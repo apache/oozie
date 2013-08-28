@@ -19,24 +19,12 @@ package org.apache.oozie.action.hadoop;
 
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.util.IOUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -111,32 +99,6 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     @Override
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
         return true;
-    }
-
-    @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
-            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-        super.getActionData(actionFs, runningJob, action, context);
-
-        // Load stored Hadoop jobs ids and promote them as external child ids on job success
-        Properties props = new Properties();
-        props.load(new StringReader(action.getData()));
-        context.setExternalChildIDs((String) props.get(LauncherMain.HADOOP_JOBS));
-    }
-
-    @Override
-    protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
-            HadoopAccessorException, URISyntaxException {
-        super.setActionCompletionData(context, actionFs);
-
-        // Load stored Hadoop jobs ids and promote them as external child ids on job failure
-        Path externalChildIDs = LauncherMapperHelper.getExternalChildIDsDataPath(context.getActionDir());
-        if (actionFs.exists(externalChildIDs)) {
-            InputStream is = actionFs.open(externalChildIDs);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            context.setExternalChildIDs(IOUtils.getReaderAsString(reader, -1));
-            reader.close();
-        }
     }
 
     /**

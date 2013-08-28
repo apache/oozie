@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
     public static final String ACTION_PREFIX = "oozie.action.";
-    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs.properties";
+    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs";
     public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
     public static final String EXTERNAL_STATS_WRITE = ACTION_PREFIX + "external.stats.write";
     public static final int STRING_BUFFER_SIZE = 100;

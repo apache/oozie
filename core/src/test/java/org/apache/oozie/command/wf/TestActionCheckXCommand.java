@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ package org.apache.oozie.command.wf;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Date;
+import java.util.Map;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -48,6 +49,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
@@ -188,7 +190,6 @@ public class TestActionCheckXCommand extends XDataTestCase {
         assertEquals(new Long(1), new Long(counterVal));
     }
 
-    @SuppressWarnings("deprecation")
     public void testActionCheck() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
@@ -202,7 +203,6 @@ public class TestActionCheckXCommand extends XDataTestCase {
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
-        String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 
         String launcherId = action.getExternalId();
@@ -215,7 +215,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
@@ -325,7 +327,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
@@ -390,7 +394,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(action1.getId()).call();
         WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
@@ -455,7 +461,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
         });
 
         assertTrue(launcherJob2.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob2));
+        actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);

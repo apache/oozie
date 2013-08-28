@@ -272,29 +272,22 @@ public class HiveMain extends LauncherMain {
         catch (SecurityException ex) {
             if (LauncherSecurityManager.getExitInvoked()) {
                 if (LauncherSecurityManager.getExitCode() != 0) {
-                    writeExternalChildIDs(logFile);
                     throw ex;
                 }
             }
         }
+        finally {
+            writeExternalChildIDs(logFile);
 
-        System.out.println("\n<<< Invocation of Hive command completed <<<\n");
-
-        // harvesting and recording Hadoop Job IDs
-        Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
-        File file = new File(System.getProperty("oozie.action.output.properties"));
-        OutputStream os = new FileOutputStream(file);
-        jobIds.store(os, "");
-        os.close();
-        System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty(HADOOP_JOBS));
-        System.out.println();
+        }
     }
 
     private void writeExternalChildIDs(String logFile) {
         // harvesting and recording Hadoop Job IDs
         try {
             Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
-            File file = new File(System.getProperty(LauncherMapper.EXTERNAL_CHILD_IDS));
+            File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
+                    + LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS));
             final String hadoopJobIDs = jobIds.getProperty(HADOOP_JOBS);
             OutputStream os = new FileOutputStream(file);
             os.write(hadoopJobIDs.getBytes());

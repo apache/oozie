@@ -18,24 +18,14 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.JDOMException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.util.List;
 
 public class PigActionExecutor extends ScriptLanguageActionExecutor {
@@ -110,70 +100,6 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     @Override
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
         return false;
-    }
-
-    /**
-     * Get the stats and external child IDs for a pig job
-     *
-     * @param actionFs the FileSystem object
-     * @param runningJob the runningJob
-     * @param action the Workflow action
-     * @param context executor context
-     *
-     */
-    @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context) throws HadoopAccessorException, JDOMException, IOException, URISyntaxException{
-        super.getActionData(actionFs, runningJob, action, context);
-        String stats = getStats(context, actionFs);
-        context.setExecutionStats(stats);
-        String externalChildIDs = getExternalChildIDs(context, actionFs);
-        context.setExternalChildIDs(externalChildIDs);
-    }
-
-    private String getStats(Context context, FileSystem actionFs) throws IOException, HadoopAccessorException,
-            URISyntaxException {
-        Path actionOutput = LauncherMapperHelper.getActionStatsDataPath(context.getActionDir());
-        String stats = null;
-        if (actionFs.exists(actionOutput)) {
-            stats = getDataFromPath(actionOutput, actionFs);
-
-        }
-        return stats;
-    }
-
-    @Override
-    protected void setActionCompletionData(Context context, FileSystem fs) throws HadoopAccessorException, IOException,
-            URISyntaxException {
-        String data = getExternalChildIDs(context, fs);
-        context.setExternalChildIDs(data);
-    }
-
-    private String getExternalChildIDs(Context context, FileSystem actionFs) throws IOException,
-            HadoopAccessorException, URISyntaxException {
-        Path actionOutput = LauncherMapperHelper.getExternalChildIDsDataPath(context.getActionDir());
-        String externalIDs = null;
-        if (actionFs.exists(actionOutput)) {
-            externalIDs = getDataFromPath(actionOutput, actionFs);
-            XLog.getLog(getClass()).info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
-        }
-        return externalIDs;
-    }
-
-    private static String getDataFromPath(Path actionOutput, FileSystem actionFs) throws IOException{
-        BufferedReader reader = null;
-        String data = null;
-        try {
-            InputStream is = actionFs.open(actionOutput);
-            reader = new BufferedReader(new InputStreamReader(is));
-            data = IOUtils.getReaderAsString(reader, -1);
-
-        }
-        finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        return data;
     }
 
     /**

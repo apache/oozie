@@ -22,6 +22,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -273,7 +274,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherJob.isSuccessful());
 
         sleep(2000);// Wait more to make sure no ID swap happens
-        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
 
         ShellActionExecutor ae = new ShellActionExecutor();
         ae.check(context, context.getAction());

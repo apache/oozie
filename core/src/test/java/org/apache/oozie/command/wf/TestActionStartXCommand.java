@@ -21,6 +21,8 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.util.Date;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -143,7 +145,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         assertEquals(new Long(1), new Long(counterVal));
     }
 
-    @SuppressWarnings("deprecation")
     public void testActionStart() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
@@ -158,7 +159,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
-        String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 
         String launcherId = action.getExternalId();
@@ -171,7 +171,9 @@ public class TestActionStartXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
     }
 
     public void testActionReuseWfJobAppPath() throws Exception {
@@ -220,7 +222,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
-        String group = conf.get("group.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 
         String launcherId = action.getExternalId();
@@ -236,7 +237,9 @@ public class TestActionStartXCommand extends XDataTestCase {
         });
         // check if launcher job succeeds
         assertTrue(launcherJob.isSuccessful());
-        assertTrue(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
     }
 
     /**

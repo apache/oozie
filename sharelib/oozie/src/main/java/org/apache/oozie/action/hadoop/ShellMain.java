@@ -188,7 +188,7 @@ public class ShellMain extends LauncherMain {
 
             try {
                 if (needCaptured) {
-                    File file = new File(System.getProperty("oozie.action.output.properties"));
+                    File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
                     os = new BufferedWriter(new FileWriter(file));
                 }
                 while ((line = reader.readLine()) != null) {

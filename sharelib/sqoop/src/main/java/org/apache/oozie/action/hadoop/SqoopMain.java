@@ -186,14 +186,11 @@ public class SqoopMain extends LauncherMain {
         // harvesting and recording Hadoop Job IDs
         Properties jobIds = getHadoopJobIds(logFile, SQOOP_JOB_IDS_PATTERNS);
 
-        File file = new File(System.getProperty("oozie.action.output.properties"));
+        File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
+                + LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS));
         OutputStream os = new FileOutputStream(file);
-        try {
-            jobIds.store(os, "");
-        }
-        finally {
-            os.close();
-        }
+        os.write(jobIds.getProperty(HADOOP_JOBS).getBytes());
+        os.close();
         System.out.println(" Hadoop Job IDs executed by Sqoop: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
     }

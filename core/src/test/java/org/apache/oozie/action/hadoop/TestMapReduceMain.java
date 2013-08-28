@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,13 +22,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.util.XConfiguration;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Properties;
 
 public class TestMapReduceMain extends MainTestCase {
 
@@ -57,26 +54,20 @@ public class TestMapReduceMain extends MainTestCase {
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
-        
+
         File actionXml = new File(getTestCaseDir(), "action.xml");
         OutputStream os = new FileOutputStream(actionXml);
         jobConf.writeXml(os);
         os.close();
 
-        File newIdProperties = new File(getTestCaseDir(), "newId.properties");
+        File newId = new File(getTestCaseDir(), "newId");
 
         System.setProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
-        System.setProperty("oozie.action.newId.properties", newIdProperties.getAbsolutePath());
+        System.setProperty("oozie.action.newId", newId.getAbsolutePath());
         MapReduceMain.main(new String[0]);
 
-        assertTrue(newIdProperties.exists());
-
-        InputStream is = new FileInputStream(newIdProperties);
-        Properties props = new Properties();
-        props.load(is);
-        is.close();
-
-        assertTrue(props.containsKey("id"));
+        assertTrue(newId.exists());
+        assertNotNull(LauncherMapper.getLocalFileContentStr(newId, "", -1));
         return null;
     }
 

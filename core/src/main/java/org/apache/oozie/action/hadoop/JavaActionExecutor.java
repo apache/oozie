@@ -17,13 +17,10 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
@@ -96,7 +93,6 @@ public class JavaActionExecutor extends ActionExecutor {
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
     private static int maxFSGlobMax;
-
     private static final String SUCCEEDED = "SUCCEEDED";
     private static final String KILLED = "KILLED";
     private static final String FAILED = "FAILED";
@@ -141,7 +137,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void initActionType() {
-        XLog log = XLog.getLog(getClass());
         super.initActionType();
         maxActionOutputLen = getOozieConf()
           .getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
@@ -1013,7 +1008,6 @@ public class JavaActionExecutor extends ActionExecutor {
             jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = getRunningJob(context, action, jobClient);
             if (runningJob == null) {
-                context.setExternalStatus(FAILED);
                 context.setExecutionData(FAILED, null);
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
                         "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
@@ -1021,17 +1015,12 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             if (runningJob.isComplete()) {
                 Path actionDir = context.getActionDir();
-
-                String user = context.getWorkflow().getUser();
-                String group = context.getWorkflow().getGroup();
-                if (LauncherMapperHelper.hasIdSwap(runningJob, user, group, actionDir)) {
+                String newId = null;
+                // load sequence file into object
+                Map<String, String> actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
+                if (actionData.containsKey(LauncherMapper.ACTION_DATA_NEW_ID)) {
+                    newId = actionData.get(LauncherMapper.ACTION_DATA_NEW_ID);
                     String launcherId = action.getExternalId();
-                    Path idSwapPath = LauncherMapperHelper.getIdSwapPath(context.getActionDir());
-                    InputStream is = actionFs.open(idSwapPath);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    Properties props = PropertiesUtils.readProperties(reader, maxActionOutputLen);
-                    reader.close();
-                    String newId = props.getProperty("id");
                     runningJob = jobClient.getJob(JobID.forName(newId));
                     if (runningJob == null) {
                         context.setExternalStatus(FAILED);
@@ -1039,27 +1028,44 @@ public class JavaActionExecutor extends ActionExecutor {
                                 "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
                                 action.getId());
                     }
-
                     context.setExternalChildIDs(newId);
                     XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
                             newId);
                 }
+                else {
+                    String externalIDs = actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS);
+                    if (externalIDs != null) {
+                        context.setExternalChildIDs(externalIDs);
+                        XLog.getLog(getClass()).info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                    }
+                }
                 if (runningJob.isComplete()) {
+                    // fetching action output and stats for the Map-Reduce action.
+                    if (newId != null) {
+                        actionData = LauncherMapperHelper.getActionData(actionFs, context.getActionDir(), jobConf);
+                    }
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
                             action.getExternalId());
-                    if (runningJob.isSuccessful() && LauncherMapperHelper.isMainSuccessful(runningJob)) {
-                        getActionData(actionFs, runningJob, action, context);
-                        XLog.getLog(getClass()).info(XLog.STD, "action produced output");
+                    if (LauncherMapperHelper.isMainSuccessful(runningJob)) {
+                        if (LauncherMapperHelper.hasOutputData(actionData)) {
+                            context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
+                                    .get(LauncherMapper.ACTION_DATA_OUTPUT_PROPS)));
+                            XLog.getLog(getClass()).info(XLog.STD, "action produced output");
+                        }
+                        else {
+                            context.setExecutionData(SUCCEEDED, null);
+                        }
+                        if (LauncherMapperHelper.hasStatsData(actionData)) {
+                            context.setExecutionStats(actionData.get(LauncherMapper.ACTION_DATA_STATS));
+                            XLog.getLog(getClass()).info(XLog.STD, "action produced stats");
+                        }
                     }
                     else {
                         XLog log = XLog.getLog(getClass());
                         String errorReason;
-                        Path actionError = LauncherMapperHelper.getErrorPath(context.getActionDir());
-                        if (actionFs.exists(actionError)) {
-                            InputStream is = actionFs.open(actionError);
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                            Properties props = PropertiesUtils.readProperties(reader, -1);
-                            reader.close();
+                        if (actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
+                            Properties props = PropertiesUtils.stringToProperties(actionData
+                                    .get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
                             String errorCode = props.getProperty("error.code");
                             if (errorCode.equals("0")) {
                                 errorCode = "JA018";
@@ -1083,7 +1089,6 @@ public class JavaActionExecutor extends ActionExecutor {
                             log.warn(errorReason);
                         }
                         context.setExecutionData(FAILED_KILLED, null);
-                        setActionCompletionData(context, actionFs);
                     }
                 }
                 else {
@@ -1118,32 +1123,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
-    }
-
-    /**
-     * Get the output data of an action. Subclasses should override this method
-     * to get action specific output data.
-     *
-     * @param actionFs the FileSystem object
-     * @param runningJob the runningJob
-     * @param action the Workflow action
-     * @param context executor context
-     *
-     */
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
-            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-        Properties props = null;
-        if (getCaptureOutput(action)) {
-            props = new Properties();
-            if (LauncherMapperHelper.hasOutputData(runningJob)) {
-                Path actionOutput = LauncherMapperHelper.getOutputDataPath(context.getActionDir());
-                InputStream is = actionFs.open(actionOutput);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                props = PropertiesUtils.readProperties(reader, maxActionOutputLen);
-                reader.close();
-            }
-        }
-        context.setExecutionData(SUCCEEDED, props);
     }
 
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
