@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1486 Cut down on number of small files created to track a running action (mona)
 OOZIE-1476 Add ability to issue kill on Coordinator Action directly with id and nominal daterange (mona)
 OOZIE-1495 inconsistent behavior of chmod/chgrp when path doesn't exist after glob support (ryota)
 OOZIE-1463 Remove discriminator column (virag)
