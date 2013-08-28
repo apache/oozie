@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,20 +19,15 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.security.UserGroupInformation;
-
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.File;
+import java.io.OutputStream;
 
 public class MapReduceMain extends LauncherMain {
 
@@ -60,11 +55,9 @@ public class MapReduceMain extends LauncherMain {
 
         // propagating job id back to Oozie
         String jobId = runningJob.getID().toString();
-        Properties props = new Properties();
-        props.setProperty("id", jobId);
-        File idFile = new File(System.getProperty("oozie.action.newId.properties"));
+        File idFile = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_NEW_ID));
         OutputStream os = new FileOutputStream(idFile);
-        props.store(os, "");
+        os.write(jobId.getBytes());
         os.close();
 
         System.out.println("=======================");

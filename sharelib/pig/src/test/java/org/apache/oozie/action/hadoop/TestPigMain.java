@@ -93,12 +93,12 @@ public class TestPigMain extends PigTestCase {
 
         File statsDataFile = new File(getTestCaseDir(), "statsdata.properties");
 
-        File hadoopIdsFile = new File(getTestCaseDir(), "hadoopIds.properties");
+        File hadoopIdsFile = new File(getTestCaseDir(), "hadoopIds");
 
         setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());
         setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
         setSystemProperty("oozie.action.stats.properties", statsDataFile.getAbsolutePath());
-        setSystemProperty("oozie.action.externalChildIDs.properties", hadoopIdsFile.getAbsolutePath());
+        setSystemProperty("oozie.action.externalChildIDs", hadoopIdsFile.getAbsolutePath());
 
 
         URL url = Thread.currentThread().getContextClassLoader().getResource("PigMain.txt");

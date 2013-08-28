@@ -26,20 +26,21 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.util.XLog;
 
 public class LauncherMapperHelper {
 
@@ -171,114 +172,79 @@ public class LauncherMapperHelper {
         return succeeded;
     }
 
-    public static boolean hasOutputData(RunningJob runningJob) throws IOException {
-        boolean output = false;
-        Counters counters = runningJob.getCounters();
-        if (counters != null) {
-            Counters.Group group = counters.getGroup(LauncherMapper.COUNTER_GROUP);
-            if (group != null) {
-                output = group.getCounter(LauncherMapper.COUNTER_OUTPUT_DATA) == 1;
-            }
-        }
-        return output;
-    }
-
     /**
-     * Check whether runningJob has stats data or not
-     *
-     * @param runningJob the runningJob
-     * @return returns whether the running Job has stats data or not
+     * Determine whether action has external child jobs or not
+     * @param actionData
+     * @return true/false
      * @throws IOException
      */
-    public static boolean hasStatsData(RunningJob runningJob) throws IOException{
-        boolean output = false;
-        Counters counters = runningJob.getCounters();
-        if (counters != null) {
-            Counters.Group group = counters.getGroup(LauncherMapper.COUNTER_GROUP);
-            if (group != null) {
-                output = group.getCounter(LauncherMapper.COUNTER_STATS_DATA) == 1;
-            }
-        }
-        return output;
-    }
-
-    public static boolean hasIdSwap(RunningJob runningJob) throws IOException {
-        boolean swap = false;
-        Counters counters = runningJob.getCounters();
-        if (counters != null) {
-            Counters.Group group = counters.getGroup(LauncherMapper.COUNTER_GROUP);
-            if (group != null) {
-                swap = group.getCounter(LauncherMapper.COUNTER_DO_ID_SWAP) == 1;
-            }
-        }
-        return swap;
-    }
-
-    public static boolean hasIdSwap(RunningJob runningJob, String user, String group, Path actionDir)
-            throws IOException, HadoopAccessorException {
-        boolean swap = false;
-
-        XLog log = XLog.getLog("org.apache.oozie.action.hadoop.LauncherMapper");
-
-        Counters counters = runningJob.getCounters();
-        if (counters != null) {
-            Counters.Group counterGroup = counters.getGroup(LauncherMapper.COUNTER_GROUP);
-            if (counterGroup != null) {
-                swap = counterGroup.getCounter(LauncherMapper.COUNTER_DO_ID_SWAP) == 1;
-            }
-        }
-        // additional check for swapped hadoop ID
-        // Can't rely on hadoop counters existing
-        // we'll check for the newID file in hdfs if the hadoop counters is null
-        else {
-
-            Path p = getIdSwapPath(actionDir);
-            // log.debug("Checking for newId file in: [{0}]", p);
-
-            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration conf = has.createJobConf(p.toUri().getAuthority());
-            FileSystem fs = has.createFileSystem(user, p.toUri(), conf);
-            if (fs.exists(p)) {
-                log.debug("Hadoop Counters is null, but found newID file.");
-
-                swap = true;
-            }
-            else {
-                log.debug("Hadoop Counters is null, and newID file doesn't exist at: [{0}]", p);
-            }
-        }
-        return swap;
-    }
-
-    public static Path getOutputDataPath(Path actionDir) {
-        return new Path(actionDir, LauncherMapper.ACTION_OUTPUT_PROPS);
+    public static boolean hasExternalChildJobs(Map<String, String> actionData) throws IOException {
+        return actionData.containsKey(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS);
     }
 
     /**
-     * Get the location of stats file
-     *
-     * @param actionDir the action directory
-     * @return the hdfs location of the file
+     * Determine whether action has output data or not
+     * @param actionData
+     * @return true/false
+     * @throws IOException
      */
-    public static Path getActionStatsDataPath(Path actionDir){
-        return new Path(actionDir, LauncherMapper.ACTION_STATS_PROPS);
+    public static boolean hasOutputData(Map<String, String> actionData) throws IOException {
+        return actionData.containsKey(LauncherMapper.ACTION_DATA_OUTPUT_PROPS);
     }
 
     /**
-     * Get the location of external Child IDs file
-     *
-     * @param actionDir the action directory
-     * @return the hdfs location of the file
+     * Determine whether action has external stats or not
+     * @param actionData
+     * @return true/false
+     * @throws IOException
      */
-    public static Path getExternalChildIDsDataPath(Path actionDir){
-        return new Path(actionDir, LauncherMapper.ACTION_EXTERNAL_CHILD_IDS_PROPS);
+    public static boolean hasStatsData(Map<String, String> actionData) throws IOException{
+        return actionData.containsKey(LauncherMapper.ACTION_DATA_STATS);
     }
 
-    public static Path getErrorPath(Path actionDir) {
-        return new Path(actionDir, LauncherMapper.ACTION_ERROR_PROPS);
+    /**
+     * Determine whether action has new id (id swap) or not
+     * @param actionData
+     * @return true/false
+     * @throws IOException
+     */
+    public static boolean hasIdSwap(Map<String, String> actionData) throws IOException {
+        return actionData.containsKey(LauncherMapper.ACTION_DATA_NEW_ID);
     }
 
-    public static Path getIdSwapPath(Path actionDir) {
-        return new Path(actionDir, LauncherMapper.ACTION_NEW_ID_PROPS);
+    /**
+     * Get the sequence file path storing all action data
+     * @param actionDir
+     * @return
+     */
+    public static Path getActionDataSequenceFilePath(Path actionDir) {
+        return new Path(actionDir, LauncherMapper.ACTION_DATA_SEQUENCE_FILE);
+    }
+
+    /**
+     * Utility function to load the contents of action data sequence file into
+     * memory object
+     *
+     * @param fs FileSystem - HDFS
+     * @param actionDir action directory
+     * @param conf job conf
+     * @param obj memory object
+     * @param type type of action data
+     * @param maxLen maximum allowed length of the data
+     * @return the objectv (map)
+     * @throws IOException
+     */
+    public static Map<String, String> getActionData(FileSystem fs, Path actionDir, Configuration conf) throws IOException {
+        Map<String, String> ret = new HashMap<String, String>();
+        Path seqFilePath = getActionDataSequenceFilePath(actionDir);
+        if (fs.exists(seqFilePath)) {
+            SequenceFile.Reader seqFile = new SequenceFile.Reader(fs, seqFilePath, conf);
+            Text key = new Text(), value = new Text();
+            while (seqFile.next(key, value)) {
+                ret.put(key.toString(), value.toString());
+            }
+            seqFile.close();
+        }
+        return ret;
     }
 }

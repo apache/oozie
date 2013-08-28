@@ -25,7 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
-import java.util.Properties;
+import java.util.Map;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -172,24 +172,23 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-
-        assertFalse(LauncherMapperHelper.hasIdSwap(launcherJob));
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                new XConfiguration());
+        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
 
         HiveActionExecutor ae = new HiveActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertNotNull(context.getAction().getData());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+        assertNotNull(context.getExternalChildIDs());
+        assertEquals(actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS), context.getExternalChildIDs());
+
         //while this works in a real cluster, it does not with miniMR
         //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
+        //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
 
         assertTrue(fs.exists(outputDir));
         assertTrue(fs.isDirectory(outputDir));
