@@ -33,11 +33,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
 import java.net.URL;
 import java.util.Properties;
 import java.util.Map;
-import java.util.Date;
 import java.util.regex.Pattern;
 
 /**
@@ -58,6 +56,9 @@ import java.util.regex.Pattern;
  * <p/>
  * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>. The default
  * value is 10 seconds.
+ * <p>
+ * <p>
+ * Unlike most of the other Services, XLogService isn't easily overridable because Services depends on XLogService being available
  */
 public class XLogService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "logging";
@@ -188,6 +189,7 @@ public class XLogService implements Service, Instrumentable {
     }
 
     private void extractInfoForLogWebService(InputStream is) throws IOException {
+        logOverWS = true;
         Properties props = new Properties();
         props.load(is);
 
@@ -337,24 +339,12 @@ public class XLogService implements Service, Instrumentable {
         });
     }
 
-    /**
-     * Stream the log of a job.
-     *
-     * @param filter log streamer filter.
-     * @param startTime start time for log events to filter.
-     * @param endTime end time for log events to filter.
-     * @param writer writer to stream the log to.
-     * @throws IOException thrown if the log cannot be streamed.
-     */
-    public void streamLog(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer) throws IOException {
-        if (logOverWS) {
-            new XLogStreamer(filter, writer, oozieLogPath, oozieLogName, oozieLogRotation)
-                    .streamLog(startTime, endTime);
-        }
-        else {
-            writer.write("Log streaming disabled!!");
-        }
+    boolean getLogOverWS() {
+        return logOverWS;
+    }
 
+    int getOozieLogRotation() {
+        return oozieLogRotation;
     }
 
     String getLog4jProperties() {

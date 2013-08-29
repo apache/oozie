@@ -46,6 +46,7 @@ import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.service.XLogStreamingService;
 
 import java.io.Writer;
 import java.util.Date;
@@ -376,11 +377,12 @@ public class DagEngine extends BaseEngine {
      *
      * @param jobId job Id.
      * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
      * @throws IOException thrown if the log cannot be streamed.
      * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
      */
     @Override
-    public void streamLog(String jobId, Writer writer) throws IOException, DagEngineException {
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         WorkflowJob job = getJob(jobId);
@@ -388,7 +390,7 @@ public class DagEngine extends BaseEngine {
         if (lastTime == null) {
             lastTime = job.getLastModifiedTime();
         }
-        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer);
+        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();

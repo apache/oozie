@@ -19,6 +19,7 @@ package org.apache.oozie;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
@@ -160,11 +161,13 @@ public abstract class BaseEngine {
      *
      * @param jobId job Id.
      * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
      * @throws IOException thrown if the log cannot be streamed.
      * @throws BaseEngineException thrown if there is error in getting the Workflow/Coordinator Job Information for
      *         jobId.
      */
-    public abstract void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException;
+    public abstract void streamLog(String jobId, Writer writer, Map<String, String[]> params)
+            throws IOException, BaseEngineException;
 
     /**
      * Return the workflow Job ID for an external ID.

@@ -955,7 +955,7 @@ public class V1JobServlet extends BaseJobServlet {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
-            dagEngine.streamLog(jobId, response.getWriter());
+            dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -974,7 +974,7 @@ public class V1JobServlet extends BaseJobServlet {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
         try {
-            bundleEngine.streamLog(jobId, response.getWriter());
+            bundleEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
         catch (BundleEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -998,7 +998,7 @@ public class V1JobServlet extends BaseJobServlet {
         String logRetrievalScope = request.getParameter(RestConstants.JOB_LOG_SCOPE_PARAM);
         String logRetrievalType = request.getParameter(RestConstants.JOB_LOG_TYPE_PARAM);
         try {
-            coordEngine.streamLog(jobId, logRetrievalScope, logRetrievalType, response.getWriter());
+            coordEngine.streamLog(jobId, logRetrievalScope, logRetrievalType, response.getWriter(), request.getParameterMap());
         }
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);

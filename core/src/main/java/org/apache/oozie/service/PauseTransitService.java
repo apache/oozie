@@ -36,7 +36,7 @@ import org.apache.oozie.executor.jpa.CoordJobsGetUnpausedJPAExecutor;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.MemoryLocks;
+import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -54,7 +54,7 @@ public class PauseTransitService implements Service {
      */
     static class PauseTransitRunnable implements Runnable {
         private JPAService jpaService = null;
-        private MemoryLocks.LockToken lock;
+        private LockToken lock;
 
         public PauseTransitRunnable() {
             jpaService = Services.get().get(JPAService.class);

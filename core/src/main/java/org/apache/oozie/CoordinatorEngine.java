@@ -50,7 +50,7 @@ import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogStreamer;
@@ -258,12 +258,12 @@ public class CoordinatorEngine extends BaseEngine {
      * java.io.Writer)
      */
     @Override
-    public void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException {
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, BaseEngineException {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
 
         CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
+        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
     }
 
     /**
@@ -273,12 +273,13 @@ public class CoordinatorEngine extends BaseEngine {
      * @param logRetrievalScope Value for the retrieval type
      * @param logRetrievalType Based on which filter criteria the log is retrieved
      * @param writer writer to stream the log to
+     * @param params additional parameters from the request
      * @throws IOException
      * @throws BaseEngineException
      * @throws CommandException
      */
-    public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer)
-            throws IOException, BaseEngineException, CommandException {
+    public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer,
+            Map<String, String[]> params) throws IOException, BaseEngineException, CommandException {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         if (logRetrievalScope != null && logRetrievalType != null) {
@@ -371,7 +372,7 @@ public class CoordinatorEngine extends BaseEngine {
             }
         }
         CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
+        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
     }
 
     /*

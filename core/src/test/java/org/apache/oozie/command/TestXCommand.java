@@ -21,7 +21,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.MemoryLocks;
+import org.apache.oozie.lock.LockToken;
 
 public class TestXCommand extends XTestCase {
 
@@ -228,7 +228,7 @@ public class TestXCommand extends XTestCase {
         @Override
         public void run() {
             try {
-                MemoryLocks.LockToken lock = Services.get().get(MemoryLocksService.class).getWriteLock("key", 1);
+                LockToken lock = Services.get().get(MemoryLocksService.class).getWriteLock("key", 1);
                 if (lock == null) {
                     fail();
                 }

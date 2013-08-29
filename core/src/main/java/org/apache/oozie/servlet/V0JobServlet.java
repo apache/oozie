@@ -186,7 +186,7 @@ public class V0JobServlet extends BaseJobServlet {
 
         String jobId = getResourceName(request);
         try {
-            dagEngine.streamLog(jobId, response.getWriter());
+            dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);

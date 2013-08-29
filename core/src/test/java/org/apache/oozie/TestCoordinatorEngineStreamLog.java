@@ -26,7 +26,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -36,7 +38,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -77,11 +79,12 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         }
     }
 
-    static class DummyXLogService extends XLogService {
+    static class DummyXLogStreamingService extends XLogStreamingService {
         Filter filter;
 
         @Override
-        public void streamLog(Filter filter1, Date startTime, Date endTime, Writer writer) throws IOException {
+        public void streamLog(Filter filter1, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+                throws IOException {
             filter = filter1;
         }
     }
@@ -100,9 +103,9 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     public void testStreamLog2() throws Exception {
         CoordinatorEngine ce = createCoordinatorEngine();
         String jobId = runJobsImpl(ce);
-        ce.streamLog(jobId, new StringWriter()/* writer is unused */);
+        ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
 
-        DummyXLogService service = (DummyXLogService) services.get(XLogService.class);
+        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
 
         assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
@@ -115,9 +118,9 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     public void testStreamLog4NullNull() throws Exception {
         CoordinatorEngine ce = createCoordinatorEngine();
         String jobId = runJobsImpl(ce);
-        ce.streamLog(jobId, null, null, new StringWriter()/* writer is unused */);
+        ce.streamLog(jobId, null, null, new StringWriter(), new HashMap<String, String[]>());
 
-        DummyXLogService service = (DummyXLogService) services.get(XLogService.class);
+        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
 
         assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
@@ -132,9 +135,9 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         CoordinatorEngine ce = createCoordinatorEngine();
         String jobId = runJobsImpl(ce);
 
-        ce.streamLog(jobId, "678, 123-127, 946", RestConstants.JOB_LOG_ACTION, new StringWriter()/* unused */);
+        ce.streamLog(jobId, "678, 123-127, 946", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());
 
-        DummyXLogService service = (DummyXLogService) services.get(XLogService.class);
+        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
 
         assertEquals(jobId, filter.getFilterParams().get(DagXLogInfoService.JOB));
@@ -160,9 +163,9 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
 
         ce.streamLog(jobId, DateUtils.formatDateOozieTZ(createdDate) + "::" + DateUtils.formatDateOozieTZ(middleDate) + ","
                 + DateUtils.formatDateOozieTZ(middleDate) + "::" + DateUtils.formatDateOozieTZ(endDate),
-                RestConstants.JOB_LOG_DATE, new StringWriter()/* unused */);
+                RestConstants.JOB_LOG_DATE, new StringWriter(), new HashMap<String, String[]>());
 
-        DummyXLogService service = (DummyXLogService) services.get(XLogService.class);
+        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
 
         assertEquals(jobId, filter.getFilterParams().get(DagXLogInfoService.JOB));
@@ -171,10 +174,9 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     }
 
     private String runJobsImpl(final CoordinatorEngine ce) throws Exception {
-        services.setService(DummyXLogService.class);
+        services.setService(DummyXLogStreamingService.class);
         // need to re-define the parameters that are cleared upon the service reset:
         new DagXLogInfoService().init(services);
-        services.init();
 
         Configuration conf = new XConfiguration();
 

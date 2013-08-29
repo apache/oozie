@@ -33,7 +33,8 @@ public class TestXLogFilter extends XTestCase {
             XLogStreamer.Filter xf2 = new XLogStreamer.Filter();
             xf2.constructPattern();
             ArrayList<String> a = new ArrayList<String>();
-            a.add("2009-06-24 02:43:13,958 DEBUG");
+            a.add("2009-06-24 02:43:13,958");
+            a.add(" DEBUG");
             a.add(" WorkflowRunnerCallable:323 - " + XLog.Info.get().createPrefix() + " test log");
             assertEquals(true, xf2.matches(a));
         }

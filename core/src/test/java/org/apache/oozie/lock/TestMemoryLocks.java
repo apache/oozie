@@ -6,18 +6,19 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.util;
+package org.apache.oozie.lock;
 
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.XLog;
 
 public class TestMemoryLocks extends XTestCase {
     private XLog log = XLog.getLog(getClass());
@@ -51,7 +52,7 @@ public class TestMemoryLocks extends XTestCase {
         public void run() {
             try {
                 log.info("Getting lock [{0}]", nameIndex);
-                MemoryLocks.LockToken token = getLock();
+                MemoryLocks.MemoryLockToken token = getLock();
                 if (token != null) {
                     log.info("Got lock [{0}]", nameIndex);
                     sb.append(nameIndex + "-L ");
@@ -78,7 +79,7 @@ public class TestMemoryLocks extends XTestCase {
             }
         }
 
-        protected abstract MemoryLocks.LockToken getLock() throws InterruptedException;
+        protected abstract MemoryLocks.MemoryLockToken getLock() throws InterruptedException;
 
 
     }
@@ -89,7 +90,7 @@ public class TestMemoryLocks extends XTestCase {
             super(name, nameIndex, timeout, buffer);
         }
 
-        protected MemoryLocks.LockToken getLock() throws InterruptedException {
+        protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {
             return locks.getReadLock(name, timeout);
         }
     }
@@ -100,7 +101,7 @@ public class TestMemoryLocks extends XTestCase {
             super(name, nameIndex, timeout, buffer);
         }
 
-        protected MemoryLocks.LockToken getLock() throws InterruptedException {
+        protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {
             return locks.getWriteLock(name, timeout);
         }
     }

@@ -49,7 +49,7 @@ import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -241,7 +241,7 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String, java.io.Writer)
      */
     @Override
-    public void streamLog(String jobId, Writer writer) throws IOException, BundleEngineException {
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, BundleEngineException {
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
 
@@ -253,7 +253,7 @@ public class BundleEngine extends BaseEngine {
             throw new BundleEngineException(ex);
         }
 
-        Services.get().get(XLogService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer);
+        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
     }
 
     /* (non-Javadoc)

@@ -126,7 +126,9 @@
             org.apache.oozie.service.StatusTransitService,
             org.apache.oozie.service.PauseTransitService,
             org.apache.oozie.service.GroupsService,
-            org.apache.oozie.service.ProxyUserService
+            org.apache.oozie.service.ProxyUserService,
+            org.apache.oozie.service.XLogStreamingService,
+            org.apache.oozie.service.JobsConcurrencyService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -1923,6 +1925,33 @@
         <description>
              Time in milliseconds to account of latency of getting the job status event
              to compare against and decide sla miss/met
+        </description>
+    </property>
+
+    <!-- ZooKeeper configuration -->
+    <property>
+        <name>oozie.zookeeper.connection.string</name>
+        <value>localhost:2181</value>
+        <description>
+            Comma-separated values of host:port pairs of the ZooKeeper servers.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.zookeeper.namespace</name>
+        <value>oozie</value>
+        <description>
+            The namespace to use.  All of the Oozie Servers that are planning on talking to each other should have the same
+            namespace.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.zookeeper.oozie.id</name>
+        <value> </value>
+        <description>
+            The ID for the Oozie server to use.  Each Oozie server must have a unique ID.
+            If blank, Oozie will use the hostname.
         </description>
     </property>
 

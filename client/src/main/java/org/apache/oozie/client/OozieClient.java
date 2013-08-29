@@ -1617,6 +1617,41 @@ public class OozieClient {
         return new GetQueueDump().call();
     }
 
+    private class GetAvailableOozieServers extends ClientCallable<Map<String, String>> {
+
+        GetAvailableOozieServers() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE, prepareParams());
+        }
+
+        @Override
+        protected Map<String, String> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                Map<String, String> map = new HashMap<String, String>();
+                for (Object key : json.keySet()) {
+                    map.put((String)key, (String)json.get(key));
+                }
+                return map;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Return the list of available Oozie servers.
+     *
+     * @return the list of available Oozie servers.
+     * @throws OozieClientException throw if it the list of available Oozie servers could not be retrieved.
+     */
+    public Map<String, String> getAvailableOozieServers() throws OozieClientException {
+        return new GetAvailableOozieServers().call();
+    }
+
+
     /**
      * Check if the string is not null or not empty.
      *
