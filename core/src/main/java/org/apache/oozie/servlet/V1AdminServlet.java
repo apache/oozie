@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +46,7 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[9];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[10];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
@@ -67,7 +68,8 @@ public class V1AdminServlet extends BaseAdminServlet {
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[8] = new ResourceInfo((RestConstants.ADMIN_JMS_INFO), Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
-
+        RESOURCES_INFO[9] = new ResourceInfo(RestConstants.ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
     }
 
     protected V1AdminServlet(String name) {
@@ -152,5 +154,8 @@ public class V1AdminServlet extends BaseAdminServlet {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
 
-
+    @Override
+    protected Map<String, String> getOozieURLs() throws XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 }

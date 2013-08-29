@@ -18,6 +18,7 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.jms.JMSJobEventListener;
 import org.apache.oozie.service.JMSTopicService;
+import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
 
 /**
@@ -74,4 +76,14 @@ public class V2AdminServlet extends V1AdminServlet {
         return jmsBean;
     }
 
+    @Override
+    protected Map<String, String> getOozieURLs() throws XServletException {
+        Map<String, String> serverUrls = null;
+        try {
+            serverUrls = Services.get().get(JobsConcurrencyService.class).getServerUrls();
+        } catch (Exception ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, ex.getMessage(), ex);
+        }
+        return serverUrls;
+    }
 }

@@ -42,7 +42,7 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.MemoryLocks.LockToken;
+import org.apache.oozie.lock.LockToken;
 
 /**
  * Base class for all synchronous and asynchronous DagEngine commands.

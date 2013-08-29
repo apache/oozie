@@ -18,9 +18,7 @@
 package org.apache.oozie.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.BufferedReader;
 
 /**
- * XLogStreamer streams the given log file to logWriter after applying the given filter.
+ * XLogStreamer streams the given log file to writer after applying the given filter.
  */
 public class XLogStreamer {
     private static XLog LOG = XLog.getLog(XLogStreamer.class);
@@ -116,8 +114,8 @@ public class XLogStreamer {
          * @return
          */
         public boolean matches(ArrayList<String> logParts) {
-            String logLevel = logParts.get(0);
-            String logMessage = logParts.get(1);
+            String logLevel = logParts.get(1);
+            String logMessage = logParts.get(2);
             if (this.logLevels == null || this.logLevels.containsKey(logLevel.toUpperCase())) {
                 Matcher logMatcher = filterPattern.matcher(logMessage);
                 return logMatcher.matches();
@@ -128,7 +126,7 @@ public class XLogStreamer {
         }
 
         /**
-         * Splits the log line into timestamp, logLevel and remaining log message. Returns array containing logLevel and
+         * Splits the log line into timestamp, logLevel and remaining log message. Returns array containing timestamp, logLevel, and
          * logMessage if the pattern matches i.e A new log statement, else returns null.
          *
          * @param logLine
@@ -138,6 +136,7 @@ public class XLogStreamer {
             Matcher splitter = SPLITTER_PATTERN.matcher(logLine);
             if (splitter.matches()) {
                 ArrayList<String> logParts = new ArrayList<String>();
+                logParts.add(splitter.group(1));// timestamp
                 logParts.add(splitter.group(2));// log level
                 logParts.add(splitter.group(3));// Log Message
                 return logParts;
@@ -184,11 +183,9 @@ public class XLogStreamer {
     private String logFile;
     private String logPath;
     private Filter logFilter;
-    private Writer logWriter;
     private long logRotation;
 
-    public XLogStreamer(Filter logFilter, Writer logWriter, String logPath, String logFile, long logRotationSecs) {
-        this.logWriter = logWriter;
+    public XLogStreamer(Filter logFilter, String logPath, String logFile, long logRotationSecs) {
         this.logFilter = logFilter;
         if (logFile == null) {
             logFile = "oozie-app.log";
@@ -202,11 +199,33 @@ public class XLogStreamer {
      * Gets the files that are modified between startTime and endTime in the given logPath and streams the log after
      * applying the filters.
      *
+     * @param writer
      * @param startTime
      * @param endTime
      * @throws IOException
      */
-    public void streamLog(Date startTime, Date endTime) throws IOException {
+    public void streamLog(Writer writer, Date startTime, Date endTime) throws IOException {
+        // Get a Reader for the log file(s)
+        BufferedReader reader = makeReader(startTime, endTime);
+        try {
+            // Process the entire logs from the reader using the logFilter
+            new TimestampedMessageParser(reader, logFilter).processRemaining(writer);
+        }
+        finally {
+            reader.close();
+        }
+        writer.flush();
+    }
+
+    /**
+     * Returns a BufferedReader configured to read the log files based on the given startTime and endTime.
+     *
+     * @param startTime
+     * @param endTime
+     * @return A BufferedReader for the log files
+     * @throws IOException
+     */
+    public BufferedReader makeReader(Date startTime, Date endTime) throws IOException {
         long startTimeMillis = 0;
         long endTimeMillis;
         if (startTime != null) {
@@ -219,43 +238,26 @@ public class XLogStreamer {
             endTimeMillis = endTime.getTime();
         }
         File dir = new File(logPath);
-        ArrayList<FileInfo> fileList = getFileList(dir, startTimeMillis, endTimeMillis, logRotation, logFile);
-        File file;
-        String fileName;
-        XLogReader logReader;
-        for (int i = 0; i < fileList.size(); i++) {
-            fileName = fileList.get(i).getFileName();
-            if (fileName.endsWith(".gz")) {
-                file = new File(fileName);
-                GZIPInputStream gzipInputStream = null;
-                gzipInputStream = new GZIPInputStream(new FileInputStream(file));
-                logReader = new XLogReader(gzipInputStream, logFilter, logWriter);
-                logReader.processLog();
-                logReader.close();
-                continue;
-            }
-            InputStream ifs;
-            ifs = new FileInputStream(fileName);
-            logReader = new XLogReader(ifs, logFilter, logWriter);
-            logReader.processLog();
-            ifs.close();
-        }
+        ArrayList<File> files = getFileList(dir, startTimeMillis, endTimeMillis, logRotation, logFile);
+        // The MultiFileReader is a Reader that treats the files as one source so we can easily go through them all with one
+        // BufferedReader
+        return new BufferedReader(new MultiFileReader(files));
     }
 
     /**
-     * File name along with the modified time which will be used to sort later.
+     * File along with the modified time which will be used to sort later.
      */
-    class FileInfo implements Comparable<FileInfo> {
-        String fileName;
+    public class FileInfo implements Comparable<FileInfo> {
+        File file;
         long modTime;
 
-        public FileInfo(String fileName, long modTime) {
-            this.fileName = fileName;
+        public FileInfo(File file, long modTime) {
+            this.file = file;
             this.modTime = modTime;
         }
 
-        public String getFileName() {
-            return fileName;
+        public File getFile() {
+            return file;
         }
 
         public long getModTime() {
@@ -286,11 +288,11 @@ public class XLogStreamer {
      * @param logFile
      * @return List of files to be streamed
      */
-    private ArrayList<FileInfo> getFileList(File dir, long startTime, long endTime, long logRotationTime, String logFile) {
+    private ArrayList<File> getFileList(File dir, long startTime, long endTime, long logRotationTime, String logFile) {
         String[] children = dir.list();
         ArrayList<FileInfo> fileList = new ArrayList<FileInfo>();
         if (children == null) {
-            return fileList;
+            return new ArrayList<File>();
         }
         else {
             for (int i = 0; i < children.length; i++) {
@@ -302,7 +304,7 @@ public class XLogStreamer {
                 if (fileName.endsWith(".gz")) {
                     long gzFileCreationTime = getGZFileCreationTime(fileName, startTime, endTime);
                     if (gzFileCreationTime != -1) {
-                        fileList.add(new FileInfo(file.getAbsolutePath(), gzFileCreationTime));
+                        fileList.add(new FileInfo(file, gzFileCreationTime));
                     }
                     continue;
                 }
@@ -313,11 +315,15 @@ public class XLogStreamer {
                 if (modTime / logRotationTime > (endTime / logRotationTime + 1)) {
                     continue;
                 }
-                fileList.add(new FileInfo(file.getAbsolutePath(), modTime));
+                fileList.add(new FileInfo(file, modTime));
             }
         }
         Collections.sort(fileList);
-        return fileList;
+        ArrayList<File> files = new ArrayList<File>(fileList.size());
+        for (FileInfo info : fileList) {
+            files.add(info.getFile());
+        }
+        return files;
     }
 
     /**

@@ -22,6 +22,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -186,7 +187,7 @@ public class MockDagEngineService extends DagEngineService {
         }
 
         @Override
-        public void streamLog(String jobId, Writer writer) throws IOException, DagEngineException {
+        public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
             did = RestConstants.JOB_SHOW_LOG;
             validateWorkflowIdx(jobId);
             writer.write(LOG);

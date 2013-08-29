@@ -22,6 +22,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
@@ -198,15 +199,15 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
 
         @Override
-        public void streamLog(String jobId, Writer writer) throws IOException, BaseEngineException {
+        public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, BaseEngineException {
             did = RestConstants.JOB_SHOW_LOG;
             validateCoordinatorIdx(jobId);
             writer.write(LOG);
         }
 
         @Override
-        public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer)
-                throws IOException, BaseEngineException {
+        public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer,
+                Map<String, String[]> params) throws IOException, BaseEngineException {
             did = RestConstants.JOB_SHOW_LOG;
             validateCoordinatorIdx(jobId);
             writer.write(LOG);

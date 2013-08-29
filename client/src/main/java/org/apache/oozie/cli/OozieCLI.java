@@ -141,6 +141,8 @@ public class OozieCLI {
 
     public static final String BULK_OPTION = "bulk";
 
+    public static final String AVAILABLE_SERVERS_OPTION = "servers";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
@@ -222,6 +224,8 @@ public class OozieCLI {
         Option version = new Option(VERSION_OPTION, false, "show Oozie server build version");
         Option queuedump = new Option(QUEUE_DUMP_OPTION, false, "show Oozie server queue elements");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Option availServers = new Option(AVAILABLE_SERVERS_OPTION, false, "list available Oozie servers"
+                + " (more than one only if HA is enabled)");
         Options adminOptions = new Options();
         adminOptions.addOption(oozie);
         adminOptions.addOption(doAs);
@@ -230,6 +234,7 @@ public class OozieCLI {
         group.addOption(status);
         group.addOption(version);
         group.addOption(queuedump);
+        group.addOption(availServers);
         adminOptions.addOptionGroup(group);
         addAuthOptions(adminOptions);
         return adminOptions;
@@ -1448,6 +1453,12 @@ public class OozieCLI {
                 }
                 else {
                     System.out.println("QueueDump is null!");
+                }
+            }
+            else if (options.contains(AVAILABLE_SERVERS_OPTION)) {
+                Map<String, String> availableOozieServers = wc.getAvailableOozieServers();
+                for (String key : availableOozieServers.keySet()) {
+                    System.out.println(key + " : " + availableOozieServers.get(key));
                 }
             }
         }

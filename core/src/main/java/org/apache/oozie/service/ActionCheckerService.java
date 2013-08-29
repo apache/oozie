@@ -118,15 +118,24 @@ public class ActionCheckerService implements Service {
                 throw new CommandException(je);
             }
 
-            if (actions == null || actions.size() == 0) {
+            if (actions == null || actions.isEmpty()) {
                 return;
             }
-            msg.append(" WF_ACTIONS : " + actions.size());
 
-            for (WorkflowActionBean action : actions) {
+            List<String> actionIds = toIds(actions);
+            try {
+                actionIds = Services.get().get(JobsConcurrencyService.class).getJobIdsForThisServer(actionIds);
+            }
+            catch (Exception ex) {
+                throw new CommandException(ErrorCode.E1700, ex.getMessage(), ex);
+            }
+
+            msg.append(" WF_ACTIONS : ").append(actionIds.size());
+
+            for (String actionId : actionIds) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_ACTIONS_COUNTER, 1);
-                    queueCallable(new ActionCheckXCommand(action.getId()));
+                    queueCallable(new ActionCheckXCommand(actionId));
             }
 
         }
@@ -151,11 +160,19 @@ public class ActionCheckerService implements Service {
                 throw new CommandException(je);
             }
 
-            if (cactionIds == null || cactionIds.size() == 0) {
+            if (cactionIds == null || cactionIds.isEmpty()) {
                 return;
             }
 
-            msg.append(" COORD_ACTIONS : " + cactionIds.size());
+            try {
+                cactionIds = Services.get().get(JobsConcurrencyService.class).getJobIdsForThisServer(cactionIds);
+            }
+            catch (Exception ex) {
+                throw new CommandException(ErrorCode.E1700, ex.getMessage(), ex);
+            }
+
+            msg.append(" COORD_ACTIONS : ").append(cactionIds.size());
+
             for (String coordActionId : cactionIds) {
                 Services.get().get(InstrumentationService.class).get().incr(INSTRUMENTATION_GROUP,
                         INSTR_CHECK_COORD_ACTIONS_COUNTER, 1);
@@ -186,6 +203,14 @@ public class ActionCheckerService implements Service {
                 }
                 callables = new ArrayList<XCallable<Void>>();
             }
+        }
+
+        private List<String> toIds(List<WorkflowActionBean> actions) {
+            List<String> ids = new ArrayList<String>(actions.size());
+            for (WorkflowActionBean action : actions) {
+                ids.add(action.getId());
+            }
+            return ids;
         }
     }
 

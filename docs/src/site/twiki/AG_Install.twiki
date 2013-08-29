@@ -693,6 +693,101 @@ similar. You will probably have to add your certificate as an exception.
 
 Refer to the [[./oozie-default.xml][oozie-default.xml]] for details.
 
+#HA
+---+++ High Availability (HA)
+
+Multiple Oozie Servers can be configured against the same database to provide High Availability (HA) of the Oozie service.
+
+---++++ Pre-requisites
+
+1. A database that supports multiple concurrent connections.  In order to have full HA, the database should also have HA support, or
+it becomes a single point of failure.
+
+*NOTE:* The default derby database does not support this
+
+2. A ZooKeeper ensemble.
+
+Apache ZooKeeper is a distributed, open-source coordination service for distributed applications; the Oozie servers use it for
+coordinating access to the database and communicating with each other.  In order to have full HA, there should be at least 3
+ZooKeeper servers.
+More information on ZooKeeper can be found [[http://zookeeper.apache.org][here]].
+
+3. Multiple Oozie servers.
+
+*IMPORTANT:* While not strictly required for all configuration properties, all of the servers should ideally have exactly the same
+configuration for consistency's sake.
+
+4. A Loadbalancer, Virtual IP, or Round-Robin DNS.
+
+This is used to provide a single entry-point for users and for callbacks from the JobTracker.  The load balancer should be
+configured for round-robin between the Oozie servers to distribute the requests.  Users (using either the Oozie client, a web
+browser, or the REST API) should connect through the load balancer.  In order to have full HA, the load balancer should also have
+HA support, or it becomes a single point of failure.
+
+---++++ Installation/Configuration Steps
+
+1. Install identically configured Oozie servers normally.  Make sure they are all configured against the same database and make sure
+that you DO NOT start them yet.
+
+2. Add the following services to the extension services configuration property in oozie-site.xml in all Oozie servers.  This will
+make Oozie use the ZooKeeper versions of these services instead of the default implementations.
+
+<verbatim>
+<property>
+    <name>oozie.services.ext</name>
+    <value>
+        org.apache.oozie.service.ZKLocksService,
+        org.apache.oozie.service.ZKXLogStreamingService,
+        org.apache.oozie.service.ZKJobsConcurrencyService
+    </value>
+</property>
+</verbatim>
+
+3. Add the following property to oozie-site.xml in all Oozie servers.  It should be a comma-separated list of host:port pairs of the
+ZooKeeper servers.  The default value is shown below.
+
+<verbatim>
+<property>
+   <name>oozie.zookeeper.connection.string</name>
+   <value>localhost:2181</value>
+</property>
+</verbatim>
+
+4. (Optional) Add the following properties to oozie-site.xml in all Oozie servers.
+
+The namespace to use.  All of the Oozie Servers that are planning on talking to each other should have the same namespace.  If there
+are multiple Oozie setups each doing their own HA, they should have their own namespace.  The default value is shown below.
+
+<verbatim>
+<property>
+    <name>oozie.zookeeper.namespace</name>
+    <value>oozie</value>
+</property>
+</verbatim>
+
+The ID for the Oozie server to use when talking to ZooKeeper and other Oozie servers.  Each Oozie server must have a unique ID.  If
+blank, Oozie will use the hostname.
+
+<verbatim>
+<property>
+    <name>oozie.zookeeper.oozie.id</name>
+    <value> </value>
+</property>
+</verbatim>
+
+5. Change the value of OOZIE_BASE_URL in oozie-env.sh to point to the loadbalancer or virtual IP, for example:
+
+<verbatim>
+export OOZIE_BASE_URL="http://my.loadbalancer.hostname:11000/oozie"
+</verbatim>
+
+6. Start the ZooKeeper servers.
+
+7. Start the Oozie servers.
+
+Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
+be missing information until that server comes back up.
+
 ---++ Starting and Stopping Oozie
 
 Use the standard Tomcat commands to start and stop Oozie.

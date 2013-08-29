@@ -18,6 +18,7 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.servlet.ServicesLoader;
 
 /**
  *
@@ -65,5 +66,36 @@ public class ConfigUtils {
                                                  boolean defaultValue) {
         String value = getWithDeprecatedCheck(conf, newName, oldName, Boolean.toString(defaultValue));
         return Boolean.parseBoolean(value);
+    }
+
+    /**
+     * Returns the HTTP or HTTPS URL for this Oozie server
+     * (http://HOSTNAME:HTTP_PORT/oozie or https://HOSTNAME:HTTPS_PORT/oozie)
+     *
+     * @param secure true to return the HTTPS URL or false to return the HTTP URL
+     * @return the HTTP or HTTPS URL for this Oozie server
+     */
+    public static String getOozieURL(boolean secure) {
+        StringBuilder sb = new StringBuilder();
+        if (secure) {
+            sb.append("https://");
+        }
+        else {
+            sb.append("http://");
+        }
+        sb.append(System.getProperty("oozie.http.hostname"));
+        sb.append(":");
+        sb.append(System.getProperty("oozie.http.port"));
+        sb.append("/oozie");
+        return sb.toString();
+    }
+
+    /**
+     * Returns the HTTP or HTTPS URL for this Oozie server depending on which is actually configured
+     *
+     * @return the HTTP or HTTPS URL for this Oozie server
+     */
+    public static String getOozieEffectiveUrl() {
+        return getOozieURL(ServicesLoader.isSSLEnabled());
     }
 }

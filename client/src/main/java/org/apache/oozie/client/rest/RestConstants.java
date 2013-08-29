@@ -157,4 +157,6 @@ public interface RestConstants {
     public static final String ADMIN_JMS_INFO = "jmsinfo";
 
     public static final String JOB_SHOW_JMS_TOPIC = "jmstopic";
+
+    public static final String ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE = "available-oozie-servers";
 }

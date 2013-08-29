@@ -75,6 +75,7 @@ usage:
                   -doas <arg>         doAs user, impersonates as the specified user.
                   -oozie <arg>        Oozie URL
                   -queuedump          show Oozie server queue elements
+                  -servers            list available Oozie servers (more than one only if HA is enabled)
                   -status             show the current system status
                   -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
@@ -781,6 +782,19 @@ $ oozie admin -oozie http://localhost:11000/oozie -queuedump
 
 It returns the Oozie server current queued commands.
 
+---+++ Displaying the list of available Oozie Servers
+
+Example:
+
+<verbatim>
+$ oozie admin http://localhost:11000/oozie -servers
+OozieA : http://localhost:11000/oozie
+OozieB : http://localhost:12000/oozie
+OozieC : http://localhost:13000/oozie
+</verbatim>
+
+It returns a list of available Oozie Servers.  This is useful when Oozie is configured for [[AG_Install#HA][High Availability]]; if
+not, it will simply return the one Oozie Server.
 
 ---++ Validate Operations
 

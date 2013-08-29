@@ -699,6 +699,24 @@
                 <version>1.8.5</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>2.2.0-incubating</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-x-discovery</artifactId>
+                <version>2.2.0-incubating</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-test</artifactId>
+                <version>2.2.0-incubating</version>
+            </dependency>
+
             <!-- examples -->
             <dependency>
                 <groupId>commons-httpclient</groupId>

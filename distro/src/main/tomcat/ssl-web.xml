@@ -45,4 +45,11 @@
         </user-data-constraint>
     </security-constraint>
 
+    <!-- Property used by Oozie to determine that SSL (HTTPS) has been enabled -->
+    <!-- Do not remove or change this -->
+    <context-param>
+        <param-name>ssl.enabled</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
 </web-app>

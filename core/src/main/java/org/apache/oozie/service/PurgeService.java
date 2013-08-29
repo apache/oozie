@@ -56,8 +56,11 @@ public class PurgeService implements Service {
         }
 
         public void run() {
+            // Only queue the purge command if this is the first server
+            if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
                 Services.get().get(CallableQueueService.class).queue(
                         new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit));
+            }
         }
 
     }

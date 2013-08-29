@@ -19,8 +19,12 @@ package org.apache.oozie.service;
 
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.MemoryLocks;
+import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.lock.MemoryLocks;
 
+/**
+ * Service that provides in-memory locks.  Assumes no other Oozie servers are using the database.
+ */
 public class MemoryLocksService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "locks";
     private MemoryLocks locks;
@@ -31,7 +35,7 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @param services services instance.
      */
     @Override
-    public void init(Services services) {
+    public void init(Services services) throws ServiceException {
         locks = new MemoryLocks();
     }
 
@@ -75,7 +79,7 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public MemoryLocks.LockToken getReadLock(String resource, long wait) throws InterruptedException {
+    public LockToken getReadLock(String resource, long wait) throws InterruptedException {
         return locks.getReadLock(resource, wait);
     }
 
@@ -87,8 +91,7 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public MemoryLocks.LockToken getWriteLock(String resource, long wait) throws InterruptedException {
+    public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
         return locks.getWriteLock(resource, wait);
     }
-
 }

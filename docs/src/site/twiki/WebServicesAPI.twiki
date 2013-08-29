@@ -357,6 +357,30 @@ A HTTP GET request returns the queue dump of the Oozie system.  This is an admin
 GET /oozie/v1/admin/queue-dump
 </verbatim>
 
+---++++ Available Oozie Servers
+
+A HTTP GET request returns the list of available Oozie Servers.  This is useful when Oozie is configured
+for [[AG_Install#HA][High Availability]]; if not, it will simply return the one Oozie Server.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/available-oozie-servers
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+    "OozieA": "http://localhost:11000/oozie",
+    "OozieB": "http://localhost:12000/oozie",
+    "OozieC": "http://localhost:13000/oozie",
+}
+</verbatim>
+
 ---+++ Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_

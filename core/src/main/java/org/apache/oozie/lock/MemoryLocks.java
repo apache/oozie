@@ -6,16 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.util;
+package org.apache.oozie.lock;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -33,14 +33,14 @@ public class MemoryLocks {
     }
 
     /**
-     * Lock token returned when obtaining a lock, the token must be released when the lock is not needed anymore.
+     * Implementation of {@link LockToken} for in memory locks.
      */
-    public class LockToken {
+    class MemoryLockToken implements LockToken {
         private final ReentrantReadWriteLock rwLock;
         private final java.util.concurrent.locks.Lock lock;
         private final String resource;
 
-        private LockToken(ReentrantReadWriteLock rwLock, java.util.concurrent.locks.Lock lock, String resource) {
+        private MemoryLockToken(ReentrantReadWriteLock rwLock, java.util.concurrent.locks.Lock lock, String resource) {
             this.rwLock = rwLock;
             this.lock = lock;
             this.resource = resource;
@@ -49,6 +49,7 @@ public class MemoryLocks {
         /**
          * Release the lock.
          */
+        @Override
         public void release() {
             int val = rwLock.getQueueLength();
             if (val == 0) {
@@ -77,7 +78,7 @@ public class MemoryLocks {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public LockToken getReadLock(String resource, long wait) throws InterruptedException {
+    public MemoryLockToken getReadLock(String resource, long wait) throws InterruptedException {
         return getLock(resource, Type.READ, wait);
     }
 
@@ -89,11 +90,11 @@ public class MemoryLocks {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
+    public MemoryLockToken getWriteLock(String resource, long wait) throws InterruptedException {
         return getLock(resource, Type.WRITE, wait);
     }
 
-    private LockToken getLock(String resource, Type type, long wait) throws InterruptedException {
+    private MemoryLockToken getLock(String resource, Type type, long wait) throws InterruptedException {
         ReentrantReadWriteLock lockEntry;
         synchronized (locks) {
             if (locks.containsKey(resource)) {
@@ -127,7 +128,6 @@ public class MemoryLocks {
                 locks.put(resource, lockEntry);
             }
         }
-        return new LockToken(lockEntry, lock, resource);
+        return new MemoryLockToken(lockEntry, lock, resource);
     }
-
 }
