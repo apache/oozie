@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -89,6 +91,15 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     private static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
     public static final String OOZIE_ACTION_SHIP_LAUNCHER_JAR = "oozie.action.ship.launcher.jar";
+    public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
+    public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
+    public static final String HADOOP_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
+    public static final String HADOOP_CHILD_JAVA_ENV = "mapred.child.env";
+    public static final String HADOOP_MAP_JAVA_ENV = "mapreduce.map.env";
+    public static final String YARN_AM_RESOURCE_MB = "yarn.app.mapreduce.am.resource.mb";
+    public static final String YARN_AM_COMMAND_OPTS = "yarn.app.mapreduce.am.command-opts";
+    public static final String YARN_AM_ENV = "yarn.app.mapreduce.am.env";
+    public static final int YARN_MEMORY_MB_MIN = 512;
     private boolean useLauncherJar;
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
@@ -99,6 +110,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED_KILLED = "FAILED/KILLED";
     private static final String RUNNING = "RUNNING";
     protected XLog log = XLog.getLog(getClass());
+    private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
@@ -263,8 +275,93 @@ public class JavaActionExecutor extends ActionExecutor {
         if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
             if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false)) {
                 launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
+                updateConfForUberMode(launcherConf);
             }
         }
+    }
+
+    void updateConfForUberMode(Configuration launcherConf) {
+
+        // memory.mb
+        int launcherMapMemoryMB = launcherConf.getInt(HADOOP_MAP_MEMORY_MB, 1536);
+        int amMemoryMB = launcherConf.getInt(YARN_AM_RESOURCE_MB, 1536);
+        // YARN_MEMORY_MB_MIN to provide buffer.
+        // suppose launcher map aggressively use high memory, need some headroom for AM
+        int memoryMB = Math.max(launcherMapMemoryMB, amMemoryMB) + YARN_MEMORY_MB_MIN;
+        // limit to 4096 in case of 32 bit
+        if(launcherMapMemoryMB < 4096 && amMemoryMB < 4096 && memoryMB > 4096){
+            memoryMB = 4096;
+        }
+        launcherConf.setInt(YARN_AM_RESOURCE_MB, memoryMB);
+
+        // child.java.opts
+        String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS);
+        if (launcherMapOpts == null) {
+            launcherMapOpts = launcherConf.get(HADOOP_CHILD_JAVA_OPTS);
+        }
+        String amChildOpts = launcherConf.get(YARN_AM_COMMAND_OPTS);
+        StringBuffer optsStr = new StringBuffer();
+        int heapSizeForMap = extractHeapSizeMB(launcherMapOpts);
+        int heapSizeForAm = extractHeapSizeMB(amChildOpts);
+        int heapSize = Math.max(heapSizeForMap, heapSizeForAm) + YARN_MEMORY_MB_MIN;
+        // limit to 3584 in case of 32 bit
+        if(heapSizeForMap < 4096 && heapSizeForAm < 4096 && heapSize > 3584) {
+            heapSize = 3584;
+        }
+        if (amChildOpts != null) {
+            optsStr.append(amChildOpts);
+        }
+        if (launcherMapOpts != null) {
+            optsStr.append(" ");
+            optsStr.append(launcherMapOpts);
+        }
+        if (heapSize > 0) {
+            // append calculated total heap size to the end
+            optsStr.append(" ");
+            optsStr.append("-Xmx" + heapSize + "m");
+        }
+        launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString());
+
+        // child.env
+        String launcherMapEnv = launcherConf.get(HADOOP_MAP_JAVA_ENV);
+        if (launcherMapEnv == null) {
+            launcherMapEnv = launcherConf.get(HADOOP_CHILD_JAVA_ENV);
+        }
+        String envForAm = launcherConf.get(YARN_AM_ENV);
+        StringBuffer envStr = new StringBuffer();
+        if (envForAm != null) {
+            envStr.append(envForAm);
+        }
+        if (launcherMapEnv != null) {
+            if (envForAm != null) {
+                envStr.append(",");
+            }
+            envStr.append(launcherMapEnv);
+        }
+        launcherConf.set(YARN_AM_ENV, envStr.toString());
+    }
+
+    public int extractHeapSizeMB(String input) {
+        int ret = 0;
+        if(input == null || input.equals(""))
+            return ret;
+        Matcher m = heapPattern.matcher(input);
+        String heapStr = null;
+        String heapNum = null;
+        // Grabs the last match which takes effect (in case that multiple Xmx options specified)
+        while (m.find()) {
+            heapStr = m.group(1);
+            heapNum = m.group(2);
+        }
+        if (heapStr != null) {
+            // when Xmx specified in Gigabyte
+            if(heapStr.endsWith("g") || heapStr.endsWith("G")) {
+                ret = Integer.parseInt(heapNum) * 1024;
+            } else {
+                ret = Integer.parseInt(heapNum);
+            }
+        }
+        return ret;
     }
 
     public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf)
@@ -983,7 +1080,7 @@ public class JavaActionExecutor extends ActionExecutor {
      *
      * @param context
      * @param jobConf
-     * @return
+     * @return JobClient
      * @throws HadoopAccessorException
      */
     protected JobClient createJobClient(Context context, JobConf jobConf) throws HadoopAccessorException {
