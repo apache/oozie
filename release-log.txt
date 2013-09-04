@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1513 Workflow stays in running if Fork/join validation or loop detection fails (mona)
 OOZIE-1490 Remove unix OS enforcement from build (dwann via tucu)
 OOZIE-1372 When using uber mode, Oozie should also make the AM container size larger (ryota)
 OOZIE-615 Support high availability for the Oozie service (rkanter)
