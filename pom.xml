@@ -882,9 +882,6 @@
                         <requireJavaVersion>
                             <version>[${javaVersion}.0,${javaVersion}.1000}]</version>
                         </requireJavaVersion>
-                        <requireOS>
-                            <family>unix</family>
-                        </requireOS>
                     </rules>
                 </configuration>
                 <executions>
