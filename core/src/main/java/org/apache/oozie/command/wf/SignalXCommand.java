@@ -30,7 +30,6 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.command.coord.CoordActionUpdateXCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -181,7 +180,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 completed = workflowInstance.signal(wfAction.getExecutionPath(), wfAction.getSignalValue());
             }
             catch (WorkflowException e) {
-                throw new CommandException(e);
+                wfJob.setStatus(WorkflowJob.Status.valueOf(workflowInstance.getStatus().toString()));
             }
             wfJob.setWorkflowInstance(workflowInstance);
             wfAction.resetPending();
