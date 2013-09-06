@@ -274,8 +274,10 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertTrue(launcherJob.isSuccessful());
 
         sleep(2000);// Wait more to make sure no ID swap happens
+        Configuration conf = new XConfiguration();
+        conf.set("user.name", getTestUser());
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
-                new XConfiguration());
+                conf);
         assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
 
         ShellActionExecutor ae = new ShellActionExecutor();

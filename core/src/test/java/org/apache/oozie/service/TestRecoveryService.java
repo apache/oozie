@@ -242,7 +242,7 @@ public class TestRecoveryService extends XDataTestCase {
         });
         assertTrue(launcherJob.isSuccessful());
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
-                new XConfiguration());
+                conf);
         assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
     }
 
