@@ -150,7 +150,8 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                         || action.getStatus() == WorkflowActionBean.Status.START_RETRY
                         || action.getStatus() == WorkflowActionBean.Status.START_MANUAL
                         || action.getStatus() == WorkflowActionBean.Status.END_RETRY
-                        || action.getStatus() == WorkflowActionBean.Status.END_MANUAL) {
+                        || action.getStatus() == WorkflowActionBean.Status.END_MANUAL
+                        || action.getStatus() == WorkflowActionBean.Status.USER_RETRY) {
 
                     action.setStatus(WorkflowActionBean.Status.KILLED);
                     action.resetPending();

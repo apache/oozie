@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -24,28 +25,75 @@ import java.io.Writer;
 import java.util.Properties;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Appender;
+import org.apache.log4j.Layout;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.WriterAppender;
+import org.apache.oozie.DagEngine;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 public class TestSignalXCommand extends XDataTestCase {
 
+    private Services services;
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        LocalOozie.start();
+        services = new Services();
+        services.getConf().setBoolean(LiteWorkflowAppParser.VALIDATE_FORK_JOIN, false);
+        services.init();
+
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
+        services.destroy();
         super.tearDown();
     }
 
+    public void testJoinFail() throws Exception {
+        Logger logger = Logger.getLogger(SignalXCommand.class);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Layout layout = new SimpleLayout();
+        Appender appender = new WriterAppender(layout, out);
+        logger.addAppender(appender);
+
+        FileSystem fs = getFileSystem();
+        Path appPath = new Path(getFsTestCaseDir(), "app");
+        fs.mkdirs(appPath);
+        Reader reader = IOUtils.getResourceAsReader("wf-fork.xml", -1);
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        IOUtils.copyCharStream(reader, writer);
+        writer.close();
+        reader.close();
+
+        final DagEngine engine = new DagEngine("u");
+
+        XConfiguration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        final String jobId = engine.submitJob(conf, false);
+
+
+        assertNotNull(jobId);
+        engine.start(jobId);
+
+        Thread.sleep(2000);
+        assertFalse(out.toString().contains("EntityExistsException"));
+    }
+
     public void testSuspendPoints() throws Exception {
+        services.destroy();
+        LocalOozie.start();
         FileSystem fs = getFileSystem();
         Path appPath = new Path(getFsTestCaseDir(), "app");
         fs.mkdirs(appPath);
@@ -103,9 +151,12 @@ public class TestSignalXCommand extends XDataTestCase {
                 new String[]{},
                 new String[]{":start:", "action1", "action2", "decision1", "action3", "fork1", "action4a", "action4b", "action4c",
                              "join1", "end"});
+        LocalOozie.stop();
     }
 
     public void testSuspendPointsAll() throws Exception {
+        services.destroy();
+        LocalOozie.start();
         FileSystem fs = getFileSystem();
         Path appPath = new Path(getFsTestCaseDir(), "app");
         fs.mkdirs(appPath);
@@ -179,6 +230,7 @@ public class TestSignalXCommand extends XDataTestCase {
                 new String[]{},
                 new String[]{":start:", "action1", "action2", "decision1", "action3", "fork1", "action4a", "action4b", "action4c",
                              "join1", "end"});
+        LocalOozie.stop();
     }
 
     private void checkSuspendActions(WorkflowJob wf, final OozieClient oc, final String jobId, final WorkflowJob.Status status,
