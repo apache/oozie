@@ -26,6 +26,8 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Map;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -172,8 +174,10 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
+        Configuration conf = new XConfiguration();
+        conf.set("user.name", getTestUser());
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
-                new XConfiguration());
+                conf);
         assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
 
         HiveActionExecutor ae = new HiveActionExecutor();
