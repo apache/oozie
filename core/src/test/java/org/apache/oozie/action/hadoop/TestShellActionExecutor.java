@@ -17,11 +17,8 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -36,7 +33,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -55,70 +51,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", ShellActionExecutor.class.getName());
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
      *
      * @param launcherJarShouldExist
      * @throws Exception
      */
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    public void testSetupMethods() throws Exception {
         ShellActionExecutor ae = new ShellActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
-        assertEquals("shell", ae.getType());// ActionExcutor type is 'shell'
-        // Verify the launcher jar filename
-        assertEquals("shell-launcher.jar", ae.getLauncherJarName());
-
-        if (launcherJarShouldExist) {
-            List<Class> classes = new ArrayList<Class>();
-            classes.add(LauncherMapper.class);
-            classes.add(LauncherSecurityManager.class);
-            classes.add(LauncherException.class);
-            classes.add(LauncherMainException.class);
-            classes.add(PrepareActionsDriver.class);
-            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-            classes.add(ActionStats.class);
-            classes.add(ActionType.class);
-            classes.add(LauncherMain.class);
-            classes.add(MapReduceMain.class);
-            classes.add(ShellMain.class);
-            classes.add(ShellMain.OutputWriteThread.class);
-            assertEquals(classes, ae.getLauncherClasses());// Verify the class
-        }
-
+        assertNull(ae.getLauncherClasses());
         Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>SCRIPT</exec>"
                 + "<argument>a=A</argument>" + "<argument>b=B</argument>" + "</shell>");

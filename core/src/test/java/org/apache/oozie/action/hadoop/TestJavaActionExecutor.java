@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -53,10 +52,10 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -85,58 +84,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    public void testSetupMethods() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
-        assertEquals("java", ae.getType());
-        assertEquals("java-launcher.jar", ae.getLauncherJarName());
-        if (launcherJarShouldExist) {
-            List<Class> classes = new ArrayList<Class>();
-            classes.add(LauncherMapper.class);
-            classes.add(LauncherSecurityManager.class);
-            classes.add(LauncherException.class);
-            classes.add(LauncherMainException.class);
-            classes.add(PrepareActionsDriver.class);
-            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-            classes.add(ActionStats.class);
-            classes.add(ActionType.class);
-            assertEquals(classes, ae.getLauncherClasses());
-        }
-
+        assertEquals(null, ae.getLauncherClasses());
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
         try {
@@ -260,14 +210,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(conf.get("mapred.cache.files").contains(appSoPath.toUri().getPath()));
         ae.addToCache(conf, appPath, appSo1Path.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(expectedSo1Path));
-
-        assertTrue(ae.getOozieLauncherJar(context).startsWith(context.getActionDir().toString()));
-        assertTrue(ae.getOozieLauncherJar(context).endsWith(ae.getLauncherJarName()));
-
         assertFalse(getFileSystem().exists(context.getActionDir()));
         ae.prepareActionDir(getFileSystem(), context);
         assertTrue(getFileSystem().exists(context.getActionDir()));
-        assertEquals(launcherJarShouldExist, getFileSystem().exists(new Path(context.getActionDir(), ae.getLauncherJarName())));
 
         ae.cleanUpActionDir(getFileSystem(), context);
         assertFalse(getFileSystem().exists(context.getActionDir()));
@@ -1272,7 +1217,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     public void testAddShareLibSchemeAndAuthority() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor() {
             @Override
-            protected String getDefaultShareLibName(Element actionXml) {
+            public String getDefaultShareLibName(Element actionXml) {
                 return "java-action-executor";
             }
         };

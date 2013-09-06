@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ActionService implements Service {
 
@@ -42,6 +42,7 @@ public class ActionService implements Service {
 
     private Services services;
     private Map<String, Class<? extends ActionExecutor>> executors;
+    private static XLog LOG = XLog.getLog(ActionService.class);
 
     @SuppressWarnings("unchecked")
     public void init(Services services) throws ServiceException {
@@ -82,9 +83,8 @@ public class ActionService implements Service {
     }
 
     public void register(Class<? extends ActionExecutor> klass) throws ServiceException {
-        XLog log = XLog.getLog(getClass());
         ActionExecutor executor = (ActionExecutor) ReflectionUtils.newInstance(klass, services.getConf());
-        log.trace("Registering action type [{0}] class [{1}]", executor.getType(), klass);
+        LOG.trace("Registering action type [{0}] class [{1}]", executor.getType(), klass);
         if (executors.containsKey(executor.getType())) {
             throw new ServiceException(ErrorCode.E0150, executor.getType());
         }
@@ -92,7 +92,7 @@ public class ActionService implements Service {
         executor.initActionType();
         ActionExecutor.disableInit();
         executors.put(executor.getType(), klass);
-        log.trace("Registered Action executor for action type [{0}] class [{1}]", executor.getType(), klass);
+        LOG.trace("Registered Action executor for action type [{0}] class [{1}]", executor.getType(), klass);
     }
 
     public ActionExecutor getExecutor(String actionType) {
@@ -101,4 +101,7 @@ public class ActionService implements Service {
         return (executorClass != null) ? (ActionExecutor) ReflectionUtils.newInstance(executorClass, null) : null;
     }
 
+    Set<String> getActionTypes() {
+        return executors.keySet();
+    }
 }

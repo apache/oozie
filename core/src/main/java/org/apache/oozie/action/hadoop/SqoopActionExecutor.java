@@ -50,10 +50,8 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
+    public List<Class> getLauncherClasses() {
+        List<Class> classes = new ArrayList<Class>();
         try {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }

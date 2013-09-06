@@ -19,6 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -51,12 +52,10 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         super("map-reduce");
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        classes.add(PipesMain.class);
+    public List<Class> getLauncherClasses() {
+        List<Class> classes = new ArrayList<Class>();
         try {
             classes.add(Class.forName(STREAMING_MAIN_CLASS_NAME));
         }

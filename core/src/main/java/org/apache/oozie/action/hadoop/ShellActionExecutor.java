@@ -37,18 +37,10 @@ public class ShellActionExecutor extends JavaActionExecutor {
         super("shell");
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        // Base class of ShellMain dedicated for 'shell' action
-        classes.add(LauncherMain.class);
-        // Some utility methods used in ShelltMain
-        classes.add(MapReduceMain.class);
-        // Specific to Shell action
-        classes.add(ShellMain.class);
-        // ShellMain's inner class
-        classes.add(ShellMain.OutputWriteThread.class);
-        return classes;
+    public List<Class> getLauncherClasses() {
+        return null;
     }
 
     @Override

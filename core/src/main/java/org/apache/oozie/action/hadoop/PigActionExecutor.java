@@ -25,13 +25,14 @@ import org.apache.oozie.client.WorkflowAction;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.JDOMException;
+import org.json.simple.parser.JSONParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     private static final String PIG_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.PigMain";
-    private static final String OOZIE_PIG_STATS = "org.apache.oozie.action.hadoop.OoziePigStats";
     static final String PIG_SCRIPT = "oozie.pig.script";
     static final String PIG_PARAMS = "oozie.pig.params";
     static final String PIG_ARGS = "oozie.pig.args";
@@ -40,12 +41,13 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
         super("pig");
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
+    public List<Class> getLauncherClasses() {
+        List<Class> classes = new ArrayList<Class>();
         try {
             classes.add(Class.forName(PIG_MAIN_CLASS_NAME));
-            classes.add(Class.forName(OOZIE_PIG_STATS));
+            classes.add(JSONParser.class);
         }
         catch (ClassNotFoundException e) {
             throw new RuntimeException("Class not found", e);
