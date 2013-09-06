@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,6 +24,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -67,43 +67,10 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
                 HiveActionExecutor.class.getName());
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    @SuppressWarnings("unchecked")
+    public void testSetupMethods() throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
+        assertEquals(Arrays.asList(HiveMain.class), ae.getLauncherClasses());
         assertEquals("hive", ae.getType());
     }
 

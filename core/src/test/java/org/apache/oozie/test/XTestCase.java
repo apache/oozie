@@ -73,6 +73,7 @@ import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -297,11 +298,15 @@ public abstract class XTestCase extends TestCase {
             }
         }
         // Copy the specified oozie-site file from oozieSiteSourceStream to the test case dir as oozie-site.xml
-        // We also need to inject oozie.action.ship.launcher.jar as false (if not already set) or else a lot of tests will fail in
-        // weird ways because the ActionExecutors can't find their corresponding Main classes
         Configuration oozieSiteConf = new Configuration(false);
         oozieSiteConf.addResource(oozieSiteSourceStream);
-        oozieSiteConf.setBooleanIfUnset("oozie.action.ship.launcher.jar", false);
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(ConfigurationService.DEFAULT_CONFIG_FILE);
+        XConfiguration configuration = new XConfiguration(inputStream);
+        String classes = configuration.get(Services.CONF_SERVICE_CLASSES);
+        // Disable sharelib service as it cannot find the sharelib jars
+        // as maven has target/classes in classpath and not the jar because test phase is before package phase
+        oozieSiteConf.set(Services.CONF_SERVICE_CLASSES, classes.replaceAll("org.apache.oozie.service.ShareLibService,",""));
         File target = new File(testCaseConfDir, "oozie-site.xml");
         oozieSiteConf.writeXml(new FileOutputStream(target));
 

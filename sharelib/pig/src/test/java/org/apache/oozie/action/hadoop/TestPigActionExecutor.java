@@ -35,8 +35,10 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.IOUtils;
+import org.codehaus.jackson.JsonParser;
 import org.jdom.Element;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,60 +83,11 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    public void testSetupMethods() throws Exception {
         PigActionExecutor ae = new PigActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
-        assertEquals("pig", ae.getType());
-
-        assertEquals("pig-launcher.jar", ae.getLauncherJarName());
-
         List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
-        classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
         classes.add(PigMain.class);
-        classes.add(OoziePigStats.class);
+        classes.add(JSONParser.class);
         assertEquals(classes, ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<pig>" +

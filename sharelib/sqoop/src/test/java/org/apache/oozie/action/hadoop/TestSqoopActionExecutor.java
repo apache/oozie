@@ -123,43 +123,9 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", SqoopActionExecutor.class.getName());
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    public void testSetupMethods() throws Exception {
         SqoopActionExecutor ae = new SqoopActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
+        assertEquals(SqoopMain.class, ae.getLauncherClasses().get(0));
         assertEquals("sqoop", ae.getType());
     }
 

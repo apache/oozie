@@ -35,12 +35,10 @@ public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
         super(type);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
-        classes.add(LauncherMain.class);
-        classes.add(MapReduceMain.class);
-        return classes;
+    public List<Class> getLauncherClasses() {
+        return null;
     }
 
     @Override

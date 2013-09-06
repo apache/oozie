@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1461 provide an option to auto-deploy launcher jar onto HDFS system libpath (ryota,virag via virag)
 OOZIE-1520 Sequencefile Reader fails to use doas for reading action data file (rohini,mona via mona)
 OOZIE-1513 Workflow stays in running if Fork/join validation or loop detection fails (mona)
 OOZIE-1490 Remove unix OS enforcement from build (dwann via tucu)

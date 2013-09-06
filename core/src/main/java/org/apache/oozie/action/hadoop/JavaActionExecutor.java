@@ -60,6 +60,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
@@ -90,7 +91,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     private static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
-    public static final String OOZIE_ACTION_SHIP_LAUNCHER_JAR = "oozie.action.ship.launcher.jar";
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
     public static final String HADOOP_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
@@ -100,7 +100,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String YARN_AM_COMMAND_OPTS = "yarn.app.mapreduce.am.command-opts";
     public static final String YARN_AM_ENV = "yarn.app.mapreduce.am.env";
     public static final int YARN_MEMORY_MB_MIN = 512;
-    private boolean useLauncherJar;
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
     private static int maxFSGlobMax;
@@ -127,24 +126,17 @@ public class JavaActionExecutor extends ActionExecutor {
     protected JavaActionExecutor(String type) {
         super(type);
         requiresNNJT = true;
-        useLauncherJar = getOozieConf().getBoolean(OOZIE_ACTION_SHIP_LAUNCHER_JAR, true);
     }
 
-    protected String getLauncherJarName() {
-        return getType() + "-launcher.jar";
-    }
-
-    protected List<Class> getLauncherClasses() {
+    public static List<Class> getCommonLauncherClasses() {
         List<Class> classes = new ArrayList<Class>();
         classes.add(LauncherMapper.class);
-        classes.add(LauncherSecurityManager.class);
-        classes.add(LauncherException.class);
-        classes.add(LauncherMainException.class);
-        classes.add(PrepareActionsDriver.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-        classes.add(ActionStats.class);
-        classes.add(ActionType.class);
         return classes;
+    }
+
+    public List<Class> getLauncherClasses() {
+       return null;
     }
 
     @Override
@@ -155,7 +147,7 @@ public class JavaActionExecutor extends ActionExecutor {
           // TODO: Remove the below config get in a subsequent release..
           // This other irrelevant property is only used to
           // preserve backwards compatibility cause of a typo.
-          // See OOZIE-4.
+                  // See OOZIE-4.
           getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN,
             2 * 1024));
         //Get the limit for the maximum allowed size of action stats
@@ -163,8 +155,6 @@ public class JavaActionExecutor extends ActionExecutor {
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
         //Get the limit for the maximum number of globbed files/dirs for FS operation
         maxFSGlobMax = getOozieConf().getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, LauncherMapper.GLOB_MAX_DEFAULT);
-
-        createLauncherJar();
 
         registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
         registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
@@ -181,23 +171,6 @@ public class JavaActionExecutor extends ActionExecutor {
         registerError(IOException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA009");
     }
 
-    public void createLauncherJar() {
-        if (useLauncherJar) {
-            try {
-                List<Class> classes = getLauncherClasses();
-                Class[] launcherClasses = classes.toArray(new Class[classes.size()]);
-                IOUtils.createJar(new File(getOozieRuntimeDir()), getLauncherJarName(), launcherClasses);
-            }
-            catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            catch (java.lang.NoClassDefFoundError err) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                err.printStackTrace(new PrintStream(baos));
-                log.warn(baos.toString());
-            }
-         }
-    }
 
     /**
      * Get the maximum allowed size of stats
@@ -459,28 +432,13 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    String getOozieLauncherJar(Context context) throws ActionExecutorException {
-        try {
-            return new Path(context.getActionDir(), getLauncherJarName()).toString();
-        }
-        catch (Exception ex) {
-            throw convertException(ex);
-        }
-    }
-
     public void prepareActionDir(FileSystem actionFs, Context context) throws ActionExecutorException {
         try {
             Path actionDir = context.getActionDir();
             Path tempActionDir = new Path(actionDir.getParent(), actionDir.getName() + ".tmp");
             if (!actionFs.exists(actionDir)) {
                 try {
-                    if (useLauncherJar) {
-                        actionFs.copyFromLocalFile(new Path(getOozieRuntimeDir(), getLauncherJarName()), new Path(
-                                tempActionDir, getLauncherJarName()));
-                    }
-                    else {
-                        actionFs.mkdirs(tempActionDir);
-                    }
+                    actionFs.mkdirs(tempActionDir);
                     actionFs.rename(tempActionDir, actionDir);
                 }
                 catch (IOException ex) {
@@ -512,16 +470,16 @@ public class JavaActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         if (actionShareLibNames != null) {
             for (String actionShareLibName : actionShareLibNames) {
-                try {
-                    Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
-                    if (systemLibPath != null) {
-                        Path actionLibPath = new Path(systemLibPath, actionShareLibName.trim());
-                        String user = conf.get("user.name");
-                        FileSystem fs;
-                        // If the actionLibPath has a valid scheme and authority, then use them to
-                        // determine the filesystem that the sharelib resides on; otherwise, assume
-                        // it resides on the same filesystem as the appPath and use the appPath to
-                        // determine the filesystem
+                Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
+                if (systemLibPath != null) {
+                    Path actionLibPath = new Path(systemLibPath, actionShareLibName.trim());
+                    String user = conf.get("user.name");
+                    FileSystem fs;
+                    // If the actionLibPath has a valid scheme and authority,
+                    // then use them to determine the filesystem that the sharelib resides on;
+                    // otherwise, assume it resides on the same filesystem as the appPath and use
+                    // the appPath to determine the filesystem
+                    try {
                         if (actionLibPath.toUri().getScheme() != null && actionLibPath.toUri().getAuthority() != null) {
                             fs = Services.get().get(HadoopAccessorService.class)
                                     .createFileSystem(user, actionLibPath.toUri(), conf);
@@ -533,19 +491,49 @@ public class JavaActionExecutor extends ActionExecutor {
                         if (fs.exists(actionLibPath)) {
                             FileStatus[] files = fs.listStatus(actionLibPath);
                             for (FileStatus file : files) {
-                                addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
+                                if (!file.isDir()) {
+                                    addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
+                                }
                             }
                         }
                     }
+                    catch (HadoopAccessorException ex) {
+                        throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
+                                .toString(), ex.getMessage());
+                    }
+                    catch (IOException ex) {
+                        throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
+                                ex.getMessage());
+                    }
+
                 }
-                catch (HadoopAccessorException ex) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
-                            .toString(), ex.getMessage());
+            }
+        }
+    }
+
+    protected void addSystemShareLibForAction(Configuration conf) throws ActionExecutorException {
+        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+        // ShareLibService is null for test cases
+        if (shareLibService != null) {
+            try {
+                List<Path> listOfPaths = shareLibService
+                        .getActionSystemLibCommonJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+                FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
+                for (Path actionLibPath : listOfPaths) {
+                    DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                    DistributedCache.createSymlink(conf);
                 }
-                catch (IOException ex) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED,
-                            "It should never happen", ex.getMessage());
+                listOfPaths = shareLibService.getActionSystemLibCommonJars(getType());
+                if (listOfPaths != null) {
+                    for (Path actionLibPath : listOfPaths) {
+                        DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                        DistributedCache.createSymlink(conf);
+                    }
                 }
+            }
+            catch (IOException ex) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
+                        ex.getMessage());
             }
         }
     }
@@ -582,14 +570,9 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    void setLibFilesArchives(Context context, Element actionXml, Path appPath, Configuration conf)
+    public void setLibFilesArchives(Context context, Element actionXml, Path appPath, Configuration conf)
             throws ActionExecutorException {
         Configuration proto = context.getProtoActionConf();
-
-        // launcher JAR
-        if (useLauncherJar) {
-            addToCache(conf, appPath, getOozieLauncherJar(context), false);
-        }
 
         // Workflow lib/
         String[] paths = proto.getStrings(WorkflowAppService.APP_LIB_PATH_LIST);
@@ -626,8 +609,8 @@ public class JavaActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         // Add action specific share libs
         addActionShareLib(appPath, conf, context, actionXml);
-        // Add common sharelibs for Oozie
-        addShareLib(appPath, conf, new String[]{JavaActionExecutor.OOZIE_COMMON_LIBDIR});
+        // Add common sharelibs for Oozie and launcher jars
+        addSystemShareLibForAction(conf);
     }
 
     private void addActionShareLib(Path appPath, Configuration conf, Context context, Element actionXml)

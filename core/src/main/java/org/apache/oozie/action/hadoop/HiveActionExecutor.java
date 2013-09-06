@@ -19,6 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -41,8 +42,8 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected List<Class> getLauncherClasses() {
-        List<Class> classes = super.getLauncherClasses();
+    public List<Class> getLauncherClasses() {
+        List<Class> classes = new ArrayList<Class>();
         try {
             classes.add(Class.forName(HIVE_MAIN_CLASS_NAME));
         }

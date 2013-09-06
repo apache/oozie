@@ -49,6 +49,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -75,63 +76,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 + "</configuration>" + "</map-reduce>");
     }
 
-    public void testSetupMethodsWithLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "true");
-            _testSetupMethods(true);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-     }
-
-    public void testSetupMethodsWithoutLauncherJar() throws Exception {
-        String defaultVal = Services.get().getConf().get("oozie.action.ship.launcher.jar");
-        try {
-            Services.get().getConf().set("oozie.action.ship.launcher.jar", "false");
-            _testSetupMethods(false);
-        }
-        finally {
-            // back to default
-            if (defaultVal != null) {
-                Services.get().getConf().set("oozie.action.ship.launcher.jar", defaultVal);
-            }
-        }
-    }
-
-    public void _testSetupMethods(boolean launcherJarShouldExist) throws Exception {
+    @SuppressWarnings("unchecked")
+    public void testSetupMethods() throws Exception {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
-        Path jar = new Path(ae.getOozieRuntimeDir(), ae.getLauncherJarName());
-        File fJar = new File(jar.toString());
-        fJar.delete();
-        assertFalse(fJar.exists());
-        ae.createLauncherJar();
-        assertEquals(launcherJarShouldExist, fJar.exists());
-
-        assertEquals("map-reduce", ae.getType());
-
-        assertEquals("map-reduce-launcher.jar", ae.getLauncherJarName());
-
-        if (launcherJarShouldExist) {
-            List<Class> classes = new ArrayList<Class>();
-            classes.add(LauncherMapper.class);
-            classes.add(LauncherSecurityManager.class);
-            classes.add(LauncherException.class);
-            classes.add(LauncherMainException.class);
-            classes.add(PrepareActionsDriver.class);
-            classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
-            classes.add(ActionStats.class);
-            classes.add(ActionType.class);
-            classes.add(LauncherMain.class);
-            classes.add(MapReduceMain.class);
-            classes.add(PipesMain.class);
-            classes.add(StreamingMain.class);
-            assertEquals(classes, ae.getLauncherClasses());
-        }
+        assertEquals(Arrays.asList(StreamingMain.class), ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>"
