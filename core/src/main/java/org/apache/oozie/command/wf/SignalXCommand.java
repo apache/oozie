@@ -306,6 +306,14 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         queue(new SignalXCommand(jobId, oldAction.getId()));
                     }
                     else {
+                        try {
+                            // Make sure that transition node for a forked action
+                            // is inserted only once
+                            jpaService.execute(new WorkflowActionGetJPAExecutor(newAction.getId()));
+                            continue;
+                        }
+                        catch (JPAExecutorException jee) {
+                        }
                         checkForSuspendNode(newAction);
                         newAction.setPending();
                         String actionSlaXml = getActionSLAXml(newAction.getName(), workflowInstance.getApp()
