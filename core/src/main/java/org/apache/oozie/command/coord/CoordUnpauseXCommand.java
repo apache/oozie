@@ -25,7 +25,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.UnpauseTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -113,7 +114,7 @@ public class CoordUnpauseXCommand extends UnpauseTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS, coordJob);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

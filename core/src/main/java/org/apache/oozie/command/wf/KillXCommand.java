@@ -29,10 +29,13 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -61,7 +64,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     private List<WorkflowActionBean> actionList;
     private ActionService actionService;
     private JPAService jpaService = null;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public KillXCommand(String wfId) {
@@ -141,8 +144,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                         || action.getStatus() == WorkflowActionBean.Status.DONE) {
                     action.setPending();
                     action.setStatus(WorkflowActionBean.Status.KILLED);
-
-                    updateList.add(action);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, action));
 
                     queue(new ActionKillXCommand(action.getId(), action.getType()));
                 }
@@ -160,7 +162,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
-                    updateList.add(action);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, action));
                     if (EventHandlerService.isEnabled()
                             && !(actionService.getExecutor(action.getType()) instanceof ControlNodeActionExecutor)) {
                         generateEvent(action, wfJob.getUser());
@@ -168,8 +170,8 @@ public class KillXCommand extends WorkflowXCommand<Void> {
                 }
             }
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(wfJob);
-            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, wfJob));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
             if (EventHandlerService.isEnabled()) {
                 generateEvent(wfJob);
             }

@@ -17,10 +17,12 @@
  */
 package org.apache.oozie.sla;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -28,13 +30,16 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.JobEvent;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.rest.RestConstants;
@@ -50,15 +55,22 @@ import org.apache.oozie.command.wf.StartXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.listener.JobEventListener;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.EventHandlerService.EventWorker;
 import org.apache.oozie.sla.listener.SLAJobEventListener;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
@@ -189,7 +201,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         WorkflowJobBean wfBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
         // set job status to succeeded, so rerun doesn't fail
         wfBean.setStatus(WorkflowJob.Status.SUCCEEDED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfBean));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfBean);
 
         // change conf for rerun
         cal.setTime(new Date());
@@ -267,7 +279,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         WorkflowJobBean wfBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
         // set job status to succeeded, so rerun doesn't fail
         wfBean.setStatus(WorkflowJob.Status.SUCCEEDED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfBean));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfBean);
 
         // change conf for rerun
         cal.setTime(new Date());
@@ -395,8 +407,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
         // test that sla processes the Job Event from Start command
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
-        final CoordActionUpdateJPAExecutor writeCmd = new CoordActionUpdateJPAExecutor(action);
-        jpa.execute(writeCmd);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         new CoordActionStartXCommand(actionId, getTestUser(), appName, jobId).call();
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
@@ -438,7 +449,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
                 "coord-action-sla1.xml", 0);
         // reset dummy externalId set by above test method
         action.setExternalId(null);
-        jpa.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
         services.get(SLAService.class).addRegistrationEvent(
                 TestSLAService._createSLARegistration(action.getId(), AppType.COORDINATOR_ACTION));
 
@@ -560,8 +571,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
         // job must already be killed (test xml) so set some status for KillX to work
         JPAService jpaService = Services.get().get(JPAService.class);
         WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
-        wf.setStatus(WorkflowJob.Status.FAILED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wf));
+        wf.setStatus(WorkflowJob.Status.RUNNING);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wf);
         new KillXCommand(jobId).call();
         waitForEventGeneration(1000); //wait for wf-action kill event to generate
         Thread.sleep(200); //wait for wf job kill event to generate
@@ -573,7 +584,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertNotNull(slaEvent.getActualEnd());
         assertEquals(EventStatus.END_MISS, slaEvent.getEventStatus());
         assertEquals(SLAStatus.MISS, slaEvent.getSLAStatus());
-        assertEquals(WorkflowJob.Status.FAILED.name(), slaEvent.getJobStatus());
+        assertEquals(WorkflowJob.Status.KILLED.name(), slaEvent.getJobStatus());
     }
 
 }

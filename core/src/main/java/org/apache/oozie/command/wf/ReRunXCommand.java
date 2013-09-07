@@ -43,10 +43,12 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BulkUpdateDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -87,7 +89,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     private WorkflowJobBean wfBean;
     private List<WorkflowActionBean> actions;
     private JPAService jpaService;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
@@ -220,9 +222,9 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
 
         try {
             wfBean.setLastModifiedTime(new Date());
-            updateList.add(wfBean);
+            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_RERUN, wfBean));
             // call JPAExecutor to do the bulk writes
-            jpaService.execute(new BulkUpdateDeleteJPAExecutor(updateList, deleteList, true));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, deleteList);
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);

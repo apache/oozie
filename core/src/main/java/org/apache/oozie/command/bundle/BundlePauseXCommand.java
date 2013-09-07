@@ -22,15 +22,13 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PauseTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 
 public class BundlePauseXCommand extends PauseTransitionXCommand {
     private BundleJobBean bundleJob;
-    private JPAService jpaService = Services.get().get(JPAService.class);
 
     public BundlePauseXCommand(BundleJobBean bundleJob) {
         super("bundle_pause", "bundle_pause", 1);
@@ -89,7 +87,7 @@ public class BundlePauseXCommand extends PauseTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
-            jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+            BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS, bundleJob);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

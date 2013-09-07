@@ -24,14 +24,12 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PauseTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 
 public class CoordPauseXCommand extends PauseTransitionXCommand {
-    private final JPAService jpaService = Services.get().get(JPAService.class);
     private final CoordinatorJobBean coordJob;
     private CoordinatorJob.Status prevStatus = null;
 
@@ -98,7 +96,7 @@ public class CoordPauseXCommand extends PauseTransitionXCommand {
     @Override
     public void updateJob() throws CommandException {
         try {
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS, coordJob);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

@@ -267,6 +267,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         assertEquals(Job.Status.FAILED, actions.get(0).getStatus());
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
+        sleep(2000);
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.KILLED);
     }

@@ -25,6 +25,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -36,7 +37,7 @@ import org.apache.oozie.util.ParamChecker;
 public abstract class TransitionXCommand<T> extends XCommand<T> {
 
     protected Job job;
-    protected List<JsonBean> updateList = new ArrayList<JsonBean>();
+    protected List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     protected List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public TransitionXCommand(String name, String type, int priority) {
@@ -77,7 +78,8 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      * @throws CommandException
      */
     public void generateEvents(CoordinatorJobBean coordJob) throws CommandException {
-        for (JsonBean actionBean : updateList) {
+        for(UpdateEntry entry : updateList){
+            JsonBean actionBean = entry.getBean();
             if (actionBean instanceof CoordinatorActionBean) {
                 CoordinatorActionBean caBean = (CoordinatorActionBean) actionBean;
                 caBean.setJobId(coordJob.getId());

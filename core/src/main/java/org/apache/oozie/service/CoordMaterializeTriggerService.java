@@ -25,8 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsToBeMaterializedJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.XCallable;
@@ -133,7 +132,9 @@ public class CoordMaterializeTriggerService implements Service {
                                 + " MatThrottle : " + coordJob.getMatThrottling());
                         // update lastModifiedTime so next time others might have higher chance to get pick up
                         coordJob.setLastModifiedTime(new Date());
-                        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+                        CoordJobQueryExecutor.getInstance().executeUpdate(
+                                CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME,
+                                coordJob);
                         if (numWaitingActions >= coordJob.getMatThrottling()) {
                             LOG.info("info for JobID [" + coordJob.getId() + " already waiting "
                                     + numWaitingActions + " actions. MatThrottle is : " + coordJob.getMatThrottling());

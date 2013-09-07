@@ -58,6 +58,15 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -358,6 +367,19 @@ public abstract class XTestCase extends TestCase {
         super.tearDown();
         RUNNING_TESTCASES.decrementAndGet();
         LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
+        resetQueryExecutor();
+    }
+
+    private void resetQueryExecutor(){
+        BatchQueryExecutor.destroy();
+        WorkflowJobQueryExecutor.destroy();
+        WorkflowActionQueryExecutor.destroy();
+        CoordJobQueryExecutor.destroy();
+        CoordActionQueryExecutor.destroy();
+        BundleJobQueryExecutor.destroy();
+        BundleActionQueryExecutor.destroy();
+        SLARegistrationQueryExecutor.destroy();
+        SLASummaryQueryExecutor.destroy();
     }
 
     /**

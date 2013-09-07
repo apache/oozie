@@ -49,7 +49,8 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.PurgeService.PurgeRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -122,8 +123,8 @@ public class TestPurgeService extends XDataTestCase {
         WorkflowJobBean wfBean = jpaService.execute(wfJobGetCmd);
         Date endDate = new Date(System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000);
         wfBean.setEndTime(endDate);
-        WorkflowJobUpdateJPAExecutor wfUpdateCmd = new WorkflowJobUpdateJPAExecutor(wfBean);
-        jpaService.execute(wfUpdateCmd);
+        wfBean.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, wfBean);
 
         Runnable purgeRunnable = new PurgeRunnable(1, 1, 1, 100);
         purgeRunnable.run();

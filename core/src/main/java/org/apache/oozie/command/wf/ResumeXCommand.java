@@ -32,14 +32,16 @@ import org.apache.oozie.action.control.JoinActionExecutor;
 import org.apache.oozie.action.control.KillActionExecutor;
 import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.JPAService;
@@ -56,7 +58,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     private String id;
     private JPAService jpaService = null;
     private WorkflowJobBean workflow = null;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
 
     public ResumeXCommand(String id) {
         super("resume", "resume", 1);
@@ -81,7 +83,8 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                     // START_MANUAL or END_RETRY or END_MANUAL
                     if (action.isRetryOrManual()) {
                         action.setPendingOnly();
-                        updateList.add(action);
+                        updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                                WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, action));
                     }
 
                     if (action.isPending()) {
@@ -127,8 +130,9 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 }
 
                 workflow.setLastModifiedTime(new Date());
-                updateList.add(workflow);
-                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+                updateList.add(new UpdateEntry<WorkflowJobQuery>(
+                        WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, workflow));
+                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
                 if (EventHandlerService.isEnabled()) {
                     generateEvent(workflow);
                 }
@@ -189,7 +193,8 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED) {
-            throw new PreconditionException(ErrorCode.E1100, "workflow's status is " + workflow.getStatusStr() + " is not SUSPENDED");
+            throw new PreconditionException(ErrorCode.E1100, "workflow's status is " + workflow.getStatusStr()
+                    + " is not SUSPENDED");
         }
     }
 }

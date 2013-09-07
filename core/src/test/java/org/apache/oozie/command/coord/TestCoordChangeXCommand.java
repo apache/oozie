@@ -31,11 +31,11 @@ import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
@@ -350,7 +350,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         insertList.add(slaSummaryBean3);
 
         JPAService jpaService = Services.get().get(JPAService.class);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
 
         new CoordChangeXCommand(job.getId(), pauseTimeChangeStr).call();
 

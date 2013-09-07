@@ -329,7 +329,7 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
         assertEquals(expStatus1, action.getStatus());
-        assertTrue(action.getPending() == false);
+        assertTrue(action.isPending() == false);
 
         assertTrue(engine.getJob(jobId).getStatus() == WorkflowJob.Status.SUSPENDED);
 
@@ -410,7 +410,7 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
         assertEquals(expStatus1, action.getStatus());
-        assertFalse(action.getPending());
+        assertFalse(action.isPending());
 
         assertEquals (WorkflowJob.Status.SUSPENDED, job.getStatus());
 
@@ -509,7 +509,7 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals(expErrorMsg, action.getErrorMessage());
         assertEquals(expStatus2, action.getStatus());
-        assertTrue(action.getPending() == false);
+        assertTrue(action.isPending() == false);
         assertEquals(WorkflowJob.Status.SUSPENDED, engine.getJob(jobId).getStatus());
         store2.commitTrx();
         store2.closeTrx();

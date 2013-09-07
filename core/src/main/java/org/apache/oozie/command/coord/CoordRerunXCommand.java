@@ -42,8 +42,11 @@ import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordUtils;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -201,7 +204,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         coordAction.setExternalStatus("");
         coordAction.setRerunTime(new Date());
         coordAction.setLastModifiedTime(new Date());
-        updateList.add(coordAction);
+        updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, coordAction));
         writeActionRegistration(coordAction.getActionXml(), coordAction, coordJob.getUser(), coordJob.getGroup());
     }
 
@@ -379,7 +382,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                 coordJob.resetPending();
             }
         }
-        updateList.add(coordJob);
+        updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING, coordJob));
     }
 
     /* (non-Javadoc)
@@ -388,7 +391,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
             if (EventHandlerService.isEnabled()) {
                 generateEvents(coordJob);
             }

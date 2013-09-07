@@ -53,7 +53,7 @@ import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -1094,7 +1094,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (!dryrun) {
             coordJob.setLastModifiedTime(new Date());
             try {
-                jpaService.execute(new CoordJobInsertJPAExecutor(coordJob));
+                CoordJobQueryExecutor.getInstance().insert(coordJob);
             }
             catch (JPAExecutorException jpaee) {
                 coordJob.setId(null);
