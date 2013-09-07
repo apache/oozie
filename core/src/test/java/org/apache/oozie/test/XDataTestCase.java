@@ -32,6 +32,7 @@ import java.util.regex.Matcher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.AppType;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -45,6 +46,8 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.client.event.SLAEvent.EventStatus;
+import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.SLAEvent;
@@ -54,16 +57,21 @@ import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLAEventInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
@@ -71,6 +79,8 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -546,7 +556,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
             if (wfId != null) {
                 WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
                 wfJob.setParentId(action.getId());
-                jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+                WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_PARENT_MODIFIED, wfJob);
             }
         }
         catch (JPAExecutorException je) {
@@ -623,7 +633,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
-            jpaService.execute(new WorkflowJobUpdateJPAExecutor(subwfBean));
+            WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_PARENT_MODIFIED, subwfBean);
         }
         catch (JPAExecutorException je) {
             je.printStackTrace();
@@ -768,6 +778,80 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     /**
+     * Insert sla summary for test
+     * @param appName application name
+     * @param status  sla status
+     * @return
+     * @throws Exception
+     */
+    protected SLASummaryBean addRecordToSLASummaryTable(String appName, SLAStatus status)
+            throws Exception {
+        SLASummaryBean sla = new SLASummaryBean();
+        Date today = new Date();
+        sla.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
+        sla.setAppName(appName);
+        sla.setAppType(AppType.COORDINATOR_JOB);
+        sla.setNominalTime(today);
+        sla.setExpectedStart(today);
+        sla.setExpectedEnd(today);
+        sla.setExpectedDuration(100);
+        sla.setJobStatus("RUNNING");
+        sla.setSLAStatus(status);
+        sla.setEventStatus(EventStatus.START_MET);
+        sla.setLastModifiedTime(today);
+        sla.setUser("oozie");
+        sla.setParentId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        sla.setEventProcessed(1);
+        sla.setActualStart(today);
+        sla.setActualEnd(today);
+        sla.setActualDuration(100);
+        try {
+            SLASummaryQueryExecutor.getInstance().insert(sla);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test sla event record to table");
+            throw je;
+        }
+        return sla;
+    }
+
+    /**
+     * Insert sla registration for test
+     * @param appName application name
+     * @param status  sla status
+     * @return
+     * @throws Exception
+     */
+    protected SLARegistrationBean addRecordToSLARegistrationTable(String appName, SLAStatus status)
+            throws Exception {
+        SLARegistrationBean sla = new SLARegistrationBean();
+        Date today = new Date();
+        sla.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
+        sla.setAppName(appName);
+        sla.setAppType(AppType.COORDINATOR_JOB);
+        sla.setExpectedDuration(100);
+        sla.setExpectedEnd(today);
+        sla.setExpectedStart(today);
+        sla.setJobData("test-job-data");
+        sla.setNominalTime(today);
+        sla.setNotificationMsg("test-sla-notification-msg");
+        sla.setParentId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        sla.setSlaConfig("alert-events");
+        sla.setUpstreamApps("test-upstream-apps");
+        sla.setUser("oozie");
+        try {
+            SLARegistrationQueryExecutor.getInstance().insert(sla);
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test sla registration record to table");
+            throw je;
+        }
+        return sla;
+    }
+
+    /**
      * Insert bundle job for testing.
      *
      * @param jobStatus job status
@@ -866,7 +950,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
             CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
             coordJob.setBundleId(jobId);
-            jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
+            CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID, coordJob);
         }
         catch (JPAExecutorException ex) {
             ex.printStackTrace();
@@ -1454,14 +1538,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
         action.setCreatedTime(new Date(actionCreationTime));
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
     }
 
     protected void setMissingDependencies(String actionId, String missingDependencies) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
         action.setMissingDependencies(missingDependencies);
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
     }
 
     protected void modifyCoordForRunning(CoordinatorJobBean coord) throws Exception {
@@ -1469,7 +1553,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
         String coordXml = coord.getJobXml();
         coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
-        Services.get().get(JPAService.class).execute(new CoordJobUpdateJPAExecutor(coord));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coord);
     }
 
 }

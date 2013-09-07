@@ -31,10 +31,13 @@ import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -70,7 +73,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private String actionId;
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
     private boolean generateEvent = false;
     private String wfJobErrorCode;
@@ -188,7 +191,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 wfAction.setTransition(workflowInstance.getTransition(wfAction.getName()));
                 queue(new NotificationXCommand(wfJob, wfAction));
             }
-            updateList.add(wfAction);
+            updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS,
+                    wfAction));
             WorkflowInstance.Status endStatus = workflowInstance.getStatus();
             if (endStatus != initialStatus) {
                 generateEvent = true;
@@ -204,7 +208,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
                     actionToKill.setPending();
                     actionToKill.setStatus(WorkflowActionBean.Status.KILLED);
-                    updateList.add(actionToKill);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                            WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, actionToKill));
                     queue(new ActionKillXCommand(actionToKill.getId(), actionToKill.getType()));
                 }
 
@@ -223,7 +228,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
-                    updateList.add(actionToFail);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                            WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, actionToFail));
                 }
             }
             catch (JPAExecutorException je) {
@@ -268,15 +274,18 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     try {
                         String tmpNodeConf = nodeDef.getConf();
                         String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);
-                        LOG.debug("Try to resolve KillNode message for jobid [{0}], actionId [{1}], before resolve [{2}], after resolve [{3}]",
-                                        jobId, actionId, tmpNodeConf, actionConf);
+                        LOG.debug(
+                                "Try to resolve KillNode message for jobid [{0}], actionId [{1}], before resolve [{2}], " +
+                                "after resolve [{3}]",
+                                jobId, actionId, tmpNodeConf, actionConf);
                         if (wfAction.getErrorCode() != null) {
                             wfAction.setErrorInfo(wfAction.getErrorCode(), actionConf);
                         }
                         else {
                             wfAction.setErrorInfo(ErrorCode.E0729.toString(), actionConf);
                         }
-                        updateList.add(wfAction);
+                        updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                                WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS_ERROR, wfAction));
                     }
                     catch (Exception ex) {
                         LOG.warn("Exception in SignalXCommand ", ex.getMessage(), ex);
@@ -301,7 +310,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         oldAction = jpaService.execute(new WorkflowActionGetJPAExecutor(newAction.getId()));
 
                         oldAction.setPending();
-                        updateList.add(oldAction);
+                        updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING, oldAction));
 
                         queue(new SignalXCommand(jobId, oldAction.getId()));
                     }
@@ -320,7 +329,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                                 .getDefinition(), wfJob.getConf());
                         newAction.setSlaXml(actionSlaXml);
                         insertList.add(newAction);
-                        LOG.debug("SignalXCommand: Name: "+ newAction.getName() + ", Id: " +newAction.getId() + ", Authcode:" + newAction.getCred());
+                        LOG.debug("SignalXCommand: Name: " + newAction.getName() + ", Id: " + newAction.getId()
+                                + ", Authcode:" + newAction.getCred());
                         queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
                     }
                 }
@@ -332,9 +342,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
         try {
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(wfJob);
+            updateList.add(new UpdateEntry<WorkflowJobQuery>(
+                    WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob));
             // call JPAExecutor to do the bulk writes
-            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
             if (generateEvent && EventHandlerService.isEnabled()) {
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }

@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -80,8 +80,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
             assertNotNull(jpaService);
             List<JsonBean> insert = new ArrayList<JsonBean>();
             insert.add(reg);
-            SLACalculationInsertUpdateJPAExecutor slaInsertCmd = new SLACalculationInsertUpdateJPAExecutor(insert, null);
-            jpaService.execute(slaInsertCmd);
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insert, null, null);
         }
         catch (JPAExecutorException je) {
             fail("Unable to insert the test sla registration record to table");

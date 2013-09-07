@@ -30,8 +30,9 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorJobBean;
@@ -191,7 +192,7 @@ public class TestActionCheckerService extends XDataTestCase {
         assertEquals(WorkflowActionBean.Status.RUNNING, action.getStatus());
 
         action.setLastCheckTime(new Date());
-        jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+        WorkflowActionQueryExecutor.getInstance().executeUpdate(WorkflowActionQuery.UPDATE_ACTION_FOR_LAST_CHECKED_TIME, action);
 
         int actionCheckDelay = 20;
 

@@ -19,7 +19,6 @@ package org.apache.oozie.service;
 
 import java.util.Date;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -27,10 +26,12 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -72,7 +73,7 @@ public class TestPauseTransitService extends XDataTestCase {
 
         job.setPauseTime(new Date(new Date().getTime() - 30 * 1000));
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
@@ -89,7 +90,7 @@ public class TestPauseTransitService extends XDataTestCase {
         assertEquals(Job.Status.PREPPAUSED, job.getStatus());
 
         job.setPauseTime(new Date(new Date().getTime() + 3600 * 1000));
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         pauseStartRunnable.run();
 
@@ -116,7 +117,7 @@ public class TestPauseTransitService extends XDataTestCase {
 
         job.setPauseTime(new Date(new Date().getTime() - 30 * 1000));
         job.setKickoffTime(new Date(new Date().getTime() + 3600 * 1000));
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
@@ -133,7 +134,7 @@ public class TestPauseTransitService extends XDataTestCase {
         assertEquals(Job.Status.PREPPAUSED, job.getStatus());
 
         job.setPauseTime(null);
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         pauseStartRunnable.run();
 
@@ -160,7 +161,7 @@ public class TestPauseTransitService extends XDataTestCase {
 
         Date pauseTime = new Date(new Date().getTime() - 30 * 1000);
         job.setPauseTime(pauseTime);
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         BundleActionBean bundleAction1 = this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         BundleActionBean bundleAction2 = this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.RUNNING);
@@ -174,10 +175,12 @@ public class TestPauseTransitService extends XDataTestCase {
 
         coordJob1.setPauseTime(pauseTime);
         coordJob1.setBundleId(job.getId());
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob1));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob1);
         coordJob2.setPauseTime(pauseTime);
         coordJob2.setBundleId(job.getId());
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob2);
 
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
@@ -231,7 +234,7 @@ public class TestPauseTransitService extends XDataTestCase {
         assertNotNull(jpaService);
 
         job.setPauseTime(null);
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         BundleActionBean bundleAction1 = this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.PAUSED);
         BundleActionBean bundleAction2 = this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.PAUSED);
@@ -245,10 +248,12 @@ public class TestPauseTransitService extends XDataTestCase {
 
         coordJob1.setPauseTime(null);
         coordJob1.setBundleId(job.getId());
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob1));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob1);
         coordJob2.setPauseTime(null);
         coordJob2.setBundleId(job.getId());
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob2);
 
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
@@ -319,10 +324,12 @@ public class TestPauseTransitService extends XDataTestCase {
 
         coordJob1.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
         coordJob1.setPauseTime(pauseTime);
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob1));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob1);
         coordJob2.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
         coordJob2.setPauseTime(pauseTime);
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(
+                CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME, coordJob2);
 
         Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
@@ -356,7 +363,7 @@ public class TestPauseTransitService extends XDataTestCase {
         assertNotNull(jpaService);
 
         job.setKickoffTime(new Date(new Date().getTime() - 30 * 1000));
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();
@@ -384,7 +391,7 @@ public class TestPauseTransitService extends XDataTestCase {
         assertNotNull(jpaService);
 
         job.setKickoffTime(new Date(new Date().getTime() - 30 * 1000));
-        jpaService.execute(new BundleJobUpdateJPAExecutor(job));
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_PAUSE_KICKOFF, job);
 
         Runnable pauseStartRunnable = new PauseTransitRunnable();
         pauseStartRunnable.run();

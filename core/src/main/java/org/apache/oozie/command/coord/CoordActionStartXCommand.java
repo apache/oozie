@@ -43,9 +43,12 @@ import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStartJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -53,7 +56,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("deprecation")
 public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
@@ -71,7 +76,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorActionBean coordAction = null;
     private JPAService jpaService = null;
     private String jobId = null;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public CoordActionStartXCommand(String id, String user, String appName, String jobId) {
@@ -186,10 +191,13 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
                     wfJob.setParentId(actionId);
                     wfJob.setLastModifiedTime(new Date());
-                    updateList.add(wfJob);
-                    updateList.add(coordAction);
+                    BatchQueryExecutor executor = BatchQueryExecutor.getInstance();
+                    updateList.add(new UpdateEntry<WorkflowJobQuery>(
+                            WorkflowJobQuery.UPDATE_WORKFLOW_PARENT_MODIFIED, wfJob));
+                    updateList.add(new UpdateEntry<CoordActionQuery>(
+                            CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction));
                     try {
-                        jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        executor.executeBatchInsertUpdateDelete(insertList, updateList, null);
                         if (EventHandlerService.isEnabled()) {
                             generateEvent(coordAction, user, appName, wfJob.getStartTime());
                         }
@@ -234,8 +242,9 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     coordAction.setErrorMessage(errMsg);
                     coordAction.setErrorCode(errCode);
 
-                    updateList = new ArrayList<JsonBean>();
-                    updateList.add(coordAction);
+                    updateList = new ArrayList<UpdateEntry>();
+                    updateList.add(new UpdateEntry<CoordActionQuery>(
+                                    CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction));
                     insertList = new ArrayList<JsonBean>();
 
                     SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
@@ -245,7 +254,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     }
                     try {
                         // call JPAExecutor to do the bulk writes
-                        jpaService.execute(new BulkUpdateInsertForCoordActionStartJPAExecutor(updateList, insertList));
+                        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
                         if (EventHandlerService.isEnabled()) {
                             generateEvent(coordAction, user, appName, null);
                         }

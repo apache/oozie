@@ -37,10 +37,12 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.JobUtils;
@@ -176,7 +178,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     @Override
     public void performWrites() throws CommandException {
         try {
-            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -222,7 +224,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 bundleJob.setStatus(Job.Status.FAILED);
                 bundleJob.resetPending();
                 try {
-                    jpaService.execute(new BundleJobUpdateJPAExecutor(bundleJob));
+                    BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
                 }
                 catch (JPAExecutorException jex) {
                     throw new CommandException(jex);
@@ -365,6 +367,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
      */
     @Override
     public void updateJob() throws CommandException {
-        updateList.add(bundleJob);
+        updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob));
     }
 }

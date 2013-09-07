@@ -42,7 +42,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.store.StoreException;
@@ -225,7 +225,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
                     try {
-                        jpaService.execute(new BulkUpdateInsertJPAExecutor(null, insertList));
+                        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);
