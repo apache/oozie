@@ -30,12 +30,9 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.dependency.DependencyChecker;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsNotCompletedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -127,7 +124,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             CoordinatorXCommand.generateEvent(action, coordJob.getUser(), coordJob.getAppName(), null);
         }
         action.setLastModifiedTime(new Date());
-        updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME,action));
+        updateList.add(action);
     }
 
     @Override
@@ -157,6 +154,8 @@ public class CoordKillXCommand extends KillTransitionXCommand {
             }
         }
         coordJob.setDoneMaterialization();
+        updateList.add(coordJob);
+
         LOG.debug("Killed coord actions for the coordinator=[{0}]", jobId);
     }
 
@@ -171,13 +170,13 @@ public class CoordKillXCommand extends KillTransitionXCommand {
 
     @Override
     public void updateJob() throws CommandException {
-        updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_TIME, coordJob));
+        updateList.add(coordJob);
     }
 
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

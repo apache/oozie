@@ -30,7 +30,6 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
-import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
@@ -39,15 +38,13 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.executor.jpa.BulkUpdateDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -69,7 +66,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
     private Job.Status prevStatus;
-    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
@@ -279,13 +276,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
                 deleteList.add(slaSummaryBean);
             }
-            if (bean.getStatus() == CoordinatorAction.Status.WAITING
-                    || bean.getStatus() == CoordinatorAction.Status.READY) {
-                deleteList.add(bean);
-            }
-            else {
-                throw new CommandException(ErrorCode.E1022, bean.getId());
-            }
+            deleteList.add(bean);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -376,8 +367,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 coordJob.setDoneMaterialization();
             }
 
-            updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_CHANGE, coordJob));
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, deleteList);
+            updateList.add(coordJob);
+            jpaService.execute(new BulkUpdateDeleteJPAExecutor(updateList, deleteList, false));
 
             return null;
         }

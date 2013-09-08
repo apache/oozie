@@ -39,12 +39,10 @@ import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -104,7 +102,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      */
     @Override
     public void updateJob() throws CommandException {
-        updateList.add(new UpdateEntry(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE,coordJob));
+        updateList.add(coordJob);
     }
 
     /* (non-Javadoc)
@@ -113,7 +111,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
             // register the partition related dependencies of actions
             for (JsonBean actionBean : insertList) {
                 if (actionBean instanceof CoordinatorActionBean) {
@@ -279,7 +277,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             LOG.error("Exception occurred:" + e.getMessage() + " Making the job failed ", e);
             coordJob.setStatus(Job.Status.FAILED);
             try {
-                CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE, coordJob);
+                jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
             }
             catch (JPAExecutorException jex) {
                 throw new CommandException(ErrorCode.E1011, jex);

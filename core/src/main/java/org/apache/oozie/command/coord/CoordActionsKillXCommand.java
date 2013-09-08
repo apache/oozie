@@ -32,11 +32,8 @@ import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.coord.CoordUtils;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -126,7 +123,7 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
             else {
                 coordAction.setPending(0);
             }
-            updateList.add(new UpdateEntry(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, coordAction));
+            updateList.add(coordAction);
             if (EventHandlerService.isEnabled()) {
                 CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(),
                         coordAction.getCreatedTime());
@@ -145,7 +142,7 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -155,7 +152,7 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
     @Override
     public void updateJob() throws CommandException {
         coordJob.setPending();
-        updateList.add(new UpdateEntry(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING, coordJob));
+        updateList.add(coordJob);
     }
 
     @Override
