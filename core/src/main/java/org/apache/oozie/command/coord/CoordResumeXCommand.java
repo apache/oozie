@@ -31,13 +31,10 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertForCoordActionStatusJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsSuspendedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -107,7 +104,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         coordJob.setLastModifiedTime(new Date());
         LOG.debug("Resume coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = "
                 + coordJob.isPending());
-        updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_TIME, coordJob));
+        updateList.add(coordJob);
     }
 
     @Override
@@ -145,8 +142,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
                 coordJob.resetPending();
                 LOG.warn("Resume children failed so fail coordinator, coordinator job id = " + jobId + ", status = "
                         + coordJob.getStatus());
-                updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_TIME,
-                        coordJob));
+                updateList.add(coordJob);
             }
         }
     }
@@ -163,7 +159,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            jpaService.execute(new BulkUpdateInsertForCoordActionStatusJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -174,7 +170,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         action.setStatus(CoordinatorActionBean.Status.RUNNING);
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action));
+        updateList.add(action);
     }
 
     @Override

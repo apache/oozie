@@ -40,18 +40,16 @@ import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetForSLAJPAExecutor;
+
+import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetOnRestartJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecutor;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.sla.SLASummaryUpdateForSLAStatusActualTimesJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
@@ -114,9 +112,7 @@ public class SLACalculatorMemory implements SLACalculator {
                             break;
                     }
                     if (isJobModified) {
-                        summaryBean.setLastModifiedTime(new Date());
-                        SLASummaryQueryExecutor.getInstance().executeUpdate(
-                                SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, summaryBean);
+                        jpaService.execute(new SLASummaryUpdateForSLAStatusActualTimesJPAExecutor(summaryBean));
                     }
                 }
                 catch (Exception e) {
@@ -356,9 +352,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 slaSummaryBean.setActualStart(slaCalc.getActualStart());
                 slaSummaryBean.setActualDuration(slaCalc.getActualDuration());
                 slaSummaryBean.setJobStatus(slaCalc.getJobStatus());
-                slaSummaryBean.setLastModifiedTime(new Date());
-                SLASummaryQueryExecutor.getInstance().executeUpdate(
-                        SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, slaSummaryBean);
+                jpaService.execute(new SLASummaryUpdateForSLAStatusActualTimesJPAExecutor(slaSummaryBean));
                 if (eventProc == 7) {
                     historySet.add(jobId);
                     slaMap.remove(jobId);
@@ -403,7 +397,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 List<JsonBean> insertList = new ArrayList<JsonBean>();
                 insertList.add(reg);
                 insertList.add(new SLASummaryBean(slaCalc));
-                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
+                jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(insertList, null));
                 LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
@@ -448,11 +442,10 @@ public class SLACalculatorMemory implements SLACalculator {
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
                 slaMap.put(jobId, slaCalc);
-                List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
-                updateList.add(new UpdateEntry<SLARegQuery>(SLARegQuery.UPDATE_SLA_REG_ALL, reg));
-                updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,
-                        new SLASummaryBean(slaCalc)));
-                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+                List<JsonBean> updateList = new ArrayList<JsonBean>();
+                updateList.add(reg);
+                updateList.add(new SLASummaryBean(slaCalc));
+                jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, updateList));
                 LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
@@ -531,9 +524,7 @@ public class SLACalculatorMemory implements SLACalculator {
         }
 
         if (hasSla) {
-            slaInfo.setLastModifiedTime(new Date());
-            SLASummaryQueryExecutor.getInstance().executeUpdate(
-                    SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, slaInfo);
+            jpaService.execute(new SLASummaryUpdateForSLAStatusActualTimesJPAExecutor(slaInfo));
         }
         return hasSla;
     }

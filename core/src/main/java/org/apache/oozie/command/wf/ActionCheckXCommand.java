@@ -30,16 +30,14 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
@@ -64,7 +62,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     private WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
-    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private boolean generateEvent = false;
 
     public ActionCheckXCommand(String actionId) {
@@ -142,13 +140,12 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (!wfAction.isPending() || wfAction.getStatus() != WorkflowActionBean.Status.RUNNING) {
-            throw new PreconditionException(ErrorCode.E0815, wfAction.isPending(), wfAction.getStatusStr());
+            throw new PreconditionException(ErrorCode.E0815, wfAction.getPending(), wfAction.getStatusStr());
         }
         if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
             wfAction.setLastCheckTime(new Date());
             try {
-                WorkflowActionQueryExecutor.getInstance().executeUpdate(
-                        WorkflowActionQuery.UPDATE_ACTION_FOR_LAST_CHECKED_TIME, wfAction);
+                jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
@@ -195,10 +192,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                 }
             }
             wfAction.setLastCheckTime(new Date());
-            updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_CHECK, wfAction));
+            updateList.add(wfAction);
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED,
-                    wfJob));
+            updateList.add(wfJob);
         }
         catch (ActionExecutorException ex) {
             LOG.warn("Exception while executing check(). Error Code [{0}], Message[{1}]", ex.getErrorCode(), ex
@@ -224,15 +220,14 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     break;
             }
             wfAction.setLastCheckTime(new Date());
-            updateList = new ArrayList<UpdateEntry>();
-            updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_CHECK, wfAction));
+            updateList = new ArrayList<JsonBean>();
+            updateList.add(wfAction);
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED,
-                    wfJob));
+            updateList.add(wfJob);
         }
         finally {
             try {
-                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
                 if (generateEvent && EventHandlerService.isEnabled()) {
                     generateEvent(wfAction, wfJob.getUser());
                 }

@@ -94,7 +94,7 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
             action.setExecutionPath(a.getExecutionPath());
             action.setLastCheckTime(a.getLastCheckTime());
             action.setLogToken(a.getLogToken());
-            if (a.isPending() == true) {
+            if (a.getPending() == true) {
                 action.setPending();
             }
             action.setPendingAge(a.getPendingAge());

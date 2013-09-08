@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetOnRestartJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -59,7 +59,8 @@ public class TestSLARegistrationGetRecordsOnRestartJPAExecutor extends XDataTest
         JPAService jpaService = Services.get().get(JPAService.class);
         List<JsonBean> insert = new ArrayList<JsonBean>();
         insert.add(reg);
-        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insert, null, null);
+        SLACalculationInsertUpdateJPAExecutor slaInsertCmd = new SLACalculationInsertUpdateJPAExecutor(insert, null);
+        jpaService.execute(slaInsertCmd);
         assertNotNull(jpaService);
         SLARegistrationGetOnRestartJPAExecutor readCmd = new SLARegistrationGetOnRestartJPAExecutor(jobId);
         SLARegistrationBean bean = jpaService.execute(readCmd);

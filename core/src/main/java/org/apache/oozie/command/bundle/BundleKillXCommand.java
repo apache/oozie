@@ -29,12 +29,9 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.coord.CoordKillXCommand;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -147,7 +144,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
             action.incrementAndGetPending();
             action.setStatus(Job.Status.KILLED);
         }
-        updateList.add(new UpdateEntry<BundleActionQuery>(BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME, action));
+        updateList.add(action);
     }
 
     /* (non-Javadoc)
@@ -170,7 +167,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
      */
     @Override
     public void updateJob() {
-        updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME, bundleJob));
+        updateList.add(bundleJob);
     }
 
     /* (non-Javadoc)
@@ -179,7 +176,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

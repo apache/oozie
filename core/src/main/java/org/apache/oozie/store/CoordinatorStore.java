@@ -34,10 +34,6 @@ import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -355,12 +351,14 @@ public class CoordinatorStore extends Store {
      * @param action Action Bean
      * @throws StoreException if action doesn't exist
      */
-    public void updateCoordinatorAction(final CoordinatorActionBean action) throws StoreException, JPAExecutorException {
+    public void updateCoordinatorAction(final CoordinatorActionBean action) throws StoreException {
         ParamChecker.notNull(action, "CoordinatorActionBean");
         doOperation("updateCoordinatorAction", new Callable<Void>() {
-            public Void call() throws StoreException, JPAExecutorException {
-                CoordActionQueryExecutor.getInstance().executeUpdate(
-                        CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION, action);
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_ACTION");
+                q.setParameter("id", action.getId());
+                setActionQueryParameters(action, q);
+                q.executeUpdate();
                 return null;
             }
         });
@@ -372,12 +370,17 @@ public class CoordinatorStore extends Store {
      * @param action Action Bean
      * @throws StoreException if action doesn't exist
      */
-    public void updateCoordActionMin(final CoordinatorActionBean action) throws StoreException, JPAExecutorException {
+    public void updateCoordActionMin(final CoordinatorActionBean action) throws StoreException {
         ParamChecker.notNull(action, "CoordinatorActionBean");
         doOperation("updateCoordinatorAction", new Callable<Void>() {
-            public Void call() throws StoreException, JPAExecutorException {
-                CoordActionQueryExecutor.getInstance().executeUpdate(
-                        CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK, action);
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_ACTION_MIN");
+                q.setParameter("id", action.getId());
+                q.setParameter("missingDependencies", action.getMissingDependencies());
+                q.setParameter("lastModifiedTime", new Date());
+                q.setParameter("status", action.getStatus().toString());
+                q.setParameter("actionXml", action.getActionXml());
+                q.executeUpdate();
                 return null;
             }
         });
@@ -392,8 +395,11 @@ public class CoordinatorStore extends Store {
     public void updateCoordinatorJob(final CoordinatorJobBean job) throws StoreException {
         ParamChecker.notNull(job, "CoordinatorJobBean");
         doOperation("updateJob", new Callable<Void>() {
-            public Void call() throws StoreException, JPAExecutorException {
-                CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_JOB");
+                q.setParameter("id", job.getId());
+                setJobQueryParameters(job, q);
+                q.executeUpdate();
                 return null;
             }
         });
@@ -402,8 +408,12 @@ public class CoordinatorStore extends Store {
     public void updateCoordinatorJobStatus(final CoordinatorJobBean job) throws StoreException {
         ParamChecker.notNull(job, "CoordinatorJobBean");
         doOperation("updateJobStatus", new Callable<Void>() {
-            public Void call() throws StoreException, JPAExecutorException {
-                CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS_MODTIME, job);
+            public Void call() throws StoreException {
+                Query q = entityManager.createNamedQuery("UPDATE_COORD_JOB_STATUS");
+                q.setParameter("id", job.getId());
+                q.setParameter("status", job.getStatus().toString());
+                q.setParameter("lastModifiedTime", new Date());
+                q.executeUpdate();
                 return null;
             }
         });

@@ -43,7 +43,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SubmitTransitionXCommand;
-import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
@@ -419,7 +419,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             bundleJob.setLastModifiedTime(new Date());
 
             if (!dryrun) {
-                BundleJobQueryExecutor.getInstance().insert(bundleJob);
+                jpaService.execute(new BundleJobInsertJPAExecutor(bundleJob));
             }
         }
         catch (Exception ex) {

@@ -25,9 +25,7 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.CoordActionGetForTimeoutJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -60,8 +58,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
             try {
                 queue(new CoordActionNotificationXCommand(actionBean), 100);
                 actionBean.setLastModifiedTime(new Date());
-                CoordActionQueryExecutor.getInstance().executeUpdate(
-                        CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, actionBean);
+                jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionUpdateStatusJPAExecutor(actionBean));
                 if (EventHandlerService.isEnabled()) {
                     generateEvent(actionBean, user, appName, null);
                 }
@@ -119,8 +116,8 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (actionBean.getStatus() != CoordinatorAction.Status.WAITING) {
-            throw new PreconditionException(ErrorCode.E1100, "The coord action must have status "
-                    + CoordinatorAction.Status.WAITING + " but has status [" + actionBean.getStatus() + "]");
+            throw new PreconditionException(ErrorCode.E1100, "The coord action must have status " + CoordinatorAction.Status.WAITING
+                    + " but has status [" + actionBean.getStatus() + "]");
         }
     }
 }

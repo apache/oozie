@@ -45,9 +45,8 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
@@ -846,7 +845,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         coordJob.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_APPNAMESPACE, coordJob);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
         CoordinatorActionBean action1 = addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
@@ -895,7 +894,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         coordJob.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_APPNAMESPACE, coordJob);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
         CoordinatorActionBean action1 = addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.FAILED, "coord-rerun-action1.xml", 0);
@@ -945,7 +944,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
         coordJob.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_APPNAMESPACE, coordJob);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
         CoordinatorActionBean action1 = addRecordToCoordActionTable(coordJob.getId(), 1,
                 CoordinatorAction.Status.SUCCEEDED, "coord-rerun-action1.xml", 0);

@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.sla;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,8 +45,6 @@ import org.json.simple.JSONObject;
 @Entity
 @Table(name = "SLA_REGISTRATION")
 @NamedQueries({
-
- @NamedQuery(name = "UPDATE_SLA_REG_ALL", query = "update SLARegistrationBean w set w.jobId = :jobId, w.nominalTimeTS = :nominalTime, w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime, w.expectedDuration = :expectedDuration, w.slaConfig = :slaConfig, w.notificationMsg = :notificationMsg, w.upstreamApps = :upstreamApps, w.appType = :appType, w.appName = :appName, w.user = :user, w.parentId = :parentId, w.jobData = :jobData where w.jobId = :jobId"),
 
  @NamedQuery(name = "GET_SLA_REG_ON_RESTART", query = "select w.notificationMsg, w.upstreamApps, w.slaConfig, w.jobData from SLARegistrationBean w where w.jobId = :id"),
 
@@ -163,10 +160,6 @@ public class SLARegistrationBean implements JsonBean {
         return DateUtils.toDate(nominalTimeTS);
     }
 
-    public Timestamp getNominalTimestamp() {
-        return this.nominalTimeTS;
-    }
-
     public void setNominalTime(Date nominalTime) {
         this.nominalTimeTS = DateUtils.convertDateToTimestamp(nominalTime);
     }
@@ -175,20 +168,12 @@ public class SLARegistrationBean implements JsonBean {
         return DateUtils.toDate(expectedStartTS);
     }
 
-    public Timestamp getExpectedStartTimestamp() {
-        return this.expectedStartTS;
-    }
-
     public void setExpectedStart(Date expectedStart) {
         this.expectedStartTS = DateUtils.convertDateToTimestamp(expectedStart);
     }
 
     public Date getExpectedEnd() {
         return DateUtils.toDate(expectedEndTS);
-    }
-
-    public Timestamp getExpectedEndTimestamp() {
-        return this.expectedEndTS;
     }
 
     public void setExpectedEnd(Date expectedEnd) {

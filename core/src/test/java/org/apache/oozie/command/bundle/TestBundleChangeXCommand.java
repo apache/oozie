@@ -27,8 +27,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.executor.jpa.BundleActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -85,7 +84,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         coordJob.setBundleId(bundleJob.getId());
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID, coordJob);
+        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob));
 
         BundleActionBean bundleAction = new BundleActionBean();
         bundleAction.setBundleActionId("11111");

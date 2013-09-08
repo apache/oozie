@@ -39,13 +39,10 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -68,7 +65,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     private WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
-    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
+    private List<JsonBean> updateList = new ArrayList<JsonBean>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public ActionEndXCommand(String actionId, String type) {
@@ -128,7 +125,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             }
         }
         else {
-            throw new PreconditionException(ErrorCode.E0812, wfAction.isPending(), wfAction.getStatusStr());
+            throw new PreconditionException(ErrorCode.E0812, wfAction.getPending(), wfAction.getStatusStr());
         }
 
         executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
@@ -214,16 +211,16 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                 if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
                     LOG.debug("Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
-                            + ", Set pending=" + wfAction.isPending());
+                            + ", Set pending=" + wfAction.getPending());
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
                     queue(new SignalXCommand(jobId, actionId));
                 }
             }
-            updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END,wfAction));
+            updateList.add(wfAction);
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, wfJob));
+            updateList.add(wfJob);
         }
         catch (ActionExecutorException ex) {
             LOG.warn(
@@ -258,13 +255,13 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             DagELFunctions.setActionInfo(wfInstance, wfAction);
             wfJob.setWorkflowInstance(wfInstance);
 
-            updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END,wfAction));
+            updateList.add(wfAction);
             wfJob.setLastModifiedTime(new Date());
-            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, wfJob));
+            updateList.add(wfJob);
         }
         finally {
             try {
-                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
+                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
                 if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
                     generateEvent(wfAction, wfJob.getUser());
                 }

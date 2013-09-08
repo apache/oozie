@@ -32,14 +32,11 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -200,7 +197,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     private void updateBundleAction(BundleActionBean action) {
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        updateList.add(new UpdateEntry<BundleActionQuery>(BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, action));
+        updateList.add(action);
     }
 
     /* (non-Javadoc)
@@ -221,7 +218,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                 }
             }
         }
-        updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob));
+        updateList.add(bundleJob);
     }
 
     /* (non-Javadoc)
@@ -230,7 +227,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     @Override
     public void performWrites() throws CommandException {
         try {
-            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
