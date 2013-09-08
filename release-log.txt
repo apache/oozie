@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1499 Update only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1522 SignalX may try to insert transition for a forked node twice (virag)
 OOZIE-1461 provide an option to auto-deploy launcher jar onto HDFS system libpath (ryota,virag via virag)
 OOZIE-1520 Sequencefile Reader fails to use doas for reading action data file (rohini,mona via mona)

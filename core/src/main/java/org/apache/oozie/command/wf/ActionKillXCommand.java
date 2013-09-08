@@ -31,10 +31,13 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.control.ControlNodeActionExecutor;
@@ -58,7 +61,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     private WorkflowJobBean wfJob;
     private WorkflowActionBean wfAction;
     private JPAService jpaService = null;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
 
     public ActionKillXCommand(String actionId, String type) {
@@ -137,9 +140,9 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.setStatus(WorkflowActionBean.Status.KILLED);
                     wfAction.setEndTime(new Date());
 
-                    updateList.add(wfAction);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END, wfAction));
                     wfJob.setLastModifiedTime(new Date());
-                    updateList.add(wfJob);
+                    updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_MODTIME, wfJob));
                     // Add SLA status event (KILLED) for WF_ACTION
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
                             SlaAppType.WORKFLOW_ACTION);
@@ -156,9 +159,9 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfAction.setEndTime(new Date());
 
                     wfJob.setStatus(WorkflowJobBean.Status.KILLED);
-                    updateList.add(wfAction);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END, wfAction));
                     wfJob.setLastModifiedTime(new Date());
-                    updateList.add(wfJob);
+                    updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob));
                     // What will happen to WF and COORD_ACTION, NOTIFICATION?
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
                             SlaAppType.WORKFLOW_ACTION);
@@ -170,7 +173,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                 }
                 finally {
                     try {
-                        jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
                         if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
                             generateEvent(wfAction, wfJob.getUser());
                         }

@@ -56,6 +56,26 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "UPDATE_COORD_JOB_PENDING", query = "update CoordinatorJobBean w set w.pending = :pending, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
+        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID", query = "update CoordinatorJobBean w set w.bundleId = :bundleId where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_APPNAMESPACE", query = "update CoordinatorJobBean w set w.appNamespace = :appNamespace where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME", query = "update CoordinatorJobBean w set w.bundleId = :bundleId, w.appNamespace = :appNamespace, w.pauseTimestamp = :pauseTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_MODTIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_MODTIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_LAST_MODIFIED_TIME", query = "update CoordinatorJobBean w set w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_TIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastModifiedTimestamp = :lastModifiedTime, w.suspendedTimestamp = :suspendedTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_MATERIALIZE", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastActionTimestamp = :lastActionTime, w.lastActionNumber = :lastActionNumber, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_COORD_JOB_CHANGE", query = "update CoordinatorJobBean w set w.endTimestamp = :endTime, w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.concurrency = :concurrency, w.pauseTimestamp = :pauseTime, w.lastActionNumber = :lastActionNumber, w.lastActionTimestamp = :lastActionTime, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
+
         @NamedQuery(name = "DELETE_COORD_JOB", query = "delete from CoordinatorJobBean w where w.id = :id"),
 
         @NamedQuery(name = "GET_COORD_JOBS", query = "select OBJECT(w) from CoordinatorJobBean w"),
@@ -723,6 +743,10 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     @Override
     public Date getPauseTime() {
         return DateUtils.toDate(pauseTimestamp);
+    }
+
+    public Timestamp getPauseTimestamp() {
+        return pauseTimestamp;
     }
 
     /**

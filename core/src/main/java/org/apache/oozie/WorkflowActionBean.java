@@ -56,6 +56,22 @@ import org.json.simple.JSONObject;
 
     @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
 
+    @NamedQuery(name = "UPDATE_ACTION_FOR_LAST_CHECKED_TIME", query = "update WorkflowActionBean a set a.lastCheckTimestamp = :lastCheckTime where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_START", query = "update WorkflowActionBean a set a.startTimestamp = :startTime, a.externalChildIDs = :externalChildIDs, a.conf = :conf, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.startTimestamp = :startTime, a.externalId = :externalId, a.trackerUri = :trackerUri, a.consoleUrl = :consoleUrl, a.lastCheckTimestamp = :lastCheckTime, a.statusStr = :status, a.externalStatus = :externalStatus, a.data = :data, a.retries = :retries, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.userRetryCount = :userRetryCount where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_CHECK", query = "update WorkflowActionBean a set a.externalChildIDs = :externalChildIDs, a.externalStatus = :externalStatus, a.statusStr = :status, a.data = :data, a.pending = :pending, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.lastCheckTimestamp = :lastCheckTime, a.retries = :retries, a.pendingAgeTimestamp = :pendingAge, a.startTimestamp = :startTime where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_END", query = "update WorkflowActionBean a set a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.retries = :retries, a.endTimestamp = :endTime, a.statusStr = :status, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.userRetryCount = :userRetryCount, a.externalStatus = :externalStatus where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_PENDING", query = "update WorkflowActionBean a set a.pending = :pending where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_STATUS_PENDING", query = "update WorkflowActionBean a set a.statusStr = :status, a.pending = :pending where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS", query = "update WorkflowActionBean a set a.pending = :pending, a.transition = :transition where a.id = :id"),
+
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS_ERROR", query = "update WorkflowActionBean a set a.pending = :pending, a.transition = :transition, a.errorCode = :errorCode, a.errorMessage = :errorMessage where a.id = :id"),
+
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTIONS_FOR_WORKFLOW", query = "delete from WorkflowActionBean a where a.wfId = :wfId"),
@@ -711,12 +727,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         this.lastCheckTimestamp = DateUtils.convertDateToTimestamp(lastCheckTime);
     }
 
-    /**
-     * Get pending
-     * @return
-     */
-    public boolean getPending() {
-        return this.pending == 1 ? true : false;
+    public int getPending() {
+        return this.pending;
     }
 
     @Override

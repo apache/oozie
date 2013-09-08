@@ -25,13 +25,15 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowActionRetryManualGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -46,7 +48,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     private final String wfid;
     private WorkflowJobBean wfJobBean;
     private JPAService jpaService;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
 
     public SuspendXCommand(String id) {
         super("suspend", "suspend", 1);
@@ -59,8 +61,9 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         try {
             suspendJob(this.jpaService, this.wfJobBean, this.wfid, null, updateList);
             this.wfJobBean.setLastModifiedTime(new Date());
-            updateList.add(this.wfJobBean);
-            jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+            updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED,
+                    this.wfJobBean));
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
             queue(new NotificationXCommand(this.wfJobBean));
         }
         catch (WorkflowException e) {
@@ -87,7 +90,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @throws CommandException thrown if unable set pending false for actions
      */
     public static void suspendJob(JPAService jpaService, WorkflowJobBean workflow, String id,
-            String actionId, List<JsonBean> updateList) throws WorkflowException, CommandException {
+            String actionId, List<UpdateEntry> updateList) throws WorkflowException, CommandException {
         if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
             workflow.getWorkflowInstance().suspend();
             WorkflowInstance wfInstance = workflow.getWorkflowInstance();
@@ -112,7 +115,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @throws CommandException thrown if failed to update workflow action
      */
     private static void setPendingFalseForActions(JPAService jpaService, String id, String actionId,
-            List<JsonBean> updateList) throws CommandException {
+            List<UpdateEntry> updateList) throws CommandException {
         List<WorkflowActionBean> actions;
         try {
             actions = jpaService.execute(new WorkflowActionRetryManualGetJPAExecutor(id));
@@ -128,7 +131,8 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
                 if (updateList != null) { // will be null when suspendJob
                                           // invoked statically via
                                           // handleNonTransient()
-                    updateList.add(action);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                            WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, action));
                 }
             }
         }

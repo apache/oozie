@@ -36,8 +36,10 @@ import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
@@ -63,7 +65,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
     private String user;
     private String group;
     private List<JsonBean> insertList = new ArrayList<JsonBean>();
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
 
     /**
      * Default timeout for catchup jobs, in minutes, after which coordinator input check will timeout
@@ -107,7 +109,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             if (job.getStatus() == CoordinatorJob.Status.PREMATER) {
                 job.setStatus(CoordinatorJob.Status.RUNNING);
             }
-            updateList.add(job);
+            updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS, job));
             return null;
         }
 
@@ -134,7 +136,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             catch (CommandException ex) {
                 log.warn("Exception occurs:" + ex + " Making the job failed ");
                 job.setStatus(CoordinatorJobBean.Status.FAILED);
-                updateList.add(job);
+                updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE, job));
             }
             catch (Exception e) {
                 log.error("Excepion thrown :", e);
@@ -304,7 +306,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
             log.info("[" + job.getId() + "]: Update status from PREMATER to RUNNING");
         }
         job.setNextMaterializedTime(endTime);
-        updateList.add(job);
+        updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE, job));
     }
 
     @Override
@@ -317,7 +319,7 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
                     try {
-                        jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, insertList));
+                        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
                     }
                     catch (JPAExecutorException je) {
                         throw new CommandException(je);
