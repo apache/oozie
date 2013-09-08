@@ -38,8 +38,8 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateForModifiedTimeJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
@@ -208,15 +208,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         if (jpaService != null) {
             try {
                 if (isChangeInDependency) {
-                    jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(coordAction));
-                    if (EventHandlerService.isEnabled()
-                            && coordAction.getStatus() != CoordinatorAction.Status.READY) {
-                        //since event is not to be generated unless action RUNNING via StartX
+                    CoordActionQueryExecutor.getInstance().executeUpdate(
+                            CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK, coordAction);
+                    if (EventHandlerService.isEnabled() && coordAction.getStatus() != CoordinatorAction.Status.READY) {
+                        // since event is not to be generated unless action
+                        // RUNNING via StartX
                         generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
                     }
                 }
                 else {
-                    jpaService.execute(new CoordActionUpdateForModifiedTimeJPAExecutor(coordAction));
+                    CoordActionQueryExecutor.getInstance().executeUpdate(
+                            CoordActionQuery.UPDATE_COORD_ACTION_FOR_MODIFIED_DATE, coordAction);
                 }
             }
             catch (JPAExecutorException jex) {

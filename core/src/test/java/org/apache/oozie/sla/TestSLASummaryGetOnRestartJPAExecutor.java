@@ -24,8 +24,8 @@ import java.util.List;
 
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecutor;
@@ -72,8 +72,7 @@ public class TestSLASummaryGetOnRestartJPAExecutor extends XDataTestCase {
         List<JsonBean> insert = new ArrayList<JsonBean>();
         insert.add(sla1);
         insert.add(sla2);
-        SLACalculationInsertUpdateJPAExecutor slaInsertCmd = new SLACalculationInsertUpdateJPAExecutor(insert, null);
-        jpaService.execute(slaInsertCmd);
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insert, null, null);
         // get all records modified in last 7 days
         SLASummaryGetRecordsOnRestartJPAExecutor slaGetOnRestart = new SLASummaryGetRecordsOnRestartJPAExecutor(7);
         List<SLASummaryBean> beans = jpaService.execute(slaGetOnRestart);

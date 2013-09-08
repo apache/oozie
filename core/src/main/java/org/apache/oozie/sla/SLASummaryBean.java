@@ -47,6 +47,8 @@ import org.json.simple.JSONObject;
 
  @NamedQuery(name = "UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES", query = "update SLASummaryBean w set w.slaStatus = :slaStatus, w.eventStatus = :eventStatus, w.eventProcessed = :eventProcessed, w.jobStatus = :jobStatus, w.lastModifiedTS = :lastModifiedTS, w.actualStartTS = :actualStartTS, w.actualEndTS = :actualEndTS, w.actualDuration = :actualDuration where w.jobId = :jobId"),
 
+ @NamedQuery(name = "UPDATE_SLA_SUMMARY_ALL", query = "update SLASummaryBean w set w.jobId = :jobId, w.appName = :appName, w.appType = :appType, w.nominalTimeTS = :nominalTime, w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime, w.expectedDuration = :expectedDuration, w.jobStatus = :jobStatus, w.slaStatus = :slaStatus, w.eventStatus = :eventStatus, w.lastModifiedTS = :lastModTime, w.user = :user, w.parentId = :parentId, w.eventProcessed = :eventProcessed, w.actualDuration = :actualDuration, w.actualEndTS = :actualEndTS, w.actualStartTS = :actualStartTS where w.jobId = :jobId"),
+
  @NamedQuery(name = "GET_SLA_SUMMARY", query = "select OBJECT(w) from SLASummaryBean w where w.jobId = :id"),
 
  @NamedQuery(name = "GET_SLA_SUMMARY_RECORDS_RESTART", query = "select OBJECT(w) from SLASummaryBean w where w.eventProcessed <= 7 AND w.lastModifiedTS >= :lastModifiedTime") })
@@ -174,6 +176,10 @@ public class SLASummaryBean implements JsonBean {
         return DateUtils.toDate(nominalTimeTS);
     }
 
+    public Timestamp getNominalTimestamp() {
+        return this.nominalTimeTS;
+    }
+
     public void setNominalTime(Date nominalTime) {
         this.nominalTimeTS = DateUtils.convertDateToTimestamp(nominalTime);
     }
@@ -181,6 +187,10 @@ public class SLASummaryBean implements JsonBean {
 
     public Date getExpectedStart() {
         return DateUtils.toDate(expectedStartTS);
+    }
+
+    public Timestamp getExpectedStartTimestamp() {
+        return this.expectedStartTS;
     }
 
     public void setExpectedStart(Date expectedStart) {
@@ -191,6 +201,9 @@ public class SLASummaryBean implements JsonBean {
         return DateUtils.toDate(expectedEndTS);
     }
 
+    public Timestamp getExpectedEndTimestamp() {
+        return this.expectedEndTS;
+    }
     public void setExpectedEnd(Date expectedEnd) {
         this.expectedEndTS = DateUtils.convertDateToTimestamp(expectedEnd);
     }
@@ -207,12 +220,20 @@ public class SLASummaryBean implements JsonBean {
         return DateUtils.toDate(actualStartTS);
     }
 
+    public Timestamp getActualStartTimestamp() {
+        return this.actualStartTS;
+    }
+
     public void setActualStart(Date actualStart) {
         this.actualStartTS = DateUtils.convertDateToTimestamp(actualStart);
     }
 
     public Date getActualEnd() {
         return DateUtils.toDate(actualEndTS);
+    }
+
+    public Timestamp getActualEndTimestamp() {
+        return this.actualEndTS;
     }
 
     public void setActualEnd(Date actualEnd) {
@@ -293,6 +314,10 @@ public class SLASummaryBean implements JsonBean {
 
     public Date getLastModifiedTime() {
         return DateUtils.toDate(lastModifiedTS);
+    }
+
+    public Timestamp getLastModifiedTimestamp() {
+        return this.lastModifiedTS;
     }
 
     public void setLastModifiedTime(Date lastModified) {

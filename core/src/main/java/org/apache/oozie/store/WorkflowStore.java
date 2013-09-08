@@ -35,6 +35,9 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob.Status;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
@@ -198,11 +201,9 @@ public class WorkflowStore extends Store {
     public void updateWorkflow(final WorkflowJobBean wfBean) throws StoreException {
         ParamChecker.notNull(wfBean, "WorkflowJobBean");
         doOperation("updateWorkflow", new Callable<Void>() {
-            public Void call() throws SQLException, StoreException, WorkflowException {
-                Query q = entityManager.createNamedQuery("UPDATE_WORKFLOW");
-                q.setParameter("id", wfBean.getId());
-                setWFQueryParameters(wfBean, q);
-                q.executeUpdate();
+            public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
+                WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                        WorkflowJobQueryExecutor.WorkflowJobQuery.UPDATE_WORKFLOW, wfBean);
                 return null;
             }
         });
@@ -274,11 +275,9 @@ public class WorkflowStore extends Store {
     public void updateAction(final WorkflowActionBean action) throws StoreException {
         ParamChecker.notNull(action, "WorkflowActionBean");
         doOperation("updateAction", new Callable<Void>() {
-            public Void call() throws SQLException, StoreException, WorkflowException {
-                Query q = entityManager.createNamedQuery("UPDATE_ACTION");
-                q.setParameter("id", action.getId());
-                setActionQueryParameters(action, q);
-                q.executeUpdate();
+            public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
+                WorkflowActionQueryExecutor.getInstance().executeUpdate(
+                        WorkflowActionQueryExecutor.WorkflowActionQuery.UPDATE_ACTION, action);
                 return null;
             }
         });
@@ -935,7 +934,7 @@ public class WorkflowStore extends Store {
             action.setExecutionPath(a.getExecutionPath());
             action.setLastCheckTime(a.getLastCheckTime());
             action.setLogToken(a.getLogToken());
-            if (a.getPending() == true) {
+            if (a.isPending() == true) {
                 action.setPending();
             }
             action.setPendingAge(a.getPendingAge());

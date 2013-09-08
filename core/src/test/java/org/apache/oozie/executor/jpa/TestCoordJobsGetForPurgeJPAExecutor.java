@@ -32,6 +32,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -74,7 +75,7 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
         CoordinatorJobBean job2 = insertJob(jobId2, CoordinatorJob.Status.SUCCEEDED,
                 DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         job2.setBundleId("some_bundle_parent_id");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(job2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID, job2);
 
         CoordJobsGetForPurgeJPAExecutor executor = new CoordJobsGetForPurgeJPAExecutor(10, 50);
         List<String> jobList = jpaService.execute(executor);

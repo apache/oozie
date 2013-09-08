@@ -57,6 +57,16 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
 
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING", query = "update BundleJobBean w set w.statusStr = :status, w.pending = :pending where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending, w.suspendedTimestamp = :suspendedTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME", query = "update BundleJobBean w set w.statusStr = :status, w.pauseTimestamp = :pauseTime, w.endTimestamp = :endTime where w.id = :id"),
+
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_PAUSE_KICKOFF", query = "update BundleJobBean w set w.kickoffTimestamp = :kickoffTime, w.pauseTimestamp = :pauseTime where w.id = :id"),
+
         @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id = :id"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS", query = "select OBJECT(w) from BundleJobBean w"),

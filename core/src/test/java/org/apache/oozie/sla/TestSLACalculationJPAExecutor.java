@@ -22,11 +22,15 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.SkipCommitFaultInjection;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -82,11 +86,9 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         SLASummaryBean bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.START_MISS, expStart, expEnd, 1000,
                 actStart, actEnd, 2000, (byte) 1, actEnd);
 
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(bean2);
-        SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor();
-        writeCmd.setInsertList(list);
-        jpaService.execute(writeCmd);
+        List<JsonBean> insertList = new ArrayList<JsonBean>();
+        insertList.add(bean2);
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
 
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
         SLASummaryBean sBean = jpaService.execute(readCmd2);
@@ -123,21 +125,17 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         Date actStart = new Date();
         SLASummaryBean bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.START_MISS, expStart, expEnd, 1000,
                 actStart, null, 2000, (byte) 0, actStart);
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(bean2);
-        SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor();
-        writeCmd.setInsertList(list);
-        jpaService.execute(writeCmd);
+        List<JsonBean> insertList = new ArrayList<JsonBean>();
+        insertList.add(bean2);
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
 
         // update existing record
         Date newDate = new Date();
         bean2 = _createSLASummaryBean(wfId, "RUNNING", EventStatus.DURATION_MISS, expStart, expEnd, 1000, actStart,
                 newDate, 2000, (byte) 1, newDate);
-        list = new ArrayList<JsonBean>();
-        list.add(bean2);
-        writeCmd.setUpdateList(list);
-        writeCmd.setInsertList(null);
-        jpaService.execute(writeCmd);
+        bean2.setAppType(AppType.WORKFLOW_ACTION);
+        List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, bean2);
 
         SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
         SLASummaryBean sBean = jpaService.execute(readCmd2);
@@ -171,28 +169,26 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
                 1000, null, null, 2000, 0, null);
         List<JsonBean> list = new ArrayList<JsonBean>();
         list.add(bean1);
-        SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor(list, null);
-        jpaService.execute(writeCmd);
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(list, null, null);
 
         // update existing record and insert another
         Date newDate = new Date();
         bean1 = new SLASummaryBean();
         bean1.setId(wfId1);
         bean1.setActualEnd(newDate);
-        List<JsonBean> updateList = new ArrayList<JsonBean>();
-        updateList.add(bean1);
+        List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
+        updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,bean1));
 
         SLASummaryBean bean2 = _createSLASummaryBean(wfId2, "RUNNING", EventStatus.END_MISS, new Date(), new Date(),
                 1000, null, null, 2000, 0, null);
         List<JsonBean> insertList = new ArrayList<JsonBean>();
         insertList.add(bean2);
-        writeCmd = new SLACalculationInsertUpdateJPAExecutor(insertList, updateList);
 
         // set fault injection to true, so transaction is roll backed
         setSystemProperty(FaultInjection.FAULT_INJECTION, "true");
         setSystemProperty(SkipCommitFaultInjection.ACTION_FAILOVER_FAULT_INJECTION, "true");
         try {
-            jpaService.execute(writeCmd);
+            BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
             fail("Expected exception due to commit failure but didn't get any");
         }
         catch (Exception e) {

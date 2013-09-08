@@ -30,14 +30,16 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
-import org.apache.oozie.executor.jpa.BulkUpdateInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -56,7 +58,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private Date newEndTime = null;
     boolean isChangePauseTime = false;
     boolean isChangeEndTime = false;
-    private List<JsonBean> updateList = new ArrayList<JsonBean>();
+    private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
 
     private static final Set<String> ALLOWED_CHANGE_OPTIONS = new HashSet<String>();
     static {
@@ -113,7 +115,9 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     private void validateChangeValue(String changeValue) throws CommandException {
         Map<String, String> map = JobUtils.parseChangeValue(changeValue);
 
-        if (map.size() > ALLOWED_CHANGE_OPTIONS.size() || !(map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME) || map.containsKey(OozieClient.CHANGE_VALUE_ENDTIME))) {
+        if (map.size() > ALLOWED_CHANGE_OPTIONS.size()
+                || !(map.containsKey(OozieClient.CHANGE_VALUE_PAUSETIME) || map
+                        .containsKey(OozieClient.CHANGE_VALUE_ENDTIME))) {
             throw new CommandException(ErrorCode.E1317, changeValue, "can only change pausetime or end time");
         }
 
@@ -181,11 +185,13 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                         LOG.info("Queuing CoordChangeXCommand coord job = " + action.getCoordId() + " to change "
                                 + changeValue);
                         action.setPending(action.getPending() + 1);
-                        updateList.add(action);
+                        updateList.add(new UpdateEntry<BundleActionQuery>(
+                                BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, action));
                     }
                 }
-                updateList.add(bundleJob);
-                jpaService.execute(new BulkUpdateInsertJPAExecutor(updateList, null));
+                updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME,
+                        bundleJob));
+                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
             }
             return null;
         }

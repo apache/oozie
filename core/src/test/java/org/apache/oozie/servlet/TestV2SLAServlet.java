@@ -36,8 +36,8 @@ import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLASummaryBean;
@@ -187,8 +187,6 @@ public class TestV2SLAServlet extends DagServletTestCase {
             nominalTime.add(Calendar.HOUR, 1);
         }
 
-        SLACalculationInsertUpdateJPAExecutor writeCmd = new SLACalculationInsertUpdateJPAExecutor(list, null);
-        JPAService jpaService = Services.get().get(JPAService.class);
-        jpaService.execute(writeCmd);
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(list, null, null);
     }
 }

@@ -64,16 +64,20 @@ import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -196,7 +200,7 @@ public class TestEventGeneration extends XDataTestCase {
         LiteWorkflowInstance wfInstance = (LiteWorkflowInstance) job.getWorkflowInstance();
         wfInstance.start();
         job.setWfInstance(wfInstance);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(job));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, job);
         WorkflowActionBean wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(job.getId() + "@one"));
         new SignalXCommand(job.getId(), wfAction.getId()).call();
         job = jpaService.execute(new WorkflowJobGetJPAExecutor(job.getId()));
@@ -271,9 +275,9 @@ public class TestEventGeneration extends XDataTestCase {
         action = jpaService.execute(coordGetCmd);
         WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
         wfJob.setStatus(WorkflowJob.Status.SUCCEEDED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob);
         action.setStatus(CoordinatorAction.Status.RUNNING);
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         new CoordActionCheckXCommand(action.getId(), 0).call();
         action = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
@@ -290,9 +294,8 @@ public class TestEventGeneration extends XDataTestCase {
 
         // Action Failure
         action.setStatus(CoordinatorAction.Status.RUNNING);
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
-        wfJob.setStatus(WorkflowJob.Status.FAILED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob);
         new CoordActionCheckXCommand(action.getId(), 0).call();
         action = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorAction.Status.FAILED, action.getStatus());
@@ -308,14 +311,14 @@ public class TestEventGeneration extends XDataTestCase {
 
         // Action start on Coord Resume
         coord.setStatus(CoordinatorJobBean.Status.SUSPENDED);
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coord));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS, coord);
         action.setStatus(CoordinatorAction.Status.SUSPENDED);
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         wfJob.setStatus(WorkflowJob.Status.SUSPENDED);
         WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
         ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.SUSPENDED);
         wfJob.setWorkflowInstance(wfInstance);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wfJob));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, wfJob);
         new CoordResumeXCommand(coord.getId()).call();
         Thread.sleep(5000);
         CoordinatorActionEvent cevent = (CoordinatorActionEvent) queue.poll();
@@ -328,7 +331,7 @@ public class TestEventGeneration extends XDataTestCase {
 
         // Action going to WAITING on Coord Rerun
         action.setStatus(CoordinatorAction.Status.SUCCEEDED);
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         queue.clear();
         new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_SCOPE_ACTION, "1", false, true)
                 .call();
@@ -395,7 +398,7 @@ public class TestEventGeneration extends XDataTestCase {
         action.setStatus(WorkflowAction.Status.KILLED);
         action.setPendingOnly();
         action.setEndTime(null); //its already set by XTestCase add action record method above
-        jpaService.execute(new WorkflowActionUpdateJPAExecutor(action));
+        WorkflowActionQueryExecutor.getInstance().executeUpdate(WorkflowActionQuery.UPDATE_ACTION_END, action);
         new ActionKillXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
         assertEquals(WorkflowAction.Status.KILLED, action.getStatus());
@@ -442,7 +445,8 @@ public class TestEventGeneration extends XDataTestCase {
                 CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
         WorkflowJobBean wjb = new WorkflowJobBean();
         wjb.setId(action.getExternalId());
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
+        wjb.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         CoordinatorXCommand<Void> myCmd = new CoordActionCheckXCommand(action.getId(), 0) {
             @Override
@@ -454,7 +458,7 @@ public class TestEventGeneration extends XDataTestCase {
 
         // CASE 1: Only pull missing deps
         action.setMissingDependencies("pull");
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_DEPENDENCIES, action);
         myCmd.call();
         CoordinatorActionEvent event = (CoordinatorActionEvent) queue.poll();
         assertNotNull(event);
@@ -463,7 +467,7 @@ public class TestEventGeneration extends XDataTestCase {
         // CASE 2: Only hcat (push) missing deps
         action.setMissingDependencies(null);
         action.setPushMissingDependencies("push");
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_DEPENDENCIES, action);
         myCmd.call();
         event = (CoordinatorActionEvent) queue.poll();
         assertNotNull(event);
@@ -471,7 +475,7 @@ public class TestEventGeneration extends XDataTestCase {
 
         // CASE 3: Both types
         action.setMissingDependencies("pull");
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_DEPENDENCIES, action);
         myCmd.call();
         event = (CoordinatorActionEvent) queue.poll();
         assertNotNull(event);
@@ -533,7 +537,7 @@ public class TestEventGeneration extends XDataTestCase {
         WorkflowJobBean wf = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
                 action.getId());
         action.setExternalId(wf.getId());
-        jpaService.execute(new CoordActionUpdateJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
 
         String waId = _createWorkflowAction(wf.getId(), "wf-action");
         new ActionStartXCommand(waId, action.getType()).call();
@@ -613,7 +617,7 @@ public class TestEventGeneration extends XDataTestCase {
                 executionPath, true);
         wfAction.setPending();
         wfAction.setSignalValue(WorkflowAction.Status.OK.name());
-        jpaService.execute(new WorkflowActionUpdateJPAExecutor(wfAction));
+        WorkflowActionQueryExecutor.getInstance().executeUpdate(WorkflowActionQuery.UPDATE_ACTION, wfAction);
 
         return workflow;
     }
@@ -623,7 +627,7 @@ public class TestEventGeneration extends XDataTestCase {
         writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
         String coordXml = coord.getJobXml();
         coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coord));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coord);
     }
 
     private String _createWorkflowAction(String wfId, String actionName) throws JPAExecutorException {

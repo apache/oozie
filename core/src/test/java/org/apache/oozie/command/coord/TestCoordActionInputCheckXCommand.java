@@ -36,8 +36,8 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdateForInputCheckJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionUpdatePushInputCheckJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
@@ -235,7 +235,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 + "\">");
         action.setActionXml(actionXML);
         action.setCreatedTime(DateUtils.parseDateOozieTZ(actionCreationTime));
-        jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK,
+                action);
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
@@ -280,7 +282,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 .execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         final String pushMissingDependency = "file://" + getTestCaseDir() + "/2009/02/05";
         action.setPushMissingDependencies(pushMissingDependency);
-        jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK,
+                action);
 
         // Update action creation time
         String actionXML = action.getActionXml();
@@ -289,7 +293,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 + "\">");
         action.setActionXml(actionXML);
         action.setCreatedTime(DateUtils.parseDateOozieTZ(actionCreationTime));
-        jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK,
+                action);
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
@@ -362,7 +368,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 + "\">");
         action.setActionXml(actionXML);
         action.setCreatedTime(DateUtils.parseDateOozieTZ(actionCreationTime));
-        jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK,
+                action);
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
@@ -406,7 +414,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 .execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         final String pushMissingDependency = "file://" + getTestCaseDir() + "/2009/02/05";
         action.setPushMissingDependencies(pushMissingDependency);
-        jpaService.execute(new CoordActionUpdatePushInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK,
+                action);
 
         // Update action creation time
         String actionXML = action.getActionXml();
@@ -415,7 +425,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
                 + "\">");
         action.setActionXml(actionXML);
         action.setCreatedTime(DateUtils.parseDateOozieTZ(actionCreationTime));
-        jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+        CoordActionQueryExecutor.getInstance().executeUpdate(
+                CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK,
+                action);
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
@@ -700,7 +712,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         action.setStatus(CoordinatorAction.Status.WAITING);
         try {
             jpaService = Services.get().get(JPAService.class);
-            jpaService.execute(new CoordActionUpdateForInputCheckJPAExecutor(action));
+            CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK, action);
         }
         catch (JPAExecutorException se) {
             fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");

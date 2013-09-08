@@ -61,6 +61,7 @@ public class TestWorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor ext
         days = 1;
         assertEquals(0, (long) jpaService.execute(new WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor(days, wfJobId)));
         days = TestPurgeXCommand.getNumDaysToNotBePurged(subwfJob1.getEndTime());
+        System.out.println("Debug: days " + days);
         assertEquals(1, (long) jpaService.execute(new WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor(days, wfJobId)));
 
         WorkflowJobBean subwfJob2 = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED, wfJobId);

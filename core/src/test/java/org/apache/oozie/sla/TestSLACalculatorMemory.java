@@ -34,11 +34,14 @@ import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobUpdateJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLACalculationInsertUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -117,16 +120,18 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         Date lastModifiedTime = new Date(System.currentTimeMillis() - 5*24*60*60*1000);
         calc1.setLastModifiedTime(lastModifiedTime);
 
-        List<JsonBean> list = new ArrayList<JsonBean>();
+        List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
         SLASummaryBean bean = new SLASummaryBean(calc1);
         bean.setActualStart(sdf.parse("2011-03-09"));
         bean.setActualEnd(sdf.parse("2011-03-10"));
         bean.setActualDuration(456);
-        list.add(bean);
-        list.add(new SLASummaryBean(calc2));
-        list.add(new SLASummaryBean(calc3));
+        updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, bean));
+        updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,
+                new SLASummaryBean(calc2)));
+        updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,
+                new SLASummaryBean(calc3)));
 
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
@@ -187,9 +192,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         calc1.setLastModifiedTime(new Date());
         SLASummaryBean slaSummaryBean = new SLASummaryBean(calc1);
 
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(slaSummaryBean);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,slaSummaryBean);
 
         SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
 
@@ -199,8 +202,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         wjb.setStatus(WorkflowJob.Status.SUCCEEDED);
         wjb.setStartTime(sdf.parse("2012-02-07"));
         wjb.setEndTime(sdf.parse("2013-02-07"));
-        WorkflowJobInsertJPAExecutor wfInsertCmd = new WorkflowJobInsertJPAExecutor(wjb);
-        jpaService.execute(wfInsertCmd);
+        wjb.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
@@ -220,7 +223,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // Simulate a lost failed event
         wjb.setStatus(WorkflowJob.Status.FAILED);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
+        wjb.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wjb);
 
         // Reset the summary Bean
         calc1.setEventProcessed(1);
@@ -228,9 +232,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         calc1.setJobStatus(WorkflowJob.Status.RUNNING.name());
         slaSummaryBean = new SLASummaryBean(calc1);
 
-        list = new ArrayList<JsonBean>();
-        list.add(slaSummaryBean);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
@@ -245,7 +247,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // Simulate a lost RUNNING event
         wjb.setStatus(WorkflowJob.Status.RUNNING);
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
+        wjb.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wjb);
 
         // Reset the summary Bean
         calc1.setEventProcessed(0);
@@ -253,9 +256,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         calc1.setJobStatus(null);
         slaSummaryBean = new SLASummaryBean(calc1);
 
-        list = new ArrayList<JsonBean>();
-        list.add(slaSummaryBean);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
@@ -287,9 +288,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         calc1.setLastModifiedTime(new Date());
         SLASummaryBean slaSummaryBean = new SLASummaryBean(calc1);
 
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(slaSummaryBean);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         // Simulate a lost success event
         WorkflowActionBean wab = new WorkflowActionBean();
@@ -335,9 +334,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         calc1.setLastModifiedTime(new Date());
         SLASummaryBean slaSummaryBean = new SLASummaryBean(calc1);
 
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(slaSummaryBean);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         // Simulate a lost failed event
         CoordinatorActionBean cab = new CoordinatorActionBean();
@@ -350,7 +347,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobBean wjb = new WorkflowJobBean();
         wjb.setId("wf_job");
         wjb.setStartTime(sdf.parse("2012-02-07"));
-        jpaService.execute(new WorkflowJobUpdateJPAExecutor(wjb));
+        wjb.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
@@ -444,9 +442,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // set back to 1, to make duration event not processed
         slaSummary.setEventProcessed(1);
-        List<JsonBean> list = new ArrayList<JsonBean>();
-        list.add(slaSummary);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummary);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
@@ -459,9 +455,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         ehs.getEventQueue().clear();
 
         slaSummary.setEventProcessed(1);
-        list = new ArrayList<JsonBean>();
-        list.add(slaSummary);
-        jpaService.execute(new SLACalculationInsertUpdateJPAExecutor(null, list));
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummary);
 
         slaRegBean = _createSLARegistration("job-2", AppType.WORKFLOW_JOB);
         slaRegBean.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));

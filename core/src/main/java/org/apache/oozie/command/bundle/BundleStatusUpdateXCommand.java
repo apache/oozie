@@ -28,8 +28,10 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StatusUpdateXCommand;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleActionUpdateJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -83,10 +85,14 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
 
             bundleaction.setLastModifiedTime(new Date());
             bundleaction.setCoordId(coordjob.getId());
-            jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
+            BundleActionQueryExecutor.getInstance().executeUpdate(
+                    BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, bundleaction);
             if (bundleaction.getCoordId() != null) {
-                LOG.info("Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], and new bundle action pending [{3}]", bundleaction
-                    .getBundleActionId(), bundleaction.getStatus(), coordCurrentStatus, bundleaction.getPending());
+                LOG.info(
+                        "Updated bundle action [{0}] from prev status [{1}] to current coord status [{2}], " +
+                        "and new bundle action pending [{3}]",
+                        bundleaction.getBundleActionId(), bundleaction.getStatus(), coordCurrentStatus,
+                        bundleaction.getPending());
             }
             else {
                 LOG.info("Updated Bundle action [{0}], status = [{1}], pending = [{2}]", bundleaction.getBundleActionId(),
@@ -162,18 +168,22 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             }
             bundleaction.setLastModifiedTime(new Date());
             try {
-                jpaService.execute(new BundleActionUpdateJPAExecutor(bundleaction));
+                BundleActionQueryExecutor.getInstance().executeUpdate(
+                        BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, bundleaction);
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
-            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], decrement pending so new pending = [{3}]",
+            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], " +
+            "decrement pending so new pending = [{3}]",
                             bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
                             bundleaction.getPending());
             throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
         }
         else if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {
-            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], pending = [{3}] and bundle not yet updated with coord-id",
+            LOG.info(
+                    "Bundle action [{0}] status [{1}] is different from prev coord status [{2}], " +
+                    "pending = [{3}] and bundle not yet updated with coord-id",
                     bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
                     bundleaction.getPending());
         }

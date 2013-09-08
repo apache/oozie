@@ -28,6 +28,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -62,7 +63,7 @@ public class TestCoordJobsGetFromParentIdJPAExecutor extends XDataTestCase {
         CoordinatorJobBean coordJobA1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorJobBean coordJobA2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJobA2.setAppName("something_different");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJobA2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJobA2);
         CoordinatorJobBean coordJobB = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorActionBean coordActionA1 = addRecordToCoordActionTable(coordJobA1.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
@@ -93,19 +94,19 @@ public class TestCoordJobsGetFromParentIdJPAExecutor extends XDataTestCase {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, false);
         CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob1.setAppName("coordJob1");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob1));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob1);
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob2.setAppName("coordJob2");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob2));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob2);
         CoordinatorJobBean coordJob3 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob3.setAppName("coordJob3");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob3));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob3);
         CoordinatorJobBean coordJob4 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob4.setAppName("coordJob4");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob4));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob4);
         CoordinatorJobBean coordJob5 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob5.setAppName("coordJob5");
-        jpaService.execute(new CoordJobUpdateJPAExecutor(coordJob5));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob5);
         CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob1.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
         CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob2.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
