@@ -199,7 +199,7 @@ public class TestEventGeneration extends XDataTestCase {
         job = _createWorkflowJob();
         LiteWorkflowInstance wfInstance = (LiteWorkflowInstance) job.getWorkflowInstance();
         wfInstance.start();
-        job.setWfInstance(wfInstance);
+        job.setWorkflowInstance(wfInstance);
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, job);
         WorkflowActionBean wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(job.getId() + "@one"));
         new SignalXCommand(job.getId(), wfAction.getId()).call();
@@ -293,6 +293,7 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(coord.getAppName(), event.getAppName());
 
         // Action Failure
+        wfJob.setStatus(WorkflowJob.Status.FAILED);
         action.setStatus(CoordinatorAction.Status.RUNNING);
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob);

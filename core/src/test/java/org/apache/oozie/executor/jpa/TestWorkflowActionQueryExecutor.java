@@ -65,11 +65,11 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         // UPDATE_ACTION
         Query query = WorkflowActionQueryExecutor.getInstance().getUpdateQuery(WorkflowActionQuery.UPDATE_ACTION, bean,
                 em);
-        assertEquals(query.getParameterValue("conf"), bean.getConf());
+        assertEquals(query.getParameterValue("conf"), bean.getConfBlob());
         assertEquals(query.getParameterValue("consoleUrl"), bean.getConsoleUrl());
-        assertEquals(query.getParameterValue("data"), bean.getData());
-        assertEquals(query.getParameterValue("stats"), bean.getStats());
-        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalId());
+        assertEquals(query.getParameterValue("data"), bean.getDataBlob());
+        assertEquals(query.getParameterValue("stats"), bean.getStatsBlob());
+        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalChildIDsBlob());
         assertEquals(query.getParameterValue("errorCode"), bean.getErrorCode());
         assertEquals(query.getParameterValue("errorMessage"), bean.getErrorMessage());
         assertEquals(query.getParameterValue("externalId"), bean.getExternalId());
@@ -87,7 +87,7 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("pending"), bean.getPending());
         assertEquals(query.getParameterValue("pendingAge"), bean.getPendingAge());
         assertEquals(query.getParameterValue("signalValue"), bean.getSignalValue());
-        assertEquals(query.getParameterValue("slaXml"), bean.getSlaXml());
+        assertEquals(query.getParameterValue("slaXml"), bean.getSlaXmlBlob());
         assertEquals(query.getParameterValue("startTime"), bean.getStartTimestamp());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
         assertEquals(query.getParameterValue("wfId"), bean.getWfId());
@@ -128,8 +128,8 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         query = WorkflowActionQueryExecutor.getInstance().getUpdateQuery(WorkflowActionQuery.UPDATE_ACTION_START, bean,
                 em);
         assertEquals(query.getParameterValue("startTime"), bean.getStartTimestamp());
-        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalId());
-        assertEquals(query.getParameterValue("conf"), bean.getConf());
+        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalChildIDsBlob());
+        assertEquals(query.getParameterValue("conf"), bean.getConfBlob());
         assertEquals(query.getParameterValue("errorCode"), bean.getErrorCode());
         assertEquals(query.getParameterValue("errorMessage"), bean.getErrorMessage());
         assertEquals(query.getParameterValue("externalId"), bean.getExternalId());
@@ -138,7 +138,7 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("lastCheckTime"), bean.getLastCheckTimestamp());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
         assertEquals(query.getParameterValue("externalStatus"), bean.getExternalStatus());
-        assertEquals(query.getParameterValue("data"), bean.getData());
+        assertEquals(query.getParameterValue("data"), bean.getDataBlob());
         assertEquals(query.getParameterValue("retries"), bean.getRetries());
         assertEquals(query.getParameterValue("pending"), bean.getPending());
         assertEquals(query.getParameterValue("pendingAge"), bean.getPendingAgeTimestamp());
@@ -147,10 +147,10 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         // UPDATE_ACTION_CHECK
         query = WorkflowActionQueryExecutor.getInstance().getUpdateQuery(WorkflowActionQuery.UPDATE_ACTION_CHECK, bean,
                 em);
-        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalId());
+        assertEquals(query.getParameterValue("externalChildIDs"), bean.getExternalChildIDsBlob());
         assertEquals(query.getParameterValue("externalStatus"), bean.getExternalStatus());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("data"), bean.getData());
+        assertEquals(query.getParameterValue("data"), bean.getDataBlob());
         assertEquals(query.getParameterValue("pending"), bean.getPending());
         assertEquals(query.getParameterValue("errorCode"), bean.getErrorCode());
         assertEquals(query.getParameterValue("errorMessage"), bean.getErrorMessage());

@@ -861,7 +861,7 @@ public class WorkflowStore extends Store {
         wfBean.setId(w.getId());
         wfBean.setAppName(w.getAppName());
         wfBean.setAppPath(w.getAppPath());
-        wfBean.setConf(w.getConf());
+        wfBean.setConfBlob(w.getConfBlob());
         wfBean.setGroup(w.getGroup());
         wfBean.setRun(w.getRun());
         wfBean.setUser(w.getUser());
@@ -870,11 +870,11 @@ public class WorkflowStore extends Store {
         wfBean.setExternalId(w.getExternalId());
         wfBean.setLastModifiedTime(w.getLastModifiedTime());
         wfBean.setLogToken(w.getLogToken());
-        wfBean.setProtoActionConf(w.getProtoActionConf());
-        wfBean.setSlaXml(w.getSlaXml());
+        wfBean.setProtoActionConfBlob(w.getProtoActionConfBlob());
+        wfBean.setSlaXmlBlob(w.getSlaXmlBlob());
         wfBean.setStartTime(w.getStartTime());
         wfBean.setStatus(w.getStatus());
-        wfBean.setWfInstance(w.getWfInstance());
+        wfBean.setWfInstanceBlob(w.getWfInstanceBlob());
         return wfBean;
     }
 
@@ -916,11 +916,11 @@ public class WorkflowStore extends Store {
         if (a != null) {
             WorkflowActionBean action = new WorkflowActionBean();
             action.setId(a.getId());
-            action.setConf(a.getConf());
+            action.setConfBlob(a.getConfBlob());
             action.setConsoleUrl(a.getConsoleUrl());
-            action.setData(a.getData());
-            action.setStats(a.getStats());
-            action.setExternalChildIDs(a.getExternalChildIDs());
+            action.setDataBlob(a.getDataBlob());
+            action.setStatsBlob(a.getStatsBlob());
+            action.setExternalChildIDsBlob(a.getExternalChildIDsBlob());
             action.setErrorInfo(a.getErrorCode(), a.getErrorMessage());
             action.setExternalId(a.getExternalId());
             action.setExternalStatus(a.getExternalStatus());
@@ -939,7 +939,7 @@ public class WorkflowStore extends Store {
             }
             action.setPendingAge(a.getPendingAge());
             action.setSignalValue(a.getSignalValue());
-            action.setSlaXml(a.getSlaXml());
+            action.setSlaXmlBlob(a.getSlaXmlBlob());
             action.setStartTime(a.getStartTime());
             action.setStatus(a.getStatus());
             action.setJobId(a.getWfId());
@@ -949,53 +949,5 @@ public class WorkflowStore extends Store {
             return action;
         }
         return null;
-    }
-
-    private void setWFQueryParameters(WorkflowJobBean wfBean, Query q) {
-        q.setParameter("appName", wfBean.getAppName());
-        q.setParameter("appPath", wfBean.getAppPath());
-        q.setParameter("conf", wfBean.getConf());
-        q.setParameter("groupName", wfBean.getGroup());
-        q.setParameter("run", wfBean.getRun());
-        q.setParameter("user", wfBean.getUser());
-        q.setParameter("createdTime", wfBean.getCreatedTimestamp());
-        q.setParameter("endTime", wfBean.getEndTimestamp());
-        q.setParameter("externalId", wfBean.getExternalId());
-        q.setParameter("lastModTime", new Date());
-        q.setParameter("logToken", wfBean.getLogToken());
-        q.setParameter("protoActionConf", wfBean.getProtoActionConf());
-        q.setParameter("slaXml", wfBean.getSlaXml());
-        q.setParameter("startTime", wfBean.getStartTimestamp());
-        q.setParameter("status", wfBean.getStatusStr());
-        q.setParameter("wfInstance", wfBean.getWfInstance());
-    }
-
-    private void setActionQueryParameters(WorkflowActionBean aBean, Query q) {
-        q.setParameter("conf", aBean.getConf());
-        q.setParameter("consoleUrl", aBean.getConsoleUrl());
-        q.setParameter("data", aBean.getData());
-        q.setParameter("stats", aBean.getStats());
-        q.setParameter("externalChildIDs", aBean.getExternalChildIDs());
-        q.setParameter("errorCode", aBean.getErrorCode());
-        q.setParameter("errorMessage", aBean.getErrorMessage());
-        q.setParameter("externalId", aBean.getExternalId());
-        q.setParameter("externalStatus", aBean.getExternalStatus());
-        q.setParameter("name", aBean.getName());
-        q.setParameter("cred", aBean.getCred());
-        q.setParameter("retries", aBean.getRetries());
-        q.setParameter("trackerUri", aBean.getTrackerUri());
-        q.setParameter("transition", aBean.getTransition());
-        q.setParameter("type", aBean.getType());
-        q.setParameter("endTime", aBean.getEndTimestamp());
-        q.setParameter("executionPath", aBean.getExecutionPath());
-        q.setParameter("lastCheckTime", aBean.getLastCheckTimestamp());
-        q.setParameter("logToken", aBean.getLogToken());
-        q.setParameter("pending", aBean.isPending() ? 1 : 0);
-        q.setParameter("pendingAge", aBean.getPendingAgeTimestamp());
-        q.setParameter("signalValue", aBean.getSignalValue());
-        q.setParameter("slaXml", aBean.getSlaXml());
-        q.setParameter("startTime", aBean.getStartTimestamp());
-        q.setParameter("status", aBean.getStatusStr());
-        q.setParameter("wfId", aBean.getWfId());
     }
 }

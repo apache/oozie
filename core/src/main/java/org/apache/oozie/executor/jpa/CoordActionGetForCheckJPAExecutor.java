@@ -25,6 +25,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -88,7 +89,7 @@ public class CoordActionGetForCheckJPAExecutor implements JPAExecutor<Coordinato
             bean.setLastModifiedTime(DateUtils.toDate((Timestamp) arr[5]));
         }
         if (arr[6] != null){
-            bean.setSlaXml((String) arr[6]);
+            bean.setSlaXmlBlob((StringBlob) arr[6]);
         }
         if (arr[7] != null){
             bean.setNominalTime(DateUtils.toDate((Timestamp) arr[7]));

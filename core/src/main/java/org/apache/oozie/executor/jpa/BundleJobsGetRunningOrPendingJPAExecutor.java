@@ -51,20 +51,16 @@ public class BundleJobsGetRunningOrPendingJPAExecutor implements JPAExecutor<Lis
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {
         List<BundleJobBean> bjBeans;
-        List<BundleJobBean> jobList = new ArrayList<BundleJobBean>();
         try {
             Query q = em.createNamedQuery("GET_BUNDLE_JOBS_RUNNING_OR_PENDING");
             if (limit > 0) {
                 q.setMaxResults(limit);
             }
             bjBeans = q.getResultList();
-            for (BundleJobBean j : bjBeans) {
-                jobList.add(j);
-            }
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        return jobList;
+        return bjBeans;
     }
 }

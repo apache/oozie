@@ -64,40 +64,11 @@ public class CoordActionGetJPAExecutor implements JPAExecutor<CoordinatorActionB
         CoordinatorActionBean bean = null;
         if (caBeans != null && caBeans.size() > 0) {
             bean = caBeans.get(0);
-            bean = getBeanForRunningCoordAction(bean);
             return bean;
+
         }
         else {
             throw new JPAExecutorException(ErrorCode.E0605, coordActionId);
         }
-    }
-
-    private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
-        if (a != null) {
-            CoordinatorActionBean action = new CoordinatorActionBean();
-            action.setId(a.getId());
-            action.setActionNumber(a.getActionNumber());
-            action.setActionXml(a.getActionXml());
-            action.setConsoleUrl(a.getConsoleUrl());
-            action.setCreatedConf(a.getCreatedConf());
-            action.setExternalStatus(a.getExternalStatus());
-            action.setMissingDependencies(a.getMissingDependencies());
-            action.setPushMissingDependencies(a.getPushMissingDependencies());
-            action.setRunConf(a.getRunConf());
-            action.setTimeOut(a.getTimeOut());
-            action.setTrackerUri(a.getTrackerUri());
-            action.setType(a.getType());
-            action.setCreatedTime(a.getCreatedTime());
-            action.setExternalId(a.getExternalId());
-            action.setJobId(a.getJobId());
-            action.setLastModifiedTime(a.getLastModifiedTime());
-            action.setNominalTime(a.getNominalTime());
-            action.setSlaXml(a.getSlaXml());
-            action.setStatus(a.getStatus());
-            action.setPending(a.getPending());
-            action.setRerunTime(a.getRerunTime());
-            return action;
-        }
-        return null;
     }
 }

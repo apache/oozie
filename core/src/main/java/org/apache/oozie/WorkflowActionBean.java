@@ -45,11 +45,14 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /**
- * Bean that contains all the information to start an action for a workflow node.
+ * Bean that contains all the information to start an action for a workflow
+ * node.
  */
 @Entity
 @NamedQueries({
@@ -93,11 +96,8 @@ import org.json.simple.JSONObject;
     @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.pending = 1 AND a.statusStr = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
 
     @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr = 'END_MANUAL')") })
-
 @Table(name = "WF_ACTIONS")
 public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
-
-
     @Id
     private String id;
 
@@ -144,9 +144,11 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Column(name = "log_token")
     private String logToken = null;
 
+    @Basic
     @Column(name = "sla_xml")
     @Lob
-    private String slaXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob slaXml;
 
     @Basic
     @Column(name = "name")
@@ -163,7 +165,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Basic
     @Column(name = "conf")
     @Lob
-    private String conf = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob conf;
 
     @Basic
     @Column(name = "retries")
@@ -185,17 +188,23 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Column(name = "transition")
     private String transition = null;
 
+    @Basic
     @Column(name = "data")
     @Lob
-    private String data = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob data;
 
+    @Basic
     @Column(name = "stats")
     @Lob
-    private String stats = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob stats;
 
+    @Basic
     @Column(name = "external_child_ids")
     @Lob
-    private String externalChildIDs = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob externalChildIDs;
 
     @Basic
     @Column(name = "external_id")
@@ -219,7 +228,6 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     @Column(name = "error_message", length = 500)
     private String errorMessage = null;
-
 
     /**
      * Default constructor.
@@ -348,8 +356,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * Return if the action is START_RETRY or START_MANUAL or END_RETRY or
      * END_MANUAL.
      *
-     * @return boolean true if status is START_RETRY or START_MANUAL or END_RETRY or
-     *         END_MANUAL
+     * @return boolean true if status is START_RETRY or START_MANUAL or
+     *         END_RETRY or END_MANUAL
      */
     public boolean isRetryOrManual() {
         return (getStatus() == WorkflowAction.Status.START_RETRY || getStatus() == WorkflowAction.Status.START_MANUAL
@@ -371,8 +379,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @return if the action is complete.
      */
     public boolean isComplete() {
-        return getStatus() == WorkflowAction.Status.OK || getStatus() == WorkflowAction.Status.KILLED ||
-                getStatus() == WorkflowAction.Status.ERROR;
+        return getStatus() == WorkflowAction.Status.OK || getStatus() == WorkflowAction.Status.KILLED
+                || getStatus() == WorkflowAction.Status.ERROR;
     }
 
     /**
@@ -407,7 +415,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Set a time when the action will be pending, normally a time in the future.
+     * Set a time when the action will be pending, normally a time in the
+     * future.
      *
      * @param pendingAge the time when the action will be pending.
      */
@@ -418,7 +427,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Return the pending age of the action.
      *
-     * @return the pending age of the action, <code>null</code> if the action is not pending.
+     * @return the pending age of the action, <code>null</code> if the action is
+     *         not pending.
      */
     public Date getPendingAge() {
         return DateUtils.toDate(pendingAgeTimestamp);
@@ -456,7 +466,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Set a tracking information for an action, and set the action status to {@link Action.Status#DONE}
+     * Set a tracking information for an action, and set the action status to
+     * {@link Action.Status#DONE}
      *
      * @param externalId external ID for the action.
      * @param trackerUri tracker URI for the action.
@@ -475,10 +486,12 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Set the completion information for an action start. Sets the Action status to {@link Action.Status#DONE}
+     * Set the completion information for an action start. Sets the Action
+     * status to {@link Action.Status#DONE}
      *
      * @param externalStatus action external end status.
-     * @param actionData action output data, <code>null</code> if there is no action output data.
+     * @param actionData action output data, <code>null</code> if there is no
+     *        action output data.
      */
     public void setExecutionData(String externalStatus, Properties actionData) {
         setStatus(Status.DONE);
@@ -513,7 +526,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      */
     @Override
     public String getExternalChildIDs() {
-        return externalChildIDs;
+        return externalChildIDs == null ? null : externalChildIDs.getString();
     }
 
     /**
@@ -522,15 +535,39 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param externalChildIDs as a string.
      */
     public void setExternalChildIDs(String externalChildIDs) {
+        if (this.externalChildIDs == null) {
+            this.externalChildIDs = new StringBlob(externalChildIDs);
+        }
+        else {
+            this.externalChildIDs.setString(externalChildIDs);
+        }
+    }
+
+    /**
+     * Set external child ids
+     *
+     * @param externalChildIds
+     */
+    public void setExternalChildIDsBlob(StringBlob externalChildIDs) {
         this.externalChildIDs = externalChildIDs;
+    }
+
+    /**
+     * Get external ChildIds
+     *
+     * @return
+     */
+    public StringBlob getExternalChildIDsBlob() {
+        return externalChildIDs;
     }
 
     /**
      * Set the completion information for an action end.
      *
-     * @param status action status, {@link Action.Status#OK} or {@link Action.Status#ERROR} or {@link
-     * Action.Status#KILLED}
-     * @param signalValue the signal value. In most cases, the value should be OK or ERROR.
+     * @param status action status, {@link Action.Status#OK} or
+     *        {@link Action.Status#ERROR} or {@link Action.Status#KILLED}
+     * @param signalValue the signal value. In most cases, the value should be
+     *        OK or ERROR.
      */
     public void setEndData(Status status, String signalValue) {
         if (status == null || (status != Status.OK && status != Status.ERROR && status != Status.KILLED)) {
@@ -543,7 +580,6 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         setStatus(status);
         setSignalValue(ParamChecker.notEmpty(signalValue, "signalValue"));
     }
-
 
     /**
      * Return the job Id.
@@ -572,24 +608,30 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         this.wfId = id;
     }
 
-    /**
-     * Get sla xml
-     * @return the sla xml
-     */
+    public void setSlaXml(String slaXmlStr) {
+        if (this.slaXml == null) {
+            this.slaXml = new StringBlob(slaXmlStr);
+        }
+        else {
+            this.slaXml.setString(slaXmlStr);
+        }
+    }
+
     public String getSlaXml() {
+        return slaXml == null ? null : slaXml.getString();
+    }
+
+    public void setSlaXmlBlob(StringBlob slaXml) {
+        this.slaXml = slaXml;
+    }
+
+    public StringBlob getSlaXmlBlob() {
         return slaXml;
     }
 
     /**
-     * Set sla Xml
-     * @param slaXml
-     */
-    public void setSlaXml(String slaXml) {
-        this.slaXml = slaXml;
-    }
-
-    /**
      * Set status of job
+     *
      * @param val
      */
     public void setStatus(Status val) {
@@ -603,6 +645,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set status
+     *
      * @param statusStr
      */
     public void setStatusStr(String statusStr) {
@@ -611,11 +654,13 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Get status
+     *
      * @return
      */
     public String getStatusStr() {
         return statusStr;
     }
+
     /**
      * Return the node execution path.
      *
@@ -635,8 +680,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Return the signal value for the action. <p/> For decision nodes it is the choosen transition, for actions it is
-     * OK or ERROR.
+     * Return the signal value for the action.
+     * <p/>
+     * For decision nodes it is the choosen transition, for actions it is OK or
+     * ERROR.
      *
      * @return the action signal value.
      */
@@ -645,8 +692,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Set the signal value for the action. <p/> For decision nodes it is the choosen transition, for actions it is OK
-     * or ERROR.
+     * Set the signal value for the action.
+     * <p/>
+     * For decision nodes it is the choosen transition, for actions it is OK or
+     * ERROR.
      *
      * @param signalValue the action signal value.
      */
@@ -708,7 +757,6 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         return endTimestamp;
     }
 
-
     /**
      * Return the action last check time
      *
@@ -738,6 +786,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set start time
+     *
      * @param startTime
      */
     public void setStartTime(Date startTime) {
@@ -751,12 +800,12 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set end time
+     *
      * @param endTime
      */
     public void setEndTime(Date endTime) {
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
     }
-
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
@@ -770,15 +819,15 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         json.put(JsonTags.WORKFLOW_ACTION_NAME, name);
         json.put(JsonTags.WORKFLOW_ACTION_AUTH, cred);
         json.put(JsonTags.WORKFLOW_ACTION_TYPE, type);
-        json.put(JsonTags.WORKFLOW_ACTION_CONF, conf);
+        json.put(JsonTags.WORKFLOW_ACTION_CONF, getConf());
         json.put(JsonTags.WORKFLOW_ACTION_STATUS, statusStr);
         json.put(JsonTags.WORKFLOW_ACTION_RETRIES, (long) retries);
         json.put(JsonTags.WORKFLOW_ACTION_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
         json.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
         json.put(JsonTags.WORKFLOW_ACTION_TRANSITION, transition);
-        json.put(JsonTags.WORKFLOW_ACTION_DATA, data);
-        json.put(JsonTags.WORKFLOW_ACTION_STATS, stats);
-        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS, externalChildIDs);
+        json.put(JsonTags.WORKFLOW_ACTION_DATA, getData());
+        json.put(JsonTags.WORKFLOW_ACTION_STATS, getStats());
+        json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS, getExternalChildIDs());
         json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_ID, externalId);
         json.put(JsonTags.WORKFLOW_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.WORKFLOW_ACTION_TRACKER_URI, trackerUri);
@@ -827,11 +876,24 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     @Override
     public String getConf() {
-        return conf;
+        return conf == null ? null : conf.getString();
     }
 
     public void setConf(String conf) {
+        if (this.conf == null) {
+            this.conf = new StringBlob(conf);
+        }
+        else {
+            this.conf.setString(conf);
+        }
+    }
+
+    public void setConfBlob(StringBlob conf) {
         this.conf = conf;
+    }
+
+    public StringBlob getConfBlob() {
+        return conf;
     }
 
     @Override
@@ -862,7 +924,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     /**
-     * Set user retry  max
+     * Set user retry max
+     *
      * @param retryMax
      */
     public void setUserRetryMax(int retryMax) {
@@ -885,6 +948,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set transition
+     *
      * @param transition
      */
     public void setTransition(String transition) {
@@ -893,28 +957,56 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     @Override
     public String getData() {
-        return data;
+        return data == null ? null : data.getString();
     }
 
     /**
      * Set data
+     *
      * @param data
      */
     public void setData(String data) {
+        if (this.data == null) {
+            this.data = new StringBlob(data);
+        }
+        else {
+            this.data.setString(data);
+        }
+    }
+
+    public void setDataBlob(StringBlob data) {
         this.data = data;
+    }
+
+    public StringBlob getDataBlob() {
+        return data;
     }
 
     @Override
     public String getStats() {
-        return stats;
+        return stats == null ? null : stats.getString();
     }
 
     /**
      * Set stats
+     *
      * @param stats
      */
     public void setStats(String stats) {
+        if (this.stats == null) {
+            this.stats = new StringBlob(stats);
+        }
+        else {
+            this.stats.setString(stats);
+        }
+    }
+
+    public void setStatsBlob(StringBlob stats) {
         this.stats = stats;
+    }
+
+    public StringBlob getStatsBlob() {
+        return this.stats;
     }
 
     @Override
@@ -924,6 +1016,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set external Id
+     *
      * @param externalId
      */
     public void setExternalId(String externalId) {
@@ -937,6 +1030,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set external status
+     *
      * @param externalStatus
      */
     public void setExternalStatus(String externalStatus) {
@@ -950,6 +1044,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set tracker uri
+     *
      * @param trackerUri
      */
     public void setTrackerUri(String trackerUri) {
@@ -963,6 +1058,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set console URL
+     *
      * @param consoleUrl
      */
     public void setConsoleUrl(String consoleUrl) {
@@ -981,12 +1077,13 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set the error Info
+     *
      * @param errorCode
      * @param errorMessage
      */
     public void setErrorInfo(String errorCode, String errorMessage) {
         this.errorCode = errorCode;
-        if(errorMessage != null && errorMessage.length() > 500){
+        if (errorMessage != null && errorMessage.length() > 500) {
             errorMessage = errorMessage.substring(0, 500);
         }
         this.errorMessage = errorMessage;
@@ -1012,6 +1109,5 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         }
         return array;
     }
-
 
 }

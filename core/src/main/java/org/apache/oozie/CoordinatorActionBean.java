@@ -46,6 +46,7 @@ import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -204,9 +205,11 @@ public class CoordinatorActionBean implements
     @Column(name = "external_id")
     private String externalId;
 
+    @Basic
     @Column(name = "sla_xml")
     @Lob
-    private String slaXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob slaXml = null;
 
     @Basic
     @Column(name = "pending")
@@ -220,29 +223,39 @@ public class CoordinatorActionBean implements
     @Column(name = "action_number")
     private int actionNumber;
 
+    @Basic
     @Column(name = "created_conf")
     @Lob
-    private String createdConf;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob createdConf;
 
     @Basic
     @Column(name = "time_out")
     private int timeOut = 0;
 
+    @Basic
     @Column(name = "run_conf")
     @Lob
-    private String runConf;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob runConf;
 
+    @Basic
     @Column(name = "action_xml")
     @Lob
-    private String actionXml;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob actionXml;
 
+    @Basic
     @Column(name = "missing_dependencies")
     @Lob
-    private String missingDependencies;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob missingDependencies;
 
+    @Basic
     @Column(name = "push_missing_dependencies")
     @Lob
-    private String pushMissingDependencies;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob pushMissingDependencies;
 
     @Basic
     @Column(name = "external_status")
@@ -417,12 +430,25 @@ public class CoordinatorActionBean implements
         this.externalId = externalId;
     }
 
-    public String getSlaXml() {
+    public StringBlob getSlaXmlBlob() {
         return slaXml;
     }
 
-    public void setSlaXml(String slaXml) {
+    public void setSlaXmlBlob(StringBlob slaXml) {
         this.slaXml = slaXml;
+    }
+
+    public String getSlaXml() {
+        return slaXml == null ? null : slaXml.getString();
+    }
+
+    public void setSlaXml(String slaXml) {
+        if (this.slaXml == null) {
+            this.slaXml = new StringBlob(slaXml);
+        }
+        else {
+            this.slaXml.setString(slaXml);
+        }
     }
 
     /**
@@ -536,39 +562,91 @@ public class CoordinatorActionBean implements
 
     @Override
     public String getCreatedConf() {
-        return createdConf;
+        return createdConf == null ? null : createdConf.getString();
     }
 
     public void setCreatedConf(String createdConf) {
+        if (this.createdConf == null) {
+            this.createdConf = new StringBlob(createdConf);
+        }
+        else {
+            this.createdConf.setString(createdConf);
+        }
+    }
+
+    public void setCreatedConfBlob(StringBlob createdConf) {
         this.createdConf = createdConf;
     }
 
+    public StringBlob getCreatedConfBlob() {
+        return createdConf;
+    }
 
     public void setRunConf(String runConf) {
-        this.runConf = runConf;
+        if (this.runConf == null) {
+            this.runConf = new StringBlob(runConf);
+        }
+        else {
+            this.runConf.setString(runConf);
+        }
     }
 
     @Override
     public String getRunConf() {
+        return runConf == null ? null : runConf.getString();
+    }
+
+    public void setRunConfBlob(StringBlob runConf) {
+        this.runConf = runConf;
+    }
+
+    public StringBlob getRunConfBlob() {
         return runConf;
     }
 
+
     public void setMissingDependencies(String missingDependencies) {
-        this.missingDependencies = missingDependencies;
+        if (this.missingDependencies == null) {
+            this.missingDependencies = new StringBlob(missingDependencies);
+        }
+        else {
+            this.missingDependencies.setString(missingDependencies);
+        }
     }
 
     @Override
     public String getMissingDependencies() {
+        return missingDependencies == null ? null : missingDependencies.getString();
+    }
+
+    public void setMissingDependenciesBlob(StringBlob missingDependencies) {
+        this.missingDependencies = missingDependencies;
+    }
+
+    public StringBlob getMissingDependenciesBlob() {
         return missingDependencies;
     }
 
     @Override
     public String getPushMissingDependencies() {
-        return pushMissingDependencies;
+        return pushMissingDependencies == null ? null : pushMissingDependencies.getString();
     }
 
     public void setPushMissingDependencies(String pushMissingDependencies) {
+        if (this.pushMissingDependencies == null) {
+            this.pushMissingDependencies = new StringBlob(pushMissingDependencies);
+        }
+        else {
+            this.pushMissingDependencies.setString(pushMissingDependencies);
+        }
+    }
+
+    public void setPushMissingDependenciesBlob(StringBlob pushMissingDependencies) {
         this.pushMissingDependencies = pushMissingDependencies;
+    }
+
+    public StringBlob getPushMissingDependenciesBlob() {
+        return pushMissingDependencies;
     }
 
     public String getExternalStatus() {
@@ -613,11 +691,24 @@ public class CoordinatorActionBean implements
     }
 
     public String getActionXml() {
-        return actionXml;
+        return actionXml == null ? null : actionXml.getString();
     }
 
     public void setActionXml(String actionXml) {
+        if (this.actionXml == null) {
+            this.actionXml = new StringBlob(actionXml);
+        }
+        else {
+            this.actionXml.setString(actionXml);
+        }
+    }
+
+    public void setActionXmlBlob(StringBlob actionXml) {
         this.actionXml = actionXml;
+    }
+
+    public StringBlob getActionXmlBlob() {
+        return actionXml;
     }
 
     @Override
@@ -650,7 +741,7 @@ public class CoordinatorActionBean implements
         json.put(JsonTags.COORDINATOR_JOB_ID, jobId);
         json.put(JsonTags.COORDINATOR_ACTION_TYPE, type);
         json.put(JsonTags.COORDINATOR_ACTION_NUMBER, actionNumber);
-        json.put(JsonTags.COORDINATOR_ACTION_CREATED_CONF, createdConf);
+        json.put(JsonTags.COORDINATOR_ACTION_CREATED_CONF, getCreatedConf());
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, JsonUtils
                 .formatDateRfc822(getCreatedTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, JsonUtils
@@ -659,15 +750,15 @@ public class CoordinatorActionBean implements
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
         // .formatDateRfc822(startTime), timeZoneId);
         json.put(JsonTags.COORDINATOR_ACTION_STATUS, statusStr);
-        json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, runConf);
+        json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, getRunConf());
         json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME, JsonUtils
                 .formatDateRfc822(getLastModifiedTime(), timeZoneId));
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
         // .formatDateRfc822(startTime), timeZoneId);
         // json.put(JsonTags.COORDINATOR_ACTION_END_TIME, JsonUtils
         // .formatDateRfc822(endTime), timeZoneId);
-        json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, missingDependencies);
-        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, pushMissingDependencies);
+        json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, getMissingDependencies());
+        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, getPushMissingDependencies());
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.COORDINATOR_ACTION_TRACKER_URI, trackerUri);
         json.put(JsonTags.COORDINATOR_ACTION_CONSOLE_URL, consoleUrl);

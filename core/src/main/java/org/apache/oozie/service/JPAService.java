@@ -42,6 +42,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonSLAEvent;
+import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -181,6 +182,12 @@ public class JPAService implements Service, Instrumentable {
         LOG.info("JPA configuration: {0}", logMsg);
         entityManager.getTransaction().commit();
         entityManager.close();
+        try {
+            CodecFactory.initialize(conf);
+        }
+        catch (Exception ex) {
+            throw new ServiceException(ErrorCode.E1700, ex);
+        }
     }
 
     /**

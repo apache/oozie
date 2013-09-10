@@ -74,13 +74,13 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
             case UPDATE_BUNDLE_JOB:
                 query.setParameter("appName", bjBean.getAppName());
                 query.setParameter("appPath", bjBean.getAppPath());
-                query.setParameter("conf", bjBean.getConf());
+                query.setParameter("conf", bjBean.getConfBlob());
                 query.setParameter("timeOut", bjBean.getTimeout());
                 query.setParameter("createdTimestamp", bjBean.getCreatedTimestamp());
                 query.setParameter("endTimestamp", bjBean.getEndTimestamp());
-                query.setParameter("jobXml", bjBean.getJobXml());
+                query.setParameter("jobXml", bjBean.getJobXmlBlob());
                 query.setParameter("lastModifiedTimestamp", bjBean.getLastModifiedTimestamp());
-                query.setParameter("origJobXml", bjBean.getOrigJobXml());
+                query.setParameter("origJobXml", bjBean.getOrigJobXmlBlob());
                 query.setParameter("startTimestamp", bjBean.getstartTimestamp());
                 query.setParameter("status", bjBean.getStatus().toString());
                 query.setParameter("timeUnit", bjBean.getTimeUnit());
@@ -133,13 +133,14 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
     public Query getSelectQuery(BundleJobQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
         Query query = em.createNamedQuery(namedQuery.name());
-        switch (namedQuery) {
+        BundleJobQuery bjQuery = (BundleJobQuery) namedQuery;
+        switch (bjQuery) {
             case GET_BUNDLE_JOB:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
-                        + namedQuery.name());
+                        + bjQuery.name());
         }
         return query;
     }

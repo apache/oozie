@@ -78,7 +78,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter("appName", cjBean.getAppName());
                 query.setParameter("appPath", cjBean.getAppPath());
                 query.setParameter("concurrency", cjBean.getConcurrency());
-                query.setParameter("conf", cjBean.getConf());
+                query.setParameter("conf", cjBean.getConfBlob());
                 query.setParameter("externalId", cjBean.getExternalId());
                 query.setParameter("frequency", cjBean.getFrequency());
                 query.setParameter("lastActionNumber", cjBean.getLastActionNumber());
@@ -87,12 +87,12 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter("createdTime", cjBean.getCreatedTimestamp());
                 query.setParameter("endTime", cjBean.getEndTimestamp());
                 query.setParameter("execution", cjBean.getExecution());
-                query.setParameter("jobXml", cjBean.getJobXml());
+                query.setParameter("jobXml", cjBean.getJobXmlBlob());
                 query.setParameter("lastAction", cjBean.getLastActionTimestamp());
                 query.setParameter("lastModifiedTime", cjBean.getLastModifiedTimestamp());
                 query.setParameter("nextMaterializedTime", cjBean.getNextMaterializedTimestamp());
-                query.setParameter("origJobXml", cjBean.getOrigJobXml());
-                query.setParameter("slaXml", cjBean.getSlaXml());
+                query.setParameter("origJobXml", cjBean.getOrigJobXmlBlob());
+                query.setParameter("slaXml", cjBean.getSlaXmlBlob());
                 query.setParameter("startTime", cjBean.getStartTimestamp());
                 query.setParameter("status", cjBean.getStatus().toString());
                 query.setParameter("timeUnit", cjBean.getTimeUnitStr());

@@ -38,6 +38,7 @@ import org.apache.oozie.BulkResponseInfo;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -263,7 +264,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
             actionBean.setNominalTime(DateUtils.toDate((Timestamp) arr[8]));
         }
         if (arr[9] != null) {
-            actionBean.setMissingDependencies((String) arr[9]);
+            actionBean.setMissingDependenciesBlob((StringBlob) arr[9]);
         }
         if (arr[10] != null) {
             coordBean.setId((String) arr[10]);

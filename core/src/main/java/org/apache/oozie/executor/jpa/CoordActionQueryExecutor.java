@@ -73,14 +73,14 @@ public class CoordActionQueryExecutor extends
         switch (namedQuery) {
             case UPDATE_COORD_ACTION:
                 query.setParameter("actionNumber", actionBean.getActionNumber());
-                query.setParameter("actionXml", actionBean.getActionXml());
+                query.setParameter("actionXml", actionBean.getActionXmlBlob());
                 query.setParameter("consoleUrl", actionBean.getConsoleUrl());
-                query.setParameter("createdConf", actionBean.getCreatedConf());
+                query.setParameter("createdConf", actionBean.getCreatedConfBlob());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("externalStatus", actionBean.getExternalStatus());
-                query.setParameter("missingDependencies", actionBean.getMissingDependencies());
-                query.setParameter("runConf", actionBean.getRunConf());
+                query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
+                query.setParameter("runConf", actionBean.getRunConfBlob());
                 query.setParameter("timeOut", actionBean.getTimeOut());
                 query.setParameter("trackerUri", actionBean.getTrackerUri());
                 query.setParameter("type", actionBean.getType());
@@ -89,7 +89,7 @@ public class CoordActionQueryExecutor extends
                 query.setParameter("jobId", actionBean.getJobId());
                 query.setParameter("lastModifiedTime", new Date());
                 query.setParameter("nominalTime", actionBean.getNominalTimestamp());
-                query.setParameter("slaXml", actionBean.getSlaXml());
+                query.setParameter("slaXml", actionBean.getSlaXmlBlob());
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("id", actionBean.getId());
                 break;
@@ -104,29 +104,29 @@ public class CoordActionQueryExecutor extends
             case UPDATE_COORD_ACTION_FOR_INPUTCHECK:
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("lastModifiedTime", new Date());
-                query.setParameter("actionXml", actionBean.getActionXml());
-                query.setParameter("missingDependencies", actionBean.getMissingDependencies());
+                query.setParameter("actionXml", actionBean.getActionXmlBlob());
+                query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
                 query.setParameter("id", actionBean.getId());
                 break;
 
             case UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK:
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("lastModifiedTime", new Date());
-                query.setParameter("actionXml", actionBean.getActionXml());
-                query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependencies());
+                query.setParameter("actionXml", actionBean.getActionXmlBlob());
+                query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependenciesBlob());
                 query.setParameter("id", actionBean.getId());
                 break;
 
             case UPDATE_COORD_ACTION_DEPENDENCIES:
-                query.setParameter("missingDependencies", actionBean.getMissingDependencies());
-                query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependencies());
+                query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
+                query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependenciesBlob());
                 query.setParameter("id", actionBean.getId());
                 break;
 
             case UPDATE_COORD_ACTION_FOR_START:
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("lastModifiedTime", new Date());
-                query.setParameter("runConf", actionBean.getRunConf());
+                query.setParameter("runConf", actionBean.getRunConfBlob());
                 query.setParameter("externalId", actionBean.getExternalId());
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("errorCode", actionBean.getErrorCode());
@@ -140,7 +140,7 @@ public class CoordActionQueryExecutor extends
                 break;
 
             case UPDATE_COORD_ACTION_RERUN:
-                query.setParameter("actionXml", actionBean.getActionXml());
+                query.setParameter("actionXml", actionBean.getActionXmlBlob());
                 query.setParameter("status", actionBean.getStatusStr());
                 query.setParameter("externalId", actionBean.getExternalId());
                 query.setParameter("externalStatus", actionBean.getExternalStatus());
@@ -161,13 +161,14 @@ public class CoordActionQueryExecutor extends
     public Query getSelectQuery(CoordActionQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
         Query query = em.createNamedQuery(namedQuery.name());
-        switch (namedQuery) {
+        CoordActionQuery caQuery = (CoordActionQuery) namedQuery;
+        switch (caQuery) {
             case GET_COORD_ACTION:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
-                        + namedQuery.name());
+                        + caQuery.name());
         }
         return query;
     }

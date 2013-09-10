@@ -74,7 +74,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             case UPDATE_WORKFLOW:
                 query.setParameter("appName", wfBean.getAppName());
                 query.setParameter("appPath", wfBean.getAppPath());
-                query.setParameter("conf", wfBean.getConf());
+                query.setParameter("conf", wfBean.getConfBlob());
                 query.setParameter("groupName", wfBean.getGroup());
                 query.setParameter("run", wfBean.getRun());
                 query.setParameter("user", wfBean.getUser());
@@ -83,11 +83,11 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 query.setParameter("externalId", wfBean.getExternalId());
                 query.setParameter("lastModTime", wfBean.getLastModifiedTimestamp());
                 query.setParameter("logToken", wfBean.getLogToken());
-                query.setParameter("protoActionConf", wfBean.getProtoActionConf());
-                query.setParameter("slaXml", wfBean.getSlaXml());
+                query.setParameter("protoActionConf", wfBean.getProtoActionConfBlob());
+                query.setParameter("slaXml", wfBean.getSlaXmlBlob());
                 query.setParameter("startTime", wfBean.getStartTimestamp());
                 query.setParameter("status", wfBean.getStatusStr());
-                query.setParameter("wfInstance", wfBean.getWfInstance());
+                query.setParameter("wfInstance", wfBean.getWfInstanceBlob());
                 query.setParameter("id", wfBean.getId());
                 break;
             case UPDATE_WORKFLOW_MODTIME:
@@ -106,20 +106,20 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 break;
             case UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED:
                 query.setParameter("status", wfBean.getStatus().toString());
-                query.setParameter("wfInstance", wfBean.getWfInstance());
+                query.setParameter("wfInstance", wfBean.getWfInstanceBlob());
                 query.setParameter("lastModTime", wfBean.getLastModifiedTimestamp());
                 query.setParameter("id", wfBean.getId());
                 break;
             case UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END:
                 query.setParameter("status", wfBean.getStatus().toString());
-                query.setParameter("wfInstance", wfBean.getWfInstance());
+                query.setParameter("wfInstance", wfBean.getWfInstanceBlob());
                 query.setParameter("lastModTime", wfBean.getLastModifiedTimestamp());
                 query.setParameter("endTime", wfBean.getEndTimestamp());
                 query.setParameter("id", wfBean.getId());
                 break;
             case UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END:
                 query.setParameter("status", wfBean.getStatus().toString());
-                query.setParameter("wfInstance", wfBean.getWfInstance());
+                query.setParameter("wfInstance", wfBean.getWfInstanceBlob());
                 query.setParameter("lastModTime", wfBean.getLastModifiedTimestamp());
                 query.setParameter("startTime", wfBean.getStartTimestamp());
                 query.setParameter("endTime", wfBean.getEndTimestamp());
@@ -127,9 +127,9 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 break;
             case UPDATE_WORKFLOW_RERUN:
                 query.setParameter("appName", wfBean.getAppName());
-                query.setParameter("protoActionConf", wfBean.getProtoActionConf());
+                query.setParameter("protoActionConf", wfBean.getProtoActionConfBlob());
                 query.setParameter("appPath", wfBean.getAppPath());
-                query.setParameter("conf", wfBean.getConf());
+                query.setParameter("conf", wfBean.getConfBlob());
                 query.setParameter("logToken", wfBean.getLogToken());
                 query.setParameter("user", wfBean.getUser());
                 query.setParameter("group", wfBean.getGroup());
@@ -137,7 +137,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 query.setParameter("endTime", wfBean.getEndTimestamp());
                 query.setParameter("run", wfBean.getRun());
                 query.setParameter("status", wfBean.getStatus().toString());
-                query.setParameter("wfInstance", wfBean.getWfInstance());
+                query.setParameter("wfInstance", wfBean.getWfInstanceBlob());
                 query.setParameter("lastModTime", wfBean.getLastModifiedTimestamp());
                 query.setParameter("id", wfBean.getId());
                 break;

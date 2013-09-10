@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import javax.persistence.Query;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 /**
  * Load the WorkflowAction into a Bean and return it.
@@ -64,51 +65,10 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
         WorkflowActionBean bean = null;
         if (waBeans != null && waBeans.size() > 0) {
             bean = waBeans.get(0);
-            bean = getBeanForRunningAction(bean);
             return bean;
         }
         else {
             throw new JPAExecutorException(ErrorCode.E0605, wfActionId);
         }
     }
-
-    private WorkflowActionBean getBeanForRunningAction(WorkflowActionBean a) {
-        if (a != null) {
-            WorkflowActionBean action = new WorkflowActionBean();
-            action.setId(a.getId());
-            action.setConf(a.getConf());
-            action.setConsoleUrl(a.getConsoleUrl());
-            action.setData(a.getData());
-            action.setStats(a.getStats());
-            action.setExternalChildIDs(a.getExternalChildIDs());
-            action.setErrorInfo(a.getErrorCode(), a.getErrorMessage());
-            action.setExternalId(a.getExternalId());
-            action.setExternalStatus(a.getExternalStatus());
-            action.setName(a.getName());
-            action.setCred(a.getCred());
-            action.setRetries(a.getRetries());
-            action.setTrackerUri(a.getTrackerUri());
-            action.setTransition(a.getTransition());
-            action.setType(a.getType());
-            action.setEndTime(a.getEndTime());
-            action.setExecutionPath(a.getExecutionPath());
-            action.setLastCheckTime(a.getLastCheckTime());
-            action.setLogToken(a.getLogToken());
-            if (a.isPending() == true) {
-                action.setPending();
-            }
-            action.setPendingAge(a.getPendingAge());
-            action.setSignalValue(a.getSignalValue());
-            action.setSlaXml(a.getSlaXml());
-            action.setStartTime(a.getStartTime());
-            action.setStatus(a.getStatus());
-            action.setJobId(a.getWfId());
-            action.setUserRetryCount(a.getUserRetryCount());
-            action.setUserRetryInterval(a.getUserRetryInterval());
-            action.setUserRetryMax(a.getUserRetryMax());
-            return action;
-        }
-        return null;
-    }
-
 }

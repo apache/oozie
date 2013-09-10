@@ -72,11 +72,11 @@ public class WorkflowActionQueryExecutor extends
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case UPDATE_ACTION:
-                query.setParameter("conf", actionBean.getConf());
+                query.setParameter("conf", actionBean.getConfBlob());
                 query.setParameter("consoleUrl", actionBean.getConsoleUrl());
-                query.setParameter("data", actionBean.getData());
-                query.setParameter("stats", actionBean.getStats());
-                query.setParameter("externalChildIDs", actionBean.getExternalChildIDs());
+                query.setParameter("data", actionBean.getDataBlob());
+                query.setParameter("stats", actionBean.getStatsBlob());
+                query.setParameter("externalChildIDs", actionBean.getExternalChildIDsBlob());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("externalId", actionBean.getExternalId());
@@ -94,7 +94,7 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("signalValue", actionBean.getSignalValue());
-                query.setParameter("slaXml", actionBean.getSlaXml());
+                query.setParameter("slaXml", actionBean.getSlaXmlBlob());
                 query.setParameter("startTime", actionBean.getStartTimestamp());
                 query.setParameter("status", actionBean.getStatusStr());
                 query.setParameter("wfId", actionBean.getWfId());
@@ -127,8 +127,8 @@ public class WorkflowActionQueryExecutor extends
                 break;
             case UPDATE_ACTION_START:
                 query.setParameter("startTime", actionBean.getStartTimestamp());
-                query.setParameter("externalChildIDs", actionBean.getExternalChildIDs());
-                query.setParameter("conf", actionBean.getConf());
+                query.setParameter("externalChildIDs", actionBean.getExternalChildIDsBlob());
+                query.setParameter("conf", actionBean.getConfBlob());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("externalId", actionBean.getExternalId());
@@ -137,7 +137,7 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("lastCheckTime", actionBean.getLastCheckTimestamp());
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("externalStatus", actionBean.getExternalStatus());
-                query.setParameter("data", actionBean.getData());
+                query.setParameter("data", actionBean.getDataBlob());
                 query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
@@ -145,10 +145,10 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_CHECK:
-                query.setParameter("externalChildIDs", actionBean.getExternalChildIDs());
+                query.setParameter("externalChildIDs", actionBean.getExternalChildIDsBlob());
                 query.setParameter("externalStatus", actionBean.getExternalStatus());
                 query.setParameter("status", actionBean.getStatus().toString());
-                query.setParameter("data", actionBean.getData());
+                query.setParameter("data", actionBean.getDataBlob());
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
@@ -182,13 +182,14 @@ public class WorkflowActionQueryExecutor extends
     public Query getSelectQuery(WorkflowActionQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
         Query query = em.createNamedQuery(namedQuery.name());
-        switch (namedQuery) {
+        WorkflowActionQuery waQuery = (WorkflowActionQuery) namedQuery;
+        switch (waQuery) {
             case GET_ACTION:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
-                        + namedQuery.name());
+                        + waQuery.name());
         }
         return query;
     }

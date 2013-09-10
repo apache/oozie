@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,6 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
 
     private Date dateInput;
     private int limit;
-    private List<CoordinatorJobBean> jobList;
 
     /**
      * @param date
@@ -46,7 +45,6 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
         ParamChecker.notNull(date, "Coord Job Materialization Date");
         this.dateInput = date;
         this.limit = limit;
-        jobList = new ArrayList<CoordinatorJobBean>();
     }
 
     /* (non-Javadoc)
@@ -55,6 +53,7 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
     @SuppressWarnings("unchecked")
     @Override
     public List<CoordinatorJobBean> execute(EntityManager em) throws JPAExecutorException {
+        List<CoordinatorJobBean> cjBeans;
         try {
             Query q = em.createNamedQuery("GET_COORD_JOBS_OLDER_THAN");
             q.setParameter("matTime", new Timestamp(this.dateInput.getTime()));
@@ -62,16 +61,12 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
                 q.setMaxResults(limit);
             }
 
-            List<CoordinatorJobBean> cjBeans = q.getResultList();
-            // copy results to a new object
-            for (CoordinatorJobBean j : cjBeans) {
-                jobList.add(j);
-            }
+           cjBeans = q.getResultList();
         }
         catch (IllegalStateException e) {
             throw new JPAExecutorException(ErrorCode.E0601, e.getMessage(), e);
         }
-        return jobList;
+        return cjBeans;
     }
 
     @Override
