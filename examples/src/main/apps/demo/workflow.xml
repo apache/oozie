@@ -65,8 +65,8 @@
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node"/>
             </prepare>
             <streaming>
-                <mapper>/bin/cat</mapper>
-                <reducer>/usr/bin/wc</reducer>
+                <mapper>${streamingMapper}</mapper>
+                <reducer>${streamingReducer}</reducer>
             </streaming>
             <configuration>
                 <property>

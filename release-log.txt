@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1496 Oozie demo and streaming examples fails to run on Windows (eshevchuk via rkanter)
 OOZIE-1462 Compress lob columns before storing in database (virag)
 OOZIE-1499 Update only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1522 SignalX may try to insert transition for a forked node twice (virag)
