@@ -45,6 +45,7 @@ import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -129,9 +130,11 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     @Column(name = "external_id")
     private String externalId = null;
 
+    @Basic
     @Column(name = "conf")
     @Lob
-    private String conf = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob conf = null;
 
     @Basic
     @Column(name = "frequency")
@@ -227,18 +230,23 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     @Column(name = "suspended_time")
     private java.sql.Timestamp suspendedTimestamp = null;
 
+    @Basic
     @Column(name = "job_xml")
     @Lob
-    private String jobXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob jobXml = null;
 
+    @Basic
     @Column(name = "orig_job_xml")
     @Lob
-    private String origJobXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob origJobXml = null;
 
-
+    @Basic
     @Column(name = "sla_xml")
     @Lob
-    private String slaXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob slaXml = null;
 
     @Basic
     @Column(name = "pending")
@@ -348,7 +356,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @return job xml
      */
     public String getJobXml() {
-        return jobXml;
+        return jobXml == null ? null : jobXml.getString();
     }
 
     /**
@@ -357,7 +365,20 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @param jobXml job xml
      */
     public void setJobXml(String jobXml) {
-        this.jobXml = jobXml;
+        if (this.jobXml == null) {
+            this.jobXml = new StringBlob(jobXml);
+        }
+        else {
+            this.jobXml.setString(jobXml);
+        }
+    }
+
+    public void setJobXmlBlob (StringBlob jobXmlBlob) {
+        this.jobXml = jobXmlBlob;
+    }
+
+    public StringBlob getJobXmlBlob() {
+        return jobXml;
     }
 
     /**
@@ -366,7 +387,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @return original job xml
      */
     public String getOrigJobXml() {
-        return origJobXml;
+        return origJobXml == null ? null : origJobXml.getString();
     }
 
     /**
@@ -375,7 +396,20 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @param origJobXml
      */
     public void setOrigJobXml(String origJobXml) {
+        if (this.origJobXml == null) {
+            this.origJobXml = new StringBlob(origJobXml);
+        }
+        else {
+            this.origJobXml.setString(origJobXml);
+        }
+    }
+
+    public void setOrigJobXmlBlob (StringBlob origJobXml) {
         this.origJobXml = origJobXml;
+    }
+
+    public StringBlob getOrigJobXmlBlob() {
+        return origJobXml;
     }
 
     /**
@@ -384,7 +418,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @return sla xml
      */
     public String getSlaXml() {
-        return slaXml;
+        return slaXml == null ? null : slaXml.getString();
     }
 
     /**
@@ -393,8 +427,22 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
      * @param slaXml sla xml
      */
     public void setSlaXml(String slaXml) {
+        if (this.slaXml == null) {
+            this.slaXml = new StringBlob(slaXml);
+        }
+        else {
+            this.slaXml.setString(slaXml);
+        }
+    }
+
+    public void setSlaXmlBlob(StringBlob slaXml) {
         this.slaXml = slaXml;
     }
+
+    public StringBlob getSlaXmlBlob() {
+        return slaXml;
+    }
+
 
 
     /**
@@ -809,11 +857,24 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     }
 
     public String getConf() {
-        return conf;
+        return conf == null ? null : conf.getString();
     }
 
     public void setConf(String conf) {
+        if (this.conf == null) {
+            this.conf = new StringBlob(conf);
+        }
+        else {
+            this.conf.setString(conf);
+        }
+    }
+
+    public void setConfBlob(StringBlob conf) {
         this.conf = conf;
+    }
+
+    public StringBlob getConfBlob() {
+        return conf;
     }
 
     public void setFrequency(String frequency) {

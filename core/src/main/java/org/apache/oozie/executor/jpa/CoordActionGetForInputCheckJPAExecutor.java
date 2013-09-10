@@ -23,6 +23,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -77,7 +78,7 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
             bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[2]));
         }
         if (arr[3] != null) {
-            bean.setRunConf((String) arr[3]);
+            bean.setRunConfBlob((StringBlob) arr[3]);
         }
         if (arr[4] != null) {
             bean.setNominalTime(DateUtils.toDate((Timestamp) arr[4]));
@@ -86,13 +87,13 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
             bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[5]));
         }
         if (arr[6] != null) {
-            bean.setActionXml((String) arr[6]);
+            bean.setActionXmlBlob((StringBlob) arr[6]);
         }
         if (arr[7] != null) {
-            bean.setMissingDependencies((String) arr[7]);
+            bean.setMissingDependenciesBlob((StringBlob) arr[7]);
         }
         if (arr[8] != null) {
-            bean.setPushMissingDependencies((String) arr[8]);
+            bean.setPushMissingDependenciesBlob((StringBlob) arr[8]);
         }
         if (arr[9] != null) {
             bean.setTimeOut((Integer) arr[9]);

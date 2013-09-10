@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,18 +47,15 @@ public class BundleJobsGetNeedStartJPAExecutor implements JPAExecutor<List<Bundl
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {
         List<BundleJobBean> bjBeans;
-        List<BundleJobBean> jobList = new ArrayList<BundleJobBean>();
         try {
             Query q = em.createNamedQuery("GET_BUNDLE_JOBS_NEED_START");
             q.setParameter("currentTime", new Timestamp(date.getTime()));
             bjBeans = q.getResultList();
-            for (BundleJobBean j : bjBeans) {
-                jobList.add(j);
-            }
+
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-        return jobList;
+        return bjBeans;
     }
 }

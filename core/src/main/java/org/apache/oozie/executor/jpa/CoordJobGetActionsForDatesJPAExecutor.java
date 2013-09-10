@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,44 +59,11 @@ public class CoordJobGetActionsForDatesJPAExecutor implements JPAExecutor<List<C
             q.setParameter("startTime", new Timestamp(startDate.getTime()));
             q.setParameter("endTime", new Timestamp(endDate.getTime()));
             actions = q.getResultList();
-
-            List<CoordinatorActionBean> actionList = new ArrayList<CoordinatorActionBean>();
-            for (CoordinatorActionBean a : actions) {
-                CoordinatorActionBean aa = getBeanForRunningCoordAction(a);
-                actionList.add(aa);
-            }
-            return actionList;
+            return actions;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
-        }       
+        }
     }
 
-    private CoordinatorActionBean getBeanForRunningCoordAction(CoordinatorActionBean a) {
-        if (a != null) {
-            CoordinatorActionBean action = new CoordinatorActionBean();
-            action.setId(a.getId());
-            action.setActionNumber(a.getActionNumber());
-            action.setActionXml(a.getActionXml());
-            action.setConsoleUrl(a.getConsoleUrl());
-            action.setCreatedConf(a.getCreatedConf());
-            //action.setErrorCode(a.getErrorCode());
-            //action.setErrorMessage(a.getErrorMessage());
-            action.setExternalStatus(a.getExternalStatus());
-            action.setMissingDependencies(a.getMissingDependencies());
-            action.setRunConf(a.getRunConf());
-            action.setTimeOut(a.getTimeOut());
-            action.setTrackerUri(a.getTrackerUri());
-            action.setType(a.getType());
-            action.setCreatedTime(a.getCreatedTime());
-            action.setExternalId(a.getExternalId());
-            action.setJobId(a.getJobId());
-            action.setLastModifiedTime(a.getLastModifiedTime());
-            action.setNominalTime(a.getNominalTime());
-            action.setSlaXml(a.getSlaXml());
-            action.setStatus(a.getStatus());
-            return action;
-        }
-        return null;
-    }
 }

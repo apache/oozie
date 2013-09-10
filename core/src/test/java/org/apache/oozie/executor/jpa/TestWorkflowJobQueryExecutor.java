@@ -55,7 +55,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         Query query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(WorkflowJobQuery.UPDATE_WORKFLOW, bean, em);
         assertEquals(query.getParameterValue("appName"), bean.getAppName());
         assertEquals(query.getParameterValue("appPath"), bean.getAppPath());
-        assertEquals(query.getParameterValue("conf"), bean.getConf());
+        assertEquals(query.getParameterValue("conf"), bean.getConfBlob());
         assertEquals(query.getParameterValue("groupName"), bean.getGroup());
         assertEquals(query.getParameterValue("run"), bean.getRun());
         assertEquals(query.getParameterValue("user"), bean.getUser());
@@ -64,11 +64,11 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("externalId"), bean.getExternalId());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("logToken"), bean.getLogToken());
-        assertEquals(query.getParameterValue("protoActionConf"), bean.getProtoActionConf());
-        assertEquals(query.getParameterValue("slaXml"), bean.getSlaXml());
+        assertEquals(query.getParameterValue("protoActionConf"), bean.getProtoActionConfBlob());
+        assertEquals(query.getParameterValue("slaXml"), bean.getSlaXmlBlob());
         assertEquals(query.getParameterValue("startTime"), bean.getStartTimestamp());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("id"), bean.getId());
 
         // UPDATE_WORKFLOW_MODTIME
@@ -95,7 +95,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(
                 WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, bean, em);
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("id"), bean.getId());
 
@@ -103,7 +103,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(
                 WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, bean, em);
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("endTime"), bean.getEndTimestamp());
         assertEquals(query.getParameterValue("id"), bean.getId());
@@ -112,7 +112,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(
                 WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, bean, em);
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("endTime"), bean.getEndTimestamp());
         assertEquals(query.getParameterValue("id"), bean.getId());
@@ -121,7 +121,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(
                 WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, bean, em);
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("startTime"), bean.getStartTimestamp());
         assertEquals(query.getParameterValue("endTime"), bean.getEndTimestamp());
@@ -130,9 +130,9 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         // UPDATE_WORKFLOW_RERUN
         query = WorkflowJobQueryExecutor.getInstance().getUpdateQuery(WorkflowJobQuery.UPDATE_WORKFLOW_RERUN, bean, em);
         assertEquals(query.getParameterValue("appName"), bean.getAppName());
-        assertEquals(query.getParameterValue("protoActionConf"), bean.getProtoActionConf());
+        assertEquals(query.getParameterValue("protoActionConf"), bean.getProtoActionConfBlob());
         assertEquals(query.getParameterValue("appPath"), bean.getAppPath());
-        assertEquals(query.getParameterValue("conf"), bean.getConf());
+        assertEquals(query.getParameterValue("conf"), bean.getConfBlob());
         assertEquals(query.getParameterValue("logToken"), bean.getLogToken());
         assertEquals(query.getParameterValue("user"), bean.getUser());
         assertEquals(query.getParameterValue("group"), bean.getGroup());
@@ -140,7 +140,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("endTime"), bean.getEndTimestamp());
         assertEquals(query.getParameterValue("run"), bean.getRun());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstance());
+        assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("id"), bean.getId());
 

@@ -26,6 +26,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.ParamChecker;
 
@@ -112,7 +113,7 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
             bean.setExternalId((String) arr[3]);
         }
         if (arr[4] != null) {
-            bean.setPushMissingDependencies((String) arr[4]);
+            bean.setPushMissingDependenciesBlob((StringBlob) arr[4]);
         }
         return bean;
     }

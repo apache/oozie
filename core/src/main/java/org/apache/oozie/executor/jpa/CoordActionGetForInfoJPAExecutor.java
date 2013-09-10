@@ -25,6 +25,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -88,7 +89,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
             }
 
             if (caBeans != null && caBeans.size() > 0) {
-                CoordinatorActionBean bean = getBeanForCoordAction(caBeans.get(0));
+                CoordinatorActionBean bean = caBeans.get(0);
                 return bean;
             }
             else {
@@ -99,34 +100,6 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
     }
 
 
-    private CoordinatorActionBean getBeanForCoordAction(CoordinatorActionBean a){
-        if (a != null) {
-            CoordinatorActionBean action = new CoordinatorActionBean();
-            action.setId(a.getId());
-            action.setActionNumber(a.getActionNumber());
-            action.setActionXml(a.getActionXml());
-            action.setConsoleUrl(a.getConsoleUrl());
-            action.setCreatedConf(a.getCreatedConf());
-            action.setExternalStatus(a.getExternalStatus());
-            action.setMissingDependencies(a.getMissingDependencies());
-            action.setPushMissingDependencies(a.getPushMissingDependencies());
-            action.setRunConf(a.getRunConf());
-            action.setTimeOut(a.getTimeOut());
-            action.setTrackerUri(a.getTrackerUri());
-            action.setType(a.getType());
-            action.setCreatedTime(a.getCreatedTime());
-            action.setExternalId(a.getExternalId());
-            action.setJobId(a.getJobId());
-            action.setLastModifiedTime(a.getLastModifiedTime());
-            action.setNominalTime(a.getNominalTime());
-            action.setSlaXml(a.getSlaXml());
-            action.setStatus(a.getStatus());
-            action.setPending(a.getPending());
-            action.setRerunTime(a.getRerunTime());
-            return action;
-        }
-        return null;
-    }
 
     private CoordinatorActionBean getBeanForRunningCoordAction(Object[] arr) {
         CoordinatorActionBean bean = new CoordinatorActionBean();
@@ -170,10 +143,10 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
             bean.setLastModifiedTime(DateUtils.toDate((Timestamp) arr[12]));
         }
         if (arr[13] != null) {
-            bean.setMissingDependencies((String) arr[13]);
+            bean.setMissingDependenciesBlob((StringBlob) arr[13]);
         }
         if (arr[14] != null) {
-            bean.setPushMissingDependencies((String) arr[14]);
+            bean.setPushMissingDependenciesBlob((StringBlob) arr[14]);
         }
         return bean;
     }

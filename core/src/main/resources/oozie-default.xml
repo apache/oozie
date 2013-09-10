@@ -25,6 +25,18 @@
     <!-- ************************** VERY IMPORTANT  ************************** -->
 
     <property>
+        <name>oozie.output.compression.codec</name>
+        <value>gz</value>
+        <description>
+            The name of the compression codec to use.
+            The implementation class for the codec needs to be specified through another property oozie.compression.codecs.
+            You can specify a comma separated list of 'Codec_name'='Codec_class' for oozie.compression.codecs
+            where codec class implements the interface org.apache.oozie.compression.CompressionCodec.
+            If oozie.compression.codecs is not specified, gz codec implementation is used by default.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.mapreduce.uber.jar.enable</name>
         <value>false</value>
         <description>

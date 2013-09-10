@@ -48,6 +48,7 @@ import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -120,9 +121,11 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     @Column(name = "external_id")
     private String externalId = null;
 
+    @Basic
     @Column(name = "conf")
     @Lob
-    private String conf = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob conf;
 
     @Basic
     @Column(name = "time_out")
@@ -183,13 +186,17 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     @Column(name = "suspended_time")
     private java.sql.Timestamp suspendedTimestamp = null;
 
+    @Basic
     @Column(name = "job_xml")
     @Lob
-    private String jobXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob jobXml;
 
+    @Basic
     @Column(name = "orig_job_xml")
     @Lob
-    private String origJobXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob origJobXml = null;
 
 
     @Transient
@@ -354,28 +361,55 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
      * @return the jobXml
      */
     public String getJobXml() {
-        return jobXml;
+        return jobXml == null ? null : jobXml.getString();
     }
 
     /**
      * @param jobXml the jobXml to set
      */
     public void setJobXml(String jobXml) {
-        this.jobXml = jobXml;
+        if (this.jobXml == null) {
+            this.jobXml = new StringBlob(jobXml);
+        }
+        else {
+            this.jobXml.setString(jobXml);
+        }
+
+    }
+
+    public void setJobXmlBlob (StringBlob jobXmlBlob) {
+        this.jobXml = jobXmlBlob;
+    }
+
+    public StringBlob getJobXmlBlob() {
+        return jobXml;
     }
 
     /**
      * @return the origJobXml
      */
     public String getOrigJobXml() {
-        return origJobXml;
+        return origJobXml == null ? null : origJobXml.getString();
     }
 
     /**
      * @param origJobXml the origJobXml to set
      */
     public void setOrigJobXml(String origJobXml) {
+        if (this.origJobXml == null) {
+            this.origJobXml = new StringBlob(origJobXml);
+        }
+        else {
+            this.origJobXml.setString(origJobXml);
+        }
+    }
+
+    public void setOrigJobXmlBlob (StringBlob origJobXml) {
         this.origJobXml = origJobXml;
+    }
+
+    public StringBlob getOrigJobXmlBlob() {
+        return origJobXml;
     }
 
     /**
@@ -499,7 +533,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
         json.put(JsonTags.BUNDLE_JOB_NAME, appName);
         json.put(JsonTags.BUNDLE_JOB_ID, id);
         json.put(JsonTags.BUNDLE_JOB_EXTERNAL_ID, externalId);
-        json.put(JsonTags.BUNDLE_JOB_CONF, conf);
+        json.put(JsonTags.BUNDLE_JOB_CONF, getConf());
         json.put(JsonTags.BUNDLE_JOB_STATUS, getStatus().toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEUNIT, getTimeUnit().toString());
         json.put(JsonTags.BUNDLE_JOB_TIMEOUT, timeOut);
@@ -530,7 +564,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
 
     @Override
     public String getConf() {
-        return conf;
+        return conf == null ? null : conf.getString();
     }
 
     @Override
@@ -619,7 +653,20 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
      * @param conf the conf to set
      */
     public void setConf(String conf) {
+        if (this.conf == null) {
+            this.conf = new StringBlob(conf);
+        }
+        else {
+            this.conf.setString(conf);
+        }
+    }
+
+    public void setConfBlob(StringBlob conf) {
         this.conf = conf;
+    }
+
+    public StringBlob getConfBlob() {
+        return conf;
     }
 
     /**

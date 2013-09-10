@@ -49,6 +49,7 @@ import javax.persistence.Transient;
 import java.sql.Timestamp;
 
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -113,9 +114,11 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     @Id
     private String id;
 
+    @Basic
     @Column(name = "proto_action_conf")
     @Lob
-    private String protoActionConf = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob protoActionConf;
 
     @Basic
     @Column(name = "log_token")
@@ -149,15 +152,17 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     @Column(name = "last_modified_time")
     private java.sql.Timestamp lastModifiedTimestamp = null;
 
-    // @Basic(fetch = FetchType.LAZY)
-    // @Column(name="wfinstance",columnDefinition="blob")
+    @Basic
     @Column(name = "wf_instance")
     @Lob
-    private byte[] wfInstance = null;
+    @Strategy("org.apache.oozie.executor.jpa.BinaryBlobValueHandler")
+    private BinaryBlob wfInstance ;
 
+    @Basic
     @Column(name = "sla_xml")
     @Lob
-    private String slaXml = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob slaXml;
 
 
     @Basic
@@ -168,9 +173,11 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     @Column(name = "app_path")
     private String appPath = null;
 
+    @Basic
     @Column(name = "conf")
     @Lob
-    private String conf = null;
+    @Strategy("org.apache.oozie.executor.jpa.StringBlobValueHandler")
+    private StringBlob conf;
 
     @Basic
     @Column(name = "user_name")
@@ -223,7 +230,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         WritableUtils.writeStr(dataOutput, getGroup());
         dataOutput.writeInt(getRun());
         WritableUtils.writeStr(dataOutput, logToken);
-        WritableUtils.writeStr(dataOutput, protoActionConf);
+        WritableUtils.writeStr(dataOutput, getProtoActionConf());
     }
 
     /**
@@ -260,9 +267,8 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         setGroup(WritableUtils.readStr(dataInput));
         setRun(dataInput.readInt());
         logToken = WritableUtils.readStr(dataInput);
-        protoActionConf = WritableUtils.readStr(dataInput);
+        setProtoActionConf(WritableUtils.readStr(dataInput));
         setExternalId(getExternalId());
-        setProtoActionConf(protoActionConf);
     }
 
     public boolean inTerminalState() {
@@ -288,39 +294,70 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     }
 
     public String getSlaXml() {
-        return slaXml;
+        return slaXml == null ? null : slaXml.getString();
     }
 
     public void setSlaXml(String slaXml) {
+        if (this.slaXml == null) {
+            this.slaXml = new StringBlob(slaXml);
+        }
+        else {
+            this.slaXml.setString(slaXml);
+        }
+    }
+
+    public void setSlaXmlBlob(StringBlob slaXml) {
         this.slaXml = slaXml;
     }
 
-    public WorkflowInstance getWorkflowInstance() {
-        return get(this.wfInstance);
+    public StringBlob getSlaXmlBlob() {
+        return this.slaXml;
     }
 
-    public byte[] getWfInstance() {
-        return wfInstance;
+    public WorkflowInstance getWorkflowInstance() {
+        return wfInstance == null ? null : get(wfInstance.getBytes());
+    }
+
+    public BinaryBlob getWfInstanceBlob() {
+        return this.wfInstance;
     }
 
     public void setWorkflowInstance(WorkflowInstance workflowInstance) {
-        setWfInstance(workflowInstance);
+        if (this.wfInstance == null) {
+            this.wfInstance = new BinaryBlob(WritableUtils.toByteArray((LiteWorkflowInstance) workflowInstance), true);
+        }
+        else {
+            this.wfInstance.setBytes(WritableUtils.toByteArray((LiteWorkflowInstance) workflowInstance));
+        }
     }
 
-    public void setWfInstance(byte[] wfInstance) {
+    public void setWfInstanceBlob(BinaryBlob wfInstance) {
         this.wfInstance = wfInstance;
     }
 
-    public void setWfInstance(WorkflowInstance wfInstance) {
-        this.wfInstance = WritableUtils.toByteArray((LiteWorkflowInstance) wfInstance);
-    }
-
     public String getProtoActionConf() {
-        return protoActionConf;
+        return protoActionConf == null ? null : protoActionConf.getString();
     }
 
     public void setProtoActionConf(String protoActionConf) {
-        this.protoActionConf = protoActionConf;
+        if (this.protoActionConf == null) {
+            this.protoActionConf = new StringBlob(protoActionConf);
+        }
+        else {
+            this.protoActionConf.setString(protoActionConf);
+        }
+    }
+
+    public void setProtoActionConfBlob (StringBlob protoBytes) {
+        this.protoActionConf = protoBytes;
+    }
+
+    public StringBlob getProtoActionConfBlob() {
+        return this.protoActionConf;
+    }
+
+    public String getlogToken() {
+        return logToken;
     }
 
     public Timestamp getLastModifiedTimestamp() {
@@ -457,11 +494,24 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     }
 
     public String getConf() {
-        return conf;
+        return conf == null ? null : conf.getString();
     }
 
     public void setConf(String conf) {
+        if (this.conf == null) {
+            this.conf = new StringBlob(conf);
+        }
+        else {
+            this.conf.setString(conf);
+        }
+    }
+
+    public void setConfBlob(StringBlob conf) {
         this.conf = conf;
+    }
+
+    public StringBlob getConfBlob() {
+        return this.conf;
     }
 
     public String getUser() {

@@ -55,7 +55,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("appName"), cjBean.getAppName());
         assertEquals(query.getParameterValue("appPath"), cjBean.getAppPath());
         assertEquals(query.getParameterValue("concurrency"), cjBean.getConcurrency());
-        assertEquals(query.getParameterValue("conf"), cjBean.getConf());
+        assertEquals(query.getParameterValue("conf"), cjBean.getConfBlob());
         assertEquals(query.getParameterValue("externalId"), cjBean.getExternalId());
         assertEquals(query.getParameterValue("frequency"), cjBean.getFrequency());
         assertEquals(query.getParameterValue("lastActionNumber"), cjBean.getLastActionNumber());
@@ -64,12 +64,12 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("createdTime"), cjBean.getCreatedTimestamp());
         assertEquals(query.getParameterValue("endTime"), cjBean.getEndTimestamp());
         assertEquals(query.getParameterValue("execution"), cjBean.getExecution());
-        assertEquals(query.getParameterValue("jobXml"), cjBean.getJobXml());
+        assertEquals(query.getParameterValue("jobXml"), cjBean.getJobXmlBlob());
         assertEquals(query.getParameterValue("lastAction"), cjBean.getLastActionTimestamp());
         assertEquals(query.getParameterValue("lastModifiedTime"), cjBean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("nextMaterializedTime"), cjBean.getNextMaterializedTimestamp());
-        assertEquals(query.getParameterValue("origJobXml"), cjBean.getOrigJobXml());
-        assertEquals(query.getParameterValue("slaXml"), cjBean.getSlaXml());
+        assertEquals(query.getParameterValue("origJobXml"), cjBean.getOrigJobXmlBlob());
+        assertEquals(query.getParameterValue("slaXml"), cjBean.getSlaXmlBlob());
         assertEquals(query.getParameterValue("startTime"), cjBean.getStartTimestamp());
         assertEquals(query.getParameterValue("status"), cjBean.getStatus().toString());
         assertEquals(query.getParameterValue("timeUnit"), cjBean.getTimeUnit().toString());
