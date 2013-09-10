@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1509 Do not preload all tabs in Oozie UI and make Active Jobs default (mona)
 OOZIE-1496 Oozie demo and streaming examples fails to run on Windows (eshevchuk via rkanter)
 OOZIE-1462 Compress lob columns before storing in database (virag)
 OOZIE-1499 Update only necessary columns and consolidate JPA Executors (ryota)

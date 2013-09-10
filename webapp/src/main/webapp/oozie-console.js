@@ -1473,12 +1473,12 @@ function showConfigurationInWindow(dataObject, windowTitle) {
 var coord_jobs_store = new Ext.data.JsonStore({
 	baseParams: {
         jobtype: "coord",
-        filter: "",
+        filter: "status=RUNNING;status=RUNNINGWITHERROR",
         timezone: getTimeZone()
     },
     idProperty: 'coordJobId',
     totalProperty: 'total',
-    autoLoad: true,
+    autoLoad: false,
     root: 'coordinatorjobs',
     fields: ['coordJobId', 'coordJobName', 'status', 'user', 'group', 'frequency', 'timeUnit', {name: 'startTime', sortType: Ext.data.SortTypes.asDate}, {name: 'nextMaterializedTime', sortType: Ext.data.SortTypes.asDate}],
     proxy: new Ext.data.HttpProxy({
@@ -1492,7 +1492,7 @@ coord_jobs_store.proxy.conn.method = "GET";
  */
 var jobs_store = new Ext.data.JsonStore({
     baseParams: {
-        filter: "",
+        filter: "status=RUNNING",
         timezone: getTimeZone()
     },
     idProperty: 'id',
@@ -1513,12 +1513,12 @@ var bundle_jobs_store = new Ext.data.JsonStore({
 
 	baseParams: {
         jobtype: "bundle",
-        filter: "",
+        filter: "status=RUNNING;status=RUNNINGWITHERROR",
         timezone: getTimeZone()
     },
     idProperty: 'bundleJobId',
     totalProperty: 'total',
-    autoLoad: true,
+    autoLoad: false,
     root: 'bundlejobs',
     fields: ['bundleJobId', 'bundleJobName', 'bundleJobPath', 'conf', 'status', {name: 'kickoffTime', sortType: Ext.data.SortTypes.asDate}, {name: 'startTime', sortType: Ext.data.SortTypes.asDate}, {name: 'endTime', sortType: Ext.data.SortTypes.asDate}, {name: 'pauseTime', sortType: Ext.data.SortTypes.asDate}, {name: 'createdTime', sortType: Ext.data.SortTypes.asDate}, 'user', 'group', 'bundleCoordJobs'],
     proxy: new Ext.data.HttpProxy({
@@ -1556,35 +1556,51 @@ var refreshCustomJobsAction = new Ext.Action({
         jobs_store.baseParams.filter = this.text;
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
+        Ext.getCmp('jobs_active').setIconClass('');
+        Ext.getCmp('jobs_all').setIconClass('');
+        Ext.getCmp('jobs_done').setIconClass('');
     }
 
 });
 
 var refreshActiveJobsAction = new Ext.Action({
+    id: 'jobs_active',
     text: 'Active Jobs',
     handler: function() {
         jobs_store.baseParams.filter = 'status=RUNNING';
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
+        Ext.getCmp('jobs_active').setIconClass('job-filter');
+        Ext.getCmp('jobs_all').setIconClass('');
+        Ext.getCmp('jobs_done').setIconClass('');
+
     }
 });
 
 var refreshAllJobsAction = new Ext.Action({
+    id: 'jobs_all',
     text: 'All Jobs',
     handler: function() {
         jobs_store.baseParams.filter = '';
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
+        Ext.getCmp('jobs_active').setIconClass('');
+        Ext.getCmp('jobs_all').setIconClass('job-filter');
+        Ext.getCmp('jobs_done').setIconClass('');
     }
 
 });
 
 var refreshDoneJobsAction = new Ext.Action({
+    id: 'jobs_done',
     text: 'Done Jobs',
     handler: function() {
-        jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+        jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED';
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
+        Ext.getCmp('jobs_active').setIconClass('');
+        Ext.getCmp('jobs_all').setIconClass('');
+        Ext.getCmp('jobs_done').setIconClass('job-filter');
     }
 });
 
@@ -1594,16 +1610,23 @@ var refreshCoordCustomJobsAction = new Ext.Action({
         coord_jobs_store.baseParams.filter = this.text;
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
+        Ext.getCmp('coord_active').setIconClass('');
+        Ext.getCmp('coord_all').setIconClass('');
+        Ext.getCmp('coord_done').setIconClass('');
     }
 });
 
 
 var refreshCoordActiveJobsAction = new Ext.Action({
+    id: 'coord_active',
     text: 'Active Jobs',
     handler: function() {
-        coord_jobs_store.baseParams.filter = 'status=RUNNING';
+        coord_jobs_store.baseParams.filter = 'status=RUNNING;status=RUNNINGWITHERROR';
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
+        Ext.getCmp('coord_active').setIconClass('job-filter');
+        Ext.getCmp('coord_all').setIconClass('');
+        Ext.getCmp('coord_done').setIconClass('');
         /*
          Ext.Ajax.request( {
          url: getOozieBase() + 'jobs/?jobtype=coord',
@@ -1617,11 +1640,15 @@ var refreshCoordActiveJobsAction = new Ext.Action({
 });
 
 var refreshCoordAllJobsAction = new Ext.Action({
+    id: 'coord_all',
     text: 'All Jobs',
     handler: function() {
         coord_jobs_store.baseParams.filter = '';
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
+        Ext.getCmp('coord_active').setIconClass('');
+        Ext.getCmp('coord_all').setIconClass('job-filter');
+        Ext.getCmp('coord_done').setIconClass('');
         /*
          Ext.Ajax.request( {
          url: getOozieBase() + 'jobs/?jobtype=coord',
@@ -1635,11 +1662,15 @@ var refreshCoordAllJobsAction = new Ext.Action({
 });
 
 var refreshCoordDoneJobsAction = new Ext.Action({
+    id: 'coord_done',
     text: 'Done Jobs',
     handler: function() {
-        coord_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+        coord_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
+        Ext.getCmp('coord_active').setIconClass('');
+        Ext.getCmp('coord_all').setIconClass('');
+        Ext.getCmp('coord_done').setIconClass('job-filter');
         /*
          Ext.Ajax.request( {
          url: getOozieBase() + 'jobs' + '?jobtype=coord',
@@ -1653,29 +1684,53 @@ var refreshCoordDoneJobsAction = new Ext.Action({
 });
 
 var refreshBundleActiveJobsAction = new Ext.Action({
+    id: 'bundle_active',
     text: 'Active Jobs',
     handler: function() {
-        bundle_jobs_store.baseParams.filter = 'status=RUNNING';
+        bundle_jobs_store.baseParams.filter = 'status=RUNNING;status=RUNNINGWITHERROR';
         bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
+        Ext.getCmp('bundle_active').setIconClass('job-filter');
+        Ext.getCmp('bundle_all').setIconClass('');
+        Ext.getCmp('bundle_done').setIconClass('');
     }
 });
 
 var refreshBundleAllJobsAction = new Ext.Action({
+    id: 'bundle_all',
     text: 'All Jobs',
     handler: function() {
 		bundle_jobs_store.baseParams.filter = '';
-                bundle_jobs_store.baseParams.timezone = getTimeZone();
+        bundle_jobs_store.baseParams.timezone = getTimeZone();
 		bundle_jobs_store.reload();
+		Ext.getCmp('bundle_active').setIconClass('');
+        Ext.getCmp('bundle_all').setIconClass('job-filter');
+        Ext.getCmp('bundle_done').setIconClass('');
     }
 });
 
 var refreshBundleDoneJobsAction = new Ext.Action({
+    id: 'bundle_done',
     text: 'Done Jobs',
     handler: function() {
-	bundle_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED';
+	    bundle_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
         bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
+        Ext.getCmp('bundle_active').setIconClass('');
+        Ext.getCmp('bundle_all').setIconClass('');
+        Ext.getCmp('bundle_done').setIconClass('job-filter');
+    }
+});
+
+var refreshBundleCustomJobsAction = new Ext.Action({
+    text: 'status=KILLED',
+    handler: function() {
+        bundle_jobs_store.baseParams.filter = this.text;
+        bundle_jobs_store.baseParams.timezone = getTimeZone();
+        bundle_jobs_store.reload();
+        Ext.getCmp('bundle_active').setIconClass('');
+        Ext.getCmp('bundle_all').setIconClass('');
+        Ext.getCmp('bundle_done').setIconClass('');
     }
 });
 
@@ -1714,6 +1769,20 @@ var changeCoordFilterAction = new Ext.Action({
                 coord_jobs_store.baseParams.filter = text;
                 coord_jobs_store.baseParams.timezone = getTimeZone();
                 coord_jobs_store.reload();
+            }
+        });
+    }
+});
+
+var changeBundleFilterAction = new Ext.Action({
+    text: 'Custom Filter',
+    handler: function() {
+        Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
+            if (btn == 'ok' && text) {
+                refreshBundleCustomJobsAction.setText(text);
+                bundle_jobs_store.baseParams.filter = text;
+                bundle_jobs_store.baseParams.timezone = getTimeZone();
+                bundle_jobs_store.reload();
             }
         });
     }
@@ -1767,7 +1836,7 @@ var serverVersion = new Ext.Action({
             url: getOozieBase() + 'admin/build-version',
             success: function(response, request) {
                 var ret = eval("(" + response.responseText + ")");
-                serverVersion.setText("<font color='800000' size='2>[" + ret['buildVersion'] + "]</font>");
+                serverVersion.setText("<font size='2'>Server version [" + ret['buildVersion'] + "]</font>");
             }
         })
     }
@@ -1817,32 +1886,6 @@ var viewInstrumentation = new Ext.Action({
         });
     }
 
-});
-
-var viewCoordJobs = new Ext.Action({
-    text: 'All Jobs',
-    handler: function() {
-        /*
-         Ext.Ajax.request( {
-         url: getOozieBase() + 'jobs/?jobtype=coord',
-         success: function(response, request) {
-         var configData = getConfigObject(response.responseText);
-         coord_job_store.loadData(configData);
-         },
-         });
-         */
-        // coord_jobs_store.baseParams.filter = 'jobtype=coord';
-        coord_jobs_store.baseParams.timezone = getTimeZone();
-        coord_jobs_store.reload();
-    }
-});
-
-var viewBundleJobs = new Ext.Action({
-    text: 'All Jobs',
-    handler: function() {
-        bundle_jobs_store.baseParams.timezone = getTimeZone();
-        bundle_jobs_store.reload();
-    }
 });
 
 var viewSystemDetails = new Ext.Action({
@@ -2177,6 +2220,10 @@ function initConsole() {
                 bundle_jobs_store.reload();
             }
         }, refreshBundleAllJobsAction, refreshBundleActiveJobsAction, refreshBundleDoneJobsAction,
+        {
+            text: 'Custom Filter',
+            menu: [refreshBundleCustomJobsAction, changeBundleFilterAction, helpFilterAction ]
+        },
             {
                 xtype: 'tbfill'
             }, checkStatus, serverVersion],
@@ -2234,11 +2281,37 @@ function initConsole() {
     tabs.add(resultArea);
     tabs.add(settingsArea);
     tabs.setActiveTab(jobs_grid);
+    // showing Workflow Jobs active tab as default
+    // and loading coord,bundle only when tab opened
+    Ext.getCmp('jobs_active').setIconClass('job-filter');
+    var isFirstLoadCoord = 0;
+    var isFirstLoadBundle = 0;
+    tabs.addListener("tabchange", function(panel, selectedTab) {
+        if (selectedTab.title == 'Workflow Jobs') {
+            jobs_grid.setVisible(true);
+            return;
+        }
+        else if (selectedTab.title == 'Coordinator Jobs') {
+            if (isFirstLoadCoord == 0) {
+                refreshCoordActiveJobsAction.execute();
+                isFirstLoadCoord = 1;
+            }
+            coordJobArea.setVisible(true);
+            return;
+        }
+        else if (selectedTab.title == 'Bundle Jobs') {
+           if (isFirstLoadBundle == 0) {
+                refreshBundleActiveJobsAction.execute();
+                isFirstLoadBundle = 1;
+            }
+            bundleJobArea.setVisible(true);
+            return;
+        }
+    });
     checkStatus.execute();
     viewConfig.execute();
     serverVersion.execute();
     viewInstrumentation.execute();
-    // viewCoordJobs.execute();
     var jobId = getReqParam("job");
     if (jobId != "") {
         if (jobId.endsWith("-C")) {
