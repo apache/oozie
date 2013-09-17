@@ -130,8 +130,9 @@ public class StatusTransitService implements Service {
                     if (b1.getId().equals(b2.getId())) {
                         return 0;
                     }
-                    else
+                    else {
                         return 1;
+                    }
                 }
             });
             s.addAll(pendingJobList);
@@ -289,23 +290,15 @@ public class StatusTransitService implements Service {
                         if ((isDoneMaterialization || coordStatus[0] == Job.Status.FAILED || coordStatus[0] == Job.Status.KILLED)
                                 && checkCoordTerminalStatus(coordActionStatus, nonPendingCoordActionsCount,
                                         coordStatus, isDoneMaterialization)) {
-                            LOG.info("Set coordinator job [" + jobId + "] status to '" + coordStatus[0].toString()
-                                    + "' from '" + coordJob.getStatus() + "'");
                             updateCoordJob(isPending, coordJob, coordStatus[0]);
                         }
                         else if (checkCoordPausedStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
-                            LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
-                                    + "' from '" + coordJob.getStatus() + "'");
                             updateCoordJob(isPending, coordJob, coordStatus[0]);
                         }
                         else if(checkCoordSuspendStatus( coordActionStatus, nonPendingCoordActionsCount, coordStatus, coordJob.isDoneMaterialization(), isPending)) {
-                            LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
-                                    + "' from '" + coordJob.getStatus() + "'");
                             updateCoordJob(isPending, coordJob, coordStatus[0]);
                         }
                         else if (checkCoordRunningStatus(coordActionStatus, nonPendingCoordActionsCount, coordStatus)) {
-                            LOG.info("Set coordinator job [" + jobId + "] status to " + coordStatus[0].toString()
-                                    + "' from '" + coordJob.getStatus() + "'");
                             updateCoordJob(isPending, coordJob, coordStatus[0]);
                         }
                         else {
@@ -662,7 +655,8 @@ public class StatusTransitService implements Service {
             // Backward support when coordinator namespace is 0.1
             coordJob.setStatus(StatusUtils.getStatus(coordJob));
             if (coordJob.getStatus() != prevStatus || isPendingStateChanged) {
-                LOG.debug("Updating coord job " + coordJob.getId());
+                LOG.info("Set coordinator job [" + coordJob.getId() + "] status to '" + coordJob.getStatus() + "' from '"
+                        + prevStatus + "'");
                 coordJob.setLastModifiedTime(new Date());
                 CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_MODTIME, coordJob);
             }
@@ -681,14 +675,14 @@ public class StatusTransitService implements Service {
             boolean prevPending = coordJob.isPending();
             if (isPending) {
                 coordJob.setPending();
-                LOG.info("Coord job [" + coordJob.getId() + "] Pending set to TRUE");
             }
             else {
                 coordJob.resetPending();
-                LOG.info("Coord job [" + coordJob.getId() + "] Pending set to FALSE");
             }
             boolean hasChange = prevPending != coordJob.isPending();
             if (saveToDB && hasChange) {
+                LOG.info("Change coordinator job [" + coordJob.getId() + "] pending to '" + coordJob.isPending()
+                        + "' from '" + prevPending + "'");
                 CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_MODTIME, coordJob);
             }
             return hasChange;
