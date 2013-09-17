@@ -766,12 +766,12 @@ are multiple Oozie setups each doing their own HA, they should have their own na
 </verbatim>
 
 The ID for the Oozie server to use when talking to ZooKeeper and other Oozie servers.  Each Oozie server must have a unique ID.  If
-blank, Oozie will use the hostname.
+empty, Oozie will use the hostname.
 
 <verbatim>
 <property>
     <name>oozie.zookeeper.oozie.id</name>
-    <value> </value>
+    <value></value>
 </property>
 </verbatim>
 

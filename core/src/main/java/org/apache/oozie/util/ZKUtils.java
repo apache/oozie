@@ -88,7 +88,10 @@ public class ZKUtils {
      */
     private ZKUtils() throws Exception {
         log = XLog.getLog(getClass());
-        zkId = Services.get().getConf().get(ZK_ID, System.getProperty("oozie.http.hostname"));
+        zkId = Services.get().getConf().get(ZK_ID, "").trim();
+        if (zkId.length() == 0) {
+            zkId = System.getProperty("oozie.http.hostname");
+        }
         createClient();
         advertiseService();
     }

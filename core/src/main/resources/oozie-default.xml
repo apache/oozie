@@ -1948,10 +1948,10 @@
 
     <property>
         <name>oozie.zookeeper.oozie.id</name>
-        <value> </value>
+        <value></value>
         <description>
             The ID for the Oozie server to use.  Each Oozie server must have a unique ID.
-            If blank, Oozie will use the hostname.
+            If empty, Oozie will use the hostname.
         </description>
     </property>
 
