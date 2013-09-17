@@ -186,7 +186,7 @@ public class JPAService implements Service, Instrumentable {
             CodecFactory.initialize(conf);
         }
         catch (Exception ex) {
-            throw new ServiceException(ErrorCode.E1700, ex);
+            throw new ServiceException(ErrorCode.E0100, getClass().getName(), ex);
         }
     }
 

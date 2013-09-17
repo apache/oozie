@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1528 CoordRerunX and ActionEndX not updating some of the modified beans. (virag)
 OOZIE-1540 When oozie.zookeeper.oozie.id is not specified, its using a space instead of the hostname (rkanter)
 OOZIE-1509 Do not preload all tabs in Oozie UI and make Active Jobs default (mona)
 OOZIE-1496 Oozie demo and streaming examples fails to run on Windows (eshevchuk via rkanter)

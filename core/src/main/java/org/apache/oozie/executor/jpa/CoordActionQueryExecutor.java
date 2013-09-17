@@ -147,6 +147,10 @@ public class CoordActionQueryExecutor extends
                 query.setParameter("rerunTime", actionBean.getRerunTimestamp());
                 query.setParameter("lastModifiedTime", actionBean.getLastModifiedTimestamp());
                 query.setParameter("createdTime", actionBean.getCreatedTimestamp());
+                query.setParameter("createdConf", actionBean.getCreatedConfBlob());
+                query.setParameter("runConf", actionBean.getRunConfBlob());
+                query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
+                query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependenciesBlob());
                 query.setParameter("id", actionBean.getId());
                 break;
 

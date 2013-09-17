@@ -156,6 +156,8 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("startTime", actionBean.getStartTimestamp());
+                query.setParameter("stats", actionBean.getStatsBlob());
+                query.setParameter("userRetryCount", actionBean.getUserRetryCount());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_END:
@@ -169,6 +171,7 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("signalValue", actionBean.getSignalValue());
                 query.setParameter("userRetryCount", actionBean.getUserRetryCount());
                 query.setParameter("externalStatus", actionBean.getExternalStatus());
+                query.setParameter("stats", actionBean.getStatsBlob());
                 query.setParameter("id", actionBean.getId());
                 break;
             default:

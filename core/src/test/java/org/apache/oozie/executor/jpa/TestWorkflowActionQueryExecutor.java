@@ -158,6 +158,8 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("retries"), bean.getRetries());
         assertEquals(query.getParameterValue("pendingAge"), bean.getPendingAgeTimestamp());
         assertEquals(query.getParameterValue("startTime"), bean.getStartTimestamp());
+        assertEquals(query.getParameterValue("stats"), bean.getStatsBlob());
+        assertEquals(query.getParameterValue("userRetryCount"), bean.getUserRetryCount());
         assertEquals(query.getParameterValue("id"), bean.getId());
         // UPDATE_ACTION_END
         query = WorkflowActionQueryExecutor.getInstance().getUpdateQuery(WorkflowActionQuery.UPDATE_ACTION_END, bean,
@@ -172,6 +174,7 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("signalValue"), bean.getSignalValue());
         assertEquals(query.getParameterValue("userRetryCount"), bean.getUserRetryCount());
         assertEquals(query.getParameterValue("externalStatus"), bean.getExternalStatus());
+        assertEquals(query.getParameterValue("stats"), bean.getStatsBlob());
         assertEquals(query.getParameterValue("id"), bean.getId());
         em.close();
     }

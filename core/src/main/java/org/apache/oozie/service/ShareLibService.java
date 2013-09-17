@@ -55,7 +55,7 @@ public class ShareLibService implements Service {
 
     public static final String LAUNCHERJAR_LIB_RETENTION = CONF_PREFIX
             + "ShareLibService.temp.sharelib.retention.days";
-
+    private static final String PERMISSION_STRING = "-rwxr-xr-x";
     private Services services;
     private Map<String, List<Path>> shareLibLauncherMap = new HashMap<String, List<Path>>();
     private static XLog LOG = XLog.getLog(ShareLibService.class);
@@ -71,10 +71,25 @@ public class ShareLibService implements Service {
         try {
             FileSystem fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             copyLauncherJarsToShareLib(fs, tmpShareLibPath);
+            recursiveChangePermissions(fs, tmpShareLibPath, FsPermission.valueOf(PERMISSION_STRING));
             purgeShareLibs(fs, tmpShareLibPath);
         }
         catch (Exception e) {
             throw new ServiceException(ErrorCode.E0100, getClass().getName(), e.getMessage(), e);
+        }
+    }
+
+    private void recursiveChangePermissions(FileSystem fs, Path path, FsPermission fsPerm) throws IOException {
+        fs.setPermission(path, fsPerm);
+        FileStatus[] filesStatus = fs.listStatus(path);
+        for (int i = 0; i < filesStatus.length; i++) {
+            Path p = filesStatus[i].getPath();
+            if (filesStatus[i].isDir()) {
+                recursiveChangePermissions(fs, p, fsPerm);
+            }
+            else {
+                fs.setPermission(p, fsPerm);
+            }
         }
     }
 
@@ -102,7 +117,6 @@ public class ShareLibService implements Service {
     private void copyJarContainingClasses(List<Class> classes, FileSystem fs, Path executorDir, String type)
             throws IOException {
         fs.mkdirs(executorDir);
-        fs.setPermission(executorDir, FsPermission.valueOf("-rwxr-xr-x"));
         Set<String> localJarSet = new HashSet<String>();
         for (Class c : classes) {
             String localJar = findContainingJar(c);
@@ -118,7 +132,6 @@ public class ShareLibService implements Service {
             File localJar = new File(localJarStr);
             fs.copyFromLocalFile(new Path(localJar.getPath()), executorDir);
             Path path = new Path(executorDir, localJar.getName());
-            fs.setPermission(path, FsPermission.valueOf("-rw-r--r--"));
             listOfPaths.add(path);
             LOG.info(localJar.getName() + " uploaded to " + executorDir.toString());
         }
