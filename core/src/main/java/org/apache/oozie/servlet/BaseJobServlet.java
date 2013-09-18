@@ -93,7 +93,6 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             response.setStatus(HttpServletResponse.SC_OK);
         }
         else if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
             stopCron();
             JSONObject json =  killJob(request, response);
             startCron();

@@ -79,7 +79,7 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         JPAService jpaService = services.get(JPAService.class);
         String[] ids = createDBRecords();
 
-        new CoordActionsKillXCommand(ids[0], "action", "1").call();
+        new CoordActionsKillXCommand(ids[0], "action", "1,3").call();
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetForCheckJPAExecutor(ids[1]));
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 

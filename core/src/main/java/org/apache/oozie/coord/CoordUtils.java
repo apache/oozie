@@ -39,6 +39,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 
 public class CoordUtils {
@@ -202,12 +203,19 @@ public class CoordUtils {
         // Retrieve the actions using the corresponding actionIds
         List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
         for (String id : actions) {
-            CoordinatorActionBean coordAction;
+            CoordinatorActionBean coordAction = null;
             try {
                 coordAction = jpaService.execute(new CoordActionGetJPAExecutor(id));
             }
             catch (JPAExecutorException je) {
-                throw new CommandException(je);
+                if (je.getErrorCode().equals(ErrorCode.E0605)) { //ignore retrieval of non-existent actions in range
+                    XLog.getLog(CoordUtils.class).warn(
+                            "Coord action [{0}] not yet materialized. Hence skipping over it for Kill action", id);
+                    continue;
+                }
+                else {
+                    throw new CommandException(je);
+                }
             }
             coordActions.add(coordAction);
         }

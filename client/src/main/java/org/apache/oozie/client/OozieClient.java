@@ -618,7 +618,6 @@ public class OozieClient {
 
         @Override
         protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
-            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if (!(conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 handleError(conn);
             }
