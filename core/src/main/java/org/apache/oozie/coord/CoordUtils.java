@@ -36,6 +36,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -209,8 +210,9 @@ public class CoordUtils {
             }
             catch (JPAExecutorException je) {
                 if (je.getErrorCode().equals(ErrorCode.E0605)) { //ignore retrieval of non-existent actions in range
-                    XLog.getLog(CoordUtils.class).warn(
-                            "Coord action [{0}] not yet materialized. Hence skipping over it for Kill action", id);
+                    XLog.getLog(XLogService.class).warn(
+                            "Coord action ID num [{0}] not yet materialized. Hence skipping over it for Kill action",
+                            id.substring(id.indexOf("@") + 1));
                     continue;
                 }
                 else {
