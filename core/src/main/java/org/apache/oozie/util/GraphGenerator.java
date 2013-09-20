@@ -22,6 +22,7 @@ import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.visualization.VisualizationImageServer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.ArrowFactory;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
@@ -29,13 +30,17 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import javax.imageio.ImageIO;
+import javax.swing.plaf.basic.BasicTextUI;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
 import org.apache.commons.collections15.Transformer;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -55,6 +60,7 @@ public class GraphGenerator {
     private String xml;
     private WorkflowJobBean job;
     private boolean showKill = false;
+    private final int actionsLimit = 25;
 
     /**
      * C'tor
@@ -284,7 +290,6 @@ public class GraphGenerator {
                                 String qName,
                                 Attributes atts)
             throws SAXException {
-
             if(localName.equalsIgnoreCase("start")) {
                 String start = localName.toLowerCase();
                 if(!tags.containsKey(start)) {
@@ -328,6 +333,10 @@ public class GraphGenerator {
                 if(!tags.containsKey(name)) {
                     tags.put(name, new OozieWFNode(name, localName.toLowerCase()));
                 }
+            }
+            if (tags.size() > actionsLimit) {
+                tags.clear();
+                throw new SAXException("Can't display the graph. Number of actions are more than display limit " + actionsLimit);
             }
         }
 

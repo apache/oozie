@@ -15,14 +15,19 @@
  */
 package org.apache.oozie.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+
 import javax.imageio.ImageIO;
+
 import junit.framework.Assert;
 
 import org.apache.oozie.WorkflowJobBean;
@@ -106,6 +111,28 @@ public class TestGraphGenerator extends XTestCase {
             Assert.fail("Write PNG failed for invalidGraphWF.xml: " + e.getMessage());
         }
         new File("src/test/resources/invalid.png").delete();
+    }
+
+    public void testJobDAGLimit_more() throws IOException {
+        WorkflowJobBean jsonWFJob = new WorkflowJobBean();
+        jsonWFJob.setAppName("My Test App");
+        jsonWFJob.setId("My Test ID");
+        String txt = "src/test/resources/tmp1.txt";
+
+        try {
+            GraphGenerator g = new GraphGenerator(readFile("src/test/resources/graphWF_26_actions.xml"), jsonWFJob);
+            g.write(new FileOutputStream(new File(txt)));
+            Assert.fail("This should not get executed");
+
+        }
+        catch (Exception e) {
+            Assert.assertTrue(e.getMessage().startsWith(
+                    "Can't display the graph. Number of actions are more than display limit"));
+        }
+
+        File f1 = new File(txt);
+        f1.delete();
+
     }
 
     private static String readFile(String path) throws IOException {

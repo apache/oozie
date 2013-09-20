@@ -176,7 +176,7 @@ function getPagingBar(dataStore) {
     return pagingBar;
 }
 
-// Image object display
+//Image object display
 Ext.ux.Image = Ext.extend(Ext.BoxComponent, {
 
     url: Ext.BLANK_IMAGE_URL,  //for initial src value
@@ -207,9 +207,19 @@ Ext.ux.Image = Ext.extend(Ext.BoxComponent, {
 
     setSrc: function(src) {
         this.el.dom.src = src;
+    },
+    setAlt: function(altText) {
+        this.autoEl.alt=altText;
+    },
+
+    onError: function(onErrorTxt) {
+        this.autoEl.onError=onErrorTxt;
     }
 });
 
+function alertOnDAGError(){
+    alert('Runtime error : Can\'t display the graph. Number of actions are more than dispaly limit 25');
+}
 // stuff to show details of a job
 function jobDetailsPopup(response, request) {
     var jobDefinitionArea = new Ext.form.TextArea({
@@ -611,17 +621,14 @@ function jobDetailsPopup(response, request) {
         });
     }
 
-    var dagImg = new Ext.ux.Image({
-                id: 'dagImage',
-                url: getOozieBase() + 'job/' + workflowId + "?show=graph",
-                readOnly: true,
-                editable: false,
-                autoScroll: true
+    var imageContainer = new Ext.Container({
+        autoEl: {},
+        height: '1000px',
+        weidht: '1000px',
+        autoScroll: true,
+        style  : { overflow: 'auto', overflowX: 'hidden' }
     });
-
-    function fetchDAG(workflowId) {
-        dagImg.setSrc(getOozieBase() + 'job/' + workflowId + '?show=graph&token=' + Math.random());
-    }
+    var isLoadedDAG = false;
 
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
@@ -657,7 +664,7 @@ function jobDetailsPopup(response, request) {
             }]
         }, {
             title: 'Job DAG',
-            items: dagImg,
+            items: imageContainer,
             tbar: [{
                 text: "&nbsp;&nbsp;&nbsp;",
                 // To avoid OOM
@@ -679,8 +686,20 @@ function jobDetailsPopup(response, request) {
         else if (selectedTab.title == 'Job Definition') {
             fetchDefinition(workflowId);
         } else if(selectedTab.title == 'Job DAG') {
-            fetchDAG(workflowId);
-        }
+                if(!isLoadedDAG){
+                var dagImage=   new Ext.ux.Image({
+                        id: 'dagImage',
+                        url: getOozieBase() + 'job/' + workflowId + '?show=graph',
+                        autoScroll: true
+                        });
+                    dagImage.setAlt('Runtime error : Can\'t display the graph. Number of actions are more than display limit 25');
+                    dagImage.onError('alertOnDAGError()');
+                    imageContainer.add(dagImage);
+                    imageContainer.syncSize();
+                    imageContainer.doLayout(true);
+                    isLoadedDAG=true;
+                 }
+                }
         jobs_grid.setVisible(false);
     });
     var win = new Ext.Window({

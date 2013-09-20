@@ -19,9 +19,11 @@ package org.apache.oozie.servlet;
 
 import java.io.IOException;
 import java.util.List;
+
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
 import org.apache.oozie.client.WorkflowAction;
@@ -36,6 +38,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.GraphGenerator;
 import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
+import org.xml.sax.SAXException;
 
 
 @SuppressWarnings("serial")
@@ -280,9 +283,10 @@ public class V1JobServlet extends BaseJobServlet {
             throws XServletException, IOException {
         String jobId = getResourceName(request);
         if (jobId.endsWith("-W")) {
-            // Applicable only to worflow, for now
-            response.setContentType(RestConstants.PNG_IMAGE_CONTENT_TYPE);
             try {
+                // Applicable only to worflow, for now
+                response.setContentType(RestConstants.PNG_IMAGE_CONTENT_TYPE);
+
                 String showKill = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
                 boolean sK = showKill != null && (showKill.equalsIgnoreCase("yes") || showKill.equals("1") || showKill.equalsIgnoreCase("true"));
 
@@ -290,9 +294,10 @@ public class V1JobServlet extends BaseJobServlet {
                         getWorkflowJobDefinition(request, response),
                         (WorkflowJobBean)getWorkflowJob(request, response),
                         sK).write(response.getOutputStream());
+
             }
             catch (Exception e) {
-                throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ErrorCode.E0307, e.getMessage(), e);
+                throw new XServletException(HttpServletResponse.SC_NOT_FOUND, ErrorCode.E0307, e.getMessage(), e);
             }
         }
         else {
