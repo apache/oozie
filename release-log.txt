@@ -1,3 +1,7 @@
+-- Oozie 4.0.1 release (unreleased)
+
+OOZIE-1549 Update hcat documentation to mention hcatalog-pig-adapter jar (bowenzhangusa via rohini)
+
 -- Oozie 4.0.0 release
 
 OOZIE-1514 Rerunning a coordinator with no input dependencies puts actions in WAITING instead of READY and proceeding (bowenzhangusa via mona)

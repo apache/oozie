@@ -71,10 +71,12 @@ For example,
   </dataset>
 </verbatim>
 
+#HCatalogLibraries
 ---+++ HCatalog Libraries
 
-A workflow action interacting with HCatalog requires the following jars in the classpath: hcatalog-core.jar,
-webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar, hive-serde.jar and libfb303.jar.
+A workflow action interacting with HCatalog requires the following jars in the classpath: 
+hcatalog-core.jar, hcatalog-pig-adapter.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar,
+hive-metastore.jar, hive-serde.jar and libfb303.jar.
 hive-site.xml which has the configuration to talk to the HCatalog server also needs to be in the classpath. The correct
 version of HCatalog and hive jars should be placed in classpath based on the version of HCatalog installed on the cluster.
 
