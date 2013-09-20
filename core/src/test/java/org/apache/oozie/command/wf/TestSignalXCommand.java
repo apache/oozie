@@ -23,6 +23,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Appender;
@@ -31,6 +32,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.oozie.DagEngine;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -116,10 +118,21 @@ public class TestSignalXCommand extends XDataTestCase {
         WorkflowJob wf = oc.getJobInfo(jobId);
         assertEquals(WorkflowJob.Status.PREP, wf.getStatus());
 
+        long beforeStart = System.currentTimeMillis();
+
         oc.start(jobId);
         checkSuspendActions(wf, oc, jobId, WorkflowJob.Status.SUSPENDED,
                 new String[]{"action1"},
                 new String[]{":start:"});
+
+        // Check for creation time
+        long afterStart = System.currentTimeMillis();
+        WorkflowJob wf1 = oc.getJobInfo(jobId);
+        for (WorkflowAction action : wf1.getActions()) {
+            WorkflowActionBean bean = (WorkflowActionBean) action;
+            assertNotNull(bean.getCreatedTime());
+            assertTrue((bean.getCreatedTime().getTime() > beforeStart) && (bean.getCreatedTime().getTime() < afterStart));
+        }
 
         oc.resume(jobId);
         checkSuspendActions(wf, oc, jobId, WorkflowJob.Status.SUSPENDED,

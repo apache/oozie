@@ -36,6 +36,7 @@ import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
+import org.apache.openjpa.persistence.jdbc.Index;
 import org.json.simple.JSONObject;
 
 @Entity
@@ -84,6 +85,7 @@ public class BundleActionBean implements Writable, JsonBean {
     @Column(name = "bundle_action_id")
     private String bundleActionId = null;
 
+    @Index
     @Column(name = "bundle_id")
     private String bundleId = null;
 

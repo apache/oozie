@@ -72,17 +72,21 @@ public class SLARegistrationBean implements JsonBean {
     private String appType = null;
 
     @Basic
+    @Column(name = "created_time")
+    private Timestamp createdTimeTS = null;
+
+    @Basic
     @Index
     @Column(name = "nominal_time")
-    private java.sql.Timestamp nominalTimeTS = null;
+    private Timestamp nominalTimeTS = null;
 
     @Basic
     @Column(name = "expected_start")
-    private java.sql.Timestamp expectedStartTS = null;
+    private Timestamp expectedStartTS = null;
 
     @Basic
     @Column(name = "expected_end")
-    private java.sql.Timestamp expectedEndTS = null;
+    private Timestamp expectedEndTS = null;
 
     @Basic
     @Column(name = "expected_duration")
@@ -157,6 +161,22 @@ public class SLARegistrationBean implements JsonBean {
 
     public void setAppType(AppType appType) {
         this.appType = appType.toString();
+    }
+
+    public Timestamp getCreatedTimestamp() {
+        return createdTimeTS;
+    }
+
+    public void setCreatedTimestamp(Timestamp createdTime) {
+        this.createdTimeTS = createdTime;
+    }
+
+    public Date getCreatedTime() {
+        return DateUtils.toDate(createdTimeTS);
+    }
+
+    public void setCreatedTime(Date createdTime) {
+        this.createdTimeTS = DateUtils.convertDateToTimestamp(createdTime);
     }
 
     public Date getNominalTime() {

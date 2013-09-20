@@ -21,19 +21,12 @@ import java.util.Date;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestSLASummaryQueryExecutor extends XDataTestCase {
     Services services;
@@ -98,17 +91,23 @@ public class TestSLASummaryQueryExecutor extends XDataTestCase {
 
     public void testExecuteUpdate() throws Exception {
         SLASummaryBean bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
+        SLASummaryBean retBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY,
+                bean.getId());
+        Date createdTime = retBean.getCreatedTime();
+        assertNotNull(createdTime);
         Date startTime = new Date(System.currentTimeMillis() - 1000 * 3600 * 2);
         Date endTime = new Date(System.currentTimeMillis() - 1000 * 3600 * 1);
         bean.setActualStart(startTime);
         bean.setActualEnd(endTime);
         bean.setSLAStatus(SLAStatus.MET);
+        bean.setCreatedTime(startTime); // Should not be updated
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, bean);
-        SLASummaryBean retBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY,
+        retBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY,
                 bean.getId());
         assertEquals(bean.getActualStartTimestamp(), retBean.getActualStartTimestamp());
         assertEquals(bean.getActualEndTimestamp(), retBean.getActualEndTimestamp());
         assertEquals(SLAStatus.MET, retBean.getSLAStatus());
+        assertEquals(createdTime, retBean.getCreatedTime()); // Created time should not be updated
     }
 
     public void testGet() throws Exception {

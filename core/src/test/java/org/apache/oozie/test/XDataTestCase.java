@@ -792,6 +792,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         sla.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
         sla.setAppName(appName);
         sla.setAppType(AppType.COORDINATOR_JOB);
+        sla.setCreatedTime(today);
         sla.setNominalTime(today);
         sla.setExpectedStart(today);
         sla.setExpectedEnd(today);
@@ -835,6 +836,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         sla.setExpectedEnd(today);
         sla.setExpectedStart(today);
         sla.setJobData("test-job-data");
+        sla.setCreatedTime(today);
         sla.setNominalTime(today);
         sla.setNotificationMsg("test-sla-notification-msg");
         sla.setParentId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
@@ -1193,9 +1195,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setType("map-reduce");
         action.setTransition("transition");
         action.setStatus(status);
-        action.setStartTime(new Date());
-        action.setEndTime(new Date());
-        action.setLastCheckTime(new Date());
+        final Date currDate = new Date();
+        action.setCreatedTime(currDate);
+        action.setStartTime(currDate);
+        action.setEndTime(currDate);
+        action.setLastCheckTime(currDate);
         action.setCred("null");
         action.setStats("dummyStats");
         if (pending) {

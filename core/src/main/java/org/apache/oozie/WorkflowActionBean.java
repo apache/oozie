@@ -123,21 +123,25 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     private String wfId = null;
 
     @Basic
+    @Column(name = "created_time")
+    private Timestamp createdTimeTS = null;
+
+    @Basic
     @Index
     @Column(name = "status")
     private String statusStr = WorkflowAction.Status.PREP.toString();
 
     @Basic
     @Column(name = "last_check_time")
-    private java.sql.Timestamp lastCheckTimestamp;
+    private Timestamp lastCheckTimestamp;
 
     @Basic
     @Column(name = "end_time")
-    private java.sql.Timestamp endTimestamp = null;
+    private Timestamp endTimestamp = null;
 
     @Basic
     @Column(name = "start_time")
-    private java.sql.Timestamp startTimestamp = null;
+    private Timestamp startTimestamp = null;
 
     @Basic
     @Column(name = "execution_path", length = 1024)
@@ -150,7 +154,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Basic
     @Index
     @Column(name = "pending_age")
-    private java.sql.Timestamp pendingAgeTimestamp = null;
+    private Timestamp pendingAgeTimestamp = null;
 
     @Basic
     @Column(name = "signal_value")
@@ -868,6 +872,18 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Timestamp getCreatedTimestamp() {
+        return createdTimeTS;
+    }
+
+    public Date getCreatedTime() {
+        return DateUtils.toDate(createdTimeTS);
+    }
+
+    public void setCreatedTime(Date createdTime) {
+        this.createdTimeTS = DateUtils.convertDateToTimestamp(createdTime);
     }
 
     @Override

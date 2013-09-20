@@ -328,6 +328,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     String actionSlaXml = getActionSLAXml(newAction.getName(), workflowInstance.getApp()
                             .getDefinition(), wfJob.getConf());
                     newAction.setSlaXml(actionSlaXml);
+                    newAction.setCreatedTime(new Date());
                     insertList.add(newAction);
                     LOG.debug("SignalXCommand: Name: " + newAction.getName() + ", Id: " + newAction.getId()
                             + ", Authcode:" + newAction.getCred());

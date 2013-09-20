@@ -33,7 +33,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
@@ -42,6 +41,7 @@ import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -520,6 +520,9 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
         slaCalcMemory.updateJobSla(jobId);
         SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaRegBean = jpaService.execute(new SLARegistrationGetJPAExecutor(jobId));
+        assertNotNull(slaRegBean.getCreatedTimestamp());
+        assertEquals(slaRegBean.getCreatedTimestamp(), slaSummary.getCreatedTimestamp());
         // Only end sla should be processed (100)
         assertEquals(4, slaSummary.getEventProcessed());
         slaCalcMemory.updateJobSla(jobId);

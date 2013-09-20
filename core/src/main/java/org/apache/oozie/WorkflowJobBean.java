@@ -208,6 +208,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     private int run = 1;
 
     @Basic
+    @Index
     @Column(name = "parent_id")
     private String parentId;
 

@@ -82,6 +82,10 @@ public class SLASummaryBean implements JsonBean {
     private String user;
 
     @Basic
+    @Column(name = "created_time")
+    private Timestamp createdTimeTS = null;
+
+    @Basic
     @Index
     @Column(name = "nominal_time")
     private Timestamp nominalTimeTS = null;
@@ -170,6 +174,22 @@ public class SLASummaryBean implements JsonBean {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    public Timestamp getCreatedTimestamp() {
+        return createdTimeTS;
+    }
+
+    public void setCreatedTimestamp(Timestamp createdTime) {
+        this.createdTimeTS = createdTime;
+    }
+
+    public Date getCreatedTime() {
+        return DateUtils.toDate(createdTimeTS);
+    }
+
+    public void setCreatedTime(Date createdTime) {
+        this.createdTimeTS = DateUtils.convertDateToTimestamp(createdTime);
     }
 
     public Date getNominalTime() {

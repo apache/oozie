@@ -226,7 +226,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         else {
             if (orArray.size() > 0) {
                 StringBuilder sbTotal = new StringBuilder(sb);
-                sb.append(" order by w.startTimestamp desc ");
+                sb.append(" order by w.createdTimestamp desc ");
                 q = em.createQuery(sb.toString());
                 q.setFirstResult(start - 1);
                 q.setMaxResults(len);

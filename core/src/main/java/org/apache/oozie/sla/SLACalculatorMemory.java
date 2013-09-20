@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.sla;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -57,6 +58,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 
 
@@ -401,8 +403,12 @@ public class SLACalculatorMemory implements SLACalculator {
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
                 slaMap.put(jobId, slaCalc);
                 List<JsonBean> insertList = new ArrayList<JsonBean>();
+                final SLASummaryBean summaryBean = new SLASummaryBean(slaCalc);
+                final Timestamp currentTime = DateUtils.convertDateToTimestamp(new Date());
+                reg.setCreatedTimestamp(currentTime);
+                summaryBean.setCreatedTimestamp(currentTime);
                 insertList.add(reg);
-                insertList.add(new SLASummaryBean(slaCalc));
+                insertList.add(summaryBean);
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
                 LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
