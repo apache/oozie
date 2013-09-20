@@ -2426,10 +2426,9 @@ coordinator action.
 </workflow-app>
 </blockquote>
 
-Ensure that the following jars are in classpath, with versions corresponding to hcatalog installation:
-hcatalog-core.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar, hive-serde.jar,
-libfb303.jar and pig.jar. You can also specify the jars using =archive= tag. The hive-site.xml needs to be
-provided using =file= tag.
+*Important*: Ensure that the required hcatalog jars and hive-site.xml are in classpath, with versions corresponding to
+hcatalog installation. Refer [[DG_HCatalogIntegration#HCatalogLibraries][HCatalog Libraries]] for the different ways
+to place them in the hadoop job classpath.
 
 *Example usage in Pig:*
 
