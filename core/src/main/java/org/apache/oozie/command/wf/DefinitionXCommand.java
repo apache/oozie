@@ -22,7 +22,8 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
@@ -53,7 +54,7 @@ public class DefinitionXCommand extends WorkflowXCommand<String> {
             JPAService jpaService = Services.get().get(JPAService.class);
 
             if (jpaService != null) {
-                this.wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+                this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_DEFINITION, jobId);
                 LogUtils.setLogInfo(wfJob, logInfo);
             }
             else {

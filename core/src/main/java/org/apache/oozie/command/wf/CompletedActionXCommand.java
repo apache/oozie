@@ -24,7 +24,8 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -61,7 +62,8 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                this.wfactionBean = jpaService.execute(new WorkflowActionGetJPAExecutor(this.actionId));
+                this.wfactionBean = WorkflowActionQueryExecutor.getInstance().get(
+                        WorkflowActionQuery.GET_ACTION_COMPLETED, this.actionId);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

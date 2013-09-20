@@ -17,14 +17,18 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -44,7 +48,16 @@ public class WorkflowActionQueryExecutor extends
         UPDATE_ACTION_STATUS_PENDING,
         UPDATE_ACTION_PENDING_TRANS,
         UPDATE_ACTION_PENDING_TRANS_ERROR,
-        GET_ACTION
+        GET_ACTION,
+        GET_ACTION_ID_TYPE,
+        GET_ACTION_FAIL,
+        GET_ACTION_SIGNAL,
+        GET_ACTION_START,
+        GET_ACTION_CHECK,
+        GET_ACTION_END,
+        GET_ACTION_KILL,
+        GET_ACTION_COMPLETED,
+        GET_RUNNING_ACTIONS
     };
 
     private static WorkflowActionQueryExecutor instance = new WorkflowActionQueryExecutor();
@@ -106,21 +119,25 @@ public class WorkflowActionQueryExecutor extends
                 break;
             case UPDATE_ACTION_PENDING:
                 query.setParameter("pending", actionBean.getPending());
+                query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_STATUS_PENDING:
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("pending", actionBean.getPending());
+                query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_PENDING_TRANS:
                 query.setParameter("transition", actionBean.getTransition());
                 query.setParameter("pending", actionBean.getPending());
+                query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_PENDING_TRANS_ERROR:
                 query.setParameter("transition", actionBean.getTransition());
                 query.setParameter("pending", actionBean.getPending());
+                query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("id", actionBean.getId());
@@ -166,6 +183,7 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("endTime", actionBean.getEndTimestamp());
+                query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("signalValue", actionBean.getSignalValue());
@@ -185,14 +203,25 @@ public class WorkflowActionQueryExecutor extends
     public Query getSelectQuery(WorkflowActionQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
         Query query = em.createNamedQuery(namedQuery.name());
-        WorkflowActionQuery waQuery = (WorkflowActionQuery) namedQuery;
-        switch (waQuery) {
+        switch (namedQuery) {
             case GET_ACTION:
+            case GET_ACTION_ID_TYPE:
+            case GET_ACTION_FAIL:
+            case GET_ACTION_SIGNAL:
+            case GET_ACTION_START:
+            case GET_ACTION_CHECK:
+            case GET_ACTION_END:
+            case GET_ACTION_KILL:
+            case GET_ACTION_COMPLETED:
                 query.setParameter("id", parameters[0]);
+                break;
+            case GET_RUNNING_ACTIONS:
+                Timestamp ts = new Timestamp(System.currentTimeMillis() - (Integer)parameters[0] * 1000);
+                query.setParameter("lastCheckTime", ts);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
-                        + waQuery.name());
+                        + namedQuery.name());
         }
         return query;
     }
@@ -205,15 +234,167 @@ public class WorkflowActionQueryExecutor extends
         return ret;
     }
 
+    private WorkflowActionBean constructBean(WorkflowActionQuery namedQuery, Object ret) throws JPAExecutorException {
+        WorkflowActionBean bean;
+        Object[] arr;
+        switch (namedQuery) {
+            case GET_ACTION:
+                bean = (WorkflowActionBean) ret;
+                break;
+            case GET_ACTION_ID_TYPE:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setType((String) arr[1]);
+                break;
+            case GET_ACTION_FAIL:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setErrorInfo((String) arr[8], (String) arr[9]);
+                break;
+            case GET_ACTION_SIGNAL:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setErrorInfo((String) arr[8], (String) arr[9]);
+                bean.setExecutionPath((String) arr[10]);
+                bean.setSignalValue((String) arr[11]);
+                bean.setSlaXmlBlob((StringBlob) arr[12]);
+                break;
+            case GET_ACTION_START:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setRetries((Integer) arr[8]);
+                bean.setUserRetryCount((Integer) arr[9]);
+                bean.setUserRetryMax((Integer) arr[10]);
+                bean.setUserRetryInterval((Integer) arr[11]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[12]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[13]));
+                bean.setErrorInfo((String) arr[14], (String) arr[15]);
+                bean.setCred((String) arr[16]);
+                bean.setConfBlob((StringBlob) arr[17]);
+                bean.setSlaXmlBlob((StringBlob) arr[18]);
+                break;
+            case GET_ACTION_CHECK:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setRetries((Integer) arr[8]);
+                bean.setTrackerUri((String) arr[9]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[10]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[11]));
+                bean.setLastCheckTime(DateUtils.toDate((Timestamp) arr[12]));
+                bean.setErrorInfo((String) arr[13], (String) arr[14]);
+                bean.setExternalId((String) arr[15]);
+                bean.setExternalStatus((String) arr[16]);
+                bean.setExternalChildIDsBlob((StringBlob) arr[17]);
+                bean.setConfBlob((StringBlob) arr[18]);
+                break;
+            case GET_ACTION_END:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setRetries((Integer) arr[8]);
+                bean.setTrackerUri((String) arr[9]);
+                bean.setUserRetryCount((Integer) arr[10]);
+                bean.setUserRetryMax((Integer) arr[11]);
+                bean.setUserRetryInterval((Integer) arr[12]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[13]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[14]));
+                bean.setErrorInfo((String) arr[15], (String) arr[16]);
+                bean.setExternalId((String) arr[17]);
+                bean.setExternalStatus((String) arr[18]);
+                bean.setExternalChildIDsBlob((StringBlob) arr[19]);
+                bean.setConfBlob((StringBlob) arr[20]);
+                bean.setDataBlob((StringBlob) arr[21]);
+                bean.setStatsBlob((StringBlob) arr[22]);
+                break;
+            case GET_ACTION_KILL:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setName((String) arr[2]);
+                bean.setStatusStr((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setType((String) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setTransition((String) arr[7]);
+                bean.setRetries((Integer) arr[8]);
+                bean.setTrackerUri((String) arr[9]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[10]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[11]));
+                bean.setErrorInfo((String) arr[12], (String) arr[13]);
+                bean.setExternalId((String) arr[14]);
+                bean.setConfBlob((StringBlob) arr[15]);
+                bean.setDataBlob((StringBlob) arr[16]);
+                break;
+            case GET_ACTION_COMPLETED:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setStatusStr((String) arr[2]);
+                bean.setType((String) arr[3]);
+                bean.setLogToken((String) arr[4]);
+                break;
+            case GET_RUNNING_ACTIONS:
+                bean = new WorkflowActionBean();
+                bean.setId((String)ret);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
+                        + namedQuery.name());
+        }
+        return bean;
+    }
+
     @Override
     public WorkflowActionBean get(WorkflowActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        WorkflowActionBean bean = null;
-        bean = (WorkflowActionBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0605, query.toString());
         }
+        WorkflowActionBean bean = constructBean(namedQuery, ret);
         return bean;
     }
 
@@ -222,10 +403,13 @@ public class WorkflowActionQueryExecutor extends
             throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        List<WorkflowActionBean> beanList = (List<WorkflowActionBean>) jpaService.executeGetList(namedQuery.name(),
-                query, em);
-        if (beanList == null || beanList.size() == 0) {
-            throw new JPAExecutorException(ErrorCode.E0605, query.toString());
+        List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<WorkflowActionBean> beanList = null;
+        if (retList != null) {
+            beanList = new ArrayList<WorkflowActionBean>();
+            for (Object ret : retList) {
+                beanList.add(constructBean(namedQuery, ret));
+            }
         }
         return beanList;
     }

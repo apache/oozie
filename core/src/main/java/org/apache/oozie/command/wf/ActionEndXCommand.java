@@ -42,8 +42,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionService;
@@ -97,8 +97,9 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                this.wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
-                this.wfAction = jpaService.execute(new WorkflowActionGetJPAExecutor(actionId));
+                this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP,
+                        jobId);
+                this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_END, actionId);
                 LogUtils.setLogInfo(wfJob, logInfo);
                 LogUtils.setLogInfo(wfAction, logInfo);
             }

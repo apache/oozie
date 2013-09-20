@@ -17,14 +17,21 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -43,7 +50,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END,
         UPDATE_WORKFLOW_RERUN,
         GET_WORKFLOW,
-        DELETE_WORKFLOW
+        GET_WORKFLOW_STARTTIME,
+        GET_WORKFLOW_USER_GROUP,
+        GET_WORKFLOW_SUSPEND,
+        GET_WORKFLOW_ACTION_OP,
+        GET_WORKFLOW_RERUN,
+        GET_WORKFLOW_DEFINITION,
+        GET_WORKFLOW_KILL,
+        GET_WORKFLOW_RESUME
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
@@ -154,6 +168,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case GET_WORKFLOW:
+            case GET_WORKFLOW_STARTTIME:
+            case GET_WORKFLOW_USER_GROUP:
+            case GET_WORKFLOW_SUSPEND:
+            case GET_WORKFLOW_ACTION_OP:
+            case GET_WORKFLOW_RERUN:
+            case GET_WORKFLOW_DEFINITION:
+            case GET_WORKFLOW_KILL:
+            case GET_WORKFLOW_RESUME:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
@@ -171,14 +193,123 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         return ret;
     }
 
+    private WorkflowJobBean constructBean(WorkflowJobQuery namedQuery, Object ret) throws JPAExecutorException {
+        WorkflowJobBean bean;
+        Object[] arr;
+        switch (namedQuery) {
+            case GET_WORKFLOW:
+                bean = (WorkflowJobBean) ret;
+                break;
+            case GET_WORKFLOW_STARTTIME:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[1]));
+                break;
+            case GET_WORKFLOW_USER_GROUP:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setUser((String) arr[0]);
+                bean.setGroup((String) arr[1]);
+                break;
+            case GET_WORKFLOW_SUSPEND:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setStatusStr((String) arr[4]);
+                bean.setParentId((String) arr[5]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[6]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[7]));
+                bean.setLogToken((String) arr[8]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[9]));
+                break;
+            case GET_WORKFLOW_ACTION_OP:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setAppPath((String) arr[4]);
+                bean.setStatusStr((String) arr[5]);
+                bean.setParentId((String) arr[6]);
+                bean.setLogToken((String) arr[7]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[8]));
+                bean.setProtoActionConfBlob((StringBlob) arr[9]);
+                break;
+            case GET_WORKFLOW_RERUN:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setStatusStr((String) arr[4]);
+                bean.setRun((Integer) arr[5]);
+                bean.setLogToken((String) arr[6]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[7]));
+                break;
+            case GET_WORKFLOW_DEFINITION:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setLogToken((String) arr[4]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[5]));
+                break;
+            case GET_WORKFLOW_KILL:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setAppPath((String) arr[4]);
+                bean.setStatusStr((String) arr[5]);
+                bean.setParentId((String) arr[6]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[7]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[8]));
+                bean.setLogToken((String) arr[9]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[10]));
+                bean.setSlaXmlBlob((StringBlob) arr[11]);
+                break;
+            case GET_WORKFLOW_RESUME:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                bean.setAppPath((String) arr[4]);
+                bean.setStatusStr((String) arr[5]);
+                bean.setParentId((String) arr[6]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[7]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[8]));
+                bean.setLogToken((String) arr[9]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[10]));
+                bean.setProtoActionConfBlob((StringBlob) arr[11]);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
+                        + namedQuery.name());
+        }
+        return bean;
+    }
+
     @Override
     public WorkflowJobBean get(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        WorkflowJobBean bean = (WorkflowJobBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
+        WorkflowJobBean bean = constructBean(namedQuery, ret);
         return bean;
     }
 
@@ -186,10 +317,13 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
     public List<WorkflowJobBean> getList(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        List<WorkflowJobBean> beanList = (List<WorkflowJobBean>) jpaService
-                .executeGetList(namedQuery.name(), query, em);
-        if (beanList == null || beanList.size() == 0) {
-            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<WorkflowJobBean> beanList = null;
+        if (retList != null) {
+            beanList = new ArrayList<WorkflowJobBean>();
+            for (Object ret : retList) {
+                beanList.add(constructBean(namedQuery, ret));
+            }
         }
         return beanList;
     }

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1524 Change Workflow SELECT query to fetch only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1515 Passing superset of action id range should be allowed (mona)
 OOZIE-1530 Fork-join mismatch makes workflow Failed but some actions stay Running (mona)
 OOZIE-1539 Load more coordinator jobs eligible to be materialized in MaterializeTriggerService (mona)

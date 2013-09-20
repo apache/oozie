@@ -45,8 +45,8 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
@@ -272,7 +272,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                this.wfBean = jpaService.execute(new WorkflowJobGetJPAExecutor(this.jobId));
+                this.wfBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RERUN, this.jobId);
                 this.actions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(this.jobId));
             }
             else {

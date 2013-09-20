@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.command.CommandException;
@@ -29,7 +28,8 @@ import org.apache.oozie.command.coord.CoordActionCheckXCommand;
 import org.apache.oozie.command.wf.ActionCheckXCommand;
 import org.apache.oozie.executor.jpa.CoordActionsRunningGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionsRunningGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
@@ -111,8 +111,8 @@ public class ActionCheckerService implements Service {
 
             List<WorkflowActionBean> actions;
             try {
-                actions = jpaService
-                        .execute(new WorkflowActionsRunningGetJPAExecutor(actionCheckDelay));
+                actions = WorkflowActionQueryExecutor.getInstance().getList(WorkflowActionQuery.GET_RUNNING_ACTIONS,
+                        actionCheckDelay);
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);

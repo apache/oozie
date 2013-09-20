@@ -33,7 +33,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.ActionService;
@@ -92,7 +92,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                this.wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_KILL, wfId);
                 this.actionList = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
                 LogUtils.setLogInfo(wfJob, logInfo);
             }

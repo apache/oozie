@@ -38,7 +38,8 @@ import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
@@ -433,7 +434,7 @@ public class AuthorizationService implements Service {
                     JPAService jpaService = Services.get().get(JPAService.class);
                     if (jpaService != null) {
                         try {
-                            jobBean = jpaService.execute(new WorkflowJobGetJPAExecutor(jobId));
+                            jobBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_USER_GROUP, jobId);
                         }
                         catch (JPAExecutorException je) {
                             throw new AuthorizationException(je);

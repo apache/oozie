@@ -17,6 +17,9 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.nio.ByteBuffer;
+import java.util.Date;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -47,7 +50,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testGetQuery() throws Exception {
+    public void testGetUpdateQuery() throws Exception {
         EntityManager em = jpaService.getEntityManager();
         WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
 
@@ -143,53 +146,162 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("wfInstance"), bean.getWfInstanceBlob());
         assertEquals(query.getParameterValue("lastModTime"), bean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("id"), bean.getId());
+    }
+
+    public void testExecuteUpdate() throws Exception {
+
+        WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        bean.setStatus(WorkflowJob.Status.RUNNING);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, bean);
+        WorkflowJobBean bean2 = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, bean.getId());
+        assertEquals(bean2.getStatus(), WorkflowJob.Status.RUNNING);
+    }
+
+    public void testGetSelectQuery() throws Exception {
+        EntityManager em = jpaService.getEntityManager();
+        WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
 
         // GET_WORKFLOW
-        query = WorkflowJobQueryExecutor.getInstance().getSelectQuery(WorkflowJobQuery.GET_WORKFLOW, em, bean.getId());
+        Query query = WorkflowJobQueryExecutor.getInstance().getSelectQuery(WorkflowJobQuery.GET_WORKFLOW, em, bean.getId());
+        assertEquals(query.getParameterValue("id"), bean.getId());
+
+        // GET_WORKFLOW_SUSPEND
+        query = WorkflowJobQueryExecutor.getInstance().getSelectQuery(WorkflowJobQuery.GET_WORKFLOW_SUSPEND, em, bean.getId());
         assertEquals(query.getParameterValue("id"), bean.getId());
     }
 
-    public void testExecuteUpdate() throws Throwable {
-
-        try {
-            WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
-            bean.setStatus(WorkflowJob.Status.RUNNING);
-            WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, bean);
-            WorkflowJobBean bean2 = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW,
-                    bean.getId());
-            assertEquals(bean2.getStatus(), WorkflowJob.Status.RUNNING);
-        }
-        catch (Throwable e) {
-            // TODO Auto-generated catch block
-            System.out.println("Debug: encountered exception");
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    public void testInsert() throws Throwable {
-        try {
-            WorkflowJobBean bean = new WorkflowJobBean();
-            bean.setId("test-oozie-wrk");
-            bean.setAppName("test");
-            bean.setUser("oozie");
-            WorkflowJobQueryExecutor.getInstance().insert(bean);
-            WorkflowJobBean retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW,
-                    "test-oozie-wrk");
-            assertNotNull(retBean);
-            assertEquals(retBean.getAppName(), "test");
-            assertEquals(retBean.getUser(), "oozie");
-        }
-        catch (Throwable e) {
-            System.out.println("Debug: encountered exception testinsert");
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw e;
-        }
+    public void testInsert() throws Exception {
+        WorkflowJobBean bean = new WorkflowJobBean();
+        bean.setId("test-oozie-wrk");
+        bean.setAppName("test");
+        bean.setUser("oozie");
+        WorkflowJobQueryExecutor.getInstance().insert(bean);
+        WorkflowJobBean retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW,
+                "test-oozie-wrk");
+        assertNotNull(retBean);
+        assertEquals(retBean.getAppName(), "test");
+        assertEquals(retBean.getUser(), "oozie");
     }
 
     public void testGet() throws Exception {
-        // TODO
+        WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        bean.setStartTime(new Date(System.currentTimeMillis() - 10));
+        bean.setEndTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, bean);
+        WorkflowJobBean retBean;
+        // GET_WORKFLOW_STARTTIME
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertNull(retBean.getWorkflowInstance());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+        // GET_WORKFLOW_USER_GROUP
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_USER_GROUP, bean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertNull(retBean.getWorkflowInstance());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+
+        // GET_WORKFLOW_SUSPEND
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_SUSPEND, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getParentId(), retBean.getParentId());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+
+        // GET_WORKFLOW_ACTION_OP
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getAppPath(), retBean.getAppPath());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getParentId(), retBean.getParentId());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertEquals(bean.getProtoActionConf(), retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+
+        //GET_WORKFLOW_RERUN
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RERUN, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getRun(), retBean.getRun());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+
+        //GET_WORKFLOW_DEFINITION
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_DEFINITION, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
+
+        // GET_WORKFLOW_KILL
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_KILL, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getAppPath(), retBean.getAppPath());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getParentId(), retBean.getParentId());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertEquals(bean.getSlaXml(), retBean.getSlaXml());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getConf());
+
+        // GET_WORKFLOW_RESUME
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RESUME, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getAppPath(), retBean.getAppPath());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getParentId(), retBean.getParentId());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
+                ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
+        assertEquals(bean.getProtoActionConf(), retBean.getProtoActionConf());
+        assertNull(retBean.getConf());
+        assertNull(retBean.getSlaXml());
     }
 
     public void testGetList() throws Exception {

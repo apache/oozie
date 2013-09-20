@@ -47,7 +47,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -188,7 +188,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
                     log.debug("Updating WF record for WFID :" + wfId + " with parent id: " + actionId);
-                    WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, wfId);
                     wfJob.setParentId(actionId);
                     wfJob.setLastModifiedTime(new Date());
                     BatchQueryExecutor executor = BatchQueryExecutor.getInstance();

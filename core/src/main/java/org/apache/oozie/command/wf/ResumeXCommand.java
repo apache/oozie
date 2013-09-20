@@ -40,7 +40,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobGetActionsJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -182,7 +182,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(ErrorCode.E0610);
         }
         try {
-            workflow = jpaService.execute(new WorkflowJobGetJPAExecutor(id));
+            workflow = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RESUME, id);
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

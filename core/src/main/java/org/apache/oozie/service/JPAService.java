@@ -439,7 +439,7 @@ public class JPAService implements Service, Instrumentable {
      * @return list containing results that match the query
      * @throws JPAExecutorException
      */
-    public List executeGetList(String namedQueryName, Query query, EntityManager em) throws JPAExecutorException {
+    public List<?> executeGetList(String namedQueryName, Query query, EntityManager em) throws JPAExecutorException {
         Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
@@ -450,7 +450,7 @@ public class JPAService implements Service, Instrumentable {
 
             cron.start();
             em.getTransaction().begin();
-            List resultList = null;
+            List<?> resultList = null;
             try {
                 resultList = query.getResultList();
             }

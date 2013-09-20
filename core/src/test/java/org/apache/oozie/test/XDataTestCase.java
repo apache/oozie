@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -1170,6 +1171,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         workflow.setUser(conf.get(OozieClient.USER_NAME));
         workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
         workflow.setWorkflowInstance(wfInstance);
+        workflow.setSlaXml("<sla></sla>");
         return workflow;
     }
 
@@ -1221,6 +1223,17 @@ public abstract class XDataTestCase extends XHCatTestCase {
                 + "<property><name>mapred.output.dir</name><value>" + outputDir.toString() + "</value></property>"
                 + "</configuration>" + "</map-reduce>";
         action.setConf(actionXml);
+        action.setSlaXml("<sla></sla>");
+        action.setData("dummy data");
+        action.setStats("dummy stats");
+        action.setExternalChildIDs("00000001-dummy-oozie-wrkf-W");
+        action.setRetries(2);
+        action.setUserRetryCount(1);
+        action.setUserRetryMax(2);
+        action.setUserRetryInterval(1);
+        action.setErrorInfo("dummyErrorCode", "dummyErrorMessage");
+        action.setExternalId("dummy external id");
+        action.setExternalStatus("RUNNING");
 
         return action;
     }
