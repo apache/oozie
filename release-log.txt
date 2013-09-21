@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1547 Change Coordinator SELECT query to fetch only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1529 Disable job DAG display for workflow having huge actions (puru via rohini)
 OOZIE-1468 Add created time column in WF_ACTIONS and SLA tables (rohini)
 OOZIE-1524 Change Workflow SELECT query to fetch only necessary columns and consolidate JPA Executors (ryota)

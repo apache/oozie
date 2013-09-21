@@ -24,6 +24,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 
@@ -46,7 +47,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testGetQuery() throws Exception {
+    public void testGetUpdateQuery() throws Exception {
         EntityManager em = jpaService.getEntityManager();
         CoordinatorJobBean cjBean = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, true, true);
 
@@ -73,6 +74,8 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("startTime"), cjBean.getStartTimestamp());
         assertEquals(query.getParameterValue("status"), cjBean.getStatus().toString());
         assertEquals(query.getParameterValue("timeUnit"), cjBean.getTimeUnit().toString());
+        assertEquals(query.getParameterValue("appNamespace"), cjBean.getAppNamespace());
+        assertEquals(query.getParameterValue("bundleId"), cjBean.getBundleId());
         assertEquals(query.getParameterValue("id"), cjBean.getId());
 
         // UPDATE_COORD_JOB_STATUS
@@ -165,7 +168,88 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
     }
 
     public void testGet() throws Exception {
-        // TODO
+        CoordinatorJobBean bean = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, true);
+        bean.setAppNamespace(SchemaService.COORDINATOR_NAMESPACE_URI_1);
+        bean.setBundleId("dummy-bundleid");
+        bean.setOrigJobXml("dummy-origjobxml");
+        bean.setSlaXml("<sla></sla>");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, bean);
+        CoordinatorJobBean retBean;
+        // GET_COORD_JOB_USER_APPNAME
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_USER_APPNAME, bean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        // GET_COORD_JOB_INPUTCHECK
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK, bean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getAppNamespace(), retBean.getAppNamespace());
+        assertNull(retBean.getConf());
+        assertNull(retBean.getJobXmlBlob());
+        assertNull(retBean.getOrigJobXmlBlob());
+        assertNull(retBean.getSlaXmlBlob());
+        // GET_COORD_JOB_ACTION_READY
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_ACTION_READY, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getExecution(), retBean.getExecution());
+        assertEquals(bean.getConcurrency(), retBean.getConcurrency());
+        assertNull(retBean.getConf());
+        assertNull(retBean.getJobXmlBlob());
+        assertNull(retBean.getOrigJobXmlBlob());
+        assertNull(retBean.getSlaXmlBlob());
+        // GET_COORD_JOB_ACTION_KILL
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_ACTION_KILL, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertNull(retBean.getConf());
+        assertNull(retBean.getJobXmlBlob());
+        assertNull(retBean.getOrigJobXmlBlob());
+        assertNull(retBean.getSlaXmlBlob());
+        // GET_COORD_JOB_MATERIALIZE
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_MATERIALIZE, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getFrequency(), retBean.getFrequency());
+        assertEquals(bean.getMatThrottling(), retBean.getMatThrottling());
+        assertEquals(bean.getTimeout(), retBean.getTimeout());
+        assertEquals(bean.getTimeZone(), retBean.getTimeZone());
+        assertEquals(bean.getStartTime(), retBean.getStartTime());
+        assertEquals(bean.getEndTime(), retBean.getEndTime());
+        assertEquals(bean.getPauseTime(), retBean.getPauseTime());
+        assertEquals(bean.getNextMaterializedTime(), retBean.getNextMaterializedTime());
+        assertEquals(bean.getLastActionTime(), retBean.getLastActionTime());
+        assertEquals(bean.getLastActionNumber(), retBean.getLastActionNumber());
+        assertEquals(bean.isDoneMaterialization(), retBean.isDoneMaterialization());
+        assertEquals(bean.getBundleId(), retBean.getBundleId());
+        assertEquals(bean.getConf(), retBean.getConf());
+        assertEquals(bean.getJobXml(), retBean.getJobXml());
+        assertNull(retBean.getOrigJobXmlBlob());
+        assertNull(retBean.getSlaXmlBlob());
+        // GET_COORD_JOB_SUSPEND_KILL
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_SUSPEND_KILL, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getUser(), retBean.getUser());
+        assertEquals(bean.getGroup(), retBean.getGroup());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getBundleId(), retBean.getBundleId());
+        assertEquals(bean.getAppNamespace(), retBean.getAppNamespace());
+        assertEquals(bean.isDoneMaterialization(), retBean.isDoneMaterialization());
+        assertNull(retBean.getConf());
+        assertNull(retBean.getJobXmlBlob());
+        assertNull(retBean.getOrigJobXmlBlob());
+        assertNull(retBean.getSlaXmlBlob());
     }
 
     public void testGetList() throws Exception {

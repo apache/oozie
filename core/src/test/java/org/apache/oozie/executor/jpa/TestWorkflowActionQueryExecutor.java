@@ -351,16 +351,32 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
     }
 
     public void testGetList() throws Exception {
-      //GET_RUNNING_ACTIONS
         addRecordToWfActionTable("wrkflow","1", WorkflowAction.Status.RUNNING, true);
         addRecordToWfActionTable("wrkflow","2", WorkflowAction.Status.RUNNING, true);
         addRecordToWfActionTable("wrkflow","3", WorkflowAction.Status.RUNNING, true);
+        addRecordToWfActionTable("wrkflow","4", WorkflowAction.Status.PREP, true);
+        addRecordToWfActionTable("wrkflow","5", WorkflowAction.Status.FAILED, true);
+        addRecordToWfActionTable("wrkflow","6", WorkflowAction.Status.FAILED, false);
+        //GET_RUNNING_ACTIONS
         List<WorkflowActionBean> retList = WorkflowActionQueryExecutor.getInstance().getList(
                 WorkflowActionQuery.GET_RUNNING_ACTIONS, 0);
         assertEquals(3, retList.size());
         for(WorkflowActionBean bean : retList){
             assertTrue(bean.getId().equals("wrkflow@1") || bean.getId().equals("wrkflow@2") || bean.getId().equals("wrkflow@3"));
         }
+        //GET_PENDING_ACTIONS
+        sleep(10);
+        long olderThan = 1;
+        retList = WorkflowActionQueryExecutor.getInstance().getList(
+                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan);
+        assertEquals(2, retList.size());
+        for(WorkflowActionBean bean : retList){
+            assertTrue(bean.getId().equals("wrkflow@4") || bean.getId().equals("wrkflow@5"));
+        }
+        olderThan = 10000;
+        retList = WorkflowActionQueryExecutor.getInstance().getList(
+                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan);
+        assertEquals(0, retList.size());
 
     }
 

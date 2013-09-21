@@ -43,7 +43,8 @@ public class CoordActionQueryExecutor extends
         UPDATE_COORD_ACTION_FOR_START,
         UPDATE_COORD_ACTION_FOR_MODIFIED_DATE,
         UPDATE_COORD_ACTION_RERUN,
-        GET_COORD_ACTION
+        GET_COORD_ACTION,
+        GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();

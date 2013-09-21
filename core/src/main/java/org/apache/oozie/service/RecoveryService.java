@@ -51,9 +51,11 @@ import org.apache.oozie.executor.jpa.BundleActionsGetWaitingOlderJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetForRecoveryJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetReadyGroupbyJobIDJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionsGetPendingJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
@@ -255,8 +257,8 @@ public class RecoveryService implements Service {
                             }
                         }
                         else if (caction.getStatus() == CoordinatorActionBean.Status.SUBMITTED) {
-                            CoordinatorJobBean coordJob = jpaService
-                                    .execute(new CoordJobGetJPAExecutor(caction.getJobId()));
+                            CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance().get(
+                                    CoordJobQuery.GET_COORD_JOB_USER_APPNAME, caction.getJobId());
                             queueCallable(new CoordActionStartXCommand(caction.getId(), coordJob.getUser(),
                                     coordJob.getAppName(), caction.getJobId()));
 
@@ -323,7 +325,8 @@ public class RecoveryService implements Service {
             // queue command for action recovery
             List<WorkflowActionBean> actions = null;
             try {
-                actions = jpaService.execute(new WorkflowActionsGetPendingJPAExecutor(olderThan));
+                actions = WorkflowActionQueryExecutor.getInstance().getList(WorkflowActionQuery.GET_PENDING_ACTIONS,
+                        olderThan);
             }
             catch (JPAExecutorException ex) {
                 log.warn("Exception while reading pending actions from storage", ex);
