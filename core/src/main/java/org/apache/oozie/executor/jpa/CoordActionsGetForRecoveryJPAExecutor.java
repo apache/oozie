@@ -94,6 +94,9 @@ public class CoordActionsGetForRecoveryJPAExecutor implements JPAExecutor<List<C
         if (arr[3] != null) {
             bean.setExternalId((String) arr[3]);
         }
+        if (arr[4] != null) {
+            bean.setPending((Integer) arr[4]);
+        }
         return bean;
     }
 

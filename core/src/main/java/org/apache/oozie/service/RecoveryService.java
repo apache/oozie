@@ -266,7 +266,7 @@ public class RecoveryService implements Service {
                                     + caction.getId());
                         }
                         else if (caction.getStatus() == CoordinatorActionBean.Status.SUSPENDED) {
-                            if (caction.getExternalId() != null) {
+                            if (caction.getExternalId() != null && caction.getPending() > 1) {
                                 queueCallable(new SuspendXCommand(caction.getExternalId()));
                                 log.debug("Recover a SUSPENDED coord action and resubmit SuspendXCommand :"
                                         + caction.getId());

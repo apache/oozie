@@ -425,7 +425,7 @@ public class TestRecoveryService extends XDataTestCase {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         final String wfJobId = wfJob.getId();
         addRecordToCoordActionTable(coordJob.getId(), 1,
-                CoordinatorAction.Status.SUSPENDED, "coord-action-get.xml", wfJobId, "RUNNING", 1);
+                CoordinatorAction.Status.SUSPENDED, "coord-action-get.xml", wfJobId, "RUNNING", 2);
 
         sleep(3000);
 
