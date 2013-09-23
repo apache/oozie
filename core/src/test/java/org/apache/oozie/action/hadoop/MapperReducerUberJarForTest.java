@@ -27,10 +27,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Iterator;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
+/**
+ * This is just like MapperReducerForTest except that this map function outputs the classpath as the value
+ */
 public class MapperReducerUberJarForTest implements Mapper, Reducer {
     public static final String GROUP = "g";
     public static final String NAME = "c";
@@ -45,18 +46,18 @@ public class MapperReducerUberJarForTest implements Mapper, Reducer {
     public void close() throws IOException {
     }
 
-    private static final LongWritable zero = new LongWritable(0);
-
     @SuppressWarnings("unchecked")
     public void map(Object key, Object value, OutputCollector collector, Reporter reporter) throws IOException {
+        StringBuilder sb = new StringBuilder();
         ClassLoader applicationClassLoader = this.getClass().getClassLoader();
         if (applicationClassLoader == null) {
             applicationClassLoader = ClassLoader.getSystemClassLoader();
         }
         URL[] urls = ((URLClassLoader) applicationClassLoader).getURLs();
         for (URL url : urls) {
-            collector.collect(zero, new Text(url.toString()));
+            sb.append(url.toString()).append("@");
         }
+        collector.collect(key, new Text(sb.toString()));
         reporter.incrCounter(GROUP, NAME, 5l);
     }
 
@@ -64,7 +65,7 @@ public class MapperReducerUberJarForTest implements Mapper, Reducer {
     public void reduce(Object key, Iterator values, OutputCollector collector, Reporter reporter)
             throws IOException {
         while (values.hasNext()) {
-            collector.collect(values.next(), NullWritable.get());
+            collector.collect(key, values.next());
         }
     }
 }

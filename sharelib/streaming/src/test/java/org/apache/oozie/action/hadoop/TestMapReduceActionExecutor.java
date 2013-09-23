@@ -502,11 +502,11 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         boolean containsLib1Jar = false;
         String lib1JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
         Pattern lib1JarPatYarn = Pattern.compile(
-                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib1.jar");
+                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib1.jar.*");
         boolean containsLib2Jar = false;
         String lib2JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
         Pattern lib2JarPatYarn = Pattern.compile(
-                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib2.jar");
+                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib2.jar.*");
 
         FileStatus[] fstats = getFileSystem().listStatus(outputDir);
         for (FileStatus fstat : fstats) {
@@ -516,8 +516,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 Scanner sc = new Scanner(is);
                 while (sc.hasNextLine()) {
                     String line = sc.nextLine();
-                    containsLib1Jar = (containsLib1Jar || line.endsWith(lib1JarStr) || lib1JarPatYarn.matcher(line).matches());
-                    containsLib2Jar = (containsLib2Jar || line.endsWith(lib2JarStr) || lib2JarPatYarn.matcher(line).matches());
+                    containsLib1Jar = (containsLib1Jar || line.contains(lib1JarStr) || lib1JarPatYarn.matcher(line).matches());
+                    containsLib2Jar = (containsLib2Jar || line.contains(lib2JarStr) || lib2JarPatYarn.matcher(line).matches());
                 }
                 sc.close();
                 is.close();

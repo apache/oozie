@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1546 TestMapReduceActionExecutorUberJar.testMapReduceWithUberJarEnabled fails (rkanter)
 OOZIE-1545 RecoveryService keeps repeatedly queueing SuspendXCommand (rohini)
 OOZIE-1547 Change Coordinator SELECT query to fetch only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1529 Disable job DAG display for workflow having huge actions (puru via rohini)
