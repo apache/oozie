@@ -320,29 +320,42 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     private void handleActionData() throws IOException, LauncherException {
         // external child IDs
-        File externalChildIDs = new File(System.getProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS));
-        if (externalChildIDs.exists()) {
-            actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
+        String externalChildIdsProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS);
+        if (externalChildIdsProp != null) {
+            File externalChildIDs = new File(externalChildIdsProp);
+            if (externalChildIDs.exists()) {
+                actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
+            }
         }
 
         // external stats
-        File actionStatsData = new File(System.getProperty(ACTION_PREFIX + ACTION_DATA_STATS));
-        if (actionStatsData.exists()) {
-            int statsMaxOutputData = getJobConf().getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, Integer.MAX_VALUE);
-            actionData.put(ACTION_DATA_STATS, getLocalFileContentStr(actionStatsData, "Stats", statsMaxOutputData));
+        String statsProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_STATS);
+        if (statsProp != null) {
+            File actionStatsData = new File(statsProp);
+            if (actionStatsData.exists()) {
+                int statsMaxOutputData = getJobConf().getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, Integer.MAX_VALUE);
+                actionData.put(ACTION_DATA_STATS, getLocalFileContentStr(actionStatsData, "Stats", statsMaxOutputData));
+            }
         }
 
         // output data
-        File actionOutputData = new File(System.getProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS));
-        if (actionOutputData.exists()) {
-            int maxOutputData = getJobConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024);
-            actionData.put(ACTION_DATA_OUTPUT_PROPS, getLocalFileContentStr(actionOutputData, "Output", maxOutputData));
+        String outputProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS);
+        if (outputProp != null) {
+            File actionOutputData = new File(outputProp);
+            if (actionOutputData.exists()) {
+                int maxOutputData = getJobConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024);
+                actionData.put(ACTION_DATA_OUTPUT_PROPS,
+                        getLocalFileContentStr(actionOutputData, "Output", maxOutputData));
+            }
         }
 
         // id swap
-        File newId = new File(System.getProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID));
-        if (newId.exists()) {
-            actionData.put(ACTION_DATA_NEW_ID, getLocalFileContentStr(newId, "", -1));
+        String newIdProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID);
+        if (newIdProp != null) {
+            File newId = new File(newIdProp);
+            if (newId.exists()) {
+                actionData.put(ACTION_DATA_NEW_ID, getLocalFileContentStr(newId, "", -1));
+            }
         }
     }
 
@@ -371,16 +384,27 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
                     + new Path(actionDir, ACTION_DATA_SEQUENCE_FILE).toUri());
 
-            SequenceFile.Writer wr = SequenceFile.createWriter(fs, getJobConf(), finalPath, Text.class, Text.class);
-            if (wr != null) {
-                Set<String> keys = actionData.keySet();
-                for (String propsKey : keys) {
-                    wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+            SequenceFile.Writer wr = null;
+            try {
+                wr = SequenceFile.createWriter(fs, getJobConf(), finalPath, Text.class, Text.class);
+                if (wr != null) {
+                    Set<String> keys = actionData.keySet();
+                    for (String propsKey : keys) {
+                        wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                    }
                 }
-                wr.close();
+                else {
+                    throw new IOException("SequenceFile.Writer is null for " + finalPath);
+                }
             }
-            else {
-                throw new IOException("SequenceFile.Writer is null for " + finalPath);
+            catch(IOException e) {
+                e.printStackTrace();
+                throw e;
+            }
+            finally {
+                if (wr != null) {
+                    wr.close();
+                }
             }
         }
     }
@@ -473,9 +497,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             actionData.put(ACTION_DATA_ERROR_PROPS, sw.toString());
 
             // external child IDs
-            File externalChildIDs = new File(System.getProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS));
-            if (externalChildIDs.exists()) {
-                actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
+            String externalChildIdsProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS);
+            if (externalChildIdsProp != null) {
+                File externalChildIDs = new File(externalChildIdsProp);
+                if (externalChildIDs.exists()) {
+                    actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
+                }
             }
         }
         catch (IOException ioe) {
