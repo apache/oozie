@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,10 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -79,8 +80,8 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         sleep(2000);
 
-        BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertEquals(true, actions.get(0).isCritical());
@@ -129,19 +130,22 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         sleep(2000);
 
-        final BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
         assertEquals(2, actions.size());
 
+        final String jobId = job.getId();
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {
-                List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+                List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, jobId);
                 return actions.get(0).getStatus().equals(Job.Status.RUNNING)
                         && actions.get(1).getStatus().equals(Job.Status.RUNNING);
             }
         });
 
-        actions = jpaService.execute(bundleActionsGetExecutor);
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+                job.getId());
         assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
         assertEquals(true, actions.get(0).isCritical());
         assertEquals(job.getId(), actions.get(0).getBundleId());
@@ -171,8 +175,8 @@ public class TestBundleStartXCommand extends XDataTestCase {
 
         sleep(2000);
 
-        BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertEquals(true, actions.get(0).isCritical());
@@ -261,8 +265,8 @@ public class TestBundleStartXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
         sleep(2000);
-        BundleActionsGetJPAExecutor bundleActionsGetExecutor = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetExecutor);
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
         assertNull(actions.get(0).getCoordId());
         assertEquals(Job.Status.FAILED, actions.get(0).getStatus());
         Runnable runnable = new StatusTransitRunnable();

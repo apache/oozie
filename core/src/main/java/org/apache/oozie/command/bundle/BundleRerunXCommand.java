@@ -25,7 +25,6 @@ import java.util.Map;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.RestConstants;
@@ -33,15 +32,14 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -63,8 +61,6 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;
     protected boolean prevPending;
-
-    private JPAService jpaService = null;
 
     /**
      * The constructor for class {@link BundleRerunXCommand}
@@ -90,18 +86,12 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
     @Override
     protected void loadState() throws CommandException {
         try {
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                this.bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
-                LogUtils.setLogInfo(bundleJob, logInfo);
-                super.setJob(bundleJob);
-                prevPending = bundleJob.isPending();
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
+            this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, jobId);
+            LogUtils.setLogInfo(bundleJob, logInfo);
+            super.setJob(bundleJob);
+            prevPending = bundleJob.isPending();
         }
         catch (XException ex) {
             throw new CommandException(ex);
@@ -280,7 +270,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
 
     private final CoordinatorJobBean getCoordJob(String coordId) throws CommandException {
         try {
-            CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+            CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, coordId);
             return job;
         }
         catch (JPAExecutorException je) {

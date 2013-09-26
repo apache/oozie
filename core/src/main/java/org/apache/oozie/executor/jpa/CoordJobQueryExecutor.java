@@ -23,12 +23,9 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -60,7 +57,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         GET_COORD_JOB_ACTION_READY,
         GET_COORD_JOB_ACTION_KILL,
         GET_COORD_JOB_MATERIALIZE,
-        GET_COORD_JOB_SUSPEND_KILL
+        GET_COORD_JOB_SUSPEND_KILL,
+        GET_COORD_JOB_STATUS_PARENTID
     };
 
     private static CoordJobQueryExecutor instance = new CoordJobQueryExecutor();
@@ -199,6 +197,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
             case GET_COORD_JOB_ACTION_KILL:
             case GET_COORD_JOB_MATERIALIZE:
             case GET_COORD_JOB_SUSPEND_KILL:
+            case GET_COORD_JOB_STATUS_PARENTID:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
@@ -215,7 +214,9 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
         return ret;
     }
-    private CoordinatorJobBean constructBean(CoordJobQuery namedQuery, Object ret) throws JPAExecutorException {
+
+    private CoordinatorJobBean constructBean(CoordJobQuery namedQuery, Object ret, Object... parameters)
+            throws JPAExecutorException {
         CoordinatorJobBean bean;
         Object[] arr;
         switch (namedQuery) {
@@ -291,6 +292,13 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setAppNamespace((String) arr[6]);
                 bean.setDoneMaterialization((Integer) arr[7]);
                 break;
+            case GET_COORD_JOB_STATUS_PARENTID:
+                bean = new CoordinatorJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) parameters[0]);
+                bean.setStatusStr((String) arr[0]);
+                bean.setBundleId((String) arr[1]);
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -306,7 +314,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
-        CoordinatorJobBean bean = constructBean(namedQuery, ret);
+        CoordinatorJobBean bean = constructBean(namedQuery, ret, parameters);
         return bean;
     }
 
@@ -319,7 +327,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         if (retList != null) {
             beanList = new ArrayList<CoordinatorJobBean>();
             for (Object ret : retList) {
-                beanList.add(constructBean(namedQuery, ret));
+                beanList.add(constructBean(namedQuery, ret, parameters));
             }
         }
         return beanList;
@@ -332,4 +340,5 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
             instance = null;
         }
     }
+
 }

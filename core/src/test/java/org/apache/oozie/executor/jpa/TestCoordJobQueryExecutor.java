@@ -179,6 +179,11 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_USER_APPNAME, bean.getId());
         assertEquals(bean.getUser(), retBean.getUser());
         assertEquals(bean.getAppName(), retBean.getAppName());
+        // GET_COORD_JOB_STATUS_PARENTID
+        retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_STATUS_PARENTID, bean.getId());
+        assertEquals(bean.getBundleId(), retBean.getBundleId());
+        assertEquals(bean.getStatus(), retBean.getStatus());
+        assertEquals(bean.getId(), retBean.getId());
         // GET_COORD_JOB_INPUTCHECK
         retBean = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK, bean.getId());
         assertEquals(bean.getUser(), retBean.getUser());

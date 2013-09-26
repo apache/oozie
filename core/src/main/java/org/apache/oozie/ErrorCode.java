@@ -220,7 +220,7 @@ public enum ErrorCode {
     E1308(XLog.STD, "Bundle Action Status  [{0}] is not matching with coordinator previous status [{1}]."),
     E1309(XLog.STD, "Bundle Action for bundle ID  [{0}] and Coordinator [{1}] could not be update by BundleStatusUpdateXCommand"),
     E1310(XLog.STD, "Bundle Job submission Error: [{0}]"),
-    E1311(XLog.STD, "Bundle Action for bundle ID  [{0}] could not be get."),
+    E1311(XLog.STD, "Bundle Action for bundle ID  [{0}] not found"),
     E1312(XLog.STD, "Bundle Job can not be suspended as job finished or failed or killed, id : {0}, status : {1}"),
     E1313(XLog.STD, "Bundle Job can not be changed as job finished, {0}, Status: {1}"),
     E1314(XLog.STD, "Bundle Job can not be changed as job does not exist, {0}"),

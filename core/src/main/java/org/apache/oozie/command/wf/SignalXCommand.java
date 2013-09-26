@@ -205,7 +205,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     WorkflowActionBean actionToKill;
 
                     actionToKill = WorkflowActionQueryExecutor.getInstance().get(
-                            WorkflowActionQuery.GET_ACTION_ID_TYPE, actionToKillId);
+                            WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK, actionToKillId);
 
                     actionToKill.setPending();
                     actionToKill.setStatus(WorkflowActionBean.Status.KILLED);
@@ -316,7 +316,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     try {
                         // Make sure that transition node for a forked action
                         // is inserted only once
-                        WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE,
+                        WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
                                 newAction.getId());
 
                         continue;

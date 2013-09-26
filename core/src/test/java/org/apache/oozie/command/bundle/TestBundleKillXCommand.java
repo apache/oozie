@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
@@ -113,8 +114,8 @@ public class TestBundleKillXCommand extends XDataTestCase {
 
         sleep(2000);
 
-        BundleActionsGetJPAExecutor bundleActionsGetCmd = new BundleActionsGetJPAExecutor(job.getId());
-        List<BundleActionBean> actions = jpaService.execute(bundleActionsGetCmd);
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertNotNull(actions.get(0).getCoordId());
@@ -125,7 +126,8 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.KILLED, job.getStatus());
 
-        actions = jpaService.execute(bundleActionsGetCmd);
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+                job.getId());
 
         assertEquals(true, actions.get(0).isPending());
         assertEquals(true, actions.get(1).isPending());

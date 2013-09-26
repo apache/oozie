@@ -156,7 +156,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     public String getEntityKey() {
-        return coordAction.getJobId();
+        return workflow.getParentId().substring(0, workflow.getParentId().indexOf("@"));
     }
 
     /* (non-Javadoc)
@@ -167,26 +167,19 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
-    protected void eagerLoadState() throws CommandException {
+    protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
-
         int retries = 0;
         while (retries++ < maxRetries) {
             try {
                 coordAction = jpaService.execute(new CoordActionGetForExternalIdJPAExecutor(workflow.getId()));
                 if (coordAction != null) {
-                    coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
-                            coordAction.getJobId()));
+                    coordJob = jpaService
+                            .execute(new CoordinatorJobGetForUserAppnameJPAExecutor(coordAction.getJobId()));
+                    LogUtils.setLogInfo(coordAction, logInfo);
                     break;
                 }
-
                 if (retries < maxRetries) {
                     Thread.sleep(500);
                 }
@@ -198,33 +191,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 LOG.warn("Retry to load coord action is interrupted {0}", ex.getMessage(), ex);
             }
         }
-
-        if (coordAction != null) {
-            LogUtils.setLogInfo(coordAction, logInfo);
-        }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
-    @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        if (coordAction == null) {
-            throw new PreconditionException(ErrorCode.E1100, ", coord action is null");
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
-    @Override
-    protected void loadState() throws CommandException {
-        eagerLoadState();
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
 
@@ -233,8 +201,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 && coordAction.getStatus() == CoordinatorAction.Status.RUNNING && !coordAction.isPending()) {
             try {
                 CoordActionQueryExecutor.getInstance().executeUpdate(
-                        CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME,
-                        coordAction);
+                        CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, coordAction);
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);

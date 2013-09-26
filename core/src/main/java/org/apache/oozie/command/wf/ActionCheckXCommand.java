@@ -25,7 +25,6 @@ import java.util.List;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.XException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
@@ -42,7 +41,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.Instrumentation;
@@ -61,7 +59,6 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     private int actionCheckDelay;
     private WorkflowJobBean wfJob = null;
     private WorkflowActionBean wfAction = null;
-    private JPAService jpaService = null;
     private ActionExecutor executor = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private boolean generateEvent = false;
@@ -84,18 +81,13 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     @Override
     protected void eagerLoadState() throws CommandException {
         try {
-            jpaService = Services.get().get(JPAService.class);
-            if (jpaService != null) {
-                this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP, jobId);
-                this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_CHECK, actionId);
-                LogUtils.setLogInfo(wfJob, logInfo);
-                LogUtils.setLogInfo(wfAction, logInfo);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, jobId);
+            this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
+                    actionId);
+            LogUtils.setLogInfo(wfJob, logInfo);
+            LogUtils.setLogInfo(wfAction, logInfo);
         }
-        catch (XException ex) {
+        catch (JPAExecutorException ex) {
             throw new CommandException(ex);
         }
     }
@@ -135,7 +127,16 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
-        eagerLoadState();
+        try {
+            this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP, jobId);
+            this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_CHECK,
+                    actionId);
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
+        }
+        LogUtils.setLogInfo(wfJob, logInfo);
+        LogUtils.setLogInfo(wfAction, logInfo);
     }
 
     @Override

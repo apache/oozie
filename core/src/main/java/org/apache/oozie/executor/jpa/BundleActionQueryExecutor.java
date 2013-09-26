@@ -37,7 +37,8 @@ public class BundleActionQueryExecutor extends
         UPDATE_BUNDLE_ACTION_PENDING_MODTIME,
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME,
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID,
-        GET_BUNDLE_ACTION
+        GET_BUNDLE_ACTION,
+        GET_BUNDLE_ACTIONS_FOR_BUNDLE
     };
 
     private static BundleActionQueryExecutor instance = new BundleActionQueryExecutor();
@@ -66,19 +67,19 @@ public class BundleActionQueryExecutor extends
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case UPDATE_BUNDLE_ACTION_PENDING_MODTIME:
-                query.setParameter("lastModifiedTimestamp", baBean.getLastModifiedTimestamp());
+                query.setParameter("lastModifiedTime", baBean.getLastModifiedTimestamp());
                 query.setParameter("pending", baBean.getPending());
                 query.setParameter("bundleActionId", baBean.getBundleActionId());
                 break;
             case UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME:
                 query.setParameter("status", baBean.getStatusStr());
-                query.setParameter("lastModifiedTimestamp", baBean.getLastModifiedTimestamp());
+                query.setParameter("lastModifiedTime", baBean.getLastModifiedTimestamp());
                 query.setParameter("pending", baBean.getPending());
                 query.setParameter("bundleActionId", baBean.getBundleActionId());
                 break;
             case UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID:
                 query.setParameter("status", baBean.getStatusStr());
-                query.setParameter("lastModifiedTimestamp", baBean.getLastModifiedTimestamp());
+                query.setParameter("lastModifiedTime", baBean.getLastModifiedTimestamp());
                 query.setParameter("pending", baBean.getPending());
                 query.setParameter("coordId", baBean.getCoordId());
                 query.setParameter("bundleActionId", baBean.getBundleActionId());
@@ -97,6 +98,9 @@ public class BundleActionQueryExecutor extends
         switch (namedQuery) {
             case GET_BUNDLE_ACTION:
                 query.setParameter("bundleActionId", parameters[0]);
+                break;
+            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+                query.setParameter("bundleId", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -124,11 +128,13 @@ public class BundleActionQueryExecutor extends
         return bean;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<BundleActionBean> getList(BundleActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
-        // TODO
-        return null;
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        return (List<BundleActionBean>) jpaService.executeGetList(namedQuery.name(), query, em);
     }
 
     @VisibleForTesting
@@ -138,4 +144,5 @@ public class BundleActionQueryExecutor extends
             instance = null;
         }
     }
+
 }

@@ -143,16 +143,10 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected void eagerLoadState() throws CommandException {
-        super.eagerLoadState();
         try {
             jpaService = Services.get().get(JPAService.class);
-            if (jpaService != null) {
-                this.wfJobBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_SUSPEND,
-                        this.wfid);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.wfJobBean = WorkflowJobQueryExecutor.getInstance()
+                    .get(WorkflowJobQuery.GET_WORKFLOW_STATUS, this.wfid);
         }
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
@@ -162,7 +156,6 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        super.eagerVerifyPrecondition();
         if (this.wfJobBean.getStatus() != WorkflowJob.Status.RUNNING) {
             throw new PreconditionException(ErrorCode.E0727, this.wfJobBean.getId(), this.wfJobBean.getStatus());
         }
@@ -185,7 +178,13 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
-        eagerLoadState();
+        try {
+            this.wfJobBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_SUSPEND,
+                    this.wfid);
+        }
+        catch (Exception ex) {
+            throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
+        }
     }
 
     @Override

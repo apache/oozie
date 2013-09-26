@@ -44,7 +44,8 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
@@ -52,7 +53,6 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -88,7 +88,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     public static final String TO_SKIP = "TO_SKIP";
     private WorkflowJobBean wfBean;
     private List<WorkflowActionBean> actions;
-    private JPAService jpaService;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
@@ -268,16 +267,10 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void eagerLoadState() throws CommandException {
-        super.eagerLoadState();
         try {
-            jpaService = Services.get().get(JPAService.class);
-            if (jpaService != null) {
-                this.wfBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RERUN, this.jobId);
-                this.actions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(this.jobId));
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.wfBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, this.jobId);
+            this.actions = WorkflowActionQueryExecutor.getInstance().getList(
+                    WorkflowActionQuery.GET_ACTIONS_FOR_WORKFLOW_RERUN, this.jobId);
 
             if (conf != null) {
                 if (conf.getBoolean(OozieClient.RERUN_FAIL_NODES, false) == false) { //Rerun with skipNodes
@@ -316,7 +309,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        super.eagerVerifyPrecondition();
         if (!(wfBean.getStatus().equals(WorkflowJob.Status.FAILED)
                 || wfBean.getStatus().equals(WorkflowJob.Status.KILLED) || wfBean.getStatus().equals(
                         WorkflowJob.Status.SUCCEEDED))) {
@@ -394,7 +386,14 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
-        eagerLoadState();
+        try {
+            this.wfBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_RERUN, this.jobId);
+            this.actions = WorkflowActionQueryExecutor.getInstance().getList(
+                    WorkflowActionQuery.GET_ACTIONS_FOR_WORKFLOW_RERUN, this.jobId);
+        }
+        catch (JPAExecutorException jpe) {
+            throw new CommandException(jpe);
+        }
     }
 
     /* (non-Javadoc)

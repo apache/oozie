@@ -40,8 +40,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
-import org.apache.oozie.client.BundleJob.Timeunit;
-import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonUtils;
@@ -54,9 +52,9 @@ import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTimestamp, w.endTimestamp = :endTimestamp, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.origJobXml = :origJobXml, w.startTimestamp = :startTimestamp, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTime, w.origJobXml = :origJobXml, w.startTimestamp = :startTime, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTimestamp, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING", query = "update BundleJobBean w set w.statusStr = :status, w.pending = :pending where w.id = :id"),
 
@@ -73,6 +71,8 @@ import org.json.simple.JSONObject;
         @NamedQuery(name = "GET_BUNDLE_JOBS", query = "select OBJECT(w) from BundleJobBean w"),
 
         @NamedQuery(name = "GET_BUNDLE_JOB", query = "select OBJECT(w) from BundleJobBean w where w.id = :id"),
+
+        @NamedQuery(name = "GET_BUNDLE_JOB_STATUS", query = "select w.statusStr from BundleJobBean w where w.id = :id"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 

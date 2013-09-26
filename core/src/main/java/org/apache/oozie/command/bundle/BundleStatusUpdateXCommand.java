@@ -28,7 +28,6 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StatusUpdateXCommand;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
@@ -112,7 +111,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      */
     @Override
     public String getEntityKey() {
-        return bundleaction.getBundleId();
+        return coordjob.getBundleId();
     }
 
     /* (non-Javadoc)
@@ -121,14 +120,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     @Override
     protected boolean isLockRequired() {
         return true;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    @Override
-    protected void eagerLoadState() throws CommandException{
-        loadState();
     }
 
     /* (non-Javadoc)

@@ -38,13 +38,10 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -60,7 +57,6 @@ import org.jdom.JDOMException;
 public class BundleStartXCommand extends StartTransitionXCommand {
     private final String jobId;
     private BundleJobBean bundleJob;
-    private JPAService jpaService = null;
 
     /**
      * The constructor for class {@link BundleStartXCommand}
@@ -104,50 +100,21 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        eagerVerifyPrecondition();
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
-    @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() != Job.Status.PREP) {
             String msg = "Bundle " + bundleJob.getId() + " is not in PREP status. It is in : " + bundleJob.getStatus();
             LOG.info(msg);
             throw new PreconditionException(ErrorCode.E1100, msg);
         }
     }
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
+
     @Override
     public void loadState() throws CommandException {
-        eagerLoadState();
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
-    @Override
-    public void eagerLoadState() throws CommandException {
         try {
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                this.bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                LogUtils.setLogInfo(bundleJob, logInfo);
-                super.setJob(bundleJob);
-
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
+            LogUtils.setLogInfo(bundleJob, logInfo);
+            super.setJob(bundleJob);
         }
         catch (XException ex) {
             throw new CommandException(ex);

@@ -34,14 +34,13 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
@@ -51,7 +50,6 @@ import org.apache.oozie.util.StatusUtils;
 public class BundleJobChangeXCommand extends XCommand<Void> {
     private String jobId;
     private String changeValue;
-    private JPAService jpaService;
     private List<BundleActionBean> bundleActions;
     private BundleJobBean bundleJob;
     private Date newPauseTime = null;
@@ -216,51 +214,33 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
-        try{
-            eagerLoadState();
-            this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
+        try {
+            this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, bundleJob.getId());
+            this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleJob.getId());
         }
-        catch(Exception Ex){
-            throw new CommandException(ErrorCode.E1311,this.jobId);
+        catch (JPAExecutorException Ex) {
+            throw new CommandException(ErrorCode.E1311, this.jobId);
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
         try {
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                this.bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                LogUtils.setLogInfo(bundleJob, logInfo);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, jobId);
+            LogUtils.setLogInfo(bundleJob, logInfo);
         }
-        catch (XException ex) {
+        catch (JPAExecutorException ex) {
             throw new CommandException(ex);
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         validateChangeValue(changeValue);
@@ -271,15 +251,14 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         }
         if (isChangePauseTime) {
             if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
-                    || bundleJob.getStatus() == Job.Status.KILLED || bundleJob.getStatus() == Job.Status.DONEWITHERROR
-                    || bundleJob == null) {
+                    || bundleJob.getStatus() == Job.Status.KILLED || bundleJob.getStatus() == Job.Status.DONEWITHERROR) {
                 LOG.info("BundleChangeCommand not succeeded for changing pausetime- " + "job " + jobId + " finished, status is "
                         + bundleJob.getStatusStr());
                 throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
             }
         }
         else if(isChangeEndTime){
-            if (bundleJob.getStatus() == Job.Status.KILLED || bundleJob == null) {
+            if (bundleJob.getStatus() == Job.Status.KILLED) {
                 LOG.info("BundleChangeCommand not succeeded for changing endtime- " + "job " + jobId + " finished, status is "
                         + bundleJob.getStatusStr());
                 throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());

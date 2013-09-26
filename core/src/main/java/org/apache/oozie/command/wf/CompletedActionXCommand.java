@@ -27,7 +27,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -38,7 +37,6 @@ import org.apache.oozie.util.ParamChecker;
 public class CompletedActionXCommand extends WorkflowXCommand<Void> {
     private final String actionId;
     private final String externalStatus;
-    private JPAService jpaService;
     private WorkflowActionBean wfactionBean;
 
     public CompletedActionXCommand(String actionId, String externalStatus, Properties actionData, int priority) {
@@ -58,16 +56,9 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void eagerLoadState() throws CommandException {
-        super.eagerLoadState();
         try {
-            jpaService = Services.get().get(JPAService.class);
-            if (jpaService != null) {
-                this.wfactionBean = WorkflowActionQueryExecutor.getInstance().get(
-                        WorkflowActionQuery.GET_ACTION_COMPLETED, this.actionId);
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
+            this.wfactionBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_COMPLETED,
+                    this.actionId);
         }
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
@@ -82,7 +73,6 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
-        super.eagerVerifyPrecondition();
         if (this.wfactionBean.getStatus() != WorkflowActionBean.Status.RUNNING) {
             throw new CommandException(ErrorCode.E0800, actionId, this.wfactionBean.getStatus());
         }

@@ -26,9 +26,7 @@ import javax.persistence.Query;
 import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -57,7 +55,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         GET_WORKFLOW_RERUN,
         GET_WORKFLOW_DEFINITION,
         GET_WORKFLOW_KILL,
-        GET_WORKFLOW_RESUME
+        GET_WORKFLOW_RESUME,
+        GET_WORKFLOW_STATUS
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
@@ -176,6 +175,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             case GET_WORKFLOW_DEFINITION:
             case GET_WORKFLOW_KILL:
             case GET_WORKFLOW_RESUME:
+            case GET_WORKFLOW_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
@@ -193,7 +193,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         return ret;
     }
 
-    private WorkflowJobBean constructBean(WorkflowJobQuery namedQuery, Object ret) throws JPAExecutorException {
+    private WorkflowJobBean constructBean(WorkflowJobQuery namedQuery, Object ret, Object... parameters)
+            throws JPAExecutorException {
         WorkflowJobBean bean;
         Object[] arr;
         switch (namedQuery) {
@@ -294,6 +295,11 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setWfInstanceBlob((BinaryBlob) (arr[10]));
                 bean.setProtoActionConfBlob((StringBlob) arr[11]);
                 break;
+            case GET_WORKFLOW_STATUS:
+                bean = new WorkflowJobBean();
+                bean.setId((String) parameters[0]);
+                bean.setStatusStr((String) ret);
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -309,7 +315,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
-        WorkflowJobBean bean = constructBean(namedQuery, ret);
+        WorkflowJobBean bean = constructBean(namedQuery, ret, parameters);
         return bean;
     }
 
@@ -322,7 +328,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         if (retList != null) {
             beanList = new ArrayList<WorkflowJobBean>();
             for (Object ret : retList) {
-                beanList.add(constructBean(namedQuery, ret));
+                beanList.add(constructBean(namedQuery, ret, parameters));
             }
         }
         return beanList;

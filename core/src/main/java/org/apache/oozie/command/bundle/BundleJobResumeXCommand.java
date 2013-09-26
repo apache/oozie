@@ -29,8 +29,8 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.ResumeTransitionXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
@@ -158,8 +158,9 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         }
 
         try {
-            bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-            bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(bundleId));
+            bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, bundleId);
+            bundleActions = BundleActionQueryExecutor.getInstance().getList(
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleId);
         }
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E0604, bundleId);

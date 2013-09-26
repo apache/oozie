@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,6 @@ import org.apache.oozie.command.SubmitTransitionXCommand;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -79,8 +78,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
-    private JPAService jpaService = null;
-
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
@@ -128,7 +125,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
 
             ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(bundleBean.getOrigJobXml()));
-            
+
             String jobXmlWithNoComment = XmlUtils.removeComments(this.bundleBean.getOrigJobXml().toString());
             // Resolving all variables in the job properties.
             // This ensures the Hadoop Configuration semantics is preserved.
@@ -205,39 +202,21 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
-        super.eagerLoadState();
-        jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         try {
-            super.eagerVerifyPrecondition();
             mergeDefaultConfig();
             String appXml = readAndValidateXml();
             bundleBean.setOrigJobXml(appXml);

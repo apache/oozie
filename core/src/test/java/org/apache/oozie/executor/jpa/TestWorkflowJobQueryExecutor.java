@@ -302,6 +302,11 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getProtoActionConf(), retBean.getProtoActionConf());
         assertNull(retBean.getConf());
         assertNull(retBean.getSlaXml());
+
+        // GET_WORKFLOW_STATUS
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getStatus(), retBean.getStatus());
     }
 
     public void testGetList() throws Exception {

@@ -32,12 +32,10 @@ import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 
@@ -45,7 +43,6 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     private final String jobId;
     private BundleJobBean bundleJob;
     private List<BundleActionBean> bundleActions;
-    private JPAService jpaService = null;
 
     public BundleKillXCommand(String jobId) {
         super("bundle_kill", "bundle_kill", 1);
@@ -79,18 +76,12 @@ public class BundleKillXCommand extends KillTransitionXCommand {
     @Override
     public void loadState() throws CommandException {
         try {
-            jpaService = Services.get().get(JPAService.class);
+            this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
+            this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, jobId);
+            LogUtils.setLogInfo(bundleJob, logInfo);
+            super.setJob(bundleJob);
 
-            if (jpaService != null) {
-                this.bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(jobId));
-                this.bundleActions = jpaService.execute(new BundleActionsGetJPAExecutor(jobId));
-                LogUtils.setLogInfo(bundleJob, logInfo);
-                super.setJob(bundleJob);
-
-            }
-            else {
-                throw new CommandException(ErrorCode.E0610);
-            }
         }
         catch (XException ex) {
             throw new CommandException(ex);

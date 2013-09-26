@@ -27,7 +27,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
@@ -328,7 +327,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     @Override
     public String getEntityKey() {
-        return coordAction.getJobId();
+        return actionId.substring(0, actionId.indexOf("@"));
     }
 
     @Override
@@ -342,26 +341,25 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
     }
 
     @Override
-    protected void eagerLoadState() throws CommandException {
+    protected void loadState() throws CommandException {
+        jpaService = Services.get().get(JPAService.class);
         try {
-            jpaService = Services.get().get(JPAService.class);
-
-            if (jpaService != null) {
-                coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
+            coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
+            if (coordAction != null) {
                 coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
                 LogUtils.setLogInfo(coordAction, logInfo);
             }
             else {
-                throw new CommandException(ErrorCode.E0610);
+                throw new CommandException(ErrorCode.E0605, actionId);
             }
         }
-        catch (XException ex) {
-            throw new CommandException(ex);
+        catch (JPAExecutorException je) {
+            throw new CommandException(je);
         }
     }
 
     @Override
-    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
+    protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (coordAction.getStatus() != CoordinatorActionBean.Status.WAITING) {
             throw new PreconditionException(ErrorCode.E1100, "[" + actionId
                     + "]::CoordPushDependencyCheck:: Ignoring action. Should be in WAITING state, but state="
@@ -381,16 +379,6 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     + " Coordinator job is not in RUNNING/RUNNINGWITHERROR/PAUSED/PAUSEDWITHERROR state, but state="
                     + coordJob.getStatus());
         }
-    }
-
-    @Override
-    protected void loadState() throws CommandException {
-        eagerLoadState();
-    }
-
-    @Override
-    protected void verifyPrecondition() throws CommandException, PreconditionException {
-        eagerVerifyPrecondition();
     }
 
 }

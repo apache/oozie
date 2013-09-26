@@ -49,7 +49,7 @@ public class WorkflowActionQueryExecutor extends
         UPDATE_ACTION_PENDING_TRANS,
         UPDATE_ACTION_PENDING_TRANS_ERROR,
         GET_ACTION,
-        GET_ACTION_ID_TYPE,
+        GET_ACTION_ID_TYPE_LASTCHECK,
         GET_ACTION_FAIL,
         GET_ACTION_SIGNAL,
         GET_ACTION_START,
@@ -58,7 +58,8 @@ public class WorkflowActionQueryExecutor extends
         GET_ACTION_KILL,
         GET_ACTION_COMPLETED,
         GET_RUNNING_ACTIONS,
-        GET_PENDING_ACTIONS
+        GET_PENDING_ACTIONS,
+        GET_ACTIONS_FOR_WORKFLOW_RERUN
     };
 
     private static WorkflowActionQueryExecutor instance = new WorkflowActionQueryExecutor();
@@ -206,7 +207,7 @@ public class WorkflowActionQueryExecutor extends
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case GET_ACTION:
-            case GET_ACTION_ID_TYPE:
+            case GET_ACTION_ID_TYPE_LASTCHECK:
             case GET_ACTION_FAIL:
             case GET_ACTION_SIGNAL:
             case GET_ACTION_START:
@@ -224,6 +225,9 @@ public class WorkflowActionQueryExecutor extends
                 Long minimumPendingAgeSecs = (Long) parameters[0];
                 Timestamp pts = new Timestamp(System.currentTimeMillis() - minimumPendingAgeSecs * 1000);
                 query.setParameter("pendingAge", pts);
+                break;
+            case GET_ACTIONS_FOR_WORKFLOW_RERUN:
+                query.setParameter("wfId", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -247,11 +251,12 @@ public class WorkflowActionQueryExecutor extends
             case GET_ACTION:
                 bean = (WorkflowActionBean) ret;
                 break;
-            case GET_ACTION_ID_TYPE:
+            case GET_ACTION_ID_TYPE_LASTCHECK:
                 bean = new WorkflowActionBean();
                 arr = (Object[]) ret;
                 bean.setId((String) arr[0]);
                 bean.setType((String) arr[1]);
+                bean.setLastCheckTime(DateUtils.toDate((Timestamp) arr[2]));
                 break;
             case GET_ACTION_FAIL:
                 bean = new WorkflowActionBean();
@@ -393,6 +398,13 @@ public class WorkflowActionQueryExecutor extends
                 bean.setStatusStr((String) arr[2]);
                 bean.setType((String) arr[3]);
                 bean.setPendingAge(DateUtils.toDate((Timestamp) arr[4]));
+                break;
+            case GET_ACTIONS_FOR_WORKFLOW_RERUN:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setName((String) arr[1]);
+                bean.setStatusStr((String) arr[2]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "

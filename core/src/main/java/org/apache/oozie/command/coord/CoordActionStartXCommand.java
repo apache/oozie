@@ -281,18 +281,10 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void loadState() throws CommandException {
-        eagerLoadState();
-    }
-
-    @Override
-    protected void eagerLoadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
-
         try {
-            coordAction = jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionGetForStartJPAExecutor(actionId));
+            coordAction = jpaService.execute(new org.apache.oozie.executor.jpa.CoordActionGetForStartJPAExecutor(
+                    actionId));
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);

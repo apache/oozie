@@ -195,7 +195,8 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         WorkflowActionBean retBean;
 
         //GET_WORKFFLOW_ID_TYPE
-        retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE, bean.getId());
+        retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
+                bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getType(), retBean.getType());
 

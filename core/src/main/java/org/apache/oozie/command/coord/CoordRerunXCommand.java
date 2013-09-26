@@ -45,12 +45,10 @@ import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.InstrumentUtils;
@@ -82,7 +80,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     private boolean refresh;
     private boolean noCleanup;
     private CoordinatorJobBean coordJob = null;
-    private JPAService jpaService = null;
     protected boolean prevPending;
 
     /**
@@ -249,12 +246,8 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      */
     @Override
     protected void loadState() throws CommandException {
-        jpaService = Services.get().get(JPAService.class);
-        if (jpaService == null) {
-            throw new CommandException(ErrorCode.E0610);
-        }
         try {
-            coordJob = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
+            coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, jobId);
             prevPending = coordJob.isPending();
         }
         catch (JPAExecutorException je) {
@@ -291,6 +284,16 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
             }
             throw new CommandException(ErrorCode.E1018,
                     "coordinator job is PREP so no actions are materialized to rerun!");
+        }
+    }
+
+    @Override
+    protected void eagerLoadState() throws CommandException {
+        try {
+            coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, jobId);
+        }
+        catch (JPAExecutorException e) {
+            throw new CommandException(e);
         }
     }
 

@@ -17,18 +17,14 @@
  */
 package org.apache.oozie.executor.jpa;
 
-import java.util.HashMap;
 import java.util.List;
 import javax.persistence.EntityManager;
-import javax.persistence.NamedQuery;
 import javax.persistence.Query;
 
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -44,7 +40,8 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME,
         UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME,
         UPDATE_BUNDLE_JOB_PAUSE_KICKOFF,
-        GET_BUNDLE_JOB
+        GET_BUNDLE_JOB,
+        GET_BUNDLE_JOB_STATUS
     };
 
     private static BundleJobQueryExecutor instance = new BundleJobQueryExecutor();
@@ -76,12 +73,12 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 query.setParameter("appPath", bjBean.getAppPath());
                 query.setParameter("conf", bjBean.getConfBlob());
                 query.setParameter("timeOut", bjBean.getTimeout());
-                query.setParameter("createdTimestamp", bjBean.getCreatedTimestamp());
-                query.setParameter("endTimestamp", bjBean.getEndTimestamp());
+                query.setParameter("createdTime", bjBean.getCreatedTimestamp());
+                query.setParameter("endTime", bjBean.getEndTimestamp());
                 query.setParameter("jobXml", bjBean.getJobXmlBlob());
-                query.setParameter("lastModifiedTimestamp", bjBean.getLastModifiedTimestamp());
+                query.setParameter("lastModifiedTime", bjBean.getLastModifiedTimestamp());
                 query.setParameter("origJobXml", bjBean.getOrigJobXmlBlob());
-                query.setParameter("startTimestamp", bjBean.getstartTimestamp());
+                query.setParameter("startTime", bjBean.getstartTimestamp());
                 query.setParameter("status", bjBean.getStatus().toString());
                 query.setParameter("timeUnit", bjBean.getTimeUnit());
                 query.setParameter("pending", bjBean.isPending() ? 1 : 0);
@@ -89,7 +86,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 break;
             case UPDATE_BUNDLE_JOB_STATUS:
                 query.setParameter("status", bjBean.getStatus().toString());
-                query.setParameter("lastModifiedTimestamp", bjBean.getLastModifiedTimestamp());
+                query.setParameter("lastModifiedTime", bjBean.getLastModifiedTimestamp());
                 query.setParameter("pending", bjBean.getPending());
                 query.setParameter("id", bjBean.getId());
                 break;
@@ -136,6 +133,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         BundleJobQuery bjQuery = (BundleJobQuery) namedQuery;
         switch (bjQuery) {
             case GET_BUNDLE_JOB:
+            case GET_BUNDLE_JOB_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
@@ -157,10 +155,11 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
     public BundleJobBean get(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        BundleJobBean bean = (BundleJobBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
+        BundleJobBean bean = constructBean(namedQuery, ret, parameters);
         return bean;
     }
 
@@ -168,6 +167,25 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
     public List<BundleJobBean> getList(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         // TODO
         return null;
+    }
+
+    private BundleJobBean constructBean(BundleJobQuery namedQuery, Object ret, Object... parameters)
+            throws JPAExecutorException {
+        BundleJobBean bean;
+        switch (namedQuery) {
+            case GET_BUNDLE_JOB:
+                bean = (BundleJobBean) ret;
+                break;
+            case GET_BUNDLE_JOB_STATUS:
+                bean = new BundleJobBean();
+                bean.setId((String) parameters[0]);
+                bean.setStatus((String) ret);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
+                        + namedQuery.name());
+        }
+        return bean;
     }
 
     @VisibleForTesting
