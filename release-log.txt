@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1523 Create Windows versions of the shell scripts (dwann via rkanter)
 OOZIE-1558 RAT Warning from BundleActionsGetJPAExecutor.java (rkanter)
 OOZIE-1557 TestFsActionExecutor.testChmodWithGlob fails against Hadoop 2.1.x-beta (rkanter)
 OOZIE-1503 [DB optimization] revisit eagerLoadState at places (mona)
