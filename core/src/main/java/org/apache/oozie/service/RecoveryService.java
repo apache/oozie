@@ -47,11 +47,13 @@ import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.ResumeXCommand;
 import org.apache.oozie.command.wf.SignalXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
-import org.apache.oozie.executor.jpa.BundleActionsGetWaitingOlderJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetForRecoveryJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetReadyGroupbyJobIDJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
@@ -165,7 +167,8 @@ public class RecoveryService implements Service {
             XLog log = XLog.getLog(getClass());
             List<BundleActionBean> bactions = null;
             try {
-                bactions = jpaService.execute(new BundleActionsGetWaitingOlderJPAExecutor(bundleOlderThan));
+                bactions = BundleActionQueryExecutor.getInstance().getList(
+                        BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, bundleOlderThan);
             }
             catch (JPAExecutorException ex) {
                 log.warn("Error reading bundle actions from database", ex);
@@ -184,7 +187,8 @@ public class RecoveryService implements Service {
                         if (baction.getStatus() == Job.Status.PREP) {
                             BundleJobBean bundleJob = null;
                             if (jpaService != null) {
-                                bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(baction.getBundleId()));
+                                bundleJob = BundleJobQueryExecutor.getInstance().get(
+                                        BundleJobQuery.GET_BUNDLE_JOB_ID_JOBXML_CONF, baction.getBundleId());
                             }
                             if (bundleJob != null) {
                                 Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());

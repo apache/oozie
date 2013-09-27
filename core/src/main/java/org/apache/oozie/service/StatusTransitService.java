@@ -36,11 +36,10 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
-import org.apache.oozie.executor.jpa.BundleActionsGetByLastModifiedTimeJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleActionsGetStatusPendingJPAExecutor;
-import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetRunningOrPendingJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsGetByLastModifiedTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsStatusJPAExecutor;
@@ -158,15 +157,16 @@ public class StatusTransitService implements Service {
                         + DateUtils.formatDateOozieTZ(lastInstanceStartTime));
                 // this is not the first instance, we should only check jobs that have actions been
                 // updated >= start time of last service run;
-                List<BundleActionBean> actionList = jpaService
-                        .execute(new BundleActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
+                List<BundleActionBean> actionList = BundleActionQueryExecutor.getInstance().getList(
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, lastInstanceStartTime);
                 Set<String> bundleIds = new HashSet<String>();
                 for (BundleActionBean action : actionList) {
                     bundleIds.add(action.getBundleId());
                 }
                 pendingJobCheckList = new ArrayList<BundleJobBean>();
                 for (String bundleId : bundleIds.toArray(new String[bundleIds.size()])) {
-                    BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+                    BundleJobBean bundle = BundleJobQueryExecutor.getInstance().get(
+                            BundleJobQuery.GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME, bundleId);
                     // Running bundle job might have pending false
                     if (bundle.isPending() || bundle.getStatus().equals(Job.Status.RUNNING)
                             || bundle.getStatus().equals(Job.Status.RUNNINGWITHERROR)
@@ -187,8 +187,8 @@ public class StatusTransitService implements Service {
                             String jobId = bundleJob.getId();
                             Job.Status[] bundleStatus = new Job.Status[1];
                             bundleStatus[0] = bundleJob.getStatus();
-                            List<BundleActionBean> bundleActions = jpaService.execute(new BundleActionsGetStatusPendingJPAExecutor(
-                                    jobId));
+                            List<BundleActionBean> bundleActions = BundleActionQueryExecutor.getInstance().getList(
+                                BundleActionQuery.GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE, jobId);
                             HashMap<Job.Status, Integer> bundleActionStatus = new HashMap<Job.Status, Integer>();
                             boolean foundPending = false;
                             for (BundleActionBean bAction : bundleActions) {
@@ -632,7 +632,8 @@ public class StatusTransitService implements Service {
                 bundleJob.resetPending();
                 LOG.info("Bundle job [" + jobId + "] Pending set to FALSE");
             }
-            BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME, bundleJob);
+            BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME,
+                    bundleJob);
         }
 
         private void updateCoordJob(boolean isPending, CoordinatorJobBean coordJob, Job.Status coordStatus)

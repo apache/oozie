@@ -323,9 +323,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
-        List<CoordinatorJobBean> beanList = null;
+        List<CoordinatorJobBean> beanList = new ArrayList<CoordinatorJobBean>();
         if (retList != null) {
-            beanList = new ArrayList<CoordinatorJobBean>();
             for (Object ret : retList) {
                 beanList.add(constructBean(namedQuery, ret, parameters));
             }

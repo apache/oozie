@@ -17,14 +17,19 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
+
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -41,7 +46,9 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME,
         UPDATE_BUNDLE_JOB_PAUSE_KICKOFF,
         GET_BUNDLE_JOB,
-        GET_BUNDLE_JOB_STATUS
+        GET_BUNDLE_JOB_STATUS,
+        GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME,
+        GET_BUNDLE_JOB_ID_JOBXML_CONF
     };
 
     private static BundleJobQueryExecutor instance = new BundleJobQueryExecutor();
@@ -130,15 +137,16 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
     public Query getSelectQuery(BundleJobQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
         Query query = em.createNamedQuery(namedQuery.name());
-        BundleJobQuery bjQuery = (BundleJobQuery) namedQuery;
-        switch (bjQuery) {
+        switch (namedQuery) {
             case GET_BUNDLE_JOB:
+            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME:
+            case GET_BUNDLE_JOB_ID_JOBXML_CONF:
             case GET_BUNDLE_JOB_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
-                        + bjQuery.name());
+                        + namedQuery.name());
         }
         return query;
     }
@@ -165,13 +173,22 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
 
     @Override
     public List<BundleJobBean> getList(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
-        // TODO
-        return null;
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<BundleJobBean> beanList = new ArrayList<BundleJobBean>();
+        if (retList != null) {
+            for (Object ret : retList) {
+                beanList.add(constructBean(namedQuery, ret));
+            }
+        }
+        return beanList;
     }
 
     private BundleJobBean constructBean(BundleJobQuery namedQuery, Object ret, Object... parameters)
             throws JPAExecutorException {
         BundleJobBean bean;
+        Object[] arr;
         switch (namedQuery) {
             case GET_BUNDLE_JOB:
                 bean = (BundleJobBean) ret;
@@ -180,6 +197,21 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 bean = new BundleJobBean();
                 bean.setId((String) parameters[0]);
                 bean.setStatus((String) ret);
+                break;
+            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME:
+                bean = new BundleJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStatus((String) arr[1]);
+                bean.setPending((Integer) arr[2]);
+                bean.setLastModifiedTime(DateUtils.toDate((Timestamp) arr[3]));
+                break;
+            case GET_BUNDLE_JOB_ID_JOBXML_CONF:
+                bean = new BundleJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setJobXmlBlob((StringBlob) arr[1]);
+                bean.setConfBlob((StringBlob) arr[2]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "

@@ -270,10 +270,14 @@ public class TestBundleStartXCommand extends XDataTestCase {
         assertNull(actions.get(0).getCoordId());
         assertEquals(Job.Status.FAILED, actions.get(0).getStatus());
         Runnable runnable = new StatusTransitRunnable();
+        //1st run of StatusTransitionService changes bundle to running
+        runnable.run();
+        sleep(2000);
+        //2nd run changes bundle to DoneWithError
         runnable.run();
         sleep(2000);
         job = jpaService.execute(bundleJobGetExecutor);
-        assertEquals(job.getStatus(), Job.Status.KILLED);
+        assertEquals(job.getStatus(), Job.Status.DONEWITHERROR);
     }
 
 

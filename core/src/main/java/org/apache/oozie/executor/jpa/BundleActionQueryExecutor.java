@@ -17,11 +17,17 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
@@ -38,7 +44,10 @@ public class BundleActionQueryExecutor extends
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME,
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID,
         GET_BUNDLE_ACTION,
-        GET_BUNDLE_ACTIONS_FOR_BUNDLE
+        GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME,
+        GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN,
+        GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE
     };
 
     private static BundleActionQueryExecutor instance = new BundleActionQueryExecutor();
@@ -102,6 +111,16 @@ public class BundleActionQueryExecutor extends
             case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
                 break;
+            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
+                query.setParameter("lastModifiedTime", new Timestamp(((Date)parameters[0]).getTime()));
+                break;
+            case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
+                Timestamp ts = new Timestamp(System.currentTimeMillis() - (Long)parameters[0] * 1000);
+                query.setParameter("lastModifiedTime", ts);
+                break;
+            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+                query.setParameter("bundleId", parameters[0]);
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -121,20 +140,62 @@ public class BundleActionQueryExecutor extends
     public BundleActionBean get(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        BundleActionBean bean = (BundleActionBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        }
+        BundleActionBean bean = constructBean(namedQuery, ret);
+        return bean;
+    }
+
+    private BundleActionBean constructBean(BundleActionQuery namedQuery, Object ret) throws JPAExecutorException {
+        BundleActionBean bean;
+        Object[] arr;
+        switch (namedQuery) {
+            case GET_BUNDLE_ACTION:
+            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+                bean = (BundleActionBean) ret;
+                break;
+            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
+                bean = new BundleActionBean();
+                bean.setBundleId((String) ret);
+                break;
+            case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
+                bean = new BundleActionBean();
+                arr = (Object[]) ret;
+                bean.setBundleActionId((String) arr[0]);
+                bean.setBundleId((String) arr[1]);
+                bean.setStatusStr((String) arr[2]);
+                bean.setCoordId((String) arr[3]);
+                bean.setCoordName((String) arr[4]);
+                break;
+            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+                bean = new BundleActionBean();
+                arr = (Object[]) ret;
+                bean.setCoordId((String) arr[0]);
+                bean.setStatusStr((String) arr[1]);
+                bean.setPending((Integer) arr[2]);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
+                        + namedQuery.name());
         }
         return bean;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public List<BundleActionBean> getList(BundleActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        return (List<BundleActionBean>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<BundleActionBean> beanList = new ArrayList<BundleActionBean>();
+        if (retList != null) {
+            for (Object ret : retList) {
+                beanList.add(constructBean(namedQuery, ret));
+            }
+        }
+        return beanList;
     }
 
     @VisibleForTesting

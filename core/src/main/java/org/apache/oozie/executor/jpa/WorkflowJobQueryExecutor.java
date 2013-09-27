@@ -324,9 +324,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
-        List<WorkflowJobBean> beanList = null;
+        List<WorkflowJobBean> beanList = new ArrayList<WorkflowJobBean>();
         if (retList != null) {
-            beanList = new ArrayList<WorkflowJobBean>();
             for (Object ret : retList) {
                 beanList.add(constructBean(namedQuery, ret, parameters));
             }

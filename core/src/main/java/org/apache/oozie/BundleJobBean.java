@@ -74,6 +74,10 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "GET_BUNDLE_JOB_STATUS", query = "select w.statusStr from BundleJobBean w where w.id = :id"),
 
+        @NamedQuery(name = "GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME", query = "select w.id, w.statusStr, w.pending, w.lastModifiedTimestamp from BundleJobBean w where w.id = :id"),
+
+        @NamedQuery(name = "GET_BUNDLE_JOB_ID_JOBXML_CONF", query = "select w.id, w.jobXml, w.conf from BundleJobBean w where w.id = :id"),
+
         @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.statusStr, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
@@ -308,6 +312,15 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     @Override
     public void setPending() {
         this.pending = 1;
+    }
+
+    /**
+     * Set pending value
+     *
+     * @param pending set pending value
+     */
+    public void setPending(int i) {
+        this.pending = i;
     }
 
     /**
