@@ -79,10 +79,10 @@ public class Services {
         if (oozieHome == null) {
             throw new ServiceException(ErrorCode.E0000);
         }
-        if (!oozieHome.startsWith("/")) {
+        File file = new File(oozieHome);
+        if (!file.isAbsolute()) {
             throw new ServiceException(ErrorCode.E0003, oozieHome);
         }
-        File file = new File(oozieHome);
         if (!file.exists()) {
             throw new ServiceException(ErrorCode.E0004, oozieHome);
         }

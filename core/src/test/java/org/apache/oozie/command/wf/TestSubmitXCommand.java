@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
@@ -52,12 +53,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
   public void testSubmitAppName() throws Exception {
       Configuration conf = new XConfiguration();
-      String appPath = getTestCaseDir();
+      String workflowUri = getTestCaseFileUri("workflow.xml");
       String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='${appName}-foo'> " + "<start to='end' /> "
               + "<end name='end' /> " + "</workflow-app>";
 
-      writeToFile(appXml, appPath + "/workflow.xml");
-      conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
+      writeToFile(appXml, workflowUri);
+      conf.set(OozieClient.APP_PATH, workflowUri);
       conf.set(OozieClient.USER_NAME, getTestUser());
       conf.set("appName", "var-app-name");
       SubmitXCommand sc = new SubmitXCommand(conf);
@@ -70,12 +71,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testSubmitReservedVars() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("GB", "5");
         SubmitXCommand sc = new SubmitXCommand(conf);
@@ -91,12 +92,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testAppPathIsDir() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf);
@@ -111,12 +112,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testAppPathIsFile1() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/workflow.xml");
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf);
@@ -131,12 +132,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testAppPathIsFile2() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
-        writeToFile(appXml, appPath + "/test.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/test.xml");
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         SubmitXCommand sc = new SubmitXCommand(conf);
@@ -151,12 +152,12 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testAppPathIsFileNegative() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("test.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
-        writeToFile(appXml, appPath + "/test.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath + "/does_not_exist.xml");
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("does_not_exist.xml"));
         conf.set(OozieClient.USER_NAME, getTestUser());
         SubmitXCommand sc = new SubmitXCommand(conf);
 
@@ -171,10 +172,10 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testDryrunValidXml() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = IOUtils.getResourceAsString("wf-schema-valid-global.xml", -1);
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         SubmitXCommand sc = new SubmitXCommand(true, conf);
         assertEquals("OK", sc.call());
@@ -182,10 +183,10 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     public void testDryrunInvalidXml() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = getTestCaseDir();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = IOUtils.getResourceAsString("wf-loop1-invalid.xml", -1);
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         SubmitXCommand sc = new SubmitXCommand(true, conf);
         try {
@@ -197,10 +198,9 @@ public class TestSubmitXCommand extends XDataTestCase {
         }
 
         conf = new XConfiguration();
-        appPath = getTestCaseDir();
         appXml = IOUtils.getResourceAsString("wf-transition-invalid.xml", -1);
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         sc = new SubmitXCommand(true, conf);
         try {
@@ -212,10 +212,9 @@ public class TestSubmitXCommand extends XDataTestCase {
         }
 
         conf = new XConfiguration();
-        appPath = getTestCaseDir();
         appXml = IOUtils.getResourceAsString("wf-schema-invalid.xml", -1);
-        writeToFile(appXml, appPath + "/workflow.xml");
-        conf.set(OozieClient.APP_PATH, "file://" + appPath);
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         sc = new SubmitXCommand(true, conf);
         try {
@@ -231,7 +230,7 @@ public class TestSubmitXCommand extends XDataTestCase {
 
     private void writeToFile(String appXml, String appPath) throws IOException {
         // TODO Auto-generated method stub
-        File wf = new File(appPath);
+        File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));

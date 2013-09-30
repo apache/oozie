@@ -85,13 +85,14 @@ public class PigMainWithOldAPI extends LauncherMain {
         }
 
         //propagate delegation related props from launcher job to Pig job
-        if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-            pigProperties.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+        String jobTokenFile = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
+        if (jobTokenFile != null) {
+            pigProperties.setProperty("mapreduce.job.credentials.binary", jobTokenFile);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to:"
-                    + System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+                    + jobTokenFile);
             System.out.println("------------------------");
-            System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            System.setProperty("mapreduce.job.credentials.binary", jobTokenFile);
         }
         else {
             System.out.println("Non-kerberoes execution");

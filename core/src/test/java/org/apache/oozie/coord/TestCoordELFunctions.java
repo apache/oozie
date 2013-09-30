@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.coord;
 
+import java.io.File;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
@@ -804,15 +805,14 @@ public class TestCoordELFunctions extends XTestCase {
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         String testDir = getTestCaseDir();
-        // ds.setUriTemplate("file:///tmp/coord/${YEAR}/${MONTH}/${DAY}");
-        ds.setUriTemplate("file://" + testDir + "/${YEAR}/${MONTH}/${DAY}");
-        createDir(testDir + "/2009/09/10");
+        ds.setUriTemplate(getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}"));
+        createTestCaseSubDir("2009/09/10/_SUCCESS".split("/"));
         // TODO: Create the directories
         assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
-        createDir(testDir + "/2009/09/09");
+        createTestCaseSubDir("2009/09/09/_SUCCESS".split("/"));
         expr = "${coord:latest(-1)}";
         assertEquals("2009-09-09T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
-        createDir(testDir + "/2009/09/08");
+        createTestCaseSubDir("2009/09/08/_SUCCESS".split("/"));
         expr = "${coord:latest(-2)}";
         assertEquals("2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
 
@@ -869,9 +869,9 @@ public class TestCoordELFunctions extends XTestCase {
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
         String testDir = getTestCaseDir();
-        ds.setUriTemplate("file://" + testDir + "/${YEAR}/${MONTH}/${DAY}");
-        createDir(testDir + "/2009/09/10");
-        createDir(testDir + "/2009/09/11");
+        ds.setUriTemplate(getTestCaseFileUri("/${YEAR}/${MONTH}/${DAY}"));
+        createTestCaseSubDir("2009/09/10/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/09/11/_SUCCESS".split("/"));
         assertEquals("2009-09-11T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
 
         try {
@@ -1000,19 +1000,5 @@ public class TestCoordELFunctions extends XTestCase {
         appInst.setActionId("00000-oozie-C@1");
         appInst.setName("mycoordinator-app");
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
-    }
-
-    private void createDir(String dir) {
-        Process pr;
-        try {
-            pr = Runtime.getRuntime().exec("mkdir -p " + dir + "/_SUCCESS");
-            pr.waitFor();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }

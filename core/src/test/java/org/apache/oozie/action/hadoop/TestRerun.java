@@ -84,12 +84,12 @@ public class TestRerun extends XFsTestCase {
         writer2.close();
 
         Reader reader = IOUtils.getResourceAsReader("recovery-wf.xml", -1);
-        Writer writer1 = new OutputStreamWriter(fs.create(new Path(appPath + "/workflow.xml")));
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
         IOUtils.copyCharStream(reader, writer1);
 
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.setProperty("jobTracker", getJobTrackerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("mrclass", MapperReducerForTest.class.getName());

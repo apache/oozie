@@ -191,7 +191,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         writer2.close();
 
         Reader reader = IOUtils.getResourceAsReader("wf-url-template.xml", -1);
-        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath + "/workflow.xml")));
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")));
         IOUtils.copyCharStream(reader, writer1);
 
         Properties jobConf = new Properties();
@@ -200,10 +200,10 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         jobConf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
         jobConf.setProperty("myJobTracker", getJobTrackerUri());
         jobConf.setProperty("myNameNode", getNameNodeUri());
-        jobConf.setProperty("wfAppPath", wfAppPath.toString()+ File.separator + "workflow.xml");
+        jobConf.setProperty("wfAppPath", new Path(wfAppPath, "workflow.xml").toString());
         jobConf.setProperty("mrclass", MapperReducerForTest.class.getName());
-        jobConf.setProperty("delPath", wfAppPath.toString() + "/output");
-        jobConf.setProperty("subWfApp", wfAppPath.toString() + "/subwf/workflow.xml");
+        jobConf.setProperty("delPath", new Path(wfAppPath, "output").toString());
+        jobConf.setProperty("subWfApp", new Path(wfAppPath, "subwf/workflow.xml").toString());
 
 
         return new XConfiguration(jobConf);
@@ -218,7 +218,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         action.setActionNumber(actionNum);
         action.setNominalTime(new Date());
         action.setStatus(Status.SUBMITTED);
-        String appPath = getTestCaseDir()+"/coord/no-op/";
+        File appPath = new File(getTestCaseDir(), "coord/no-op/");
         String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' " +
         		"frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' " +
         		"end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
@@ -230,7 +230,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "<input-events>";
         actionXml += "<data-in name='A' dataset='a'>";
         actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        actionXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
+        actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:latest(0)}</instance>";
         actionXml += "</data-in>";
@@ -238,22 +238,22 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "<output-events>";
         actionXml += "<data-out name='LOCAL_A' dataset='local_a'>";
         actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        actionXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
+        actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:current(-1)}</instance>";
         actionXml += "</data-out>";
         actionXml += "</output-events>";
         actionXml += "<action>";
         actionXml += "<workflow>";
-        actionXml += "<app-path>file://" + appPath + "</app-path>";
+        actionXml += "<app-path>" + appPath.toURI() + "</app-path>";
         actionXml += "<configuration>";
         actionXml += "<property>";
         actionXml += "<name>inputA</name>";
-        actionXml += "<value>file:///tmp/coord//US/2009/02/01</value>";
+        actionXml += "<value>" + getTestCaseFileUri("coord/US//2009/02/01") + "</value>";
         actionXml += "</property>";
         actionXml += "<property>";
         actionXml += "<name>inputB</name>";
-        actionXml += "<value>file:///tmp/coord//US/2009/02/01</value>";
+        actionXml += "<value>" + getTestCaseFileUri("coord/US//2009/02/01") + "</value>";
         actionXml += "</property>";
         actionXml += "</configuration>";
         actionXml += "</workflow>";
@@ -275,7 +275,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         createdConf += "<property> <name>execution_order</name> <value>LIFO</value> </property>";
         createdConf += "<property> <name>user.name</name> <value>" + getTestUser() + "</value> </property>";
         createdConf += "<property> <name>group.name</name> <value>other</value> </property>";
-        createdConf += "<property> <name>app-path</name> " + "<value>file://" + appPath + "/</value> </property>";
+        createdConf += "<property> <name>app-path</name> " + "<value>" + appPath.toURI() + "/</value> </property>";
         createdConf += "<property> <name>jobTracker</name> ";
         createdConf += "<value>localhost:9001</value></property>";
         createdConf += "<property> <name>nameNode</name> <value>hdfs://localhost:9000</value></property>";
@@ -303,7 +303,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 + " <sla:qa-contact>abc@example.com</sla:qa-contact>" + " <sla:se-contact>abc@example.com</sla:se-contact>"
                 + "</sla:info>";
         content += "<end name='end' />" + slaXml2 + "</workflow-app>";
-        writeToFile(content, appPath);
+        writeToFile(content, appPath.getAbsolutePath());
     }
 
     private void checkCoordAction(String actionId) {
@@ -326,7 +326,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
 
     private void writeToFile(String content, String appPath) throws IOException {
         createDir(appPath);
-        File wf = new File(appPath + "/workflow.xml");
+        File wf = new File(appPath, "workflow.xml");
         PrintWriter out = null;
         try {
             out = new PrintWriter(new FileWriter(wf));
@@ -345,17 +345,6 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
     }
 
     private void createDir(String dir) {
-        Process pr;
-        try {
-            pr = Runtime.getRuntime().exec("mkdir -p " + dir + "/_SUCCESS");
-            pr.waitFor();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        new File(dir, "_SUCCESS").mkdirs();
     }
-
 }

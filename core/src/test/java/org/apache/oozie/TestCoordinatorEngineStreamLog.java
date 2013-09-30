@@ -180,7 +180,7 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
 
         Configuration conf = new XConfiguration();
 
-        final String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        final String appPath = getTestCaseFileUri("coordinator.xml");
         final long now = System.currentTimeMillis();
         final String start = DateUtils.formatDateOozieTZ(new Date(now));
         long e = now + 1000 * 119;

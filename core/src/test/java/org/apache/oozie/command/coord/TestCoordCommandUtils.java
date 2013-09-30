@@ -247,8 +247,10 @@ public class TestCoordCommandUtils extends XDataTestCase {
     }
 
     private String getPullMissingDependencies(String testDir) {
-        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file"
-                + "://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
+        String missDeps = getTestCaseFileUri("2009/29/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/22/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/15/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/08/_SUCCESS") + "#";
         missDeps = missDeps.replaceAll("#testDir", testDir);
         return missDeps;
     }

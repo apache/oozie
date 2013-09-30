@@ -60,7 +60,7 @@ public class SqoopMain extends LauncherMain {
 
         sqoopConf.addResource(new Path("file:///", actionXml));
 
-        String delegationToken = System.getenv("HADOOP_TOKEN_FILE_LOCATION");
+        String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
         if (delegationToken != null) {
             sqoopConf.set("mapreduce.job.credentials.binary", delegationToken);
             System.out.println("------------------------");

@@ -121,7 +121,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testSubWorkflowRecovery() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(APP1);
         writer.close();
 
@@ -130,7 +131,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + workflowPath.toString() + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -176,7 +177,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testConfigPropagation() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(APP1);
         writer.close();
 
@@ -189,7 +191,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + workflowPath.toString() + "</app-path>" +
                 "      <propagate-configuration />" +
                 "      <configuration>" +
                 "        <property>" +
@@ -228,7 +230,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testGetGroupFromParent() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(APP1);
         writer.close();
 
@@ -237,7 +240,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         String defaultConf = workflow.getConf();
         XConfiguration newConf = new XConfiguration(new StringReader(defaultConf));
         String actionConf = "<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + workflowPath.toString() + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -306,7 +309,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testConfigNotPropagation() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(APP1);
         writer.close();
 
@@ -319,7 +323,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + workflowPath.toString() + "</app-path>" +
                 "      <configuration>" +
                 "        <property>" +
                 "          <name>a</name>" +
@@ -367,7 +371,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         workflow.setConf(newConf.toXmlString());
 
         Path subWorkflowAppPath = new Path(getFsTestCaseDir().toString(), "subwf");
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(APP1);
         writer.close();
         Path subwfLibJar = new Path(subWorkflowAppPath, "lib/subwfLibrary.jar");
@@ -376,7 +381,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
         action.setConf("<sub-workflow xmlns='uri:oozie:workflow:0.1' name='subwf'>" +
-                "      <app-path>" + subWorkflowAppPath + File.separator + "workflow.xml" + "</app-path>" +
+                "      <app-path>" + workflowPath.toString() + "</app-path>" +
                 "</sub-workflow>");
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
         subWorkflow.start(new Context(workflow, action), action);

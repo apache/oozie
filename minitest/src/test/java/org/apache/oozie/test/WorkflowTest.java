@@ -67,7 +67,7 @@ public class WorkflowTest extends MiniOozieTestCase {
         final OozieClient wc = LocalOozie.getClient();
 
         Properties conf = wc.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
 
 
@@ -110,7 +110,7 @@ public class WorkflowTest extends MiniOozieTestCase {
         final OozieClient wc = LocalOozie.getClient();
 
         Properties conf = wc.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", path.toUri().getPath());

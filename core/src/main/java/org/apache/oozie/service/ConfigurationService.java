@@ -136,12 +136,14 @@ public class ConfigurationService implements Service, Instrumentable {
 
     public static String getConfigurationDirectory() throws ServiceException {
         String oozieHome = Services.getOozieHome();
-        String configDir = System.getProperty(OOZIE_CONFIG_DIR, oozieHome + "/conf");
-        File file = new File(configDir);
+        String configDir = System.getProperty(OOZIE_CONFIG_DIR, null);
+        File file = configDir == null
+                ? new File(oozieHome, "conf")
+                : new File(configDir);
         if (!file.exists()) {
             throw new ServiceException(ErrorCode.E0024, configDir);
         }
-        return configDir;
+        return file.getPath();
     }
 
     /**

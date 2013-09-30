@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
@@ -120,10 +121,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordinatorActionBean action1 = addRecordToCoordActionTableForWaiting(job.getId(), 1,
                 CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
 
-        createDir(getTestCaseDir() + "/2009/01/29/");
-        createDir(getTestCaseDir() + "/2009/01/22/");
-        createDir(getTestCaseDir() + "/2009/01/15/");
-        createDir(getTestCaseDir() + "/2009/01/08/");
+        createTestCaseSubDir("2009/01/29/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/15/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
 
         final MyCoordActionInputCheckXCommand callable1 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "1");
         final MyCoordActionInputCheckXCommand callable2 = new MyCoordActionInputCheckXCommand(action1.getId(), 100, "2");
@@ -154,8 +155,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-02T23:59" + TZ);
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
-        createDir(getTestCaseDir() + "/2009/02/05/");
-        createDir(getTestCaseDir() + "/2009/01/15/");
+        createTestCaseSubDir("2009/02/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/15/_SUCCESS".split("/"));
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(job.getId() + "@1"));
@@ -181,8 +182,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // providing some of the dataset dirs required as per coordinator
         // specification - /2009/02/19, /2009/02/12, /2009/02/05, /2009/01/29, /2009/01/22
-        createDir(getTestCaseDir() + "/2009/02/19/");
-        createDir(getTestCaseDir() + "/2009/01/29/");
+        createTestCaseSubDir("2009/02/19/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/29/_SUCCESS".split("/"));
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         CoordinatorActionBean action = null;
@@ -243,12 +244,12 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // providing some of the dataset dirs required as per coordinator specification with holes
         // before and after action creation time
-        createDir(getTestCaseDir() + "/2009/03/05/");
-        createDir(getTestCaseDir() + "/2009/02/19/");
-        createDir(getTestCaseDir() + "/2009/02/12/");
-        createDir(getTestCaseDir() + "/2009/02/05/");
-        createDir(getTestCaseDir() + "/2009/01/22/");
-        createDir(getTestCaseDir() + "/2009/01/08/");
+        createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/19/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/12/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         //Sleep for sometime as it gets requeued with 10ms delay on failure to acquire write lock
@@ -258,10 +259,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         actionXML = action.getActionXml();
         assertEquals("", action.getMissingDependencies());
         // Datasets only before action creation/actual time should be picked up.
-        String resolvedList = "file://" + getTestCaseDir() + "/2009/02/12" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/05" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/01/22" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/01/08";
+        String resolvedList = getTestCaseFileUri("2009/02/12") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/05") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/01/22") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/01/08");
         System.out.println("Expected: " + resolvedList);
         System.out.println("Actual: " +  actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
         assertEquals(resolvedList, actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
@@ -280,7 +281,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService
                 .execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
-        final String pushMissingDependency = "file://" + getTestCaseDir() + "/2009/02/05";
+        final String pushMissingDependency = getTestCaseFileUri("2009/02/05");
         action.setPushMissingDependencies(pushMissingDependency);
         CoordActionQueryExecutor.getInstance().executeUpdate(
                 CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK,
@@ -308,12 +309,12 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // providing some of the dataset dirs required as per coordinator specification with holes
         // before and after action creation time
-        createDir(getTestCaseDir() + "/2009/03/05/");
-        createDir(getTestCaseDir() + "/2009/02/19/");
-        createDir(getTestCaseDir() + "/2009/02/12/");
-        createDir(getTestCaseDir() + "/2009/01/22/");
-        createDir(getTestCaseDir() + "/2009/01/08/");
-        createDir(getTestCaseDir() + "/2009/01/01/");
+        createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/19/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/12/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/01/_SUCCESS".split("/"));
 
         // Run input check after making latest available
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
@@ -323,7 +324,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals(pushMissingDependency, action.getPushMissingDependencies());
 
         // Run input check after making push dependencies available
-        createDir(getTestCaseDir() + "/2009/02/05");
+        createTestCaseSubDir("2009/02/05/_SUCCESS".split("/"));
         new CoordPushDependencyCheckXCommand(job.getId() + "@1").call();
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertEquals("", action.getPushMissingDependencies());
@@ -337,10 +338,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals("", action.getMissingDependencies());
         actionXML = action.getActionXml();
         // Datasets only before action creation/actual time should be picked up.
-        String resolvedList = "file://" + getTestCaseDir() + "/2009/02/12" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/05" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/01/22" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/01/08";
+        String resolvedList = getTestCaseFileUri("2009/02/12") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/05") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/01/22") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/01/08");
         System.out.println("Expected: " + resolvedList);
         System.out.println("Actual: " +  actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
         assertEquals(resolvedList, actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
@@ -377,12 +378,12 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         // providing some of the dataset dirs required as per coordinator
         // specification with holes
         // before and after action creation time
-        createDir(getTestCaseDir() + "/2009/03/05/");
-        createDir(getTestCaseDir() + "/2009/02/19/");
-        createDir(getTestCaseDir() + "/2009/02/12/");
-        createDir(getTestCaseDir() + "/2009/02/05/");
-        createDir(getTestCaseDir() + "/2009/01/22/");
-        createDir(getTestCaseDir() + "/2009/01/08/");
+        createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/19/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/12/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         //Sleep for sometime as it gets requeued with 10ms delay on failure to acquire write lock
@@ -392,10 +393,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         actionXML = action.getActionXml();
         assertEquals("", action.getMissingDependencies());
         // Datasets should be picked up based on current time and not action creation/actual time.
-        String resolvedList = "file://" + getTestCaseDir() + "/2009/03/05" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/19" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/12" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/05";
+        String resolvedList = getTestCaseFileUri("2009/03/05") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/19") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/12") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/05");
         assertEquals(resolvedList, actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
     }
 
@@ -412,7 +413,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService
                 .execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
-        final String pushMissingDependency = "file://" + getTestCaseDir() + "/2009/02/05";
+        final String pushMissingDependency = getTestCaseFileUri("2009/02/05");
         action.setPushMissingDependencies(pushMissingDependency);
         CoordActionQueryExecutor.getInstance().executeUpdate(
                 CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK,
@@ -440,12 +441,12 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         // providing some of the dataset dirs required as per coordinator specification with holes
         // before and after action creation time
-        createDir(getTestCaseDir() + "/2009/03/05/");
-        createDir(getTestCaseDir() + "/2009/02/19/");
-        createDir(getTestCaseDir() + "/2009/02/12/");
-        createDir(getTestCaseDir() + "/2009/01/22/");
-        createDir(getTestCaseDir() + "/2009/01/08/");
-        createDir(getTestCaseDir() + "/2009/01/01/");
+        createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/19/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/12/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/01/05/_SUCCESS".split("/"));
 
         // Run input check after making latest available
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
@@ -455,7 +456,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals(pushMissingDependency, action.getPushMissingDependencies());
 
         // Run input check after making push dependencies available
-        createDir(getTestCaseDir() + "/2009/02/05");
+        createTestCaseSubDir("2009/02/05/_SUCCESS".split("/"));
         new CoordPushDependencyCheckXCommand(job.getId() + "@1").call();
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertEquals("", action.getPushMissingDependencies());
@@ -469,10 +470,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals("", action.getMissingDependencies());
         actionXML = action.getActionXml();
         // Datasets should be picked up based on current time and not action creation/actual time.
-        String resolvedList = "file://" + getTestCaseDir() + "/2009/03/05" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/19" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/12" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/05";
+        String resolvedList = getTestCaseFileUri("2009/03/05") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/19") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/12") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/05");
         System.out.println("Expected: " + resolvedList);
         System.out.println("Actual: " +  actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
         assertEquals(resolvedList, actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
@@ -486,10 +487,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
 
         // providing some of the dataset dirs required as per coordinator specification with holes
-        createDir(getTestCaseDir() + "/2009/02/12/");
-        createDir(getTestCaseDir() + "/2009/02/26/");
-        createDir(getTestCaseDir() + "/2009/03/05/");
-        createDir(getTestCaseDir() + "/2009/03/26/"); //limit is 5. So this should be ignored
+        createTestCaseSubDir("2009/02/12/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/02/26/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/03/26/_SUCCESS".split("/")); //limit is 5. So this should be ignored
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         CoordinatorActionBean action = null;
@@ -504,7 +505,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:futureRange(0,3,'5')}",
                 action.getMissingDependencies());
 
-        createDir(getTestCaseDir() + "/2009/03/12/");
+        createTestCaseSubDir("2009/03/12/_SUCCESS".split("/"));
 
         new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId()).call();
         try {
@@ -516,10 +517,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         assertEquals("", action.getMissingDependencies());
         String actionXML = action.getActionXml();
-        String resolvedList = "file://" + getTestCaseDir() + "/2009/02/12" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/02/26" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/03/05" + CoordELFunctions.INSTANCE_SEPARATOR
-                + "file://" + getTestCaseDir() + "/2009/03/12";
+        String resolvedList = getTestCaseFileUri("2009/02/12") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/02/26") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/03/05") + CoordELFunctions.INSTANCE_SEPARATOR
+                + getTestCaseFileUri("2009/03/12");
         assertEquals(resolvedList, actionXML.substring(actionXML.indexOf("<uris>") + 6, actionXML.indexOf("</uris>")));
     }
     /**
@@ -594,10 +595,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
                     CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
 
-            createDir(getTestCaseDir() + "/2009/01/29/");
-            createDir(getTestCaseDir() + "/2009/01/22/");
-            createDir(getTestCaseDir() + "/2009/01/15/");
-            createDir(getTestCaseDir() + "/2009/01/08/");
+            createTestCaseSubDir("2009/01/29/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/15/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
             sleep(3000);
             new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
             sleep(3000);
@@ -807,10 +808,11 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
-        String testDir = getTestCaseDir();
-        String missDeps = "file://#testDir/2009/01/29/_SUCCESS#file://#testDir/2009/01/22/_SUCCESS"
-                + "#file://#testDir/2009/01/15/_SUCCESS#file://#testDir/2009/01/08/_SUCCESS";
-        missDeps = missDeps.replaceAll("#testDir", testDir);
+        String missDeps = getTestCaseFileUri("2009/01/29/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/01/22/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/01/15/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/01/08/_SUCCESS");
+
         action.setMissingDependencies(missDeps);
 
         try {
@@ -870,7 +872,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
         appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${MONTH}/${DAY}</uri-template>";
+        appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         if (dataInType.equals("future")) {
             appXml += "<start-instance>${coord:" + dataInType + "(0,5)}</start-instance>";
@@ -889,7 +891,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
         appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
-        appXml += "<uri-template>file://" + testDir + "/${YEAR}/${MONTH}/${DAY}</uri-template>";
+        appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";
         appXml += "<instance>${coord:current(0)}</instance>";
@@ -945,20 +947,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException se) {
             throw new Exception("Action ID " + actionId + " was not stored properly in db");
-        }
-    }
-
-    private void createDir(String dir) {
-        Process pr;
-        try {
-            pr = Runtime.getRuntime().exec("mkdir -p " + dir + "/_SUCCESS");
-            pr.waitFor();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 }

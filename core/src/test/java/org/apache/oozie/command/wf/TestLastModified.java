@@ -87,7 +87,8 @@ public class TestLastModified extends XFsTestCase {
         inputWriter.write("Hello. This is my input data set.");
         inputWriter.close();
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Path workflowPath = new Path(appPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
         writer.write(wfApp);
         writer.close();
 
@@ -95,7 +96,7 @@ public class TestLastModified extends XFsTestCase {
             LocalOozie.start();
             final OozieClient wc = LocalOozie.getClient();
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+            conf.setProperty(OozieClient.APP_PATH, workflowPath.toString());
             conf.setProperty(OozieClient.USER_NAME, getTestUser());
             conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
 

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.hadoop.util.Shell;
 
 public abstract class LauncherMain {
 
@@ -97,6 +98,23 @@ public abstract class LauncherMain {
         System.out.flush();
     }
 
+    /**
+     * Get file path from the given environment
+     */
+    protected static String getFilePathFromEnv(String env) {
+        String path = System.getenv(env);
+        if (path != null && Shell.WINDOWS) {
+            // In Windows, file paths are enclosed in \" so remove them here
+            // to avoid path errors
+            if(path.charAt(0)=='"') {
+                path = path.substring(1);
+            }
+            if(path.charAt(path.length()-1) == '"') {
+                path = path.substring(0, path.length()-1);
+            }
+        }
+        return path;
+    }
 }
 
 class LauncherMainException extends Exception {

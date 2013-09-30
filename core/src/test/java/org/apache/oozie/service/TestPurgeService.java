@@ -94,12 +94,12 @@ public class TestPurgeService extends XDataTestCase {
      */
     public void testPurgeServiceForWorkflow() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.setStrings(OozieClient.USER_NAME, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
 

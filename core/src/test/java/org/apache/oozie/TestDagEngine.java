@@ -88,11 +88,12 @@ public class TestDagEngine extends XTestCase {
     }
 
     public void testSubmit() throws Exception {
+        String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
-        OutputStream os = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
+        OutputStream os = new FileOutputStream(new File(getTestCaseDir(), "config-default.xml"));
         XConfiguration defaultConf = new XConfiguration();
         defaultConf.set("a", "AA");
         defaultConf.set("b", "BB");
@@ -102,7 +103,7 @@ public class TestDagEngine extends XTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, workflowPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -145,13 +146,14 @@ public class TestDagEngine extends XTestCase {
     }
 
     public void testJobDefinition() throws Exception {
+        String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, workflowPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -166,13 +168,14 @@ public class TestDagEngine extends XTestCase {
     }
 
     public void testGetJobs() throws Exception {
+        String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, workflowPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");

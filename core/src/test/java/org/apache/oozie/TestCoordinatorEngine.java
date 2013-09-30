@@ -51,7 +51,7 @@ public class TestCoordinatorEngine extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
         String jobId = _testSubmitJob(appPath);
         _testGetJob(jobId, appPath);
         _testGetJobs(jobId);
@@ -67,13 +67,13 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
 
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file://" + getTestCaseDir() + "/workflows/${YEAR}/${DAY}</uri-template> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template> "
                 + "</dataset>"
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"local_a\"> <instance>${coord:current(0)}</instance> </data-in>  "
@@ -113,7 +113,7 @@ public class TestCoordinatorEngine extends XTestCase {
         String missingDeps = action.getMissingDependencies();
         System.out.println("Missing deps=" + missingDeps);
         //done flag is not added to the missing dependency list
-        assertEquals("file://" + getTestCaseDir() + "/workflows/2009/01/_SUCCESS", missingDeps);
+        assertEquals(getTestCaseFileUri("workflows/2009/01/_SUCCESS"), missingDeps);
     }
 
     /**
@@ -123,12 +123,12 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testCustomDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file://" + getTestCaseDir() + "/workflows/${YEAR}/${MONTH}/${DAY}</uri-template> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${MONTH}/${DAY}") + "</uri-template> "
                 + "<done-flag>consume_me</done-flag> </dataset>"
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"local_a\"> <instance>${coord:current(0)}</instance> </data-in>  "
@@ -167,7 +167,7 @@ public class TestCoordinatorEngine extends XTestCase {
         CoordinatorAction action = actions.get(0);
         String missingDeps = action.getMissingDependencies();
         System.out.println("..Missing deps=" + missingDeps);
-        assertEquals("file://" + getTestCaseDir() + "/workflows/2009/02/01/consume_me", missingDeps);
+        assertEquals(new URI(getTestCaseFileUri("workflows/2009/02/01/consume_me")), new URI(missingDeps));
     }
 
     /**
@@ -177,12 +177,12 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testEmptyDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file://" + getTestCaseDir() + "/workflows/${YEAR}/${MONTH}/${DAY}</uri-template> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${MONTH}/${DAY}") + "</uri-template> "
                 + "<done-flag></done-flag> </dataset>"
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"local_a\"> <instance>${coord:current(0)}</instance> </data-in>  "
@@ -221,7 +221,7 @@ public class TestCoordinatorEngine extends XTestCase {
         CoordinatorAction action = actions.get(0);
         String missingDeps = action.getMissingDependencies();
         System.out.println("..Missing deps=" + missingDeps);
-        assertEquals("file://" + getTestCaseDir() + "/workflows/2009/02/01", missingDeps);
+        assertEquals(getTestCaseFileUri("workflows/2009/02/01"), missingDeps);
     }
 
     /**
@@ -231,12 +231,12 @@ public class TestCoordinatorEngine extends XTestCase {
      */
     public void testDoneFlagCreation() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
         String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-01T02:00Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file://" + getTestCaseDir() + "/workflows/${YEAR}/${MONTH}/${DAY}</uri-template> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${MONTH}/${DAY}") + "</uri-template> "
                 + "<done-flag>consume_me</done-flag> </dataset>"
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"local_a\"> <instance>${coord:current(0)}</instance> </data-in>  "
@@ -253,18 +253,7 @@ public class TestCoordinatorEngine extends XTestCase {
         final String jobId = ce.submitJob(conf, true);
 
         //create done flag
-        String doneDir = getTestCaseDir() + "/workflows/2009/02/01";
-        Process pr;
-        try {
-            pr = Runtime.getRuntime().exec("mkdir -p " + doneDir + "/consume_me");
-            pr.waitFor();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        new File(getTestCaseDir(), "workflows/2009/02/01/consume_me").mkdirs();
 
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {

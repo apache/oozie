@@ -25,6 +25,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -117,12 +118,12 @@ public class TestAuthorizationService extends XDataTestCase {
     private void _testAuthorizationService(boolean useDefaultGroup) throws Exception {
         init(useDefaultGroup, true);
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration jobConf = new XConfiguration();
-        jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         jobConf.set(OozieClient.USER_NAME, getTestUser());
         if (useDefaultGroup) {
             jobConf.set(OozieClient.GROUP_NAME, getTestGroup());
@@ -143,7 +144,7 @@ public class TestAuthorizationService extends XDataTestCase {
         Configuration fsConf = has.createJobConf(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
 
-        Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
+        Path path = new Path(fileSystem.getWorkingDirectory(), UUID.randomUUID().toString());
         Path fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
         fileSystem.delete(fsTestDir, true);

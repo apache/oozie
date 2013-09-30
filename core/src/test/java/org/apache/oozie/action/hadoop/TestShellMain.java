@@ -33,12 +33,11 @@ public class TestShellMain extends ShellTestCase {
 
     @Override
     public Void call() throws Exception {
-        Path script = new Path(getTestCaseDir(), scriptName);
-        Writer w = new FileWriter(script.toString());
+        File script = new File(getTestCaseDir(), scriptName);
+        Writer w = new FileWriter(script);
         w.write(scriptContent);
         w.close();
-        File fl = new File(getTestCaseDir(), scriptName);
-        fl.setExecutable(true);
+        script.setExecutable(true);
 
         XConfiguration jobConf = new XConfiguration();
 
@@ -51,9 +50,9 @@ public class TestShellMain extends ShellTestCase {
         jobConf.set("fs.default.name", getNameNodeUri());
 
 
-        jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, "sh");
-        MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, new String[] { "-c",
-                getTestCaseDir() + "/" + scriptName, "A", "B" });
+        jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, SHELL_COMMAND_NAME);
+        String[] args = new String[] { SHELL_COMMAND_SCRIPTFILE_OPTION, script.toString(), "A", "B" };
+        MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, args);
         MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ENVS,
                 new String[] { "var1=value1", "var2=value2" });
 
@@ -74,12 +73,12 @@ public class TestShellMain extends ShellTestCase {
         try {
             ShellMain.main(null);
             if (expectedSuccess == false) {
-                fail("Expected to succeed");
+                fail("Expected to fail");
             }
         }
         catch (LauncherMainException le) {
             if (expectedSuccess == true) {
-                fail("Should be succeesfull");
+                fail("Should be successful");
             }
         }
 

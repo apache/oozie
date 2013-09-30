@@ -72,7 +72,7 @@ public abstract class XFsTestCase extends XTestCase {
         JobConf jobConf = has.createJobConf(getNameNodeUri());
         XConfiguration.copy(conf, jobConf);
         fileSystem = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), jobConf);
-        Path path = new Path(fileSystem.getWorkingDirectory(), getTestCaseDir().substring(1));
+        Path path = new Path(fileSystem.getWorkingDirectory(), java.util.UUID.randomUUID().toString());
         fsTestDir = fileSystem.makeQualified(path);
         System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
         if (fileSystem.exists(fsTestDir)) {

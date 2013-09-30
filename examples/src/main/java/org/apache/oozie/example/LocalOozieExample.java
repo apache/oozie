@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.File;
 import java.util.Properties;
 import java.text.MessageFormat;
+import org.apache.hadoop.fs.Path;
 
 public class LocalOozieExample {
 
@@ -64,7 +65,7 @@ public class LocalOozieExample {
 
             // create a workflow job configuration and set the workflow application path
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appUri + File.separator + "workflow.xml");
+            conf.setProperty(OozieClient.APP_PATH, new Path(appUri, "workflow.xml").toString());
             // load additional workflow job parameters from properties file
             if (propertiesFile != null) {
                 conf.load(new FileInputStream(propertiesFile));

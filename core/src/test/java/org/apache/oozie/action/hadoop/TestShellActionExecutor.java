@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -41,8 +42,18 @@ import org.jdom.Element;
 
 public class TestShellActionExecutor extends ActionExecutorTestCase {
 
-    private static final String SHELL_SCRIPT_CONTENT = "ls -ltr\necho $1 $2\necho $PATH\npwd\ntype sh";
-    private static final String SHELL_SCRIPT_CONTENT_ERROR = "ls -ltr\necho $1 $2\nexit 1";
+    private static final String SHELL_EXEC = Shell.WINDOWS ? "cmd.exe" : "sh";
+    private static final String SHELL_PARAM = Shell.WINDOWS ? "/c" : "-c";
+    private static final String SHELL_SCRIPTNAME = Shell.WINDOWS ? "script.cmd" : "script.sh";
+    private static final String SHELL_SCRIPT_CONTENT = Shell.WINDOWS
+            ? "dir /s /b\necho %1 %2\necho %PATH%\ntype %0"
+            : "ls -ltr\necho $1 $2\necho $PATH\npwd\ntype sh";
+    private static final String SHELL_SCRIPT_CONTENT_ENVVAR = Shell.WINDOWS
+            ? "dir /s /b\necho var1=%var1%\necho var2=%var2%"
+            : "ls -ltr\necho var1=$var1\necho var2=$var2";
+    private static final String SHELL_SCRIPT_CONTENT_ERROR = Shell.WINDOWS
+            ? "dir /s /b\necho %1 %2\nexit 1"
+            : "ls -ltr\necho $1 $2\nexit 1";
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
 
     @Override
@@ -90,15 +101,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     public void testShellScript() throws Exception {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
-        Path script = new Path(getAppPath(), "script.sh");
+        Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
         Writer w = new OutputStreamWriter(fs.create(script));
         w.write(SHELL_SCRIPT_CONTENT);
         w.close();
 
         // Create sample Shell action xml
         String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "<exec>sh</exec>" + "<argument>-c</argument>"
-                + "<argument>script.sh</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
+                + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
+                + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
                 + "<env-var>var1=val1</env-var>" + "<env-var>var2=val2</env-var>" + "<file>" + script.toString()
                 + "#" + script.getName() + "</file>" + "</shell>";
         // Submit and verify the job's status
@@ -114,15 +125,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     public void testShellScriptError() throws Exception {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
-        Path script = new Path(getAppPath(), "script.sh");
+        Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
         Writer w = new OutputStreamWriter(fs.create(script));
         w.write(SHELL_SCRIPT_CONTENT_ERROR);
         w.close();
 
         // Create sample shell action xml
         String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "<exec>sh</exec>" + "<argument>-c</argument>"
-                + "<argument>script.sh</argument>" + "<argument>A</argument>" + "<argument>B</argument>" + "<file>"
+                + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
+                + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>" + "<file>"
                 + script.toString() + "#" + script.getName() + "</file>" + "</shell>";
         // Submit and verify the job's status
         _testSubmit(actionXml, false, "");
@@ -134,6 +145,11 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @throws Exception
      */
     public void testPerlScript() throws Exception {
+        if (Shell.WINDOWS) {
+            System.out.println("Windows cannot natively execute perl. Skipping test");
+            return;
+        }
+
         FileSystem fs = getFileSystem();
         // Create a sample perl script
         Path script = new Path(getAppPath(), "script.pl");
@@ -155,19 +171,18 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      */
     public void testEnvVar() throws Exception {
 
-        String shellScript = "ls -ltr\necho var1=$var1\necho var2=$var2";
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
-        Path script = new Path(getAppPath(), "script.sh");
+        Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
         Writer w = new OutputStreamWriter(fs.create(script));
-        w.write(shellScript);
+        w.write(SHELL_SCRIPT_CONTENT_ENVVAR);
         w.close();
 
         String envValueHavingEqualSign = "a=b;c=d";
         // Create sample shell action xml
         String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "<exec>sh</exec>" + "<argument>-c</argument>"
-                + "<argument>script.sh</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
+                + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
+                + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
                 + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>" + script.toString()
                 + "#" + script.getName() + "</file>" + "<capture-output />" + "</shell>";
 

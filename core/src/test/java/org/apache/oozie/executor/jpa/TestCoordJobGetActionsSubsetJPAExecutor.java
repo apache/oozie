@@ -63,9 +63,10 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         action.setErrorMessage("errorMessage");
         action.setTrackerUri("trackerUri");
         action.setCreatedTime(dummyCreationTime);
-        String testDir = getTestCaseDir();
-        String missDeps = "file://#testDir/2009/29/_SUCCESS#file://#testDir/2009/22/_SUCCESS#file://#testDir/2009/15/_SUCCESS#file://#testDir/2009/08/_SUCCESS";
-        missDeps = missDeps.replaceAll("#testDir", testDir);
+        String missDeps = getTestCaseFileUri("2009/29/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/22/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/15/_SUCCESS") + "#"
+                + getTestCaseFileUri("2009/08/_SUCCESS");
         action.setMissingDependencies(missDeps);
         action.setTimeOut(10);
         // Insert the action

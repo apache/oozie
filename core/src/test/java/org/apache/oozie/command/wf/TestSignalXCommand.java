@@ -108,7 +108,7 @@ public class TestSignalXCommand extends XDataTestCase {
         final OozieClient oc = LocalOozie.getClient();
 
         Properties conf = oc.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty("oozie.suspend.on.nodes", "action1,nonexistant_action_name,decision1, action3,join1 ,fork1,action4b");
 
@@ -182,7 +182,7 @@ public class TestSignalXCommand extends XDataTestCase {
         final OozieClient oc = LocalOozie.getClient();
 
         Properties conf = oc.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty("oozie.suspend.on.nodes", "*");
 

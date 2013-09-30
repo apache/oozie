@@ -80,7 +80,8 @@ public class TestLocalOozie extends XFsTestCase {
         fs.mkdirs(appPath);
         fs.mkdirs(new Path(appPath, "lib"));
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Path workflow = new Path(appPath, "workflow.xml");
+        Writer writer = new OutputStreamWriter(fs.create(workflow));
         writer.write(wfApp);
         writer.close();
 
@@ -88,7 +89,7 @@ public class TestLocalOozie extends XFsTestCase {
             LocalOozie.start();
             final OozieClient wc = LocalOozie.getClient();
             Properties conf = wc.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+            conf.setProperty(OozieClient.APP_PATH, workflow.toString());
             conf.setProperty(OozieClient.USER_NAME, getTestUser());
             conf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
 

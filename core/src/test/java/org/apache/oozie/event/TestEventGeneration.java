@@ -488,12 +488,12 @@ public class TestEventGeneration extends XDataTestCase {
     public void testForNoDuplicates() throws Exception {
         // test workflow job events
         Reader reader = IOUtils.getResourceAsReader("wf-no-op.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         final String jobId1 = engine.submitJob(conf, true);

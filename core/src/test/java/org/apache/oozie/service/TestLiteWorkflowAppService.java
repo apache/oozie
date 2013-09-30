@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,13 +85,13 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             Configuration conf = new XConfiguration();
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
-            String wfDef = wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml",
+            String wfDef = wps.readDefinition(getTestCaseFileUri("workflow.xml"),
                                               getTestUser(), conf);
             assertNotNull(reader.toString(), wfDef);
         }
@@ -111,13 +112,13 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             Configuration conf = new XConfiguration();
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
-            wps.readDefinition("file://" + getTestCaseDir() + File.separator + "workflow.xml", getTestUser(),
+            wps.readDefinition(getTestCaseFileUri("workflow.xml"), getTestUser(),
                     conf);
             fail("an exception should be thrown as the definition exceeds the given maximum");
         }
@@ -151,13 +152,13 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
@@ -166,7 +167,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("test-wf", app.getName());
 
             reader = IOUtils.getResourceAsReader("wf-schema-invalid.xml", -1);
-            writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             try {
@@ -191,13 +192,13 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
@@ -206,7 +207,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("test-wf", app.getName());
 
             reader = IOUtils.getResourceAsReader("wf-ext-schema-invalid.xml", -1);
-            writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             try {
@@ -229,13 +230,13 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-action-name-too-long.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
@@ -260,11 +261,11 @@ public class TestLiteWorkflowAppService extends XTestCase {
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
 
@@ -307,36 +308,42 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/lib/reduceutil.so");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("scripts");
-            writer = new FileWriter(getTestCaseDir() + "/scripts/myscript.sh");
+            writer = new FileWriter(new File(getTestCaseDir(), "scripts/myscript.sh"));
             writer.write("bla bla");
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
             Configuration protoConf = wps.createProtoActionConf(jobConf, true);
             assertEquals(getTestUser(), protoConf.get(OozieClient.USER_NAME));
 
             assertEquals(2, protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST).length);
-            String f1 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0];
-            String f2 = protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1];
-            String ref1 = "file://" + getTestCaseDir() + "/lib/reduceutil.so";
-            String ref2 = "file://" + getTestCaseDir() + "/lib/maputil.jar";
-            Assert.assertTrue(f1.equals(ref1) || f1.equals(ref2));
-            Assert.assertTrue(f2.equals(ref1) || f2.equals(ref2));
-            Assert.assertTrue(!f1.equals(f2));
+            List<String> found = new ArrayList<String>();
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[0]);
+            found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1]);
+            List<String> expected = new ArrayList<String>();
+            expected.add(getTestCaseFileUri("lib/reduceutil.so"));
+            expected.add(getTestCaseFileUri("lib/maputil.jar"));
+
+            Collections.sort(found);
+            Collections.sort(expected);
+            for(int i=0; i<expected.size(); i++) {
+                assert(new URI(expected.get(i)).equals(new URI(found.get(i))));
+            }
+            Assert.assertTrue(!new URI(found.get(0)).equals(new URI(found.get(1))));
         }
         finally {
             services.destroy();
@@ -348,24 +355,24 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/lib/reduceutil.so");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libx");
-            writer = new FileWriter(getTestCaseDir() + "/libx/maputilx.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "libx/maputilx.jar"));
             writer.write("bla bla");
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
-            jobConf.set(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
+            jobConf.set(OozieClient.LIBPATH, getTestCaseFileUri("libx"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
             Configuration protoConf = wps.createProtoActionConf(jobConf, true);
@@ -377,12 +384,15 @@ public class TestLiteWorkflowAppService extends XTestCase {
             found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[1]);
             found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[2]);
             List<String> expected = new ArrayList<String>();
-            expected.add("file://" + getTestCaseDir() + "/lib/reduceutil.so");
-            expected.add("file://" + getTestCaseDir() + "/lib/maputil.jar");
-            expected.add("file://" + getTestCaseDir() + "/libx/maputilx.jar");
+            expected.add(getTestCaseFileUri("lib/reduceutil.so"));
+            expected.add(getTestCaseFileUri("lib/maputil.jar"));
+            expected.add(getTestCaseFileUri("libx/maputilx.jar"));
             Collections.sort(found);
             Collections.sort(expected);
-            assertEquals(expected, found);
+            assertEquals(expected.size(), found.size());
+            for(int i=0; i<expected.size(); i++) {
+                assert(new URI(expected.get(i)).equals(new URI(found.get(i))));
+            }
         }
         finally {
             services.destroy();
@@ -394,37 +404,37 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(getTestCaseDir() + "/lib/maputil.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/lib/reduceutil.so");
+            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libx");
-            writer = new FileWriter(getTestCaseDir() + "/libx/maputil_x.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "libx/maputil_x.jar"));
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("liby");
-            writer = new FileWriter(getTestCaseDir() + "/liby/maputil_y1.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "liby/maputil_y1.jar"));
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(getTestCaseDir() + "/liby/maputil_y2.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "liby/maputil_y2.jar"));
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libz");
-            writer = new FileWriter(getTestCaseDir() + "/libz/maputil_z.jar");
+            writer = new FileWriter(new File(getTestCaseDir(), "libz/maputil_z.jar"));
             writer.write("bla bla");
             writer.close();
 
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + "/workflow.xml");
-            jobConf.setStrings(OozieClient.LIBPATH, "file://" + getTestCaseDir() + "/libx",
-                    "file://" + getTestCaseDir() + "/liby", "file://" + getTestCaseDir() + "/libz");
+            jobConf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
+            jobConf.setStrings(OozieClient.LIBPATH, getTestCaseFileUri("libx"),
+                    getTestCaseFileUri("liby"), getTestCaseFileUri("libz"));
             jobConf.set(OozieClient.USER_NAME, getTestUser());
 
             Configuration protoConf = wps.createProtoActionConf(jobConf, true);
@@ -439,15 +449,17 @@ public class TestLiteWorkflowAppService extends XTestCase {
             found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[4]);
             found.add(protoConf.getStrings(WorkflowAppService.APP_LIB_PATH_LIST)[5]);
             List<String> expected = new ArrayList<String>();
-            expected.add("file://" + getTestCaseDir() + "/lib/reduceutil.so");
-            expected.add("file://" + getTestCaseDir() + "/lib/maputil.jar");
-            expected.add("file://" + getTestCaseDir() + "/libx/maputil_x.jar");
-            expected.add("file://" + getTestCaseDir() + "/liby/maputil_y1.jar");
-            expected.add("file://" + getTestCaseDir() + "/liby/maputil_y2.jar");
-            expected.add("file://" + getTestCaseDir() + "/libz/maputil_z.jar");
+            expected.add(getTestCaseFileUri("lib/reduceutil.so"));
+            expected.add(getTestCaseFileUri("lib/maputil.jar"));
+            expected.add(getTestCaseFileUri("libx/maputil_x.jar"));
+            expected.add(getTestCaseFileUri("liby/maputil_y1.jar"));
+            expected.add(getTestCaseFileUri("liby/maputil_y2.jar"));
+            expected.add(getTestCaseFileUri("libz/maputil_z.jar"));
             Collections.sort(found);
-            Collections.sort(expected);
-            assertEquals(expected, found);
+            assertEquals(expected.size(), found.size());
+            for(int i=0; i<expected.size(); i++) {
+                assert(new URI(expected.get(i)).equals(new URI(found.get(i))));
+            }
         }
         finally {
             services.destroy();
@@ -593,28 +605,28 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
             String childWFDir = createTestCaseSubDir("child-wf-" + unique);
-            Writer writer = new FileWriter(childWFDir + File.separator + "workflow.xml");
+            File childWFFile = new File(childWFDir, "workflow.xml");
+            Writer writer = new FileWriter(childWFFile);
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
             Configuration jobConf = new XConfiguration();
-            jobConf.set(OozieClient.APP_PATH, "file://" + childWFDir + File.separator + "workflow.xml");
+            jobConf.set(OozieClient.APP_PATH, childWFFile.toURI().toString());
             jobConf.set(OozieClient.USER_NAME, getTestUser());
             if (inheritWF != null) {
                 jobConf.set("oozie.wf.subworkflow.classpath.inheritance", inheritWF);
             }
 
-            String childLibDir = createTestCaseSubDir("child-wf-" + unique + File.separator + "lib");
+            String childLibDir = createTestCaseSubDir("child-wf-" + unique, "lib");
             for (String childLib : childLibs) {
-                writer = new FileWriter(childLibDir + File.separator + childLib);
+                writer = new FileWriter(new File(childLibDir, childLib));
                 writer.write("bla bla");
                 writer.close();
             }
-            String parentWFDir = createTestCaseSubDir("parent-wf-" + unique);
-            String parentLibDir = createTestCaseSubDir("parent-wf-" + unique + File.separator + "lib");
+            String parentLibDir = createTestCaseSubDir("parent-wf-" + unique, "lib");
             String[] parentLibsFullPaths = new String[parentLibs.length];
             for (int i = 0; i < parentLibs.length; i++) {
-                parentLibsFullPaths[i] = parentLibDir + File.separator + parentLibs[i];
+                parentLibsFullPaths[i] = new File(parentLibDir, parentLibs[i]).toString();
                 writer = new FileWriter(parentLibsFullPaths[i]);
                 writer.write("bla bla");
                 writer.close();

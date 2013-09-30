@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.apache.hadoop.util.Shell;
 
 public class TestAdminServlet extends DagServletTestCase {
 
@@ -71,7 +72,7 @@ public class TestAdminServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey("USER"));
+                assertTrue(json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER"));
                 return null;
             }
         });

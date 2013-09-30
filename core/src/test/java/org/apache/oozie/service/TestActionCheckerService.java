@@ -88,12 +88,12 @@ public class TestActionCheckerService extends XDataTestCase {
      */
     public void testActionCheckerService() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
 
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -151,12 +151,12 @@ public class TestActionCheckerService extends XDataTestCase {
      */
     public void testActionCheckerServiceDelay() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.setStrings(WorkflowAppService.HADOOP_USER, getTestUser());
         conf.setStrings(OozieClient.GROUP_NAME, getTestGroup());
 

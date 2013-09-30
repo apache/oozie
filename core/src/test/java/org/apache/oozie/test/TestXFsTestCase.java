@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.test;
 
+import java.io.File;
+import java.net.URI;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -26,20 +28,25 @@ public class TestXFsTestCase extends XFsTestCase {
     public void testFsDir() throws Exception {
         assertNotNull(getFsTestCaseDir());
         assertNotNull(getFileSystem());
+        assertNotNull(getTestCaseFileUri("file"));
 
         String testDir = getTestCaseDir();
+        String testFile = getTestCaseFileUri("file");
         String nameNode = getNameNodeUri();
         String user = getTestUser();
         Path fsTestDir = getFsTestCaseDir();
 
         assertTrue(fsTestDir.toString().startsWith(nameNode));
-        assertTrue(fsTestDir.toString().contains(user + testDir));
+        assertTrue(fsTestDir.toString().contains(user));
+        assertEquals(fsTestDir, getFsTestCaseDir());
 
         FileSystem fs = getFileSystem();
         assertTrue(fs.getUri().toString().startsWith(getNameNodeUri()));
 
         assertTrue(fs.exists(fsTestDir));
         assertTrue(fs.listStatus(fsTestDir).length == 0);
+
+        assertTrue(new File(new URI(testFile)).createNewFile());
     }
 
 }

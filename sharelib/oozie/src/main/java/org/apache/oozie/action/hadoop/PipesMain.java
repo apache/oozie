@@ -69,8 +69,8 @@ public class PipesMain extends MapReduceMain {
         addActionConf(jobConf, actionConf);
 
         //propagate delegation related props from launcher job to MR job
-        if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-            jobConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+        if (getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+            jobConf.set("mapreduce.job.credentials.binary", getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION"));
         }
 
         return Submitter.jobSubmit(jobConf);

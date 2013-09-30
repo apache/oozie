@@ -59,7 +59,7 @@ public class TestFutureActionsTimeOut extends XTestCase {
     }
 
     public void testEngine() throws Exception {
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = getTestCaseFileUri("coordinator.xml");
         String jobId = _testSubmitJob(appPath);
         Date createDate = new Date();
         _testTimeout(jobId, createDate);
@@ -102,9 +102,9 @@ public class TestFutureActionsTimeOut extends XTestCase {
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"9999-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("${YEAR}/${DAY}" )+ "</uri-template> </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"9999-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("${YEAR}/${DAY}" )+ "</uri-template> </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "

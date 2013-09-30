@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.apache.hadoop.util.Shell;
 import org.mockito.Mockito;
 
 public class TestHostnameFilter extends TestCase {
@@ -45,7 +46,7 @@ public class TestHostnameFilter extends TestCase {
             @Override
             public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse)
                 throws IOException, ServletException {
-                Assert.assertTrue(HostnameFilter.get().contains("localhost"));
+                Assert.assertTrue(HostnameFilter.get().contains(Shell.WINDOWS ? "127.0.0.1" : "localhost"));
                 invoked.set(true);
             }
         };

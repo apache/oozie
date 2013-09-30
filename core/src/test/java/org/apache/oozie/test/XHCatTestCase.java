@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.Shell;
 import org.apache.hcatalog.api.HCatPartition;
 import org.apache.oozie.util.HCatURI;
 
@@ -61,7 +62,7 @@ public abstract class XHCatTestCase extends XFsTestCase {
     protected void createDatabase(String db) throws Exception {
         if (db.equals("default"))
             return;
-        hcatServer.createDatabase(db, getTestCaseDir());
+        hcatServer.createDatabase(db, getSanitizedTestCaseDir());
     }
 
     protected void createTable(String db, String table, String partitionCols) throws Exception {
@@ -79,7 +80,7 @@ public abstract class XHCatTestCase extends XFsTestCase {
     }
 
     protected String getPartitionDir(String db, String table, String partitionSpec) throws Exception {
-        return hcatServer.getPartitionDir(db, table, partitionSpec, getTestCaseDir());
+        return hcatServer.getPartitionDir(db, table, partitionSpec, getSanitizedTestCaseDir()).toString();
     }
 
     /**
@@ -91,9 +92,20 @@ public abstract class XHCatTestCase extends XFsTestCase {
      * @throws Exception
      */
     protected String addPartition(String db, String table, String partitionSpec) throws Exception {
-        String location = hcatServer.createPartitionDir(db, table, partitionSpec, getTestCaseDir());
+        String location = hcatServer.createPartitionDir(db, table, partitionSpec, getSanitizedTestCaseDir());
         hcatServer.addPartition(db, table, partitionSpec, location);
         return location;
+    }
+
+    protected String getSanitizedTestCaseDir() {
+        // On Windows, the working directory will have a colon from to the drive letter. Because colons
+        // are not allowed in DFS paths, we remove it. Also, prepend a backslash to simulate an absolute path.
+        if(Shell.WINDOWS) {
+            return "\\" + getTestCaseDir().replaceAll(":", "");
+        }
+        else {
+            return getTestCaseDir();
+        }
     }
 
     protected void dropPartition(String db, String table, String partitionSpec) throws Exception {

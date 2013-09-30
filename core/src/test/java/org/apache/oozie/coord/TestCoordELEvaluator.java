@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.coord;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
@@ -182,20 +183,20 @@ public class TestCoordELEvaluator extends XTestCase {
 
         Date actualTime = DateUtils.parseDateOozieTZ("2009-09-01T01:00Z");
         Date nominalTime = DateUtils.parseDateOozieTZ("2009-09-01T00:00Z");
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///"+testCaseDir+"/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>" + getTestCaseFileUri("US/2009/1/30") + "|file:///tmp/coord/US/2009/1/31</uris>";
         dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\"  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
-        dataEvntXML += "<uri-template>file:///"+testCaseDir+"/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
+        dataEvntXML += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}") + "</uri-template></dataset></data-in>";
         Element dEvent = XmlUtils.parseXml(dataEvntXML);
         ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
-        createDir(testCaseDir+"/2009/01/02");
+        createTestCaseSubDir("2009/01/02/_SUCCESS".split("/"));
         String expr = "${coord:latest(0)} ${coord:latest(-1)}";
         // Dependent on the directory structure
         // TODO: Create the directory
         assertEquals("2009-01-02T00:00Z ${coord:latest(-1)}", eval.evaluate(expr, String.class));
 
         // future
-        createDir(testCaseDir+"/2009/09/04");
-        createDir(testCaseDir+"/2009/09/05");
+        createTestCaseSubDir("2009/09/04/_SUCCESS".split("/"));
+        createTestCaseSubDir("2009/09/05/_SUCCESS".split("/"));
         expr = "${coord:future(1, 30)}";
         assertEquals("2009-09-05T00:00Z", eval.evaluate(expr, String.class));
 
@@ -204,20 +205,6 @@ public class TestCoordELEvaluator extends XTestCase {
 
     public void testCleanup() throws Exception {
         Services.get().destroy();
-    }
-
-    private void createDir(String dir) {
-        Process pr;
-        try {
-            pr = Runtime.getRuntime().exec("mkdir -p " + dir + "/_SUCCESS");
-            pr.waitFor();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private String getConfString() {

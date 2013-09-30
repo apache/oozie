@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.util.concurrent.Callable;
+import org.apache.hadoop.util.Shell;
 
 import org.apache.oozie.test.XFsTestCase;
 
@@ -27,8 +28,11 @@ public abstract class ShellTestCase extends XFsTestCase implements Callable<Void
     protected static String scriptName = "";
     protected boolean expectedSuccess = true;
 
-    private static final String SUCCESS_SHELL_SCRIPT_CONTENT = "ls -ltr\necho $1 $2\necho $PATH\npwd\ntype sh";
-    private static final String FAIL_SHELLSCRIPT_CONTENT = "ls -ltr\necho $1 $2\nexit 1";
+    private static final String SUCCESS_SHELL_SCRIPT_CONTENT_LINUX = "ls -ltr\necho $1 $2\necho $PATH\npwd\ntype sh";
+    private static final String FAIL_SHELLSCRIPT_CONTENT_LINUX = "ls -ltr\necho $1 $2\nexit 1";
+
+    private static final String SUCCESS_SHELL_SCRIPT_CONTENT_WINDOWS = "dir /OD\necho %1 %2\necho %PATH%\necho %cd%\ntype %0";
+    private static final String FAIL_SHELLSCRIPT_CONTENT_WINDOWS = "dir /OD\necho %1 %2\nexit 1";
 
     /**
      * Test a shell script that returns success
@@ -36,8 +40,8 @@ public abstract class ShellTestCase extends XFsTestCase implements Callable<Void
      * @throws Exception
      */
     public void testShellScriptSuccess() throws Exception {
-        scriptContent = SUCCESS_SHELL_SCRIPT_CONTENT;
-        scriptName = "script.sh";
+        scriptContent = Shell.WINDOWS ? SUCCESS_SHELL_SCRIPT_CONTENT_WINDOWS : SUCCESS_SHELL_SCRIPT_CONTENT_LINUX;
+        scriptName = Shell.WINDOWS ? "script.cmd" : "script.sh";
         expectedSuccess = true;
         MainTestCase.execute(getTestUser(), this);
     }
@@ -48,8 +52,8 @@ public abstract class ShellTestCase extends XFsTestCase implements Callable<Void
      * @throws Exception
      */
     public void testShellScriptFailure() throws Exception {
-        scriptContent = FAIL_SHELLSCRIPT_CONTENT;
-        scriptName = "script.sh";
+        scriptContent = Shell.WINDOWS ? FAIL_SHELLSCRIPT_CONTENT_WINDOWS : FAIL_SHELLSCRIPT_CONTENT_LINUX;
+        scriptName = Shell.WINDOWS ? "script.cmd" : "script.sh";
         expectedSuccess = false;
         MainTestCase.execute(getTestUser(), this);
     }
