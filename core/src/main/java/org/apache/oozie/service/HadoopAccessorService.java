@@ -481,10 +481,16 @@ public class HadoopAccessorService implements Service {
                 if (target == null) {
                     target = jobConf.get(HADOOP_JOB_TRACKER);
                 }
-                String addr = NetUtils.createSocketAddr(target).getHostName();
-                renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
-                LOG.info("Delegation Token Renewer details: Principal=" + servicePrincipal + ",Target=" + target
-                        + ",Renewer=" + renewer);
+                try {
+                    String addr = NetUtils.createSocketAddr(target).getHostName();
+                    renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
+                    LOG.info("Delegation Token Renewer details: Principal=" + servicePrincipal + ",Target=" + target
+                            + ",Renewer=" + renewer);
+                }
+                catch (IllegalArgumentException iae) {
+                    renewer = new Text(servicePrincipal.split("[/@]")[0]);
+                    LOG.info("Delegation Token Renewer for " + servicePrincipal + " is " + renewer);
+                }
                 mrTokenRenewers.put(servicePrincipal, renewer);
             }
         }

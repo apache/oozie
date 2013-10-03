@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1526 Oozie does not work with a secure HA JobTracker or ResourceManager (rkanter)
 OOZIE-1500 Fix many OS-specific issues on Windows (dwann via rohini)
 OOZIE-1556 Change Bundle SELECT query to fetch only necessary columns and consolidate JPA Executors (ryota)
 OOZIE-1523 Create Windows versions of the shell scripts (dwann via rkanter)

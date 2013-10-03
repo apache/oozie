@@ -131,6 +131,20 @@ public class TestHadoopAccessorService extends XTestCase {
         jobConf.set("yarn.resourcemanager.address", "localhost:8032");
         jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
         assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
+
+        // Try the above with logical URIs (i.e. for HA)
+        jobConf = new JobConf(false);
+        jobConf.set("mapred.job.tracker", "jt-ha-uri");
+        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
+        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
+        jobConf = new JobConf(false);
+        jobConf.set("mapreduce.jobtracker.address", "jt-ha-uri");
+        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
+        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
+        jobConf = new JobConf(false);
+        jobConf.set("yarn.resourcemanager.address", "rm-ha-uri");
+        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
+        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
     }
 
     public void testCheckSupportedFilesystem() throws Exception {
