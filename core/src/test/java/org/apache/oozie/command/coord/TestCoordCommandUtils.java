@@ -22,11 +22,15 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
@@ -244,6 +248,79 @@ public class TestCoordCommandUtils extends XDataTestCase {
             e.printStackTrace();
             fail(e.getMessage());
         }
+    }
+
+    public void testGetNextValidActionTime() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-07-18T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
+
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "10,20 * * * *");
+        Date actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:15Z");
+        Date expectedDate = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
+        Date retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "10/20 * * 5-7 4,5");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:15Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-18T00:30Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "20-30 * 20 5-7 4,5");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-18T00:21Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "30 * 20 5-7 ?");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-20T00:30Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "0 9-16 * * 2-6");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-20T00:20Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-22T09:00Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(retDate, job);
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-22T10:00Z");
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "20-30 * * 1 *");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2014-01-01T00:20Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "20-30 10 * * MON,WED");
+        actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
+        expectedDate = DateUtils.parseDateOozieTZ("2013-07-22T10:20Z");
+        retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
+        assertEquals(expectedDate, retDate);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          String freq) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
+        coordJob.setStartTime(startTime);
+        coordJob.setEndTime(endTime);
+        coordJob.setFrequency(freq);
+        coordJob.setTimeUnit(CoordinatorJob.Timeunit.MINUTE);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        }
+        catch (JPAExecutorException ex) {
+            ex.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw ex;
+        }
+
+        return coordJob;
     }
 
     private String getPullMissingDependencies(String testDir) {

@@ -309,7 +309,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         String jobXml = coordJob.getJobXml();
         Element eJob = XmlUtils.parseXml(jobXml);
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
-        int frequency = Integer.valueOf(coordJob.getFrequency());
+
+        String frequency = coordJob.getFrequency();
         TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);
@@ -326,11 +327,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         origStart.setTime(coordJob.getStartTimestamp());
         // Move to the End of duration, if needed.
         DateUtils.moveToEnd(origStart, endOfFlag);
-        // Cloning the start time to be used in loop iteration
-        Calendar effStart = (Calendar) origStart.clone();
-        // Move the time when the previous action finished
-        effStart.add(freqTU.getCalendarUnit(), lastActionNumber * frequency);
 
+        Date effStart = (Date) startMatdTime.clone();
         StringBuilder actionStrings = new StringBuilder();
         Date jobPauseTime = coordJob.getPauseTime();
         Calendar pause = null;
@@ -346,35 +344,69 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
                 + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
 
-        while (effStart.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
-            if (pause != null && effStart.compareTo(pause) >= 0) {
-                break;
-            }
-            CoordinatorActionBean actionBean = new CoordinatorActionBean();
-            lastActionNumber++;
+        boolean isCronFrequency = false;
 
-            int timeout = coordJob.getTimeout();
-            LOG.debug("Materializing action for time=" + effStart.getTime() + ", lastactionnumber=" + lastActionNumber
-                    + " timeout=" + timeout + " minutes");
-            Date actualTime = new Date();
-            action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
-                    effStart.getTime(), actualTime, lastActionNumber, jobConf, actionBean);
-            actionBean.setTimeOut(timeout);
-
-            if (!dryrun) {
-                storeToDB(actionBean, action); // Storing to table
-
-            }
-            else {
-                actionStrings.append("action for new instance");
-                actionStrings.append(action);
-            }
-            // Restore the original start time
-            effStart = (Calendar) origStart.clone();
-            effStart.add(freqTU.getCalendarUnit(), lastActionNumber * frequency);
+        try {
+            Integer.parseInt(coordJob.getFrequency());
+        } catch (NumberFormatException e) {
+            isCronFrequency = true;
         }
 
-        endMatdTime = new Date(effStart.getTimeInMillis());
+        boolean firstMater = true;
+        while (start.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
+            if (pause != null && start.compareTo(pause) >= 0) {
+                break;
+            }
+
+            Date nextTime = start.getTime();
+
+            if (isCronFrequency) {
+                if (start.getTime().compareTo(startMatdTime) == 0 && firstMater) {
+                    start.add(Calendar.MINUTE, -1);
+                    firstMater = false;
+                }
+
+                nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(start.getTime(), coordJob);
+                start.setTime(nextTime);
+            }
+
+            if (start.compareTo(end) < 0) {
+
+                if (pause != null && start.compareTo(pause) >= 0) {
+                    break;
+                }
+                CoordinatorActionBean actionBean = new CoordinatorActionBean();
+                lastActionNumber++;
+
+                int timeout = coordJob.getTimeout();
+                LOG.debug("Materializing action for time=" + start.getTime() + ", lastactionnumber=" + lastActionNumber
+                        + " timeout=" + timeout + " minutes");
+                Date actualTime = new Date();
+                action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
+                        nextTime, actualTime, lastActionNumber, jobConf, actionBean);
+                actionBean.setTimeOut(timeout);
+
+                if (!dryrun) {
+                    storeToDB(actionBean, action); // Storing to table
+
+                }
+                else {
+                    actionStrings.append("action for new instance");
+                    actionStrings.append(action);
+                }
+            }
+            else {
+                break;
+            }
+
+            if (!isCronFrequency) {
+                start = (Calendar) origStart.clone();
+                start.add(freqTU.getCalendarUnit(), lastActionNumber * Integer.parseInt(coordJob.getFrequency()));
+            }
+        }
+
+        endMatdTime = start.getTime();
+
         if (!dryrun) {
             return action;
         }

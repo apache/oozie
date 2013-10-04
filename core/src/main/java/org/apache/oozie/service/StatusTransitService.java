@@ -712,9 +712,8 @@ public class StatusTransitService implements Service {
                 List<String> coordJobIdList = jpaService
                         .execute(new CoordActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
                 Set<String> coordIds = new HashSet<String>();
-                for (String coordJobId : coordJobIdList) {
-                    coordIds.add(coordJobId);
-                }
+                coordIds.addAll(coordJobIdList);
+
                 pendingJobCheckList = new ArrayList<CoordinatorJobBean>();
                 for (String coordId : coordIds.toArray(new String[coordIds.size()])) {
                     CoordinatorJobBean coordJob;
