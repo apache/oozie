@@ -197,6 +197,8 @@ Because the number of minutes in day may vary for timezones that observe dayligh
 
 Frequencies can be expressed using EL constants and EL functions that evaluate to an positive integer number.
 
+Coordinator Frequencies can also be expressed using cron syntax.
+
 *%GREEN% Examples: %ENDCOLOR%*
 
 | *EL Constant* | *Value* | *Example* |
@@ -204,6 +206,7 @@ Frequencies can be expressed using EL constants and EL functions that evaluate t
 | =${coord:hours(int n)}= | _n * 60_ | =${coord:hours(3)}= --> =180= |
 | =${coord:days(int n)}= | _variable_ | =${coord:days(2)}= --> minutes in 2 full days from the current date |
 | =${coord:months(int n)}= | _variable_ | =${coord:months(1)}= --> minutes in a 1 full month from the current date |
+| =${cron syntax}= | _variable_ | =${0,10 15 * * 2-6}= --> a job that runs every weekday at 3:00pm and 3:10pm UTC time|
 
 ---++++ 4.4.1. The coord:days(int n) and coord:endOfDays(int n) EL functions
 
@@ -393,6 +396,138 @@ The =${coord:endOfMonths(int n)}= EL function is identical to the =${coord:month
       </action>
  </coordinator-app>
 </verbatim>
+
+---++++ 4.4.3. Cron syntax in coordinator frequency
+
+Oozie has historically allowed only very basic forms of scheduling: You could choose
+to run jobs separated by a certain number of minutes, hours, days or weeks. That's
+all. This works fine for processes that need to run continuously all year like building
+a search index to power an online website.
+
+However, there are a lot of cases that don't fit this model. For example, maybe you
+want to export data to a reporting system used during the day by business analysts.
+It would be wasteful to run the jobs when no analyst is going to take advantage of
+the new information, such as overnight. You might want a policy that says "only run
+these jobs on weekdays between 6AM and 8PM". Previous versions of Oozie didn't support
+this kind of complex scheduling policy without requiring multiple identical coordinators.
+Cron-scheduling improves the user experience in this area, allowing for a lot more flexibility.
+
+Cron is a standard time-based job scheduling mechanism in unix-like operating system. It is used extensively by system
+administrators to setup jobs and maintain software environment. Cron syntax generally consists of five fields, minutes,
+hours, date of month, month, and day of week respectively although multiple variations do exist.
+
+<verbatim>
+<coordinator-app name="cron-coord" frequency="0/10 1/2 * * *" start="${start}" end="${end}" timezone="UTC"
+                 xmlns="uri:oozie:coordinator:0.2">
+        <action>
+        <workflow>
+            <app-path>${workflowAppUri}</app-path>
+            <configuration>
+                <property>
+                    <name>jobTracker</name>
+                    <value>${jobTracker}</value>
+                </property>
+                <property>
+                    <name>nameNode</name>
+                    <value>${nameNode}</value>
+                </property>
+                <property>
+                    <name>queueName</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>
+</verbatim>
+
+Cron expressions are comprised of 5 required fields. The fields respectively are described as follows:
+
+| *Field name* | *Allowed Values* | *Allowed Special Characters*  |
+| =Minutes= | =0-59= | , - * / |
+| =Hours= | =0-23= | , - * / |
+| =Day-of-month= | =1-31= | , - * ? / L W |
+| =Month= | =1-12 or JAN-DEC= | , - * / |
+| =Day-of-Week= | =1-7 or SUN-SAT= | , - * ? / L #|
+
+The '*' character is used to specify all values. For example, "*" in the minute field means "every minute".
+
+The '?' character is allowed for the day-of-month and day-of-week fields. It is used to specify 'no specific value'.
+This is useful when you need to specify something in one of the two fields, but not the other.
+
+The '-' character is used to specify ranges For example "10-12" in the hour field means "the hours 10, 11 and 12".
+
+The ',' character is used to specify additional values. For example "MON,WED,FRI" in the day-of-week field means
+"the days Monday, Wednesday, and Friday".
+
+The '/' character is used to specify increments. For example "0/15" in the minutes field means "the minutes 0, 15, 30, and 45".
+And "5/15" in the minutes field means "the minutes 5, 20, 35, and 50". Specifying '*' before the '/' is equivalent to
+specifying 0 is the value to start with.
+Essentially, for each field in the expression, there is a set of numbers that can be turned on or off.
+For minutes, the numbers range from 0 to 59. For hours 0 to 23, for days of the month 0 to 31, and for months 1 to 12.
+The "/" character simply helps you turn on every "nth" value in the given set. Thus "7/6" in the month field only turns on
+month "7", it does NOT mean every 6th month, please note that subtlety.
+
+The 'L' character is allowed for the day-of-month and day-of-week fields. This character is short-hand for "last",
+but it has different meaning in each of the two fields.
+For example, the value "L" in the day-of-month field means "the last day of the month" - day 31 for January, day 28 for
+February on non-leap years.
+If used in the day-of-week field by itself, it simply means "7" or "SAT".
+But if used in the day-of-week field after another value, it means "the last xxx day of the month" - for example
+"6L" means "the last friday of the month".
+You can also specify an offset from the last day of the month, such as "L-3" which would mean the third-to-last day of the
+calendar month.
+When using the 'L' option, it is important not to specify lists, or ranges of values, as you'll get confusing/unexpected results.
+
+The 'W' character is allowed for the day-of-month field. This character is used to specify the weekday (Monday-Friday)
+nearest the given day.
+As an example, if you were to specify "15W" as the value for the day-of-month field, the meaning is:
+"the nearest weekday to the 15th of the month". So if the 15th is a Saturday, the trigger will fire on Friday the 14th.
+If the 15th is a Sunday, the trigger will fire on Monday the 16th. If the 15th is a Tuesday, then it will fire on Tuesday the 15th.
+However if you specify "1W" as the value for day-of-month, and the 1st is a Saturday, the trigger will fire on Monday the 3rd,
+as it will not 'jump' over the boundary of a month's days.
+The 'W' character can only be specified when the day-of-month is a single day, not a range or list of days.
+
+The 'L' and 'W' characters can also be combined for the day-of-month expression to yield 'LW', which translates to
+"last weekday of the month".
+
+The '#' character is allowed for the day-of-week field. This character is used to specify "the nth" XXX day of the month.
+For example, the value of "6#3" in the day-of-week field means the third Friday of the month (day 6 = Friday and "#3" =
+the 3rd one in the month).
+Other examples: "2#1" = the first Monday of the month and "4#5" = the fifth Wednesday of the month.
+Note that if you specify "#5" and there is not 5 of the given day-of-week in the month, then no firing will occur that month.
+If the '#' character is used, there can only be one expression in the day-of-week field ("3#1,6#3" is not valid,
+since there are two expressions).
+
+The legal characters and the names of months and days of the week are not case sensitive.
+
+If a user specifies an invalid cron syntax to run something on Feb, 30th for example: "0 10 30 2 *", the coordinator job
+will not be created and an invalid coordinator frequency parse exception will be thrown.
+
+*%GREEN% Examples: %ENDCOLOR%*
+
+| *Cron Expression* | *Meaning* |
+| 10 9 * * * | Runs everyday at 9:10am |
+| 10,30,45 9 * * * | Runs everyday at 9:10am, 9:30am, and 9:45am |
+| =0 * 30 JAN 2-6= | Runs at 0 minute of every hour on weekdays and 30th of January |
+| =0/20 9-17 * * 2-5= | Runs every Mon, Tue, Wed, and Thurs at minutes 0, 20, 40 from 9am to 5pm |
+| 1 2 L-3 * * | Runs every third-to-last day of month at 2:01am |
+| =1 2 6W 3 ?= | Runs on the nearest weekday to March, 6th every year at 2:01am |
+| =1 2 * 3 3#2= | Runs every second Tuesday of March at 2:01am every year |
+| =0 10,13 * * MON-FRI= | Runs every weekday at 10am and 1pm |
+
+
+NOTES:
+
+    Cron expression uses oozie server processing timezone. Since default oozie processing timezone is UTC, if you want to
+    run a job on every weekday at 10am in Tokyo, Japan(UTC + 9), your cron expression should be "0 1 * * 2-6" instead of
+    the "0 10 * * 2-6" which you might expect.
+
+    Overflowing ranges is supported but strongly discouraged - that is, having a larger number on the left hand side than the right.
+    You might do 22-2 to catch 10 o'clock at night until 2 o'clock in the morning, or you might have NOV-FEB.
+    It is very important to note that overuse of overflowing ranges creates ranges that don't make sense and
+    no effort has been made to determine which interpretation CronExpression chooses.
+    An example would be "0 14-6 ? * FRI-MON".
 
 ---++ 5. Dataset
 

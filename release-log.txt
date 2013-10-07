@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1454 Documentation for cron syntax scheduling of coordinator job (bowenzhangusa via rkanter)
 OOZIE-1306 add flexibility to oozie coordinator job scheduling (bowenzhangusa via rohini)
 OOZIE-1526 Oozie does not work with a secure HA JobTracker or ResourceManager (rkanter)
 OOZIE-1500 Fix many OS-specific issues on Windows (dwann via rohini)
