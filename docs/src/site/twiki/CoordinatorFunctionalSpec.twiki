@@ -519,6 +519,11 @@ will not be created and an invalid coordinator frequency parse exception will be
 
 NOTES:
 
+    Cron expression and syntax in Oozie are inspired by Quartz:http://quartz-scheduler.org/api/2.0.0/org/quartz/CronExpression.html.
+    However, there is a major difference between Quartz cron and Oozie cron in which Oozie cron doesn't have "Seconds" field
+    since everything in Oozie functions at the minute granularity at most. Everything related to Oozie cron syntax should be based
+    on the documentation in the Oozie documentation.
+
     Cron expression uses oozie server processing timezone. Since default oozie processing timezone is UTC, if you want to
     run a job on every weekday at 10am in Tokyo, Japan(UTC + 9), your cron expression should be "0 1 * * 2-6" instead of
     the "0 10 * * 2-6" which you might expect.
