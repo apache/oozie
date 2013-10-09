@@ -711,6 +711,44 @@
                 <version>2.10.0</version>
             </dependency>
 
+            <!-- For drawing runtime DAG -->
+            <dependency>
+                <groupId>net.sf.jung</groupId>
+                <artifactId>jung-graph-impl</artifactId>
+                <version>2.0.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.jung</groupId>
+                <artifactId>jung-api</artifactId>
+                <version>2.0.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.jung</groupId>
+                <artifactId>jung-visualization</artifactId>
+                <version>2.0.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.jung</groupId>
+                <artifactId>jung-algorithms</artifactId>
+                <version>2.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <!-- part of colt is LGPL -->
+                        <groupId>colt</groupId>
+                        <artifactId>colt</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sourceforge.collections</groupId>
+                <artifactId>collections-generic</artifactId>
+                <version>4.01</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

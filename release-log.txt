@@ -1,5 +1,6 @@
 -- Oozie 4.0.1 release (unreleased)
 
+OOZIE-1563 colt jar includes GPL licence (rkanter)
 OOZIE-1284 oozie.service.SchemaService.wf.ext.schemas in oozie-site is missing some newer xsd files (rkanter)
 OOZIE-1549 Update hcat documentation to mention hcatalog-pig-adapter jar (bowenzhangusa via rohini)
 
