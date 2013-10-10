@@ -63,3 +63,7 @@ export CATALINA_OPTS="$CATALINA_OPTS -Xmx1024m"
 # The password of the keystore for the Oozie server if using SSL (HTTPS)
 #
 # export OOZIE_HTTPS_KEYSTORE_PASS=password
+
+# The Oozie Instance ID
+#
+# export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"

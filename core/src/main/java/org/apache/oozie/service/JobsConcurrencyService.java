@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.ZKUtils;
 
 /**
  * This Service helps coordinate other Services to prevent duplicate processing of Jobs if there are multiple Oozie Servers.  This
@@ -34,7 +35,7 @@ public class JobsConcurrencyService implements Service, Instrumentable {
     private static final Map<String, String> urls;
     static {
         urls = new HashMap<String, String>();
-        urls.put(System.getProperty("oozie.http.hostname"), ConfigUtils.getOozieEffectiveUrl());
+        urls.put(System.getProperty(ZKUtils.OOZIE_INSTANCE_ID), ConfigUtils.getOozieEffectiveUrl());
     }
 
     /**
@@ -103,10 +104,10 @@ public class JobsConcurrencyService implements Service, Instrumentable {
     }
 
     /**
-     * Return a map of server id to Oozie server URL.  This implementation always returns a map with a single entry where the key is
-     * the hostname and the value is the URL (of this Oozie server).
+     * Return a map of instance id to Oozie server URL.  This implementation always returns a map with a single entry where the key
+     * is the OOZIE_INSTANCE_ID env var and the value is the URL (of this Oozie server).
      *
-     * @return A map of Oozie server ids and URLs
+     * @return A map of Oozie instance ids and URLs
      * @throws Exception
      */
     public Map<String, String> getServerUrls() {

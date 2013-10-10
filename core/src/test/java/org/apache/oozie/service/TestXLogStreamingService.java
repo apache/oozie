@@ -152,14 +152,14 @@ public class TestXLogStreamingService extends XTestCase {
         try {
             new Services().init();
             assertFalse(doStreamDisabledCheck());
-            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                    + "ACTION[-] Released Lock");
-            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L2_:317 - USER[blah] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                    + "ACTION[-] Released Lock");
-            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L3_:317 USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                    + "ACTION[-] Released Lock");
-            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L4_:317 USER[blah] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                    + "ACTION[-] Released Lock");
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] "
+                    + "APP[-] JOB[-] ACTION[-] Released Lock");
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L2_:317 - SERVER[foo] USER[blah] GROUP[oozie] TOKEN[-]"
+                    + "APP[-] JOB[-] ACTION[-] Released Lock");
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L3_:317 SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] APP[-]"
+                    + " JOB[-] ACTION[-] Released Lock");
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L4_:317 SERVER[foo] USER[blah] GROUP[oozie] TOKEN[-] APP[-] "
+                    + "JOB[-] ACTION[-] Released Lock");
             String out = doStreamLog(xf);
             String outArr[] = out.split("\n");
             // Lines 2 and 4 are filtered out because they have the wrong user

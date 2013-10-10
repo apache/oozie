@@ -153,10 +153,10 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     }
 
     /**
-     * Return a map of server id to Oozie server URL.  This implementation always returns a map with where the key is the ZooKeeper
+     * Return a map of instance id to Oozie server URL.  This implementation always returns a map with where the key is the instance
      * id and the value is the URL of each Oozie server that we can see in the service discovery in ZooKeeper.
      *
-     * @return A map of Oozie server ids and URLs
+     * @return A map of Oozie instance ids and URLs
      */
     @Override
     public Map<String, String> getServerUrls() {

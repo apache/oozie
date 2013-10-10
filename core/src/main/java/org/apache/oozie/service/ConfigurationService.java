@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
+import org.apache.oozie.util.ZKUtils;
 
 /**
  * Built in service that initializes the services configuration.
@@ -90,6 +91,7 @@ public class ConfigurationService implements Service, Instrumentable {
         //all this properties are seeded as system properties, no need to log changes
         IGNORE_SYS_PROPS.add("oozie.http.hostname");
         IGNORE_SYS_PROPS.add("oozie.http.port");
+        IGNORE_SYS_PROPS.add(ZKUtils.OOZIE_INSTANCE_ID);
 
         IGNORE_SYS_PROPS.add(Services.OOZIE_HOME_DIR);
         IGNORE_SYS_PROPS.add(OOZIE_CONFIG_DIR);

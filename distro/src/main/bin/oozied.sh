@@ -55,6 +55,7 @@ setup_catalina_opts() {
   catalina_opts="${catalina_opts} -Doozie.config.dir=${OOZIE_CONFIG}";
   catalina_opts="${catalina_opts} -Doozie.log.dir=${OOZIE_LOG}";
   catalina_opts="${catalina_opts} -Doozie.data.dir=${OOZIE_DATA}";
+  catalina_opts="${catalina_opts} -Doozie.instance.id=${OOZIE_INSTANCE_ID}"
 
   catalina_opts="${catalina_opts} -Doozie.config.file=${OOZIE_CONFIG_FILE}";
 

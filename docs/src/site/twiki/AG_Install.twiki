@@ -55,6 +55,9 @@ Default value =${HOME}/.keystore= (i.e. the home dir of the Oozie user).
 
 *OOZIE_HTTPS_KEYSTORE_PASS* : The password of the keystore file. Default value =password=.
 
+*OOZIE_INSTANCE_ID* : The instance id of the Oozie server.  When using HA, each server instance should have a unique instance id.
+Default value =${OOZIE_HTTP_HOSTNAME}=
+
 ---++ Oozie Server Setup
 
 The =oozie-setup.sh= script prepares the embedded Tomcat server to run Oozie.
@@ -753,25 +756,14 @@ ZooKeeper servers.  The default value is shown below.
 </property>
 </verbatim>
 
-4. (Optional) Add the following properties to oozie-site.xml in all Oozie servers.
-
-The namespace to use.  All of the Oozie Servers that are planning on talking to each other should have the same namespace.  If there
-are multiple Oozie setups each doing their own HA, they should have their own namespace.  The default value is shown below.
+4. (Optional) Add the following property to oozie-site.xml in all Oozie servers to specify the namespace to use.  All of the Oozie
+Servers that are planning on talking to each other should have the same namespace.  If there are multiple Oozie setups each doing
+their own HA, they should have their own namespace.  The default value is shown below.
 
 <verbatim>
 <property>
     <name>oozie.zookeeper.namespace</name>
     <value>oozie</value>
-</property>
-</verbatim>
-
-The ID for the Oozie server to use when talking to ZooKeeper and other Oozie servers.  Each Oozie server must have a unique ID.  If
-empty, Oozie will use the hostname.
-
-<verbatim>
-<property>
-    <name>oozie.zookeeper.oozie.id</name>
-    <value></value>
 </property>
 </verbatim>
 
@@ -781,9 +773,16 @@ empty, Oozie will use the hostname.
 export OOZIE_BASE_URL="http://my.loadbalancer.hostname:11000/oozie"
 </verbatim>
 
-6. Start the ZooKeeper servers.
+6. (Optional) Change the value of OOZIE_INSTANCE_ID in oozie-env.sh.  Each Oozie server should have its own unique instance id.  The
+default is =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
 
-7. Start the Oozie servers.
+<verbatim>
+export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
+</verbatim>
+
+7. Start the ZooKeeper servers.
+
+8. Start the Oozie servers.
 
 Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
 be missing information until that server comes back up.

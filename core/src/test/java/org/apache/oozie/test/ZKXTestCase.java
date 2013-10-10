@@ -36,7 +36,7 @@ import org.apache.oozie.util.FixedJsonInstanceSerializer;
 
 /**
  * Provides a version of XTestCase that also runs a ZooKeeper server and provides some utilities for interacting and simulating ZK
- * related things.  By default, the ZooKeeper ID of this Oozie server will be "1234" (instead of the hostname).
+ * related things.  By default, the Instance ID of this Oozie server will be "1234" (instead of the hostname).
  * <p>
  * Unlike the code, which uses ZKUtils for interacting with ZK, this class doesn't to make sure that (a) we test ZKUtils and (b) so
  * that the test class doesn't advertise on the ZK service discovery; the test class has access to a CuratorFramework (client) and
@@ -61,7 +61,7 @@ public abstract class ZKXTestCase extends XTestCase {
         // Start the ZooKeeper server and set Oozie ZK properties
         zkServer = new TestingServer();
         Services.get().getConf().set("oozie.zookeeper.connection.string", zkServer.getConnectString());
-        Services.get().getConf().set("oozie.zookeeper.oozie.id", ZK_ID);
+        setSystemProperty("oozie.instance.id", ZK_ID);
         createClient();
         createServiceDiscovery();
     }

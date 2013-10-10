@@ -216,6 +216,13 @@ else
   print "Using   OOZIE_HTTPS_KEYSTORE_PASS:     ${OOZIE_HTTPS_KEYSTORE_PASS}"
 fi
 
+if [ "${OOZIE_INSTANCE_ID}" = "" ]; then
+  export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
+  print "Setting OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
+else
+  print "Using   OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
+fi
+
 if [ "${CATALINA_OUT}" = "" ]; then
   export CATALINA_OUT=${OOZIE_LOG}/catalina.out
   print "Setting CATALINA_OUT:        ${CATALINA_OUT}"

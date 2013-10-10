@@ -168,14 +168,14 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         log4jProps.store(new FileOutputStream(log4jFile), "");
         setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
         assertFalse(doStreamDisabledCheck());
-        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                + "ACTION[-] Released Lock");
-        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L2_:317 - USER[blah] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                + "ACTION[-] Released Lock");
-        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L3_:317 USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                + "ACTION[-] Released Lock");
-        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L4_:317 USER[blah] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
-                + "ACTION[-] Released Lock");
+        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] APP[-] "
+                + "JOB[-] ACTION[-] Released Lock");
+        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L2_:317 - SERVER[foo] USER[blah] GROUP[oozie] TOKEN[-] APP[-] "
+                + "JOB[-] ACTION[-] Released Lock");
+        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L3_:317 SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] APP[-] "
+                + "JOB[-] ACTION[-] Released Lock");
+        LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L4_:317 SERVER[foo] USER[blah] GROUP[oozie] TOKEN[-] APP[-] "
+                + "JOB[-] ACTION[-] Released Lock");
         String out = doStreamLog(xf);
         String outArr[] = out.split("\n");
         // Lines 2 and 4 are filtered out because they have the wrong user
@@ -233,10 +233,10 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         logFile.getParentFile().mkdirs();
         FileWriter logWriter = new FileWriter(logFile);
         // local logs
-        logWriter.append("2013-06-10 10:25:44,008 WARN HiveActionExecutor:542 USER[rkanter] GROUP[-] TOKEN[] "
+        logWriter.append("2013-06-10 10:25:44,008 WARN HiveActionExecutor:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] "
                 + "APP[hive-wf] JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] "
                 + "credentials is null for the action _L3_").append("\n")
-                .append("2013-06-10 10:26:10,008 INFO HiveActionExecutor:539 USER[rkanter] GROUP[-] TOKEN[] "
+                .append("2013-06-10 10:26:10,008 INFO HiveActionExecutor:539 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] "
                 + "APP[hive-wf] JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] "
                 + "action completed, external ID [job_201306101021_0005] _L4_").append("\n")
                 .append("2013-06-10 10:26:10,341 WARN ActionStartXCommand:542 USER[rkanter] GROUP[-] TOKEN[] "
@@ -245,20 +245,20 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         logWriter.close();
         // logs to be returned by another "Oozie server"
         DummyLogStreamingServlet.logs =
-                "2013-06-10 10:25:43,575 WARN ActionStartXCommand:542 USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
+                "2013-06-10 10:25:43,575 WARN ActionStartXCommand:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
                 + "JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@:start:] "
                 + "[***0000003-130610102426873-oozie-rkan-W@:start:***]Action status=DONE _L1_"
                 + "\n"
-                + "2013-06-10 10:25:43,575 WARN ActionStartXCommand:542 USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
+                + "2013-06-10 10:25:43,575 WARN ActionStartXCommand:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
                 + "JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@:start:] "
                 + "[***0000003-130610102426873-oozie-rkan-W@:start:***]Action updated in DB! _L2_"
                 + "\n"
-                + "2013-06-10 10:26:10,148 INFO HiveActionExecutor:539 USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
+                + "2013-06-10 10:26:10,148 INFO HiveActionExecutor:539 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
                 + "JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] action produced"
                 + " output _L5_"
                 + "\n"
                 // a multiline message with a stack trace
-                + "2013-06-10 10:26:30,202  WARN ActionStartXCommand:542 - USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
+                + "2013-06-10 10:26:30,202  WARN ActionStartXCommand:542 - SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
                 + "JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] Error starting "
                 + "action [hive-node]. ErrorType [TRANSIENT], ErrorCode [JA009], Message [JA009: java.io.IOException: Unknown "
                 + "protocol to name node: org.apache.hadoop.mapred.JobSubmissionProtocol _L7_\n"

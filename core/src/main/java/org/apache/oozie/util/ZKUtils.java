@@ -49,9 +49,9 @@ import org.apache.oozie.service.Services;
  * to add additional metadata in the future, we share a Map.  They keys are defined in {@link ZKMetadataKeys}.
  * <p>
  * For the service discovery, the structure in ZooKeeper is /oozie.zookeeper.namespace/ZK_BASE_PATH/ (default is /oozie/services/).
- * There is currently only one service, named "servers" under which each Oozie server creates a ZNode named oozie.zookeeper.oozie.id
- * (default is the hostname) that contains the metadata payload.  For example, with the default settings, an Oozie server named
- * "foo" would create a ZNode at /oozie/services/servers/foo where the foo ZNode contains the metadata.
+ * There is currently only one service, named "servers" under which each Oozie server creates a ZNode named
+ * ${OOZIE_SERVICE_INSTANCE} (default is the hostname) that contains the metadata payload.  For example, with the default settings,
+ * an Oozie server named "foo" would create a ZNode at /oozie/services/servers/foo where the foo ZNode contains the metadata.
  */
 public class ZKUtils {
     /**
@@ -64,10 +64,12 @@ public class ZKUtils {
      * on talking to each other should have the same value for this.
      */
     public static final String ZK_NAMESPACE = "oozie.zookeeper.namespace";
+
     /**
-     * oozie-site property for specifying the ID for this Oozie Server.  Each Oozie server should have a unique ID.
+     * oozie-env environment variable for specifying the Oozie instance ID
      */
-    public static final String ZK_ID = "oozie.zookeeper.oozie.id";
+    public static final String OOZIE_INSTANCE_ID = "oozie.instance.id";
+
     private static final String ZK_OOZIE_SERVICE = "servers";
     private static final String ZK_BASE_PATH = "/services";
 
@@ -88,10 +90,7 @@ public class ZKUtils {
      */
     private ZKUtils() throws Exception {
         log = XLog.getLog(getClass());
-        zkId = Services.get().getConf().get(ZK_ID, "").trim();
-        if (zkId.length() == 0) {
-            zkId = System.getProperty("oozie.http.hostname");
-        }
+        zkId = System.getProperty(OOZIE_INSTANCE_ID);
         createClient();
         advertiseService();
     }

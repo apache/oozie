@@ -80,8 +80,8 @@ public class TestJobsConcurrencyService extends XTestCase {
             jcs.init(null);
             Map<String, String> map = jcs.getServerUrls();
             assertEquals(1, map.size());
-            assertEquals(System.getProperty("oozie.http.hostname"), map.keySet().iterator().next());
-            assertEquals(ConfigUtils.getOozieURL(false), map.get(System.getProperty("oozie.http.hostname")));
+            assertEquals(System.getProperty("oozie.instance.id"), map.keySet().iterator().next());
+            assertEquals(ConfigUtils.getOozieURL(false), map.get(System.getProperty("oozie.instance.id")));
         }
         finally {
             jcs.destroy();

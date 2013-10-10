@@ -1946,13 +1946,4 @@
         </description>
     </property>
 
-    <property>
-        <name>oozie.zookeeper.oozie.id</name>
-        <value></value>
-        <description>
-            The ID for the Oozie server to use.  Each Oozie server must have a unique ID.
-            If empty, Oozie will use the hostname.
-        </description>
-    </property>
-
 </configuration>
