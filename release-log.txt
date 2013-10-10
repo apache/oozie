@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1570 Make openjpa connection properties configurable (rohini)
 OOZIE-1560 Log messages should have a way of identifying which server they came from when using HA (rkanter)
 OOZIE-1566 Add reference to Quartz module in cron documentation (bowenzhangusa via rkanter)
 OOZIE-1454 Documentation for cron syntax scheduling of coordinator job (bowenzhangusa via rkanter)

@@ -68,6 +68,7 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_USERNAME = CONF_PREFIX + "jdbc.username";
     public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
     public static final String CONF_CONN_DATA_SOURCE = CONF_PREFIX + "connection.data.source";
+    public static final String CONF_CONN_PROPERTIES = CONF_PREFIX + "connection.properties";
 
     public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
     public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
@@ -110,6 +111,7 @@ public class JPAService implements Service, Instrumentable {
         String password = conf.get(CONF_PASSWORD, "").trim();
         String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();
         String dataSource = conf.get(CONF_CONN_DATA_SOURCE, "org.apache.commons.dbcp.BasicDataSource");
+        String connPropsConfig = conf.get(CONF_CONN_PROPERTIES);
         boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, true);
         boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, false);
         String evictionInterval = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL, "300000").trim();
@@ -153,6 +155,9 @@ public class JPAService implements Service, Instrumentable {
         }
         else {
             connProps += ",TestOnBorrow=false,TestOnReturn=false,TestWhileIdle=false";
+        }
+        if (connPropsConfig != null) {
+            connProps += "," + connPropsConfig;
         }
         props.setProperty("openjpa.ConnectionProperties", connProps);
 
