@@ -787,6 +787,12 @@ export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
 Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
 be missing information until that server comes back up.
 
+---++++ Security
+
+Oozie HA works with the existing Oozie security framework and settings.  There are no additional security settings specific to HA;
+however, for log streaming to work properly in a secure setup, =oozie.authentication.type= must be set properly on each server
+(though this is already required if using security in the first place).
+
 ---++ Starting and Stopping Oozie
 
 Use the standard Tomcat commands to start and stop Oozie.
