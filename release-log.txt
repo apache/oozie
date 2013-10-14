@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1517 Support using MS SQL Server as a metastore (dwann via rkanter)
 OOZIE-1460 Implement and Document security for HA (rkanter)
 OOZIE-1570 Make openjpa connection properties configurable (rohini)
 OOZIE-1560 Log messages should have a way of identifying which server they came from when using HA (rkanter)

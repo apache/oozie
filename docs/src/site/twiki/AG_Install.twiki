@@ -123,7 +123,7 @@ servlet container (if using Tomcat, copy the prepared =oozie.war= file to Tomcat
 
 ---++ Database Configuration
 
-Oozie works with HSQL, Derby, MySQL, Oracle or PostgreSQL databases.
+Oozie works with HSQL, Derby, MySQL, Oracle, PostgreSQL or SQL Server databases.
 
 By default, Oozie is configured to use Embedded Derby.
 
@@ -131,10 +131,10 @@ Oozie bundles the JDBC drivers for HSQL, Embedded Derby and PostgreSQL.
 
 HSQL is normally used for testcases as it is an in-memory database and all data is lost everytime Oozie is stopped.
 
-If using Derby, MySQL, Oracle or PostgreSQL, the Oozie database schema must be created using the =ooziedb.sh= command
+If using Derby, MySQL, Oracle, PostgreSQL, or SQL Server, the Oozie database schema must be created using the =ooziedb.sh= command
 line tool.
 
-If using MySQL or Oracle, the corresponding JDBC driver JAR file mut be copied to Oozie's =libext/= directory and
+If using MySQL, Oracle, or SQL Server, the corresponding JDBC driver JAR file mut be copied to Oozie's =libext/= directory and
 it must be added to Oozie WAR file using the =bin/addtowar.sh= or the =oozie-setup.sh= scripts using the =-jars= option.
 
 The SQL database used by Oozie is configured using the following configuration properties (default values shown):
@@ -182,7 +182,7 @@ The SQL commands have been written to: oozie.sql
 $
 </verbatim>
 
-NOTE: If using MySQL or Oracle, copy the corresponding JDBC driver JAR file to the =libext/= directory before running
+NOTE: If using MySQL, Oracle, or SQL Server, copy the corresponding JDBC driver JAR file to the =libext/= directory before running
 the =ooziedb.sh= command line tool.
 
 NOTE: If instead using the '-run' option, the '-sqlfile <FILE>' option is used, then all the
