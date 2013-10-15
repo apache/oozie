@@ -469,6 +469,7 @@ public class TestWorkflowClient extends DagServletTestCase {
     public void testSla() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
+                cleanUpDBTables();
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
 
