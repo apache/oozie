@@ -17,11 +17,8 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
@@ -65,7 +62,6 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -1127,7 +1123,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
                             action.getExternalId());
                     if (LauncherMapperHelper.isMainSuccessful(runningJob)) {
-                        if (LauncherMapperHelper.hasOutputData(actionData)) {
+                        if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {
                             context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
                                     .get(LauncherMapper.ACTION_DATA_OUTPUT_PROPS)));
                             XLog.getLog(getClass()).info(XLog.STD, "action produced output");
@@ -1139,6 +1135,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             context.setExecutionStats(actionData.get(LauncherMapper.ACTION_DATA_STATS));
                             XLog.getLog(getClass()).info(XLog.STD, "action produced stats");
                         }
+                        getActionData(actionFs, runningJob, action, context);
                     }
                     else {
                         XLog log = XLog.getLog(getClass());
@@ -1203,6 +1200,20 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
+    }
+
+    /**
+     * Get the output data of an action. Subclasses should override this method
+     * to get action specific output data.
+     *
+     * @param actionFs the FileSystem object
+     * @param runningJob the runningJob
+     * @param action the Workflow action
+     * @param context executor context
+     *
+     */
+    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
     }
 
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {

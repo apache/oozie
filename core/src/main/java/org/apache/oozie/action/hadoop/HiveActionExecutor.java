@@ -19,13 +19,21 @@ package org.apache.oozie.action.hadoop;
 
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -100,6 +108,20 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     @Override
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
         return true;
+    }
+
+    @Override
+    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
+        super.getActionData(actionFs, runningJob, action, context);
+
+        if (action.getData() != null) {
+            // Load stored Hadoop jobs ids and promote them as external child
+            // ids on job success
+            Properties props = new Properties();
+            props.load(new StringReader(action.getData()));
+            context.setExternalChildIDs((String) props.get(LauncherMain.HADOOP_JOBS));
+        }
     }
 
     /**

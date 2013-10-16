@@ -116,7 +116,7 @@ public class TestHiveMain extends MainTestCase {
 
             setSystemProperty("oozie.launcher.job.id", "" + System.currentTimeMillis());
             setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
-            setSystemProperty("oozie.action.externalChildIDs", outputDataFile.getAbsolutePath());
+            setSystemProperty("oozie.action.output.properties", outputDataFile.getAbsolutePath());
 
             new LauncherSecurityManager();
             String user = System.getProperty("user.name");

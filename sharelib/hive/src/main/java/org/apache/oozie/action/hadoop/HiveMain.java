@@ -277,6 +277,7 @@ public class HiveMain extends LauncherMain {
             }
         }
         finally {
+            System.out.println("\n<<< Invocation of Hive command completed <<<\n");
             writeExternalChildIDs(logFile);
 
         }
@@ -287,12 +288,15 @@ public class HiveMain extends LauncherMain {
         try {
             Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
             File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
-                    + LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS));
-            final String hadoopJobIDs = jobIds.getProperty(HADOOP_JOBS);
+                    + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
             OutputStream os = new FileOutputStream(file);
-            os.write(hadoopJobIDs.getBytes());
-            os.close();
-            System.out.println(" Hadoop Job IDs executed by Hive: " + hadoopJobIDs);
+            try {
+                jobIds.store(os, "");
+            }
+            finally {
+                os.close();
+            }
+            System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty(HADOOP_JOBS));
             System.out.println();
         }
         catch (Exception e) {

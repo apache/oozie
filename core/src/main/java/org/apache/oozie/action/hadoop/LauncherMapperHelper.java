@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -45,6 +47,8 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UserGroupInformationService;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.PropertiesUtils;
 
 public class LauncherMapperHelper {
 
@@ -253,6 +257,50 @@ public class LauncherMapperHelper {
                         ret.put(key.toString(), value.toString());
                     }
                     seqFile.close();
+                }
+                else { // maintain backward-compatibility. to be deprecated
+                    org.apache.hadoop.fs.FileStatus[] files = fs.listStatus(actionDir);
+                    InputStream is;
+                    BufferedReader reader = null;
+                    Properties props;
+                    if (files != null && files.length > 0) {
+                        for (int x = 0; x < files.length; x++) {
+                            Path file = files[x].getPath();
+                            if (file.equals(new Path(actionDir, "externalChildIds.properties"))) {
+                                is = fs.open(file);
+                                reader = new BufferedReader(new InputStreamReader(is));
+                                ret.put(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS,
+                                        IOUtils.getReaderAsString(reader, -1));
+                            }
+                            else if (file.equals(new Path(actionDir, "newId.properties"))) {
+                                is = fs.open(file);
+                                reader = new BufferedReader(new InputStreamReader(is));
+                                props = PropertiesUtils.readProperties(reader, -1);
+                                ret.put(LauncherMapper.ACTION_DATA_NEW_ID, props.getProperty("id"));
+                            }
+                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_OUTPUT_PROPS))) {
+                                int maxOutputData = conf.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
+                                        2 * 1024);
+                                is = fs.open(file);
+                                reader = new BufferedReader(new InputStreamReader(is));
+                                ret.put(LauncherMapper.ACTION_DATA_OUTPUT_PROPS, PropertiesUtils
+                                        .propertiesToString(PropertiesUtils.readProperties(reader, maxOutputData)));
+                            }
+                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_STATS))) {
+                                int statsMaxOutputData = conf.getInt(LauncherMapper.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
+                                        Integer.MAX_VALUE);
+                                is = fs.open(file);
+                                reader = new BufferedReader(new InputStreamReader(is));
+                                ret.put(LauncherMapper.ACTION_DATA_STATS, PropertiesUtils
+                                        .propertiesToString(PropertiesUtils.readProperties(reader, statsMaxOutputData)));
+                            }
+                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_ERROR_PROPS))) {
+                                is = fs.open(file);
+                                reader = new BufferedReader(new InputStreamReader(is));
+                                ret.put(LauncherMapper.ACTION_DATA_ERROR_PROPS, IOUtils.getReaderAsString(reader, -1));
+                            }
+                        }
+                    }
                 }
                 return ret;
             }
