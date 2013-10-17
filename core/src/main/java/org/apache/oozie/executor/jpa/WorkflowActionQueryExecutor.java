@@ -54,8 +54,6 @@ public class WorkflowActionQueryExecutor extends
         GET_ACTION_SIGNAL,
         GET_ACTION_START,
         GET_ACTION_CHECK,
-        GET_ACTION_END,
-        GET_ACTION_KILL,
         GET_ACTION_COMPLETED,
         GET_RUNNING_ACTIONS,
         GET_PENDING_ACTIONS,
@@ -185,7 +183,6 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("status", actionBean.getStatus().toString());
                 query.setParameter("endTime", actionBean.getEndTimestamp());
-                query.setParameter("retries", actionBean.getRetries());
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("signalValue", actionBean.getSignalValue());
@@ -212,8 +209,6 @@ public class WorkflowActionQueryExecutor extends
             case GET_ACTION_SIGNAL:
             case GET_ACTION_START:
             case GET_ACTION_CHECK:
-            case GET_ACTION_END:
-            case GET_ACTION_KILL:
             case GET_ACTION_COMPLETED:
                 query.setParameter("id", parameters[0]);
                 break;
@@ -279,13 +274,14 @@ public class WorkflowActionQueryExecutor extends
                 bean.setName((String) arr[2]);
                 bean.setStatusStr((String) arr[3]);
                 bean.setPending((Integer) arr[4]);
-                bean.setType((String) arr[5]);
-                bean.setLogToken((String) arr[6]);
-                bean.setTransition((String) arr[7]);
-                bean.setErrorInfo((String) arr[8], (String) arr[9]);
-                bean.setExecutionPath((String) arr[10]);
-                bean.setSignalValue((String) arr[11]);
-                bean.setSlaXmlBlob((StringBlob) arr[12]);
+                bean.setPendingAge(DateUtils.toDate((Timestamp) arr[5]));
+                bean.setType((String) arr[6]);
+                bean.setLogToken((String) arr[7]);
+                bean.setTransition((String) arr[8]);
+                bean.setErrorInfo((String) arr[9], (String) arr[10]);
+                bean.setExecutionPath((String) arr[11]);
+                bean.setSignalValue((String) arr[12]);
+                bean.setSlaXmlBlob((StringBlob) arr[13]);
                 break;
             case GET_ACTION_START:
                 bean = new WorkflowActionBean();
@@ -295,19 +291,22 @@ public class WorkflowActionQueryExecutor extends
                 bean.setName((String) arr[2]);
                 bean.setStatusStr((String) arr[3]);
                 bean.setPending((Integer) arr[4]);
-                bean.setType((String) arr[5]);
-                bean.setLogToken((String) arr[6]);
-                bean.setTransition((String) arr[7]);
-                bean.setRetries((Integer) arr[8]);
-                bean.setUserRetryCount((Integer) arr[9]);
-                bean.setUserRetryMax((Integer) arr[10]);
-                bean.setUserRetryInterval((Integer) arr[11]);
-                bean.setStartTime(DateUtils.toDate((Timestamp) arr[12]));
-                bean.setEndTime(DateUtils.toDate((Timestamp) arr[13]));
-                bean.setErrorInfo((String) arr[14], (String) arr[15]);
-                bean.setCred((String) arr[16]);
-                bean.setConfBlob((StringBlob) arr[17]);
-                bean.setSlaXmlBlob((StringBlob) arr[18]);
+                bean.setPendingAge(DateUtils.toDate((Timestamp) arr[5]));
+                bean.setType((String) arr[6]);
+                bean.setLogToken((String) arr[7]);
+                bean.setTransition((String) arr[8]);
+                bean.setRetries((Integer) arr[9]);
+                bean.setUserRetryCount((Integer) arr[10]);
+                bean.setUserRetryMax((Integer) arr[11]);
+                bean.setUserRetryInterval((Integer) arr[12]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[13]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[14]));
+                bean.setErrorInfo((String) arr[15], (String) arr[16]);
+                bean.setCred((String) arr[17]);
+                bean.setExternalId((String) arr[18]);
+                bean.setExternalStatus((String) arr[19]);
+                bean.setConfBlob((StringBlob) arr[20]);
+                bean.setSlaXmlBlob((StringBlob) arr[21]);
                 break;
             case GET_ACTION_CHECK:
                 bean = new WorkflowActionBean();
@@ -317,65 +316,23 @@ public class WorkflowActionQueryExecutor extends
                 bean.setName((String) arr[2]);
                 bean.setStatusStr((String) arr[3]);
                 bean.setPending((Integer) arr[4]);
-                bean.setType((String) arr[5]);
-                bean.setLogToken((String) arr[6]);
-                bean.setTransition((String) arr[7]);
-                bean.setRetries((Integer) arr[8]);
-                bean.setTrackerUri((String) arr[9]);
-                bean.setStartTime(DateUtils.toDate((Timestamp) arr[10]));
-                bean.setEndTime(DateUtils.toDate((Timestamp) arr[11]));
-                bean.setLastCheckTime(DateUtils.toDate((Timestamp) arr[12]));
-                bean.setErrorInfo((String) arr[13], (String) arr[14]);
-                bean.setExternalId((String) arr[15]);
-                bean.setExternalStatus((String) arr[16]);
-                bean.setExternalChildIDsBlob((StringBlob) arr[17]);
-                bean.setConfBlob((StringBlob) arr[18]);
-                break;
-            case GET_ACTION_END:
-                bean = new WorkflowActionBean();
-                arr = (Object[]) ret;
-                bean.setId((String) arr[0]);
-                bean.setJobId((String) arr[1]);
-                bean.setName((String) arr[2]);
-                bean.setStatusStr((String) arr[3]);
-                bean.setPending((Integer) arr[4]);
-                bean.setType((String) arr[5]);
-                bean.setLogToken((String) arr[6]);
-                bean.setTransition((String) arr[7]);
-                bean.setRetries((Integer) arr[8]);
-                bean.setTrackerUri((String) arr[9]);
+                bean.setPendingAge(DateUtils.toDate((Timestamp) arr[5]));
+                bean.setType((String) arr[6]);
+                bean.setLogToken((String) arr[7]);
+                bean.setTransition((String) arr[8]);
+                bean.setRetries((Integer) arr[9]);
                 bean.setUserRetryCount((Integer) arr[10]);
                 bean.setUserRetryMax((Integer) arr[11]);
                 bean.setUserRetryInterval((Integer) arr[12]);
-                bean.setStartTime(DateUtils.toDate((Timestamp) arr[13]));
-                bean.setEndTime(DateUtils.toDate((Timestamp) arr[14]));
-                bean.setErrorInfo((String) arr[15], (String) arr[16]);
-                bean.setExternalId((String) arr[17]);
-                bean.setExternalStatus((String) arr[18]);
-                bean.setExternalChildIDsBlob((StringBlob) arr[19]);
-                bean.setConfBlob((StringBlob) arr[20]);
-                bean.setDataBlob((StringBlob) arr[21]);
-                bean.setStatsBlob((StringBlob) arr[22]);
-                break;
-            case GET_ACTION_KILL:
-                bean = new WorkflowActionBean();
-                arr = (Object[]) ret;
-                bean.setId((String) arr[0]);
-                bean.setJobId((String) arr[1]);
-                bean.setName((String) arr[2]);
-                bean.setStatusStr((String) arr[3]);
-                bean.setPending((Integer) arr[4]);
-                bean.setType((String) arr[5]);
-                bean.setLogToken((String) arr[6]);
-                bean.setTransition((String) arr[7]);
-                bean.setRetries((Integer) arr[8]);
-                bean.setTrackerUri((String) arr[9]);
-                bean.setStartTime(DateUtils.toDate((Timestamp) arr[10]));
-                bean.setEndTime(DateUtils.toDate((Timestamp) arr[11]));
-                bean.setErrorInfo((String) arr[12], (String) arr[13]);
-                bean.setExternalId((String) arr[14]);
-                bean.setConfBlob((StringBlob) arr[15]);
-                bean.setDataBlob((StringBlob) arr[16]);
+                bean.setTrackerUri((String) arr[13]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[14]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[15]));
+                bean.setLastCheckTime(DateUtils.toDate((Timestamp) arr[16]));
+                bean.setErrorInfo((String) arr[17], (String) arr[18]);
+                bean.setExternalId((String) arr[19]);
+                bean.setExternalStatus((String) arr[20]);
+                bean.setExternalChildIDsBlob((StringBlob) arr[21]);
+                bean.setConfBlob((StringBlob) arr[22]);
                 break;
             case GET_ACTION_COMPLETED:
                 bean = new WorkflowActionBean();

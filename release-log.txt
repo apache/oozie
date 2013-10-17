@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1559 Fix missing fields from new SELECT queries and Recovery Service picking up killed control nodes (ryota,mona via mona)
 OOZIE-1569 Maintain backward incompatibility for running jobs before upgrade (mona)
 OOZIE-1568 TestWorkflowClient.testSla is flakey (rkanter)
 OOZIE-1517 Support using MS SQL Server as a metastore (dwann via rkanter)

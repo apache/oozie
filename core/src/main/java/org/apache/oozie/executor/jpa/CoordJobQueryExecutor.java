@@ -279,6 +279,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setBundleId((String) arr[16]);
                 bean.setConfBlob((StringBlob) arr[17]);
                 bean.setJobXmlBlob((StringBlob) arr[18]);
+                bean.setAppNamespace((String) arr[19]);
                 break;
             case GET_COORD_JOB_SUSPEND_KILL:
                 bean = new CoordinatorJobBean();

@@ -142,7 +142,9 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             for (WorkflowActionBean action : actionList) {
                 if (action.getStatus() == WorkflowActionBean.Status.RUNNING
                         || action.getStatus() == WorkflowActionBean.Status.DONE) {
-                    action.setPending();
+                    if (!(actionService.getExecutor(action.getType()) instanceof ControlNodeActionExecutor)) {
+                        action.setPending();
+                    }
                     action.setStatus(WorkflowActionBean.Status.KILLED);
                     updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_STATUS_PENDING, action));
 

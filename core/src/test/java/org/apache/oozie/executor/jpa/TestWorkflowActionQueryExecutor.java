@@ -191,16 +191,18 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
     }
 
     public void testGet() throws Exception {
-        WorkflowActionBean bean = addRecordToWfActionTable("workflowId","testAction", WorkflowAction.Status.PREP);
+        WorkflowActionBean bean = addRecordToWfActionTable("workflowId", "testAction", WorkflowAction.Status.PREP, "",
+                true);
         WorkflowActionBean retBean;
 
-        //GET_WORKFFLOW_ID_TYPE
+        //GET_ACTION_ID_TYPE_LASTCHECK
         retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
                 bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getType(), retBean.getType());
+        assertEquals(bean.getLastCheckTime(), retBean.getLastCheckTime());
 
-        //GET_WORKFFLOW_FAIL
+        //GET_ACTION_FAIL
         retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_FAIL, bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getJobId(), retBean.getJobId());
@@ -218,13 +220,14 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertNull(retBean.getStats());
         assertNull(retBean.getExternalChildIDs());
 
-        //GET_WORKFFLOW_SIGNAL
+        //GET_ACTION_SIGNAL
         retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_SIGNAL, bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getJobId(), retBean.getJobId());
         assertEquals(bean.getName(), retBean.getName());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
         assertEquals(bean.getPending(), retBean.getPending());
+        assertEquals(bean.getPendingAge().getTime(), retBean.getPendingAge().getTime());
         assertEquals(bean.getType(), retBean.getType());
         assertEquals(bean.getLogToken(), retBean.getLogToken());
         assertEquals(bean.getTransition(), retBean.getTransition());
@@ -256,23 +259,29 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(bean.getErrorCode(), retBean.getErrorCode());
         assertEquals(bean.getErrorMessage(), retBean.getErrorMessage());
         assertEquals(bean.getCred(), retBean.getCred());
+        assertEquals(bean.getExternalId(), retBean.getExternalId());
+        assertEquals(bean.getExternalStatus(), retBean.getExternalStatus());
         assertEquals(bean.getConf(), retBean.getConf());
         assertEquals(bean.getSlaXml(), retBean.getSlaXml());
         assertNull(retBean.getData());
         assertNull(retBean.getStats());
         assertNull(retBean.getExternalChildIDs());
 
-        // GET_WORKFLOW_CHECK
+        // GET_ACTION_CHECK
         retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_CHECK, bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getJobId(), retBean.getJobId());
         assertEquals(bean.getName(), retBean.getName());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
         assertEquals(bean.getPending(), retBean.getPending());
+        assertEquals(bean.getPendingAge().getTime(), retBean.getPendingAge().getTime());
         assertEquals(bean.getType(), retBean.getType());
         assertEquals(bean.getLogToken(), retBean.getLogToken());
         assertEquals(bean.getTransition(), retBean.getTransition());
         assertEquals(bean.getRetries(), retBean.getRetries());
+        assertEquals(bean.getUserRetryCount(), retBean.getUserRetryCount());
+        assertEquals(bean.getUserRetryMax(), retBean.getUserRetryMax());
+        assertEquals(bean.getUserRetryInterval(), retBean.getUserRetryInterval());
         assertEquals(bean.getTrackerUri(), retBean.getTrackerUri());
         assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
         assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
@@ -287,57 +296,7 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertNull(retBean.getStats());
         assertNull(retBean.getSlaXml());
 
-        // GET_WORKFLOW_END
-        retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_END, bean.getId());
-        assertEquals(bean.getId(), retBean.getId());
-        assertEquals(bean.getJobId(), retBean.getJobId());
-        assertEquals(bean.getName(), retBean.getName());
-        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
-        assertEquals(bean.getPending(), retBean.getPending());
-        assertEquals(bean.getType(), retBean.getType());
-        assertEquals(bean.getLogToken(), retBean.getLogToken());
-        assertEquals(bean.getTransition(), retBean.getTransition());
-        assertEquals(bean.getRetries(), retBean.getRetries());
-        assertEquals(bean.getTrackerUri(), retBean.getTrackerUri());
-        assertEquals(bean.getUserRetryCount(), retBean.getUserRetryCount());
-        assertEquals(bean.getUserRetryMax(), retBean.getUserRetryMax());
-        assertEquals(bean.getUserRetryInterval(), retBean.getUserRetryInterval());
-        assertEquals(bean.getExternalId(), retBean.getExternalId());
-        assertEquals(bean.getExternalStatus(), retBean.getExternalStatus());
-        assertEquals(bean.getExternalChildIDs(), retBean.getExternalChildIDs());
-        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
-        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
-        assertEquals(bean.getErrorCode(), retBean.getErrorCode());
-        assertEquals(bean.getErrorMessage(), retBean.getErrorMessage());
-        assertEquals(bean.getConf(), retBean.getConf());
-        assertEquals(bean.getData(), retBean.getData());
-        assertEquals(bean.getStats(), retBean.getStats());
-        assertNull(retBean.getSlaXml());
-
-        // GET_WORKFLOW_KILL
-        retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_KILL, bean.getId());
-        assertEquals(bean.getId(), retBean.getId());
-        assertEquals(bean.getJobId(), retBean.getJobId());
-        assertEquals(bean.getName(), retBean.getName());
-        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
-        assertEquals(bean.getPending(), retBean.getPending());
-        assertEquals(bean.getType(), retBean.getType());
-        assertEquals(bean.getLogToken(), retBean.getLogToken());
-        assertEquals(bean.getTransition(), retBean.getTransition());
-        assertEquals(bean.getRetries(), retBean.getRetries());
-        assertEquals(bean.getTrackerUri(), retBean.getTrackerUri());
-        assertEquals(bean.getErrorCode(), retBean.getErrorCode());
-        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
-        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
-        assertEquals(bean.getErrorMessage(), retBean.getErrorMessage());
-        assertEquals(bean.getExternalId(), retBean.getExternalId());
-        assertEquals(bean.getConf(), retBean.getConf());
-        assertEquals(bean.getData(), retBean.getData());
-        assertNull(retBean.getExternalChildIDs());
-        assertNull(retBean.getStats());
-        assertNull(retBean.getSlaXml());
-
-        //GET_WORKFLOW_COMPLETED
+        //GET_ACTION_COMPLETED
         retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_COMPLETED, bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getJobId(), retBean.getJobId());
@@ -349,6 +308,36 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertNull(retBean.getData());
         assertNull(retBean.getStats());
         assertNull(retBean.getExternalChildIDs());
+
+        // GET_ACTION (entire obj)
+        retBean = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getJobId(), retBean.getJobId());
+        assertEquals(bean.getName(), retBean.getName());
+        assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getPending(), retBean.getPending());
+        assertEquals(bean.getPendingAge().getTime(), retBean.getPendingAge().getTime());
+        assertEquals(bean.getType(), retBean.getType());
+        assertEquals(bean.getLogToken(), retBean.getLogToken());
+        assertEquals(bean.getTransition(), retBean.getTransition());
+        assertEquals(bean.getRetries(), retBean.getRetries());
+        assertEquals(bean.getUserRetryCount(), retBean.getUserRetryCount());
+        assertEquals(bean.getUserRetryMax(), retBean.getUserRetryMax());
+        assertEquals(bean.getUserRetryInterval(), retBean.getUserRetryInterval());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
+        assertEquals(bean.getCreatedTime().getTime(), retBean.getCreatedTime().getTime());
+        assertEquals(bean.getLastCheckTime().getTime(), retBean.getLastCheckTime().getTime());
+        assertEquals(bean.getErrorCode(), retBean.getErrorCode());
+        assertEquals(bean.getErrorMessage(), retBean.getErrorMessage());
+        assertEquals(bean.getExecutionPath(), retBean.getExecutionPath());
+        assertEquals(bean.getSignalValue(), retBean.getSignalValue());
+        assertEquals(bean.getCred(), retBean.getCred());
+        assertEquals(bean.getConf(), retBean.getConf());
+        assertEquals(bean.getSlaXml(), retBean.getSlaXml());
+        assertEquals(bean.getData(), retBean.getData());
+        assertEquals(bean.getStats(), retBean.getStats());
+        assertEquals(bean.getExternalChildIDs(), retBean.getExternalChildIDs());
     }
 
     public void testGetList() throws Exception {

@@ -361,10 +361,13 @@ public class TestEventGeneration extends XDataTestCase {
         ehs.setAppTypes(new HashSet<String>(Arrays.asList("workflow_action")));
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP, true);
-        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
+        // adding record sets externalChildID to dummy workflow-id so resetting it
+        action.setExternalChildIDs(null);
+        WorkflowActionQueryExecutor.getInstance().executeUpdate(WorkflowActionQuery.UPDATE_ACTION_START, action);
 
         // Starting job
         new ActionStartXCommand(action.getId(), "map-reduce").call();
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
         action = jpaService.execute(wfActionGetCmd);
         assertEquals(WorkflowAction.Status.RUNNING, action.getStatus());
         assertEquals(1, queue.size());
@@ -488,12 +491,12 @@ public class TestEventGeneration extends XDataTestCase {
     public void testForNoDuplicates() throws Exception {
         // test workflow job events
         Reader reader = IOUtils.getResourceAsReader("wf-no-op.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         final String jobId1 = engine.submitJob(conf, true);
