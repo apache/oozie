@@ -175,6 +175,79 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         }
     }
 
+    public void testBasicSubmitWithUnMaterializableFrequency() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"0/10 3 * * *\" start=\"2010-02-01T01:00Z\" "
+                + "end=\"2010-02-01T02:00Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2010-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2010-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> "
+                + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+
+        try {
+            sc.call();
+            fail("Expected to catch errors due to bad combination of frequency and start and end time");
+        }
+        catch (CommandException e) {
+            assertEquals(sc.getJob().getStatus(), Job.Status.FAILED);
+            assertEquals(e.getErrorCode(), ErrorCode.E1003);
+            assertTrue(e.getMessage().contains("materializes no actions between start and end time."));
+        }
+    }
+
+    public void testBasicSubmitWithValidFrequency() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"0/10 1 * * *\" start=\"2010-02-01T01:00Z\" "
+                + "end=\"2010-02-01T02:00Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> "
+                + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            fail("Unexpected failure: " + e);
+        }
+    }
+
     /**
      * Testing for when user tries to submit a coordinator application having data-in events
      * that erroneously specify multiple input data instances inside a single <instance> tag.

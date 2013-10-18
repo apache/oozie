@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -306,10 +307,27 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Method that validates values in the definition for correctness. Placeholder to add more.
      */
-    private void validateCoordinatorJob() {
+    private void validateCoordinatorJob() throws Exception {
         // check if startTime < endTime
         if (!coordJob.getStartTime().before(coordJob.getEndTime())) {
             throw new IllegalArgumentException("Coordinator Start Time must be earlier than End Time.");
+        }
+
+        // Check if a coord job with cron frequency will materialize actions
+        try {
+            Integer.parseInt(coordJob.getFrequency());
+        } catch (NumberFormatException e) {
+            Date start = coordJob.getStartTime();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(start);
+            cal.add(Calendar.MINUTE, -1);
+            start = cal.getTime();
+
+            Date nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(start, coordJob);
+            if (!nextTime.before(coordJob.getEndTime())) {
+                throw new IllegalArgumentException("Coordinator job with frequency '" +
+                        coordJob.getFrequency() + "' materializes no actions between start and end time.");
+            }
         }
     }
 

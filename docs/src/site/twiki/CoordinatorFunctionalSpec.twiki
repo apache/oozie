@@ -504,6 +504,10 @@ The legal characters and the names of months and days of the week are not case s
 If a user specifies an invalid cron syntax to run something on Feb, 30th for example: "0 10 30 2 *", the coordinator job
 will not be created and an invalid coordinator frequency parse exception will be thrown.
 
+If a user has a coordinator job that materializes no action during run time, for example: frequency of "0 10 * * *" with
+start time of 2013-10-18T21:00Z and end time of 2013-10-18T22:00Z, the coordinator job submission will be rejected and
+an invalid coordinator attribute exception will be thrown.
+
 *%GREEN% Examples: %ENDCOLOR%*
 
 | *Cron Expression* | *Meaning* |
