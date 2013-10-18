@@ -94,7 +94,7 @@
          <distcp.version>${hadooplib.version}</distcp.version>
 
          <!-- Tomcat version -->
-         <tomcat.version>6.0.36</tomcat.version>
+         <tomcat.version>6.0.37</tomcat.version>
 
          <openjpa.version>2.2.2</openjpa.version>
     </properties>
