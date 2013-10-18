@@ -308,8 +308,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     private void validateCoordinatorJob() {
         // check if startTime < endTime
-        if (coordJob.getStartTime().after(coordJob.getEndTime())) {
-            throw new IllegalArgumentException("Coordinator Start Time cannot be greater than End Time.");
+        if (!coordJob.getStartTime().before(coordJob.getEndTime())) {
+            throw new IllegalArgumentException("Coordinator Start Time must be earlier than End Time.");
         }
     }
 

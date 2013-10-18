@@ -792,7 +792,8 @@ Coordinator applications are normally parameterized.
 
 To create a coordinator job, a job configuration that resolves all coordinator application parameters must be provided to the coordinator engine.
 
-A coordinator job is a running instance of a coordinator application running from a start time to an end time.
+A coordinator job is a running instance of a coordinator application running from a start time to an end time. The start
+time must be earlier than the end time.
 
 At any time, a coordinator job is in one of the following status: *PREP, RUNNING, RUNNINGWITHERROR, PREPSUSPENDED, SUSPENDED, SUSPENDEDWITHERROR, PREPPAUSED, PAUSED, PAUSEDWITHERROR, SUCCEEDED, DONEWITHERROR, KILLED, FAILED*.
 
