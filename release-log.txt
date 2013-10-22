@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1592 El Expression Reference should point to the exact chapter in java 6 (bowenzhangusa via rkanter)
 OOZIE-1578 Coordinator jobs with cron frequency should be invalidated upon submission if nothing would be materialized during run time (bowenzhangusa via rkanter)
 OOZIE-1577 Oozie coordinator job with identical start and end time remains "RUNNING" forever (bowenzhangusa via rkanter)
 OOZIE-1559 Fix missing fields from new SELECT queries and Recovery Service picking up killed control nodes (ryota,mona via mona)
