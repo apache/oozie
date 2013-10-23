@@ -17,8 +17,6 @@
  */
 package org.apache.oozie.coord;
 
-import java.io.File;
-import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.ELService;
@@ -346,9 +344,17 @@ public class TestCoordELFunctions extends XTestCase {
         // eval.setVariable("resolve_tzOffset", "true");
         assertEquals("0", CoordELFunctions.evalAndWrap(eval, expr));
 
-        appInst.setTimeZone(DateUtils.getTimeZone("America/New_York"));
+        appInst.setTimeZone(DateUtils.getTimeZone("UTC"));
+        ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2012-06-13T00:00Z")); //Summer
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
-        assertEquals("-180", CoordELFunctions.evalAndWrap(eval, expr));
+        // PDT is UTC - 7
+        assertEquals("-420", CoordELFunctions.evalAndWrap(eval, expr));
+
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2012-12-13T00:00Z")); //Winter
+        CoordELFunctions.configureEvaluator(eval, ds, appInst);
+        // PST is UTC - 8
+        assertEquals("-480", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testDateOffset() throws Exception {

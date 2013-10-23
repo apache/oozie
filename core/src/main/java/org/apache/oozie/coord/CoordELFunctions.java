@@ -144,15 +144,10 @@ public class CoordELFunctions {
      * @return difference in minutes (DataSet TZ Offset - Application TZ offset)
      */
     public static int ph2_coord_tzOffset() {
-        Date actionCreationTime = getActionCreationtime();
+        long actionCreationTime = getActionCreationtime().getTime();
         TimeZone dsTZ = ParamChecker.notNull(getDatasetTZ(), "DatasetTZ");
         TimeZone jobTZ = ParamChecker.notNull(getJobTZ(), "JobTZ");
-        // Apply the TZ into Calendar object
-        Calendar dsTime = Calendar.getInstance(dsTZ);
-        dsTime.setTime(actionCreationTime);
-        Calendar jobTime = Calendar.getInstance(jobTZ);
-        jobTime.setTime(actionCreationTime);
-        return (dsTime.get(Calendar.ZONE_OFFSET) - jobTime.get(Calendar.ZONE_OFFSET)) / (1000 * 60);
+        return (dsTZ.getOffset(actionCreationTime) - jobTZ.getOffset(actionCreationTime)) / (1000 * 60);
     }
 
     public static int ph3_coord_tzOffset() {
