@@ -43,6 +43,12 @@
             <artifactId>pig</artifactId>
             <classifier>${pig.classifier}</classifier>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>avro</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>jline</groupId>
