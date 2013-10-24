@@ -100,42 +100,56 @@ public class TestShareLibService extends XFsTestCase {
     public void testCreateLauncherLibPath() throws Exception {
         services = new Services();
         setSystemProps();
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        List<Path> launcherPath = shareLibService.getActionSystemLibCommonJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
-        assertNotNull(launcherPath);
-        assertTrue(getFileSystem().exists(launcherPath.get(0)));
-        List<Path> pigLauncherPath = shareLibService.getActionSystemLibCommonJars("pig");
-        assertTrue(getFileSystem().exists(pigLauncherPath.get(0)));
-        services.destroy();
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            List<Path> launcherPath = shareLibService.getActionSystemLibCommonJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertNotNull(launcherPath);
+            assertTrue(getFileSystem().exists(launcherPath.get(0)));
+            List<Path> pigLauncherPath = shareLibService.getActionSystemLibCommonJars("pig");
+            assertTrue(getFileSystem().exists(pigLauncherPath.get(0)));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
     public void testAddShareLibDistributedCache() throws Exception {
         services = new Services();
         setSystemProps();
-        services.init();
-        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "</java>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        WorkflowJobBean wfj = new WorkflowJobBean();
-        wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
-        wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
-        Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
-        PigActionExecutor ae = new PigActionExecutor();
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+        try {
+            services.init();
+            String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "</java>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            XConfiguration protoConf = new XConfiguration();
+            protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+            WorkflowJobBean wfj = new WorkflowJobBean();
+            wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+            wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
+            Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
+            PigActionExecutor ae = new PigActionExecutor();
+            Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertEquals(2, cacheFiles.length);
-        assertTrue(cacheFilesStr.contains(MyPig.class.getName() + ".jar"));
-        assertTrue(cacheFilesStr.contains(MyOozie.class.getName() + ".jar"));
-        services.destroy();
-
+            URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+            String cacheFilesStr = Arrays.toString(cacheFiles);
+            assertTrue(cacheFilesStr.contains(MyPig.class.getName() + ".jar"));
+            assertTrue(cacheFilesStr.contains(MyOozie.class.getName() + ".jar"));
+            // Hadoop 2 has two extra jars
+            if (cacheFiles.length == 4) {
+                assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+                assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            }
+            else {
+                assertEquals(2, cacheFiles.length);
+            }
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
@@ -163,12 +177,16 @@ public class TestShareLibService extends XFsTestCase {
         fs.mkdirs(expirePath);
         fs.mkdirs(noexpirePath);
         fs.mkdirs(noexpirePath1);
-        services.init();
-        assertEquals(3, fs.listStatus(basePath).length);
-        assertTrue(fs.exists(noexpirePath));
-        assertTrue(fs.exists(noexpirePath1));
-        assertTrue(!fs.exists(expirePath));
-        services.destroy();
+        try {
+            services.init();
+            assertEquals(3, fs.listStatus(basePath).length);
+            assertTrue(fs.exists(noexpirePath));
+            assertTrue(fs.exists(noexpirePath1));
+            assertTrue(!fs.exists(expirePath));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
 }

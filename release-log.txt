@@ -60,6 +60,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.1 release (unreleased)
 
+OOZIE-1551 Change hadoop-2 profile to use 2.2.0 (rkanter,rohini,mona via rkanter)
 OOZIE-1573 coord:tzOffset() gives incorrect offset for daylight saving timezones (rohini)
 OOZIE-1582 Bump up Tomcat version to 6.0.37 (rkanter)
 OOZIE-1563 colt jar includes GPL licence (rkanter)
