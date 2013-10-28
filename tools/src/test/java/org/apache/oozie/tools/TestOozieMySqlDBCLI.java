@@ -69,6 +69,7 @@ public class TestOozieMySqlDBCLI extends XTestCase {
      */
     public void testCreateMysql() throws Exception {
         FakeConnection.SYSTEM_TABLE = false;
+        FakeConnection.CREATE = true;
 
         File createSql = new File(getTestCaseConfDir() + File.separator + "create.sql");
         String[] argsCreate = { "create", "-sqlfile", createSql.getAbsolutePath(), "-run" };
