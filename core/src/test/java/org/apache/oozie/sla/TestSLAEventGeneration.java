@@ -112,7 +112,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
         jpa = services.get(JPAService.class);
         ehs = services.get(EventHandlerService.class);
         cal = Calendar.getInstance();
-        cleanUpDBTables();
     }
 
     @Override

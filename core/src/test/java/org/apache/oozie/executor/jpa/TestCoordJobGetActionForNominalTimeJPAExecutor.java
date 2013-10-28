@@ -38,7 +38,6 @@ public class TestCoordJobGetActionForNominalTimeJPAExecutor extends XDataTestCas
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

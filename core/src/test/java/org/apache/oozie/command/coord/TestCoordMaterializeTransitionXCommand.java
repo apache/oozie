@@ -51,7 +51,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         LocalOozie.start(); //LocalOozie does new Services().init();
-        cleanUpDBTables();
     }
 
     @Override

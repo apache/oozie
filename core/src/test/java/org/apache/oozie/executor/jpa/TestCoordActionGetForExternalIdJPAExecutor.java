@@ -34,7 +34,6 @@ public class TestCoordActionGetForExternalIdJPAExecutor extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

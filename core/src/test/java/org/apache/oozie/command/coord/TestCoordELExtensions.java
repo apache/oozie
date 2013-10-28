@@ -43,7 +43,6 @@ public class TestCoordELExtensions extends XDataTestCase {
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

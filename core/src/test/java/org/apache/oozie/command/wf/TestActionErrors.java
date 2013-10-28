@@ -64,7 +64,6 @@ public class TestActionErrors extends XDataTestCase {
         setSystemProperty(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, ForTestingActionExecutor.TEST_ERROR);
         services = new Services();
         services.init();
-        cleanUpDBTables();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
     }
 

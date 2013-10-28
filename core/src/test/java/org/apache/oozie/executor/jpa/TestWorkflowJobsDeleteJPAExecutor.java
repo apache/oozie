@@ -46,7 +46,6 @@ public class TestWorkflowJobsDeleteJPAExecutor extends XDataTestCase {
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

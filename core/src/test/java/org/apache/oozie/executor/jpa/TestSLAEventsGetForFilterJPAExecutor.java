@@ -44,7 +44,6 @@ public class TestSLAEventsGetForFilterJPAExecutor extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
         populateDB();
     }
 

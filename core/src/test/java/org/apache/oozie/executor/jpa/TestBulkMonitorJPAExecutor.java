@@ -43,7 +43,6 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
         jpaService = Services.get().get(JPAService.class);
         addRecordsForBulkMonitor();
     }

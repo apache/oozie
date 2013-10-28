@@ -69,7 +69,6 @@ public class TestHCatMessageHandler extends XDataTestCase {
         conn = connFac.createConnection();
         conn.start();
         session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        cleanUpDBTables();
     }
 
     @After

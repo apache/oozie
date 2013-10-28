@@ -51,7 +51,7 @@ public class TestOozieSharelibCLI extends XTestCase {
     protected void setUp() throws Exception {
         SECURITY_MANAGER = System.getSecurityManager();
         new LauncherSecurityManager();
-        super.setUp();
+        super.setUp(false);
 
     }
 

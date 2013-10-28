@@ -44,7 +44,6 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
         services = new Services();
         services.init();
         jpaService = Services.get().get(JPAService.class);
-        cleanUpDBTables();
     }
 
     @Override

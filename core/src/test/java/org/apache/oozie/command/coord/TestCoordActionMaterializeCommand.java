@@ -41,7 +41,6 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

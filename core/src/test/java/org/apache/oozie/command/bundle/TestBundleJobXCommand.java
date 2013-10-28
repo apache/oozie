@@ -34,7 +34,6 @@ public class TestBundleJobXCommand extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

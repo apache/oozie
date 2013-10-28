@@ -71,7 +71,6 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         setSystemProperty(DateUtils.OOZIE_PROCESSING_TIMEZONE_KEY, getProcessingTZ());
         services = new Services();
         services.init();
-        cleanUpDBTables();
         TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT))
              ? "Z" : getProcessingTZ().substring(3);
     }

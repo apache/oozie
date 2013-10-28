@@ -66,7 +66,6 @@ public class TestSLACalculatorMemory extends XDataTestCase {
                 + "org.apache.oozie.sla.service.SLAService");
         services.init();
         jpaService = Services.get().get(JPAService.class);
-        cleanUpDBTables();
     }
 
     @Override

@@ -52,7 +52,6 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         LocalOozie.start();
-        cleanUpDBTables();
 
     }
 

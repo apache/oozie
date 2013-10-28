@@ -46,7 +46,6 @@ public class TestWorkflowJobsGetFromCoordParentIdJPAExecutor extends XDataTestCa
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

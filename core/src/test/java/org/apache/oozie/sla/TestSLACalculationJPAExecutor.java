@@ -52,7 +52,6 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
         cal = Calendar.getInstance();
     }
 

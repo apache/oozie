@@ -95,7 +95,6 @@ public class TestAuthorizationService extends XDataTestCase {
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
-        cleanUpDBTables();
     }
 
     @Override

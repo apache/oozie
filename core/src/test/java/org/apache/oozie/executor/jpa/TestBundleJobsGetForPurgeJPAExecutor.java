@@ -41,7 +41,6 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     /* (non-Javadoc)

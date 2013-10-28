@@ -37,7 +37,6 @@ public class TestCoordJobsXCommand extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
         LocalOozie.start();
     }
 

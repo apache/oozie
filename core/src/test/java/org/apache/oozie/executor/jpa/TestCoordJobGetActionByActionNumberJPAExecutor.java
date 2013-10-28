@@ -34,7 +34,6 @@ public class TestCoordJobGetActionByActionNumberJPAExecutor extends XDataTestCas
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

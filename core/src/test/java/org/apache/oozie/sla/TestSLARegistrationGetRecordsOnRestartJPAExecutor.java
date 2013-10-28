@@ -37,7 +37,6 @@ public class TestSLARegistrationGetRecordsOnRestartJPAExecutor extends XDataTest
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

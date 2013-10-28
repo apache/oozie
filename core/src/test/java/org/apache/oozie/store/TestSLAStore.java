@@ -32,7 +32,6 @@ public class TestSLAStore extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        cleanUpDB(services.getConf());
         services.init();
         store = Services.get().get(SLAStoreService.class).create();
     }

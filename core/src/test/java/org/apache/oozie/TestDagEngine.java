@@ -76,7 +76,6 @@ public class TestDagEngine extends XTestCase {
 
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
-        cleanUpDB(services.getConf());
         services.init();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
     }

@@ -68,7 +68,6 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
         LocalOozie.start();
         jpaService = Services.get().get(JPAService.class);
         addRecordsForBulkMonitor();

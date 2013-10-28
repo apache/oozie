@@ -72,9 +72,11 @@ import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
@@ -256,13 +258,30 @@ public abstract class XTestCase extends TestCase {
     protected static final String SHELL_COMMAND_SCRIPTFILE_OPTION = (Shell.WINDOWS) ? "/c" : "-c";
 
     /**
+     * Minimal set of require Services for cleaning up the database ({@link JPAService} and {@link StoreService})
+     */
+    private static final String MINIMAL_SERVICES_FOR_DB_CLEANUP = JPAService.class.getName() + "," + StoreService.class.getName();
+
+    /**
      * Initialize the test working directory. <p/> If it does not exist it creates it, if it already exists it deletes
-     * all its contents. <p/> The test working directory it is not deleted after the test runs. <p/>
+     * all its contents. <p/> The test working directory it is not deleted after the test runs. <p/> It will also cleanup the
+     * database tables. <p/>
      *
-     * @throws Exception if the test workflow working directory could not be created.
+     * @throws Exception if the test workflow working directory could not be created or there was a problem cleaning the database
      */
     @Override
     protected void setUp() throws Exception {
+        setUp(true);
+    }
+
+    /**
+     * Like {@link #setUp()} but allows skipping cleaning up the database tables.  Most tests should use the other method, unless
+     * they specifically don't want to (or can't) clean up the database tables.
+     *
+     * @param cleanUpDBTables true if should cleanup the database tables, false if not
+     * @throws Exception if the test workflow working directory could not be created or there was a problem cleaning the database
+     */
+    protected  void setUp(boolean cleanUpDBTables) throws Exception {
         RUNNING_TESTCASES.incrementAndGet();
         super.setUp();
         String baseDir = System.getProperty(OOZIE_TEST_DIR, new File("target/test-data").getAbsolutePath());
@@ -371,6 +390,11 @@ public abstract class XTestCase extends TestCase {
 
         if (System.getProperty("oozie.test.metastore.server", "true").equals("true")) {
             setupHCatalogServer();
+        }
+
+        // Cleanup any leftover database data to make sure we start each test with an empty database
+        if (cleanUpDBTables) {
+            cleanUpDBTables();
         }
     }
 
@@ -727,23 +751,37 @@ public abstract class XTestCase extends TestCase {
         return hcatServer;
     }
 
-    //TODO Fix this
     /**
-     * Clean up database schema
+     * Cleans up all database tables.  Tests won't typically need to call this directly because {@link #setUp()} will automatically
+     * call it before each test.
      *
-     * @param conf
      * @throws Exception
      */
-    protected void cleanUpDB(Configuration conf) throws Exception {
+    protected final void cleanUpDBTables() throws Exception {
+        // If the Services are already loaded, then a test is likely calling this for something specific and we shouldn't mess with
+        // the Services; so just cleanup the database
+        if (Services.get() != null) {
+            cleanUpDBTablesInternal();
+        }
+        else {
+            // Otherwise, this is probably being called during setup() and we should just load the minimal set of required Services
+            // needed to cleanup the database and shut them down when done; the test will likely start its own Services later and
+            // we don't want to interfere
+            try {
+                Services services = new Services();
+                services.getConf().set(Services.CONF_SERVICE_CLASSES, MINIMAL_SERVICES_FOR_DB_CLEANUP);
+                services.init();
+                cleanUpDBTablesInternal();
+            }
+            finally {
+                if (Services.get() != null) {
+                    Services.get().destroy();
+                }
+            }
+        }
     }
 
-
-    /**
-     * Clean up tables
-     *
-     * @throws StoreException
-     */
-    protected void cleanUpDBTables() throws StoreException {
+    private void cleanUpDBTablesInternal() throws StoreException {
         CoordinatorStore store = new CoordinatorStore(false);
         EntityManager entityManager = store.getEntityManager();
         store.beginTrx();

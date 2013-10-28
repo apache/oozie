@@ -45,7 +45,6 @@ public class TestCoordJobsGetFromParentIdJPAExecutor extends XDataTestCase {
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

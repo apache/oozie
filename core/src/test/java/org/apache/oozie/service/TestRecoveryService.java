@@ -89,7 +89,6 @@ public class TestRecoveryService extends XDataTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
         services.init();
-        cleanUpDBTables();
         services.get(ActionService.class).register(ForTestingActionExecutor.class);
 
     }

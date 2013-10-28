@@ -33,7 +33,6 @@ public class TestCoordActionsPendingFalseCountGetJPAExecutor extends XDataTestCa
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

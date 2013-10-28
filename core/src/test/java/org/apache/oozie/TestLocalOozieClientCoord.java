@@ -51,7 +51,6 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
          */
         services = new Services();
         services.init();
-        cleanUpDBTables();
 
         LocalOozie.start();
     }

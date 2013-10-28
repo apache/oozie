@@ -39,7 +39,6 @@ public class TestCoordJobsCountNotForPurgeFromParentIdJPAExecutor extends XDataT
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

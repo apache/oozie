@@ -60,7 +60,6 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

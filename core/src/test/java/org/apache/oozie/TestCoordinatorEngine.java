@@ -42,7 +42,6 @@ public class TestCoordinatorEngine extends XTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     protected void tearDown() throws Exception {

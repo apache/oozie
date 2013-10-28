@@ -53,7 +53,6 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

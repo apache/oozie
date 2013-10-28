@@ -48,7 +48,6 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         LocalOozie.start();
-        cleanUpDBTables();
     }
 
     /* (non-Javadoc)

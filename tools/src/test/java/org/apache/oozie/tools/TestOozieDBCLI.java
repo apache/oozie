@@ -52,7 +52,7 @@ public class TestOozieDBCLI extends XTestCase {
         Connection conn = DriverManager.getConnection(url, "sa", "");
         conn.close();
 
-        super.setUp();
+        super.setUp(false);
 
     }
 

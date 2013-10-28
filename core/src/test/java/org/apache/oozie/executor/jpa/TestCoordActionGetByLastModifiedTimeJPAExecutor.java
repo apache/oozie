@@ -36,7 +36,6 @@ public class TestCoordActionGetByLastModifiedTimeJPAExecutor extends XDataTestCa
         super.setUp();
         services = new Services();
         services.init();
-        cleanUpDBTables();
     }
 
     @Override

@@ -61,7 +61,6 @@ public class TestCoordCommandUtils extends XDataTestCase {
         setSystemProperty(DateUtils.OOZIE_PROCESSING_TIMEZONE_KEY, getProcessingTZ());
         services = super.setupServicesForHCatalog();
         services.init();
-        cleanUpDBTables();
         hcatServer = getMetastoreAuthority();
     }
 

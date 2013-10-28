@@ -50,7 +50,6 @@ public class TestRerun extends XFsTestCase {
         setSystemProperty("oozie.service.ActionCheckerService.action.check.delay", "1");
         setSystemProperty("oozie.service.ActionCheckerService.action.check.interval", "10");
         LocalOozie.start();
-        cleanUpDBTables();
     }
 
     protected void tearDown() throws Exception {
