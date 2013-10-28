@@ -375,9 +375,9 @@ HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {
-    "OozieA": "http://localhost:11000/oozie",
-    "OozieB": "http://localhost:12000/oozie",
-    "OozieC": "http://localhost:13000/oozie",
+    "hostA": "http://hostA:11000/oozie",
+    "hostB": "http://hostB:11000/oozie",
+    "hostC": "http://hostC:11000/oozie",
 }
 </verbatim>
 

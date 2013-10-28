@@ -787,10 +787,10 @@ It returns the Oozie server current queued commands.
 Example:
 
 <verbatim>
-$ oozie admin http://localhost:11000/oozie -servers
-OozieA : http://localhost:11000/oozie
-OozieB : http://localhost:12000/oozie
-OozieC : http://localhost:13000/oozie
+$ oozie admin -oozie http://hostA:11000/oozie -servers
+hostA : http://hostA:11000/oozie
+hostB : http://hostB:11000/oozie
+hostC : http://hostC:11000/oozie
 </verbatim>
 
 It returns a list of available Oozie Servers.  This is useful when Oozie is configured for [[AG_Install#HA][High Availability]]; if

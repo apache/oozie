@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1541 Typo in Oozie HA admin -servers command in documentation (rkanter)
 OOZIE-1596 TestOozieMySqlDBCLI.testCreateMysql fails when tests are executed in a different order (rkanter)
 OOZIE-1592 El Expression Reference should point to the exact chapter in java 6 (bowenzhangusa via rkanter)
 OOZIE-1578 Coordinator jobs with cron frequency should be invalidated upon submission if nothing would be materialized during run time (bowenzhangusa via rkanter)
