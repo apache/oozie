@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1589 TestZKLocksService is flakey (rkanter)
 OOZIE-1541 Typo in Oozie HA admin -servers command in documentation (rkanter)
 OOZIE-1596 TestOozieMySqlDBCLI.testCreateMysql fails when tests are executed in a different order (rkanter)
 OOZIE-1592 El Expression Reference should point to the exact chapter in java 6 (bowenzhangusa via rkanter)

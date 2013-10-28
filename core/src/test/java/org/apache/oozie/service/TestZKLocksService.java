@@ -154,13 +154,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -196,13 +196,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, 0, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:2-N a:1-U", sb.toString().trim());
     }
 
@@ -235,16 +235,16 @@ public class TestZKLocksService extends ZKXTestCase {
     public void _testTimeoutWaitingWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, 0, sb, zkls1);
-        Locker l2 = new WriteLocker("a", 2, 1000, sb, zkls2);
+        Locker l2 = new WriteLocker("a", 2, (long) (WAITFOR_RATIO * 2000), sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -280,13 +280,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, 50, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:2-N a:1-U", sb.toString().trim());
     }
 
@@ -322,13 +322,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:2-L a:1-U a:2-U", sb.toString().trim());
     }
 
@@ -364,13 +364,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -406,13 +406,13 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        Thread.sleep(500);
+        sleep(1000);
         new Thread(l2).start();
-        Thread.sleep(500);
+        sleep(1000);
         l1.finish();
-        Thread.sleep(500);
+        sleep(1000);
         l2.finish();
-        Thread.sleep(500);
+        sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 }
