@@ -781,7 +781,7 @@ public class V1JobServlet extends BaseJobServlet {
         // Get default number of coordinator actions to be retrieved
         int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
-        len = (len < 0) ? defaultLen : len;
+        len = getCoordinatorJobLength(defaultLen, len);
         try {
             JsonCoordinatorJob coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
             jobBean = coordJob;
@@ -791,6 +791,18 @@ public class V1JobServlet extends BaseJobServlet {
         }
 
         return jobBean;
+    }
+
+    /**
+     * Given the requested length and the default length, determine how many coordinator jobs to return.
+     * Used by {@link #getCoordinatorJob(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}
+     *
+     * @param defaultLen The default length
+     * @param len The requested length
+     * @return The length to use
+     */
+    protected int getCoordinatorJobLength(int defaultLen, int len) {
+        return (len < 1) ? defaultLen : len;
     }
 
     /**
