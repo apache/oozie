@@ -49,6 +49,10 @@ public class V2JobServlet extends V1JobServlet {
         return actionBean;
     }
 
+    @Override
+    protected int getCoordinatorJobLength(int defaultLen, int len) {
+        return (len < 0) ? defaultLen : len;
+    }
 
     @Override
     protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
