@@ -778,11 +778,11 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     }
 
     /**
-     * Negative Test : rerun <jobId> -action 1 -nocleanup. Coordinator job is killed, so no actions are able to rerun.
+     * rerun <jobId> -action 1 -nocleanup. Coordinator job is killed, but actions are able to rerun.
      *
      * @throws Exception
      */
-    public void testCoordRerunNeg() throws Exception {
+    public void testCoordRerunKilledCoord() throws Exception {
         final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
         final int actionNum = 1;
         final String actionId = jobId + "@" + actionNum;
@@ -806,18 +806,16 @@ public class TestCoordRerunXCommand extends XDataTestCase {
             final OozieClient coordClient = LocalOozie.getCoordClient();
             coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), false,
                     true);
-            fail("Exception expected because action is not in terminal state.");
         }
         catch (OozieClientException ex) {
-            if (!ex.getErrorCode().equals(ErrorCode.E1018.toString())) {
-                fail("Error code should be E1018 when job is killed or failed.");
-            }
+            ex.printStackTrace();
+            fail("Coord rerun failed");
         }
 
         CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         store2.beginTrx();
         CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
-        assertEquals(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        assertEquals(action2.getStatus(), CoordinatorAction.Status.WAITING);
         store2.commitTrx();
         store2.closeTrx();
     }
