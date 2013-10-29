@@ -16,16 +16,19 @@
  * limitations under the License.
  */
 
-// Warn about dependencies
-if (typeof Ext == 'undefined'){
-    var warning = 'Missing JavaScript dependencies.';
-    var dependencies = document.getElementById('dependencies');
-    if (dependencies){
-        warning += "\n" + (dependencies.innerText || dependencies.textContent);
-        dependencies.style.display = '';
+// Warn about dependencies; this has to be done on .ready so that the divs will all be loaded and exist.  Otherwise, it won't find
+// the 'dependencies' element
+$(document).ready(function() {
+    if (typeof Ext == 'undefined'){
+        var warning = 'Missing JavaScript dependencies.';
+        var dependencies = document.getElementById('dependencies');
+        if (dependencies){
+            warning += "\n" + (dependencies.innerText || dependencies.textContent);
+            dependencies.style.display = '';
+        }
+        throw new Error(warning);
     }
-    throw new Error(warning);
-}
+});
 
 //so it works from remote browsers, "http://localhost:8080";
 var oozie_host = "";
