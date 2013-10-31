@@ -1431,6 +1431,51 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("v4", conf.get("p4"));
     }
 
+    public void testParseJobXmlAndConfigurationWithELExpression() throws Exception {
+        String str = "<java>"
+                + "<job-xml>job1.xml</job-xml>"
+                + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>"
+                + "<property><name>p1</name><value>v1a</value></property>"
+                + "<property><name>p2</name><value>v2</value></property>"
+                + "</configuration>"
+                + "</java>";
+        Element xml = XmlUtils.parseXml(str);
+        Path appPath = new Path(getFsTestCaseDir(), "app");
+        getFileSystem().mkdirs(appPath);
+
+        XConfiguration jConf = new XConfiguration();
+        jConf.set("p3", "${v3}");
+        jConf.set("p4", "${v4}");
+        jConf.set("user", "${wf:user()}");
+        OutputStream os = getFileSystem().create(new Path(appPath, "job1.xml"));
+        jConf.writeXml(os);
+        os.close();
+
+        jConf = new XConfiguration();
+        jConf.set("p5", "v5");
+        jConf.set("p6", "v6");
+        os = getFileSystem().create(new Path(appPath, "job2.xml"));
+        jConf.writeXml(os);
+        os.close();
+
+        Configuration conf = new XConfiguration();
+        assertEquals(0, conf.size());
+
+        JavaActionExecutor.parseJobXmlAndConfiguration(createContext("<configuration>" +
+                "<property><name>v3</name><value>v3a</value></property>" +
+                "<property><name>v4</name><value>v4a</value></property>" +
+                "</configuration>", null), xml, appPath, conf);
+        assertEquals(7, conf.size());
+        assertEquals("v1a", conf.get("p1"));
+        assertEquals("v2", conf.get("p2"));
+        assertEquals("v3a", conf.get("p3"));
+        assertEquals("v4a", conf.get("p4"));
+        assertEquals("v5", conf.get("p5"));
+        assertEquals("v6", conf.get("p6"));
+        assertEquals("test", conf.get("user"));
+    }
+
     public void testInjectLauncherUseUberMode() throws Exception {
         // TODO: Delete these two lines once uber mode is set back to the
         // default (OOZIE-1385)

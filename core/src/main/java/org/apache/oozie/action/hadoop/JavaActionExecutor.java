@@ -66,6 +66,7 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.util.ELEvaluationException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -343,6 +344,19 @@ public class JavaActionExecutor extends ActionExecutor {
             Path path = new Path(appPath, jobXml);
             FileSystem fs = context.getAppFileSystem();
             Configuration jobXmlConf = new XConfiguration(fs.open(path));
+            try {
+                String jobXmlConfString = XmlUtils.prettyPrint(jobXmlConf).toString();
+                jobXmlConfString = XmlUtils.removeComments(jobXmlConfString);
+                jobXmlConfString = context.getELEvaluator().evaluate(jobXmlConfString, String.class);
+                jobXmlConf = new XConfiguration(new StringReader(jobXmlConfString));
+            }
+            catch (ELEvaluationException ex) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.TRANSIENT, "EL_EVAL_ERROR", ex
+                        .getMessage(), ex);
+            }
+            catch (Exception ex) {
+                context.setErrorInfo("EL_ERROR", ex.getMessage());
+            }
             checkForDisallowedProps(jobXmlConf, "job-xml");
             XConfiguration.copy(jobXmlConf, conf);
         }

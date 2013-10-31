@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1580 EL variables don't get resolved in configurations imported from a <job-xml> (bowenzhangusa via rkanter)
 OOZIE-1562 Allow re-run of actions of killed coordinator (shwethags via virag)
 OOZIE-1597 Cleanup database before every test (rkanter)
 OOZIE-1589 TestZKLocksService is flakey (rkanter)

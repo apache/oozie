@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -27,6 +28,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -109,7 +111,18 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
         }
 
         public ELEvaluator getELEvaluator() {
-            throw new UnsupportedOperationException();
+            ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator("workflow");
+            DagELFunctions.configureEvaluator(evaluator, workflow, action);
+            try {
+                XConfiguration xconf = new XConfiguration(new StringReader(action.getConf()));
+                for (Map.Entry<String, String> entry : xconf){
+                    evaluator.setVariable(entry.getKey(), entry.getValue());
+                }
+            }
+            catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            return evaluator;
         }
 
         public void setVar(String name, String value) {
