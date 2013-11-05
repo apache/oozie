@@ -785,6 +785,83 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertTrue(counters.contains("Counter"));
     }
 
+    public void testEndWithoutConfiguration() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        // set user stats write property as false explicitly in the
+        // configuration.
+        String actionXml = "<map-reduce>"
+                + "<job-tracker>"
+                + getJobTrackerUri()
+                + "</job-tracker>"
+                + "<name-node>"
+                + getNameNodeUri()
+                + "</name-node>"
+                + getOozieActionExternalStatsWriteProperty(inputDir.toString(), outputDir.toString(), "false")
+                .toXmlString(false) + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 2000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                context.getProtoActionConf());
+        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+
+        MapReduceActionExecutor ae = new MapReduceActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
+
+        JobConf conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+        String group = conf.get("group.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
+
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertTrue(mrJob.isSuccessful());
+        ae.check(context, context.getAction());
+
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        actionXml = "<map-reduce>"
+                + "<job-tracker>"
+                + getJobTrackerUri()
+                + "</job-tracker>"
+                + "<name-node>"
+                + getNameNodeUri()
+                + "</name-node></map-reduce>";
+
+        WorkflowActionBean action = (WorkflowActionBean) context.getAction();
+        action.setConf(actionXml);
+
+        try {
+            ae.end(context, context.getAction());
+        }
+        catch(Exception e)
+        {
+            fail("unexpected exception throwing " + e);
+        }
+    }
+
     /**
      * Test "oozie.launcher.mapred.job.name" and "mapred.job.name" can be set in
      * the action configuration and not overridden by the action executor

@@ -234,14 +234,17 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     // Return the value of the specified configuration property
     private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue) throws ActionExecutorException {
         try {
+            String ret = defaultValue;
             if (actionConf != null) {
                 Namespace ns = actionConf.getNamespace();
                 Element e = actionConf.getChild("configuration", ns);
-                String strConf = XmlUtils.prettyPrint(e).toString();
-                XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-                return inlineConf.get(key, defaultValue);
+                if(e != null) {
+                    String strConf = XmlUtils.prettyPrint(e).toString();
+                    XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
+                    ret = inlineConf.get(key, defaultValue);
+                }
             }
-            return "";
+            return ret;
         }
         catch (IOException ex) {
             throw convertException(ex);
