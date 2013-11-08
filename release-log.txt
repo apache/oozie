@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1603 cannot submit job to oozie on mysql (virag)
 OOZIE-1600 map-reduce actions without configuration section in workflow.xml throws "IllegalArgumentException: element cannot be null" (bowenzhangusa via rkanter)
 OOZIE-1580 EL variables don't get resolved in configurations imported from a <job-xml> (bowenzhangusa via rkanter)
 OOZIE-1562 Allow re-run of actions of killed coordinator (shwethags via virag)
