@@ -1045,7 +1045,7 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <fs>
@@ -1059,7 +1059,7 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
             ...
             <touchz path='[PATH]' />
             ...
-            <chmod path='[PATH]' group='[GROUP]' dir-files='false' />
+            <chgrp path='[PATH]' group='[GROUP]' dir-files='false' />
         </fs>
         <ok to="[NODE-NAME]"/>
         <error to="[NODE-NAME]"/>
@@ -1100,7 +1100,7 @@ To apply the =chgrp= command recursively to all levels within a directory, put a
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="hdfscommands">
          <fs>

@@ -1,5 +1,6 @@
 -- Oozie 4.0.1 release (unreleased)
 
+OOZIE-1607 [Doc]Update workflow specification for chgrp command (puru via rohini)
 OOZIE-1542 When extjs isn't installed, the web UI is unhelpfully blank (rkanter)
 OOZIE-1565 OOZIE-1481 should only affect v2 of the API, not v1 (rkanter)
 OOZIE-1551 Change hadoop-2 profile to use 2.2.0 (rkanter,rohini,mona via rkanter)
