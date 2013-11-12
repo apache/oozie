@@ -456,6 +456,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         String appPath = ParamChecker.notEmpty(conf.get(OozieClient.COORDINATOR_APP_PATH),
                 OozieClient.COORDINATOR_APP_PATH);
         String coordXml = readDefinition(appPath);
+
         validateXml(coordXml);
         return coordXml;
     }
@@ -730,6 +731,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         // for each data set
         resolveDataSets(eAppXml);
         HashMap<String, String> dataNameList = new HashMap<String, String>();
+        resolveIODataset(eAppXml);
         resolveIOEvents(eAppXml, dataNameList);
 
         resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
@@ -804,6 +806,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 resolveTagContents("instance", dataIn, evalInst);
                 resolveTagContents("start-instance", dataIn, evalInst);
                 resolveTagContents("end-instance", dataIn, evalInst);
+
             }
         }
         // Resolving output-events/data-out
@@ -821,10 +824,39 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     eventNameSet.add(dataOutName);
                 }
                 resolveTagContents("instance", dataOut, evalInst);
+
             }
         }
 
     }
+
+    /**
+     * Resolve input-events/dataset and output-events/dataset tags.
+     *
+     * @param eJob : Job element
+     * @throws CoordinatorJobException thrown if failed to resolve input and output events
+     */
+    @SuppressWarnings("unchecked")
+    private void resolveIODataset(Element eAppXml) throws CoordinatorJobException {
+        // Resolving input-events/data-in
+        Element inputList = eAppXml.getChild("input-events", eAppXml.getNamespace());
+        if (inputList != null) {
+            for (Element dataIn : (List<Element>) inputList.getChildren("data-in", eAppXml.getNamespace())) {
+                resolveAttribute("dataset", dataIn, evalInst);
+
+            }
+        }
+        // Resolving output-events/data-out
+        Element outputList = eAppXml.getChild("output-events", eAppXml.getNamespace());
+        if (outputList != null) {
+            for (Element dataOut : (List<Element>) outputList.getChildren("data-out", eAppXml.getNamespace())) {
+                resolveAttribute("dataset", dataOut, evalInst);
+
+            }
+        }
+
+    }
+
 
     /**
      * Add an attribute into XML element.

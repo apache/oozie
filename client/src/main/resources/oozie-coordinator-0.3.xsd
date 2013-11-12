@@ -89,7 +89,7 @@
             </xs:sequence>
         </xs:choice>
         <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
-        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="xs:string" use="required"/>
     </xs:complexType>
     <xs:complexType name="OUTPUTEVENTS">
         <xs:sequence minOccurs="1" maxOccurs="1">
@@ -101,7 +101,7 @@
             <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
-        <xs:attribute name="dataset" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="xs:string" use="required"/>
     </xs:complexType>
     <xs:complexType name="ACTION">
         <xs:sequence minOccurs="1" maxOccurs="1">

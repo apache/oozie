@@ -479,6 +479,41 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         }
     }
 
+    public void testELdataIO_xsd_4() throws Exception {
+        Configuration conf = new XConfiguration();
+        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+
+
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        Reader reader = IOUtils.getResourceAsReader("coord-el-dataset-4.xml", -1);
+        Writer writer = new FileWriter(new URI(appPath).getPath());
+
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nameNode", "hdfs://localhost:9000");
+        conf.set("queueName", "default");
+        conf.set("jobTracker", "localhost:9001");
+
+        conf.set("examplesRoot", "examples");
+        conf.set("aggregated_logs", "aggregated-logs");
+        conf.set("raw_logs", "raw-logs");
+
+
+        sc = new CoordSubmitXCommand(conf);
+
+        try {
+            sc.call();
+        }
+        catch (CommandException e) {
+            e.printStackTrace();
+            fail("should not throw exception " + e.getMessage());
+        }
+    }
+
+
+
+
     /**
      * Basic coordinator submit test with bundleId
      *
