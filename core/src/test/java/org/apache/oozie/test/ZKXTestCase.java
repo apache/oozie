@@ -20,7 +20,6 @@ package org.apache.oozie.test;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -75,9 +74,7 @@ public abstract class ZKXTestCase extends XTestCase {
         client.close();
         client = null;
         zkServer.stop();
-        // If we don't delete the temp dir used by ZK, it will quickly start eating up GBs of space as every test method creates a
-        // new dir about 70MB
-        FileUtils.deleteDirectory(zkServer.getTempDirectory());
+        zkServer.close();   // also deletes the temp dir so we don't start eating up GBs of space
     }
 
     /**

@@ -102,8 +102,8 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
     @Override
     public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
         InterProcessReadWriteLock lock = new InterProcessReadWriteLock(zk.getClient(), LOCKS_NODE + resource);
-        InterProcessMutex readLock = lock.writeLock();
-        return acquireLock(wait, readLock);
+        InterProcessMutex writeLock = lock.writeLock();
+        return acquireLock(wait, writeLock);
     }
 
     private LockToken acquireLock(long wait, InterProcessMutex lock) {
