@@ -782,7 +782,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Resolve input-events/data-in and output-events/data-out tags.
      *
-     * @param eJob : Job element
+     * @param eJobOrg : Job element
      * @throws CoordinatorJobException thrown if failed to resolve input and output events
      */
     @SuppressWarnings("unchecked")

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1314 IllegalArgumentException: wfId cannot be empty (shwethags via virag)
 OOZIE-1606 Update Curator to 2.3.0 and fix some misc minor ZK related things (rkanter)
 OOZIE-1544 Support variables for coord data-in/data-out dataset (puru via rohini)
 OOZIE-1603 cannot submit job to oozie on mysql (virag)

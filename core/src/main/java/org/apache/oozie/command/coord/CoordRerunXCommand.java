@@ -197,8 +197,8 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
             coordAction.setCreatedTime(new Date());
         }
         coordAction.setStatus(CoordinatorAction.Status.WAITING);
-        coordAction.setExternalId("");
-        coordAction.setExternalStatus("");
+        coordAction.setExternalId(null);
+        coordAction.setExternalStatus(null);
         coordAction.setRerunTime(new Date());
         coordAction.setLastModifiedTime(new Date());
         updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, coordAction));

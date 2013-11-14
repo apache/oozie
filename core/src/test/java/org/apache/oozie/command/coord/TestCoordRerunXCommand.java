@@ -121,6 +121,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         store2.beginTrx();
         CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
         assertNotSame(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        assertNull(action2.getExternalId());
         store2.commitTrx();
         store2.closeTrx();
     }
