@@ -1519,6 +1519,18 @@
         </description>
     </property>
 
+    <!-- SubworkflowActionExecutor -->
+
+    <property>
+        <name>oozie.action.subworkflow.max.depth</name>
+        <value>50</value>
+        <description>
+            The maximum depth for subworkflows.  For example, if set to 3, then a workflow can start subwf1, which can start subwf2,
+            which can start subwf3; but if subwf3 tries to start subwf4, then the action will fail.  This is helpful in preventing
+            errant workflows from starting infintely recursive subworkflows.
+        </description>
+    </property>
+
     <!-- HadoopAccessorService -->
 
     <property>

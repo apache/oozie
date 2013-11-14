@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.StringReader;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
+import java.util.Properties;
+import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.XLogService;
 
 public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     private static final int JOB_TIMEOUT = 100 * 1000;
@@ -405,5 +408,63 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Configuration childConf = new XConfiguration(new StringReader(wf.getConf()));
         childConf = wps.createProtoActionConf(childConf, true);
         assertEquals(childConf.get(WorkflowAppService.APP_LIB_PATH_LIST), subwfLibJar.toString());
+    }
+
+    public void testSubworkflowDepth() throws Exception {
+        Path subWorkflowAppPath = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        // Infinitly recursive workflow
+        String appStr = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
+                "<start to=\"subwf\"/>" +
+                "<action name=\"subwf\">" +
+                "     <sub-workflow xmlns='uri:oozie:workflow:0.4'>" +
+                "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
+                "     </sub-workflow>" +
+                "     <ok to=\"end\"/>" +
+                "     <error to=\"fail\"/>" +
+                "</action>" +
+                "<kill name=\"fail\">" +
+                "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                "</kill>" +
+                "<end name=\"end\"/>" +
+                "</workflow-app>";
+        writer.write(appStr);
+        writer.close();
+
+        try {
+            Services.get().destroy();
+            setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
+            LocalOozie.start();
+            // Set the max depth to 3
+            Services.get().getConf().setInt("oozie.action.subworkflow.max.depth", 3);
+            final OozieClient wfClient = LocalOozie.getClient();
+            Properties conf = wfClient.createConfiguration();
+            conf.setProperty(OozieClient.APP_PATH, subWorkflowAppPath.toString());
+            conf.setProperty(OozieClient.USER_NAME, getTestUser());
+            final String jobId0 = wfClient.submit(conf);
+            wfClient.start(jobId0);
+
+            waitFor(20 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    return wfClient.getJobInfo(jobId0).getStatus() == WorkflowJob.Status.KILLED;
+                }
+            });
+            // All should be KILLED because our infinitly recusrive workflow hit the max
+            assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId0).getStatus());
+            String jobId1 = wfClient.getJobInfo(jobId0).getActions().get(1).getExternalId();
+            assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId1).getStatus());
+            String jobId2 = wfClient.getJobInfo(jobId1).getActions().get(1).getExternalId();
+            assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId2).getStatus());
+            String jobId3 = wfClient.getJobInfo(jobId2).getActions().get(1).getExternalId();
+            assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId3).getStatus());
+            String jobId4 = wfClient.getJobInfo(jobId3).getActions().get(1).getExternalId();
+            // A fourth subworkflow shouldn't have been created because we set the max to 3
+            assertNull(jobId4);
+        }
+        finally {
+            LocalOozie.stop();
+        }
     }
 }

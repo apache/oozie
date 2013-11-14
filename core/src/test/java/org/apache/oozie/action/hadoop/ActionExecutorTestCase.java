@@ -71,7 +71,9 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        Services.get().destroy();
+        if (Services.get() != null) {
+            Services.get().destroy();
+        }
         super.tearDown();
     }
 

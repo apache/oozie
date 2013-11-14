@@ -48,6 +48,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
     public static final String LOCAL = "local";
     public static final String PARENT_ID = "oozie.wf.parent.id";
+    public static final String SUBWORKFLOW_MAX_DEPTH = "oozie.action.subworkflow.max.depth";
+    private static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
@@ -119,6 +121,16 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         conf.set(PARENT_ID, parentId);
     }
 
+    protected void verifyAndInjectSubworkflowDepth(Configuration parentConf, Configuration conf) throws ActionExecutorException {
+        int depth = conf.getInt(SUBWORKFLOW_DEPTH, 0);
+        int maxDepth = Services.get().getConf().getInt(SUBWORKFLOW_MAX_DEPTH, 50);
+        if (depth >= maxDepth) {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "SUBWF001",
+                    "Depth [{0}] cannot exceed maximum subworkflow depth [{1}]", (depth + 1), maxDepth);
+        }
+        conf.setInt(SUBWORKFLOW_DEPTH, depth + 1);
+    }
+
     protected String checkIfRunning(OozieClient oozieClient, String extId) throws OozieClientException {
         String jobId = oozieClient.getJobId(extId);
         if (jobId.equals("")) {
@@ -161,6 +173,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
                 injectParent(context.getWorkflow().getId(), subWorkflowConf);
+                verifyAndInjectSubworkflowDepth(parentConf, subWorkflowConf);
 
                 //TODO: this has to be refactored later to be done in a single place for REST calls and this
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),

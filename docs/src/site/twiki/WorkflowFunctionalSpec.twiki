@@ -1311,6 +1311,9 @@ in oozie-site.xml or on a per-job basis by setting =oozie.wf.subworkflow.classpa
 If both are specified, =oozie.wf.subworkflow.classpath.inheritance= has priority.  If the subworkflow and the parent have
 conflicting jars, the subworkflow's jar has priority.  By default, =oozie.wf.subworkflow.classpath.inheritance= is set to false.
 
+To prevent errant workflows from starting infinitely recursive subworkflows, =oozie.action.subworkflow.max.depth= can be specified
+in oozie-site.xml to set the maximum depth of subworkflow calls.  For example, if set to 3, then a workflow can start subwf1, which
+can start subwf2, which can start subwf3; but if subwf3 tries to start subwf4, then the action will fail.  The default is 50.
 
 #JavaAction
 ---++++ 3.2.7 Java Action
