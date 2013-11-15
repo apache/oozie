@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -52,6 +53,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
@@ -74,6 +76,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
+
         setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
         setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
                           "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
@@ -82,6 +85,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-conf", "java.xml"));
         IOUtils.copyStream(is, os);
+
     }
 
     public void testSetupMethods() throws Exception {
@@ -1137,7 +1141,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     @Test
     public void testAddActionShareLib() throws Exception {
-        Path systemLibPath = new Path(getFsTestCaseDir(), "systemlib");
+
+        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+
+        Path systemLibPath = new Path(wps.getSystemLibPath(), ShareLibService.SHARED_LIB_PREFIX
+                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).toString());
+
         Path javaShareLibPath = new Path(systemLibPath, "java");
         getFileSystem().mkdirs(javaShareLibPath);
         Path jar1Path = new Path(javaShareLibPath, "jar1.jar");
@@ -1157,6 +1166,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path jar5Path = new Path(otherShareLibPath, "jar5.jar");
         getFileSystem().create(jar5Path).close();
 
+        Path launcherPath = new Path(systemLibPath, "oozie");
+        getFileSystem().mkdirs(launcherPath);
+        Path jar6Path = new Path(launcherPath, "jar5.jar");
+        getFileSystem().create(jar6Path).close();
+
+
         String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" +
@@ -1164,6 +1179,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         Element eActionXml = XmlUtils.parseXml(actionXml);
         Context context = createContext(actionXml, null);
+
+        Services.get().setService(ShareLibService.class);
 
         // Test oozie server action sharelib setting
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
@@ -1231,6 +1248,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Services.get().destroy();
         setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, "/user/" + getOozieUser() + "/share/");
         new Services().init();
+        Services.get().setService(ShareLibService.class);
+
         Path appPath = getAppPath();
         JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
         // The next line should not throw an Exception because it will get the scheme and authority from the appPath, and not the
@@ -1253,6 +1272,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Services.get().destroy();
         setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getNameNodeUri() + "/user/" + getOozieUser() + "/share/");
         new Services().init();
+        Services.get().setService(ShareLibService.class);
         appPath = new Path("foo://bar:1234/blah");
         conf = ae.createBaseHadoopConf(context, eActionXml);
         // The next line should not throw an Exception because it will get the scheme and authority from the sharelib path (and not

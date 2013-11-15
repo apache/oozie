@@ -17,8 +17,11 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
@@ -62,6 +65,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -479,44 +483,40 @@ public class JavaActionExecutor extends ActionExecutor {
     protected void addShareLib(Path appPath, Configuration conf, String[] actionShareLibNames)
             throws ActionExecutorException {
         if (actionShareLibNames != null) {
-            for (String actionShareLibName : actionShareLibNames) {
+            String user = conf.get("user.name");
+            FileSystem fs;
+            try {
+
                 Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
-                if (systemLibPath != null) {
-                    Path actionLibPath = new Path(systemLibPath, actionShareLibName.trim());
-                    String user = conf.get("user.name");
-                    FileSystem fs;
-                    // If the actionLibPath has a valid scheme and authority,
-                    // then use them to determine the filesystem that the sharelib resides on;
-                    // otherwise, assume it resides on the same filesystem as the appPath and use
-                    // the appPath to determine the filesystem
-                    try {
-                        if (actionLibPath.toUri().getScheme() != null && actionLibPath.toUri().getAuthority() != null) {
-                            fs = Services.get().get(HadoopAccessorService.class)
-                                    .createFileSystem(user, actionLibPath.toUri(), conf);
-                        }
-                        else {
-                            fs = Services.get().get(HadoopAccessorService.class)
-                                    .createFileSystem(user, appPath.toUri(), conf);
-                        }
-                        if (fs.exists(actionLibPath)) {
-                            FileStatus[] files = fs.listStatus(actionLibPath);
-                            for (FileStatus file : files) {
-                                if (!file.isDir()) {
-                                    addToCache(conf, actionLibPath, file.getPath().toUri().getPath(), false);
-                                }
+                if (systemLibPath.toUri().getScheme() != null && systemLibPath.toUri().getAuthority() != null) {
+                    fs = Services.get().get(HadoopAccessorService.class)
+                            .createFileSystem(user, systemLibPath.toUri(), conf);
+                }
+                else {
+                    fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                }
+                for (String actionShareLibName : actionShareLibNames) {
+
+                    if (systemLibPath != null) {
+                        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+                        List<Path> listOfPaths = shareLibService.getShareLibJars(actionShareLibName);
+                        if (listOfPaths != null && !listOfPaths.isEmpty()) {
+
+                            for (Path actionLibPath : listOfPaths) {
+                                DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                                DistributedCache.createSymlink(conf);
                             }
                         }
                     }
-                    catch (HadoopAccessorException ex) {
-                        throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
-                                .toString(), ex.getMessage());
-                    }
-                    catch (IOException ex) {
-                        throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
-                                ex.getMessage());
-                    }
-
                 }
+            }
+            catch (HadoopAccessorException ex) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
+                        .toString(), ex.getMessage());
+            }
+            catch (IOException ex) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
+                        ex.getMessage());
             }
         }
     }
@@ -526,14 +526,13 @@ public class JavaActionExecutor extends ActionExecutor {
         // ShareLibService is null for test cases
         if (shareLibService != null) {
             try {
-                List<Path> listOfPaths = shareLibService
-                        .getActionSystemLibCommonJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+                List<Path> listOfPaths = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
                 FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
                 for (Path actionLibPath : listOfPaths) {
                     DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
                     DistributedCache.createSymlink(conf);
                 }
-                listOfPaths = shareLibService.getActionSystemLibCommonJars(getType());
+                listOfPaths = shareLibService.getSystemLibJars(getType());
                 if (listOfPaths != null) {
                     for (Path actionLibPath : listOfPaths) {
                         DistributedCache.addFileToClassPath(actionLibPath, conf, fs);

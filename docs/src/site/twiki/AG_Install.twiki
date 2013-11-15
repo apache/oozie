@@ -77,7 +77,8 @@ Usage  : oozie-setup.sh <OPTIONS>"
                                                                installation directory will be used)"
                                                                (action failes if sharelib is already installed"
                                                                in HDFS)"
-         sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] (upgrade existing sharelib, fails if there"
+         sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated][use create command to create new version]
+                                                                 upgrade existing sharelib, fails if there"
                                                                  is no existing sharelib installed in HDFS)"
          db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an"
                                                                optional sql file)"
@@ -810,11 +811,10 @@ The Oozie sharelib TAR.GZ file bundled with the distribution contains the necess
 hive, sqooop, and distcp actions.  There is also a sharelib for HCatalog.  The sharelib is required for these actions to work; any
 other actions (mapreduce, shell, ssh, and java) do not require the sharelib to be installed.
 
-As of Oozie 4.0, the following property is included.  If true, Oozie will create and ship a "launcher jar" that contains classes
-necessary for the launcher job.  If false, Oozie will not do this, and it is assumed that the necessary classes are in their
+As of Oozie 4.0, the following property is included.  If true, Oozie will create and ship a "launcher jar" to hdfs that contains
+classes necessary for the launcher job.  If false, Oozie will not do this, and it is assumed that the necessary classes are in their
 respective sharelib jars or the "oozie" sharelib instead.  When false, the sharelib is required for ALL actions; when true, the
-sharelib is only required for actions that need additional jars (the original list from above).  The main advantage of setting this
-to false is that launching jobs should be slightly faster.
+sharelib is only required for actions that need additional jars (the original list from above).
 
 <verbatim>
 <property>
@@ -822,6 +822,31 @@ to false is that launching jobs should be slightly faster.
     <value>true</value>
 </property>
 </verbatim>
+
+Using sharelib CLI, sharelib files are copied to new lib_<timestamped> directory. At start, server picks the sharelib from latest
+time-stamp directory. While starting, server also purges sharelib directory which are older than sharelib retention days
+(defined as oozie.service.ShareLibService.temp.sharelib.retention.days and 7 days is default).
+
+Sharelib mapping file can be also configured. Configured file is a key value mapping, where key will be the sharelib name for the
+action and value is a comma separated list of DFS directories or jar files.
+ This can be configured in oozie-site.xml as :
+ <verbatim>
+  <!-- OOZIE -->
+    <property>
+        <name>oozie.service.ShareLibService.mapping.file</name>
+        <value></value>
+        <description>
+            Sharelib mapping files contains list of key=value,
+            where key will be the sharelib name for the action and value is a comma separated list of
+            DFS directories or jar files.
+            Example.
+            oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
+            oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
+            oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
+        </description>
+    </property>
+ </verbatim>
+
 
 ---++ Oozie Coordinators/Bundles Processing Timezone
 

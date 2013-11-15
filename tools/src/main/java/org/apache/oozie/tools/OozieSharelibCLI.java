@@ -16,7 +16,15 @@
  * limitations under the License.
  */
 package org.apache.oozie.tools;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -25,15 +33,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.cli.CLIParser;
-import org.apache.commons.cli.Options;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collection;
 
 public class OozieSharelibCLI {
     public static final String[] HELP_INFO = {
@@ -46,6 +48,8 @@ public class OozieSharelibCLI {
     public static final String LIB_OPT = "locallib";
     public static final String FS_OPT = "fs";
     public static final String OOZIE_HOME = "oozie.home.dir";
+    public static final String SHARE_LIB_PREFIX = "lib_";
+
     private boolean used;
 
     public static void main(String[] args) throws Exception{
@@ -75,8 +79,11 @@ public class OozieSharelibCLI {
         CLIParser parser = new CLIParser("oozie-setup.sh", HELP_INFO);
         String oozieHome = System.getProperty(OOZIE_HOME);
         parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
-        parser.addCommand(CREATE_CMD, "", "create oozie sharelib", createUpgradeOptions(CREATE_CMD), false);
-        parser.addCommand(UPGRADE_CMD, "", "upgrade oozie sharelib", createUpgradeOptions(UPGRADE_CMD), false);
+        parser.addCommand(CREATE_CMD, "", "create a new timestamped version of oozie sharelib",
+                createUpgradeOptions(CREATE_CMD), false);
+        parser.addCommand(UPGRADE_CMD, "",
+                "[deprecated][use command \"create\" to create new version]   upgrade oozie sharelib \n",
+                createUpgradeOptions(UPGRADE_CMD), false);
 
         try {
             final CLIParser.Command command = parser.parse(args);
@@ -137,6 +144,11 @@ public class OozieSharelibCLI {
             WorkflowAppService lwas = services.get(WorkflowAppService.class);
             HadoopAccessorService has = services.get(HadoopAccessorService.class);
             Path dstPath = lwas.getSystemLibPath();
+
+            if (sharelibAction.equals(CREATE_CMD) || sharelibAction.equals(UPGRADE_CMD)){
+                dstPath= new Path(dstPath.toString() +  Path.SEPARATOR +  SHARE_LIB_PREFIX + getTimestampDirectory()  );
+            }
+
             System.out.println("the destination path for sharelib is: " + dstPath);
 
             URI uri = new Path(hdfsUri).toUri();
@@ -146,19 +158,6 @@ public class OozieSharelibCLI {
 
             if (!srcFile.exists()){
                 throw new IOException(srcPath + " cannot be found");
-            }
-
-            if (fs.exists(dstPath)){
-                if (sharelibAction.equals(CREATE_CMD)){
-                    throw new IllegalStateException("share lib already exists");
-                }
-
-                fs.delete(dstPath, true);
-            }
-            else {
-                if (sharelibAction.equals(UPGRADE_CMD)){
-                    throw new IllegalStateException("original share lib doesn't exist");
-                }
             }
 
             fs.copyFromLocalFile(false, srcPath, dstPath);
@@ -185,4 +184,11 @@ public class OozieSharelibCLI {
             return 1;
         }
     }
+
+    public String getTimestampDirectory() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date date = new Date();
+        return dateFormat.format(date).toString();
+    }
+
 }

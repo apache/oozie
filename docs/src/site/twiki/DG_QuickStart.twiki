@@ -118,10 +118,14 @@ required Hadoop JARs from such version in the *libext/* directory.
 
 If using the ExtJS library copy the ZIP file to the *libext/* directory.
 
-A "sharelib create|upgrade -fs fs_default_name [-locallib sharelib]" command is available when running oozie-setup.sh
-for uploading new or upgrading existing sharelib into hdfs where the first argument is the default fs name
+A "sharelib create -fs fs_default_name [-locallib sharelib]" command is available when running oozie-setup.sh
+for uploading new sharelib into hdfs where the first argument is the default fs name
 and the second argument is the Oozie sharelib to install, it can be a tarball or the expanded version of it.
 If the second argument is omitted, the Oozie sharelib tarball from the Oozie installation directory will be used.
+Upgrade command is deprecated, one should use create command to create new version of sharelib.
+Sharelib files are copied to new lib_<timestamped> directory. At start, server picks the sharelib from latest time-stamp directory.
+While starting server also purge sharelib directory which is older than sharelib retention days
+(defined as oozie.service.ShareLibService.temp.sharelib.retention.days and 7 days is default).
 
 "prepare-war [-d directory]" command is for creating war files for oozie with an optional alternative directory other
 than libext.

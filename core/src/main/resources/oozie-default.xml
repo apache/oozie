@@ -1958,4 +1958,23 @@
         </description>
     </property>
 
+
+
+
+    <!-- Sharelib Configuration -->
+    <property>
+        <name>oozie.service.ShareLibService.mapping.file</name>
+        <value></value>
+        <description>
+            Sharelib mapping files contains list of key=value,
+            where key will be the sharelib name for the action and value is a comma separated list of
+            DFS directories or jar files.
+            Example.
+            oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
+            oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
+            oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
+        </description>
+    </property>
+
+
 </configuration>
