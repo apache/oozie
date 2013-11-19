@@ -1575,8 +1575,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         action.setType(ae.getType());
 
         Context context = new Context(wf, action);
-        JobConf launcherConf = ae.createBaseHadoopConf(context, actionXml1);
-        ae.setupLauncherConf(launcherConf, actionXml1, getFsTestCaseDir(), context);
+        JobConf launcherConf = new JobConf();
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml1, launcherConf);
         // memoryMB (2048 + 512)
         assertEquals("2560", launcherConf.get(JavaActionExecutor.YARN_AM_RESOURCE_MB));
         // heap size in child.opts (2048 + 512)
@@ -1607,8 +1607,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                         + "<property><name>oozie.launcher.mapred.child.env</name><value>B=bar</value></property>"
                         + "</configuration>" + "<main-class>MAIN-CLASS</main-class>" + "</java>");
 
-        launcherConf = ae.createBaseHadoopConf(context, actionXml2);
-        ae.setupLauncherConf(launcherConf, actionXml2, getFsTestCaseDir(), context);
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml2, launcherConf);
 
         // memoryMB (3072 + 512)
         assertEquals("3584", launcherConf.get(JavaActionExecutor.YARN_AM_RESOURCE_MB));
@@ -1644,7 +1643,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                         + "</configuration>" + "<main-class>MAIN-CLASS</main-class>" + "</java>");
 
         launcherConf = ae.createBaseHadoopConf(context, actionXml3);
-        ae.setupLauncherConf(launcherConf, actionXml3, getFsTestCaseDir(), context);
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml3, launcherConf);
 
         // memoryMB (limit to 4096)
         assertEquals("4096", launcherConf.get(JavaActionExecutor.YARN_AM_RESOURCE_MB));
@@ -1656,6 +1655,93 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // env (equqls to mapreduce.map.env + am.env)
         assertEquals("A=foo,B=bar", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
+    }
+
+    public void testUpdateConfForUberModeForJavaOpts() throws Exception {
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+
+        Element actionXml1 = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<configuration>"
+                        + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
+                        + "<value>-Xmx1024m -Djava.net.preferIPv4Stack=true </value></property>"
+                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx1536m</value></property>"
+                        + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
+                        + "<java-opt>-Xmx2048m</java-opt>"
+                        + "<java-opt>-Dkey1=val1</java-opt>"
+                        + "<java-opt>-Dkey2=val2</java-opt>"
+                        + "</java>");
+        JavaActionExecutor ae = new JavaActionExecutor();
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+        JobConf launcherConf = new JobConf();
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml1, launcherConf);
+
+        // heap size (2048 + 512)
+        int heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx2048m -Dkey1=val1 -Dkey2=val2 -Xmx2560m",
+                launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        assertEquals(2560, heapSize);
+
+        Element actionXml2 = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<configuration>"
+                        + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
+                        + "<value>-Xmx1024m -Djava.net.preferIPv4Stack=true </value></property>"
+                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx1536m</value></property>"
+                        + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
+                        + "<java-opts>-Xmx2048m -Dkey1=val1</java-opts>"
+                        + "</java>");
+
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml2, launcherConf);
+
+        // heap size (2048 + 512)
+        heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx2048m -Dkey1=val1 -Xmx2560m",
+                launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        assertEquals(2560, heapSize);
+
+        Element actionXml3 = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<configuration>"
+                        + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
+                        + "<value>-Xmx2048m -Djava.net.preferIPv4Stack=true </value></property>"
+                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx3072m</value></property>"
+                        + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
+                        + "<java-opts>-Xmx1024m -Dkey1=val1</java-opts>"
+                        + "</java>");
+
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml3, launcherConf);
+
+        // heap size (2048 + 512)
+        heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
+        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx3072m -Xmx1024m -Dkey1=val1 -Xmx2560m",
+                launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        assertEquals(2560, heapSize);
     }
 
     public void testAddToCache() throws Exception {

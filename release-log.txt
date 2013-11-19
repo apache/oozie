@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1604 <java-opts> and <java-opt> not added to Application Master property in uber mode (ryota)
 OOZIE-1584 Setup sharelib using script and pickup latest(honor ship.launcher) and remove DFS dependency at startup (puru via ryota)
 OOZIE-1550 Create a safeguard to kill errant recursive workflows before they bring down oozie (rkanter)
 OOZIE-1314 IllegalArgumentException: wfId cannot be empty (shwethags via virag)

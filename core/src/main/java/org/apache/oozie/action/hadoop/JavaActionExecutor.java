@@ -233,7 +233,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
                 injectLauncherProperties(actionDefaultConf, launcherConf);
                 injectLauncherProperties(inlineConf, launcherConf);
-                injectLauncherUseUberMode(launcherConf);
                 checkForDisallowedProps(launcherConf, "launcher configuration");
                 XConfiguration.copy(launcherConf, conf);
             }
@@ -733,6 +732,9 @@ public class JavaActionExecutor extends ActionExecutor {
                 opts = opts.trim();
                 launcherJobConf.set("mapred.child.java.opts", opts);
             }
+
+            // setting for uber mode
+            injectLauncherUseUberMode(launcherJobConf);
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
             // maybe we should add queue to the WF schema, below job-tracker
