@@ -159,4 +159,13 @@ public interface RestConstants {
     public static final String JOB_SHOW_JMS_TOPIC = "jmstopic";
 
     public static final String ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE = "available-oozie-servers";
+
+    public static final String ADMIN_UPDATE_SHARELIB = "update_sharelib";
+
+    public static final String ADMIN_LIST_SHARELIB = "list_sharelib";
+
+    public static final String SHARE_LIB_REQUEST_KEY = "lib";
+
+    public static final String SHARE_LIB_ALLSERVER_REQUEST = "allservers";
+
 }

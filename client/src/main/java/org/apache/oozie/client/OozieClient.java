@@ -1489,6 +1489,14 @@ public class OozieClient {
         return new GetSystemMode().call();
     }
 
+    public String updateShareLib() throws OozieClientException {
+        return new UpdateSharelib().call();
+    }
+
+    public String listShareLib(String sharelibKey) throws OozieClientException {
+        return new ListShareLib(sharelibKey).call();
+    }
+
     private class GetBuildVersion extends ClientCallable<String> {
 
         GetBuildVersion() {
@@ -1507,6 +1515,73 @@ public class OozieClient {
             }
             return null;
         }
+    }
+
+
+    private  class UpdateSharelib extends ClientCallable<String> {
+
+        UpdateSharelib() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_UPDATE_SHARELIB, prepareParams());
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            StringBuffer bf = new StringBuffer();
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) ((JSONObject) JSONValue.parse(reader))
+                        .get(JsonTags.SHARELIB_LIB_UPDATE);
+                bf.append("[ShareLib update status]").append(System.getProperty("line.separator"));
+                    for (Object key : json.keySet()) {
+                        bf.append(" ").append(key).append(" = ").append(json.get(key))
+                                .append(System.getProperty("line.separator"));
+                }
+
+                return bf.toString();
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    private class ListShareLib extends ClientCallable<String> {
+
+        ListShareLib(String sharelibKey) {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_LIST_SHARELIB, prepareParams(
+                    RestConstants.SHARE_LIB_REQUEST_KEY, sharelibKey));
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                StringBuffer bf = new StringBuffer();
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                Object sharelib = json.get(JsonTags.SHARELIB_LIB);
+                bf.append("[Available ShareLib]").append(System.getProperty("line.separator"));
+                if (sharelib instanceof JSONArray) {
+                    for (Object o : ((JSONArray) sharelib)) {
+                        JSONObject obj = (JSONObject) o;
+                        bf.append(obj.get(JsonTags.SHARELIB_LIB_NAME))
+                                .append(System.getProperty("line.separator"));
+                        if (obj.get(JsonTags.SHARELIB_LIB_FILES) != null) {
+                            for (Object file : ((JSONArray) obj.get(JsonTags.SHARELIB_LIB_FILES))) {
+                                bf.append("\t").append(file).append(System.getProperty("line.separator"));
+                            }
+                        }
+                    }
+                    return bf.toString();
+                }
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+
     }
 
     /**

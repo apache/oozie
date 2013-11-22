@@ -18,13 +18,14 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
@@ -33,6 +34,7 @@ import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.util.Instrumentation;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,6 +43,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
 
     private static final long serialVersionUID = 1L;
     protected String modeTag;
+
 
     public BaseAdminServlet(String instrumentationName, ResourceInfo[] RESOURCES_INFO) {
         super(instrumentationName, RESOURCES_INFO);
@@ -56,13 +59,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         request.setAttribute(AUDIT_OPERATION, resourceName);
         request.setAttribute(AUDIT_PARAM, request.getParameter(modeTag));
 
-        try {
-            AuthorizationService auth = Services.get().get(AuthorizationService.class);
-            auth.authorizeForAdmin(getUser(request), true);
-        }
-        catch (AuthorizationException ex) {
-            throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
-        }
+        authorizeRequest(request);
 
         setOozieMode(request, response, resourceName);
         /*if (resourceName.equals(RestConstants.ADMIN_STATUS_RESOURCE)) {
@@ -147,8 +144,161 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             json.putAll(getOozieURLs());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
+        else if (resource.equals(RestConstants.ADMIN_UPDATE_SHARELIB)) {
+            authorizeRequest(request);
+            updateShareLib(request, response);
+        }
+        else if (resource.equals(RestConstants.ADMIN_LIST_SHARELIB)) {
+            String sharelibKey = request.getParameter(RestConstants.SHARE_LIB_REQUEST_KEY);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, getShareLib(sharelibKey));
+        }
     }
 
+    /**
+     * Gets the list of share lib.
+     *
+     * @param sharelibKey the sharelib key
+     * @return the list of supported share lib
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    private JSONObject getShareLib(String sharelibKey) throws IOException {
+        JSONObject json = new JSONObject();
+
+        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+
+        // for testcases.
+        if (shareLibService == null) {
+            return json;
+        }
+        JSONArray shareLibList = new JSONArray();
+
+        Map<String, List<Path>> shareLibLauncherMap = shareLibService.getShareLib();
+        if (sharelibKey != null && !sharelibKey.isEmpty()) {
+            Pattern pattern = Pattern.compile(sharelibKey);
+            for (String key : shareLibLauncherMap.keySet()) {
+                if (pattern.matcher(key).matches() == true) {
+                    JSONObject object = new JSONObject();
+                    JSONArray fileList = new JSONArray();
+                    List<Path> pathList = shareLibLauncherMap.get(key);
+
+                    for (Path file : pathList) {
+                        fileList.add(file.toString());
+                    }
+                    object.put(JsonTags.SHARELIB_LIB_NAME, key);
+                    object.put(JsonTags.SHARELIB_LIB_FILES, fileList);
+                    shareLibList.add(object);
+
+                }
+            }
+        }
+        else {
+            for (String key : shareLibLauncherMap.keySet()) {
+                JSONObject object = new JSONObject();
+                object.put(JsonTags.SHARELIB_LIB_NAME, key);
+                shareLibList.add(object);
+            }
+
+        }
+        json.put(JsonTags.SHARELIB_LIB, shareLibList);
+
+        return json;
+    }
+
+    /**
+     * Update share lib.
+     *
+     * @param request the request
+     * @param response the response
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    @SuppressWarnings("unchecked")
+    public void updateShareLib(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        //TODO sharelib HA.
+//        if (Boolean.parseBoolean(request.getParameter(RestConstants.SHARE_LIB_ALLSERVER_REQUEST))) {
+//            JSONArray jsonArray = new JSONArray();
+//            JSONObject json = new JSONObject();
+//            try {
+//                JobsConcurrencyService jc = Services.get().get(JobsConcurrencyService.class);
+//                Map<String, String> serverList = jc.getServerUrls();
+//                for (String server : serverList.values()) {
+//                    String serverUrl = server + "/v2/admin/" + RestConstants.ADMIN_UPDATE_SHARELIB + "?"
+//                            + RestConstants.SHARE_LIB_ALLSERVER_REQUEST + "=false";
+//                    try {
+//                        jsonArray.add(callServer(serverUrl, request));
+//                    }
+//                    catch (Exception e) {
+//                        JSONObject errorJson = new JSONObject();
+//                        errorJson.put(JsonTags.SHARELIB_UPDATE_HOST, server);
+//                        errorJson.put(JsonTags.SHARELIB_UPDATE_STATUS, e.getMessage());
+//                        jsonArray.add(errorJson);
+//
+//                    }
+//                }
+//                json.put(JsonTags.SHARELIB_LIB_UPDATE, jsonArray);
+//                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+//            }
+//
+//            catch (Exception e) {
+//                sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "internal Error",
+//                        e.getMessage());
+//            }
+//
+//        }
+//        else {
+        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+        JSONObject status = new JSONObject();
+
+        JSONObject json = new JSONObject();
+        json.put(JsonTags.SHARELIB_UPDATE_HOST, request.getServerName() + ":" + request.getServerPort());
+        try {
+            json.putAll(shareLibService.updateShareLib());
+            json.put(JsonTags.SHARELIB_UPDATE_STATUS, "Successful");
+        }
+        catch (Exception e) {
+            json.put(JsonTags.SHARELIB_UPDATE_STATUS, e.getClass().getName() + ": " + e.getMessage());
+        }
+        status.put(JsonTags.SHARELIB_LIB_UPDATE, json);
+        sendJsonResponse(response, HttpServletResponse.SC_OK, status);
+
+        // }
+
+    }
+
+//    private JSONObject callServer(String url, HttpServletRequest request) throws MalformedURLException, IOException {
+//        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+//        conn.setRequestMethod("GET");
+//
+//        Enumeration headerNames = request.getHeaderNames();
+//        while (headerNames.hasMoreElements()) {
+//            String headerName = (String) headerNames.nextElement();
+//
+//            conn.setRequestProperty(headerName, request.getHeader(headerName));
+//        }
+//        conn.connect();
+//
+//        Reader reader = new InputStreamReader(conn.getInputStream());
+//        JSONObject json = (JSONObject) JSONValue.parse(reader);
+//        return (JSONObject) json.get(JsonTags.SHARELIB_LIB_UPDATE);
+//
+//    }
+
+    /**
+     * Authorize request.
+     *
+     * @param request the HttpServletRequest
+     * @throws XServletException the x servlet exception
+     */
+    private void authorizeRequest(HttpServletRequest request) throws XServletException {
+        try {
+            AuthorizationService auth = Services.get().get(AuthorizationService.class);
+            auth.authorizeForAdmin(getUser(request), true);
+        }
+        catch (AuthorizationException ex) {
+            throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,

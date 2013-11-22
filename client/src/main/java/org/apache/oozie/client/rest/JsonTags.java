@@ -30,6 +30,13 @@ public interface JsonTags {
     public static final String UNIQUE_MAP_DUMP = "uniqueMapDump";
     public static final String UNIQUE_ENTRY_DUMP = "uniqueEntryDump";
 
+    public static final String SHARELIB_LIB_UPDATE = "sharelibUpdate";
+    public static final String SHARELIB_LIB = "sharelib";
+    public static final String SHARELIB_LIB_NAME = "name";
+    public static final String SHARELIB_LIB_FILES = "files";
+    public static final String SHARELIB_UPDATE_HOST = "host";
+    public static final String SHARELIB_UPDATE_STATUS = "status";
+
     public static final String JOB_ID = "id";
 
     public static final String WORKFLOW_APP_PATH = "appPath";

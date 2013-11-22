@@ -80,6 +80,9 @@ usage:
                   -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
                   -version            show Oozie server build version
+                  -shareliblist       List available sharelib that can be specified in a workflow
+                                      action
+                  -sharelibupdate     Update server to use a newer version of sharelib
 .
       oozie validate <ARGS> : validate a workflow XML file
 .
@@ -812,6 +815,54 @@ Error: Invalid workflow-app, org.xml.sax.SAXParseException: cvc-complex-type.2.4
 </verbatim>
 
 It performs an XML Schema validation on the specified workflow XML file.
+
+---+++ Getting list of available sharelib
+This command is used to get list of available sharelib.
+If the name of the sharelib is passed as an argument (regex supported) then all corresponding files are also listed.
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -shareliblist
+[Available ShareLib]
+    oozie
+    hive
+    distcp
+    hcatalog
+    sqoop
+    mapreduce-streaming
+    pig
+
+$ oozie admin -oozie http://localhost:11000/oozie -sharelib pig*
+[Available ShareLib]
+    pig
+        hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729/pig/pig.jar
+        hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729/pig/piggybank.jar
+</verbatim>
+
+---+++ Update system sharelib
+This command makes the oozie server to pick up the latest version of sharelib present
+under oozie.service.WorkflowAppService.system.libpath directory based on the sharelib directory timestamp or reloads
+the sharelib metafile if one is configured. The main purpose is to update the sharelib on the oozie server without restarting.
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -sharelibupdate
+[ShareLib update status]
+ShareLib update status]
+ host = localhost:11000
+ status = Successful
+ sharelibDirOld = hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729
+ sharelibDirNew = hdfs://localhost:9000/user/purushah/share/lib/lib_20131120163343
+</verbatim>
+
+Sharelib update for metafile configuration.
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -sharelibupdate
+[ShareLib update status]
+ host = localhost:11000
+ status = Successful
+ sharelibMetaFile = hdfs://localhost:9000/user/purushah/sharelib_metafile.property
+ sharelibMetaFileOldTimeStamp = Thu, 21 Nov 2013 00:40:04 GMT
+ sharelibMetaFileNewTimeStamp = Thu, 21 Nov 2013 01:01:25 GMT
+</verbatim>
 
 #SLAOperations
 ---++ SLA Operations

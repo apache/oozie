@@ -32,12 +32,11 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -47,7 +46,8 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
-import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.client.rest.JsonUtils;
+
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -84,6 +84,10 @@ public class ShareLibService implements Service {
 
     private boolean shareLibLoadAttempted = false;
 
+    private String sharelibMetaFileOldTimeStamp;
+
+    private String sharelibDirOld;
+
     FileSystem fs;
 
     @Override
@@ -116,6 +120,12 @@ public class ShareLibService implements Service {
 
     private void updateLauncherLib() throws IOException {
         if (isShipLauncherEnabled) {
+            if (fs == null) {
+                Path launcherlibPath = getLauncherlibPath();
+                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+                URI uri = launcherlibPath.toUri();
+                fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+            }
             Path launcherlibPath = getLauncherlibPath();
             setupLauncherLibPath(fs, launcherlibPath);
             recursiveChangePermissions(fs, launcherlibPath, FsPermission.valueOf(PERMISSION_STRING));
@@ -236,6 +246,10 @@ public class ShareLibService implements Service {
                 listOfPaths.add(file.getPath());
             }
         }
+    }
+
+    public Map<String, List<Path>> getShareLib() {
+        return shareLibMap;
     }
 
     /**
@@ -389,19 +403,44 @@ public class ShareLibService implements Service {
     /**
      * Update share lib cache.
      *
+     * @return the map
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public void updateShareLib() throws IOException {
+    public Map<String, String> updateShareLib() throws IOException {
+        Map<String, String> status = new HashMap<String, String>();
+
+        if (fs == null) {
+            Path launcherlibPath = getLauncherlibPath();
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            URI uri = launcherlibPath.toUri();
+            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+        }
+
         Map<String, List<Path>> tempShareLibMap = new HashMap<String, List<Path>>();
 
         if (!StringUtils.isEmpty(sharelibMappingFile)) {
+            String sharelibMetaFileNewTimeStamp = JsonUtils.formatDateRfc822(new Date(fs.getFileStatus(
+                    new Path(sharelibMappingFile)).getModificationTime()),"GMT");
             loadShareLibMetaFile(tempShareLibMap, sharelibMappingFile);
+            status.put("sharelibMetaFile", sharelibMappingFile);
+            status.put("sharelibMetaFileNewTimeStamp", sharelibMetaFileNewTimeStamp);
+            status.put("sharelibMetaFileOldTimeStamp", sharelibMetaFileOldTimeStamp);
+            sharelibMetaFileOldTimeStamp = sharelibMetaFileNewTimeStamp;
         }
         else {
-            loadShareLibfromDFS(tempShareLibMap);
+            Path shareLibpath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
+                    SHARED_LIB_PREFIX);
+            loadShareLibfromDFS(tempShareLibMap, shareLibpath);
+
+            if (shareLibpath != null) {
+                status.put("sharelibDirNew", shareLibpath.toString());
+                status.put("sharelibDirOld", sharelibDirOld);
+                sharelibDirOld = shareLibpath.toString();
+            }
+
         }
         shareLibMap = tempShareLibMap;
-
+        return status;
     }
 
     /**
@@ -409,11 +448,10 @@ public class ShareLibService implements Service {
      * directory is a action key
      *
      * @param shareLibMap the share lib jar map
+     * @param shareLibpath the share libpath
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private void loadShareLibfromDFS(Map<String, List<Path>> shareLibMap) throws IOException {
-        Path shareLibpath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
-                SHARED_LIB_PREFIX);
+    private void loadShareLibfromDFS(Map<String, List<Path>> shareLibMap, Path shareLibpath) throws IOException {
 
         if (shareLibpath == null) {
             LOG.info("No share lib directory found");
@@ -428,10 +466,13 @@ public class ShareLibService implements Service {
         }
 
         for (FileStatus dir : dirList) {
+            if (!dir.isDir()) {
+                continue;
+            }
             List<Path> listOfPaths = new ArrayList<Path>();
             getPathRecursively(fs, dir.getPath(), listOfPaths);
             shareLibMap.put(dir.getPath().getName(), listOfPaths);
-            LOG.info("Share lib for " + dir.getPath().getName() + ":" +  listOfPaths);
+            LOG.info("Share lib for " + dir.getPath().getName() + ":" + listOfPaths);
 
         }
 
@@ -450,30 +491,27 @@ public class ShareLibService implements Service {
     private void loadShareLibMetaFile(Map<String, List<Path>> shareLibMap, String sharelibFileMapping)
             throws IOException {
 
-
-        Path shareFileMappingPath= new Path(sharelibFileMapping);
+        Path shareFileMappingPath = new Path(sharelibFileMapping);
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         FileSystem filesystem = FileSystem.get(has.createJobConf(shareFileMappingPath.toUri().getAuthority()));
-        XConfiguration conf = new XConfiguration(filesystem.open(shareFileMappingPath));
-        Iterator<Map.Entry<String, String>> it = conf.iterator();
+        Properties prop = new Properties();
+        prop.load(filesystem.open(new Path(sharelibFileMapping)));
 
-
-        while (it.hasNext()) {
-            Map.Entry<String, String> en = it.next();
-            if (en.getKey().toLowerCase().startsWith(SHARE_LIB_CONF_PREFIX)) {
-                String key = en.getKey().substring(SHARE_LIB_CONF_PREFIX.length() + 1);
-                String pathList[] = en.getValue().split(",");
+        for (Object keyObject : prop.keySet()) {
+            String key = (String) keyObject;
+            if (key.toLowerCase().startsWith(SHARE_LIB_CONF_PREFIX)) {
+                String mapKey = key.substring(SHARE_LIB_CONF_PREFIX.length() + 1);
+                String pathList[] = ((String) prop.get(key)).split(",");
                 List<Path> listOfPaths = new ArrayList<Path>();
                 for (String dfsPath : pathList) {
                     getPathRecursively(fs, new Path(dfsPath), listOfPaths);
                 }
-                shareLibMap.put(key, listOfPaths);
-                LOG.info("Share lib for " + en.getKey() + ":" +  listOfPaths);
-
+                shareLibMap.put(mapKey, listOfPaths);
+                LOG.info("Share lib for " + mapKey + ":" + listOfPaths);
 
             }
             else {
-                LOG.info(" Not adding " + en.getKey() + " to sharelib, not prefix with " + SHARE_LIB_CONF_PREFIX);
+                LOG.info(" Not adding " + key + " to sharelib, not prefix with " + SHARE_LIB_CONF_PREFIX);
             }
 
         }

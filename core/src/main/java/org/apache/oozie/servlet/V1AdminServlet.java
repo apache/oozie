@@ -46,7 +46,7 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[10];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[12];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
@@ -70,6 +70,11 @@ public class V1AdminServlet extends BaseAdminServlet {
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[9] = new ResourceInfo(RestConstants.ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
+        RESOURCES_INFO[10] = new ResourceInfo(RestConstants.ADMIN_UPDATE_SHARELIB, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
+        RESOURCES_INFO[11] = new ResourceInfo(RestConstants.ADMIN_LIST_SHARELIB, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
+
     }
 
     protected V1AdminServlet(String name) {

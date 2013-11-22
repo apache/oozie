@@ -1018,5 +1018,66 @@ public class TestOozieCLI extends DagServletTestCase {
                 return null;
             }
         });
-     }
+    }
+
+    public void testshareLibUpdate() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-sharelibupdate", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+
+                return null;
+            }
+        });
+    }
+
+    public void testshareLibUpdate_withSecurity() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, true, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-sharelibupdate", "-oozie", oozieUrl };
+                assertEquals(-1, new OozieCLI().run(args));
+
+                return null;
+            }
+        });
+    }
+
+    public void testGetShareLib() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-shareliblist", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+
+                return null;
+            }
+        });
+    }
+
+    public void testGetShareLib_withKey() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "admin", "-shareliblist", "pig", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+
+                return null;
+            }
+        });
+    }
+
 }

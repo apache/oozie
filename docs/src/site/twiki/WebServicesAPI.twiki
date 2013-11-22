@@ -381,6 +381,95 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++++ List available sharelib
+A HTTP GET request to get list of available sharelib.
+If the name of the sharelib is passed as an argument (regex supported) then all corresponding files are also listed.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/list_sharelib
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{
+    "sharelib":
+        [
+            "oozie",
+            "hive",
+            "distcp",
+            "hcatalog",
+            "sqoop",
+            "mapreduce-streaming",
+            "pig"
+        ]
+}
+</verbatim>
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/list_sharelib?lib=pig*
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+
+{
+    "sharelib":
+            [
+                {
+                    "pig":
+                        {
+                            "sharelibFiles":
+                                [
+                                    hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729/pig/pig.jar
+                                    hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729/pig/piggybank.jar
+                                ]
+                        }
+                }
+            ]
+}
+</verbatim>
+
+
+---++++ Update system sharelib
+This webservice call makes the oozie server to pick up the latest version of sharelib present
+under oozie.service.WorkflowAppService.system.libpath directory based on the sharelib directory timestamp or reloads
+the sharelib metafile if one is configured. The main purpose is to update the sharelib on the oozie server without restarting.
+
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/update_sharelib
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+
+{
+ {
+    "sharelibUpdate":
+        {
+            "sharelibDirOld":"hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729",
+            "sharelibDirNew":"hdfs://localhost:9000/user/purushah/share/lib/lib_20131120163343",
+            "host":"localhost:11000",
+            "status":"Successful"
+         }
+       }
+}
+
 ---+++ Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_
@@ -1241,8 +1330,8 @@ Content-Type: application/json;charset=UTF-8
 **  bulkresponses: [
 **  {
       bulkbundle:
-	  {
-	    bundleJobName: "my-bundle-app",
+      {
+        bundleJobName: "my-bundle-app",
         bundleJobId: "0-200905191240-oozie-B",
         status: "SUSPENDED",
       },

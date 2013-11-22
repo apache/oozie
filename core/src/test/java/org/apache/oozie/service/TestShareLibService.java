@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -447,7 +448,7 @@ public class TestShareLibService extends XFsTestCase {
     }
 
     public void creatTempshareLibKeymap(FileSystem fs) {
-        XConfiguration prop = new XConfiguration();
+        Properties prop = new Properties();
 
         try {
 
@@ -462,12 +463,12 @@ public class TestShareLibService extends XFsTestCase {
             createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
             createFile(somethingNew.toString() + Path.SEPARATOR + "somethingNew" + Path.SEPARATOR + "somethingNew.jar");
 
-            prop.set(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
-            prop.set(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
 
             FSDataOutputStream out = fs.create(new Path("/user/test/config.properties"));
 
-            prop.writeXml(out);
+            prop.store(out, null);
             out.close();
 
         }
@@ -478,7 +479,7 @@ public class TestShareLibService extends XFsTestCase {
 
     public void creatTempshareLibKeymap_multipleFile(FileSystem fs) {
 
-        XConfiguration prop = new XConfiguration();
+        Properties prop = new Properties();
         try {
 
             String testPath = "shareLibPath/";
@@ -491,13 +492,13 @@ public class TestShareLibService extends XFsTestCase {
             createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
             createFile(somethingNew.toString() + Path.SEPARATOR + "somethingNew" + Path.SEPARATOR + "somethingNew.jar");
 
-            prop.set(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString()
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString()
                     + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar," + "/user/test/" + somethingNew.toString()
                     + Path.SEPARATOR + "somethingNew" + Path.SEPARATOR + "somethingNew.jar");
 
             FSDataOutputStream out = fs.create(new Path("/user/test/config.properties"));
 
-            prop.writeXml(out);
+            prop.store(out, null);
             out.close();
 
         }

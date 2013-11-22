@@ -220,4 +220,50 @@ public class TestAdminServlet extends DagServletTestCase {
         });
     }
 
+    public void testShareLibUpdate() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_UPDATE_SHARELIB, Collections.EMPTY_MAP);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(1, json.entrySet().size());
+                return null;
+            }
+        });
+    }
+
+    public void testShareLib() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_LIST_SHARELIB, Collections.EMPTY_MAP);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(null, json.get(JsonTags.SHARELIB_LIB));
+                return null;
+            }
+        });
+    }
+
+    public void testShareLib_withKey() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                Map<String, String> map = new HashMap<String, String>();
+                map.put(RestConstants.SHARE_LIB_REQUEST_KEY, "pig");
+                URL url = createURL(RestConstants.ADMIN_LIST_SHARELIB, map);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(null, json.get(JsonTags.SHARELIB_LIB));
+                return null;
+            }
+        });
+    }
 }

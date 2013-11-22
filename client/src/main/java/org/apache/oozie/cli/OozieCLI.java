@@ -129,6 +129,12 @@ public class OozieCLI {
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
 
+    public static final String UPDATE_SHARELIB_OPTION = "sharelibupdate";
+
+    public static final String LIST_SHARELIB_LIB_OPTION = "shareliblist";
+
+
+
     public static final String AUTH_OPTION = "auth";
 
     public static final String VERBOSE_OPTION = "verbose";
@@ -226,6 +232,12 @@ public class OozieCLI {
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Option availServers = new Option(AVAILABLE_SERVERS_OPTION, false, "list available Oozie servers"
                 + " (more than one only if HA is enabled)");
+        Option sharelibUpdate = new Option(UPDATE_SHARELIB_OPTION, false, "Update server to use a newer version of sharelib");
+
+        Option sharelib = new Option(LIST_SHARELIB_LIB_OPTION, false,
+                "List available sharelib that can be specified in a workflow action");
+        sharelib.setOptionalArg(true);
+
         Options adminOptions = new Options();
         adminOptions.addOption(oozie);
         adminOptions.addOption(doAs);
@@ -235,6 +247,8 @@ public class OozieCLI {
         group.addOption(version);
         group.addOption(queuedump);
         group.addOption(availServers);
+        group.addOption(sharelibUpdate);
+        group.addOption(sharelib);
         adminOptions.addOptionGroup(group);
         addAuthOptions(adminOptions);
         return adminOptions;
@@ -1443,6 +1457,19 @@ public class OozieCLI {
                 status = wc.getSystemMode();
                 System.out.println("System mode: " + status);
             }
+
+            else if (options.contains(UPDATE_SHARELIB_OPTION)) {
+                System.out.println(wc.updateShareLib());
+            }
+
+            else if (options.contains(LIST_SHARELIB_LIB_OPTION)) {
+                String sharelibKey = null;
+                if (commandLine.getArgList().size() > 0) {
+                    sharelibKey = (String) commandLine.getArgList().get(0);
+                }
+                System.out.println(wc.listShareLib(sharelibKey));
+            }
+
             else if (options.contains(QUEUE_DUMP_OPTION)) {
 
                 List<String> list = wc.getQueueDump();
