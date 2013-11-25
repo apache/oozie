@@ -102,7 +102,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             updateCoordAction(coordAction, false);
             LOG.info("[" + actionId
                     + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
-                    + currentTime + ", nominal=" + nominalTime);
+                    + DateUtils.formatDateOozieTZ(currentTime) + ", nominal=" + DateUtils.formatDateOozieTZ(nominalTime));
 
             return null;
         }

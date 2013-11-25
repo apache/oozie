@@ -193,7 +193,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             endMatdTime = jobEndTime;
         }
 
-        LOG.debug("Materializing coord job id=" + jobId + ", start=" + startMatdTime + ", end=" + endMatdTime
+        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end=" + DateUtils.formatDateOozieTZ(endMatdTime)
                 + ", window=" + materializationWindow);
     }
 
@@ -319,6 +319,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         Calendar end = Calendar.getInstance(appTz);
         end.setTime(endMatdTime);
         lastActionNumber = coordJob.getLastActionNumber();
+        //Intentionally printing dates in their own timezone, not Oozie timezone
         LOG.info("materialize actions for tz=" + appTz.getDisplayName() + ",\n start=" + start.getTime() + ", end="
                 + end.getTime() + ",\n timeUnit " + freqTU.getCalendarUnit() + ",\n frequency :" + frequency + ":"
                 + freqTU + ",\n lastActionNumber " + lastActionNumber);
@@ -379,7 +380,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 lastActionNumber++;
 
                 int timeout = coordJob.getTimeout();
-                LOG.debug("Materializing action for time=" + start.getTime() + ", lastactionnumber=" + lastActionNumber
+                LOG.debug("Materializing action for time=" + DateUtils.formatDateOozieTZ(start.getTime()) + ", lastactionnumber=" + lastActionNumber
                         + " timeout=" + timeout + " minutes");
                 Date actualTime = new Date();
                 action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),

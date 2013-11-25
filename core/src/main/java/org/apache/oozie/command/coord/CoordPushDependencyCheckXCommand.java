@@ -51,6 +51,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.DateUtils;
 
 public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> {
     protected String actionId;
@@ -213,7 +214,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             // CoordActionInputCheckXCommand will take care of moving it to READY when it is nominal time.
             if (nominalTime.compareTo(currentTime) > 0) {
                 LOG.info("[" + actionId + "]::ActionInputCheck:: nominal Time is newer than current time. Current="
-                        + currentTime + ", nominal=" + nominalTime);
+                        + DateUtils.formatDateOozieTZ(currentTime) + ", nominal=" + DateUtils.formatDateOozieTZ(nominalTime));
             }
             else {
                 String actionXml = resolveCoordConfiguration();

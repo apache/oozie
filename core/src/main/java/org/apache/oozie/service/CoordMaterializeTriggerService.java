@@ -30,6 +30,7 @@ import org.apache.oozie.executor.jpa.CoordJobsToBeMaterializedJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.DateUtils;
 
 /**
  * The coordinator Materialization Lookup trigger service schedule lookup trigger command for every interval (default is
@@ -133,7 +134,7 @@ public class CoordMaterializeTriggerService implements Service {
                 CoordJobsToBeMaterializedJPAExecutor cmatcmd = new CoordJobsToBeMaterializedJPAExecutor(currDate, limit);
                 List<CoordinatorJobBean> materializeJobs = jpaService.execute(cmatcmd);
                 int rejected = 0;
-                LOG.info("CoordMaterializeTriggerService - Curr Date= " + currDate + ", Num jobs to materialize = "
+                LOG.info("CoordMaterializeTriggerService - Curr Date= " + DateUtils.formatDateOozieTZ(currDate)  + ", Num jobs to materialize = "
                         + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(coordJob.getId())) {
