@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.1" name="recovery-el-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.1" name="${WF_NAME}-${FEED_NAME}">
     <start to="hdfs11"/>
     <action name="hdfs11">
         <fs>
