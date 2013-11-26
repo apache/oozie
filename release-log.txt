@@ -12,6 +12,7 @@ OOZIE-1549 Update hcat documentation to mention hcatalog-pig-adapter jar (bowenz
 
 -- Oozie 4.0.0 release
 
+OOZIE-1626 pig action pop-up is not working properly in UI (ryota)
 OOZIE-1514 Rerunning a coordinator with no input dependencies puts actions in WAITING instead of READY and proceeding (bowenzhangusa via mona)
 OOZIE-1510 Fix branch-4.0 compilation (mona)
 OOZIE-1507 Command queue filling up with duplicate commands from RecoveryService (rohini)
