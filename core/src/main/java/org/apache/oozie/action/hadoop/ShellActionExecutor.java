@@ -147,7 +147,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
             }
             val += appendValue;
             conf.set(propertyName, val);
-            log.debug("action conf is updated with default value for property " + propertyName + ", old value :"
+            LOG.debug("action conf is updated with default value for property " + propertyName + ", old value :"
                     + conf.get(propertyName, "") + ", new value :" + val);
         }
     }

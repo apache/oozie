@@ -146,6 +146,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.XLogStreamingService.buffer.len</name>
+        <value>4096</value>
+        <description>4K buffer for streaming the logs progressively</description>
+    </property>
+
  <!-- HCatAccessorService -->
    <property>
         <name>oozie.service.HCatAccessorService.jmsconnections</name>

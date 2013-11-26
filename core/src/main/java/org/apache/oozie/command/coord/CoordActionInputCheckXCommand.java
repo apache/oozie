@@ -90,7 +90,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
-        LOG.info("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
+        LOG.debug("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
 
         // this action should only get processed if current time > nominal time;
         // otherwise, requeue this action for delay execution;
@@ -421,7 +421,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     private boolean checkResolvedUris(Element eAction, StringBuilder existList, StringBuilder nonExistList,
             Configuration conf) throws IOException {
-        LOG.info("[" + actionId + "]::ActionInputCheck:: In checkResolvedUris...");
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
         if (inputList != null) {
             if (nonExistList.length() > 0) {

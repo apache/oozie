@@ -423,7 +423,6 @@ function jobDetailsPopup(response, request) {
 
     });
     function showActionContextMenu(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         actionDetailsGridWindow(actionStatus);
         function actionDetailsGridWindow(actionStatus) {
@@ -739,9 +738,9 @@ function coordJobDetailsPopup(response, request) {
         emptyText: "Loading..."
     });
     var getLogButton = new Ext.Button({
-	    text: 'Retrieve log',
+	    text: 'Retrieve coord action logs',
 	    handler: function() {
-                    fetchLogs(coordJobId, actionsTextBox.getValue());
+            fetchLogs(coordJobId, actionsTextBox.getValue());
 	    }
     });
     var actionsTextBox = new Ext.form.TextField({
@@ -789,7 +788,7 @@ function coordJobDetailsPopup(response, request) {
 	var responseLength = response.length;
 	var twentyFiveMB = 25*1024*1024;
 	if(responseLength > twentyFiveMB) {
-	    response = response.substring(responseLength-twentyFiveMB,responseLength)
+	    response = response.substring(responseLength-twentyFiveMB,responseLength);
 	    response = response.substring(response.indexOf("\n")+1,responseLength);
 	    jobLogArea.setRawValue(response);
 	}
@@ -974,14 +973,12 @@ function coordJobDetailsPopup(response, request) {
 
     });
     function showWorkflowPopup(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         var workflowId = actionStatus["externalId"];
         jobDetailsGridWindow(workflowId);
     }
     // alert("Coordinator PopUP 4 inside coordDetailsPopup ");
     function showCoordActionContextMenu(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         actionDetailsGridWindow(actionStatus);
         function actionDetailsGridWindow(actionStatus) {
@@ -1130,8 +1127,17 @@ function coordJobDetailsPopup(response, request) {
 	   items: [jobLogArea, actionsTextBox, getLogButton],
            tbar: [ {
                 text: "&nbsp;&nbsp;&nbsp;",
-                icon: 'ext-2.2/resources/images/default/grid/refresh.gif'
-                 }]
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                handler: function() {
+                    var actionsText = actionsTextBox.getValue();
+                    if (actionsText == 'Enter the action list here' || actionsText == '') {
+                        fetchLogs(coordJobId, '');
+                    }
+                    else {
+                        fetchLogs(coordJobId, actionsText);
+                    }
+                }
+           }]
 	   }]
 });
 
@@ -1141,7 +1147,9 @@ function coordJobDetailsPopup(response, request) {
             return;
         }
         if (selectedTab.title == 'Coord Job Log') {
-	    actionsTextBox.setValue('Enter the action list here');
+            fetchLogs(coordJobId, '');
+            //actionsTextBox.position
+	        actionsTextBox.setValue('Enter the action list here');
         }
         else if (selectedTab.title == 'Coord Job Definition') {
             fetchDefinition(coordJobId);
@@ -1827,7 +1835,7 @@ var getSupportedVersions = new Ext.Action({
                 Ext.Msg.alert('Oozie Console Alert!', 'Server doesn\'t support client version: v' + getOozieClientVersion());
             }
 
-        })
+        });
     }
 
 });
@@ -1860,7 +1868,7 @@ var serverVersion = new Ext.Action({
                 var ret = eval("(" + response.responseText + ")");
                 serverVersion.setText("<font size='2'>Server version [" + ret['buildVersion'] + "]</font>");
             }
-        })
+        });
     }
 });
 
@@ -1954,20 +1962,17 @@ var timeZones_store = new Ext.data.JsonStore({
 timeZones_store.proxy.conn.method = "GET";
 
 function showCoordJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
-    var jobContextMenu = new Ext.menu.Menu('taskContext');
     var coordJobId = thisGrid.store.data.items[rowIndex].data.coordJobId;
     coordJobDetailsGridWindow(coordJobId);
 }
 
 function initConsole() {
     function showJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
         var workflowId = thisGrid.store.data.items[rowIndex].data.id;
         jobDetailsGridWindow(workflowId);
     }
 
     function showBundleJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
-        var jobContextMenu = new Ext.menu.Menu('taskContext');
         var bundleJobId = thisGrid.store.data.items[rowIndex].data.bundleJobId;
         bundleJobDetailsGridWindow(bundleJobId);
     }

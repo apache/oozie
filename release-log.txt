@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1474 Fix logging issues - latency, accurate job ids, coord Job UI to show job logs (mona)
 OOZIE-1623 JPAService doesn't need to do reads in a transaction (rkanter)
 OOZIE-1612 When printing Dates to log messages, we should make sure they are in oozie.processing.timezone (gwenshap via rkanter)
 OOZIE-1519 Admin command to update the sharelib (puru via ryota)

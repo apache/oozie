@@ -557,7 +557,7 @@ public class CallableQueueService implements Service, Instrumentable {
 
     private synchronized boolean queue(CallableWrapper wrapper, boolean ignoreQueueSize) {
         if (!ignoreQueueSize && queue.size() >= queueSize) {
-            log.warn("queue if full, ignoring queuing for [{0}]", wrapper.getElement());
+            log.warn("queue full, ignoring queuing for [{0}]", wrapper.getElement().getKey());
             return false;
         }
         if (!executor.isShutdown()) {
@@ -573,7 +573,7 @@ public class CallableQueueService implements Service, Instrumentable {
             }
         }
         else {
-            log.warn("Executor shutting down, ignoring queueing of [{0}]", wrapper.getElement());
+            log.warn("Executor shutting down, ignoring queueing of [{0}]", wrapper.getElement().getKey());
         }
         return true;
     }

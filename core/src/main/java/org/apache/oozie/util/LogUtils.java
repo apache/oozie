@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.XLogService;
 
@@ -86,6 +87,13 @@ public class LogUtils {
         logInfo.setParameter(DagXLogInfoService.JOB, action.getJobId());
         logInfo.setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
         logInfo.setParameter(DagXLogInfoService.ACTION, action.getId());
+        XLog.Info.get().setParameters(logInfo);
+    }
+
+    public static void setLogInfo(WorkflowAction action, XLog.Info logInfo) {
+        String actionId = action.getId();
+        logInfo.setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
+        logInfo.setParameter(DagXLogInfoService.ACTION, actionId);
         XLog.Info.get().setParameters(logInfo);
     }
 

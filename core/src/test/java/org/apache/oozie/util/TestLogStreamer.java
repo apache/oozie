@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,7 +139,7 @@ public class TestLogStreamer extends XTestCase {
         // respectively
         StringWriter sw = new StringWriter();
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 10 * 3600000), new Date(currTime - 5 * 3600000));
+        str.streamLog(sw, new Date(currTime - 10 * 3600000), new Date(currTime - 5 * 3600000), 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -157,7 +157,7 @@ public class TestLogStreamer extends XTestCase {
         // and corresponding log content is retrieved properly
         StringWriter sw1 = new StringWriter();
         XLogStreamer str1 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str1.streamLog(sw1, null, null);
+        str1.streamLog(sw1, null, null, 4096);
         out = sw1.toString().split("\n");
         // Check if the retrieved log content is of length eight lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -224,7 +224,7 @@ public class TestLogStreamer extends XTestCase {
         Calendar calendarEntry = Calendar.getInstance();
         // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January), and end time is current time
         calendarEntry.set(2012, 3, 24, 19, 0);
-        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()));
+        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()), 4096);
         String[] out = sw2.toString().split("\n");
 
         // Check if the retrieved log content is of length five lines after filtering based on time window, file name
@@ -273,7 +273,7 @@ public class TestLogStreamer extends XTestCase {
 
         StringWriter sw = new StringWriter();
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 5000), new Date(currTime + 5000));
+        str.streamLog(sw, new Date(currTime - 5000), new Date(currTime + 5000), 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
         // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering

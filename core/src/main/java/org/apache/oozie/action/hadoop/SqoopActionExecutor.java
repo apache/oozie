@@ -178,7 +178,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                             OOZIE_ACTION_EXTERNAL_STATS_WRITE, "true"))
                             && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
-                        log.debug(
+                        LOG.debug(
                           "Printing stats for sqoop action as a JSON string : [{0}]", statsJsonString);
                     }
                 } else {
@@ -198,7 +198,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                 }
                 catch (Exception e) {
                     if (exception) {
-                        log.error("JobClient error: ", e);
+                        LOG.error("JobClient error: ", e);
                     }
                     else {
                         throw convertException(e);

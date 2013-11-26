@@ -65,7 +65,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -109,7 +109,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED = "FAILED";
     private static final String FAILED_KILLED = "FAILED/KILLED";
     private static final String RUNNING = "RUNNING";
-    protected XLog log = XLog.getLog(getClass());
+    protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
 
     static {
@@ -438,7 +438,7 @@ public class JavaActionExecutor extends ActionExecutor {
             return conf;
         }
         catch (Exception ex) {
-            XLog.getLog(getClass()).debug(
+            LOG.debug(
                     "Errors when add to DistributedCache. Path=" + uri.toString() + ", archive=" + archive + ", conf="
                             + XmlUtils.prettyPrint(conf).toString());
             throw convertException(ex);
@@ -753,7 +753,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private void injectCallback(Context context, Configuration conf) {
         String callback = context.getCallbackUrl("$jobStatus");
         if (conf.get("job.end.notification.url") != null) {
-            XLog.getLog(getClass()).warn("Overriding the action job end notification URI");
+            LOG.warn("Overriding the action job end notification URI");
         }
         conf.set("job.end.notification.url", callback);
     }
@@ -790,7 +790,7 @@ public class JavaActionExecutor extends ActionExecutor {
             // action job configuration
             Configuration actionConf = createBaseHadoopConf(context, actionXml);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
-            XLog.getLog(getClass()).debug("Setting LibFilesArchives ");
+            LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
 
             String jobName = actionConf.get(HADOOP_JOB_NAME);
@@ -831,7 +831,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
             injectLauncherCallback(context, launcherJobConf);
-            XLog.getLog(getClass()).debug("Creating Job Client for action " + action.getId());
+            LOG.debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
             String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
                     .getRecoveryId());
@@ -850,7 +850,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
             else {
-                XLog.getLog(getClass()).debug("Submitting the job through Job Client for action " + action.getId());
+                LOG.debug("Submitting the job through Job Client for action " + action.getId());
 
                 // setting up propagation of the delegation token.
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
@@ -861,12 +861,12 @@ public class JavaActionExecutor extends ActionExecutor {
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials()) {
                     for (Token<? extends TokenIdentifier> tk : credentialsConf.getCredentials().getAllTokens()) {
-                        log.debug("ADDING TOKEN: " + tk.getKind().toString());
+                        LOG.debug("ADDING TOKEN: " + tk.getKind().toString());
                         launcherJobConf.getCredentials().addToken(tk.getKind(), tk);
                     }
                 }
                 else {
-                    log.info("No need to inject credentials.");
+                    LOG.info("No need to inject credentials.");
                 }
                 runningJob = jobClient.submitJob(launcherJobConf);
                 if (runningJob == null) {
@@ -874,7 +874,7 @@ public class JavaActionExecutor extends ActionExecutor {
                             "Error submitting launcher for action [{0}]", action.getId());
                 }
                 launcherId = runningJob.getID().toString();
-                XLog.getLog(getClass()).debug("After submission get the launcherId " + launcherId);
+                LOG.debug("After submission get the launcherId " + launcherId);
             }
 
             String jobTracker = launcherJobConf.get(HADOOP_JOB_TRACKER);
@@ -892,7 +892,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
                 catch (Exception e) {
                     if (exception) {
-                        log.error("JobClient error: ", e);
+                        LOG.error("JobClient error: ", e);
                     }
                     else {
                         throw convertException(e);
@@ -929,20 +929,20 @@ public class JavaActionExecutor extends ActionExecutor {
                 for (String key : credPropertiesMap.keySet()) {
                     CredentialsProperties prop = credPropertiesMap.get(key);
                     if (prop != null) {
-                        log.debug("Credential Properties set for action : " + action.getId());
+                        LOG.debug("Credential Properties set for action : " + action.getId());
                         for (String property : prop.getProperties().keySet()) {
                             actionConf.set(property, prop.getProperties().get(property));
-                            log.debug("property : '" + property + "', value : '" + prop.getProperties().get(property) + "'");
+                            LOG.debug("property : '" + property + "', value : '" + prop.getProperties().get(property) + "'");
                         }
                     }
                 }
             }
             else {
-                log.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
+                LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
             }
         }
         else {
-            log.warn("context or action is null");
+            LOG.warn("context or action is null");
         }
         return credPropertiesMap;
     }
@@ -959,10 +959,10 @@ public class JavaActionExecutor extends ActionExecutor {
                     Credentials credentialObject = credProvider.createCredentialObject();
                     if (credentialObject != null) {
                         credentialObject.addtoJobConf(jobconf, credProps, context);
-                        log.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
+                        LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
                     }
                     else {
-                        log.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
+                        LOG.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
                         throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA020",
                             "Could not load credentials of type [{0}] with name [{1}]]; perhaps it was not defined"
                                 + " in oozie-site.xml?", credProps.getType(), credName);
@@ -978,7 +978,7 @@ public class JavaActionExecutor extends ActionExecutor {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
-            log.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
+            LOG.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
             String[] credNames = credsInAction.split(",");
             for (String credName : credNames) {
                 CredentialsProperties credProps = getCredProperties(context, credName);
@@ -986,7 +986,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
         else {
-            log.warn("context or action is null");
+            LOG.warn("context or action is null");
         }
         return props;
     }
@@ -1003,7 +1003,7 @@ public class JavaActionExecutor extends ActionExecutor {
             for (Element credential : (List<Element>) credentials.getChildren("credential", credentials.getNamespace())) {
                 String name = credential.getAttributeValue("name");
                 String type = credential.getAttributeValue("type");
-                log.debug("getCredProperties: Name: " + name + ", Type: " + type);
+                LOG.debug("getCredProperties: Name: " + name + ", Type: " + type);
                 if (name.equalsIgnoreCase(credName)) {
                     credProp = new CredentialsProperties(name, type);
                     for (Element property : (List<Element>) credential.getChildren("property",
@@ -1018,29 +1018,31 @@ public class JavaActionExecutor extends ActionExecutor {
                         propertyValue = eval.evaluate(propertyValue, String.class);
 
                         credProp.getProperties().put(propertyName, propertyValue);
-                        log.debug("getCredProperties: Properties name :'" + propertyName + "', Value : '"
+                        LOG.debug("getCredProperties: Properties name :'" + propertyName + "', Value : '"
                                 + propertyValue + "'");
                     }
                 }
             }
         } else {
-            log.warn("credentials is null for the action");
+            LOG.debug("credentials is null for the action");
         }
         return credProp;
     }
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG = XLog.resetPrefix(LOG);
+        LogUtils.setLogInfo(action, new XLog.Info());
         try {
-            XLog.getLog(getClass()).debug("Starting action " + action.getId() + " getting Action File System");
+            LOG.debug("Starting action " + action.getId() + " getting Action File System");
             FileSystem actionFs = context.getAppFileSystem();
-            XLog.getLog(getClass()).debug("Preparing action Dir through copying " + context.getActionDir());
+            LOG.debug("Preparing action Dir through copying " + context.getActionDir());
             prepareActionDir(actionFs, context);
-            XLog.getLog(getClass()).debug("Action Dir is ready. Submitting the action ");
+            LOG.debug("Action Dir is ready. Submitting the action ");
             submitLauncher(actionFs, context, action);
-            XLog.getLog(getClass()).debug("Action submit completed. Performing check ");
+            LOG.debug("Action submit completed. Performing check ");
             check(context, action);
-            XLog.getLog(getClass()).debug("Action check is done after submission");
+            LOG.debug("Action check is done after submission");
         }
         catch (Exception ex) {
             throw convertException(ex);
@@ -1120,14 +1122,14 @@ public class JavaActionExecutor extends ActionExecutor {
                                 action.getId());
                     }
                     context.setExternalChildIDs(newId);
-                    XLog.getLog(getClass()).info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
+                    LOG.info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
                             newId);
                 }
                 else {
                     String externalIDs = actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS);
                     if (externalIDs != null) {
                         context.setExternalChildIDs(externalIDs);
-                        XLog.getLog(getClass()).info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                        LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
                     }
                 }
                 if (runningJob.isComplete()) {
@@ -1135,25 +1137,24 @@ public class JavaActionExecutor extends ActionExecutor {
                     if (newId != null) {
                         actionData = LauncherMapperHelper.getActionData(actionFs, context.getActionDir(), jobConf);
                     }
-                    XLog.getLog(getClass()).info(XLog.STD, "action completed, external ID [{0}]",
+                    LOG.info(XLog.STD, "action completed, external ID [{0}]",
                             action.getExternalId());
                     if (LauncherMapperHelper.isMainSuccessful(runningJob)) {
                         if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {
                             context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
                                     .get(LauncherMapper.ACTION_DATA_OUTPUT_PROPS)));
-                            XLog.getLog(getClass()).info(XLog.STD, "action produced output");
+                            LOG.info(XLog.STD, "action produced output");
                         }
                         else {
                             context.setExecutionData(SUCCEEDED, null);
                         }
                         if (LauncherMapperHelper.hasStatsData(actionData)) {
                             context.setExecutionStats(actionData.get(LauncherMapper.ACTION_DATA_STATS));
-                            XLog.getLog(getClass()).info(XLog.STD, "action produced stats");
+                            LOG.info(XLog.STD, "action produced stats");
                         }
                         getActionData(actionFs, runningJob, action, context);
                     }
                     else {
-                        XLog log = XLog.getLog(getClass());
                         String errorReason;
                         if (actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
                             Properties props = PropertiesUtils.stringToProperties(actionData
@@ -1166,37 +1167,37 @@ public class JavaActionExecutor extends ActionExecutor {
                                 errorCode = "JA019";
                             }
                             errorReason = props.getProperty("error.reason");
-                            log.warn("Launcher ERROR, reason: {0}", errorReason);
+                            LOG.warn("Launcher ERROR, reason: {0}", errorReason);
                             String exMsg = props.getProperty("exception.message");
                             String errorInfo = (exMsg != null) ? exMsg : errorReason;
                             context.setErrorInfo(errorCode, errorInfo);
                             String exStackTrace = props.getProperty("exception.stacktrace");
                             if (exMsg != null) {
-                                log.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
+                                LOG.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
                             }
                         }
                         else {
-                            errorReason = XLog.format("LauncherMapper died, check Hadoop log for job [{0}:{1}]", action
+                            errorReason = XLog.format("LauncherMapper died, check Hadoop LOG for job [{0}:{1}]", action
                                     .getTrackerUri(), action.getExternalId());
-                            log.warn(errorReason);
+                            LOG.warn(errorReason);
                         }
                         context.setExecutionData(FAILED_KILLED, null);
                     }
                 }
                 else {
                     context.setExternalStatus(RUNNING);
-                    XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
+                    LOG.info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
                             action.getExternalId(), action.getExternalStatus());
                 }
             }
             else {
                 context.setExternalStatus(RUNNING);
-                XLog.getLog(getClass()).info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
+                LOG.info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
                         action.getExternalId(), action.getExternalStatus());
             }
         }
         catch (Exception ex) {
-            XLog.getLog(getClass()).warn("Exception in check(). Message[{0}]", ex.getMessage(), ex);
+            LOG.warn("Exception in check(). Message[{0}]", ex.getMessage(), ex);
             exception = true;
             throw convertException(ex);
         }
@@ -1207,7 +1208,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
                 catch (Exception e) {
                     if (exception) {
-                        log.error("JobClient error: ", e);
+                        LOG.error("JobClient error: ", e);
                     }
                     else {
                         throw convertException(e);
@@ -1267,7 +1268,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             catch (Exception ex) {
                 if (exception) {
-                    log.error("Error: ", ex);
+                    LOG.error("Error: ", ex);
                 }
                 else {
                     throw convertException(ex);

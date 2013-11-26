@@ -124,7 +124,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             if (params.get(ALL_SERVERS_PARAM) != null && params.get(ALL_SERVERS_PARAM).length > 0
                     && params.get(ALL_SERVERS_PARAM)[0].equals("false")) {
                 new XLogStreamer(filter, xLogService.getOozieLogPath(), xLogService.getOozieLogName(),
-                        xLogService.getOozieLogRotation()).streamLog(writer, startTime, endTime);
+                        xLogService.getOozieLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
             }
             // Otherwise, we have to go collate relevant logs from the other Oozie servers
             else {
@@ -201,7 +201,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             // If it's just the one server (this server), then we don't need to do any more processing and can just copy it directly
             if (parsers.size() == 1) {
                 TimestampedMessageParser parser = parsers.get(0);
-                parser.processRemaining(writer);
+                parser.processRemaining(writer, bufferLen);
             }
             else {
                 // Now that we have a Reader for each server to get the logs from that server, we have to collate them.  Within each
@@ -215,11 +215,17 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                         timestampMap.put(parser.getLastTimestamp(), parser);
                     }
                 }
+                int bytesWritten = 0;
                 while (timestampMap.size() > 1) {
                     // The first entry will be the earliest based on the timestamp (also removes it) from the map
                     TimestampedMessageParser earliestParser = timestampMap.pollFirstEntry().getValue();
                     // Write the message from that parser at that timestamp
                     writer.write(earliestParser.getLastMessage());
+                    bytesWritten = earliestParser.getLastMessage().length();
+                    if (bytesWritten > bufferLen) {
+                        writer.flush();
+                        bytesWritten = 0;
+                    }
                     // Increment that parser to read the next message
                     if (earliestParser.increment()) {
                         // If it still has messages left, put it back in the map with the new last timestamp for it
@@ -230,7 +236,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                 if (timestampMap.size() == 1) {
                     TimestampedMessageParser parser = timestampMap.values().iterator().next();
                     writer.write(parser.getLastMessage());  // don't forget the last message read by the parser
-                    parser.processRemaining(writer);
+                    parser.processRemaining(writer, bufferLen, bytesWritten + parser.getLastMessage().length());
                 }
             }
         }

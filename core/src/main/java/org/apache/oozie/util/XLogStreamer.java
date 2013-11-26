@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import java.io.BufferedReader;
 
 /**
@@ -204,17 +205,16 @@ public class XLogStreamer {
      * @param endTime
      * @throws IOException
      */
-    public void streamLog(Writer writer, Date startTime, Date endTime) throws IOException {
+    public void streamLog(Writer writer, Date startTime, Date endTime, int bufferLen) throws IOException {
         // Get a Reader for the log file(s)
         BufferedReader reader = makeReader(startTime, endTime);
         try {
             // Process the entire logs from the reader using the logFilter
-            new TimestampedMessageParser(reader, logFilter).processRemaining(writer);
+            new TimestampedMessageParser(reader, logFilter).processRemaining(writer, bufferLen);
         }
         finally {
             reader.close();
         }
-        writer.flush();
     }
 
     /**

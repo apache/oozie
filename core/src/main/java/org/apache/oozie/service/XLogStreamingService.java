@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLogStreamer;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
@@ -29,7 +30,9 @@ import java.util.Date;
  * Service that performs streaming of log files over Web Services if enabled in XLogService
  */
 public class XLogStreamingService implements Service, Instrumentable {
-
+    private static final String CONF_PREFIX = Service.CONF_PREFIX + "XLogStreamingService.";
+    public static final String STREAM_BUFFER_LEN = CONF_PREFIX + "buffer.len";
+    protected int bufferLen;
 
     /**
      * Initialize the log streaming service.
@@ -38,6 +41,7 @@ public class XLogStreamingService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log streaming service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
+        bufferLen = services.getConf().getInt(STREAM_BUFFER_LEN, 4096);
     }
 
     /**
@@ -79,11 +83,15 @@ public class XLogStreamingService implements Service, Instrumentable {
         XLogService xLogService = Services.get().get(XLogService.class);
         if (xLogService.getLogOverWS()) {
             new XLogStreamer(filter, xLogService.getOozieLogPath(), xLogService.getOozieLogName(),
-                    xLogService.getOozieLogRotation()).streamLog(writer, startTime, endTime);
+                    xLogService.getOozieLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
         }
         else {
             writer.write("Log streaming disabled!!");
         }
 
+    }
+
+    public int getBufferLen() {
+        return bufferLen;
     }
 }
