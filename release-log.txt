@@ -1,6 +1,5 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
-OOZIE-1626 pig action pop-up is not working properly in UI (ryota)
 OOZIE-1612 When printing Dates to log messages, we should make sure they are in oozie.processing.timezone (gwenshap via rkanter)
 OOZIE-1519 Admin command to update the sharelib (puru via ryota)
 OOZIE-1604 <java-opts> and <java-opt> not added to Application Master property in uber mode (ryota)
@@ -90,7 +89,6 @@ OOZIE-1549 Update hcat documentation to mention hcatalog-pig-adapter jar (bowenz
 
 -- Oozie 4.0.0 release
 
-OOZIE-1626 pig action pop-up is not working properly in UI (ryota)
 OOZIE-1514 Rerunning a coordinator with no input dependencies puts actions in WAITING instead of READY and proceeding (bowenzhangusa via mona)
 OOZIE-1507 Command queue filling up with duplicate commands from RecoveryService (rohini)
 OOZIE-1502 Coordinator Job not going to Failed if a bad HCat-uri is specified (mona)
