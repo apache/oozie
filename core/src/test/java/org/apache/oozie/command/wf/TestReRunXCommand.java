@@ -216,6 +216,8 @@ public class TestReRunXCommand extends XFsTestCase {
         sleep(5000);
 
         conf.setProperty(OozieClient.RERUN_SKIP_NODES, "hdfs11");
+        conf.setProperty("WF_NAME", "wf_test");
+        conf.setProperty("FEED_NAME", "feed_test");
         wfClient.reRun(jobId1, conf);
         waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -223,5 +225,6 @@ public class TestReRunXCommand extends XFsTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
+        assertEquals("wf_test-feed_test", wfClient.getJobInfo(jobId1).getAppName());
     }
 }

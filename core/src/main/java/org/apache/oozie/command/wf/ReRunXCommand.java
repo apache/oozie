@@ -163,7 +163,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             catch (WorkflowException e) {
                 throw new CommandException(e);
             }
-
+            String appName = ELUtils.resolveAppName(app.getName(), conf);
             if (SLAService.isEnabled()) {
                 Element wfElem = XmlUtils.parseXml(app.getDefinition());
                 ELEvaluator evalSla = SubmitXCommand.createELEvaluatorForGroup(conf, "wf-sla-submit");
@@ -172,12 +172,11 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 if (eSla != null) {
                     jobSlaXml = SubmitXCommand.resolveSla(eSla, evalSla);
                 }
-                String appName = ELUtils.resolveAppName(app.getName(), conf);
                 writeSLARegistration(wfElem, jobSlaXml, newWfInstance.getId(),
                             conf.get(SubWorkflowActionExecutor.PARENT_ID), conf.get(OozieClient.USER_NAME), appName,
                             evalSla);
             }
-            wfBean.setAppName(app.getName());
+            wfBean.setAppName(appName);
             wfBean.setProtoActionConf(protoActionConf.toXmlString());
         }
         catch (WorkflowException ex) {
