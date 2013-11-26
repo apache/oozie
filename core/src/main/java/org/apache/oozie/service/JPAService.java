@@ -295,7 +295,7 @@ public class JPAService implements Service, Instrumentable {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
         finally {
-            processFinally(em, cron, namedQueryName);
+            processFinally(em, cron, namedQueryName, true);
         }
     }
 
@@ -317,20 +317,22 @@ public class JPAService implements Service, Instrumentable {
         }
     }
 
-    private void processFinally(EntityManager em, Instrumentation.Cron cron, String name){
+    private void processFinally(EntityManager em, Instrumentation.Cron cron, String name, boolean checkActive) {
         cron.stop();
         if (instr != null) {
             instr.addCron(INSTRUMENTATION_GROUP_JPA, name, cron);
         }
-        try {
-            if (em.getTransaction().isActive()) {
-                LOG.warn("[{0}] ended with an active transaction, rolling back", name);
-                em.getTransaction().rollback();
+        if (checkActive) {
+            try {
+                if (em.getTransaction().isActive()) {
+                    LOG.warn("[{0}] ended with an active transaction, rolling back", name);
+                    em.getTransaction().rollback();
+                }
             }
-        }
-        catch (Exception ex) {
-            LOG.warn("Could not check/rollback transaction after [{0}], {1}", name,
-                    ex.getMessage(), ex);
+            catch (Exception ex) {
+                LOG.warn("Could not check/rollback transaction after [{0}], {1}", name,
+                        ex.getMessage(), ex);
+            }
         }
         try {
             if (em.isOpen()) {
@@ -390,7 +392,7 @@ public class JPAService implements Service, Instrumentable {
             throw new JPAExecutorException(ErrorCode.E0603, e);
         }
         finally {
-            processFinally(em, cron, "batchqueryexecutor");
+            processFinally(em, cron, "batchqueryexecutor", true);
         }
     }
 
@@ -400,9 +402,8 @@ public class JPAService implements Service, Instrumentable {
      * @param query query instance to be executed
      * @param em Entity Manager
      * @return object that matches the query
-     * @throws JPAExecutorException
      */
-    public Object executeGet(String namedQueryName, Query query, EntityManager em) throws JPAExecutorException {
+    public Object executeGet(String namedQueryName, Query query, EntityManager em) {
         Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
@@ -412,7 +413,6 @@ public class JPAService implements Service, Instrumentable {
             }
 
             cron.start();
-            em.getTransaction().begin();
             Object obj = null;
             try {
                 obj = query.getSingleResult();
@@ -420,19 +420,10 @@ public class JPAService implements Service, Instrumentable {
             catch (NoResultException e) {
                 // return null when no matched result
             }
-            if (em.getTransaction().isActive()) {
-                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
-                    throw new RuntimeException("Skipping Commit for Failover Testing");
-                }
-                em.getTransaction().commit();
-            }
             return obj;
         }
-        catch (PersistenceException e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
-        }
         finally {
-            processFinally(em, cron, namedQueryName);
+            processFinally(em, cron, namedQueryName, false);
         }
     }
 
@@ -442,9 +433,8 @@ public class JPAService implements Service, Instrumentable {
      * @param query query instance to be executed
      * @param em Entity Manager
      * @return list containing results that match the query
-     * @throws JPAExecutorException
      */
-    public List<?> executeGetList(String namedQueryName, Query query, EntityManager em) throws JPAExecutorException {
+    public List<?> executeGetList(String namedQueryName, Query query, EntityManager em) {
         Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
@@ -454,7 +444,6 @@ public class JPAService implements Service, Instrumentable {
             }
 
             cron.start();
-            em.getTransaction().begin();
             List<?> resultList = null;
             try {
                 resultList = query.getResultList();
@@ -462,19 +451,10 @@ public class JPAService implements Service, Instrumentable {
             catch (NoResultException e) {
                 // return null when no matched result
             }
-            if (em.getTransaction().isActive()) {
-                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
-                    throw new RuntimeException("Skipping Commit for Failover Testing");
-                }
-                em.getTransaction().commit();
-            }
             return resultList;
         }
-        catch (PersistenceException e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
-        }
         finally {
-            processFinally(em, cron, namedQueryName);
+            processFinally(em, cron, namedQueryName, false);
         }
     }
 
