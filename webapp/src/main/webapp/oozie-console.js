@@ -89,6 +89,37 @@ function getTimeZone() {
     return Ext.state.Manager.get("TimezoneId","GMT");
 }
 
+function getUserName() {
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+    return Ext.state.Manager.get("UserName", null);
+}
+
+function getCustomFilter() {
+    var filter = '';
+    var userName = getUserName();
+    if(userName) {
+        filter = "user=" + userName;
+    }
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+    var customFilter = Ext.state.Manager.get("GlobalCustomFilter", null);
+    if (customFilter) {
+       if (filter) {
+           filter = filter + ";" + customFilter;
+       } else {
+           filter = customFilter;
+       }
+    }
+    return filter;
+}
+
+function convertStatusToUpperCase(filterText) {
+    var converted = filterText.replace(/status=([a-zA-Z]+)/g, function(){
+          var text = arguments[1];
+          return "status="+ text.toUpperCase();
+    });
+    return converted;
+}
+
 if ( !String.prototype.endsWith ) {
     String.prototype.endsWith = function(pattern) {
         var d = this.length - pattern.length;
@@ -554,7 +585,7 @@ function jobDetailsPopup(response, request) {
                     }]
                 })]
             });
-            
+
             // Tab to show list of child Job URLs for pig action
             var childJobsItem = {
                 title : 'Child Job URLs',
@@ -1581,9 +1612,9 @@ function getConfigObject(responseTxt) {
 }
 // All the actions
 var refreshCustomJobsAction = new Ext.Action({
-    text: 'status=KILLED',
+    text: Ext.state.Manager.get('CustomWFJobFilter','status=KILLED'),
     handler: function() {
-        jobs_store.baseParams.filter = this.text;
+        jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ";" + this.text : this.text;
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
         Ext.getCmp('jobs_active').setIconClass('');
@@ -1597,7 +1628,7 @@ var refreshActiveJobsAction = new Ext.Action({
     id: 'jobs_active',
     text: 'Active Jobs',
     handler: function() {
-        jobs_store.baseParams.filter = 'status=RUNNING';
+        jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';status=RUNNING' : 'status=RUNNING';
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
         Ext.getCmp('jobs_active').setIconClass('job-filter');
@@ -1611,7 +1642,7 @@ var refreshAllJobsAction = new Ext.Action({
     id: 'jobs_all',
     text: 'All Jobs',
     handler: function() {
-        jobs_store.baseParams.filter = '';
+        jobs_store.baseParams.filter = getCustomFilter()? getCustomFilter() : "";
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
         Ext.getCmp('jobs_active').setIconClass('');
@@ -1625,7 +1656,8 @@ var refreshDoneJobsAction = new Ext.Action({
     id: 'jobs_done',
     text: 'Done Jobs',
     handler: function() {
-        jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED';
+        var doneJobStatus = 'status=SUCCEEDED;status=KILLED;status=FAILED';
+        jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + doneJobStatus : doneJobStatus;
         jobs_store.baseParams.timezone = getTimeZone();
         jobs_store.reload();
         Ext.getCmp('jobs_active').setIconClass('');
@@ -1635,9 +1667,9 @@ var refreshDoneJobsAction = new Ext.Action({
 });
 
 var refreshCoordCustomJobsAction = new Ext.Action({
-    text: 'status=KILLED',
+    text: Ext.state.Manager.get('CustomCoordJobFilter', 'status=KILLED'),
     handler: function() {
-        coord_jobs_store.baseParams.filter = this.text;
+        coord_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + this.text : this.text;
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         Ext.getCmp('coord_active').setIconClass('');
@@ -1651,7 +1683,8 @@ var refreshCoordActiveJobsAction = new Ext.Action({
     id: 'coord_active',
     text: 'Active Jobs',
     handler: function() {
-        coord_jobs_store.baseParams.filter = 'status=RUNNING;status=RUNNINGWITHERROR';
+        var coordActiveStatus = 'status=RUNNING;status=RUNNINGWITHERROR';
+        coord_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + coordActiveStatus : coordActiveStatus;
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         Ext.getCmp('coord_active').setIconClass('job-filter');
@@ -1673,7 +1706,7 @@ var refreshCoordAllJobsAction = new Ext.Action({
     id: 'coord_all',
     text: 'All Jobs',
     handler: function() {
-        coord_jobs_store.baseParams.filter = '';
+        coord_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() : '';
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         Ext.getCmp('coord_active').setIconClass('');
@@ -1695,7 +1728,8 @@ var refreshCoordDoneJobsAction = new Ext.Action({
     id: 'coord_done',
     text: 'Done Jobs',
     handler: function() {
-        coord_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
+        var coordDoneStatus = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
+        coord_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + coordDoneStatus : coordDoneStatus;
         coord_jobs_store.baseParams.timezone = getTimeZone();
         coord_jobs_store.reload();
         Ext.getCmp('coord_active').setIconClass('');
@@ -1717,7 +1751,8 @@ var refreshBundleActiveJobsAction = new Ext.Action({
     id: 'bundle_active',
     text: 'Active Jobs',
     handler: function() {
-        bundle_jobs_store.baseParams.filter = 'status=RUNNING;status=RUNNINGWITHERROR';
+        var bundleActiveStatus = 'status=RUNNING;status=RUNNINGWITHERROR';
+        bundle_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + bundleActiveStatus : bundleActiveStatus;
         bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
         Ext.getCmp('bundle_active').setIconClass('job-filter');
@@ -1730,10 +1765,10 @@ var refreshBundleAllJobsAction = new Ext.Action({
     id: 'bundle_all',
     text: 'All Jobs',
     handler: function() {
-		bundle_jobs_store.baseParams.filter = '';
+        bundle_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() : '';
         bundle_jobs_store.baseParams.timezone = getTimeZone();
-		bundle_jobs_store.reload();
-		Ext.getCmp('bundle_active').setIconClass('');
+        bundle_jobs_store.reload();
+        Ext.getCmp('bundle_active').setIconClass('');
         Ext.getCmp('bundle_all').setIconClass('job-filter');
         Ext.getCmp('bundle_done').setIconClass('');
     }
@@ -1743,7 +1778,8 @@ var refreshBundleDoneJobsAction = new Ext.Action({
     id: 'bundle_done',
     text: 'Done Jobs',
     handler: function() {
-	    bundle_jobs_store.baseParams.filter = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
+        var bundleDoneStatus = 'status=SUCCEEDED;status=KILLED;status=FAILED;status=DONEWITHERROR';
+        bundle_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ';' + bundleDoneStatus : bundleDoneStatus
         bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
         Ext.getCmp('bundle_active').setIconClass('');
@@ -1753,9 +1789,9 @@ var refreshBundleDoneJobsAction = new Ext.Action({
 });
 
 var refreshBundleCustomJobsAction = new Ext.Action({
-    text: 'status=KILLED',
+    text: Ext.state.Manager.get('CustomBundleJobFilter', 'status=KILLED'),
     handler: function() {
-        bundle_jobs_store.baseParams.filter = this.text;
+        bundle_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + this.text : this.text;
         bundle_jobs_store.baseParams.timezone = getTimeZone();
         bundle_jobs_store.reload();
         Ext.getCmp('bundle_active').setIconClass('');
@@ -1781,8 +1817,13 @@ var changeFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                refreshCustomJobsAction.setText(text);
-                jobs_store.baseParams.filter = text;
+                var filter = convertStatusToUpperCase(text);
+                refreshCustomJobsAction.setText(filter);
+                Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+                    expires: new Date(new Date().getTime()+315569259747)
+                }));
+                Ext.state.Manager.set('CustomWFJobFilter', filter);
+                jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ";" + filter : filter;
                 jobs_store.baseParams.timezone = getTimeZone();
                 jobs_store.reload();
             }
@@ -1795,8 +1836,13 @@ var changeCoordFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                refreshCoordCustomJobsAction.setText(text);
-                coord_jobs_store.baseParams.filter = text;
+                var filter = convertStatusToUpperCase(text);
+                refreshCoordCustomJobsAction.setText(filter);
+                Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+                    expires: new Date(new Date().getTime()+315569259747)
+                }));
+                Ext.state.Manager.set("CustomCoordJobFilter", filter);
+                coord_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ";" + filter : filter;
                 coord_jobs_store.baseParams.timezone = getTimeZone();
                 coord_jobs_store.reload();
             }
@@ -1809,8 +1855,13 @@ var changeBundleFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                refreshBundleCustomJobsAction.setText(text);
-                bundle_jobs_store.baseParams.filter = text;
+                var filter = convertStatusToUpperCase(text);
+                refreshBundleCustomJobsAction.setText(filter);
+                Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+                    expires: new Date(new Date().getTime()+315569259747)
+                }));
+                Ext.state.Manager.set("CustomBundleJobFilter", filter);
+                bundle_jobs_store.baseParams.filter = getCustomFilter() ? getCustomFilter() + ";" + filter : filter;
                 bundle_jobs_store.baseParams.timezone = getTimeZone();
                 bundle_jobs_store.reload();
             }
@@ -2041,6 +2092,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                jobs_store.baseParams.filter = getCustomFilter();
                 jobs_store.baseParams.timezone = getTimeZone();
                 jobs_store.reload();
             }
@@ -2173,6 +2225,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                coord_jobs_store.baseParams.filter = getCustomFilter();
                 coord_jobs_store.baseParams.timezone = getTimeZone();
                 coord_jobs_store.reload();
             }
@@ -2243,6 +2296,7 @@ function initConsole() {
             text: "&nbsp;&nbsp;&nbsp;",
             icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
             handler: function() {
+                bundle_jobs_store.baseParams.filter = getCustomFilter();
                 bundle_jobs_store.baseParams.timezone = getTimeZone();
                 bundle_jobs_store.reload();
             }
@@ -2264,6 +2318,8 @@ function initConsole() {
     });
     Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
     var currentTimezone = Ext.state.Manager.get("TimezoneId","GMT");
+    var userName = Ext.state.Manager.get("UserName","");
+    var commonFilter = Ext.state.Manager.get("GlobalCustomFilter","");
     var settingsArea = new Ext.FormPanel({
         title: 'Settings',
         items: [{
@@ -2287,6 +2343,48 @@ function initConsole() {
                         expires: new Date(new Date().getTime()+315569259747) // about 10 years from now!
                     }));
                     Ext.state.Manager.set("TimezoneId",this.value);
+                }
+            }}
+        },{
+            xtype: 'label',
+            width: 300,
+            style: 'font: normal 12px tahoma',
+            text: 'Global Filter'
+        },{
+            xtype: 'field',
+            width: 300,
+            fieldLabel: '- by User Name',
+            inputType: 'text',
+            typeAhead: true,
+            editable: false,
+            triggerAction: 'all',
+            value: userName,
+            listeners:
+            { change: { fn:function(field, value)
+                {
+                    Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+                        expires: new Date(new Date().getTime()+315569259747) // about 10 years from now!
+                    }));
+                    Ext.state.Manager.set("UserName", value);
+                }
+            }}
+        },{
+            xtype: 'field',
+            width: 300,
+            fieldLabel: '- by Filter Text',
+            inputType: 'text',
+            typeAhead: true,
+            editable: false,
+            triggerAction: 'all',
+            value: commonFilter,
+            listeners:
+            { change: { fn:function(field, value)
+                {
+                    Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+                        expires: new Date(new Date().getTime()+315569259747) // about 10 years from now!
+                    }));
+                    var upper_value = convertStatusToUpperCase(value);
+                    Ext.state.Manager.set("GlobalCustomFilter", upper_value);
                 }
             }}
         }]
