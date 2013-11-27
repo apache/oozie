@@ -111,7 +111,7 @@ public class TestTimestampedMessageParser extends XTestCase {
 
         File file = prepareFile1(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw);
+        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
         String[] out = sw.toString().split("\n");
         assertEquals(14, out.length);
         assertTrue(out[0].contains("_L1_"));
@@ -144,7 +144,7 @@ public class TestTimestampedMessageParser extends XTestCase {
 
         File file = prepareFile2(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw);
+        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
         String[] matches = sw.toString().split("\n");
         assertEquals(2, matches.length);
         assertTrue(matches[0].contains("_L1_"));
