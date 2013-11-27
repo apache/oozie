@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1615 shell action cannot find script file and fails in uber mode (ryota)
 OOZIE-1605 Add common custom filter applied to Wf/Coord/Bundle jobs on oozie UI (ryota)
 OOZIE-1474 Fix logging issues - latency, accurate job ids, coord Job UI to show job logs (mona)
 OOZIE-1623 JPAService doesn't need to do reads in a transaction (rkanter)

@@ -326,4 +326,24 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         return runningJob;
     }
 
+    public void testShellMainPathInUber() throws Exception {
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+
+        Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"
+                + "<argument>a=A</argument>" + "<argument>b=B</argument>" + "</shell>");
+        ShellActionExecutor ae = new ShellActionExecutor();
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+        JobConf launcherConf = new JobConf();
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, launcherConf);
+        // env
+        assertEquals("PATH=.:$PATH", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
+    }
 }

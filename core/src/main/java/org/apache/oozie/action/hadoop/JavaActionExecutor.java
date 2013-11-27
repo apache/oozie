@@ -233,7 +233,12 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
                 injectLauncherProperties(actionDefaultConf, launcherConf);
                 injectLauncherProperties(inlineConf, launcherConf);
+                injectLauncherUseUberMode(launcherConf);
                 checkForDisallowedProps(launcherConf, "launcher configuration");
+                XConfiguration.copy(launcherConf, conf);
+            } else {
+                XConfiguration launcherConf = new XConfiguration();
+                injectLauncherUseUberMode(launcherConf);
                 XConfiguration.copy(launcherConf, conf);
             }
             return conf;
@@ -248,7 +253,6 @@ public class JavaActionExecutor extends ActionExecutor {
         if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
             if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false)) {
                 launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
-                updateConfForUberMode(launcherConf);
             }
         }
     }
@@ -734,7 +738,9 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             // setting for uber mode
-            injectLauncherUseUberMode(launcherJobConf);
+            if (launcherJobConf.getBoolean(HADOOP_YARN_UBER_MODE, false)) {
+                updateConfForUberMode(launcherJobConf);
+            }
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
             // maybe we should add queue to the WF schema, below job-tracker
