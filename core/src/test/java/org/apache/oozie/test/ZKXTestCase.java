@@ -32,6 +32,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.FixedJsonInstanceSerializer;
+import org.apache.oozie.util.ZKUtils;
 
 /**
  * Provides a version of XTestCase that also runs a ZooKeeper server and provides some utilities for interacting and simulating ZK
@@ -43,11 +44,16 @@ import org.apache.oozie.util.FixedJsonInstanceSerializer;
  * To simulate another Oozie server, the DummyZKOozie object can be used; you can specify a ZooKeeper ID and Oozie URL for it in
  * the constructor.  Unlike this test class, it will advertise on the ZK service discovery, so it will appear as another Oozie
  * Server to anything using ZKUtils (though it does not use ZKUtils itself so it can have different information).
+ * To simulate another ZK-aware class, DummyUser can be used, which will use ZKUtils for interacting with ZK, including advertising
+ * on the service discovery; it also provides access to its ZKUtils instance.
+ * <p>
+ * To use security, see {@link ZKXTestCaseWithSecurity}.
  */
 public abstract class ZKXTestCase extends XTestCase {
     private TestingServer zkServer;
     private CuratorFramework client = null;
     private ServiceDiscovery<Map> sDiscovery = null;
+
     /**
      * The ZooKeeper ID for "this" Oozie server
      */
@@ -57,8 +63,7 @@ public abstract class ZKXTestCase extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
-        // Start the ZooKeeper server and set Oozie ZK properties
-        zkServer = new TestingServer();
+        zkServer = setupZKServer();
         Services.get().getConf().set("oozie.zookeeper.connection.string", zkServer.getConnectString());
         setSystemProperty("oozie.instance.id", ZK_ID);
         createClient();
@@ -75,6 +80,16 @@ public abstract class ZKXTestCase extends XTestCase {
         client = null;
         zkServer.stop();
         zkServer.close();   // also deletes the temp dir so we don't start eating up GBs of space
+    }
+
+    /**
+     * Creates and sets up the embedded ZooKeeper server.  Test subclasses should have no reason to override this method.
+     *
+     * @return the embedded ZooKeeper server
+     * @throws Exception
+     */
+    protected TestingServer setupZKServer() throws Exception {
+        return new TestingServer();
     }
 
     /**
@@ -207,6 +222,48 @@ public abstract class ZKXTestCase extends XTestCase {
                 .id(zkId)
                 .payload(map)
                 .build();
+        }
+    }
+
+    /**
+     * Provides a class that can can register/unregister with the ZKUtils.  It also provides access to the ZKUtils object.  This is
+     * useful for testing features of the of ZKUtils class.  It will register when {@link DummyUser#register()} is called.  Make
+     * sure to call {@link DummyUser#unregister()} when done using it.
+     */
+    protected class DummyUser {
+
+        public DummyUser() {
+        }
+        private ZKUtils zk = null;
+
+        /**
+         * Registers with ZKUtils.
+         *
+         * @throws Exception
+         */
+        public void register() throws Exception {
+            zk = ZKUtils.register(this);
+            sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
+        }
+
+        /**
+         * Unregisters with ZKUtils.
+         */
+        public void unregister() {
+            if (zk != null) {
+                zk.unregister(this);
+                sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
+            }
+            zk = null;
+        }
+
+        /**
+         * Accessor for the ZKUtils object used by this class.
+         *
+         * @return The ZKUtils object
+         */
+        public ZKUtils getZKUtils() {
+            return zk;
         }
     }
 }

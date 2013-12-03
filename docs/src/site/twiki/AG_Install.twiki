@@ -790,9 +790,37 @@ be missing information until that server comes back up.
 
 ---++++ Security
 
-Oozie HA works with the existing Oozie security framework and settings.  There are no additional security settings specific to HA;
-however, for log streaming to work properly in a secure setup, =oozie.authentication.type= must be set properly on each server
-(though this is already required if using security in the first place).
+Oozie HA works with the existing Oozie security framework and settings. For log streaming to work properly in a secure
+setup =oozie.authentication.type= must be set properly on each server (though this is already required if using security in the
+first place).
+
+(Optional) To prevent unauthorized users or programs from interacting with or reading the znodes used by Oozie in ZooKeeper,
+you can tell Oozie to use Kerberos-backed ACLs.  To enforce this for all of the Oozie-related znodes, simply add the following
+property to oozie-site.xml in all Oozie servers and set it to =true=.  The default is =false=.
+
+<verbatim>
+<property>
+    <name>oozie.zookeeper.secure</name>
+    <value>true</value>
+</property>
+</verbatim>
+
+Note: The Kerberos principals of each of the Oozie servers should have the same primary name (i.e. in =primary/instance@REALM=, each
+server should have the same value for =primary=).
+
+*Important:* Once this property is set to =true=, it will set the ACLs on all existing Oozie-related znodes to only allow Kerberos
+authenticated users with a principal that has the same primary as described above (also for any subsequently created new znodes).
+This means that if you ever want to turn this feature off, you will have to manually connect to ZooKeeper using a Kerberos principal
+with the same primary and either delete all znodes under and including the namespace (i.e. if =oozie.zookeeper.namespace= = =oozie=
+then that would be =/oozie=); alternatively, instead of deleting them all, you can manually set all of their ACLs to =world:anyone=.
+In either case, make sure that no Oozie servers are running while this is being done.
+
+Also, in your zoo.cfg for ZooKeeper, make sure to set the following properties:
+<verbatim>
+authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+kerberos.removeHostFromPrincipal=true
+kerberos.removeRealmFromPrincipal=true
+</verbatim>
 
 ---++ Starting and Stopping Oozie
 

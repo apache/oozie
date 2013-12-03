@@ -18,14 +18,19 @@
 package org.apache.oozie.util;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.security.auth.login.Configuration;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.api.ACLProvider;
+import org.apache.curator.framework.imps.DefaultACLProvider;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.utils.EnsurePath;
 import org.apache.curator.x.discovery.ServiceCache;
@@ -33,7 +38,16 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
+import org.apache.oozie.ErrorCode;
+import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_KEYTAB;
+import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_PRINCIPAL;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.zookeeper.ZooDefs.Perms;
+import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
 
 
 /**
@@ -48,10 +62,15 @@ import org.apache.oozie.service.Services;
  * Each Oozie Server provides metadata that can be shared with the other Oozie Servers.  To keep things simple and to make it easy
  * to add additional metadata in the future, we share a Map.  They keys are defined in {@link ZKMetadataKeys}.
  * <p>
- * For the service discovery, the structure in ZooKeeper is /oozie.zookeeper.namespace/ZK_BASE_PATH/ (default is /oozie/services/).
- * There is currently only one service, named "servers" under which each Oozie server creates a ZNode named
+ * For the service discovery, the structure in ZooKeeper is /oozie.zookeeper.namespace/ZK_BASE_SERVICES_PATH/ (default is
+ * /oozie/services/).  There is currently only one service, named "servers" under which each Oozie server creates a ZNode named
  * ${OOZIE_SERVICE_INSTANCE} (default is the hostname) that contains the metadata payload.  For example, with the default settings,
  * an Oozie server named "foo" would create a ZNode at /oozie/services/servers/foo where the foo ZNode contains the metadata.
+ * <p>
+ * If oozie.zookeeper.secure is set to true, then Oozie will (a) use jaas to connect to ZooKeeper using SASL/Kerberos based on
+ * Oozie's existing security configuration parameters (b) use/convert every znode under the namespace (including the namespace
+ * itself) to have ACLs such that only Oozie servers have access (i.e. if "service/host@REALM" is the Kerberos principal, then
+ * "service" will be used for the ACLs).
  */
 public class ZKUtils {
     /**
@@ -70,8 +89,13 @@ public class ZKUtils {
      */
     public static final String OOZIE_INSTANCE_ID = "oozie.instance.id";
 
+    /**
+     * oozie-site property for specifying that ZooKeeper is secure.
+     */
+    public static final String ZK_SECURE = "oozie.zookeeper.secure";
+
     private static final String ZK_OOZIE_SERVICE = "servers";
-    private static final String ZK_BASE_PATH = "/services";
+    private static final String ZK_BASE_SERVICES_PATH = "/services";
 
     private static Set<Object> users = new HashSet<Object>();
     private CuratorFramework client = null;
@@ -79,6 +103,7 @@ public class ZKUtils {
     private long zkRegTime;
     private ServiceDiscovery<Map> sDiscovery;
     private ServiceCache<Map> sCache;
+    private List<ACL> saslACL;
     private XLog log;
 
     private static ZKUtils zk = null;
@@ -93,6 +118,7 @@ public class ZKUtils {
         zkId = System.getProperty(OOZIE_INSTANCE_ID);
         createClient();
         advertiseService();
+        checkAndSetACLs();
     }
 
     /**
@@ -130,20 +156,33 @@ public class ZKUtils {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
         String zkNamespace = Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+        ACLProvider aclProvider;
+        if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
+            log.info("Connecting to ZooKeeper with SASL/Kerberos and using 'sasl' ACLs");
+            setJaasConfiguration();
+            System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
+            System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+            saslACL = Collections.singletonList(new ACL(Perms.ALL, new Id("sasl", getServicePrincipal())));
+            aclProvider = new SASLOwnerACLProvider();
+        } else {
+            log.info("Connecting to ZooKeeper without authentication");
+            aclProvider = new DefaultACLProvider();     // open to everyone
+        }
         client = CuratorFrameworkFactory.builder()
                                             .namespace(zkNamespace)
                                             .connectString(zkConnectionString)
                                             .retryPolicy(retryPolicy)
+                                            .aclProvider(aclProvider)
                                             .build();
         client.start();
     }
 
     private void advertiseService() throws Exception {
         // Advertise on the service discovery
-        new EnsurePath(ZK_BASE_PATH).ensure(client.getZookeeperClient());
+        new EnsurePath(ZK_BASE_SERVICES_PATH).ensure(client.getZookeeperClient());
         InstanceSerializer<Map> instanceSerializer = new FixedJsonInstanceSerializer<Map>(Map.class);
         sDiscovery = ServiceDiscoveryBuilder.builder(Map.class)
-                                                .basePath(ZK_BASE_PATH)
+                                                .basePath(ZK_BASE_SERVICES_PATH)
                                                 .client(client)
                                                 .serializer(instanceSerializer)
                                                 .build();
@@ -196,7 +235,6 @@ public class ZKUtils {
      * or two stale.
      *
      * @return a List of the metadata provided by all of the Oozie Servers.
-     * @throws Exception
      */
     public List<ServiceInstance<Map>> getAllMetaData() {
         List<ServiceInstance<Map>> instances = null;
@@ -245,6 +283,59 @@ public class ZKUtils {
         return index;
     }
 
+    private void checkAndSetACLs() throws Exception {
+        if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
+            // If znodes were previously created without security enabled, and now it is, we need to go through all existing znodes
+            // and set the ACLs for them
+            // We can't get the namespace znode through curator; have to go through zk client
+            String namespace = "/" + client.getNamespace();
+            if (client.getZookeeperClient().getZooKeeper().exists(namespace, null) != null) {
+                List<ACL> acls = client.getZookeeperClient().getZooKeeper().getACL(namespace, new Stat());
+                if (!acls.get(0).getId().getScheme().equals("sasl")) {
+                    log.info("'sasl' ACLs not set; setting...");
+                    List<String> children = client.getZookeeperClient().getZooKeeper().getChildren(namespace, null);
+                    for (String child : children) {
+                        checkAndSetACLs(child);
+                    }
+                    client.getZookeeperClient().getZooKeeper().setACL(namespace, saslACL, -1);
+                }
+            }
+        }
+    }
+
+    private void checkAndSetACLs(String path) throws Exception {
+        List<String> children = client.getChildren().forPath(path);
+        for (String child : children) {
+            checkAndSetACLs(path + "/" + child);
+        }
+        client.setACL().withACL(saslACL).forPath(path);
+    }
+
+    // This gets ignored during most tests, see ZKXTestCaseWithSecurity#setupZKServer()
+    private void setJaasConfiguration() throws ServiceException, IOException {
+        String keytabFile = Services.get().getConf().get(KERBEROS_KEYTAB, System.getProperty("user.home") + "/oozie.keytab").trim();
+        if (keytabFile.length() == 0) {
+            throw new ServiceException(ErrorCode.E0026, KERBEROS_KEYTAB);
+        }
+        String principal = Services.get().getConf().get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+        if (principal.length() == 0) {
+            throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
+        }
+
+        // This is equivalent to writing a jaas.conf file and setting the system property, "java.security.auth.login.config", to
+        // point to it (but this way we don't have to write a file, and it works better for the tests)
+        JaasConfiguration.addEntry("Client", principal, keytabFile);
+        Configuration.setConfiguration(JaasConfiguration.getInstance());
+    }
+
+    private String getServicePrincipal() throws ServiceException {
+        String principal = Services.get().getConf().get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+        if (principal.length() == 0) {
+            throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
+        }
+        return principal.split("[/@]")[0];
+    }
+
     /**
      * Useful for tests to get the registered classes
      *
@@ -267,5 +358,21 @@ public class ZKUtils {
          * The URL of the Oozie Server
          */
         public static final String OOZIE_URL = "OOZIE_URL";
+    }
+
+    /**
+     * Simple implementation of an {@link ACLProvider} that simply returns {@link #saslACL}.
+     */
+    public class SASLOwnerACLProvider implements ACLProvider {
+
+        @Override
+        public List<ACL> getDefaultAcl() {
+            return saslACL;
+        }
+
+        @Override
+        public List<ACL> getAclForPath(String path) {
+            return saslACL;
+        }
     }
 }

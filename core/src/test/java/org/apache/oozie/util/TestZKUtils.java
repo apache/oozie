@@ -39,26 +39,6 @@ public class TestZKUtils extends ZKXTestCase {
         super.tearDown();
     }
 
-    private class DummyUser {
-        private ZKUtils zk = null;
-        void register() throws Exception {
-            zk = ZKUtils.register(this);
-            sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
-        }
-
-        void unregister() {
-            if (zk != null) {
-                zk.unregister(this);
-                sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
-            }
-            zk = null;
-        }
-
-        ZKUtils getZKUtils() {
-            return zk;
-        }
-    }
-
     public void testRegisterAdvertiseUnadvertiseUnregister() throws Exception {
         CuratorFramework client = getClient();
         ServiceDiscovery<Map> sDiscovery = getServiceDiscovery();
