@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1631 Tools module should have a direct dependency on mockito (rkanter)
 OOZIE-1491 Make sure HA works with a secure ZooKeeper (rkanter)
 OOZIE-1615 shell action cannot find script file and fails in uber mode (ryota)
 OOZIE-1605 Add common custom filter applied to Wf/Coord/Bundle jobs on oozie UI (ryota)
