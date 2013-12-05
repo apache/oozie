@@ -173,8 +173,17 @@ public class TestShareLibService extends XFsTestCase {
         ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
         URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        assertEquals(2, cacheFiles.length);
-        assertTrue(cacheFiles[0].getPath().endsWith("MyPig.jar") || cacheFiles[1].getPath().endsWith("MyPig.jar"));
+        String cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains("MyPig.jar"));
+        assertTrue(cacheFilesStr.contains("MyOozie.jar"));
+        // Hadoop 2 has two extra jars
+        if (cacheFiles.length == 4) {
+            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+        }
+        else {
+            assertEquals(2, cacheFiles.length);
+        }
         services.destroy();
 
     }
@@ -221,9 +230,18 @@ public class TestShareLibService extends XFsTestCase {
         ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
         URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        assertEquals(3, cacheFiles.length);
-        assertTrue(cacheFiles[0].getPath().endsWith("pig-10.jar") || cacheFiles[1].getPath().endsWith("pig-10.jar")
-                || cacheFiles[2].getPath().endsWith("pig-10.jar"));
+        String cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains("MyPig.jar"));
+        assertTrue(cacheFilesStr.contains("MyOozie.jar"));
+        assertTrue(cacheFilesStr.contains("pig-10.jar"));
+        // Hadoop 2 has two extra jars
+        if (cacheFiles.length == 5) {
+            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+        }
+        else {
+            assertEquals(3, cacheFiles.length);
+        }
         services.destroy();
 
     }
@@ -418,8 +436,17 @@ public class TestShareLibService extends XFsTestCase {
         jobConf.set("oozie.action.sharelib.for.pig", "pig_10");
         ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
         URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        assertEquals(2, cacheFiles.length);
-        assertTrue(cacheFiles[0].getPath().endsWith("pig-10.jar") || cacheFiles[1].getPath().endsWith("pig-10.jar"));
+        String cacheFilesStr = Arrays.toString(cacheFiles);
+        assertTrue(cacheFilesStr.contains("pig-10.jar"));
+        assertTrue(cacheFilesStr.contains("oozie_luncher.jar"));
+        // Hadoop 2 has two extra jars
+        if (cacheFiles.length == 4) {
+            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+        }
+        else {
+            assertEquals(2, cacheFiles.length);
+        }
         services.destroy();
 
     }

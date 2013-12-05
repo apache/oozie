@@ -1246,8 +1246,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Set sharelib to a relative path (i.e. no scheme nor authority)
         Services.get().destroy();
-        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, "/user/" + getOozieUser() + "/share/");
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, "/user/" + getTestUser()+ "/share/");
         new Services().init();
+        // Create the dir
+        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+        Path systemLibPath = new Path(wps.getSystemLibPath(), ShareLibService.SHARED_LIB_PREFIX
+                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).toString());
+        Path javaShareLibPath = new Path(systemLibPath, "java-action-executor");
+        getFileSystem().mkdirs(javaShareLibPath);
         Services.get().setService(ShareLibService.class);
 
         Path appPath = getAppPath();
@@ -1262,6 +1268,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         // invalid, and not the sharelib path because it doesn't have a scheme or authority
         try {
             ae.addShareLib(appPath, conf, new String[]{"java-action-executor"});
+            fail();
         }
         catch (ActionExecutorException aee) {
             assertEquals("E0902", aee.getErrorCode());
@@ -1270,7 +1277,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Set sharelib to a full path (i.e. include scheme and authority)
         Services.get().destroy();
-        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getNameNodeUri() + "/user/" + getOozieUser() + "/share/");
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getNameNodeUri() + "/user/" + getTestUser() + "/share/");
         new Services().init();
         Services.get().setService(ShareLibService.class);
         appPath = new Path("foo://bar:1234/blah");
