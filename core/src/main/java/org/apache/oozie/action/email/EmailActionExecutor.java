@@ -60,7 +60,9 @@ public class EmailActionExecutor extends ActionExecutor {
     private final static String SUB = "subject";
     private final static String BOD = "body";
     private final static String COMMA = ",";
+    private final static String CONTENT_TYPE = "content_type";
 
+    private final static String DEFAULT_CONTENT_TYPE = "text/plain";
     public EmailActionExecutor() {
         super("email");
     }
@@ -86,11 +88,12 @@ public class EmailActionExecutor extends ActionExecutor {
     @SuppressWarnings("unchecked")
     protected void validateAndMail(Context context, Element element) throws ActionExecutorException {
         // The XSD does the min/max occurrence validation for us.
-        Namespace ns = Namespace.getNamespace("uri:oozie:email-action:0.1");
+        Namespace ns = element.getNamespace();
         String tos[] = new String[0];
         String ccs[] = new String[0];
         String subject = "";
         String body = "";
+        String contentType;
         Element child = null;
 
         // <to> - One ought to exist.
@@ -114,11 +117,18 @@ public class EmailActionExecutor extends ActionExecutor {
         // <body> - One ought to exist.
         body = element.getChildTextTrim(BOD, ns);
 
+        contentType = element.getChildTextTrim(CONTENT_TYPE, ns);
+        if (contentType == null || contentType.isEmpty()) {
+            contentType = DEFAULT_CONTENT_TYPE;
+        }
+
+
         // All good - lets try to mail!
-        email(context, tos, ccs, subject, body);
+        email(context, tos, ccs, subject, body, contentType);
     }
 
-    protected void email(Context context, String[] to, String[] cc, String subject, String body) throws ActionExecutorException {
+    protected void email(Context context, String[] to, String[] cc, String subject, String body, String contentType)
+            throws ActionExecutorException {
         // Get mailing server details.
         String smtpHost = getOozieConf().get(EMAIL_SMTP_HOST, "localhost");
         String smtpPort = getOozieConf().get(EMAIL_SMTP_PORT, "25");
@@ -168,9 +178,9 @@ public class EmailActionExecutor extends ActionExecutor {
             }
             message.addRecipients(RecipientType.CC, ccAddrs.toArray(new InternetAddress[0]));
 
-            // Set subject, and plain-text body.
+            // Set subject
             message.setSubject(subject);
-            message.setContent(body, "text/plain");
+            message.setContent(body, contentType);
         } catch (AddressException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc>.", e);
         } catch (MessagingException e) {

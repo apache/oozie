@@ -26,11 +26,12 @@ All values specified in the =email= action can be parameterized (templatized) us
 <workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
     ...
     <action name="[NODE-NAME]">
-        <email xmlns="uri:oozie:email-action:0.1">
+        <email xmlns="uri:oozie:email-action:0.2">
             <to>[COMMA-SEPARATED-TO-ADDRESSES]</to>
             <cc>[COMMA-SEPARATED-CC-ADDRESSES]</cc> <!-- cc is optional -->
             <subject>[SUBJECT]</subject>
             <body>[BODY]</body>
+            <content_type>[CONTENT-TYPE]</content_type> <!-- content_type is optional -->
         </email>
         <ok to="[NODE-NAME]"/>
         <error to="[NODE-NAME]"/>
@@ -42,7 +43,10 @@ All values specified in the =email= action can be parameterized (templatized) us
 The =to= and =cc= commands are used to specify reciepents who should get the mail. Multiple email reciepents can be provided
 using comma-separated values. Providing a =to= command is necessary, while the =cc= may optionally be used along.
 
-The =subject= and =body= commands are used to specify the plain-text subject and body of the mail.
+The =subject= and =body= commands are used to specify subject and body of the mail.
+From uri:oozie:email-action:0.2 one can also specify mail content type as <content_type>text/html</content_type>.
+"text/plain" is default.
+
 
 *Configuration*
 
@@ -82,8 +86,8 @@ with the subject and body both containing the workflow ID after substitution.
 
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:email="uri:oozie:email-action:0.1" elementFormDefault="qualified"
-           targetNamespace="uri:oozie:email-action:0.1">
+           xmlns:email="uri:oozie:email-action:0.2" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:email-action:0.2">
 .
     <xs:element name="email" type="email:ACTION"/>
 .
@@ -93,6 +97,7 @@ with the subject and body both containing the workflow ID after substitution.
             <xs:element name="cc" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="subject" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="body" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="content_type" type="xs:string" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
 </xs:schema>

@@ -159,6 +159,27 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         }
     }
 
+    public void testContentTypeDefault() throws Exception {
+        EmailActionExecutor email = new EmailActionExecutor();
+        email.validateAndMail(createAuthContext("email-action"), prepareEmailElement(true));
+        assertEquals("bod", GreenMailUtil.getBody(server.getReceivedMessages()[0]));
+        assertTrue(server.getReceivedMessages()[0].getContentType().contains("text/plain"));
+    }
+
+    public void testContentType() throws Exception {
+        StringBuilder elem = new StringBuilder();
+        elem.append("<email xmlns=\"uri:oozie:email-action:0.2\">");
+        elem.append("<to>purushah@yahoo-inc.com</to>");
+        elem.append("<subject>sub</subject>");
+        elem.append("<content_type>text/html</content_type>");
+        elem.append("<body>&lt;body&gt; This is a test mail &lt;/body&gt;</body>");
+        elem.append("</email>");
+        EmailActionExecutor emailContnetType = new EmailActionExecutor();
+        emailContnetType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
+        assertEquals("<body> This is a test mail </body>", GreenMailUtil.getBody(server.getReceivedMessages()[0]));
+        assertTrue(server.getReceivedMessages()[0].getContentType().contains("text/html"));
+    }
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
