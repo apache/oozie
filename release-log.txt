@@ -83,6 +83,7 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.1 release (unreleased)
 
+OOZIE-1630 <prepare> operations fail when path doesn't have scheme (ryota)
 OOZIE-1627 Rerun doesn't resolve workflow app name (puru via rohini)
 OOZIE-1626 pig action pop-up is not working properly in UI (ryota)
 OOZIE-1607 [Doc]Update workflow specification for chgrp command (puru via rohini)
