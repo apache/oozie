@@ -110,31 +110,23 @@ public class TestFSPrepareActions extends XFsTestCase {
     // Test for null scheme value in the path for action
     @Test
     public void testForNullScheme() throws Exception {
+        Path actionDir = getFsTestCaseDir();
+        Path newDir = new Path(actionDir, "newDir");
         // Construct a path without scheme
-        Path newDir = new Path("test/oozietests/testDelete/delete");
+        String noSchemePath = newDir.toUri().getPath();
         FileSystem fs = getFileSystem();
         // Delete the file if it is already there
         if (fs.exists(newDir)) {
             fs.delete(newDir, true);
         }
         // Construct prepare XML block with the path
-        String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
+        String prepareXML = "<prepare>" + "<mkdir path='" + noSchemePath + "'/>" + "</prepare>";
 
-        // Parse the XML to get the node
-        Document doc = PrepareActionsDriver.getDocumentFromXML(prepareXML);
-        Node n = doc.getDocumentElement().getChildNodes().item(0);
+        JobConf conf = createJobConf();
+        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        PrepareActionsDriver.doOperations(prepareXML, conf);
 
-        try {
-            JobConf conf = createJobConf();
-            LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
-            PrepareActionsDriver.doOperations(prepareXML, conf);
-            fail("Expected to catch an exception but did not encounter any");
-        } catch (LauncherException le) {
-            Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
-            assertEquals("Scheme not present in uri " + path, le.getMessage());
-        } catch(Exception ex) {
-            fail("Expected a LauncherException but received an Exception");
-        }
+        assertTrue(fs.exists(new Path(noSchemePath)));
     }
 
 }

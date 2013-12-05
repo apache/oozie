@@ -37,8 +37,9 @@ public class LauncherURIHandlerFactory {
      * @throws LauncherException
      */
     public LauncherURIHandler getURIHandler(URI uri) throws LauncherException {
+        LauncherURIHandler handler;
         if (uri.getScheme() == null) {
-            throw new LauncherException("Scheme not present in uri " + uri);
+            handler = new FSLauncherURIHandler();
         }
         else {
             String className = conf.get(CONF_LAUNCHER_URIHANDLER_SCHEME_PREFIX + uri.getScheme());
@@ -55,8 +56,9 @@ public class LauncherURIHandlerFactory {
             catch (ClassNotFoundException e) {
                 throw new LauncherException("Error instantiating LauncherURIHandler", e);
             }
-            return (LauncherURIHandler) ReflectionUtils.newInstance(clazz, null);
+            handler =  (LauncherURIHandler) ReflectionUtils.newInstance(clazz, null);
         }
+        return handler;
     }
 
 }
