@@ -1588,8 +1588,15 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("2560", launcherConf.get(JavaActionExecutor.YARN_AM_RESOURCE_MB));
         // heap size in child.opts (2048 + 512)
         int heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx2560m",
-                launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        // There's an extra parameter (-Xmx1024m) in here when using YARN that's not here when using MR1
+        if (createJobConf().get("yarn.resourcemanager.address") != null) {
+            assertEquals("-Xmx1024m -Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx2560m",
+                    launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        }
+        else {
+            assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx2560m",
+                    launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        }
 
         // env
         assertEquals("A=foo", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));

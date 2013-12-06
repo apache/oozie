@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1634 TestJavaActionExecutor#testUpdateConfForUberMode fails against Hadoop 2 (rkanter)
 OOZIE-1633 Test failures related to sharelib when running against Hadoop 2 (rkanter)
 OOZIE-1598 enable html email in email action (puru via ryota)
 OOZIE-1631 Tools module should have a direct dependency on mockito (rkanter)
