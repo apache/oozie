@@ -16,37 +16,37 @@
  * limitations under the License.
  */
 package org.apache.oozie.command.wf;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.action.hadoop.MapReduceMain;
-import org.apache.oozie.client.XOozieClient;
-import org.apache.oozie.command.CommandException;
-import org.jdom.Element;
-import org.jdom.Namespace;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.action.hadoop.MapReduceMain;
+import org.jdom.Namespace;
+import org.jdom.Element;
 
-public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
-    public SubmitScriptLanguageXCommand(String name, String type, Configuration conf) {
-        super(name, type, conf);
+public class SubmitSqoopXCommand extends SubmitHttpXCommand {
+    public SubmitSqoopXCommand(Configuration conf) {
+        super("submitSqoop", "submitSqoop", conf);
+    }
+
+    protected String getOptions(){
+        return XOozieClient.SQOOP_OPTIONS;
     }
 
     @Override
-    protected abstract String getWorkflowName();
-
-    protected abstract String getOptions();
-
-    protected abstract String getScriptParamters();
+    protected Namespace getSectionNamespace(){
+        return Namespace.getNamespace("uri:oozie:sqoop-action:0.4");
+    }
 
     @Override
-    protected Namespace getSectionNamespace() {
-        return Namespace.getNamespace("uri:oozie:workflow:0.2");
+    protected String getWorkflowName(){
+        return "sqoop";
     }
 
     @Override
     protected Element generateSection(Configuration conf, Namespace ns) {
-        String name = getWorkflowName();
+        String name = "sqoop";
         Element ele = new Element(name, ns);
         Element jt = new Element("job-tracker", ns);
         jt.addContent(conf.get(XOozieClient.JT));
@@ -56,17 +56,12 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
         ele.addContent(nn);
 
         List<String> Dargs = new ArrayList<String>();
-        List<String> otherArgs = new ArrayList<String>();
         String[] args = MapReduceMain.getStrings(conf, getOptions());
         for (String arg : args) {
             if (arg.startsWith("-D")) {
                 Dargs.add(arg);
             }
-            else {
-                otherArgs.add(arg);
-            }
         }
-        String [] params = MapReduceMain.getStrings(conf, getScriptParamters());
 
         // configuration section
         if (Dargs.size() > 0) {
@@ -74,22 +69,11 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
             ele.addContent(configuration);
         }
 
-        Element script = new Element("script", ns);
-        script.addContent("dummy." + name);
-        ele.addContent(script);
-
-        // parameter section
-        for (String param : params) {
-            Element parameter = new Element("param", ns);
-            parameter.addContent(param);
-            ele.addContent(parameter);
-        }
-
-        // argument section
-        for (String arg : otherArgs) {
-            Element argument = new Element("argument", ns);
-            argument.addContent(arg);
-            ele.addContent(argument);
+        String[] sqoopArgs = conf.get(XOozieClient.SQOOP_COMMAND).split("\n");
+        for (String arg : sqoopArgs) {
+            Element eArg = new Element("arg", ns);
+            eArg.addContent(arg);
+            ele.addContent(eArg);
         }
 
         // file section
@@ -102,8 +86,7 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
     }
 
     @Override
-    public String getEntityKey() {
-        return null;
+    protected void verifyPrecondition() throws CommandException {
     }
 
     @Override
@@ -113,11 +96,10 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
 
     @Override
     protected void loadState() {
-
     }
 
     @Override
-    protected void verifyPrecondition() throws CommandException {
-
+    public String getEntityKey() {
+        return null;
     }
 }

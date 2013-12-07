@@ -25,14 +25,17 @@ public class SubmitPigXCommand extends SubmitScriptLanguageXCommand {
         super("submitPig", "submitPig", conf);
     }
 
-    protected String getLanguageName(){
+    @Override
+    protected String getWorkflowName(){
         return "pig";
     }
 
+    @Override
     protected String getOptions(){
         return XOozieClient.PIG_OPTIONS;
     }
 
+    @Override
     protected String getScriptParamters() {
         return XOozieClient.PIG_SCRIPT_PARAMS;
     }

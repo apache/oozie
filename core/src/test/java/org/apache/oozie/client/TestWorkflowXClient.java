@@ -108,6 +108,31 @@ public class TestWorkflowXClient extends DagServletTestCase {
         });
     }
 
+    public void testSubmitSqoop() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                int wfCount = MockDagEngineService.INIT_WF_COUNT;
+                XOozieClient wc = new XOozieClient(oozieUrl);
+                Properties conf = wc.createConfiguration();
+                Path libPath = new Path(getFsTestCaseDir(), "lib");
+                getFileSystem().mkdirs(libPath);
+                System.out.println(libPath.toString());
+                conf.setProperty(OozieClient.LIBPATH, libPath.toString());
+                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
+
+                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
+                        wc.submitSqoop(conf, new String[] {"import", "--connect",
+                                "jdbc:mysql://localhost:3306/oozie"},
+                                null));
+
+                assertTrue(MockDagEngineService.started.get(wfCount));
+                return null;
+            }
+        });
+    }
+
     public void testSubmitMR() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {

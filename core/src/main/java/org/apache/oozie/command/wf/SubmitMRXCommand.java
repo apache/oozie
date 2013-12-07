@@ -19,7 +19,6 @@ package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.apache.oozie.client.XOozieClient;
@@ -52,6 +51,16 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         DEPRECATE_MAP.put(WorkflowAppService.HADOOP_USER, "mapreduce.job.user.name");
     }
 
+    @Override
+    protected Namespace getSectionNamespace(){
+        return Namespace.getNamespace("uri:oozie:workflow:0.2");
+    }
+
+    @Override
+    protected String getWorkflowName(){
+        return "mapreduce";
+    }
+
     private Element generateConfigurationSection(Configuration conf, Namespace ns) {
         Element configuration = null;
         Iterator<Map.Entry<String, String>> iter = conf.iterator();
@@ -82,7 +91,8 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         return configuration;
     }
 
-    private Element generateMRSection(Configuration conf, Namespace ns) {
+    @Override
+    protected Element generateSection(Configuration conf, Namespace ns) {
         Element mapreduce = new Element("map-reduce", ns);
         Element jt = new Element("job-tracker", ns);
         String newJTVal = conf.get(DEPRECATE_MAP.get(XOozieClient.JT));
@@ -111,15 +121,8 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         return mapreduce;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.command.wf.SubmitHttpCommand#getWorkflowXml(org.apache
-     * .hadoop.conf.Configuration)
-     */
     @Override
-    protected String getWorkflowXml(Configuration conf) {
+    protected void checkMandatoryConf(Configuration conf) {
         for (String key : MANDATORY_OOZIE_CONFS) {
             String value = conf.get(key);
             if(value == null) {
@@ -133,43 +136,6 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
                 }
             }
         }
-
-        Namespace ns = Namespace.getNamespace("uri:oozie:workflow:0.2");
-        Element root = new Element("workflow-app", ns);
-        root.setAttribute("name", "oozie-mapreduce");
-
-        Element start = new Element("start", ns);
-        start.setAttribute("to", "hadoop1");
-        root.addContent(start);
-
-        Element action = new Element("action", ns);
-        action.setAttribute("name", "hadoop1");
-
-        Element mapreduce = generateMRSection(conf, ns);
-        action.addContent(mapreduce);
-
-        Element ok = new Element("ok", ns);
-        ok.setAttribute("to", "end");
-        action.addContent(ok);
-
-        Element error = new Element("error", ns);
-        error.setAttribute("to", "fail");
-        action.addContent(error);
-
-        root.addContent(action);
-
-        Element kill = new Element("kill", ns);
-        kill.setAttribute("name", "fail");
-        Element message = new Element("message", ns);
-        message.addContent("Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]");
-        kill.addContent(message);
-        root.addContent(kill);
-
-        Element end = new Element("end", ns);
-        end.setAttribute("name", "end");
-        root.addContent(end);
-
-        return XmlUtils.prettyPrint(root).toString();
     }
 
     @Override

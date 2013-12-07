@@ -26,18 +26,22 @@ public class SubmitHiveXCommand extends SubmitScriptLanguageXCommand {
         super("submitHive", "submitHive", conf);
     }
 
-    protected String getLanguageName(){
+    @Override
+    protected String getWorkflowName(){
         return "hive";
     }
 
+    @Override
     protected String getOptions(){
         return XOozieClient.HIVE_OPTIONS;
     }
 
+    @Override
     protected String getScriptParamters() {
         return XOozieClient.HIVE_SCRIPT_PARAMS;
     }
 
+    @Override
     protected Namespace getSectionNamespace(){
         return Namespace.getNamespace("uri:oozie:hive-action:0.5");
     }

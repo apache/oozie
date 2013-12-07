@@ -46,6 +46,7 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -86,13 +87,99 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
         PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
+    abstract protected Element generateSection(Configuration conf, Namespace ns);
+
+    abstract protected Namespace getSectionNamespace();
+
+    abstract protected String getWorkflowName();
+
+    protected void checkMandatoryConf(Configuration conf) {
+        for (String key : MANDATORY_OOZIE_CONFS) {
+            String value = conf.get(key);
+            if (value == null) {
+                throw new RuntimeException(key + " is not specified");
+            }
+        }
+    }
+
+    protected Namespace getWorkflowNamespace() {
+        return Namespace.getNamespace("uri:oozie:workflow:0.2");
+    }
     /**
      * Generate workflow xml from conf object
      *
      * @param conf the configuration object
      * @return workflow xml def string representation
      */
-    abstract protected String getWorkflowXml(Configuration conf);
+    protected String getWorkflowXml(Configuration conf) {
+        checkMandatoryConf(conf);
+
+        Namespace ns = getWorkflowNamespace();
+        Element root = new Element("workflow-app", ns);
+        String name = getWorkflowName();
+        root.setAttribute("name", "oozie-" + name);
+
+        Element start = new Element("start", ns);
+        String nodeName = name + "1";
+        start.setAttribute("to", nodeName);
+        root.addContent(start);
+
+        Element action = new Element("action", ns);
+        action.setAttribute("name", nodeName);
+
+        Element ele = generateSection(conf, getSectionNamespace());
+        action.addContent(ele);
+
+        Element ok = new Element("ok", ns);
+        ok.setAttribute("to", "end");
+        action.addContent(ok);
+
+        Element error = new Element("error", ns);
+        error.setAttribute("to", "fail");
+        action.addContent(error);
+
+        root.addContent(action);
+
+        Element kill = new Element("kill", ns);
+        kill.setAttribute("name", "fail");
+        Element message = new Element("message", ns);
+        message.addContent(name + " failed, error message[${wf:errorMessage(wf:lastErrorNode())}]");
+        kill.addContent(message);
+        root.addContent(kill);
+
+        Element end = new Element("end", ns);
+        end.setAttribute("name", "end");
+        root.addContent(end);
+
+        return XmlUtils.prettyPrint(root).toString();
+    };
+
+    protected Element generateConfigurationSection(List<String> Dargs, Namespace ns) {
+        Element configuration = new Element("configuration", ns);
+        for (String arg : Dargs) {
+            String name = null, value = null;
+            int pos = arg.indexOf("=");
+            if (pos == -1) { // "-D<name>" or "-D" only
+                name = arg.substring(2, arg.length());
+                value = "";
+            }
+            else { // "-D<name>=<value>"
+                name = arg.substring(2, pos);
+                value = arg.substring(pos + 1, arg.length());
+            }
+
+            Element property = new Element("property", ns);
+            Element nameElement = new Element("name", ns);
+            nameElement.addContent(name);
+            property.addContent(nameElement);
+            Element valueElement = new Element("value", ns);
+            valueElement.addContent(value);
+            property.addContent(valueElement);
+            configuration.addContent(property);
+        }
+
+        return configuration;
+    }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()

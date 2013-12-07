@@ -57,6 +57,10 @@ public class XOozieClient extends OozieClient {
 
     public static final String HIVE_SCRIPT_PARAMS = "oozie.hive.script.params";
 
+    public static final String SQOOP_COMMAND = "oozie.sqoop.command";
+
+    public static final String SQOOP_OPTIONS = "oozie.sqoop.options";
+
     public static final String FILES = "oozie.files";
 
     public static final String ARCHIVES = "oozie.archives";
@@ -98,6 +102,14 @@ public class XOozieClient extends OozieClient {
                 System.err.println("Error: " + ex.getMessage());
             }
         }
+    }
+
+    private String serializeSqoopCommand(String[] command) {
+        StringBuilder sb = new StringBuilder();
+        for (String arg : command) {
+            sb.append(arg).append("\n");
+        }
+        return sb.toString();
     }
 
     static void setStrings(Properties conf, String key, String[] values) {
@@ -221,6 +233,32 @@ public class XOozieClient extends OozieClient {
         setStrings(conf, scriptParams, params);
 
         return (new HttpJobSubmit(conf, jobType)).call();
+    }
+
+    /**
+     * Submit a Sqoop job via HTTP.
+     *
+     * @param conf job configuration.
+     * @param command sqoop command to run.
+     * @param args  arguments string.
+     * @return the job Id.
+     * @throws OozieClientException thrown if the job could not be submitted.
+     */
+    public String submitSqoop(Properties conf, String[] command, String[] args)
+            throws OozieClientException {
+        if (conf == null) {
+            throw new IllegalArgumentException("conf cannot be null");
+        }
+        if (command == null) {
+            throw new IllegalArgumentException("command cannot be null");
+        }
+
+        validateHttpSubmitConf(conf);
+
+        conf.setProperty(XOozieClient.SQOOP_COMMAND, serializeSqoopCommand(command));
+        setStrings(conf, XOozieClient.SQOOP_OPTIONS, args);
+
+        return (new HttpJobSubmit(conf, OozieCLI.SQOOP_CMD)).call();
     }
 
     /**

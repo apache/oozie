@@ -59,6 +59,7 @@ public class V1JobsServlet extends BaseJobsServlet {
     private static final String INSTRUMENTATION_NAME = "v1jobs";
     private static final Set<String> httpJobType = new HashSet<String>(){{
         this.add(OozieCLI.HIVE_CMD);
+        this.add(OozieCLI.SQOOP_CMD);
         this.add(OozieCLI.PIG_CMD);
         this.add(OozieCLI.MR_CMD);
     }};

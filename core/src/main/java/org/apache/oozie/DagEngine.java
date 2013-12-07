@@ -38,6 +38,7 @@ import org.apache.oozie.command.wf.SubmitHiveXCommand;
 import org.apache.oozie.command.wf.SubmitHttpXCommand;
 import org.apache.oozie.command.wf.SubmitMRXCommand;
 import org.apache.oozie.command.wf.SubmitPigXCommand;
+import org.apache.oozie.command.wf.SubmitSqoopXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
@@ -144,7 +145,7 @@ public class DagEngine extends BaseEngine {
      * It validates configuration properties.
      *
      * @param conf job configuration.
-     * @param jobType job type - can be "pig", "hive, or "mapreduce".
+     * @param jobType job type - can be "pig", "hive", "sqoop" or "mapreduce".
      * @return the job Id.
      * @throws DagEngineException thrown if the job could not be created.
      */
@@ -162,6 +163,9 @@ public class DagEngine extends BaseEngine {
             }
             else if (jobType.equals("hive")) {
                 submit = new SubmitHiveXCommand(conf);
+            }
+            else if (jobType.equals("sqoop")) {
+                submit = new SubmitSqoopXCommand(conf);
             }
 
             jobId = submit.call();

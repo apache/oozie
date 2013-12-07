@@ -91,6 +91,7 @@ public class OozieCLI {
     public static final String SLA_CMD = "sla";
     public static final String PIG_CMD = "pig";
     public static final String HIVE_CMD = "hive";
+    public static final String SQOOP_CMD = "sqoop";
     public static final String MR_CMD = "mapreduce";
     public static final String INFO_CMD = "info";
 
@@ -112,6 +113,7 @@ public class OozieCLI {
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
     public static final String CONFIG_CONTENT_OPTION = "configcontent";
+    public static final String SQOOP_COMMAND_OPTION = "command";
 
     public static final String DO_AS_OPTION = "doas";
 
@@ -427,6 +429,29 @@ public class OozieCLI {
     }
 
     /**
+     * Create option for command line option 'sqoop'
+     * @return sqoop options
+     */
+    @SuppressWarnings("static-access")
+    protected Options createSqoopCLIOptions() {
+        Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
+        Option config = new Option(CONFIG_OPTION, true, "job configuration file '.properties'");
+        Option command = OptionBuilder.withArgName(SQOOP_COMMAND_OPTION).hasArgs().withValueSeparator().withDescription(
+                "sqoop command").create(SQOOP_COMMAND_OPTION);
+        Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
+                "set/override value for given property").create("D");
+        Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Options Options = new Options();
+        Options.addOption(oozie);
+        Options.addOption(doAs);
+        Options.addOption(config);
+        Options.addOption(property);
+        Options.addOption(command);
+        addAuthOptions(Options);
+        return Options;
+    }
+
+    /**
      * Create option for command line option 'info'
      * @return info options
      */
@@ -485,6 +510,8 @@ public class OozieCLI {
                 + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
         parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
                 + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(HIVE_CMD), true);
+        parser.addCommand(SQOOP_CMD, "-X ", "submit a sqoop job, everything after '-X' are pass-through parameters " +
+                "to sqoop, any '-D' arguments after '-X' are put in <configuration>", createSqoopCLIOptions(), true);
         parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
         parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
 
@@ -552,6 +579,9 @@ public class OozieCLI {
         }
         else if (command.getName().equals(HIVE_CMD)) {
             scriptLanguageCommand(command.getCommandLine(), HIVE_CMD);
+        }
+        else if (command.getName().equals(SQOOP_CMD)) {
+            sqoopCommand(command.getCommandLine());
         }
         else if (command.getName().equals(INFO_CMD)) {
             infoCommand(command.getCommandLine());
@@ -1690,6 +1720,35 @@ public class OozieCLI {
             }
             System.out.println(JOB_ID_PREFIX + wc.submitScriptLanguage(conf, script, args.toArray(new String[args.size()]),
                     paramsList.toArray(new String[paramsList.size()]), jobType));
+        }
+        catch (OozieClientException ex) {
+            throw new OozieCLIException(ex.toString(), ex);
+        }
+    }
+
+    private void sqoopCommand(CommandLine commandLine) throws IOException, OozieCLIException {
+        List<String> args = commandLine.getArgList();
+        if (args.size() > 0) {
+            // checking if args starts with -X (because CLIParser cannot check this)
+            if (!args.get(0).equals("-X")) {
+                throw new OozieCLIException("Unrecognized option: " + args.get(0) + " Expecting -X");
+            }
+            args.remove(0);
+        }
+
+        if (!commandLine.hasOption(SQOOP_COMMAND_OPTION)) {
+            throw new OozieCLIException("Need to specify -command");
+        }
+
+        if (!commandLine.hasOption(CONFIG_OPTION)) {
+            throw new OozieCLIException("Need to specify -config <configfile>");
+        }
+
+        try {
+            XOozieClient wc = createXOozieClient(commandLine);
+            Properties conf = getConfiguration(wc, commandLine);
+            String[] command = commandLine.getOptionValues(SQOOP_COMMAND_OPTION);
+            System.out.println(JOB_ID_PREFIX + wc.submitSqoop(conf, command, args.toArray(new String[args.size()])));
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);

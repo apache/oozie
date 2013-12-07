@@ -114,6 +114,9 @@ public class MockDagEngineService extends DagEngineService {
             else if (jobType.equals("mapreduce")) {
                 did = "submitMR";
             }
+            else if (jobType.equals("sqoop")) {
+                did = "submitSqoop";
+            }
             int idx = workflows.size();
             WorkflowJob job = createDummyWorkflow(idx, XmlUtils.prettyPrint(conf).toString());
             workflows.add(job);
