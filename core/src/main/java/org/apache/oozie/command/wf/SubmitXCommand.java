@@ -263,7 +263,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
         // Validate all actions
         for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
-            eSla = XmlUtils.getSLAElement(eWfJob);
+            eSla = XmlUtils.getSLAElement(action);
             if (eSla != null) {
                 resolveSla(eSla, evalSla);
             }
