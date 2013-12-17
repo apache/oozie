@@ -248,11 +248,12 @@ public abstract class JsonRestServlet extends HttpServlet {
 
             String errorCode = (String) request.getAttribute(AUDIT_ERROR_CODE);
             String errorMessage = (String) request.getAttribute(AUDIT_ERROR_MESSAGE);
+            String hostDetail = request.getRemoteAddr();
 
-            auditLog
-                    .info(
-                            "USER [{0}], GROUP [{1}], APP [{2}], JOBID [{3}], OPERATION [{4}], PARAMETER [{5}], STATUS [{6}], HTTPCODE [{7}], ERRORCODE [{8}], ERRORMESSAGE [{9}]",
-                            user, group, app, jobId, operation, param, status, httpStatusCode, errorCode, errorMessage);
+            auditLog.info(
+                    "IP [{0}], USER [{1}], GROUP [{2}], APP [{3}], JOBID [{4}], OPERATION [{5}], PARAMETER [{6}], STATUS [{7}],"
+                            + " HTTPCODE [{8}], ERRORCODE [{9}], ERRORMESSAGE [{10}]", hostDetail, user, group, app,
+                    jobId, operation, param, status, httpStatusCode, errorCode, errorMessage);
         }
     }
 
