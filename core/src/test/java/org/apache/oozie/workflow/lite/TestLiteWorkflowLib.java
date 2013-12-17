@@ -18,6 +18,7 @@
 package org.apache.oozie.workflow.lite;
 
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -756,6 +757,24 @@ public class TestLiteWorkflowLib extends XTestCase {
         assertEquals(WorkflowInstance.Status.SUCCEEDED, job.getStatus());
     }
 
+    public void testJobPersistanceMoreThan64K() throws WorkflowException {
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>", new StartNodeDef(
+                TestControlNodeHandler.class, "one")).addNode(
+                new NodeDef("one", null, AsynchNodeHandler.class, Arrays.asList(new String[] { "end" }))).addNode(
+                new EndNodeDef("end", TestControlNodeHandler.class));
+
+        LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
+        // 100k
+        String value = RandomStringUtils.randomAlphanumeric(100 * 1024);
+        job.setVar("a", value);
+        assertEquals(WorkflowInstance.Status.PREP, job.getStatus());
+        assertEquals(value, job.getVar("a"));
+
+        byte[] array = WritableUtils.toByteArray(job);
+        job = WritableUtils.fromByteArray(array, LiteWorkflowInstance.class);
+        assertEquals(WorkflowInstance.Status.PREP, job.getStatus());
+        assertEquals(value, job.getVar("a"));
+    }
 
     public void testImmediateError() throws WorkflowException {
         LiteWorkflowApp workflowDef = new LiteWorkflowApp("testWf", "<worklfow-app/>",

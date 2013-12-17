@@ -51,6 +51,10 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private static String ROOT = PATH_SEPARATOR;
     private static String TRANSITION_SEPARATOR = "#";
 
+    // Using unique string to indicate version. This is to make sure that it
+    // doesn't match with user data.
+    private static final String DATA_VERSION = "V==1";
+
     private static class NodeInstance {
         String nodeName;
         boolean started = false;
@@ -579,7 +583,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         dOut.writeInt(persistentVars.size());
         for (Map.Entry<String, String> entry : persistentVars.entrySet()) {
             dOut.writeUTF(entry.getKey());
-            dOut.writeUTF(entry.getValue());
+            writeStringAsBytes(entry.getValue(), dOut);
         }
     }
 
@@ -609,10 +613,32 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         int numVars = dIn.readInt();
         for (int x = 0; x < numVars; x++) {
             String vName = dIn.readUTF();
-            String vVal = dIn.readUTF();
+            String vVal = readBytesAsString(dIn);
             persistentVars.put(vName, vVal);
         }
         refreshLog();
+    }
+
+    private void writeStringAsBytes(String value, DataOutput dOut) throws IOException {
+        if (value == null) {
+            dOut.writeUTF(null);
+            return;
+        }
+        dOut.writeUTF(DATA_VERSION);
+        byte[] data = value.getBytes("UTF-8");
+        dOut.writeInt(data.length);
+        dOut.write(data);
+    }
+
+    private String readBytesAsString(DataInput dIn) throws IOException {
+        String value = dIn.readUTF();
+        if (value != null && value.equals(DATA_VERSION)) {
+            int length = dIn.readInt();
+            byte[] data = new byte[length];
+            dIn.readFully(data);
+            value = new String(data, "UTF-8");
+        }
+        return value;
     }
 
     @Override

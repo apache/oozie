@@ -1,6 +1,7 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
-OOZIE-1641 oozie-audit.log - add remote IP. (puru via rohini)
+OOZIE-1642 writeUTF 64k limit for counters (puru via rohini)
+OOZIE-1641 oozie-audit.log - add remote IP (puru via rohini)
 OOZIE-1635 verifySlaElement in submitXCommand.java should get sla info from action child as well (bowenzhangusa via rohini)
 OOZIE-1575 Add functionality to submit sqoop jobs through http on oozie server side (bowenzhangusa via rkanter)
 OOZIE-1634 TestJavaActionExecutor#testUpdateConfForUberMode fails against Hadoop 2 (rkanter)
