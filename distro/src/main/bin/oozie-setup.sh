@@ -149,7 +149,7 @@ do
       shift
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBCLI "${@}"
     fi
-    exit 0
+    exit $?
   elif [ "$1" = "-secure" ]; then
     shift
     secure=true
