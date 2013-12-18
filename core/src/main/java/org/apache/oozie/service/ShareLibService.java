@@ -47,12 +47,13 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.client.rest.JsonUtils;
-
+import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class ShareLibService implements Service {
+public class ShareLibService implements Service, Instrumentable {
 
     public static final String LAUNCHERJAR_LIB_RETENTION = CONF_PREFIX + "ShareLibService.temp.sharelib.retention.days";
 
@@ -564,5 +565,74 @@ public class ShareLibService implements Service {
             }
         }
         return path;
+    }
+
+    /**
+     * Instruments the log service.
+     * <p/>
+     * It sets instrumentation variables indicating the location of the sharelib and launcherlib
+     *
+     * @param instr instrumentation to use.
+     */
+    @Override
+    public void instrument(Instrumentation instr) {
+        instr.addVariable("libs", "sharelib.source", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                if (!StringUtils.isEmpty(sharelibMappingFile)) {
+                    return SHARELIB_MAPPING_FILE;
+                }
+                return WorkflowAppService.SYSTEM_LIB_PATH;
+            }
+        });
+        instr.addVariable("libs", "sharelib.mapping.file", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                if (!StringUtils.isEmpty(sharelibMappingFile)) {
+                    return sharelibMappingFile;
+                }
+                return "(none)";
+            }
+        });
+        instr.addVariable("libs", "sharelib.system.libpath", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                String sharelibPath = "(unavailable)";
+                try {
+                    sharelibPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
+                        .toUri().toString();
+                }
+                catch (IOException ioe) {
+                    // ignore exception because we're just doing instrumentation
+                }
+                return sharelibPath;
+            }
+        });
+        instr.addVariable("libs", "sharelib.mapping.file.timestamp", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                if (!StringUtils.isEmpty(sharelibMetaFileOldTimeStamp)) {
+                    return sharelibMetaFileOldTimeStamp;
+                }
+                return "(none)";
+            }
+        });
+        instr.addVariable("libs", "sharelib.keys", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                Map<String, List<Path>> shareLib = getShareLib();
+                if (shareLib != null && !shareLib.isEmpty()) {
+                    Set<String> keySet = shareLib.keySet();
+                    return keySet.toString();
+                }
+                return "(unavailable)";
+            }
+        });
+        instr.addVariable("libs", "launcherlib.system.libpath", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                return getLauncherlibPath().toUri().toString();
+            }
+        });
     }
 }
