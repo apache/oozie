@@ -111,6 +111,14 @@ usage:
                  -oozie <arg>          Oozie URL
                  -P <property=value>   set parameters for script
 .
+      oozie sqoop <OPTIONS> -X<ARGS> : submit a sqoop job, any '-D' arguments after '-X' are put in <configuration>
+                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                 -config <arg>         job configuration file '.properties'
+                 -D <property=value>   set/override value for given property
+                 -doas <arg>           doAs user, impersonates as the specified user
+                 -command <arg>        sqoop command
+                 -oozie <arg>          Oozie URL
+.
       oozie info <OPTIONS> : get more detailed info about specific topics
                 -timezones   display a list of available time zones
 .
@@ -1078,6 +1086,52 @@ to the configuration used by Hive); any other opts after -X will be passed as-is
 Multiple -D and -P arguments can be specified.
 
 The job will be created and run right away.
+
+---++ Sqoop Operations
+
+---+++ Submitting a sqoop job through HTTP
+
+Syntax:
+
+<verbatim>
+$ oozie sqoop [-Dkey=value] -command completeSqoopCommand -config OOZIE-CONFIG [-X [-Dkey=value opts for Launcher/Job configuration]]
+</verbatim>
+
+Example:
+
+<verbatim>
+$ oozie sqoop -oozie http://localhost:11000/oozie -Dfs.default.name=hdfs://localhost:8020 -command import --connect jdbc:mysql://localhost:3306/oozie --username oozie --password oozie --table WF_JOBS --target-dir '/user/${wf:user()}/${examplesRoot}/output-data/sqoop' -m 1 -config job.properties -X -Dmapred.job.queue.name=default
+.
+job: 14-20090525161322-oozie-joe-W
+.
+</verbatim>
+
+Sqoop Freeform Example:
+<verbatim>
+$ oozie sqoop -oozie http://localhost:11000/oozie -command import --connect jdbc:mysql://localhost:3306/oozie --username oozie --password oozie --query "SELECT a.id FROM WF_JOBS a WHERE \$CONDITIONS" --target-dir '/user/${wf:user()}/${examplesRoot}/output-data/sqoop' -m 1 -config job.properties -X -Dmapred.job.queue.name=default
+.
+job: 14-20090525161321-oozie-joe-W
+.
+$cat job.properties
+fs.default.name=hdfs://localhost:8020
+mapreduce.jobtracker.kerberos.principal=ccc
+dfs.namenode.kerberos.principal=ddd
+oozie.libpath=hdfs://localhost:8020/user/oozie/sqoop/lib/
+</verbatim>
+
+The parameters for the job must be provided in a Java Properties file (.properties). jobtracker, namenode,
+libpath must be specified in this file. All jar files (including sqoop jar file) and all other files needed by the
+sqoop job need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server
+internally. Users can get the workflow.xml from console or command line(-definition).
+The -D options passed after the -X will be placed into the generated workflow's <code><configuration> elements</code>
+(and make it to the configuration used by Sqoop); Multiple -D arguments can be specified.
+
+The job will be created and run right away.
+
+Note: in the freeform query example, the "select" query itself must be double quoted and the "$" sign in the query is
+properly escaped by "\". And all other variables containing "$" within sqoop command are escaped by single quoting the
+variable itself like the value of "--target-dir". All the "-D" arguments before "-X" that are overriding given property
+must be placed before the "-command" argument.
 
 ---++ Info Operations
 

@@ -787,6 +787,80 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++++ Proxy Sqoop Job Submission
+
+You can submit a Workflow that contains a single Sqoop command without writing a workflow.xml. Any requred Jars or other
+ files must already exist in HDFS.
+
+The following properties are required:
+   * =fs.default.name=: The NameNode
+   * =mapred.job.tracker=: The JobTracker
+   * =user.name=: The username of the user submitting the job
+   * =oozie.sqoop.command=: The sqoop command you want to run where each argument occupies one line or separated by "\n"
+   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
+   * =oozie.proxysubmission=: Must be set to =true=
+
+The following properties are optional:
+   * =oozie.sqoop.options.size=: The number of options you'll be passing to Sqoop Hadoop job
+   * =oozie.sqoop.options.n=: An argument to pass to Sqoop hadoop job conf, the 'n' should be an integer starting with 0 to indicate the option number
+
+*Request:*
+
+<verbatim>
+POST /oozie/v1/jobs?jobtype=sqoop
+Content-Type: application/xml;charset=UTF-8
+.
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:8020</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:8021</value>
+    </property>
+    <property>
+        <name>user.name</name>
+        <value>bzhang</value>
+    </property>
+    <property>
+        <name>oozie.sqoop.command</name>
+        <value>
+            import
+            --connect
+            jdbc:mysql://localhost:3306/oozie
+            --username
+            oozie
+            --password
+            oozie
+            --table
+            WF_JOBS
+            --target-dir
+            /user/${wf:user()}/${examplesRoot}/output-data/sqoop
+        </value>
+    </property>
+        <name>oozie.libpath</name>
+        <value>hdfs://localhost:8020/user/bzhang/share/lib/sqoop</value>
+    </property>
+    <property>
+        <name>oozie.proxysubmission</name>
+        <value>true</value>
+    </property>
+</configuration>
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 201 CREATED
+Content-Type: application/json;charset=UTF-8
+.
+{
+  id: "job-3"
+}
+</verbatim>
+
 ---++++ Managing a Job
 
 A HTTP PUT request starts, suspends, resumes, kills, or dryruns a job.
