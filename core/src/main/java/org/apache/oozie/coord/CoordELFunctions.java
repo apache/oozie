@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.dependency.URIHandler.Context;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.util.DateUtils;
@@ -388,13 +390,13 @@ public class CoordELFunctions {
      * @throws Exception if unable to format the Date object to String
      */
     public static String ph2_coord_formatTime(String dateTimeStr, String format)
-        throws Exception {
+            throws Exception {
         Date dateTime = DateUtils.parseDateOozieTZ(dateTimeStr);
         return DateUtils.formatDateCustom(dateTime, format);
     }
 
     public static String ph3_coord_formatTime(String dateTimeStr, String format)
-        throws Exception {
+            throws Exception {
         return ph2_coord_formatTime(dateTimeStr, format);
     }
 
@@ -526,7 +528,6 @@ public class CoordELFunctions {
             throw new UnsupportedOperationException("Asynchronous Dataset is not supported yet");
         }
     }
-
     /**
      * Determine the date-time in Oozie processing timezone of the given offset from the dataset effective nominal time. <p/> It
      * depends on: <p> 1. Data set frequency <p/> 2. Data set Time Unit <p/> 3. Data set Time zone/DST
@@ -698,6 +699,10 @@ public class CoordELFunctions {
         return echoUnResolved("current", n);
     }
 
+    public static String ph1_coord_absolute_echo(String date) {
+        return echoUnResolved("absolute", date);
+    }
+
     public static String ph1_coord_currentRange_echo(String start, String end) {
         return echoUnResolved("currentRange", start + ", " + end);
     }
@@ -716,6 +721,39 @@ public class CoordELFunctions {
 
     public static String ph2_coord_offset_echo(String n, String timeUnit) {
         return echoUnResolved("offset", n + " , " + timeUnit);
+    }
+
+    public static String ph2_coord_absolute_echo(String date) {
+        return echoUnResolved("absolute", date);
+    }
+
+    public static String ph2_coord_absolute_range(String startInstance, int end) throws Exception {
+        int[] instanceCount = new int[1];
+
+        // getCurrentInstance() returns null, which means startInstance is less
+        // than initial instance
+        if (getCurrentInstance(DateUtils.getCalendar(startInstance).getTime(), instanceCount) == null) {
+            throw new CommandException(ErrorCode.E1010,
+                    "intial-instance should be equal or earlier than the start-instance. intial-instance is "
+                            + getInitialInstance() + " and start-instance is " + startInstance);
+        }
+        int[] nominalCount = new int[1];
+        if (getCurrentInstance(getActionCreationtime(), nominalCount) == null) {
+            throw new CommandException(ErrorCode.E1010,
+                    "intial-instance should be equal or earlier than the nominal time. intial-instance is "
+                            + getInitialInstance() + " and nominal time is " + getActionCreationtime());
+        }
+        // getCurrentInstance return offset relative to initial instance.
+        // start instance offset - nominal offset = start offset relative to
+        // nominal time-stamp.
+        int start = instanceCount[0] - nominalCount[0];
+        if (start > end) {
+            throw new CommandException(ErrorCode.E1010,
+                    "start-instance should be equal or earlier than the end-instance. startInstance is "
+                            + startInstance + " which is equivalent to current (" + instanceCount[0]
+                            + ") but end is specified as current (" + end + ")");
+        }
+        return ph2_coord_currentRange(start, end);
     }
 
     public static String ph1_coord_dateOffset_echo(String n, String offset, String unit) {
@@ -1041,7 +1079,7 @@ public class CoordELFunctions {
                     String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
                     if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
                         XLog.getLog(CoordELFunctions.class)
-                                .debug("Found latest(" + available + "): " + uriWithDoneFlag);
+                        .debug("Found latest(" + available + "): " + uriWithDoneFlag);
                         if (available == startOffset) {
                             LOG.debug("Matched latest(" + available + "): " + uriWithDoneFlag);
                             resolved = true;

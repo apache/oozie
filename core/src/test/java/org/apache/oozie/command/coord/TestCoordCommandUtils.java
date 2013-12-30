@@ -22,8 +22,6 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
-
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
@@ -253,7 +251,8 @@ public class TestCoordCommandUtils extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2013-07-18T00:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
 
-        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, "10,20 * * * *");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
+                "10,20 * * * *");
         Date actionTime = DateUtils.parseDateOozieTZ("2013-07-18T00:15Z");
         Date expectedDate = DateUtils.parseDateOozieTZ("2013-07-18T00:20Z");
         Date retDate = CoordCommandUtils.getNextValidActionTimeForCronFrequency(actionTime, job);
@@ -299,8 +298,124 @@ public class TestCoordCommandUtils extends XDataTestCase {
         assertEquals(expectedDate, retDate);
     }
 
+    @Test
+    public void testCoordAbsolute() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-dataset-absolute.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String actionXml = getCoordActionXml(appPath, "coord-dataset-absolute.xml");
+        CoordinatorActionBean actionBean = createCoordinatorActionBean(job);
+        Configuration jobConf = new XConfiguration(new StringReader(job.getConf()));
+        Element eAction = createActionElement(actionXml);
+        jobConf.set("startInstance", "coord:absolute(2009-08-20T01:00Z)");
+        jobConf.set("endInstance", "coord:current(2)");
+        String output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), 1,
+                jobConf, actionBean);
+        eAction = XmlUtils.parseXml(output);
+        List<?> elementList = ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0))
+                .getChildren();
+        Element e1 = (Element) elementList.get(0);
+        Element e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:absolute(2009-08-20T01:00Z) which is current(0)
+        // and endInstance = coord:current(2).
+        assertEquals(e1.getChild("uris", e1.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/09/03;region=us#hdfs:///tmp/workflows/2009/08/27;"
+                        + "region=us#hdfs:///tmp/workflows/2009/08/20;region=us");
+
+        // Test parameterized with startInstance =
+        // coord:absolute(2009-08-20T01:00Z) which is current (0) and
+        // endInstance = coord:current(2)
+        assertEquals(e2.getChild("uris", e1.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/09/03;region=us#hdfs:///tmp/workflows/2009/08/27;"
+                        + "region=us#hdfs:///tmp/workflows/2009/08/20;region=us");
+
+        // Test when start instance < nominal time. 2009-08-20T01:00Z is
+        // current(-3)
+
+        jobConf.set("startInstance", "coord:absolute(2009-08-20T01:00Z)");
+        jobConf.set("endInstance", "coord:current(2)");
+        eAction = createActionElement(actionXml);
+        output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ("2009-09-10T01:00Z"), DateUtils.parseDateOozieTZ("2009-09-08T01:00Z"), 1,
+                jobConf, actionBean);
+        eAction = XmlUtils.parseXml(output);
+        elementList = ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0)).getChildren();
+        e1 = (Element) elementList.get(1);
+        assertEquals(e1.getChild("uris", e1.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/09/24;region=us#hdfs:///tmp/workflows/2009/09/17;region=us#"
+                        + "hdfs:///tmp/workflows/2009/09/10;region=us#hdfs:///tmp/workflows/2009/09/03;region=us#"
+                        + "hdfs:///tmp/workflows/2009/08/27;region=us#hdfs:///tmp/workflows/2009/08/20;region=us");
+
+        // // Test when start instance > nominal time. 2009-08-20T01:00Z is
+        // current(1)
+        jobConf.set("startInstance", "coord:absolute(2009-08-20T01:00Z)");
+        jobConf.set("endInstance", "coord:current(2)");
+        eAction = createActionElement(actionXml);
+        output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ("2009-08-14T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-14T01:00Z"), 1,
+                jobConf, actionBean);
+        eAction = XmlUtils.parseXml(output);
+        elementList = ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0)).getChildren();
+        e1 = (Element) elementList.get(1);
+        assertEquals(e1.getChild("uris", e1.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/08/27;region=us#hdfs:///tmp/workflows/2009/08/20;region=us");
+
+        try {
+            // Test start instance > end instance. start = 2009-08-27T01:00Z
+            // which is current(3)
+            jobConf.set("startInstance", "coord:absolute(2009-08-27T01:00Z)");
+            jobConf.set("endInstance", "coord:current(2)");
+            eAction = createActionElement(actionXml);
+            output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                    DateUtils.parseDateOozieTZ("2009-08-06T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-16T01:00Z"),
+                    1, jobConf, actionBean);
+            eAction = XmlUtils.parseXml(output);
+            fail("Should throw exception. Start-instance > end-instance ");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("start-instance should be equal or earlier than the end-instance"));
+        }
+
+        try {
+            // Test start instance < initial instance. initial instance =
+            // 2009-08-06T01:00Z and start = 2009-07-01T01:00Z
+            jobConf.set("startInstance", "coord:absolute(2009-07-01T01:00Z)");
+            jobConf.set("endInstance", "coord:current(2)");
+            eAction = createActionElement(actionXml);
+            output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                    DateUtils.parseDateOozieTZ("2009-08-06T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-16T01:00Z"),
+                    1, jobConf, actionBean);
+            eAction = XmlUtils.parseXml(output);
+            fail("Should throw exception. Start-instance > end-instance ");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("intial-instance should be equal or earlier than the start-instance"));
+        }
+
+        try {
+            // Test Exception. Start-instance as absolute and end-instance as
+            // latest.
+            jobConf.set("startInstance", "coord:absolute(2009-08-20T01:00Z)");
+            jobConf.set("endInstance", "coord:latest(2)");
+            eAction = createActionElement(actionXml);
+            output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                    DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"),
+                    1, jobConf, actionBean);
+            eAction = XmlUtils.parseXml(output);
+            fail("Should throw exception. Start-instance is absolute and end-instance is latest");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains(
+                    "Only start-instance as absolute and end-instance as current is supported"));
+        }
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
-                                                          String freq) throws Exception {
+            String freq) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);

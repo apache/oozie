@@ -469,6 +469,7 @@ Content-Type: application/json;charset=UTF-8
          }
        }
 }
+</verbatim>
 
 ---+++ Job and Jobs End-Points
 

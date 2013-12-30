@@ -59,6 +59,7 @@ public class CoordCommandUtils {
     public static int LATEST = 1;
     public static int FUTURE = 2;
     public static int OFFSET = 3;
+    public static int ABSOLUTE = 4;
     public static int UNEXPECTED = -1;
     public static final String RESOLVED_UNRESOLVED_SEPARATOR = "!!";
     public static final String UNRESOLVED_INST_TAG = "unresolved-instances";
@@ -74,6 +75,9 @@ public class CoordCommandUtils {
      */
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
+        if (funcType == ABSOLUTE) {
+            return ABSOLUTE;
+        }
         if (funcType == CURRENT || funcType == LATEST) {
             return parseOneArg(function);
         }
@@ -109,6 +113,15 @@ public class CoordCommandUtils {
         throw new RuntimeException("Unformatted function :" + funcName);
     }
 
+    public static String parseOneStringArg(String funcName) throws Exception {
+        int firstPos = funcName.indexOf("(");
+        int lastPos = funcName.lastIndexOf(")");
+        if (firstPos >= 0 && lastPos > firstPos) {
+            return funcName.substring(firstPos + 1, lastPos).trim();
+        }
+        throw new RuntimeException("Unformatted function :" + funcName);
+    }
+
     private static int parseMoreArgs(String funcName, StringBuilder restArg) throws Exception {
         int firstPos = funcName.indexOf("(");
         int secondPos = funcName.lastIndexOf(",");
@@ -140,6 +153,9 @@ public class CoordCommandUtils {
         else if (function.indexOf("offset") >= 0) {
             return OFFSET;
         }
+        else if (function.indexOf("absolute") >= 0) {
+            return ABSOLUTE;
+        }
         return UNEXPECTED;
         // throw new RuntimeException("Unexpected instance name "+ function);
     }
@@ -151,11 +167,21 @@ public class CoordCommandUtils {
      */
     public static void checkIfBothSameType(String startInst, String endInst) throws CommandException {
         if (getFuncType(startInst) != getFuncType(endInst)) {
-            throw new CommandException(ErrorCode.E1010,
-                    " start-instance and end-instance both should be either latest or current or future or offset\n"
-                            + " start " + startInst + " and end " + endInst);
+            if (getFuncType(startInst) == ABSOLUTE) {
+                if (getFuncType(endInst) != CURRENT) {
+                    throw new CommandException(ErrorCode.E1010,
+                            "Only start-instance as absolute and end-instance as current is supported." + " start = "
+                                    + startInst + "  end = " + endInst);
+                }
+            }
+            else {
+                throw new CommandException(ErrorCode.E1010,
+                        " start-instance and end-instance both should be either latest or current or future or offset\n"
+                                + " start " + startInst + " and end " + endInst);
+            }
         }
     }
+
 
     /**
      * Resolve list of <instance> </instance> tags.
@@ -170,6 +196,7 @@ public class CoordCommandUtils {
     public static void resolveInstances(Element event, StringBuilder instances, SyncCoordAction actionInst,
             Configuration conf, ELEvaluator eval) throws Exception {
         for (Element eInstance : (List<Element>) event.getChildren("instance", event.getNamespace())) {
+
             if (instances.length() > 0) {
                 instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
             }
@@ -207,57 +234,73 @@ public class CoordCommandUtils {
             int endIndex = getInstanceNumber(strEnd, restArg);
             String endRestArg = restArg.toString();
             int funcType = getFuncType(strStart);
-            if (funcType == OFFSET) {
-                TimeUnit startU = TimeUnit.valueOf(startRestArg);
-                TimeUnit endU = TimeUnit.valueOf(endRestArg);
-                if (startU.getCalendarUnit() * startIndex > endU.getCalendarUnit() * endIndex) {
-                    throw new CommandException(ErrorCode.E1010,
-                            " start-instance should be equal or earlier than the end-instance \n"
-                                    + XmlUtils.prettyPrint(event));
-                }
-                Calendar startCal = CoordELFunctions.resolveOffsetRawTime(startIndex, startU, eval);
-                Calendar endCal = CoordELFunctions.resolveOffsetRawTime(endIndex, endU, eval);
-                if (startCal != null && endCal != null) {
-                    List<Integer> expandedFreqs = CoordELFunctions.expandOffsetTimes(startCal, endCal, eval);
-                    for (int i = expandedFreqs.size() - 1; i >= 0; i--) {
-                        String matInstance = materializeInstance(event, "${coord:offset(" + expandedFreqs.get(i)
-                                + ", \"MINUTE\")}", appInst, conf, eval);
-                        if (matInstance == null || matInstance.length() == 0) {
-                            // Earlier than dataset's initial instance
-                            break;
-                        }
-                        if (instances.length() > 0) {
-                            instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                        }
-                        instances.append(matInstance);
+
+            if (funcType == ABSOLUTE) {
+                StringBuffer bf = new StringBuffer();
+                bf.append("${coord:absoluteRange(\"").append(parseOneStringArg(strStart))
+                        .append("\",").append(endIndex).append(")}");
+                String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
+                if (matInstance != null && !matInstance.isEmpty()) {
+                    if (instances.length() > 0) {
+                        instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
                     }
+                    instances.append(matInstance);
                 }
             }
             else {
-                if (startIndex > endIndex) {
-                    throw new CommandException(ErrorCode.E1010,
-                            " start-instance should be equal or earlier than the end-instance \n"
-                                    + XmlUtils.prettyPrint(event));
-                }
-                if (funcType == CURRENT) {
-                    // Everything could be resolved NOW. no latest() ELs
-                    String matInstance = materializeInstance(event, "${coord:currentRange(" + startIndex + ","
-                            + endIndex + ")}", appInst, conf, eval);
-                    if (matInstance != null && !matInstance.isEmpty()) {
-                        if (instances.length() > 0) {
-                            instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                if (funcType == OFFSET) {
+                    TimeUnit startU = TimeUnit.valueOf(startRestArg);
+                    TimeUnit endU = TimeUnit.valueOf(endRestArg);
+                    if (startU.getCalendarUnit() * startIndex > endU.getCalendarUnit() * endIndex) {
+                        throw new CommandException(ErrorCode.E1010,
+                                " start-instance should be equal or earlier than the end-instance \n"
+                                        + XmlUtils.prettyPrint(event));
+                    }
+                    Calendar startCal = CoordELFunctions.resolveOffsetRawTime(startIndex, startU, eval);
+                    Calendar endCal = CoordELFunctions.resolveOffsetRawTime(endIndex, endU, eval);
+                    if (startCal != null && endCal != null) {
+                        List<Integer> expandedFreqs = CoordELFunctions.expandOffsetTimes(startCal, endCal, eval);
+                        for (int i = expandedFreqs.size() - 1; i >= 0; i--) {
+                            String matInstance = materializeInstance(event, "${coord:offset(" + expandedFreqs.get(i)
+                                    + ", \"MINUTE\")}", appInst, conf, eval);
+                            if (matInstance == null || matInstance.length() == 0) {
+                                // Earlier than dataset's initial instance
+                                break;
+                            }
+                            if (instances.length() > 0) {
+                                instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                            }
+                            instances.append(matInstance);
                         }
-                        instances.append(matInstance);
                     }
                 }
-                else { // latest(n)/future() EL is present
-                    if (funcType == LATEST) {
-                        instances.append("${coord:latestRange(").append(startIndex).append(",").append(endIndex)
-                                .append(")}");
+                else {
+                    if (startIndex > endIndex) {
+                        throw new CommandException(ErrorCode.E1010,
+                                " start-instance should be equal or earlier than the end-instance \n"
+                                        + XmlUtils.prettyPrint(event));
                     }
-                    else if (funcType == FUTURE) {
-                        instances.append("${coord:futureRange(").append(startIndex).append(",").append(endIndex)
-                                .append(",'").append(endRestArg).append("')}");
+                    if (funcType == CURRENT) {
+                        // Everything could be resolved NOW. no latest() ELs
+                        String matInstance = materializeInstance(event, "${coord:currentRange(" + startIndex + ","
+                                + endIndex + ")}", appInst, conf, eval);
+                        if (matInstance != null && !matInstance.isEmpty()) {
+                            if (instances.length() > 0) {
+                                instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                            }
+                            instances.append(matInstance);
+                        }
+                    }
+
+                    else { // latest(n)/future() EL is present
+                        if (funcType == LATEST) {
+                            instances.append("${coord:latestRange(").append(startIndex).append(",").append(endIndex)
+                            .append(")}");
+                        }
+                        else if (funcType == FUTURE) {
+                            instances.append("${coord:futureRange(").append(startIndex).append(",").append(endIndex)
+                            .append(",'").append(endRestArg).append("')}");
+                        }
                     }
                 }
             }

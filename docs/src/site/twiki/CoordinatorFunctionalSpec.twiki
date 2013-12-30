@@ -2094,13 +2094,62 @@ Then, the dataset instances for the input events for the coordinator action will
   hdfs://bar:8020/app/logs/2009/02/07
 </verbatim>
 
----++++ 6.6.8. coord:version(int n) EL Function for Asynchronous Datasets
+
+---++++ 6.6.8. coord:absolute(String timeStamp) EL Function for Synchronous Datasets
+
+=${coord:absolute(String timeStamp)} = represents absolute dataset instance time. coord:absolute is only supported with range
+where, start-instance is coord:absolute and end-instance is coord:current. Specifying a fixed date as the start instance is
+useful if your processing needs to process all dataset instances from a specific instance to the current instance.
+
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
+<verbatim>
+<coordinator-app name="app-coord" frequency="${coord:months(1)}"
+                    start="2009-01-01T01:00Z" end="2009-12-31T24:00" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.4">
+    <input-events>
+        <data-in name="input" dataset="logs">
+            <dataset name='a' frequency='7' initial-instance="2009-01-01T01:00Z"
+                timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
+                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}
+                </uri-template>
+            </dataset>
+            <start-instance>${coord:absolute("2009-01-01T01:00Z")}</start-instance>
+            <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+    </input-events>
+    <action>
+        <workflow>
+        .............
+        </workflow>
+    </action>
+</coordinator-app>
+</verbatim>
+
+Then, the dataset instances for the input events for the coordinator action at first run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/02/01
+<verbatim>
+
+The dataset instances for the input events for the coordinator action at second run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/02/01
+  hdfs://bar:8020/app/logs/2009/02/07
+<verbatim>
+
+
+---++++ 6.6.9. coord:version(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.9. coord:latest(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.10. coord:latest(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.10. Dataset Instance Resolution for Instances Before the Initial Instance
+---++++ 6.6.11. Dataset Instance Resolution for Instances Before the Initial Instance
 
 When defining input events that refer to dataset instances it may be possible that the resolution of instances is out of it lower bound. This is scenario is likely to happen when the instance resolution is very close to the initial-instance. This is useful for bootstrapping the application.
 

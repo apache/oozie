@@ -810,7 +810,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
-        String testDir = getTestCaseDir();
+        getTestCaseDir();
         ds.setUriTemplate(getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}"));
         createTestCaseSubDir("2009/09/10/_SUCCESS".split("/"));
         // TODO: Create the directories
@@ -874,7 +874,7 @@ public class TestCoordELFunctions extends XTestCase {
 
         // TODO:Set hadoop properties
         eval.setVariable(CoordELFunctions.CONFIGURATION, conf);
-        String testDir = getTestCaseDir();
+        getTestCaseDir();
         ds.setUriTemplate(getTestCaseFileUri("/${YEAR}/${MONTH}/${DAY}"));
         createTestCaseSubDir("2009/09/10/_SUCCESS".split("/"));
         createTestCaseSubDir("2009/09/11/_SUCCESS".split("/"));
@@ -976,6 +976,34 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-action-create-inst");
         expr = "${coord:user()}";
         assertEquals("test_user", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+
+    public void testAbsoluteRange() throws Exception {
+        init("coord-action-create");
+        ds = new SyncCoordDataset();
+        ds.setFrequency(7);
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"));
+        ds.setTimeUnit(TimeUnit.DAY);
+        ds.setTimeZone(DateUtils.getTimeZone("America/Los_Angeles"));
+        ds.setName("test");
+        ds.setUriTemplate("hdfs:///tmp/workflows/${YEAR}/${MONTH}/${DAY};region=us");
+        ds.setType("SYNC");
+        ds.setDoneFlag("");
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"));
+        CoordELFunctions.configureEvaluator(eval, ds, appInst);
+        String expr = "${coord:absoluteRange(\"2009-08-20T01:00Z\",\"0\")}";
+        assertEquals(CoordELFunctions.evalAndWrap(eval, expr), "2009-08-20T01:00Z");
+        expr = "${coord:absoluteRange(\"2009-08-20T01:00Z\",\"1\")}";
+        assertEquals(CoordELFunctions.evalAndWrap(eval, expr), "2009-08-27T01:00Z#2009-08-20T01:00Z");
+        try {
+            expr = "${coord:absoluteRange(\"2009-08-20T01:00Z\",\"-1\")}";
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("start-instance is greater than the end-instance and there was no exception");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage().contains("start-instance should be equal or earlier than the end-instance"));
+        }
     }
 
     /*

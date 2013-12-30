@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1504 Allow specifying a fixed instance as the start instance of a data-in (puru via rohini)
 OOZIE-1576 Add documentation for Oozie Sqoop CLI (bowenzhangusa via rkanter)
 OOZIE-1616 Add sharelib and launcherlib locations to the instrumentation info (rkanter)
 OOZIE-1647 oozie-setup.sh doesn't check exit code of java executions (alazarev via rkanter)
