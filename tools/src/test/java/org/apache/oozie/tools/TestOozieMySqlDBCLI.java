@@ -88,7 +88,7 @@ public class TestOozieMySqlDBCLI extends XTestCase {
         FakeConnection.CREATE = false;
 
         File upgrade = new File(getTestCaseConfDir() + File.separator + "update.sql");
-        String[] argsUpgrade = { "upgrade", "-sqlfile", upgrade.getAbsolutePath(), "-run"};
+        String[] argsUpgrade = { "upgrade", "-sqlfile", upgrade.getAbsolutePath()};
 
         assertEquals(0, execOozieDBCLICommands(argsUpgrade));
         assertTrue(upgrade.exists());

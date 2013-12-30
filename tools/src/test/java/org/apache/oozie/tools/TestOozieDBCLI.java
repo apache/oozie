@@ -94,8 +94,7 @@ public class TestOozieDBCLI extends XTestCase {
             System.setOut(new PrintStream(data));
             String[] argsVersion = { "version" };
             assertEquals(0, execOozieDBCLICommands(argsVersion));
-
-            assertTrue(data.toString().contains("db.version: 2"));
+            assertTrue(data.toString().contains("db.version: "+ OozieDBCLI.DB_VERSION_FOR_5_0));
             // show help information
             data.reset();
             String[] argsHelp = { "help" };
@@ -118,6 +117,13 @@ public class TestOozieDBCLI extends XTestCase {
         execSQL("ALTER TABLE BUNDLE_JOBS ADD COLUMN AUTH_TOKEN CLOB");
         execSQL("ALTER TABLE COORD_JOBS ADD COLUMN AUTH_TOKEN CLOB");
         execSQL("ALTER TABLE WF_JOBS ADD COLUMN AUTH_TOKEN CLOB");
+
+        execSQL("ALTER TABLE WF_JOBS ADD COLUMN BEAN_TYPE VARCHAR(31)");
+        execSQL("ALTER TABLE WF_ACTIONS ADD COLUMN BEAN_TYPE VARCHAR(31)");
+        execSQL("ALTER TABLE COORD_JOBS ADD COLUMN BEAN_TYPE VARCHAR(31)");
+        execSQL("ALTER TABLE COORD_ACTIONS ADD COLUMN BEAN_TYPE VARCHAR(31)");
+        execSQL("ALTER TABLE BUNDLE_JOBS ADD COLUMN BEAN_TYPE VARCHAR(31)");
+        execSQL("ALTER TABLE BUNDLE_ACTIONS ADD COLUMN BEAN_TYPE VARCHAR(31)");
         String[] argsUpgrade = { "upgrade", "-sqlfile", upgrade.getAbsolutePath(), "-run" };
         assertEquals(0, execOozieDBCLICommands(argsUpgrade));
 
@@ -125,7 +131,6 @@ public class TestOozieDBCLI extends XTestCase {
         File postUpgrade = new File(getTestCaseConfDir() + File.separator + "postUpdate.sql");
         String[] argsPostUpgrade = { "postupgrade", "-sqlfile", postUpgrade.getAbsolutePath(), "-run" };
         assertEquals(0, execOozieDBCLICommands(argsPostUpgrade));
-        assertTrue(postUpgrade.exists());
     }
 
     private int execOozieDBCLICommands(String[] args) {
