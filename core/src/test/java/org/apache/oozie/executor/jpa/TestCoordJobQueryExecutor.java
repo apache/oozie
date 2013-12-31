@@ -17,6 +17,10 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -257,7 +261,25 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
     }
 
     public void testGetList() throws Exception {
-        // TODO
+        CoordinatorJobBean bean1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
+        CoordinatorJobBean bean2 = addRecordToCoordJobTable(CoordinatorJob.Status.DONEWITHERROR, true, true);
+
+        // time to check last modified time against
+        Date queryTime = new Date();
+        bean1.setLastModifiedTime(new Date(queryTime.getTime() + 1000));
+        bean2.setLastModifiedTime(new Date(queryTime.getTime() + 2000));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, bean1);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, bean2);
+
+        // GET_COORD_JOBS_CHANGED
+        List<CoordinatorJobBean> retBeans = CoordJobQueryExecutor.getInstance().getList(
+                CoordJobQuery.GET_COORD_JOBS_CHANGED, new Timestamp(queryTime.getTime()));
+        assertEquals(2, retBeans.size());
+        assertEquals(bean1.getId(), retBeans.get(0).getId());
+        assertEquals(bean1.getStatus(), retBeans.get(0).getStatus());
+
+        assertEquals(bean2.getId(), retBeans.get(1).getId());
+        assertEquals(bean2.getStatus(), retBeans.get(1).getStatus());
     }
 
     public void testInsert() throws Exception {

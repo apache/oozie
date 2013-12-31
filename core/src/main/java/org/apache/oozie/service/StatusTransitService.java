@@ -29,6 +29,7 @@ import java.util.Comparator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
@@ -41,9 +42,9 @@ import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetRunningOrPendingJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionsGetByLastModifiedTimeJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsStatusJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetPendingActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
@@ -707,18 +708,20 @@ public class StatusTransitService implements Service {
                 LOG.info("Running coordinator status service from last instance time =  "
                         + DateUtils.formatDateOozieTZ(lastInstanceStartTime));
                 // this is not the first instance, we should only check jobs
-                // that have actions been
+                // that have actions or jobs been
                 // updated >= start time of last service run;
-                List<String> coordJobIdList = jpaService
-                        .execute(new CoordActionsGetByLastModifiedTimeJPAExecutor(lastInstanceStartTime));
+                List<CoordinatorActionBean> actionsList = CoordActionQueryExecutor.getInstance().getList(
+                        CoordActionQuery.GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME, lastInstanceStartTime);
                 Set<String> coordIds = new HashSet<String>();
-                coordIds.addAll(coordJobIdList);
+                for (CoordinatorActionBean action : actionsList) {
+                    coordIds.add(action.getJobId());
+                }
 
                 pendingJobCheckList = new ArrayList<CoordinatorJobBean>();
                 for (String coordId : coordIds.toArray(new String[coordIds.size()])) {
                     CoordinatorJobBean coordJob;
-                    try{
-                        coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordId));
+                    try {
+                        coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, coordId);
                     }
                     catch (JPAExecutorException jpaee) {
                         if (jpaee.getErrorCode().equals(ErrorCode.E0604)) {
@@ -737,6 +740,8 @@ public class StatusTransitService implements Service {
                         pendingJobCheckList.add(coordJob);
                     }
                 }
+                pendingJobCheckList.addAll(CoordJobQueryExecutor.getInstance().getList(
+                        CoordJobQuery.GET_COORD_JOBS_CHANGED, lastInstanceStartTime));
             }
             aggregateCoordJobsStatus(pendingJobCheckList);
         }

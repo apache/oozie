@@ -17,10 +17,14 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JPAService;
@@ -44,7 +48,8 @@ public class CoordActionQueryExecutor extends
         UPDATE_COORD_ACTION_FOR_MODIFIED_DATE,
         UPDATE_COORD_ACTION_RERUN,
         GET_COORD_ACTION,
-        GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID
+        GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID,
+        GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
@@ -171,6 +176,9 @@ public class CoordActionQueryExecutor extends
             case GET_COORD_ACTION:
                 query.setParameter("id", parameters[0]);
                 break;
+            case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
+                query.setParameter("lastModifiedTime", new Timestamp(((Date) parameters[0]).getTime()));
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + caQuery.name());
@@ -202,12 +210,28 @@ public class CoordActionQueryExecutor extends
             throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        List<CoordinatorActionBean> beanList = (List<CoordinatorActionBean>) jpaService.executeGetList(
-                namedQuery.name(), query, em);
-        if (beanList == null || beanList.size() == 0) {
-            throw new JPAExecutorException(ErrorCode.E0605, query.toString());
+        List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
+        List<CoordinatorActionBean> beanList = new ArrayList<CoordinatorActionBean>();
+        if (retList != null) {
+            for (Object ret : retList) {
+                beanList.add(constructBean(namedQuery, ret));
+            }
         }
         return beanList;
+    }
+
+    private CoordinatorActionBean constructBean(CoordActionQuery namedQuery, Object ret) throws JPAExecutorException {
+        CoordinatorActionBean bean;
+        switch (namedQuery) {
+            case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
+                bean = new CoordinatorActionBean();
+                bean.setJobId((String) ret);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
+                        + namedQuery.name());
+        }
+        return bean;
     }
 
     @VisibleForTesting

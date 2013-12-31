@@ -35,6 +35,8 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
@@ -280,6 +282,133 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     }
 
     /**
+     * Testcase when changing end-time == nextMaterializedTime
+     * reflects correct job status via StatusTransit
+     *
+     * @throws Exception
+     */
+    public void testCoordChangeEndTime1() throws Exception {
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (50 * 60 * 1000));
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, true, true, 1);
+        coordJob.setNextMaterializedTime(new Date(startTime.getTime() + (30 * 60 * 1000)));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+        addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        Runnable runnable = new StatusTransitService.StatusTransitRunnable();
+        runnable.run(); // dummy run so we get to the interval check following coord job change
+        sleep(1000);
+
+        assertEquals(endTime.getTime(), coordJob.getEndTime().getTime()); // checking before change
+
+        String newEndTime = convertDateToString(startTime.getTime() + 30 * 60 * 1000);
+
+        new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
+        try {
+            checkCoordJobs(coordJob.getId(), DateUtils.parseDateOozieTZ(newEndTime), null, null, false);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Invalid date" + ex);
+        }
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+        assertEquals(newEndTime, convertDateToString(coordJob.getEndTime().getTime())); // checking after change
+        assertTrue(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+
+        runnable.run();
+        sleep(1000);
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+        assertFalse(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+    }
+
+    /**
+     * Testcase when changing end-time > nextMaterializedTime, but < original end
+     * reflects correct job state and values
+     *
+     * @throws Exception
+     */
+    public void testCoordChangeEndTime2() throws Exception {
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (50 * 60 * 1000));
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, true, true, 1);
+        coordJob.setNextMaterializedTime(new Date(startTime.getTime() + (30 * 60 * 1000)));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+        addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        assertTrue(coordJob.isDoneMaterialization()); // checking initial condition before change
+
+        Runnable runnable = new StatusTransitService.StatusTransitRunnable();
+        runnable.run(); // dummy run so we get to the interval check following coord job change
+        sleep(1000);
+
+        String newEndTime = convertDateToString(startTime.getTime() + 40 * 60 * 1000);
+
+        new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
+        try {
+            checkCoordJobs(coordJob.getId(), DateUtils.parseDateOozieTZ(newEndTime), null, null, false);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Invalid date" + ex);
+        }
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+        assertTrue(coordJob.isPending());
+        assertFalse(coordJob.isDoneMaterialization()); // <-- changed
+        assertEquals(newEndTime, convertDateToString(coordJob.getEndTime().getTime()));
+
+    }
+
+    /**
+     * Testcase when changing end-time to after original end-time
+     * but before nextMaterializedTime should not cause unnecessary changes
+     *
+     * @throws Exception
+     */
+    public void testCoordChangeEndTime3() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (10 * 60 * 1000));
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, true, true, 1);
+        coordJob.setNextMaterializedTime(new Date(startTime.getTime() + (40 * 60 * 1000)));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+        addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+
+        Runnable runnable = new StatusTransitService.StatusTransitRunnable();
+        runnable.run();
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+        assertFalse(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+
+        String newEndTime = convertDateToString(startTime.getTime() + 20 * 60 * 1000);
+
+        new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
+
+        coordJob = jpaService.execute(coordGetCmd);
+        assertFalse(Job.Status.RUNNING == coordJob.getStatus());
+        assertFalse(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+
+    }
+
+    /**
      * Change the pause time and end time of a failed coordinator job. Check whether the status changes
      * to RUNNINGWITHERROR
      * @throws Exception
@@ -407,8 +536,9 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             new CoordChangeXCommand(job.getId(), pauseTimeChangeStr).call();
             fail("Should not reach here.");
         } catch(CommandException e) {
-            if(e.getErrorCode() != ErrorCode.E1022)
+            if(e.getErrorCode() != ErrorCode.E1022) {
                 fail("Error code should be E1022");
+            }
         }
     }
 
