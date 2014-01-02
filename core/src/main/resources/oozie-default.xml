@@ -1184,7 +1184,7 @@
 
     <property>
         <name>oozie.service.JPAService.create.db.schema</name>
-        <value>true</value>
+        <value>false</value>
         <description>
             Creates Oozie DB.
 
@@ -1195,7 +1195,7 @@
 
     <property>
         <name>oozie.service.JPAService.validate.db.connection</name>
-        <value>false</value>
+        <value>true</value>
         <description>
             Validates DB connections from the DB connection pool.
             If the 'oozie.service.JPAService.create.db.schema' property is set to true, this property is ignored.

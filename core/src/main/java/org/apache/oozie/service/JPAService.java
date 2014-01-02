@@ -113,7 +113,7 @@ public class JPAService implements Service, Instrumentable {
         String dataSource = conf.get(CONF_CONN_DATA_SOURCE, "org.apache.commons.dbcp.BasicDataSource");
         String connPropsConfig = conf.get(CONF_CONN_PROPERTIES);
         boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, true);
-        boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, false);
+        boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, true);
         String evictionInterval = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL, "300000").trim();
         String evictionNum = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_NUM, "10").trim();
 
