@@ -82,8 +82,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
     private static final Set<String> IGNORE_SYS_PROPS = new HashSet<String>();
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
-
-    private static final String PASSWORD_PROPERTY_END = ".password";
+    private static final Set<String> MASK_PROPS = new HashSet<String>();
 
     static {
         IGNORE_SYS_PROPS.add(CONF_IGNORE_SYS_PROPS);
@@ -101,6 +100,10 @@ public class ConfigurationService implements Service, Instrumentable {
         IGNORE_SYS_PROPS.add(XLogService.OOZIE_LOG_DIR);
         IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE);
         IGNORE_SYS_PROPS.add(XLogService.LOG4J_RELOAD);
+
+        // These properties should be masked when displayed because they contain sensitive info (e.g. password)
+        MASK_PROPS.add(JPAService.CONF_PASSWORD);
+        MASK_PROPS.add("oozie.authentication.signature.secret");
     }
 
     public static final String DEFAULT_CONFIG_FILE = "oozie-default.xml";
@@ -218,8 +221,7 @@ public class ConfigurationService implements Service, Instrumentable {
             try {
                 StringWriter writer = new StringWriter();
                 for (Map.Entry<String, String> entry : configuration) {
-                    boolean maskValue = entry.getKey().endsWith(PASSWORD_PROPERTY_END);
-                    String value = (maskValue) ? "**MASKED**" : entry.getValue();
+                    String value = getValue(configuration, entry.getKey());
                     writer.write(" " + entry.getKey() + " = " + value + "\n");
                 }
                 writer.close();
@@ -274,7 +276,7 @@ public class ConfigurationService implements Service, Instrumentable {
         public String get(String name, String defaultValue) {
             String value = get(name);
             if (value == null) {
-                boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
+                boolean maskValue = MASK_PROPS.contains(name);
                 value = defaultValue;
                 String logValue = (maskValue) ? "**MASKED**" : defaultValue;
                 log.warn(XLog.OPS, "Configuration property [{0}] not found, using default [{1}]", name, logValue);
@@ -284,7 +286,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
         public void set(String name, String value) {
             setValue(name, value);
-            boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
+            boolean maskValue = MASK_PROPS.contains(name);
             value = (maskValue) ? "**MASKED**" : value;
             log.info(XLog.OPS, "Programmatic configuration change, property[{0}]=[{1}]", name, value);
         }
@@ -312,24 +314,32 @@ public class ConfigurationService implements Service, Instrumentable {
                 return configFile;
             }
         });
-        instr.setConfiguration(configuration);
     }
 
     /**
      * Return a configuration with all sensitive values masked.
      *
-     * @param conf configuration to mask.
      * @return masked configuration.
      */
-    public static Configuration maskPasswords(Configuration conf) {
+    public Configuration getMaskedConfiguration() {
         XConfiguration maskedConf = new XConfiguration();
+        Configuration conf = getConf();
         for (Map.Entry<String, String> entry : conf) {
             String name = entry.getKey();
-            boolean maskValue = name.endsWith(PASSWORD_PROPERTY_END);
-            String value = (maskValue) ? "**MASKED**" : entry.getValue();
+            String value = getValue(conf, name);
             maskedConf.set(name, value);
         }
         return maskedConf;
     }
 
+    private String getValue(Configuration config, String key) {
+        String value;
+        if (MASK_PROPS.contains(key)) {
+            value = "**MASKED**";
+        }
+        else {
+            value = config.get(key);
+        }
+        return value;
+    }
 }

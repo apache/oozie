@@ -19,6 +19,7 @@ package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.Services;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +47,6 @@ public class Instrumentation {
     private Lock timerLock;
     private Lock variableLock;
     private Lock samplerLock;
-    private Configuration configuration;
     private Map<String, Map<String, Map<String, Object>>> all;
     private Map<String, Map<String, Element<Long>>> counters;
     private Map<String, Map<String, Element<Timer>>> timers;
@@ -554,15 +554,6 @@ public class Instrumentation {
     }
 
     /**
-     * Set the system configuration.
-     *
-     * @param configuration system configuration.
-     */
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
-
-    /**
      * Return the JVM system properties.
      *
      * @return JVM system properties.
@@ -587,7 +578,7 @@ public class Instrumentation {
      * @return the current system configuration as a Map<String,String>.
      */
     public Map<String, String> getConfiguration() {
-        final Configuration maskedConf = ConfigurationService.maskPasswords(configuration);
+        final Configuration maskedConf = Services.get().get(ConfigurationService.class).getMaskedConfiguration();
 
         return new Map<String, String>() {
             public int size() {

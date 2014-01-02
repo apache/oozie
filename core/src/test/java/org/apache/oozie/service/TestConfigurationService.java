@@ -17,9 +17,11 @@
  */
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -97,5 +99,20 @@ public class TestConfigurationService extends XTestCase {
         assertNull(cl.getConf().get("oozie.dummy"));
         cl.destroy();
 
+    }
+
+    public void testMaskProperties() throws Exception {
+        prepareOozieConfDir("oozie-site-mask.xml");
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        Configuration conf = cl.getConf();
+        assertEquals("my-secret", conf.get("oozie.authentication.signature.secret"));
+        assertEquals("my-password", conf.get("oozie.service.JPAService.jdbc.password"));
+        assertEquals("true", conf.get("oozie.is.awesome"));
+        conf = cl.getMaskedConfiguration();
+        assertEquals("**MASKED**", conf.get("oozie.authentication.signature.secret"));
+        assertEquals("**MASKED**", conf.get("oozie.service.JPAService.jdbc.password"));
+        assertEquals("true", conf.get("oozie.is.awesome"));
+        cl.destroy();
     }
 }
