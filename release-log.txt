@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1643 Oozie doesn't parse Hadoop Job Id from the Hive action (rkanter)
 OOZIE-1632 Coordinators that undergo change endtime but are doneMaterialization, not getting picked for StatusTransit (mona)
 OOZIE-1548 OozieDBCLI changes to convert clob to blob and remove the discriminator column (virag)
 OOZIE-1504 Allow specifying a fixed instance as the start instance of a data-in (puru via rohini)
