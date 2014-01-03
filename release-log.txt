@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1660 DB connection misconfig causes all or most unit tests to fail (rkanter)
 OOZIE-1641 Oozie should mask the signature secret in the configuration output (rkanter)
 OOZIE-1655 Change oozie.service.JPAService.validate.db.connection to true (rkanter)
 OOZIE-1643 Oozie doesn't parse Hadoop Job Id from the Hive action (rkanter)

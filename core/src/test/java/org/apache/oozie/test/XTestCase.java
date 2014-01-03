@@ -353,6 +353,8 @@ public abstract class XTestCase extends TestCase {
         // Disable sharelib service as it cannot find the sharelib jars
         // as maven has target/classes in classpath and not the jar because test phase is before package phase
         oozieSiteConf.set(Services.CONF_SERVICE_CLASSES, classes.replaceAll("org.apache.oozie.service.ShareLibService,",""));
+        // Make sure to create the Oozie DB during unit tests
+        oozieSiteConf.set(JPAService.CONF_CREATE_DB_SCHEMA, "true");
         File target = new File(testCaseConfDir, "oozie-site.xml");
         oozieSiteConf.writeXml(new FileOutputStream(target));
 
