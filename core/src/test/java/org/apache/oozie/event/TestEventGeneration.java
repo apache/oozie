@@ -496,7 +496,7 @@ public class TestEventGeneration extends XDataTestCase {
 
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         final String jobId1 = engine.submitJob(conf, true);
