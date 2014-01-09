@@ -30,7 +30,70 @@ $(document).ready(function() {
     }
 });
 
-//so it works from remote browsers, "http://localhost:8080";
+function getLogs(url, textArea, shouldParseResponse, errorMsg) {
+    textArea.getEl().dom.value = '';
+
+    if (!errorMsg) {
+        errorMsg = "Fatal Error. Can't load logs.";
+    }
+    if (!window.XMLHttpRequest) {
+        Ext.Ajax.request({
+            url : url,
+            timeout : 300000,
+            success : function(response, request) {
+                if (shouldParseResponse) {
+                    processAndDisplayLog(response.responseText, textArea);
+                } else {
+                    textArea.getEl().dom.value = response.responseText;
+                }
+            },
+
+            failure : function() {
+                textArea.getEl().dom.value = errorMsg;
+            }
+        });
+
+    } else {
+        var xhr = new XMLHttpRequest();
+        xhr.previous_text_length = 0;
+
+        xhr.onerror = function() {
+            textArea.getEl().dom.value = errorMsg;
+        };
+        xhr.onreadystatechange = function() {
+            try {
+                if (xhr.readyState > 2  && xhr.status == 200) {
+                    var new_response = xhr.responseText
+                            .substring(xhr.previous_text_length);
+                    textArea.getEl().dom.value += new_response;
+                    xhr.previous_text_length = xhr.responseText.length;
+
+                }
+                if (xhr.status != 200 && xhr.status != 0) {
+                    textArea.getEl().dom.value = "Error :\n" + xhr.responseText;
+                }
+            } catch (e) {
+            }
+        };
+        xhr.open("GET", url, true);
+        xhr.send();
+    }
+}
+
+function processAndDisplayLog(response, textArea) {
+    var responseLength = response.length;
+    var twentyFiveMB = 25 * 1024 * 1024;
+    if (responseLength > twentyFiveMB) {
+        response = response.substring(responseLength - twentyFiveMB,
+                responseLength);
+        response = response.substring(response.indexOf("\n") + 1,
+                responseLength);
+        textArea.getEl().dom.value = response;
+    } else {
+        textArea.getEl().dom.value = response;
+    }
+}
+
 var oozie_host = "";
 var flattenedObject;
 
@@ -284,13 +347,8 @@ function jobDetailsPopup(response, request) {
         });
     }
     function fetchLogs(workflowId) {
-        Ext.Ajax.request({
-            url: getOozieBase() + 'job/' + workflowId + "?show=log",
-            success: function(response, request) {
-                jobLogArea.setRawValue(response.responseText);
-            }
+        getLogs(getOozieBase() + 'job/' + workflowId + "?show=log", jobLogArea, false, null);
 
-        });
     }
     var jobDetails = eval("(" + response.responseText + ")");
     var workflowId = jobDetails["id"];
@@ -765,15 +823,16 @@ function coordJobDetailsPopup(response, request) {
     var jobLogArea = new Ext.form.TextArea({
         fieldLabel: 'Logs',
         editable: false,
-	id: 'jobLogAreaId',
+        id: 'jobLogAreaId',
         name: 'logs',
         width: 1035,
         height: 400,
         autoScroll: true,
-        emptyText: "Loading..."
+        emptyText: "Enter the list of actions in the format similar to 1,3-4,7-40 to get logs for specific coordinator actions. " +
+                   "To get the log for the coordinator job, leave the actions field empty."
     });
     var getLogButton = new Ext.Button({
-	    text: 'Retrieve coord action logs',
+        text: 'Get logs',
 	    handler: function() {
             fetchLogs(coordJobId, actionsTextBox.getValue());
 	    }
@@ -781,8 +840,14 @@ function coordJobDetailsPopup(response, request) {
     var actionsTextBox = new Ext.form.TextField({
              fieldLabel: 'ActionsList',
              name: 'ActionsList',
-             value: 'Enter the action list here'
+             width: 150,
+             value: ''
          });
+
+    var actionsText = new Ext.form.Label({
+        text : 'Enter action list : '
+    });
+
     function fetchDefinition(coordJobId) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + coordJobId + "?show=definition",
@@ -792,45 +857,17 @@ function coordJobDetailsPopup(response, request) {
         });
     }
     function fetchLogs(coordJobId, actionsList) {
-	if(actionsList=='') {
-	    Ext.Ajax.request({
-            url: getOozieBase() + 'job/' + coordJobId + "?show=log",
-	        success: function(response, request) {
-		    processAndDisplayLog(response.responseText);
-                }
-            });
-	}
-	else {
-            Ext.Ajax.request({
-                url: getOozieBase() + 'job/' + coordJobId + "?show=log&type=action&scope="+actionsList,
-                timeout: 300000,
-                success: function(response, request) {
-		    processAndDisplayLog(response.responseText);
-                },
-		failure: function() {
-                    Ext.MessageBox.show({
-                        title: 'Format Error',
-                        msg: 'Action List format is wrong. Format should be similar to 1,3-4,7-40',
-                        buttons: Ext.MessageBox.OK,
-                        icon: Ext.MessageBox.ERROR
-                    });
-		}
-            });
-	}
+        if (actionsList == '') {
+            getLogs(getOozieBase() + 'job/' + coordJobId + "?show=log",
+                    jobLogArea, true, null);
+        } else {
+            getLogs(getOozieBase() + 'job/' + coordJobId
+                    + "?show=log&type=action&scope=" + actionsList, jobLogArea,
+                    true,
+                    'Action List format is wrong. Format should be similar to 1,3-4,7-40');
+        }
     }
-    function processAndDisplayLog(response)
-    {
-	var responseLength = response.length;
-	var twentyFiveMB = 25*1024*1024;
-	if(responseLength > twentyFiveMB) {
-	    response = response.substring(responseLength-twentyFiveMB,responseLength);
-	    response = response.substring(response.indexOf("\n")+1,responseLength);
-	    jobLogArea.setRawValue(response);
-	}
-	else {
-	    jobLogArea.setRawValue(response);
-	}
-    }
+
     var jobDetails = eval("(" + response.responseText + ")");
     var coordJobId = jobDetails["coordJobId"];
     var appName = jobDetails["coordJobName"];
@@ -1159,20 +1196,9 @@ function coordJobDetailsPopup(response, request) {
             })
 	},{
            title: 'Coord Job Log',
-	   items: [jobLogArea, actionsTextBox, getLogButton],
-           tbar: [ {
-                text: "&nbsp;&nbsp;&nbsp;",
-                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
-                handler: function() {
-                    var actionsText = actionsTextBox.getValue();
-                    if (actionsText == 'Enter the action list here' || actionsText == '') {
-                        fetchLogs(coordJobId, '');
-                    }
-                    else {
-                        fetchLogs(coordJobId, actionsText);
-                    }
-                }
-           }]
+           items: jobLogArea,
+           tbar: [
+                   actionsText,actionsTextBox, getLogButton]
 	   }]
 });
 
@@ -1180,11 +1206,6 @@ function coordJobDetailsPopup(response, request) {
         if (selectedTab.title == "Coord Job Info") {
             coord_jobs_grid.setVisible(true);
             return;
-        }
-        if (selectedTab.title == 'Coord Job Log') {
-            fetchLogs(coordJobId, '');
-            //actionsTextBox.position
-	        actionsTextBox.setValue('Enter the action list here');
         }
         else if (selectedTab.title == 'Coord Job Definition') {
             fetchDefinition(coordJobId);
@@ -1212,6 +1233,7 @@ function bundleJobDetailsPopup(response, request) {
         height: 400,
         autoScroll: true,
         emptyText: "Loading..."
+
     });
     var jobDetails = eval("(" + response.responseText + ")");
     var bundleJobId = jobDetails["bundleJobId"];
@@ -1394,17 +1416,17 @@ function bundleJobDetailsPopup(response, request) {
                 autoScroll: true,
                 value: jobDetails["conf"]
              })
-	      },{
+      },{
            title: 'Bundle Job Log',
-	   		 items: jobLogArea,
+           items: jobLogArea,
              tbar: [ {
                 text: "&nbsp;&nbsp;&nbsp;",
                 icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
                 handler: function() {
-                    fetchLogs(bundleJobId);
+                    getLogs(getOozieBase() + 'job/' + bundleJobId + "?show=log", jobLogArea, false, null);
                 }
             }]
-	    }]
+          }]
      });
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -1413,7 +1435,7 @@ function bundleJobDetailsPopup(response, request) {
             return;
         }
         else if (selectedTab.title == 'Bundle Job Log') {
-            fetchLogs(bundleJobId);
+            getLogs(getOozieBase() + 'job/' + bundleJobId + "?show=log", jobLogArea, false, null);
         }
         else if (selectedTab.title == 'Bundle Job Definition') {
             fetchDefinition(bundleJobId);
@@ -1430,15 +1452,7 @@ function bundleJobDetailsPopup(response, request) {
         });
     }
 
-	function fetchLogs(bundleJobId) {
-        Ext.Ajax.request({
-            url: getOozieBase() + 'job/' + bundleJobId + "?show=log",
-            success: function(response, request) {
-                jobLogArea.setRawValue(response.responseText);
-            }
 
-        });
-    }
 
     var win = new Ext.Window({
         title: 'Job (Name: ' + bundleJobName + '/bundleJobId: ' + bundleJobId + ')',
