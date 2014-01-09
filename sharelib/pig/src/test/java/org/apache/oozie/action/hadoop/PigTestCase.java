@@ -17,7 +17,9 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
@@ -36,6 +38,7 @@ import com.google.common.primitives.Booleans;
 public abstract class PigTestCase extends XFsTestCase implements Callable<Void> {
     protected static String pigScript;
     protected static boolean writeStats;
+    protected static boolean failOnException = true;
     private static String commonPigScript = "set job.name 'test'\n" +
              "set debug on\n" +
              "A = load '$IN' using PigStorage(':');\n" +
@@ -47,11 +50,17 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
     public void testPigScript() throws Exception {
         pigScript = commonPigScript;
         writeStats = true;
+        failOnException = true;
         MainTestCase.execute(getTestUser(), this);
-    }
+        String hadoopIdsFile = System.getProperty("oozie.action.externalChildIDs");
+        assertTrue(new File(hadoopIdsFile).exists());
+        String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
+        assertTrue(externalChildIds.contains("job_"));
 
+    }
     // testing embedded Pig feature of Pig 0.9
     public void testEmbeddedPigWithinPython() throws Exception {
+        failOnException = true;
         FileSystem fs = getFileSystem();
         Path jythonJar = new Path(getFsTestCaseDir(), "jython.jar");
         InputStream is = new FileInputStream(ClassUtils.findContainingJar(jython.class));
@@ -85,5 +94,23 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
         writeStats = false;
         MainTestCase.execute(getTestUser(), this);
     }
+
+    public void testPig_withNullExternalID() throws Exception {
+        failOnException = false;
+        String script = "A = load '$IN' using PigStorage(':');\n"
+                + "store A into '$IN' USING PigStorage();";
+        pigScript = script;
+        writeStats = true;
+        try {
+            MainTestCase.execute(getTestUser(), this);
+        }
+        catch (Exception e) {
+            //Ignore exception
+        }
+        String hadoopIdsFile = System.getProperty("oozie.action.externalChildIDs");
+        assertFalse(new File(hadoopIdsFile).exists());
+
+    }
+
 
 }

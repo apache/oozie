@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.hadoop.util.Shell;
+import org.apache.commons.lang.StringUtils;
 
 public abstract class LauncherMain {
 
@@ -54,6 +55,10 @@ public abstract class LauncherMain {
                     Matcher matcher = pattern.matcher(line);
                     if (matcher.find()) {
                         String jobId = matcher.group(1);
+                        if (StringUtils.isEmpty(jobId) || jobId.equalsIgnoreCase("NULL")) {
+                            continue;
+                        }
+
                         sb.append(separator).append(jobId);
                         separator = ",";
                     }
@@ -82,7 +87,7 @@ public abstract class LauncherMain {
         StringWriter writer = new StringWriter();
         writer.write(header + "\n");
         writer.write("--------------------\n");
-        for (Map.Entry entry : (Iterable<Map.Entry>) conf){
+        for (Map.Entry entry : (Iterable<Map.Entry>) conf) {
             String name = (String) entry.getKey();
             String value = (String) entry.getValue();
             for (String mask : maskSet) {
@@ -106,11 +111,11 @@ public abstract class LauncherMain {
         if (path != null && Shell.WINDOWS) {
             // In Windows, file paths are enclosed in \" so remove them here
             // to avoid path errors
-            if(path.charAt(0)=='"') {
+            if (path.charAt(0) == '"') {
                 path = path.substring(1);
             }
-            if(path.charAt(path.length()-1) == '"') {
-                path = path.substring(0, path.length()-1);
+            if (path.charAt(path.length() - 1) == '"') {
+                path = path.substring(0, path.length() - 1);
             }
         }
         return path;
@@ -119,11 +124,11 @@ public abstract class LauncherMain {
 
 class LauncherMainException extends Exception {
     private int errorCode;
-    
+
     public LauncherMainException(int code) {
         errorCode = code;
     }
-    
+
     int getErrorCode() {
         return errorCode;
     }

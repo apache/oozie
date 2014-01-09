@@ -606,41 +606,45 @@ function jobDetailsPopup(response, request) {
         }
     }
 
-	function populateUrlUnit(actionStatus, urlUnit) {
-		var consoleUrl = actionStatus["consoleUrl"];
+    function populateUrlUnit(actionStatus, urlUnit) {
+        var consoleUrl = actionStatus["consoleUrl"];
         var externalChildIDs = actionStatus["externalChildIDs"];
-		if(consoleUrl && externalChildIDs && externalChildIDs != "null") {
-	        var urlPrefix = consoleUrl.trim().split(/_/)[0];
-            //externalChildIds is a comma-separated string of each child job ID.
-            //Create URL list by appending jobID portion after stripping "job"
+        if (consoleUrl && externalChildIDs && externalChildIDs != "null") {
+            var urlPrefix = consoleUrl.trim().split(/_/)[0];
+            // externalChildIds is a comma-separated string of each child job
+            // ID.
+            // Create URL list by appending jobID portion after stripping "job"
             var jobIds = externalChildIDs.split(/,/);
             var count = 1;
             jobIds.forEach(function(jobId) {
-                jobId = jobId.trim().split(/job/)[1];
-		        var jobUrl = new Ext.form.TriggerField({
-			        fieldLabel: 'Child Job ' + count,
-			        editable: false,
-			        name: 'childJobURLs',
-			        width: 400,
-			        value: urlPrefix + jobId,
-			        triggerClass: 'x-form-search-trigger',
-			        onTriggerClick: function() {
-			            window.open(urlPrefix + jobId);
-			        }
-	            });
-	            if(jobId != undefined) {
-                    urlUnit.add(jobUrl);
-	                count++;
-	            }
-	        });
+                jobId = jobId.trim().split(/job/);
+                if (jobId.length > 1) {
+                    jobId = jobId[1];
+                    var jobUrl = new Ext.form.TriggerField({
+                        fieldLabel : 'Child Job ' + count,
+                        editable : false,
+                        name : 'childJobURLs',
+                        width : 400,
+                        value : urlPrefix + jobId,
+                        triggerClass : 'x-form-search-trigger',
+                        onTriggerClick : function() {
+                            window.open(urlPrefix + jobId);
+                        }
+                    });
+                    if (jobId != undefined) {
+                        urlUnit.add(jobUrl);
+                        count++;
+                    }
+                }
+            });
         } else {
             var note = new Ext.form.TextField({
-                fieldLabel: 'Child Job',
-                value: 'n/a'
+                fieldLabel : 'Child Job',
+                value : 'n/a'
             });
             urlUnit.add(note);
         }
-	}
+    }
 
     function refreshActionDetails(actionId, detail, urlUnit) {
         Ext.Ajax.request({

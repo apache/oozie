@@ -120,8 +120,10 @@ public class TestPigMain extends PigTestCase {
             if (LauncherSecurityManager.getExitInvoked()) {
                 System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
                 System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    fail();
+                if (failOnException) {
+                    if (LauncherSecurityManager.getExitCode() != 0) {
+                        fail();
+                    }
                 }
             }
             else {
@@ -144,10 +146,11 @@ public class TestPigMain extends PigTestCase {
         } else {
             assertFalse(statsDataFile.exists());
         }
-        // HadoopIds should always be stored
-        assertTrue(hadoopIdsFile.exists());
-        String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
-        assertTrue(externalChildIds.contains("job_"));
+        //File exist only if there is external child jobID.
+        if (hadoopIdsFile.exists()) {
+            String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
+            assertTrue(externalChildIds.contains("job_"));
+        }
         return null;
     }
 

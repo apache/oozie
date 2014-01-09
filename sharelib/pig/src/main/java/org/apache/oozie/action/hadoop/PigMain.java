@@ -21,6 +21,7 @@ import org.apache.pig.Main;
 import org.apache.pig.PigRunner;
 import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
@@ -371,6 +372,9 @@ public class PigMain extends LauncherMain {
             PigStats.JobGraph jobGraph = pigStats.getJobGraph();
             for (JobStats jobStats : jobGraph) {
                 String hadoopJobId = jobStats.getJobId();
+                if (StringUtils.isEmpty(hadoopJobId) || hadoopJobId.trim().equalsIgnoreCase("NULL")) {
+                    continue;
+                }
                 if (sb.length() > 0) {
                     sb.append(separator);
                 }
