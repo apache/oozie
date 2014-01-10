@@ -18,7 +18,7 @@
 package org.apache.oozie.command.coord;
 
 import org.apache.hadoop.conf.Configuration;
-
+import org.apache.oozie.action.hadoop.OozieJobInfo;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.CoordinatorActionBean;
@@ -176,7 +176,10 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 if(slaEvent != null) {
                     insertList.add(slaEvent);
                 }
-
+                if (OozieJobInfo.isJobInfoEnabled()) {
+                    conf.set(OozieJobInfo.COORD_NAME, appName);
+                    conf.set(OozieJobInfo.COORD_NOMINAL_TIME, coordAction.getNominalTimestamp().toString());
+                }
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
                 String wfId = dagEngine.submitJobFromCoordinator(conf, actionId);

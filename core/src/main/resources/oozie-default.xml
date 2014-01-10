@@ -1987,5 +1987,18 @@
         </description>
     </property>
 
-
+    <property>
+        <name>oozie.action.jobinfo.enable</name>
+        <value>false</value>
+        <description>
+        JobInfo will contain information of bundle, coordinator, workflow and actions. If enabled, hadoop job will have
+        property(oozie.job.info) which value is multiple key/value pair separated by ",". This information can be used for
+        analytics like how many oozie jobs are submitted for a particular period, what is the total number of failed pig jobs,
+        etc from mapreduce job history logs and configuration.
+        User can also add custom workflow property to jobinfo by adding property which prefix with "oozie.job.info."
+        Eg.
+        oozie.job.info="bundle.id=,bundle.name=,coord.name=,coord.nominal.time=,coord.name=,wf.id=,
+        wf.name=,action.name=,action.type=,launcher=true"
+        </description>
+    </property>
 </configuration>

@@ -30,6 +30,7 @@ import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.action.hadoop.OozieJobInfo;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonBean;
@@ -242,6 +243,9 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                     Attribute name = coordElem.getAttribute("name");
                     Configuration coordConf = mergeConfig(coordElem);
                     coordConf.set(OozieClient.BUNDLE_ID, jobId);
+                    if (OozieJobInfo.isJobInfoEnabled()) {
+                        coordConf.set(OozieJobInfo.BUNDLE_NAME, bundleJob.getAppName());
+                    }
 
                     queue(new CoordSubmitXCommand(coordConf, bundleJob.getId(), name.getValue()));
 

@@ -836,6 +836,8 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
+
+            injectJobInfo(launcherJobConf, actionConf, context, action);
             injectLauncherCallback(context, launcherJobConf);
             LOG.debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
@@ -907,7 +909,6 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
     }
-
     private boolean needInjectCredentials() {
         boolean methodExists = true;
 
@@ -1367,5 +1368,20 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
             HadoopAccessorException, URISyntaxException {
+    }
+
+    private void injectJobInfo(JobConf launcherJobConf, Configuration actionConf, Context context, WorkflowAction action) {
+        if (OozieJobInfo.isJobInfoEnabled()) {
+            try {
+                OozieJobInfo jobInfo = new OozieJobInfo(actionConf, context, action);
+                String jobInfoStr = jobInfo.getJobInfo();
+                launcherJobConf.set(OozieJobInfo.JOB_INFO_KEY, jobInfoStr + "launcher=true");
+                actionConf.set(OozieJobInfo.JOB_INFO_KEY, jobInfoStr + "launcher=false");
+            }
+            catch (Exception e) {
+                // Just job info, should not impact the execution.
+                LOG.error("Error while populating job info", e);
+            }
+        }
     }
 }
