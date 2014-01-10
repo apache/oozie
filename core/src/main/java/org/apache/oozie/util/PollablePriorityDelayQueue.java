@@ -57,7 +57,7 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
                     Iterator<QueueElement<E>> iter = queues[i - 1].iterator();
                     while(e == null && iter.hasNext()) {
                         e = iter.next();
-                        if (eligibleToPoll(e)) {
+                        if (e.getDelay(TimeUnit.MILLISECONDS) <= 0 && eligibleToPoll(e)) {
                             queues[i - 1].remove(e);
                         }
                         else {

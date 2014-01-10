@@ -400,7 +400,8 @@ public class TestCallableQueueService extends XTestCase {
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3, callable4, callable5, callable6);
 
         final MyCallable callableOther = new MyCallable("other", 0, 100);
-        queueservice.queue(callableOther, 1000);
+        long now = System.currentTimeMillis();
+        queueservice.queue(callableOther, 15);
 
         for (MyCallable c : callables) {
             queueservice.queue(c, 10);
@@ -430,6 +431,7 @@ public class TestCallableQueueService extends XTestCase {
         System.out.println("Callable callableOther executed :" + callableOther.executed);
 
         assertTrue(callableOther.executed < last);
+        assertTrue(callableOther.executed > (now + 115));
     }
 
     public void testSerialConcurrencyLimit() throws Exception {

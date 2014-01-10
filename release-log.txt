@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1664 PollablePriorityDelayQueue.poll() returns elements with +ve delay (shwethags via rohini)
 OOZIE-1661 Stream logs in oozie UI (puru via rohini)
 OOZIE-1610 UnitTests fail on Windows because of wrong paths (omaliuvanchuk via rohini)
 OOZIE-1660 DB connection misconfig causes all or most unit tests to fail (rkanter)
