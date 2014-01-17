@@ -17,12 +17,16 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.io.StringReader;
 import java.net.URI;
 import java.util.Date;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -37,6 +41,9 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.test.XTestCase.Predicate;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestWorkflowActionKillXCommand extends XDataTestCase {
@@ -61,10 +68,10 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillSuccess() throws Exception {
-        String externalJobID = launchSleepJob();
+        String externalJobID = launchSleepJob(1000);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
-                WorkflowAction.Status.KILLED);
+                WorkflowAction.Status.KILLED,null);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -88,10 +95,10 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testWfActionKillFailed() throws Exception {
-        String externalJobID = launchSleepJob();
+        String externalJobID = launchSleepJob(1000);
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
-                WorkflowAction.Status.RUNNING);
+                WorkflowAction.Status.RUNNING,null);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -109,8 +116,28 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getExternalStatus(), "RUNNING");
     }
 
+    public void testWfActionKillChildJob() throws Exception {
+        String externalJobID = launchSleepJob(1000);
+        String childId = launchSleepJob(1000000);
+
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
+                WorkflowAction.Status.KILLED, childId);
+
+        new ActionKillXCommand(action.getId()).call();
+        JobClient jobClient = createJobClient();
+
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
+        waitFor(60 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertEquals(mrJob.getJobState(), JobStatus.KILLED);
+    }
+
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String externalJobID, String actionName,
-            WorkflowAction.Status status) throws Exception {
+            WorkflowAction.Status status, String childID) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
         action.setJobId(wfId);
@@ -123,6 +150,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         action.setPending();
         action.setExternalId(externalJobID);
         action.setExternalStatus("RUNNING");
+        action.setExternalChildIDs(childID);
 
         String actionXml = "<map-reduce>" +
         "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
@@ -152,14 +180,14 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         return action;
     }
 
-    private String launchSleepJob() throws Exception {
+    private String launchSleepJob(int sleep) throws Exception {
         JobConf jobConf = Services.get().get(HadoopAccessorService.class)
                 .createJobConf(new URI(getNameNodeUri()).getAuthority());
         JobClient jobClient = createJobClient();
 
         SleepJob sleepjob = new SleepJob();
         sleepjob.setConf(jobConf);
-        jobConf = sleepjob.setupJobConf(1, 1, 1000, 1, 1000, 1);
+        jobConf = sleepjob.setupJobConf(1, 1, sleep, 1, sleep, 1);
 
         final RunningJob runningJob = jobClient.submitJob(jobConf);
         return runningJob.getID().toString();
