@@ -340,6 +340,7 @@ function jobDetailsPopup(response, request) {
     function fetchDefinition(workflowId) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + workflowId + "?show=definition",
+            timeout: 300000,
             success: function(response, request) {
                 jobDefinitionArea.setRawValue(response.responseText);
             }
@@ -446,6 +447,7 @@ function jobDetailsPopup(response, request) {
             handler: function() {
                 Ext.Ajax.request({
                     url: getOozieBase() + 'job/' + workflowId + "?timezone=" + getTimeZone(),
+                    timeout: 300000,
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         jobActionStatus.loadData(jobDetails["actions"]);
@@ -707,6 +709,7 @@ function jobDetailsPopup(response, request) {
     function refreshActionDetails(actionId, detail, urlUnit) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + actionId + "?timezone=" + getTimeZone(),
+            timeout: 300000,
             success: function(response, request) {
                 var results = eval("(" + response.responseText + ")");
                 detail.getForm().setValues(results);
@@ -851,6 +854,7 @@ function coordJobDetailsPopup(response, request) {
     function fetchDefinition(coordJobId) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + coordJobId + "?show=definition",
+            timeout: 300000,
             success: function(response, request) {
                 jobDefinitionArea.setRawValue(response.responseText);
             }
@@ -978,6 +982,7 @@ function coordJobDetailsPopup(response, request) {
             handler: function() {
                 Ext.Ajax.request({
                     url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&offset=0&len=0",
+                    timeout: 300000,
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         fs.getForm().setValues(jobDetails);
@@ -1303,6 +1308,7 @@ function bundleJobDetailsPopup(response, request) {
             handler: function() {
                 Ext.Ajax.request({
                     url: getOozieBase() + 'job/' + bundleJobId + "?timezone=" + getTimeZone(),
+                    timeout: 300000,
                     success: function(response, request) {
                         jobDetails = eval("(" + response.responseText + ")");
                         jobActionStatus.loadData(jobDetails["bundleCoordJobs"]);
@@ -1446,6 +1452,7 @@ function bundleJobDetailsPopup(response, request) {
     function fetchDefinition(bundleJobId) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + bundleJobId + "?show=definition",
+            timeout: 300000,
             success: function(response, request) {
                 jobDefinitionArea.setRawValue(response.responseText);
             }
@@ -1469,6 +1476,7 @@ function bundleJobDetailsPopup(response, request) {
 function jobDetailsGridWindow(workflowId) {
     Ext.Ajax.request({
         url: getOozieBase() + 'job/' + workflowId + "?timezone=" + getTimeZone(),
+        timeout: 300000,
         success: jobDetailsPopup
 
     });
@@ -1485,6 +1493,7 @@ function coordJobDetailsGridWindow(coordJobId) {
          });
          */
         url: getOozieBase() + 'job/' + coordJobId + "?timezone=" + getTimeZone() + "&offset=0&len=0",
+        timeout: 300000,
         success: coordJobDetailsPopup
     });
 }
@@ -1492,6 +1501,7 @@ function coordJobDetailsGridWindow(coordJobId) {
 function coordActionDetailsGridWindow(coordActionId) {
     Ext.Ajax.request({
         url: getOozieBase() + 'job/' + coordActionId + "?timezone=" + getTimeZone(),
+        timeout: 300000,
         success: function(response, request) {
             var coordAction = JSON.parse(response.responseText);
             var workflowId = coordAction.externalId;
@@ -1503,6 +1513,7 @@ function coordActionDetailsGridWindow(coordActionId) {
 function bundleJobDetailsGridWindow(bundleJobId) {
     Ext.Ajax.request({
         url: getOozieBase() + 'job/' + bundleJobId + "?timezone=" + getTimeZone(),
+        timeout: 300000,
         success: bundleJobDetailsPopup
     });
 }
