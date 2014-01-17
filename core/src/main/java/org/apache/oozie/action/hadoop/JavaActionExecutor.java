@@ -1152,7 +1152,7 @@ public class JavaActionExecutor extends ActionExecutor {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
             jobClient = createJobClient(context, jobConf);
-            RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+            RunningJob runningJob = getRunningJob(context, action, jobClient);
             if (runningJob != null) {
                 runningJob.killJob();
             }
