@@ -69,7 +69,7 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>1.1.1</hadoop.version>
+        <hadoop.version>2.2.0</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hcatalog.version>0.5.0</hcatalog.version>
 
@@ -86,6 +86,7 @@
 
          <!-- Sharelib component versions -->
          <hive.version>0.10.0</hive.version>
+         <hivebuiltins.version>0.10.0</hivebuiltins.version>
          <pig.version>0.10.1</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
@@ -496,12 +497,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.6.6</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-builtins</artifactId>
-                <version>${hive.version}</version>
             </dependency>
 
            <dependency>
@@ -1028,6 +1023,19 @@
             <modules>
                 <module>login</module>
             </modules>
+        </profile>
+        <profile>
+            <id>hive-10</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hive</groupId>
+                    <artifactId>hive-builtins</artifactId>
+                    <version>${hivebuiltins.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 </project>
