@@ -32,9 +32,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>hadoop-1</module>
-        <module>hadoop-test-1</module>
-        <module>hadoop-distcp-1</module>
         <!--
             Modules are only defined via a profile
         -->
