@@ -199,14 +199,6 @@ public class CallableQueueService implements Service, Instrumentable {
         }
 
         /**
-         * @return String the queue dump
-         */
-        @Override
-        public String toString() {
-            return "delay=" + getDelay(TimeUnit.MILLISECONDS) + ", elements=" + getElement().toString();
-        }
-
-        /**
          * Filter the duplicate callables from the list before queue this.
          * <p/>
          * If it is single callable, checking if key is in unique map or not.

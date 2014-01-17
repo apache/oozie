@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1663 Queuedump to display command type (shwethags via virag)
 OOZIE-1672 UI info fetch fails for bundle having large number of coordinators (puru via rohini)
 OOZIE-1666 Child job link not working in safari and chrome (puru via ryota)
 OOZIE-1658 Add bundle, coord, wf and action related information to launched M/R jobs (puru via rohini)

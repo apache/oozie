@@ -521,4 +521,12 @@ public abstract class XCommand<T> implements XCallable<T> {
         return LOG;
     }
 
+    /**
+     * String for the command - key
+     * @return String
+     */
+    @Override
+    public String toString() {
+        return getKey();
+    }
 }
