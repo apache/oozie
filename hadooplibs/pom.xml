@@ -32,15 +32,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>hadoop-1</module>
-        <module>hadoop-distcp-1</module>
-        <module>hadoop-test-1</module>
-        <module>hadoop-2</module>
-        <module>hadoop-test-2</module>
-        <module>hadoop-distcp-2</module>
-        <module>hadoop-0.23</module>
-        <module>hadoop-test-0.23</module>
-        <module>hadoop-distcp-0.23</module>
+        <!--
+            Modules are only defined via a profile
+        -->
     </modules>
 
     <build>
@@ -66,6 +60,39 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>hadoop-1</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-1</module>
+                <module>hadoop-test-1</module>
+                <module>hadoop-distcp-1</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>hadoop-0.23</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-0.23</module>
+                <module>hadoop-test-0.23</module>
+                <module>hadoop-distcp-0.23</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>hadoop-2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-2</module>
+                <module>hadoop-test-2</module>
+                <module>hadoop-distcp-2</module>
+            </modules>
+        </profile>
         <profile>
             <id>hadoop-3</id>
             <activation>
