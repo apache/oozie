@@ -537,6 +537,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
         action.setPending();
+        action.setExecutionPath("/");
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");

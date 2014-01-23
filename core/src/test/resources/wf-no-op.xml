@@ -15,7 +15,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="no-op-wf">
-    <start to="end"/>
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="no-op-wf">
+     <start to="action1"/>
+    <action name="action1">
+        <fs/>
+    <ok to="end"/>
+    <error to="end"/>
+    </action>
     <end name="end"/>
 </workflow-app>

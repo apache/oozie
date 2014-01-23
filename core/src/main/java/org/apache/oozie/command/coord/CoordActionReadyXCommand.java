@@ -86,7 +86,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                     + numRunningJobs + ", numLeftover=" + numActionsToStart);
             // no actions to start
             if (numActionsToStart == 0) {
-                log.warn("No actions to start! for jobId=" + jobId);
+                log.warn("No actions to start for jobId=" + jobId + " as max concurrency reached!");
                 return null;
             }
         }
@@ -100,7 +100,6 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(je);
         }
         log.debug("Number of READY actions = " + actions.size());
-        String user = coordJob.getUser();
         // make sure auth token is not null
         // log.denug("user=" + user + ", token=" + authToken);
         int counter = 0;
@@ -111,9 +110,6 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                 log.debug("Set status to SUBMITTED for id: " + action.getId());
                 // change state of action to SUBMITTED
                 action.setStatus(CoordinatorAction.Status.SUBMITTED);
-                // queue action to start action
-                queue(new CoordActionStartXCommand(action.getId(), user, coordJob.getAppName(),
-                        action.getJobId()), 100);
                 try {
                     CoordActionQueryExecutor.getInstance().executeUpdate(
                             CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
@@ -121,6 +117,9 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                 catch (JPAExecutorException je) {
                     throw new CommandException(je);
                 }
+                // start action
+                new CoordActionStartXCommand(action.getId(), coordJob.getUser(), coordJob.getAppName(),
+                        action.getJobId()).call(getEntityKey());
             }
             else {
                 break;

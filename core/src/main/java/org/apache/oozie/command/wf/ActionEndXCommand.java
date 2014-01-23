@@ -215,12 +215,9 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                 }
                 if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
-                    LOG.debug("Queuing commands for action=" + actionId + ", status=" + wfAction.getStatus()
-                            + ", Set pending=" + wfAction.isPending());
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
-                    queue(new SignalXCommand(jobId, actionId));
                 }
             }
             updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END,wfAction));
@@ -249,7 +246,6 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     break;
                 case ERROR:
                     handleError(context, executor, COULD_NOT_END, false, WorkflowAction.Status.ERROR);
-                    queue(new SignalXCommand(jobId, actionId));
                     break;
                 case FAILED:
                     failJob(context);
@@ -267,13 +263,14 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         finally {
             try {
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
-                if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
-                    generateEvent(wfAction, wfJob.getUser());
-                }
             }
             catch (JPAExecutorException e) {
                 throw new CommandException(e);
             }
+            if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
+                generateEvent(wfAction, wfJob.getUser());
+            }
+            new SignalXCommand(jobId, actionId).call(getEntityKey());
         }
 
         LOG.debug("ENDED ActionEndXCommand for action " + actionId);

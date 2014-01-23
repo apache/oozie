@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,13 @@ package org.apache.oozie.action;
 
 import java.io.OutputStreamWriter;
 import java.util.List;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.control.StartActionExecutor;
-import org.apache.oozie.action.hadoop.FsActionExecutor;
+import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
@@ -42,7 +40,6 @@ import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
-import org.mortbay.io.WriterOutputStream;
 
 public class TestActionFailover extends XFsTestCase {
 
@@ -78,10 +75,18 @@ public class TestActionFailover extends XFsTestCase {
         conf.setProperty("source", source.toString());
         conf.setProperty("target", target.toUri().getPath());
         final String jobId1 = wfClient.submit(conf);
-        wfClient.start(jobId1);
+
         setSystemProperty(FaultInjection.FAULT_INJECTION, "true");
         setSystemProperty(SkipCommitFaultInjection.ACTION_FAILOVER_FAULT_INJECTION, "true");
-        
+
+        try {
+            wfClient.start(jobId1);
+            fail("Should have skipped commit for failover testing");
+        }
+        catch (OozieClientException oce) {
+            assertTrue(oce.getMessage().contains("Skipping Commit for Failover Testing"));
+        }
+
         waitFor(10 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return getFileSystem().exists(target);
@@ -111,11 +116,12 @@ public class TestActionFailover extends XFsTestCase {
 
         ActionStartXCommand actionStartCommand = new ActionStartXCommand(action.getId(), action.getType());
         actionStartCommand.call();
+        sleep(500);
 
         store = Services.get().get(WorkflowStoreService.class).create();
         actions = store.getActionsForWorkflow(jobId1, false);
         action = actions.get(0);
-        assertEquals(WorkflowAction.Status.DONE, action.getStatus());
+        assertEquals(WorkflowAction.Status.OK, action.getStatus());
 
         waitFor(5 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {

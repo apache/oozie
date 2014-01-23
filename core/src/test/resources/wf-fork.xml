@@ -25,13 +25,13 @@
     <action name="action1">
         <fs>
         </fs>
-        <ok to="kill"/>
+        <ok to="join1"/>
         <error to="kill"/>
     </action>
     <action name="action2">
         <fs>
         </fs>
-        <ok to="kill"/>
+        <ok to="join1"/>
         <error to="kill"/>
     </action>
     <join name="join1" to="end"/>

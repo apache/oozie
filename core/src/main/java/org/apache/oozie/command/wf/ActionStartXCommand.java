@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.servlet.jsp.el.ELException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
@@ -82,6 +83,13 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         this.jobId = Services.get().get(UUIDService.class).getId(actionId);
     }
 
+    public ActionStartXCommand(WorkflowJobBean job, String actionId, String type) {
+        super("action.start", type, 0);
+        this.actionId = actionId;
+        this.wfJob = job;
+        this.jobId = wfJob.getId();
+    }
+
     @Override
     protected boolean isLockRequired() {
         return true;
@@ -97,7 +105,9 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
         try {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
-                this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
+                if (wfJob == null) {
+                    this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
+                }
                 this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, actionId);
                 LogUtils.setLogInfo(wfJob, logInfo);
                 LogUtils.setLogInfo(wfAction, logInfo);
@@ -147,6 +157,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
 
         int maxRetries = 0;
         long retryInterval = 0;
+        boolean execSynchronous = false;
 
         if (!(executor instanceof ControlNodeActionExecutor)) {
             maxRetries = conf.getInt(OozieClient.ACTION_MAX_RETRIES, executor.getMaxRetries());
@@ -229,7 +240,12 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                         failJob(context);
                     } else {
                         wfAction.setPending();
-                        queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
+                        if (!(executor instanceof ControlNodeActionExecutor)) {
+                            queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
+                        }
+                        else {
+                            execSynchronous = true;
+                        }
                     }
                 }
                 else {
@@ -307,6 +323,11 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
                 if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
                     generateEvent(wfAction, wfJob.getUser());
+                }
+                if (execSynchronous) {
+                    // Changing to synchronous call from asynchronous queuing to prevent
+                    // undue delay from ::start:: to action due to queuing
+                    new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call(getEntityKey());
                 }
             }
             catch (JPAExecutorException e) {

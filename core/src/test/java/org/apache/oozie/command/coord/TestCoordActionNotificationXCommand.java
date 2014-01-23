@@ -72,6 +72,6 @@ public class TestCoordActionNotificationXCommand extends XTestCase {
         command.call();
         long end = System.currentTimeMillis();
         Assert.assertTrue(end - start >= 50);
-        Assert.assertTrue(end - start <= 100);
+        Assert.assertTrue(end - start <= NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
     }
 }

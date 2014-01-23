@@ -84,7 +84,7 @@ public abstract class WorkflowStoreService implements Service {
      * @return the list of actions started by the signaling.
      */
     @SuppressWarnings("unchecked")
-    public static List<WorkflowActionBean> getStartedActions(WorkflowInstance instance) {
+    public static List<WorkflowActionBean> getActionsToStart(WorkflowInstance instance) {
         List<WorkflowActionBean> list = (List<WorkflowActionBean>) instance.getTransientVar(ACTIONS_TO_START);
         instance.setTransientVar(ACTIONS_TO_START, null);
         return (list != null) ? list : Collections.EMPTY_LIST;

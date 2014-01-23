@@ -18,14 +18,12 @@
 package org.apache.oozie.test;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -657,6 +655,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef(
                 LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).addNode(new EndNodeDef("end",
                 LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        return addRecordToWfJobTable(app, jobStatus, instanceStatus);
+    }
+
+    protected WorkflowJobBean addRecordToWfJobTable(WorkflowApp app, WorkflowJob.Status jobStatus,
+            WorkflowInstance.Status instanceStatus) throws Exception {
         Configuration conf = new Configuration();
         Path appUri = new Path(getAppPath(), "workflow.xml");
         conf.set(OozieClient.APP_PATH, appUri.toString());
@@ -1160,7 +1163,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         WorkflowInstance wfInstance = workflowLib.createInstance(app, conf);
         ((LiteWorkflowInstance) wfInstance).setStatus(instanceStatus);
         WorkflowJobBean workflow = new WorkflowJobBean();
-        workflow.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW));
+        workflow.setId(wfInstance.getId());
         workflow.setExternalId("extid");
         workflow.setAppName(app.getName());
         workflow.setAppPath(conf.get(OozieClient.APP_PATH));
@@ -1325,7 +1328,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         bundleAppXml = bundleAppXml
                 .replaceAll("#app_path1", new Path(coordPath1.toString(), "coordinator.xml").toString());
         bundleAppXml = bundleAppXml
-                .replaceAll("#app_path2", new Path(coordPath2.toString(), "coordinator.xml").toString());
+                .replaceAll("#app_path2", new Path(coordPath1.toString(), "coordinator.xml").toString());
         writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
 
         Configuration conf = new XConfiguration();

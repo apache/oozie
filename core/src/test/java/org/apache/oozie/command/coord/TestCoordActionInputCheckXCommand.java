@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.command.coord;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
@@ -706,7 +705,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         catch (JPAExecutorException se) {
             fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
         }
-        assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+        // for no dataset dependency, action will proceed directly to start
+        // workflow synchronously after being READY (since n(actions) < concurrency)
+        assertEquals(CoordinatorAction.Status.RUNNING, action.getStatus());
 
         action.setMissingDependencies("");
         action.setStatus(CoordinatorAction.Status.WAITING);
@@ -726,7 +727,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         catch (JPAExecutorException se) {
             fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
         }
-        assertEquals(action.getStatus(), CoordinatorAction.Status.READY);
+        // for no dataset dependency, action will proceed directly to start
+        // workflow synchronously after being READY (since n(actions) < concurrency)
+        assertEquals(CoordinatorAction.Status.RUNNING, action.getStatus());
     }
 
     @Test

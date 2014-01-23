@@ -72,6 +72,7 @@ public abstract class XCommand<T> implements XCallable<T> {
     private LockToken lock;
     private AtomicBoolean used = new AtomicBoolean(false);
     private boolean inInterrupt = false;
+    private boolean isSynchronous = false;
 
     private Map<Long, List<XCommand<?>>> commandQueue;
     protected boolean dryrun = false;
@@ -246,12 +247,14 @@ public abstract class XCommand<T> implements XCallable<T> {
         Instrumentation.Cron callCron = new Instrumentation.Cron();
         try {
             callCron.start();
-            eagerLoadState();
-            LOG = XLog.resetPrefix(LOG);
-            eagerVerifyPrecondition();
+            if (!isSynchronous) {
+                eagerLoadState();
+                LOG = XLog.resetPrefix(LOG);
+                eagerVerifyPrecondition();
+            }
             try {
                 T ret = null;
-                if (isLockRequired() && !this.inInterruptMode()) {
+                if (!isSynchronous && isLockRequired() && !this.inInterruptMode()) {
                     Instrumentation.Cron acquireLockCron = new Instrumentation.Cron();
                     acquireLockCron.start();
                     acquireLock();
@@ -263,7 +266,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                     this.executeInterrupts();
                 }
 
-                if (!isLockRequired() || (lock != null) || this.inInterruptMode()) {
+                if (isSynchronous || !isLockRequired() || (lock != null) || this.inInterruptMode()) {
                     if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType())
                             && !used.compareAndSet(false, true)) {
                         LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(), this.toString());
@@ -294,7 +297,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                 return ret;
             }
             finally {
-                if (isLockRequired() && !this.inInterruptMode()) {
+                if (!isSynchronous && isLockRequired() && !this.inInterruptMode()) {
                     releaseLock();
                 }
             }
@@ -328,6 +331,25 @@ public abstract class XCommand<T> implements XCallable<T> {
             callCron.stop();
             instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".call", callCron);
         }
+    }
+
+    /**
+     * Call this command synchronously from its caller. This benefits faster
+     * execution of command lifecycle for control nodes and kicking off
+     * subsequent actions
+     *
+     * @param callerEntityKey
+     * @return the {link #execute} return value.
+     * @throws CommandException
+     */
+    public final T call(String callerEntityKey) throws CommandException {
+        if (!callerEntityKey.equals(this.getEntityKey())) {
+            throw new CommandException(ErrorCode.E0607, "Entity Keys mismatch during synchronous call", "caller="
+                    + callerEntityKey + ", callee=" + getEntityKey());
+        }
+        isSynchronous = true; //setting to true so lock acquiring and release is not repeated
+        LOG.trace("Executing synchronously command [{0}] on job [{1}]", this.getName(), this.getKey());
+        return call();
     }
 
     /**

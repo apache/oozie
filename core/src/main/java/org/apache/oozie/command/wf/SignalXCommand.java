@@ -18,7 +18,11 @@
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.control.ForkActionExecutor;
+import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -38,6 +42,7 @@ import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -56,11 +61,13 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.jdom.Element;
+
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.oozie.client.OozieClient;
 
 @SuppressWarnings("deprecation")
@@ -139,11 +146,14 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
+
         LOG.debug("STARTED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);
         WorkflowInstance workflowInstance = wfJob.getWorkflowInstance();
         workflowInstance.setTransientVar(WorkflowStoreService.WORKFLOW_BEAN, wfJob);
-        boolean completed = false;
-        boolean skipAction = false;
+        WorkflowJob.Status prevStatus = wfJob.getStatus();
+        boolean completed = false, skipAction = false;
+        WorkflowActionBean syncAction = null;
+
         if (wfAction == null) {
             if (wfJob.getStatus() == WorkflowJob.Status.PREP) {
                 try {
@@ -296,10 +306,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
         }
         else {
-            for (WorkflowActionBean newAction : WorkflowStoreService.getStartedActions(workflowInstance)) {
+            for (WorkflowActionBean newAction : WorkflowStoreService.getActionsToStart(workflowInstance)) {
                 String skipVar = workflowInstance.getVar(newAction.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
                         + ReRunXCommand.TO_SKIP);
-                boolean skipNewAction = false;
+                boolean skipNewAction = false, suspendNewAction = false;
                 if (skipVar != null) {
                     skipNewAction = skipVar.equals("true");
                 }
@@ -323,7 +333,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     }
                     catch (JPAExecutorException jee) {
                     }
-                    checkForSuspendNode(newAction);
+                    suspendNewAction = checkForSuspendNode(newAction);
                     newAction.setPending();
                     String actionSlaXml = getActionSLAXml(newAction.getName(), workflowInstance.getApp()
                             .getDefinition(), wfJob.getConf());
@@ -332,7 +342,26 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     insertList.add(newAction);
                     LOG.debug("SignalXCommand: Name: " + newAction.getName() + ", Id: " + newAction.getId()
                             + ", Authcode:" + newAction.getCred());
-                    queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
+                    if (wfAction != null) { // null during wf job submit
+                        ActionService as = Services.get().get(ActionService.class);
+                        ActionExecutor current = as.getExecutor(wfAction.getType());
+                        LOG.trace("Current Action Type:" + current.getClass());
+                        if (!suspendNewAction) {
+                            if (!(current instanceof ForkActionExecutor) && !(current instanceof StartActionExecutor)) {
+                                // Excluding :start: here from executing first action synchronously since it
+                                // blocks the consumer thread till the action is submitted to Hadoop,
+                                // in turn reducing the number of new submissions the threads can accept.
+                                // Would also be susceptible to longer delays in case Hadoop cluster is busy.
+                                syncAction = newAction;
+                            }
+                            else {
+                                queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
+                            }
+                        }
+                    }
+                    else {
+                        syncAction = newAction; // first action after wf submit should always be sync
+                    }
                 }
             }
         }
@@ -343,6 +372,9 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob));
             // call JPAExecutor to do the bulk writes
             BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
+            if (prevStatus != wfJob.getStatus()) {
+                LOG.debug("Updated the workflow status to " + wfJob.getId() + "  status =" + wfJob.getStatusStr());
+            }
             if (generateEvent && EventHandlerService.isEnabled()) {
                 generateEvent(wfJob, wfJobErrorCode, wfJobErrorMsg);
             }
@@ -350,10 +382,17 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        LOG.debug("Updated the workflow status to " + wfJob.getId() + "  status =" + wfJob.getStatusStr());
-        if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
+        // Changing to synchronous call from asynchronous queuing to prevent
+        // undue delay from between end of previous and start of next action
+        if (wfJob.getStatus() != WorkflowJob.Status.RUNNING
+                && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
+            // only for asynchronous actions, parent coord action's external id will
+            // persisted and following update will succeed.
             updateParentIfNecessary(wfJob);
             new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
+        }
+        else if (syncAction != null) {
+            new ActionStartXCommand(wfJob, syncAction.getId(), syncAction.getType()).call(getEntityKey());
         }
         LOG.debug("ENDED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);
         return null;
@@ -428,7 +467,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
     }
 
-    private void checkForSuspendNode(WorkflowActionBean newAction) {
+    private boolean checkForSuspendNode(WorkflowActionBean newAction) {
+        boolean suspendNewAction = false;
         try {
             XConfiguration wfjobConf = new XConfiguration(new StringReader(wfJob.getConf()));
             String[] values = wfjobConf.getTrimmedStrings(OozieClient.OOZIE_SUSPEND_ON_NODES);
@@ -437,6 +477,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     LOG.info("Reached suspend node at [{0}], suspending workflow [{1}]", newAction.getName(),
                             wfJob.getId());
                     queue(new SuspendXCommand(jobId));
+                    suspendNewAction = true;
                 }
                 else {
                     for (String suspendPoint : values) {
@@ -444,6 +485,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                             LOG.info("Reached suspend node at [{0}], suspending workflow [{1}]", newAction.getName(),
                                     wfJob.getId());
                             queue(new SuspendXCommand(jobId));
+                            suspendNewAction = true;
                             break;
                         }
                     }
@@ -453,6 +495,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         catch (IOException ex) {
             LOG.warn("Error reading " + OozieClient.OOZIE_SUSPEND_ON_NODES + ", ignoring [{0}]", ex.getMessage());
         }
+        return suspendNewAction;
     }
 
 }

@@ -260,8 +260,8 @@ public class TestRecoveryService extends XDataTestCase {
         CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         store.beginTrx();
         try {
-            createTestCaseSubDir("no-op");
-            createTestCaseSubDir("no-op", "lib");
+            createTestCaseSubDir("one-op");
+            createTestCaseSubDir("one-op", "lib");
             createTestCaseSubDir("workflows");
             createTestCaseSubDir("in");
             addRecordToJobTable(jobId, store, getTestCaseDir());
@@ -567,7 +567,7 @@ public class TestRecoveryService extends XDataTestCase {
         action.setNominalTime(new Date());
         action.setLastModifiedTime(new Date());
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
-        String appPath = getTestCaseFileUri("no-op/workflow.xml");
+        String appPath = getTestCaseFileUri("one-op/workflow.xml");
         String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
         actionXml += "<controls>";
         actionXml += "<timeout>10</timeout>";
@@ -626,10 +626,10 @@ public class TestRecoveryService extends XDataTestCase {
 
         action.setCreatedConf(createdConf);
         store.insertCoordinatorAction(action);
-        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
-        content += "<start to='end' />";
+        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='one-op-wf'>";
+        content += "<start to='fs1'/><action name='fs1'><fs><mkdir path='/tmp'/></fs><ok to='end'/><error to='end'/></action>";
         content += "<end name='end' /></workflow-app>";
-        writeToFile(content, baseDir + "/no-op/");
+        writeToFile(content, baseDir + "/one-op/");
     }
 
     private void writeToFile(String content, String appPath) throws IOException {

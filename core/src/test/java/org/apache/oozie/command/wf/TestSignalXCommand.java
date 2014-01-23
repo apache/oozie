@@ -194,11 +194,6 @@ public class TestSignalXCommand extends XDataTestCase {
 
         oc.start(jobId);
         checkSuspendActions(wf, oc, jobId, WorkflowJob.Status.SUSPENDED,
-                new String[]{":start:"},
-                new String[]{});
-
-        oc.resume(jobId);
-        checkSuspendActions(wf, oc, jobId, WorkflowJob.Status.SUSPENDED,
                 new String[]{"action1"},
                 new String[]{":start:"});
 

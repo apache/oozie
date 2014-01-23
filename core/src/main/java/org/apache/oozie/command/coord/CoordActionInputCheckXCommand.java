@@ -152,14 +152,15 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
                 coordAction.setStatus(CoordinatorAction.Status.READY);
-                // pass jobID to the CoordActionReadyXCommand
-                queue(new CoordActionReadyXCommand(coordAction.getJobId()), 100);
+                updateCoordAction(coordAction, true);
+                new CoordActionReadyXCommand(coordAction.getJobId()).call(getEntityKey());
             }
             else if (!isTimeout(currentTime)) {
                 if (status == false) {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
                             getCoordInputCheckRequeueInterval());
                 }
+                updateCoordAction(coordAction, isChangeInDependency);
             }
             else {
                 if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
@@ -169,6 +170,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     // Let CoordPushDependencyCheckXCommand queue the timeout
                     queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
                 }
+                updateCoordAction(coordAction, isChangeInDependency);
             }
         }
         catch (Exception e) {
@@ -178,11 +180,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 Services.get().get(CallableQueueService.class)
                         .queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
             }
+            updateCoordAction(coordAction, isChangeInDependency);
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         finally {
             cron.stop();
-            updateCoordAction(coordAction, isChangeInDependency);
         }
         return null;
     }

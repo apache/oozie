@@ -81,18 +81,21 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.ActionNodeDef;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
+import org.apache.oozie.workflow.lite.TestLiteWorkflowLib;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestControlNodeHandler;
 import org.junit.After;
@@ -133,7 +136,11 @@ public class TestEventGeneration extends XDataTestCase {
     @Test
     public void testWorkflowJobEvent() throws Exception {
         assertEquals(0, queue.size());
-        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>", new StartNodeDef(
+                LiteWorkflowStoreService.LiteControlNodeHandler.class, "fs-node")).addNode(
+                new ActionNodeDef("fs-node", "", TestLiteWorkflowLib.TestActionNodeHandler.class, "end", "end"))
+                .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        WorkflowJobBean job = addRecordToWfJobTable(app, WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
 
         // Starting job
         new StartXCommand(job.getId()).call();
@@ -248,32 +255,25 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(0, queue.size());
 
         // Make Action ready
+        // In this case it will proceed to Running since n(ready_actions) < concurrency
         new CoordActionInputCheckXCommand(action.getId(), coord.getId()).call();
         action = jpaService.execute(coordGetCmd);
-        assertEquals(CoordinatorAction.Status.READY, action.getStatus());
+        assertEquals(CoordinatorAction.Status.RUNNING, action.getStatus());
 
-        waitFor(4 * 100, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return jpaService.execute(coordGetCmd).getStatus() == CoordinatorAction.Status.RUNNING;
-            }
-        });
-
-        action = jpaService.execute(coordGetCmd);
         event = (JobEvent) queue.poll();
         assertEquals(EventStatus.STARTED, event.getEventStatus());
         assertEquals(AppType.COORDINATOR_ACTION, event.getAppType());
         assertEquals(action.getId(), event.getId());
         assertEquals(action.getJobId(), event.getParentId());
         assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
-        WorkflowJobBean wjb = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
-        assertEquals(wjb.getStartTime(), event.getStartTime());
+        WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
+        assertEquals(wfJob.getStartTime(), event.getStartTime());
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
+        sleep(2000);
+
         // Action Success
-        action = jpaService.execute(coordGetCmd);
-        WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(action.getExternalId()));
         wfJob.setStatus(WorkflowJob.Status.SUCCEEDED);
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob);
         action.setStatus(CoordinatorAction.Status.RUNNING);

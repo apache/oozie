@@ -166,6 +166,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         executor.setRetryInterval(retryInterval);
 
         ActionExecutorContext context = null;
+        boolean execSynchronous = false;
         try {
             boolean isRetry = false;
             if (wfAction.getRetries() > 0) {
@@ -191,7 +192,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     generateEvent = true;
                 } else {
                     wfAction.setPending();
-                    queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
+                    execSynchronous = true;
                 }
             }
             wfAction.setLastCheckTime(new Date());
@@ -235,6 +236,9 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
                 if (generateEvent && EventHandlerService.isEnabled()) {
                     generateEvent(wfAction, wfJob.getUser());
+                }
+                if (execSynchronous) {
+                    new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call(getEntityKey());
                 }
             }
             catch (JPAExecutorException e) {
