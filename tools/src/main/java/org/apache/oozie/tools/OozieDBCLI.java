@@ -326,6 +326,9 @@ public class OozieDBCLI {
     private final static String UPDATE_DELIMITER_VER_TWO =
             "UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES = REPLACE(MISSING_DEPENDENCIES,';','!!')";
 
+    private final static String UPDATE_DELIMITER_VER_TWO_MSSQL=
+            "UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES = REPLACE(CAST(MISSING_DEPENDENCIES AS varchar(MAX)),';','!!')";
+
     private void postUpgradeTasks(String sqlFile, boolean run, boolean force) throws Exception {
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
         writer.println();
@@ -373,11 +376,18 @@ public class OozieDBCLI {
                 System.out.println("         although those jobs may show different status names in their actions");
             }
             if (!getDBVendor().equals("derby")) {
-                writer.println(UPDATE_DELIMITER_VER_TWO + ";");
+                String  updateMissingDependenciesQuery;
+                if (getDBVendor().equals("sqlserver")){
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO_MSSQL;
+                } else {
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO;
+                }
+
+                writer.println(updateMissingDependenciesQuery + ";");
                 System.out.println("Post-upgrade MISSING_DEPENDENCIES column");
                 if (run) {
                     Statement st = conn.createStatement();
-                    st.executeUpdate(UPDATE_DELIMITER_VER_TWO);
+                    st.executeUpdate(updateMissingDependenciesQuery);
                     st.close();
                 }
             }
