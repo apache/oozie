@@ -20,6 +20,8 @@ package org.apache.oozie;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -280,6 +282,9 @@ public class CoordinatorEngine extends BaseEngine {
      */
     public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer,
             Map<String, String[]> params) throws IOException, BaseEngineException, CommandException {
+
+        Date startTime = null;
+        Date endTime = null;
         XLogStreamer.Filter filter = new XLogStreamer.Filter();
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         if (logRetrievalScope != null && logRetrievalType != null) {
@@ -343,7 +348,26 @@ public class CoordinatorEngine extends BaseEngine {
                     orSeparatedActions.insert(0, "(");
                     orSeparatedActions.append(")");
                 }
+
                 filter.setParameter(DagXLogInfoService.ACTION, orSeparatedActions.toString());
+                if (actionSet != null && actionSet.size() == 1) {
+                    CoordinatorActionBean actionBean = getCoordAction(actionSet.iterator().next());
+                    startTime = actionBean.getCreatedTime();
+                    endTime = actionBean.getStatus().equals(CoordinatorAction.Status.RUNNING) ? new Date() : actionBean
+                            .getLastModifiedTime();
+                }
+                else if (actionSet != null && actionSet.size() > 0) {
+                    List<String> tempList = new ArrayList<String>(actionSet);
+                    Collections.sort(tempList, new Comparator<String>() {
+                        public int compare(String a, String b) {
+                            return Integer.valueOf(a.substring(a.lastIndexOf("@") + 1)).compareTo(
+                                    Integer.valueOf(b.substring(b.lastIndexOf("@") + 1)));
+                        }
+                    });
+                    startTime = getCoordAction(tempList.get(0)).getCreatedTime();
+                    endTime = CoordActionsInDateRange.getCoordActionsLastModifiedDate(jobId, tempList.get(0),
+                            tempList.get(tempList.size() - 1));
+                }
             }
             // if coordinator action logs are to be retrieved based on date range
             // this block gets the corresponding list of coordinator actions to be used by the log filter
@@ -369,10 +393,37 @@ public class CoordinatorEngine extends BaseEngine {
                     orSeparatedActions.append(")");
                 }
                 filter.setParameter(DagXLogInfoService.ACTION, orSeparatedActions.toString());
+
+                if (coordActionIdList != null && coordActionIdList.size() == 1) {
+                    CoordinatorActionBean actionBean = getCoordAction(coordActionIdList.get(0));
+                    startTime = actionBean.getCreatedTime();
+                    endTime = actionBean.getStatus().equals(CoordinatorAction.Status.RUNNING) ? new Date() : actionBean
+                            .getLastModifiedTime();
+                }
+                else if (coordActionIdList != null && coordActionIdList.size() > 0) {
+                    Collections.sort(coordActionIdList, new Comparator<String>() {
+                        public int compare(String a, String b) {
+                            return Integer.valueOf(a.substring(a.lastIndexOf("@") + 1)).compareTo(
+                                    Integer.valueOf(b.substring(b.lastIndexOf("@") + 1)));
+                        }
+                    });
+                    startTime = getCoordAction(coordActionIdList.get(0)).getCreatedTime();
+                    endTime = CoordActionsInDateRange.getCoordActionsLastModifiedDate(jobId, coordActionIdList.get(0),
+                            coordActionIdList.get(coordActionIdList.size() - 1));
+                }
             }
         }
-        CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
+        if (startTime == null || endTime == null) {
+            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+            if (startTime == null) {
+                startTime = job.getCreatedTime();
+            }
+            if (endTime == null) {
+                endTime = job.getEndTime() == null ? new Date() : job.getEndTime();
+            }
+        }
+        //job.getActions()
+        Services.get().get(XLogStreamingService.class).streamLog(filter, startTime, endTime, writer, params);
     }
 
     /*

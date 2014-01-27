@@ -25,6 +25,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -80,11 +82,15 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
 
     static class DummyXLogStreamingService extends XLogStreamingService {
         Filter filter;
+        Date startTime;
+        Date endTime;
 
         @Override
         public void streamLog(Filter filter1, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
                 throws IOException {
             filter = filter1;
+            this.startTime = startTime;
+            this.endTime = endTime;
         }
     }
 
@@ -92,89 +98,121 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         return new CoordinatorEngine(getTestUser());
     }
 
-    /**
-     * The log streaming itself is tested in
-     * {@link org.apache.oozie.service.TestXLogService}. Here we test only the
-     * fields that are injected into
-     * {@link org.apache.oozie.util.XLogStreamer.Filter} upon
-     * {@link CoordinatorEngine#streamLog(String, Writer)} invocation.
-     */
-    public void testStreamLog2() throws Exception {
+    public void testCoordLogStreaming() throws Exception {
         CoordinatorEngine ce = createCoordinatorEngine();
-        String jobId = runJobsImpl(ce);
-        ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
-
-        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
-        Filter filter = service.filter;
-
-        assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
-    }
-
-    /**
-     * Test method org.apache.oozie.CoordinatorEngine.streamLog(String, String,
-     * String, Writer) with null 2nd and 3rd arguments.
-     */
-    public void testStreamLog4NullNull() throws Exception {
-        CoordinatorEngine ce = createCoordinatorEngine();
-        String jobId = runJobsImpl(ce);
-        ce.streamLog(jobId, null, null, new StringWriter(), new HashMap<String, String[]>());
-
-        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
-        Filter filter = service.filter;
-
-        assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
-    }
-
-    /**
-     * Test method org.apache.oozie.CoordinatorEngine.streamLog(String, String,
-     * String, Writer) with RestConstants.JOB_LOG_ACTION and non-null 2nd
-     * argument.
-     */
-    public void testStreamLog4JobLogAction() throws Exception {
-        CoordinatorEngine ce = createCoordinatorEngine();
-        String jobId = runJobsImpl(ce);
-
-        ce.streamLog(jobId, "678, 123-127, 946", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());
-
-        DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
-        Filter filter = service.filter;
-
-        assertEquals(jobId, filter.getFilterParams().get(DagXLogInfoService.JOB));
-        assertEquals("(" + jobId + "@678|" + jobId + "@123|" + jobId + "@124|" + jobId + "@125|" + jobId + "@126|" + jobId
-                + "@127|" + jobId + "@946)", filter.getFilterParams().get(DagXLogInfoService.ACTION));
-    }
-
-    /**
-     * Test method org.apache.oozie.CoordinatorEngine.streamLog(String, String,
-     * String, Writer) with RestConstants.JOB_LOG_DATE.
-     */
-    public void testStreamLog4JobLogDate() throws Exception {
-        CoordinatorEngine ce = createCoordinatorEngine();
-        final String jobId = runJobsImpl(ce);
+        final String jobId = runJobsImpl(ce, 6);
 
         CoordinatorJobBean cjb = ce.getCoordJob(jobId);
         Date createdDate = cjb.getCreatedTime();
         Date endDate = new Date();
         assertTrue(endDate.after(createdDate));
 
-        long middle = (createdDate.getTime() + endDate.getTime()) / 2;
-        Date middleDate = new Date(middle);
+        List<CoordinatorAction> list = cjb.getActions();
+        Collections.sort(list, new Comparator<CoordinatorAction>() {
+            public int compare(CoordinatorAction a, CoordinatorAction b) {
+                return a.getId().compareTo(b.getId());
+            }
+        });
 
-        ce.streamLog(jobId, DateUtils.formatDateOozieTZ(createdDate) + "::" + DateUtils.formatDateOozieTZ(middleDate) + ","
-                + DateUtils.formatDateOozieTZ(middleDate) + "::" + DateUtils.formatDateOozieTZ(endDate),
-                RestConstants.JOB_LOG_DATE, new StringWriter(), new HashMap<String, String[]>());
-
+        // Test 1.to test if fields are injected
+        ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
         DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
+        assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
 
+        // Test2
+        // * Test method org.apache.oozie.CoordinatorEngine.streamLog(String,
+        // String,
+        // * String, Writer) with null 2nd and 3rd arguments.
+        // */
+        ce.streamLog(jobId, null, null, new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        filter = service.filter;
+        assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
+
+        // Test 3
+        // * Test method org.apache.oozie.CoordinatorEngine.streamLog(String,
+        // String,
+        // * String, Writer) with RestConstants.JOB_LOG_ACTION and non-null 2nd
+        // * argument.
+
+        ce.streamLog(jobId, "1, 3-4, 6", RestConstants.JOB_LOG_ACTION, new StringWriter(),
+                new HashMap<String, String[]>());
+
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        filter = service.filter;
+        assertEquals(jobId, filter.getFilterParams().get(DagXLogInfoService.JOB));
+        assertEquals("(" + jobId + "@1|" + jobId + "@3|" + jobId + "@4|" + jobId + "@6)",
+                filter.getFilterParams().get(DagXLogInfoService.ACTION));
+
+        // Test 4. testing with date range
+        long middle = (createdDate.getTime() + endDate.getTime()) / 2;
+        Date middleDate = new Date(middle);
+        ce.streamLog(jobId, DateUtils.formatDateOozieTZ(createdDate) + "::" + DateUtils.formatDateOozieTZ(middleDate)
+                + "," + DateUtils.formatDateOozieTZ(middleDate) + "::" + DateUtils.formatDateOozieTZ(endDate),
+                RestConstants.JOB_LOG_DATE, new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        filter = service.filter;
         assertEquals(jobId, filter.getFilterParams().get(DagXLogInfoService.JOB));
         final String action = filter.getFilterParams().get(DagXLogInfoService.ACTION);
-        assertEquals("(" + jobId + "@1|" + jobId + "@2)", action);
+        assertEquals("(" + jobId + "@1|" + jobId + "@2|" + jobId + "@3|" + jobId + "@4|" + jobId + "@5|" + jobId
+                + "@6)", action);
+
+        // Test 5 testing with action list range
+        ce.streamLog(jobId, "2-4", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(1).getCreatedTime(), service.startTime);
+        assertEquals(list.get(3).getLastModifiedTime(), service.endTime);
+
+        // Test 6, testing with 1 action list
+        ce.streamLog(jobId, "5", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(4).getCreatedTime(), service.startTime);
+        assertEquals(list.get(4).getLastModifiedTime(), service.endTime);
+
+        // Test 7, testing with 1 action list + range
+        ce.streamLog(jobId, "1,2-4,5", RestConstants.JOB_LOG_ACTION, new StringWriter(),
+                new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(0).getCreatedTime(), service.startTime);
+        assertEquals(list.get(4).getLastModifiedTime(), service.endTime);
+
+        // Test 8, testing with out order range
+        ce.streamLog(jobId, "5,3-4,1", RestConstants.JOB_LOG_ACTION, new StringWriter(),
+                new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(0).getCreatedTime(), service.startTime);
+        assertEquals(list.get(4).getLastModifiedTime(), service.endTime);
+
+
+        // Test 9, testing with date range
+        ce.streamLog(
+                jobId,
+                DateUtils.formatDateOozieTZ(list.get(1).getCreatedTime()) + "::"
+                        + DateUtils.formatDateOozieTZ(list.get(4).getLastModifiedTime()) + ",",
+                RestConstants.JOB_LOG_DATE, new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(1).getCreatedTime().toString(), service.startTime.toString());
+        assertEquals(list.get(4).getLastModifiedTime().toString(), service.endTime.toString());
+
+        // Test 10, testing with multiple date range
+        ce.streamLog(
+                jobId,
+                DateUtils.formatDateOozieTZ(list.get(1).getCreatedTime()) + "::"
+                        + DateUtils.formatDateOozieTZ(list.get(2).getLastModifiedTime()) + ","
+                        + DateUtils.formatDateOozieTZ(list.get(3).getCreatedTime()) + "::"
+                        + DateUtils.formatDateOozieTZ(list.get(5).getLastModifiedTime()), RestConstants.JOB_LOG_DATE,
+                new StringWriter(), new HashMap<String, String[]>());
+        service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
+        assertEquals(list.get(1).getCreatedTime().toString(), service.startTime.toString());
+        assertEquals(list.get(5).getLastModifiedTime().toString(), service.endTime.toString());
+
     }
 
-    private String runJobsImpl(final CoordinatorEngine ce) throws Exception {
+    private String runJobsImpl(final CoordinatorEngine ce, int count) throws Exception {
         services.setService(DummyXLogStreamingService.class);
-        // need to re-define the parameters that are cleared upon the service reset:
+        // need to re-define the parameters that are cleared upon the service
+        // reset:
         new DagXLogInfoService().init(services);
 
         Configuration conf = new XConfiguration();
@@ -182,25 +220,26 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         final String appPath = getTestCaseFileUri("coordinator.xml");
         final long now = System.currentTimeMillis();
         final String start = DateUtils.formatDateOozieTZ(new Date(now));
-        long e = now + 1000 * 119;
+        long e = now + 1000 * 60 * count;
         final String end = DateUtils.formatDateOozieTZ(new Date(e));
 
         String wfXml = IOUtils.getResourceAsString("wf-no-op.xml", -1);
         writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
 
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(1)}\" start=\"" + start + "\" end=\"" + end
-                + "\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.1\"> " + "<controls> " + "  <timeout>10</timeout> "
-                + "  <concurrency>1</concurrency> " + "  <execution>LIFO</execution> " + "</controls> " + "<action> "
-                + "  <workflow> " + "  <app-path>" + getFsTestCaseDir() + "/workflow.xml</app-path>"
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(1)}\" start=\"" + start
+                + "\" end=\"" + end + "\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.1\"> " + "<controls> "
+                + "  <timeout>1</timeout> " + "  <concurrency>1</concurrency> " + "  <execution>LIFO</execution> "
+                + "</controls> " + "<action> " + "  <workflow> " + "  <app-path>" + getFsTestCaseDir()
+                + "/workflow.xml</app-path>"
                 + "  <configuration> <property> <name>inputA</name> <value>valueA</value> </property> "
-                + "  <property> <name>inputB</name> <value>valueB</value> " + "  </property></configuration> " + "</workflow>"
-                + "</action> " + "</coordinator-app>";
+                + "  <property> <name>inputB</name> <value>valueB</value> " + "  </property></configuration> "
+                + "</workflow>" + "</action> " + "</coordinator-app>";
         writeToFile(appXml, appPath);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         final String jobId = ce.submitJob(conf, true);
-        waitFor(1000 * 119, new Predicate() {
+        waitFor(1000 * 60 * count, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
                 try {
@@ -222,10 +261,11 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
                 }
             }
         });
-        // Assert all the actions are succeeded (useful for waitFor() timeout case):
+        // Assert all the actions are succeeded (useful for waitFor() timeout
+        // case):
         final List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
-        for (CoordinatorAction action: actions) {
-          assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
+        for (CoordinatorAction action : actions) {
+            assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
         }
         return jobId;
     }

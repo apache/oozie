@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1668 Coord log streaming start and end time should be of action list start and end time (puru via rohini)
 OOZIE-1674 DB upgrade from 3.3.0 to trunk fails on postgres (rkanter)
 OOZIE-1581 Workflow performance optimizations (mona)
 OOZIE-1663 Queuedump to display command type (shwethags via virag)

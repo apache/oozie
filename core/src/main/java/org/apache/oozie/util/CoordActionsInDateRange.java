@@ -28,9 +28,13 @@ import java.util.Set;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.CoordJobGetActionModifiedDateForRangeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionIdsForDateRangeJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionRunningCountForRangeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsByDatesForKillJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsForDatesJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
@@ -140,7 +144,7 @@ public class CoordActionsInDateRange {
             return list;
     }
 
-    /*
+    /**
      * Get coordinator action ids between given start and end time
      *
      * @param jobId coordinator job id
@@ -160,4 +164,36 @@ public class CoordActionsInDateRange {
         }
         return list;
     }
+
+    /**
+     * Gets the coordinator actions last modified date for range, if any action is running it return new date
+     *
+     * @param jobId the job id
+     * @param startAction the start action
+     * @param endAction the end action
+     * @return the coordinator actions last modified date
+     * @throws CommandException the command exception
+     */
+    public static Date getCoordActionsLastModifiedDate(String jobId, String startAction, String endAction)
+            throws CommandException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        ParamChecker.notEmpty(jobId, "jobId");
+        ParamChecker.notEmpty(startAction, "startAction");
+        ParamChecker.notEmpty(endAction, "endAction");
+
+        try {
+            long count = jpaService.execute(new CoordJobGetActionRunningCountForRangeJPAExecutor(jobId, startAction,
+                    endAction));
+            if (count == 0) {
+                return jpaService.execute(new CoordJobGetActionModifiedDateForRangeJPAExecutor(jobId, startAction, endAction));
+            }
+            else {
+                return new Date();
+            }
+        }
+        catch (JPAExecutorException je) {
+            throw new CommandException(je);
+        }
+    }
+
 }
