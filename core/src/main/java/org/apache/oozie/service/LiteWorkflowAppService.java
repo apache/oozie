@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,14 +36,25 @@ public class LiteWorkflowAppService extends WorkflowAppService {
      * @return workflow application.
      */
     public WorkflowApp parseDef(Configuration jobConf) throws WorkflowException {
+        return parseDef(jobConf, null);
+    }
+
+    public WorkflowApp parseDef(Configuration jobConf, Configuration configDefault) throws WorkflowException {
         String appPath = ParamChecker.notEmpty(jobConf.get(OozieClient.APP_PATH), OozieClient.APP_PATH);
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         String workflowXml = readDefinition(appPath, user, jobConf);
-        return parseDef(workflowXml, jobConf);
+        return parseDef(workflowXml, jobConf, configDefault);
     }
 
-    public WorkflowApp parseDef(String workflowXml, Configuration jobConf) throws WorkflowException {
-        WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
-        return workflowLib.parseDef(workflowXml, jobConf);
+    @Override
+    public WorkflowApp parseDef(String wfXml, Configuration jobConf) throws WorkflowException {
+        return parseDef(wfXml, jobConf, null);
     }
+
+    public WorkflowApp parseDef(String workflowXml, Configuration jobConf, Configuration configDefault)
+            throws WorkflowException {
+        WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
+        return workflowLib.parseDef(workflowXml, jobConf, configDefault);
+    }
+
 }

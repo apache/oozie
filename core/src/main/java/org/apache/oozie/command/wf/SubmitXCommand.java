@@ -33,7 +33,6 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.DagXLogInfoService;
-import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.sla.SLAOperations;
@@ -131,18 +130,14 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
         try {
             XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, conf.get(OozieClient.LOG_TOKEN));
-            WorkflowApp app = wps.parseDef(conf);
-            XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
-            WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
-
             String user = conf.get(OozieClient.USER_NAME);
-            String group = ConfigUtils.getWithDeprecatedCheck(conf, OozieClient.JOB_ACL, OozieClient.GROUP_NAME, null);
             URI uri = new URI(conf.get(OozieClient.APP_PATH));
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createJobConf(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path configDefault = null;
+            Configuration defaultConf = null;
             // app path could be a directory
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
@@ -153,7 +148,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
 
             if (fs.exists(configDefault)) {
                 try {
-                    Configuration defaultConf = new XConfiguration(fs.open(configDefault));
+                    defaultConf = new XConfiguration(fs.open(configDefault));
                     PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
                     XConfiguration.injectDefaults(defaultConf, conf);
                 }
@@ -161,6 +156,10 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                     throw new IOException("default configuration file, " + ex.getMessage(), ex);
                 }
             }
+
+            WorkflowApp app = wps.parseDef(conf, defaultConf);
+            XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
+            WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
 

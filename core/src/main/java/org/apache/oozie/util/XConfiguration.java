@@ -200,9 +200,11 @@ public class XConfiguration extends Configuration {
      * @param target target configuration.
      */
     public static void injectDefaults(Configuration source, Configuration target) {
-        for (Map.Entry<String, String> entry : source) {
-            if (target.get(entry.getKey()) == null) {
-                target.set(entry.getKey(), entry.getValue());
+        if (source != null) {
+            for (Map.Entry<String, String> entry : source) {
+                if (target.get(entry.getKey()) == null) {
+                    target.set(entry.getKey(), entry.getValue());
+                }
             }
         }
     }

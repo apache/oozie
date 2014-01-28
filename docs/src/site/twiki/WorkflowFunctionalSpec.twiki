@@ -560,11 +560,14 @@ configurations.
 The =map-reduce= action has to be configured with all the necessary Hadoop JobConf properties to run the Hadoop
 map/reduce job.
 
-Hadoop JobConf properties can be specified in a JobConf XML file bundled with the workflow application or they can be
-indicated inline in the =map-reduce= action configuration.
+Hadoop JobConf properties can be specified as part of 
+   * the =config-default.xml= or
+   * JobConf XML file bundled with the workflow application or
+   * <global> tag in workflow definition or
+   * Inline =map-reduce= action configuration. 
 
-The configuration properties are loaded in the following order, =streaming=, =job-xml= and =configuration=, and later
-values override earlier values.
+The configuration properties are loaded in the following above order i.e. =streaming=, =job-xml= and =configuration=, and 
+the precedence order is later values override earlier values.
 
 Streaming and inline property values can be parameterized (templatized) using EL expressions.
 
@@ -829,11 +832,14 @@ A =pig= action can be configured to perform HDFS files/directories cleanup or HC
 starting the Pig job. This capability enables Oozie to retry a Pig job in the situation of a transient failure (Pig
 creates temporary directories for intermediate data, thus a retry without cleanup would fail).
 
-Hadoop JobConf properties can be specified in a JobConf XML file bundled with the workflow application or they can be
-indicated inline in the =pig= action configuration.
+Hadoop JobConf properties can be specified as part of 
+   * the =config-default.xml= or
+   * JobConf XML file bundled with the workflow application or
+   * <global> tag in workflow definition or
+   * Inline =pig= action configuration. 
 
-The configuration properties are loaded in the following order, =job-xml= and =configuration=, and later
-values override earlier values.
+The configuration properties are loaded in the following above order i.e. =job-xml= and =configuration=, and 
+the precedence order is later values override earlier values.
 
 Inline property values can be parameterized (templatized) using EL expressions.
 
@@ -1496,9 +1502,9 @@ used within the =transition= elements of a node.
 When a workflow job is submitted to Oozie, the submitter may specify as many workflow job properties as required
 (similar to Hadoop JobConf properties).
 
-Workflow applications may define default values for the workflow job parameters. They must be defined in a
+Workflow applications may define default values for the workflow job or action parameters. They must be defined in a
  =config-default.xml= file bundled with the workflow application archive (refer to section '7 Workflow
- Applications Packaging'). Workflow job properties have precedence over the default values.
+ Applications Packaging'). Job or action properties specified in the workflow definition have precedence over the default values.
 
 Properties that are a valid Java identifier, <code>[A-Za-z_][0-9A-Za-z_]*</code>, are available as '${NAME}'
 variables within the workflow definition.
@@ -2182,11 +2188,11 @@ specify an uber jar is governed by the =oozie.action.mapreduce.uber.jar.enable= 
 </action>
 </verbatim>
 
-The =config-default.xml= file defines, if any, default values for the workflow job parameters. This file must be in
+The =config-default.xml= file defines, if any, default values for the workflow job or action parameters. This file must be in
 the Hadoop Configuration XML format. EL expressions are not supported and =user.name= property cannot be specified in
 this file.
 
-Any other resources like =job.xml= files referenced from a workflow action action node must be included under the
+Any other resources like =job.xml= files referenced from a workflow action node must be included under the
 corresponding path, relative paths always start from the root of the workflow application.
 
 ---++ 8 External Data Assumptions

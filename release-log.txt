@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1644 Default config from config-default.xml is not propagated to actions (mona)
 OOZIE-1645 Oozie upgrade DB command fails due to missing dependencies for mssql (omaliuvanchuk via rkanter)
 OOZIE-1668 Coord log streaming start and end time should be of action list start and end time (puru via rohini)
 OOZIE-1674 DB upgrade from 3.3.0 to trunk fails on postgres (rkanter)
