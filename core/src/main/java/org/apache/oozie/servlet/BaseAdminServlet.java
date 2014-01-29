@@ -18,6 +18,7 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -33,11 +34,14 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
+import org.apache.oozie.util.AuthUrlClient;
 import org.apache.oozie.util.Instrumentation;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 public abstract class BaseAdminServlet extends JsonRestServlet {
 
@@ -206,7 +210,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     }
 
     /**
-     * Update share lib.
+     * Update share lib. support HA
      *
      * @param request the request
      * @param response the response
@@ -214,42 +218,45 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
      */
     @SuppressWarnings("unchecked")
     public void updateShareLib(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        JSONArray jsonArray = new JSONArray();
+        JobsConcurrencyService jc = Services.get().get(JobsConcurrencyService.class);
+        if (jc.isAllServerRequest(request.getParameterMap())) {
+            Map<String, String> servers = jc.getOtherServerUrls();
+            for (String otherUrl : servers.values()) {
+                // It's important that we specify ALL_SERVERS_PARAM=false, so that other oozie server should not call other oozie
+                //servers to update sharelib (and creating an infinite recursion)
+                String serverUrl = otherUrl + "/v2/admin/" + RestConstants.ADMIN_UPDATE_SHARELIB + "?"
+                        + RestConstants.ALL_SERVER_REQUEST + "=false";
+                try {
+                    Reader reader = AuthUrlClient.callServer(serverUrl);
+                    JSONObject json = (JSONObject) JSONValue.parse(reader);
+                    jsonArray.add(json);
+                }
+                catch (Exception e) {
+                    JSONObject errorJson = new JSONObject();
+                    errorJson.put(JsonTags.SHARELIB_UPDATE_HOST, otherUrl);
+                    errorJson.put(JsonTags.SHARELIB_UPDATE_STATUS, e.getMessage());
+                    JSONObject newJson = new JSONObject();
+                    newJson.put(JsonTags.SHARELIB_LIB_UPDATE, errorJson);
+                    jsonArray.add(newJson);
+                }
+            }
+            //For current server
+            JSONObject newJson = new JSONObject();
+            newJson.put(JsonTags.SHARELIB_LIB_UPDATE, updateLocalShareLib(request));
+            jsonArray.add(newJson);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, jsonArray);
+        }
+        else {
+            JSONObject newJson = new JSONObject();
+            newJson.put(JsonTags.SHARELIB_LIB_UPDATE, updateLocalShareLib(request));
+            sendJsonResponse(response, HttpServletResponse.SC_OK, newJson);
+        }
+    }
 
-        //TODO sharelib HA.
-//        if (Boolean.parseBoolean(request.getParameter(RestConstants.SHARE_LIB_ALLSERVER_REQUEST))) {
-//            JSONArray jsonArray = new JSONArray();
-//            JSONObject json = new JSONObject();
-//            try {
-//                JobsConcurrencyService jc = Services.get().get(JobsConcurrencyService.class);
-//                Map<String, String> serverList = jc.getServerUrls();
-//                for (String server : serverList.values()) {
-//                    String serverUrl = server + "/v2/admin/" + RestConstants.ADMIN_UPDATE_SHARELIB + "?"
-//                            + RestConstants.SHARE_LIB_ALLSERVER_REQUEST + "=false";
-//                    try {
-//                        jsonArray.add(callServer(serverUrl, request));
-//                    }
-//                    catch (Exception e) {
-//                        JSONObject errorJson = new JSONObject();
-//                        errorJson.put(JsonTags.SHARELIB_UPDATE_HOST, server);
-//                        errorJson.put(JsonTags.SHARELIB_UPDATE_STATUS, e.getMessage());
-//                        jsonArray.add(errorJson);
-//
-//                    }
-//                }
-//                json.put(JsonTags.SHARELIB_LIB_UPDATE, jsonArray);
-//                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
-//            }
-//
-//            catch (Exception e) {
-//                sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "internal Error",
-//                        e.getMessage());
-//            }
-//
-//        }
-//        else {
+    @SuppressWarnings("unchecked")
+    private JSONObject updateLocalShareLib(HttpServletRequest request) {
         ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        JSONObject status = new JSONObject();
-
         JSONObject json = new JSONObject();
         json.put(JsonTags.SHARELIB_UPDATE_HOST, request.getServerName() + ":" + request.getServerPort());
         try {
@@ -259,30 +266,8 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         catch (Exception e) {
             json.put(JsonTags.SHARELIB_UPDATE_STATUS, e.getClass().getName() + ": " + e.getMessage());
         }
-        status.put(JsonTags.SHARELIB_LIB_UPDATE, json);
-        sendJsonResponse(response, HttpServletResponse.SC_OK, status);
-
-        // }
-
+        return json;
     }
-
-//    private JSONObject callServer(String url, HttpServletRequest request) throws MalformedURLException, IOException {
-//        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-//        conn.setRequestMethod("GET");
-//
-//        Enumeration headerNames = request.getHeaderNames();
-//        while (headerNames.hasMoreElements()) {
-//            String headerName = (String) headerNames.nextElement();
-//
-//            conn.setRequestProperty(headerName, request.getHeader(headerName));
-//        }
-//        conn.connect();
-//
-//        Reader reader = new InputStreamReader(conn.getInputStream());
-//        JSONObject json = (JSONObject) JSONValue.parse(reader);
-//        return (JSONObject) json.get(JsonTags.SHARELIB_LIB_UPDATE);
-//
-//    }
 
     /**
      * Authorize request.

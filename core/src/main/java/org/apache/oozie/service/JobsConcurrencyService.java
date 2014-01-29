@@ -113,4 +113,25 @@ public class JobsConcurrencyService implements Service, Instrumentable {
     public Map<String, String> getServerUrls() {
         return urls;
     }
+
+    /**
+     * Return a map of instance id to other Oozie servers URL in HA.  This implementation always returns a empty map.
+     *
+     * @return A map of Oozie instance ids and URLs
+     * @throws Exception
+     */
+    public Map<String, String> getOtherServerUrls() {
+        return new HashMap<String, String>();
+    }
+
+    /**
+     * Checks if rest request is for all server. This function always return
+     * false;
+     *
+     * @param params the HttpRequest param
+     * @return false.
+     */
+    public boolean isAllServerRequest(Map<String, String[]> params) {
+        return false;
+    }
 }

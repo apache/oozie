@@ -18,8 +18,11 @@
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
 
@@ -87,4 +90,24 @@ public class TestJobsConcurrencyService extends XTestCase {
             jcs.destroy();
         }
     }
+
+    public void testsAllServerRequest() throws Exception {
+        JobsConcurrencyService jcs = new JobsConcurrencyService();
+        try {
+            jcs.init(null);
+            assertFalse(jcs.isAllServerRequest(null));
+            Map<String, String[]> param = new HashMap<String, String[]>();
+            assertFalse(jcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "test" });
+            assertFalse(jcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "true" });
+            assertFalse(jcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "false" });
+            assertFalse(jcs.isAllServerRequest(param));
+        }
+        finally {
+            jcs.destroy();
+        }
+    }
+
 }

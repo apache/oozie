@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -103,8 +104,11 @@ public class ShareLibService implements Service, Instrumentable {
             fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             updateLauncherLib();
             updateShareLib();
-            purgeLibs(fs, LAUNCHER_PREFIX);
-            purgeLibs(fs, SHARED_LIB_PREFIX);
+            //Only one server should purge sharelib
+            if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
+                purgeLibs(fs, LAUNCHER_PREFIX);
+                purgeLibs(fs, SHARED_LIB_PREFIX);
+            }
         }
         catch (Exception e) {
             LOG.error("Not able to cache shareLib. Admin need to issue oozlie cli command to update sharelib.", e);

@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ZKUtils;
@@ -169,5 +170,41 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
             urls.put(id, url);
         }
         return urls;
+    }
+
+    /**
+     * Return a map of instance id to Oozie server URL of other servers.  This implementation always returns a map with
+     * where the key is the instance id and the value is the URL of each Oozie server that we can see in the service
+     * discovery in ZooKeeper.
+     *
+     * @return A map of Oozie instance ids and URLs
+     */
+    @Override
+    public Map<String, String> getOtherServerUrls() {
+        Map<String, String> urls = new HashMap<String, String>();
+        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
+        for (ServiceInstance<Map> oozie : oozies) {
+            Map<String, String> metadata = oozie.getPayload();
+            String id = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_ID);
+
+            if (id.equals(zk.getZKId())) {
+                continue;
+            }
+            String url = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_URL);
+            urls.put(id, url);
+        }
+        return urls;
+    }
+
+    /**
+     * Checks if rest request is for all server. By default it's true.
+     *
+     * @param params the HttpRequest param
+     * @return false if allservers=false, else true;
+     */
+    @Override
+    public boolean isAllServerRequest(Map<String, String[]> params) {
+        return params == null || params.get(RestConstants.ALL_SERVER_REQUEST) == null || params.isEmpty()
+                || !params.get(RestConstants.ALL_SERVER_REQUEST)[0].equalsIgnoreCase("false");
     }
 }

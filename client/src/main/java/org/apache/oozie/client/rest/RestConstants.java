@@ -166,6 +166,6 @@ public interface RestConstants {
 
     public static final String SHARE_LIB_REQUEST_KEY = "lib";
 
-    public static final String SHARE_LIB_ALLSERVER_REQUEST = "allservers";
+    public static final String ALL_SERVER_REQUEST = "allservers";
 
 }

@@ -1521,7 +1521,8 @@ public class OozieClient {
     private  class UpdateSharelib extends ClientCallable<String> {
 
         UpdateSharelib() {
-            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_UPDATE_SHARELIB, prepareParams());
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_UPDATE_SHARELIB, prepareParams(
+                    RestConstants.ALL_SERVER_REQUEST, "true"));
         }
 
         @Override
@@ -1529,15 +1530,27 @@ public class OozieClient {
             StringBuffer bf = new StringBuffer();
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
-                JSONObject json = (JSONObject) ((JSONObject) JSONValue.parse(reader))
-                        .get(JsonTags.SHARELIB_LIB_UPDATE);
+                Object sharelib = (Object) JSONValue.parse(reader);
                 bf.append("[ShareLib update status]").append(System.getProperty("line.separator"));
-                    for (Object key : json.keySet()) {
-                        bf.append(" ").append(key).append(" = ").append(json.get(key))
-                                .append(System.getProperty("line.separator"));
+                if (sharelib instanceof JSONArray) {
+                    for (Object o : ((JSONArray) sharelib)) {
+                        JSONObject obj = (JSONObject) ((JSONObject) o).get(JsonTags.SHARELIB_LIB_UPDATE);
+                        for (Object key : obj.keySet()) {
+                            bf.append("\t").append(key).append(" = ").append(obj.get(key))
+                                    .append(System.getProperty("line.separator"));
+                        }
+                        bf.append(System.getProperty("line.separator"));
+                    }
+                    return bf.toString();
                 }
-
-                return bf.toString();
+                else{
+                    JSONObject obj = (JSONObject) ((JSONObject) sharelib).get(JsonTags.SHARELIB_LIB_UPDATE);
+                    for (Object key : obj.keySet()) {
+                        bf.append("\t").append(key).append(" = ").append(obj.get(key))
+                                .append(System.getProperty("line.separator"));
+                    }
+                    bf.append(System.getProperty("line.separator"));
+                }
             }
             else {
                 handleError(conn);

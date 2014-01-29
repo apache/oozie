@@ -441,7 +441,7 @@ Content-Type: application/json;charset=UTF-8
 
 
 ---++++ Update system sharelib
-This webservice call makes the oozie server to pick up the latest version of sharelib present
+This webservice call makes the oozie server(s) to pick up the latest version of sharelib present
 under oozie.service.WorkflowAppService.system.libpath directory based on the sharelib directory timestamp or reloads
 the sharelib metafile if one is configured. The main purpose is to update the sharelib on the oozie server without restarting.
 
@@ -457,18 +457,30 @@ GET /oozie/v2/admin/update_sharelib
 <verbatim>
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
-
-{
- {
-    "sharelibUpdate":
-        {
-            "sharelibDirOld":"hdfs://localhost:9000/user/purushah/share/lib/lib_20131114095729",
-            "sharelibDirNew":"hdfs://localhost:9000/user/purushah/share/lib/lib_20131120163343",
-            "host":"localhost:11000",
-            "status":"Successful"
-         }
+[
+    {
+       "sharelibUpdate":{
+          "host":"server1",
+          "status":"Server not found"
        }
-}
+    },
+    {
+       "sharelibUpdate":{
+          "host":"server2",
+          "status":"Successful",
+          "sharelibDirOld":"hdfs://localhost:51951/user/purushah/share/lib/lib_20140107181218",
+          "sharelibDirNew":"hdfs://localhost:51951/user/purushah/share/lib/lib_20140107181218"
+       }
+    },
+    {
+       "sharelibUpdate":{
+          "host":"server3",
+          "status":"Successful",
+          "sharelibDirOld":"hdfs://localhost:51951/user/purushah/share/lib/lib_20140107181218",
+          "sharelibDirNew":"hdfs://localhost:51951/user/purushah/share/lib/lib_20140107181218"
+       }
+    }
+]
 </verbatim>
 
 ---+++ Job and Jobs End-Points

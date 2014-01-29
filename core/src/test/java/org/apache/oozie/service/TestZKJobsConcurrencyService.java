@@ -18,8 +18,11 @@
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.ZKUtils;
@@ -242,6 +245,25 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
             if (dummyOozie2 != null) {
                 dummyOozie2.teardown();
             }
+        }
+    }
+
+    public void testisAllServerRequest() throws Exception {
+        ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
+        try {
+            zkjcs.init(Services.get());
+            assertTrue(zkjcs.isAllServerRequest(null));
+            Map<String, String[]> param = new HashMap<String, String[]>();
+            assertTrue(zkjcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "test" });
+            assertTrue(zkjcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "true" });
+            assertTrue(zkjcs.isAllServerRequest(param));
+            param.put(RestConstants.ALL_SERVER_REQUEST, new String[] { "false" });
+            assertFalse(zkjcs.isAllServerRequest(param));
+        }
+        finally {
+            zkjcs.destroy();
         }
     }
 }

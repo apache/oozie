@@ -195,7 +195,9 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         StringWriter w = new StringWriter();
         ZKXLogStreamingService zkxlss = new ZKXLogStreamingService();
         try {
-            zkxlss.init(Services.get());
+            Services services=Services.get();
+            services.setService(ZKJobsConcurrencyService.class);
+            zkxlss.init(services);
             sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
             zkxlss.streamLog(xf, null, null, w, new HashMap<String, String[]>());
         }
