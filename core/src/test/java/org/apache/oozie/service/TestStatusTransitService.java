@@ -1034,16 +1034,18 @@ public class TestStatusTransitService extends XDataTestCase {
         assertNotNull(jpaService);
 
         final String bundleId = bundleJob.getId();
-        // Add a bundle action with no coordinator to make it fail
-        addRecordToBundleActionTable(bundleId, null, 0, Job.Status.KILLED);
-        addRecordToBundleActionTable(bundleId, "action2", 0, Job.Status.RUNNING);
 
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
         Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
         Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
 
-        addRecordToCoordJobTableWithBundle(bundleId, "action2", CoordinatorJob.Status.RUNNING, start, end, true, true, 2);
+        CoordinatorJobBean coord = addRecordToCoordJobTableWithBundle(bundleId, "action2",
+                CoordinatorJob.Status.RUNNING, start, end, true, true, 2);
         addRecordToCoordActionTable("action2", 1, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+
+        // Add a bundle action with no coordinator to make it fail
+        addRecordToBundleActionTable(bundleId, null, 0, Job.Status.KILLED);
+        addRecordToBundleActionTable(bundleId, coord.getId(), "action2", 0, Job.Status.RUNNING);
 
         Runnable runnable = new StatusTransitRunnable();
         // first time, service will call bundle kill

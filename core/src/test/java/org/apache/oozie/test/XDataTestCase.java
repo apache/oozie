@@ -916,7 +916,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected BundleActionBean addRecordToBundleActionTable(String jobId, String coordName, int pending,
             Job.Status status) throws Exception {
-        BundleActionBean action = createBundleAction(jobId, coordName, coordName, pending, status);
+        BundleActionBean action = createBundleAction(jobId, null, coordName, pending, status);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

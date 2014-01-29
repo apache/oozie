@@ -179,31 +179,28 @@ public class RecoveryService implements Service {
                 try {
                     Services.get().get(InstrumentationService.class).get()
                             .incr(INSTRUMENTATION_GROUP, INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER, 1);
-                    if (baction.getCoordId() == null) {
+                    if (baction.getCoordId() == null && baction.getStatus() != Job.Status.PREP) {
                         log.error("CoordId is null for Bundle action " + baction.getBundleActionId());
                         continue;
                     }
                     if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(baction.getCoordId())) {
-                        if (baction.getStatus() == Job.Status.PREP) {
+                        if (baction.getStatus() == Job.Status.PREP && baction.getCoordId() == null) {
                             BundleJobBean bundleJob = null;
                             if (jpaService != null) {
                                 bundleJob = BundleJobQueryExecutor.getInstance().get(
                                         BundleJobQuery.GET_BUNDLE_JOB_ID_JOBXML_CONF, baction.getBundleId());
                             }
-                            if (bundleJob != null) {
-                                Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
-                                List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
-                                for (Element coordElem : coordElems) {
-                                    Attribute name = coordElem.getAttribute("name");
-                                    if (name.getValue().equals(baction.getCoordName())) {
-                                        Configuration coordConf = mergeConfig(coordElem, bundleJob);
-                                        coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
-                                        queueCallable(new CoordSubmitXCommand(coordConf,
-                                                bundleJob.getId(), name.getValue()));
-                                    }
+                            Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
+                            List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
+                            for (Element coordElem : coordElems) {
+                                Attribute name = coordElem.getAttribute("name");
+                                if (name.getValue().equals(baction.getCoordName())) {
+                                    Configuration coordConf = mergeConfig(coordElem, bundleJob);
+                                    coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
+                                    queueCallable(new CoordSubmitXCommand(coordConf,
+                                            bundleJob.getId(), name.getValue()));
                                 }
                             }
-
                         }
                         else if (baction.getStatus() == Job.Status.KILLED) {
                             queueCallable(new CoordKillXCommand(baction.getCoordId()));
