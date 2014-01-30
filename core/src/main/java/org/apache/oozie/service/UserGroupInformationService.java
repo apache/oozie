@@ -20,8 +20,10 @@ package org.apache.oozie.service;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.apache.hadoop.fs.FileSystem;
 
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.oozie.util.XLog;
 
 public class UserGroupInformationService implements Service {
 
@@ -33,6 +35,13 @@ public class UserGroupInformationService implements Service {
 
     @Override
     public void destroy() {
+        for (UserGroupInformation ugi : cache.values()) {
+            try {
+                FileSystem.closeAllForUGI(ugi);
+            } catch(IOException ioe) {
+                XLog.getLog(this.getClass()).warn("Exception occurred while closing filesystems for " + ugi.getUserName(), ioe);
+            }
+        }
         cache.clear();
     }
 
@@ -42,9 +51,7 @@ public class UserGroupInformationService implements Service {
     }
 
     public UserGroupInformation getProxyUser(String user) throws IOException {
-        if (!cache.containsKey(user)) {
-            cache.putIfAbsent(user, UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser()));
-        }
+        cache.putIfAbsent(user, UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser()));
         return cache.get(user);
     }
 
