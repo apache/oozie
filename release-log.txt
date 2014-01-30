@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1646 HBase Table Copy between two HBase servers doesn't work with Kerberos (rkanter)
 OOZIE-1609 HA support for share lib. (puru via rkanter)
 OOZIE-1622 Multiple CoordSubmit for same bundle (shwethags via virag)
 OOZIE-1644 Default config from config-default.xml is not propagated to actions (mona)

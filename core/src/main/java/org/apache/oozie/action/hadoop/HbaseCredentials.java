@@ -60,6 +60,8 @@ public class HbaseCredentials extends Credentials {
         Configuration hbaseConf = HBaseConfiguration.create();
         // copy cred props to hbaseconf and override if values already exists
         addPropsConf(props, hbaseConf);
+        // copy cred props to jobconf and override if values already exist
+        addPropsConf(props, jobConf);
         // copy conf from hbaseConf to jobConf without overriding the
         // already existing values of jobConf
         injectConf(hbaseConf, jobConf);
