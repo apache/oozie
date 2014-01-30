@@ -113,12 +113,17 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
                 return a.getId().compareTo(b.getId());
             }
         });
-
+        
+        endDate = new Date();
+        
+        Thread.sleep(2000);
         // Test 1.to test if fields are injected
         ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
         DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         Filter filter = service.filter;
         assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
+        assertTrue(endDate.before(service.endTime));
+
 
         // Test2
         // * Test method org.apache.oozie.CoordinatorEngine.streamLog(String,

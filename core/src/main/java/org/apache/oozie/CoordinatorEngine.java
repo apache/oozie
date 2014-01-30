@@ -419,7 +419,7 @@ public class CoordinatorEngine extends BaseEngine {
                 startTime = job.getCreatedTime();
             }
             if (endTime == null) {
-                endTime = job.getEndTime() == null ? new Date() : job.getEndTime();
+                endTime = new Date();
             }
         }
         //job.getActions()

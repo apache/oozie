@@ -253,8 +253,8 @@ public class BundleEngine extends BaseEngine {
             throw new BundleEngineException(ex);
         }
 
-        Date endTime = job.getEndTime() == null ? new Date() : job.getEndTime();
-        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), endTime, writer, params);
+        Services.get().get(XLogStreamingService.class)
+                .streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
     }
 
     /* (non-Javadoc)
