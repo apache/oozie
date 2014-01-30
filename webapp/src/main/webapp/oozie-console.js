@@ -597,6 +597,13 @@ function jobDetailsPopup(response, request) {
                     }
                 }
             });
+            if (count == 1) {
+                var note = new Ext.form.TextField({
+                    fieldLabel : 'Child Job',
+                    value : 'n/a'
+                });
+                urlUnit.add(note);
+            }
         } else {
             var note = new Ext.form.TextField({
                 fieldLabel : 'Child Job',
