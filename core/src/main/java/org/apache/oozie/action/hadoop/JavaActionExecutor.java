@@ -426,7 +426,19 @@ public class JavaActionExecutor extends ActionExecutor {
                 else if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
                         String user = conf.get("user.name");
-                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, new Path(uri.normalize()), conf);
+                        Path pathToAdd;
+                        // if filePath and appPath belong to same cluster, add URI path component else add absolute URI
+                        if (uri.getScheme() != null && uri.getHost() != null &&
+                            uri.getPort() > 0 && baseUri.getScheme() != null &&
+                            baseUri.getHost() != null && baseUri.getPort() > 0 &&
+                            uri.getScheme().equalsIgnoreCase(baseUri.getScheme()) &&
+                            uri.getHost().equalsIgnoreCase(baseUri.getHost()) &&
+                            uri.getPort() == baseUri.getPort()) {
+                          pathToAdd = new Path(uri.getPath());
+                        } else {
+                          pathToAdd = new Path(uri.normalize());
+                        }
+                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, pathToAdd, conf);
                     }
                     else {
                         DistributedCache.addCacheFile(uri, conf);

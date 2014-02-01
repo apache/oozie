@@ -1796,12 +1796,36 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(conf.get("mapred.cache.files").contains(appSoFragmentFullPath.toString()));
         assertTrue(DistributedCache.getSymlink(conf));
 
-        // test .jar without fragment
+        // test .jar without fragment where app path is on same cluster as jar path
         Path appJarPath = new Path("lib/a.jar");
         Path appJarFullPath = new Path(appPath, appJarPath);
         conf.clear();
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         ae.addToCache(conf, appPath, appJarFullPath.toString(), false);
+        // assert that mapred.cache.files contains jar URI path
+        Path jarPath = new Path(appJarFullPath.toUri().getPath());
+        assertTrue(conf.get("mapred.cache.files").contains(jarPath.toString()));
+        // assert that dist cache classpath contains jar URI path
+        Path[] paths = DistributedCache.getFileClassPaths(conf);
+        boolean pathFound = false;
+        for (Path path : paths) {
+          if (path.equals(jarPath)) {
+            pathFound = true;
+            break;
+          }
+        }
+        assertTrue(pathFound);
+        assertTrue(DistributedCache.getSymlink(conf));
+
+        // test .jar without fragment where app path is on a different cluster than jar path
+        appJarPath = new Path("lib/a.jar");
+        appJarFullPath = new Path(appPath, appJarPath);
+        Path appDifferentClusterPath = new Path(new URI(appUri.getScheme(), null, appUri.getHost() + "x",
+            appUri.getPort(), appUri.getPath(), appUri.getQuery(), appUri.getFragment()));
+        conf.clear();
+        conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        ae.addToCache(conf, appDifferentClusterPath, appJarFullPath.toString(), false);
+        // assert that mapred.cache.files contains absolute jar URI
         assertTrue(conf.get("mapred.cache.files").contains(appJarFullPath.toString()));
         assertTrue(DistributedCache.getSymlink(conf));
 

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1675 Adding absolute URI of local cluster to dist cache not working with hadoop version 0.20.2 and before (satish via ryota)
 OOZIE-1683 UserGroupInformationService should close any filesystems opened by it (rkanter)
 OOZIE-1646 HBase Table Copy between two HBase servers doesn't work with Kerberos (rkanter)
 OOZIE-1609 HA support for share lib. (puru via rkanter)
