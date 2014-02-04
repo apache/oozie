@@ -1038,11 +1038,7 @@ public class OozieDBCLI {
         System.out.println((create) ? "Create SQL schema" : "Upgrade SQL schema");
         String[] args = createMappingToolArguments(sqlFile);
         org.apache.openjpa.jdbc.meta.MappingTool.main(args);
-        // With oracle, mapping tool tries to create a table even if already
-        // exists and fails
-        // However the update is reflected in the database even though the below
-        // block is not executed
-        if (run && (create || !getDBVendor().equals("oracle"))) {
+        if (run) {
             args = createMappingToolArguments(null);
             org.apache.openjpa.jdbc.meta.MappingTool.main(args);
         }
