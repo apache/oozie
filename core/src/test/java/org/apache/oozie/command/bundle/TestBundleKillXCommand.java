@@ -28,14 +28,18 @@ import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
 
@@ -85,7 +89,6 @@ public class TestBundleKillXCommand extends XDataTestCase {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
 
         final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
 
         Configuration jobConf = null;
         try {
@@ -98,6 +101,8 @@ public class TestBundleKillXCommand extends XDataTestCase {
 
         Path appPath = new Path(jobConf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
+
+        new BundleKillXCommand(job.getId()).call();
 
         BundleSubmitXCommand submitCmd = new BundleSubmitXCommand(jobConf);
         submitCmd.call();
@@ -154,6 +159,46 @@ public class TestBundleKillXCommand extends XDataTestCase {
 
         CoordinatorJobBean job2 = jpaService.execute(coordGetCmd2);
         assertEquals(CoordinatorJobBean.Status.KILLED, job2.getStatus());
+
+        final Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        sleep(1000);
+
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.KILLED, job.getStatus());
+
+        actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+        for (BundleActionBean action : actions) {
+            assertEquals(0, action.getPending());
+            assertEquals(CoordinatorJobBean.Status.KILLED, action.getStatus());
+        }
+
+        // If bundle kill + Status Transit service left the bundle action with Pending=1
+        // due to race condition, killing the bundle again should reset the pending.
+        job.setPending();
+        job.setStatus(Status.RUNNING);
+        actions.get(0).incrementAndGetPending();
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, job);
+        BundleActionQueryExecutor.getInstance().executeUpdate(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, actions.get(0));
+
+        runnable.run();
+        sleep(1000);
+        new BundleKillXCommand(job.getId()).call();
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.KILLED, job.getStatus());
+
+        runnable.run();
+        sleep(1000);
+        job = jpaService.execute(bundleJobGetCmd);
+        assertEquals(Job.Status.KILLED, job.getStatus());
+        actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+        for (BundleActionBean action : actions) {
+            assertEquals(0, action.getPending());
+            assertEquals(CoordinatorJobBean.Status.KILLED, action.getStatus());
+        }
 
     }
 

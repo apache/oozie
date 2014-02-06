@@ -625,10 +625,28 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         setAppNamespace(WritableUtils.readStr(dataInput));
     }
 
+    /**
+     * @return true if in terminal status
+     */
+    public boolean isTerminalStatus() {
+        boolean isTerminal = false;
+        switch (getStatus()) {
+            case SUCCEEDED:
+            case FAILED:
+            case KILLED:
+            case DONEWITHERROR:
+                isTerminal = true;
+                break;
+            default:
+                isTerminal = false;
+                break;
+        }
+        return isTerminal;
+    }
+
     @Override
     public Status getStatus() {
         return Status.valueOf(this.statusStr);
-        //return null;
     }
 
     /**

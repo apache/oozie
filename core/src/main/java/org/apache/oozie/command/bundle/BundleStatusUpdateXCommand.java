@@ -56,9 +56,6 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         this.prevStatus = prevStatus;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         try {
@@ -68,7 +65,10 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             // The status of bundle action should not be updated if the bundle action is in terminal state
             // and coord Id is null. For e.g if Bundleaction is killed and coord Id is null, then the status of bundle
             // should not be changed.
-            if (bundleaction.getCoordId() != null || !bundleaction.isTerminalStatus()) {
+            if (bundleaction.getCoordId() != null
+                    || !bundleaction.isTerminalStatus()
+                    || (bundleaction.getCoordId() != null && bundleaction.isTerminalStatus() && coordjob
+                            .isTerminalStatus())) {
                 bundleaction.setStatus(coordCurrentStatus);
             }
             if (bundleaction.isPending()) {
@@ -106,25 +106,16 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return coordjob.getBundleId();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -145,15 +136,19 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0 && bundleaction.getCoordId()!=null) {
             // pending should be decremented only if status of coord job and bundle action is same
             // e.g if bundle is killed and coord job is running, then pending should not be false
             // to allow recovery service to pick and kill the coord job
+            if (bundleaction.isTerminalStatus() && coordjob.isTerminalStatus()) {
+                LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], "
+                        + "but coord job is currently in terminal state = [{3}]",
+                        bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
+                        coordjob.getStatus());
+                return;
+            }
             if (bundleaction.isPending() && coordjob.getStatus().equals(bundleaction.getStatus())) {
                 bundleaction.decrementAndGetPending();
             }
@@ -165,10 +160,10 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
-            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}], " +
-            "decrement pending so new pending = [{3}]",
-                            bundleaction.getBundleActionId(), bundleaction.getStatusStr(), prevStatus.toString(),
-                            bundleaction.getPending());
+            LOG.info("Bundle action [{0}] status [{1}] is different from prev coord status [{2}] and current coord"
+                    + " status [{3}], decrement pending so new pending = [{4}]", bundleaction.getBundleActionId(),
+                    bundleaction.getStatusStr(), prevStatus.toString(), coordjob.getStatusStr(),
+                    bundleaction.getPending());
             throw new PreconditionException(ErrorCode.E1308, bundleaction.getStatusStr(), prevStatus.toString());
         }
         else if (bundleaction.getStatusStr().compareToIgnoreCase(prevStatus.toString()) != 0) {

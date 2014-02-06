@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
@@ -35,6 +36,8 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -49,9 +52,6 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return jobId;
@@ -62,17 +62,11 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         return getName() + "_" + jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     public void loadState() throws CommandException {
         try {
@@ -88,9 +82,6 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == Job.Status.SUCCEEDED
@@ -103,9 +94,6 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.KillTransitionXCommand#killChildren()
-     */
     @Override
     public void killChildren() throws CommandException {
         if (bundleActions != null) {
@@ -138,35 +126,40 @@ public class BundleKillXCommand extends KillTransitionXCommand {
             action.incrementAndGetPending();
             action.setStatus(Job.Status.KILLED);
         }
+        else {
+            // Due to race condition bundle action pending might be true
+            // while coordinator is killed.
+            if (action.isPending() && action.getCoordId() != null) {
+                try {
+                    CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB,
+                            action.getCoordId());
+                    if (!coordJob.isPending() && coordJob.isTerminalStatus()) {
+                        action.decrementAndGetPending();
+                        action.setStatus(coordJob.getStatus());
+                    }
+                }
+                catch (JPAExecutorException e) {
+                    LOG.warn("Error in checking coord job status:" + action.getCoordId(), e);
+                }
+            }
+        }
         updateList.add(new UpdateEntry<BundleActionQuery>(BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME, action));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() {
         updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME, bundleJob));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.KillTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {

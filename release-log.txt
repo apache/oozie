@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1687 Bundle can still be in RUNNINGWITHERROR status after bundle kill (rohini)
 OOZIE-1684 DB upgrade from 3.3.0 to trunk fails on Oracle (rkanter)
 OOZIE-1675 Adding absolute URI of local cluster to dist cache not working with hadoop version 0.20.2 and before (satish via ryota)
 OOZIE-1683 UserGroupInformationService should close any filesystems opened by it (rkanter)
