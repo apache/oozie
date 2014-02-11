@@ -111,6 +111,13 @@ if not defined OOZIE_ADMIN_PORT (
   echo Using   OOZIE_ADMIN_PORT:   '%OOZIE_ADMIN_PORT%'
 )
 
+if not defined OOZIE_HTTPS_PORT (
+  SET OOZIE_HTTPS_PORT=11443
+  echo Setting OOZIE_HTTPS_PORT:   '%OOZIE_HTTPS_PORT%'
+) else (
+  echo Using   OOZIE_HTTPS_PORT:   '%OOZIE_HTTPS_PORT%'
+)
+
 if not defined OOZIE_BASE_URL (
   set OOZIE_BASE_URL=http://%OOZIE_HTTP_HOSTNAME%:%OOZIE_HTTP_PORT%/oozie
   echo Setting OOZIE_BASE_URL:   '%OOZIE_BASE_URL%'
@@ -125,6 +132,26 @@ if not defined CATALINA_BASE (
   echo Using   CATALINA_BASE:   '%CATALINA_BASE%'
 )
 
+if not defined OOZIE_HTTPS_KEYSTORE_FILE (
+  set OOZIE_HTTPS_KEYSTORE_FILE=%HOME%\.keystore
+  echo Setting OOZIE_HTTPS_KEYSTORE_FILE:   '%OOZIE_HTTPS_KEYSTORE_FILE%'
+) else (
+  echo Using   OOZIE_HTTPS_KEYSTORE_FILE:   '%OOZIE_HTTPS_KEYSTORE_FILE%'
+)
+
+if not defined OOZIE_HTTPS_KEYSTORE_PASS (
+  set OOZIE_HTTPS_KEYSTORE_PASS=password
+  echo Setting OOZIE_HTTPS_KEYSTORE_PASS:   '%OOZIE_HTTPS_KEYSTORE_PASS%'
+) else (
+  echo Using   OOZIE_HTTPS_KEYSTORE_PASS:   '%OOZIE_HTTPS_KEYSTORE_PASS%'
+)
+
+if not defined OOZIE_INSTANCE_ID (
+  set OOZIE_INSTANCE_ID=%OOZIE_HTTP_HOSTNAME%
+  echo Setting OOZIE_INSTANCE_ID:   '%OOZIE_INSTANCE_ID%'
+) else (
+  echo Using   OOZIE_INSTANCE_ID:   '%OOZIE_INSTANCE_ID%'
+)
 
 if not defined CATALINA_HOME (
   set CATALINA_HOME=%OOZIE_HOME%\oozie-server

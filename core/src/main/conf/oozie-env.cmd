@@ -56,8 +56,12 @@ set CATALINA_OPTS=%CATALINA_OPTS% -Xmx1024m
 
 @rem The location of the keystore for the Oozie server if using SSL (HTTPS)
 @rem
-@rem export OOZIE_HTTPS_KEYSTORE_FILE=${HOME}\.keystore
+@rem set OOZIE_HTTPS_KEYSTORE_FILE=%HOME%/.keystore
 
 @rem The password of the keystore for the Oozie server if using SSL (HTTPS)
 @rem
-@rem export OOZIE_HTTPS_KEYSTORE_PASS=password
+@rem set OOZIE_HTTPS_KEYSTORE_PASS=password
+
+@rem The Oozie Instance ID
+@rem
+@rem set OOZIE_INSTANCE_ID=%OOZIE_HTTP_HOSTNAME%

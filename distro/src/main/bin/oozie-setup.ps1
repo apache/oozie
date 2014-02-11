@@ -14,58 +14,41 @@
 ### limitations under the License.
 
 param(
-[Parameter(Mandatory=$true)] [string] $InputWar,
-[Parameter(Mandatory=$true)] [string] $OutputWar,
-[string[]] $Jars,
-[string] $HadoopVersion,
-[string] $HadoopHome,
-[string] $ExtJS)
+[Parameter(Mandatory=$true,Position = 0)] [string] $Command="",
+[string] $D="",
+[switch] $Secure,
+[Parameter(ValueFromRemainingArguments = $true)][string[]]$args)
 
 # FUNCTIONS
 
-Function GetHadoopJars { param (
-    [Parameter(Mandatory=$true)] [string] $HadoopVersion,
-    [Parameter(Mandatory=$true)] [string] $HadoopHome)
-    if ($HadoopVersion -ieq "0.20.1")
-    {
-        $jarsList = "$hadoopHome\hadoop*core*.jar"
-    }
-    elseif ($HadoopVersion -ieq "0.20.2")
-    {
-        $jarsList = "$hadoopHome\hadoop*core*.jar"
-    }
-    elseif ($HadoopVersion -ieq "0.20.104")
-    {
-        $jarsList =
-            "$hadoopHome\hadoop*core*.jar",
-            "$hadoopHome\lib\jackson-core-asl*.jar",
-            "$hadoopHome\lib\jackson-mapper-asl-*.jar"
-    }
-    else
-    {
-        $jarsList =
-            "$hadoopHome\hadoop-core-$HadoopVersion.jar",
-            "$hadoopHome\lib\jackson-core-asl*.jar",
-            "$hadoopHome\lib\jackson-mapper-asl-*.jar",
-            "$hadoopHome\lib\commons-configuration-*.jar"
-    }
-    $hadoopJars = @()
-    $jarsList | % { if ((Test-Path $_)) {
-        $hadoopJars += $_
-        }
-        else {
-            Write-Output "Unable to find Hadoop Jar '$_'"
-        }}
-    $hadoopJars
+Function PrintUsage { param ()
+    Write-Output  "Usage  : oozie-setup.ps1 COMMAND [OPTIONS]"
+    Write-Output  "          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
+    Write-Output  "                                                -secure will configure the war file to use HTTPS (SSL))"
+    Write-Output  "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
+    Write-Output  "                                                                FS_URI is the fs.default.name"
+    Write-Output  "                                                                for hdfs uri; SHARED_LIBRARY, path to the"
+    Write-Output  "                                                                Oozie sharelib to install, it can be a tarball"
+    Write-Output  "                                                                or an expanded version of it. If ommited,"
+    Write-Output  "                                                                the Oozie sharelib tarball from the Oozie"
+    Write-Output  "                                                                installation directory will be used)"
+    Write-Output  "                                                                (action failes if sharelib is already installed"
+    Write-Output  "                                                                in HDFS)"
+    Write-Output  "          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated]"
+    Write-Output  "                                                                  [use create command to create new version]"
+    Write-Output  "                                                                  upgrade existing sharelib, fails if there"
+    Write-Output  "                                                                  is no existing sharelib installed in HDFS)"
+    Write-Output  "          db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an"
+    Write-Output  "                                                                optional sql File)"
+    Write-Output  "         EXTJS can be downloaded from http://www.extjs.com/learn/Ext_Version_Archives"
 }
 
-Function PrintUsage { param ()
-    Write-Output  "Usage  : oozie-setup.ps1 [OPTIONS]"
-    Write-Output  "         [-ExtJS EXTJS_PATH] (expanded or ZIP, to enable the Oozie webconsole)"
-    Write-Output  "         [-HadoopHome HADOOP_PATH -HadoopVersion HADOOP_VERSION] (Hadoop version [1.2.0-SNAPSHOT])"
-    Write-Output  "                (Hadoop version [1.2.0-SNAPSHOT])"
-    Write-Output  "         [-jars [JAR_PATH, ... ] ] "
-    Write-Output  "         EXTJS can be downloaded from http://www.extjs.com/learn/Ext_Version_Archives"
+function Expand-ZIPFile($file, $destination){
+    $shell = new-object -com shell.application
+    $zip = $shell.NameSpace($file)
+    foreach($item in $zip.items()){
+        $shell.Namespace($destination).copyhere($item)
+    }
 }
 
 # MAIN()
@@ -75,98 +58,141 @@ $ErrorActionPreference = "Stop"
 
 # Constants
 $EXT_SUBDIR = "ext-2.2"
-$HADOOP_DEFAULT_VERSION = "1.2.0-SNAPSHOT"
-
-# Finds JAR.EXE
-
-$JAR_EXE=""
-if ($env:JAVA_HOME) {
-    $JAR_EXE = "$env:JAVA_HOME\bin\jar.exe"
-} else {
-    Write-Output "WARN: JAVA_HOME not defined. oozie-setup.ps1 will rely on the PATH environment variable to use JAR.exe"
-    $JAR_EXE = "jar.exe"
-}
-
-# Validates that both/neither $HadoopHome and $HadoopVersion are provided
-if ($HadoopHome -and !$HadoopVersion) {
-    PrintUsage
-    throw "Need to specify -HadoopVersion for -HadoopHome='$HadoopHome'"
-}
-if ($HadoopVersion -and !$HadoopHome) {
-    PrintUsage
-    throw "Need to specify -HadoopHome for -HadoopVersion='$HadoopHome'"
-}
-
-# Validates the input\output wars
-if (!(Test-Path $InputWar)){
-    PrintUsage
-    throw "Path '$InputWar' doesn't exist"
-}
-if (!$InputWar.ToLower().EndsWith(".war")){
-    PrintUsage
-    throw "Invalid input war file '$InputWar'"
-}
-if (!$OutputWar.ToLower().EndsWith(".war")){
-    PrintUsage
-    throw "Invalid input war file '$OutputWar'"
-}
-if ($OutputWar -ieq $InputWar){
-    PrintUsage
-    throw "Invalid output\input war file. Both parameters cannot be the same file"
-}
-# Deletes previous output wars.
-if (Test-Path $OutputWar){
-    Write-Output "Deleting existing output .war '$OutputWar'"
-    Remove-Item -Force -Path $OutputWar
-}
-
-# Selects\Creates the temp directory
 $OOZIE_HOME = (Split-Path $MyInvocation.MyCommand.Path) + "\.."
 $OOZIE_HOME = Resolve-Path $OOZIE_HOME
-$OOZIE_TEMP = "$OOZIE_HOME\temp"
-$OOZIE_WEB_INF_LIB = "$OOZIE_TEMP\WEB-INF\lib"
 
-Write-Output "Creating OOZIE_TEMP directory '$OOZIE_TEMP'"
-if (Test-Path "$OOZIE_TEMP") { Remove-Item "$OOZIE_TEMP" -Force -Recurse }
-$x = New-Item "$OOZIE_WEB_INF_LIB" -type directory
+$CATALINA_BASE = ""
+if ($env:CATALINA_BASE){
+    $CATALINA_BASE = "$env:CATALINA_BASE"
+}else{
+    $CATALINA_BASE = "$OOZIE_HOME\oozie-server"
+}
 
-# Creates the new OutputWar
-$x = Copy-Item $InputWar $OutputWar
+# Finds JAR.EXE and Java
+$JAR_EXE=""
+$JAVA_BIN=""
+if ($env:JAVA_HOME) {
+    $JAR_EXE = "$env:JAVA_HOME\bin\jar.exe"
+    $JAVA_BIN = "$env:JAVA_HOME\bin\java.exe"
+} else {
+    Write-Output "WARN: JAVA_HOME not defined. oozie-setup.ps1 will relay on the PATH environment variable to use JAR.exe"
+    $JAR_EXE = "jar.exe"
+    $JAVA_BIN = "java.exe"
+}
 
-# Copy hadoop files
-if ($HadoopVersion -or $HadoopHome) {
-    Write-Output "Extracting files from path '$HadoopHome' from version '$HadoopVersion'"
-    if (!(Test-Path $HadoopHome)) { throw "Unable to find Hadoop Home '$HadoopHome'" }
-    $HadoopFiles = GetHadoopJars -HadoopVersion $HadoopVersion -HadoopHome $HadoopHome
-    $HadoopFiles | % {
-        Write-Output "   Adding HadoopFiles: $_"
-        Copy-Item $_ $OOZIE_WEB_INF_LIB -force
+if (($Command -eq "sharelib") -Or ($Command -eq "db")) {
+          $OOZIE_OPTS="-Doozie.home.dir=$OOZIE_HOME";
+          $OOZIE_OPTS="$OOZIE_OPTS -Doozie.config.dir=$OOZIE_HOME\conf";
+          $OOZIE_OPTS="$OOZIE_OPTS -Doozie.log.dir=$OOZIE_HOME\log";
+          $OOZIE_OPTS="$OOZIE_OPTS -Doozie.data.dir=$OOZIE_HOME\data";
+          $OOZIE_OPTS="$OOZIE_OPTS -Dderby.stream.error.file=$OOZIE_HOME\log\derby.log"
+
+          $OOZIECPPATH=""
+          $OOZIECPPATH="$OOZIE_HOME\libtools\*"
+
+          $COMMAND_OPTS=[string]$args
+
+          if ($Command -eq "sharelib") {
+            cmd /c $JAVA_BIN $OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieSharelibCLI $COMMAND_OPTS
+          } elseif ($Command -eq "db") {
+            cmd /c $JAVA_BIN $OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieDBCLI $COMMAND_OPTS
+          }
+          exit 0
+}elseif ($Command -eq "prepare-war"){
+
+    $InputWar = "$OOZIE_HOME\oozie.war"
+    $OutputWar = "$OOZIE_HOME\oozie-server\webapps\oozie.war"
+    $SecureConfigsDir="$CATALINA_BASE\conf\ssl"
+    $ExtraLibs = Resolve-Path "$OOZIE_HOME\..\extra_libs"
+    $EXTJS = "$ExtraLibs\ext-2.2.zip"
+
+    # Validates the input\output wars
+    if (!(Test-Path $InputWar)){
+        PrintUsage
+        throw "Path '$InputWar' doesn't exist"
     }
-}
+    if (!$InputWar.ToLower().EndsWith(".war")){
+        PrintUsage
+        throw "Invalid input war file '$InputWar'"
+    }
+    if (!$OutputWar.ToLower().EndsWith(".war")){
+        PrintUsage
+        throw "Invalid input war file '$OutputWar'"
+    }
+    if ($OutputWar -ieq $InputWar){
+        PrintUsage
+        throw "Invalid output\input war file. Both parameters cannot be the same file"
+    }
+    # Deletes previous output wars.
+    if (Test-Path $OutputWar){
+        Write-Output "Deleting existing output .war '$OutputWar'"
+        Remove-Item -Force -Path $OutputWar
+    }
 
-# Copy EXT_JS files
-if ($ExtJS) {
-    Write-Output "ExtJS not currently supported!"
-}
+    # Selects\Creates the temp directory
+    $OOZIE_TEMP = "$OOZIE_HOME\temp"
+    $OOZIE_WEB_INF_LIB = "$OOZIE_TEMP\WEB-INF\lib"
 
-# Copy additional Jars
-$Jars | % {
-    Write-Output "   Adding JarFiles: $_"
-    Copy-Item $_ $OOZIE_WEB_INF_LIB -force
-}
+    Write-Output "Creating OOZIE_TEMP directory '$OOZIE_TEMP'"
+    if (Test-Path "$OOZIE_TEMP") { Remove-Item "$OOZIE_TEMP" -Force -Recurse }
+    $x = New-Item "$OOZIE_TEMP" -type directory
 
-$counter = (Get-ChildItem $OOZIE_WEB_INF_LIB).Length
-IF ($counter -gt 0) {
-    Write-Output "Adding files to the war file '$OutputWar'..."
+    # Extract the InputWar
+    pushd $OOZIE_TEMP
+    cmd /c $JAR_EXE xvf $InputWar
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to execute 'jar xvf'. Error ($LASTEXITCODE)"
+    }
+    popd
+    # Copy EXT_JS files
+    if ((Test-Path $EXTJS)) {
+        $EXTJS_HOME = "$ExtraLibs\ext-2.2"
 
-    "$JAR_EXE"
+        if (Test-Path "$EXTJS_HOME") { Remove-Item "$EXTJS_HOME" -Force -Recurse }
+        $x = New-Item "$EXTJS_HOME" -type directory
 
-    cmd /c $JAR_EXE uvf $OutputWar -C $OOZIE_TEMP WEB-INF\lib
+        Expand-ZIPFile -File $EXTJS -Destination $EXTJS_HOME
+        cp -r "$EXTJS_HOME\ext-2.2" "$OOZIE_TEMP"
+    }else{
+        Write-Output "INFO: Oozie webconsole disabled, ExtJS library not specified"
+    }
 
+    # Copy additional Jars
+    if ($D -ne "") {
+        $ExtraLibs = $D
+    }
+    Write-Output "   Adding JarFiles: $ExtraLibs\*.jar"
+    cp -r $ExtraLibs\*.jar $OOZIE_WEB_INF_LIB
 
+    if ($Secure) {
+        #Use the SSL version of server.xml in oozie-server
+        if (Test-Path $SecureConfigsDir\ssl-server.xml){
+            cp $SecureConfigsDir\ssl-server.xml $CATALINA_BASE\conf\server.xml
+        }
+
+        #Inject the SSL version of web.xml in oozie war
+        if (Test-Path $SecureConfigsDir\ssl-web.xml){
+            cp $SecureConfigsDir\ssl-web.xml $OOZIE_TEMP\WEB-INF\web.xml
+        }
+
+        Write-Output "INFO: Using secure server.xml and secure web.xml"
+    }else{
+        #Use the regular version of server.xml in oozie-server
+        if (Test-Path $SecureConfigsDir\server.xml){
+            cp $SecureConfigsDir\server.xml $CATALINA_BASE\conf\server.xml
+        }
+        #No need to restore web.xml because its already in the original WAR file
+    }
+
+    Write-Output "Recreating the new war file '$OutputWar'..."
+
+    cmd /c $JAR_EXE cvf $OutputWar -C $OOZIE_TEMP '.'
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to execute 'jar uvf'. Error ($LASTEXITCODE)"
     }
 
     Write-Output "Done! $counter files added"
+} else {
+    PrintUsage
+    exit -1
 }
