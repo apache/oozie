@@ -77,10 +77,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "    <mapper>/mycat.sh</mapper>\r\n" +
              "    <reducer>/mywc.sh</reducer>\r\n" +
              "  </streaming>\r\n" +
-             "  <job-xml>/tmp</job-xml>\r\n" +
              "  <file>/tmp</file>\r\n" +
              "  <archive>/tmp</archive>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
+             "  <job-tracker>${foo}</job-tracker>\r\n" +
              "  <name-node>bar</name-node>\r\n" +
              "  <configuration>\r\n" +
              "    <property>\r\n" +
@@ -171,7 +170,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "  <param>x</param>\r\n" +
                 "  <file>/tmp</file>\r\n" +
                 "  <file>/tmp</file>\r\n" +
-                "  <job-tracker>foo</job-tracker>\r\n" +
+                "  <job-tracker>${foo}</job-tracker>\r\n" +
                 "  <name-node>bar</name-node>\r\n" +
                 "</pig>";
         e = e.replaceAll(" xmlns=?(\"|\')(\"|\')", "");

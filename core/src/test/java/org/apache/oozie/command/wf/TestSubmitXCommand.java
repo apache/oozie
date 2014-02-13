@@ -178,6 +178,15 @@ public class TestSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         SubmitXCommand sc = new SubmitXCommand(true, conf);
+        try {
+            sc.call();
+            fail("Should fail with variable cannot be resolved");
+        } catch (CommandException ex) {
+            assertEquals(ErrorCode.E0803, ex.getErrorCode());
+            assertEquals("E0803: IO error, variable [foo] cannot be resolved", ex.getMessage());
+        }
+        conf.set("foo", "foo");
+        sc = new SubmitXCommand(true, conf);
         assertEquals("OK", sc.call());
     }
 

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1618 dryrun should check variable substitution in workflow.xml (bowenzhangusa via rkanter)
 OOZIE-1681 Sqoop sharelib has no hsqldb jar version (Ostap via rkanter)
 OOZIE-1691 StackOverflowError in TimestampedMessageParser.parseNextLine() (puru via rkanter)
 OOZIE-1552 Bring Windows shell script functionality and structure in line with trunk (omaliuvanchuk via rkanter)

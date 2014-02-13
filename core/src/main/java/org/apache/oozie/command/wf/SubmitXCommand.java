@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.oozie.AppType;
 import org.apache.oozie.SLAEventBean;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
@@ -59,8 +60,11 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.jdom.Element;
+import org.jdom.filter.ElementFilter;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -238,6 +242,29 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 return workflow.getId();
             }
             else {
+                // Checking variable substitution for dryrun
+                ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(workflow, null, false, false);
+                Element workflowXml = XmlUtils.parseXml(app.getDefinition());
+                removeSlaElements(workflowXml);
+                String workflowXmlString = XmlUtils.removeComments(XmlUtils.prettyPrint(workflowXml).toString());
+                workflowXmlString = context.getELEvaluator().evaluate(workflowXmlString, String.class);
+                workflowXml = XmlUtils.parseXml(workflowXmlString);
+
+                Iterator<Element> it = workflowXml.getDescendants(new ElementFilter("job-xml"));
+
+                // Checking all variable substitutions in job-xml files
+                while (it.hasNext()) {
+                    Element e = it.next();
+                    String jobXml = e.getTextTrim();
+                    Path xmlPath = new Path(workflow.getAppPath(), jobXml);
+                    Configuration jobXmlConf = new XConfiguration(fs.open(xmlPath));
+
+
+                    String jobXmlConfString = XmlUtils.prettyPrint(jobXmlConf).toString();
+                    jobXmlConfString = XmlUtils.removeComments(jobXmlConfString);
+                    context.getELEvaluator().evaluate(jobXmlConfString, String.class);
+                }
+
                 return "OK";
             }
         }
@@ -252,6 +279,19 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         }
     }
 
+    private void removeSlaElements(Element eWfJob) {
+        Element sla = XmlUtils.getSLAElement(eWfJob);
+        if (sla != null) {
+            eWfJob.removeChildren(sla.getName(), sla.getNamespace());
+        }
+
+        for (Element action : (List<Element>) eWfJob.getChildren("action", eWfJob.getNamespace())) {
+            sla = XmlUtils.getSLAElement(action);
+            if (sla != null) {
+                action.removeChildren(sla.getName(), sla.getNamespace());
+            }
+        }
+    }
     private String verifySlaElements(Element eWfJob, ELEvaluator evalSla) throws CommandException {
         String jobSlaXml = "";
         // Validate WF job

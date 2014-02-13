@@ -17,7 +17,7 @@
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.4" name="test-wf">
     <global>
-        <job-tracker>foo</job-tracker>
+        <job-tracker>${foo}</job-tracker>
         <name-node>bar</name-node>
         <configuration>
             <property>
@@ -58,7 +58,6 @@
                 <mapper>/mycat.sh</mapper>
                 <reducer>/mywc.sh</reducer>
             </streaming>
-            <job-xml>/tmp</job-xml>
             <file>/tmp</file>
             <archive>/tmp</archive>
         </map-reduce>
