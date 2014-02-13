@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1691 StackOverflowError in TimestampedMessageParser.parseNextLine() (puru via rkanter)
 OOZIE-1552 Bring Windows shell script functionality and structure in line with trunk (omaliuvanchuk via rkanter)
 OOZIE-1608 Update Curator to 2.4.0 when its available to fix security hole (rkanter)
 OOZIE-1687 Bundle can still be in RUNNINGWITHERROR status after bundle kill (rohini)

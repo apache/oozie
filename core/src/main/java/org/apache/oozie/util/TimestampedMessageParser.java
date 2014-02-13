@@ -133,14 +133,14 @@ public class TimestampedMessageParser {
      * @throws IOException
      */
     protected String parseNextLine() throws IOException {
-        String line = reader.readLine();
-        if (line != null) {
+        String line;
+        while ((line = reader.readLine()) != null) {
             ArrayList<String> logParts = filter.splitLogMessage(line);
             if (logParts != null) {
                 patternMatched = filter.matches(logParts);
             }
-            if (!patternMatched) {
-                line = parseNextLine();
+            if (patternMatched) {
+                return line;
             }
         }
         return line;
