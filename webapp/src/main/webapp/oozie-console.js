@@ -70,7 +70,8 @@ function getLogs(url, textArea, shouldParseResponse, errorMsg) {
 
                 }
                 if (xhr.status != 200 && xhr.status != 0) {
-                    textArea.getEl().dom.value = "Error :\n" + xhr.responseText;
+                    var errorText = xhr.getResponseHeader('oozie-error-message');
+                    textArea.getEl().dom.value = "Error :\n" + (errorText ? errorText : xhr.responseText);
                 }
             } catch (e) {
             }

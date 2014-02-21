@@ -61,6 +61,9 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class CoordinatorEngine extends BaseEngine {
     private static XLog LOG = XLog.getLog(CoordinatorEngine.class);
+    public final static String COORD_ACTIONS_LOG_MAX_COUNT = "oozie.coord.actions.log.max.count";
+    private final static int COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT = 50;
+    private int maxNumActionsForLog;
 
     /**
      * Create a system Coordinator engine, with no user and no group.
@@ -72,6 +75,8 @@ public class CoordinatorEngine extends BaseEngine {
         else {
             LOG.debug("Oozie CoordinatorEngine is using XCommands.");
         }
+        maxNumActionsForLog = Services.get().getConf()
+                .getInt(COORD_ACTIONS_LOG_MAX_COUNT, COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT);
     }
 
     /**
@@ -334,6 +339,11 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                 }
 
+                if (actionSet.size() >= maxNumActionsForLog) {
+                    throw new CommandException(ErrorCode.E0302,
+                            "Retrieving log of too many coordinator actions. Max count is "
+                                    + maxNumActionsForLog + " actions");
+                }
                 Iterator<String> actionsIterator = actionSet.iterator();
                 StringBuilder orSeparatedActions = new StringBuilder("");
                 boolean orRequired = false;
@@ -378,6 +388,11 @@ public class CoordinatorEngine extends BaseEngine {
                 }
                 catch (XException xe) {
                     throw new CommandException(ErrorCode.E0302, "Error in date range for coordinator actions", xe);
+                }
+                if(coordActionIdList.size() >= maxNumActionsForLog) {
+                    throw new CommandException(ErrorCode.E0302,
+                            "Retrieving log of too many coordinator actions. Max count is "
+                                    + maxNumActionsForLog + " actions");
                 }
                 StringBuilder orSeparatedActions = new StringBuilder("");
                 boolean orRequired = false;
@@ -527,7 +542,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-
     // Parses the filter string (e.g status=RUNNING;status=WAITING) and returns a list of status values
     private List<String> parseStatusFilter(String filter) throws CoordinatorEngineException {
         List<String> filterList = new ArrayList<String>();
@@ -548,7 +562,7 @@ public class CoordinatorEngine extends BaseEngine {
                             CoordinatorAction.Status.valueOf(statusValue);
                         } catch (IllegalArgumentException ex) {
                             StringBuilder validStatusList = new StringBuilder();
-                            for (CoordinatorAction.Status status: CoordinatorAction.Status.values()){
+                            for (CoordinatorAction.Status status : CoordinatorAction.Status.values()){
                                 validStatusList.append(status.toString()+" ");
                             }
                             // Check for incorrect status value

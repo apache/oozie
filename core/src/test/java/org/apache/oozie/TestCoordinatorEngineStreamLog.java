@@ -212,6 +212,24 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         assertEquals(list.get(1).getCreatedTime().toString(), service.startTime.toString());
         assertEquals(list.get(5).getLastModifiedTime().toString(), service.endTime.toString());
 
+        // Test 11, testing -scope option with Max Count
+        Services.get().getConf().setInt(CoordinatorEngine.COORD_ACTIONS_LOG_MAX_COUNT, 1);
+        ce = createCoordinatorEngine();
+        try {
+            ce.streamLog(jobId, "1-3", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());
+        } catch (XException e){
+            assertEquals(e.getErrorCode(), ErrorCode.E0302);
+            assertTrue(e.getMessage().indexOf("Retrieving log of too many coordinator actions") != -1);
+        }
+
+        // Test 12, testing -date option with Max Count
+        try {
+            ce.streamLog(jobId, DateUtils.formatDateOozieTZ(createdDate) + "::" + DateUtils.formatDateOozieTZ(endDate),
+                RestConstants.JOB_LOG_DATE, new StringWriter(),new HashMap<String, String[]>());
+        } catch (XException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.E0302);
+            assertTrue(e.getMessage().indexOf("Retrieving log of too many coordinator actions") != -1);
+        }
     }
 
     private String runJobsImpl(final CoordinatorEngine ce, int count) throws Exception {

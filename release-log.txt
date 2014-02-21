@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1671 add an option to limit # of coordinator actions for log retrieval (ryota)
 OOZIE-1629 EL function in <timeout> is not evaluated properly (ryota)
 OOZIE-1618 dryrun should check variable substitution in workflow.xml (bowenzhangusa via rkanter)
 OOZIE-1681 Sqoop sharelib has no hsqldb jar version (Ostap via rkanter)
