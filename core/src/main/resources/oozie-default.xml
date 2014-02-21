@@ -501,7 +501,7 @@
     <!--  List of supported groups for ELService -->
 	<property>
         <name>oozie.service.ELService.groups</name>
-        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start</value>
+        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout</value>
         <description>List of groups for different ELServices</description>
     </property>
 
@@ -689,6 +689,19 @@
             coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-wait-timeout</name>
+        <value>
+            coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
+            coord:months=org.apache.oozie.coord.CoordELFunctions#ph1_coord_months,
+            coord:hours=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hours,
+            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

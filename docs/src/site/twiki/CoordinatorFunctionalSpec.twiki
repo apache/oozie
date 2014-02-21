@@ -208,6 +208,8 @@ Coordinator Frequencies can also be expressed using cron syntax.
 | =${coord:months(int n)}= | _variable_ | =${coord:months(1)}= --> minutes in a 1 full month from the current date |
 | =${cron syntax}= | _variable_ | =${0,10 15 * * 2-6}= --> a job that runs every weekday at 3:00pm and 3:10pm UTC time|
 
+Note that, though =${coord:days(int n)}= and =${coord:months(int n)}= EL functions are used to calculate minutes precisely including variations due to daylight saving time for Frequency representation, when specified for coordinator timeout interval, one day is calculated as 24 hours and one month is calculated as 30 days for simplicity.
+
 ---++++ 4.4.1. The coord:days(int n) and coord:endOfDays(int n) EL functions
 
 The =${coord:days(int n)}= and =${coord:endOfDays(int n)}= EL functions should be used to handle day based frequencies.

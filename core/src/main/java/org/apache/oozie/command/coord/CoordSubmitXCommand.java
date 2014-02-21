@@ -140,6 +140,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private ELEvaluator evalInst = null;
     private ELEvaluator evalAction = null;
     private ELEvaluator evalSla = null;
+    private ELEvaluator evalTimeout = null;
 
     static {
         String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
@@ -625,6 +626,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
         evalSla = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-sla-submit");
         evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
+        evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
     }
 
     /**
@@ -683,8 +685,26 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setTimeZone(val);
 
         // controls
-        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalFreq);
-        if (val == "") {
+        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalTimeout);
+        if (val != null && val != "") {
+            int t = Integer.parseInt(val);
+            tmp = (evalTimeout.getVariable("timeunit") == null) ? TimeUnit.MINUTE : ((TimeUnit) evalTimeout
+                    .getVariable("timeunit"));
+            switch (tmp) {
+                case HOUR:
+                    val = String.valueOf(t * 60);
+                    break;
+                case DAY:
+                    val = String.valueOf(t * 60 * 24);
+                    break;
+                case MONTH:
+                    val = String.valueOf(t * 60 * 24 * 30);
+                    break;
+                default:
+                    break;
+            }
+        }
+        else {
             val = Services.get().getConf().get(CONF_DEFAULT_TIMEOUT_NORMAL);
         }
 

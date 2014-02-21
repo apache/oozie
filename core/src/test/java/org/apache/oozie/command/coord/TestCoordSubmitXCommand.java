@@ -1151,4 +1151,72 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             }
         }
     }
+
+    /**
+     * Test timeout setting
+     *
+     * @throws Exception
+     */
+    public void testSubmitWithTimeout() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        // timeout unit = DAY
+        String appXml1 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:days(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml1, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 14400);
+        // timeout unit = HOUR
+        String appXml2 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:hours(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml2, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 600);
+        // timeout unit = MINUTE
+        String appXml3 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:minutes(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml3, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 10);
+        // timeout unit = MONTH
+        String appXml4 = "<coordinator-app name=\"NAME\" frequency=\"${coord:months(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:months(1)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml4, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 43200);
+    }
+
 }
