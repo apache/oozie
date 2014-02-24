@@ -17,19 +17,20 @@
  */
 package org.apache.oozie.service;
 
-import java.util.Arrays;
+import junit.framework.Assert;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
+import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.XCallable;
+
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.XCommand;
-import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.XCallable;
 
 public class TestCallableQueueService extends XTestCase {
     static AtomicLong EXEC_ORDER = new AtomicLong();
@@ -872,4 +873,46 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(intCallable.executed > callables.get(5).executed);
     }
 
+    public void testRemoveUniqueCallables() throws Exception {
+        XCommand command = new XCommand("Test", "type", 100) {
+            @Override
+            protected boolean isLockRequired() {
+                return false;
+            }
+
+            @Override
+            public String getEntityKey() {
+                return "TEST";
+            }
+
+            @Override
+            protected void loadState() throws CommandException {
+            }
+
+            @Override
+            protected void verifyPrecondition() throws CommandException, PreconditionException {
+            }
+
+            @Override
+            protected Object execute() throws CommandException {
+                return null;
+            }
+        };
+        Services.get().destroy();
+        setSystemProperty(CallableQueueService.CONF_THREADS, "1");
+        new Services().init();
+
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
+        List<String> uniquesBefore = queueservice.getUniqueDump();
+        try {
+            queueservice.queue(command);
+            fail("Expected illegal argument exception: priority = 100");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause() != null && e.getCause() instanceof IllegalArgumentException);
+        }
+        List<String> uniquesAfter = queueservice.getUniqueDump();
+        uniquesAfter.removeAll(uniquesBefore);
+        assertTrue(uniquesAfter.toString(), uniquesAfter.isEmpty());
+    }
 }

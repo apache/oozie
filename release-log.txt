@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1699 Some of the commands submitted to Oozie internal queue are never executed (sriksun via virag)
 OOZIE-1671 add an option to limit # of coordinator actions for log retrieval (ryota)
 OOZIE-1629 EL function in <timeout> is not evaluated properly (ryota)
 OOZIE-1618 dryrun should check variable substitution in workflow.xml (bowenzhangusa via rkanter)

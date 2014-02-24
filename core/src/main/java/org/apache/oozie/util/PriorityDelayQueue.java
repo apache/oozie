@@ -258,8 +258,8 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
     @SuppressWarnings("unchecked")
     public Iterator<QueueElement<E>> iterator() {
         QueueElement[][] queueElements = new QueueElement[queues.length][];
+        lock.lock();
         try {
-            lock.lock();
             for (int i = 0; i < queues.length; i++) {
                 queueElements[i] = queues[i].toArray(new QueueElement[0]);
             }
@@ -340,23 +340,29 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
         if (queueElement == null) {
             throw new NullPointerException("queueElement is NULL");
         }
-        if (queueElement.getPriority() < 0 && queueElement.getPriority() >= priorities) {
-            throw new IllegalArgumentException("priority out of range");
+        if (queueElement.getPriority() < 0 || queueElement.getPriority() >= priorities) {
+            throw new IllegalArgumentException("priority out of range: " + queueElement);
         }
         if (queueElement.inQueue) {
-            throw new IllegalStateException("queueElement already in a queue");
+            throw new IllegalStateException("queueElement already in a queue: " + queueElement);
         }
         if (!ignoreSize && currentSize != null && currentSize.get() >= maxSize) {
             return false;
         }
-        boolean accepted = queues[queueElement.getPriority()].offer(queueElement);
-        debug("offer([{0}]), to P[{1}] delay[{2}ms] accepted[{3}]", queueElement.getElement().toString(),
-              queueElement.getPriority(), queueElement.getDelay(TimeUnit.MILLISECONDS), accepted);
-        if (accepted) {
-            if (currentSize != null) {
-                currentSize.incrementAndGet();
+        boolean accepted;
+        lock.lock();
+        try {
+            accepted = queues[queueElement.getPriority()].offer(queueElement);
+            debug("offer([{0}]), to P[{1}] delay[{2}ms] accepted[{3}]", queueElement.getElement().toString(),
+                  queueElement.getPriority(), queueElement.getDelay(TimeUnit.MILLISECONDS), accepted);
+            if (accepted) {
+                if (currentSize != null) {
+                    currentSize.incrementAndGet();
+                }
+                queueElement.inQueue = true;
             }
-            queueElement.inQueue = true;
+        } finally {
+            lock.unlock();
         }
         return accepted;
     }
@@ -390,8 +396,8 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      */
     @Override
     public QueueElement<E> poll() {
+        lock.lock();
         try {
-            lock.lock();
             antiStarvation();
             QueueElement<E> e = null;
             int i = priorities;
@@ -421,8 +427,8 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      */
     @Override
     public QueueElement<E> peek() {
+        lock.lock();
         try {
-            lock.lock();
             antiStarvation();
             QueueElement<E> e = null;
 
