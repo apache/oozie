@@ -1066,6 +1066,58 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 , job.getJobXml().contains(URI_TEMPLATE_INCLUDE_XML));
     }
 
+    /**
+     * Frequency faster/slower than than maximum
+     *
+     * @throws Exception
+     */
+    public void testCheckMaximumFrequency() throws Exception {
+        assertTrue(Services.get().getConf().getBoolean("oozie.service.coord.check.maximum.frequency", false));
+        _testCheckMaximumFrequencyHelper("5");
+        _testCheckMaximumFrequencyHelper("10");
+        _testCheckMaximumFrequencyHelper("${coord:hours(2)}");
+        _testCheckMaximumFrequencyHelper("${coord:days(3)}");
+        _testCheckMaximumFrequencyHelper("${coord:months(4)}");
+        try {
+            _testCheckMaximumFrequencyHelper("3");
+            fail();
+        } catch (CommandException ce) {
+            assertEquals(ErrorCode.E1003, ce.getErrorCode());
+            assertTrue(ce.getMessage().contains("Coordinator job with frequency [3] minutes is faster than allowed maximum of 5 "
+                    + "minutes"));
+        }
+        try {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", false);
+            _testCheckMaximumFrequencyHelper("5");
+            _testCheckMaximumFrequencyHelper("10");
+            _testCheckMaximumFrequencyHelper("${coord:hours(2)}");
+            _testCheckMaximumFrequencyHelper("${coord:days(3)}");
+            _testCheckMaximumFrequencyHelper("${coord:months(4)}");
+            _testCheckMaximumFrequencyHelper("3");
+        } finally {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", true);
+        }
+    }
+
+    private void _testCheckMaximumFrequencyHelper(String freq) throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"" + freq + "\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>blah</value> </property> "
+                + "</configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        checkCoordJobs(jobId);
+    }
+
     private void _testConfigDefaults(boolean withDefaults) throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");

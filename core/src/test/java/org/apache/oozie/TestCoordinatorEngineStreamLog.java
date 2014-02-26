@@ -233,64 +233,69 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     }
 
     private String runJobsImpl(final CoordinatorEngine ce, int count) throws Exception {
-        services.setService(DummyXLogStreamingService.class);
-        // need to re-define the parameters that are cleared upon the service
-        // reset:
-        new DagXLogInfoService().init(services);
+        try {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", false);
+            services.setService(DummyXLogStreamingService.class);
+            // need to re-define the parameters that are cleared upon the service
+            // reset:
+            new DagXLogInfoService().init(services);
 
-        Configuration conf = new XConfiguration();
+            Configuration conf = new XConfiguration();
 
-        final String appPath = getTestCaseFileUri("coordinator.xml");
-        final long now = System.currentTimeMillis();
-        final String start = DateUtils.formatDateOozieTZ(new Date(now));
-        long e = now + 1000 * 60 * count;
-        final String end = DateUtils.formatDateOozieTZ(new Date(e));
+            final String appPath = getTestCaseFileUri("coordinator.xml");
+            final long now = System.currentTimeMillis();
+            final String start = DateUtils.formatDateOozieTZ(new Date(now));
+            long e = now + 1000 * 60 * count;
+            final String end = DateUtils.formatDateOozieTZ(new Date(e));
 
-        String wfXml = IOUtils.getResourceAsString("wf-no-op.xml", -1);
-        writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
+            String wfXml = IOUtils.getResourceAsString("wf-no-op.xml", -1);
+            writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
 
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(1)}\" start=\"" + start
-                + "\" end=\"" + end + "\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.1\"> " + "<controls> "
-                + "  <timeout>1</timeout> " + "  <concurrency>1</concurrency> " + "  <execution>LIFO</execution> "
-                + "</controls> " + "<action> " + "  <workflow> " + "  <app-path>" + getFsTestCaseDir()
-                + "/workflow.xml</app-path>"
-                + "  <configuration> <property> <name>inputA</name> <value>valueA</value> </property> "
-                + "  <property> <name>inputB</name> <value>valueB</value> " + "  </property></configuration> "
-                + "</workflow>" + "</action> " + "</coordinator-app>";
-        writeToFile(appXml, appPath);
-        conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
-        conf.set(OozieClient.USER_NAME, getTestUser());
+            String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(1)}\" start=\"" + start
+                    + "\" end=\"" + end + "\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.1\"> " + "<controls> "
+                    + "  <timeout>1</timeout> " + "  <concurrency>1</concurrency> " + "  <execution>LIFO</execution> "
+                    + "</controls> " + "<action> " + "  <workflow> " + "  <app-path>" + getFsTestCaseDir()
+                    + "/workflow.xml</app-path>"
+                    + "  <configuration> <property> <name>inputA</name> <value>valueA</value> </property> "
+                    + "  <property> <name>inputB</name> <value>valueB</value> " + "  </property></configuration> "
+                    + "</workflow>" + "</action> " + "</coordinator-app>";
+            writeToFile(appXml, appPath);
+            conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
+            conf.set(OozieClient.USER_NAME, getTestUser());
 
-        final String jobId = ce.submitJob(conf, true);
-        waitFor(1000 * 60 * count, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                try {
-                    List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
-                    if (actions.size() < 1) {
-                        return false;
-                    }
-                    for (CoordinatorAction action : actions) {
-                        CoordinatorAction.Status actionStatus = action.getStatus();
-                        if (actionStatus != CoordinatorAction.Status.SUCCEEDED) {
+            final String jobId = ce.submitJob(conf, true);
+            waitFor(1000 * 60 * count, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    try {
+                        List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
+                        if (actions.size() < 1) {
                             return false;
                         }
+                        for (CoordinatorAction action : actions) {
+                            CoordinatorAction.Status actionStatus = action.getStatus();
+                            if (actionStatus != CoordinatorAction.Status.SUCCEEDED) {
+                                return false;
+                            }
+                        }
+                        return true;
                     }
-                    return true;
+                    catch (Exception ex) {
+                        ex.printStackTrace();
+                        return false;
+                    }
                 }
-                catch (Exception ex) {
-                    ex.printStackTrace();
-                    return false;
-                }
+            });
+            // Assert all the actions are succeeded (useful for waitFor() timeout
+            // case):
+            final List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
+            for (CoordinatorAction action : actions) {
+                assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
             }
-        });
-        // Assert all the actions are succeeded (useful for waitFor() timeout
-        // case):
-        final List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
-        for (CoordinatorAction action : actions) {
-            assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
+            return jobId;
+        } finally {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", true);
         }
-        return jobId;
     }
 
     private void writeToFile(String content, Path appPath, String fileName) throws IOException {

@@ -131,8 +131,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     public static final String CONF_DEFAULT_MAX_TIMEOUT = Service.CONF_PREFIX + "coord.default.max.timeout";
 
-
     public static final String CONF_QUEUE_SIZE = Service.CONF_PREFIX + "CallableQueueService.queue.size";
+
+    public static final String CONF_CHECK_MAX_FREQUENCY = Service.CONF_PREFIX + "coord.check.maximum.frequency";
 
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
@@ -314,9 +315,19 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             throw new IllegalArgumentException("Coordinator Start Time must be earlier than End Time.");
         }
 
-        // Check if a coord job with cron frequency will materialize actions
         try {
-            Integer.parseInt(coordJob.getFrequency());
+            // Check if a coord job with cron frequency will materialize actions
+            int freq = Integer.parseInt(coordJob.getFrequency());
+
+            // Check if the frequency is faster than 5 min if enabled
+            if (Services.get().getConf().getBoolean(CONF_CHECK_MAX_FREQUENCY, true)) {
+                CoordinatorJob.Timeunit unit = coordJob.getTimeUnit();
+                if (freq == 0 || (freq < 5 && unit == CoordinatorJob.Timeunit.MINUTE)) {
+                    throw new IllegalArgumentException("Coordinator job with frequency [" + freq +
+                            "] minutes is faster than allowed maximum of 5 minutes ("
+                            + CONF_CHECK_MAX_FREQUENCY + " is set to true)");
+                }
+            }
         } catch (NumberFormatException e) {
             Date start = coordJob.getStartTime();
             Calendar cal = Calendar.getInstance();
