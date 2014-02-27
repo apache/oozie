@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1714 Update Derby driver version to latest (rkanter)
 OOZIE-1680 Add a check for a maximum frequency of 5 min on Coord jobs (rkanter)
 OOZIE-1699 Some of the commands submitted to Oozie internal queue are never executed (sriksun via virag)
 OOZIE-1671 add an option to limit # of coordinator actions for log retrieval (ryota)
