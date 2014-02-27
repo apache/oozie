@@ -533,6 +533,7 @@ public class JavaActionExecutor extends ActionExecutor {
         
         Path systemLibPath = Services.get().get(WorkflowAppService.class)
             .getSystemLibPath();
+        System.out.println("systemLibPath:"+systemLibPath);
         if (systemLibPath.toUri().getScheme() != null
             && systemLibPath.toUri().getAuthority() != null) {
           fs = Services.get().get(HadoopAccessorService.class)
@@ -551,6 +552,7 @@ public class JavaActionExecutor extends ActionExecutor {
             if (listOfPaths != null && !listOfPaths.isEmpty()) {
               
               for (Path actionLibPath : listOfPaths) {
+                System.out.println("actionLibPath:"+actionLibPath);
                 DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
                 DistributedCache.createSymlink(conf);
               }
@@ -1417,6 +1419,7 @@ public class JavaActionExecutor extends ActionExecutor {
   protected String[] getShareLibNames(Context context, Element actionXml,
       Configuration conf) {
     String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
+    System.out.println("names:"+names);
     if (names == null || names.length == 0) {
       try {
         XConfiguration jobConf = new XConfiguration(new StringReader(context
@@ -1436,6 +1439,7 @@ public class JavaActionExecutor extends ActionExecutor {
         throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
       }
     }
+    System.out.println("names:"+names);
     return names;
   }
   
