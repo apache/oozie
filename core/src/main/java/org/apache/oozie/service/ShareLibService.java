@@ -605,6 +605,7 @@ public class ShareLibService implements Service, Instrumentable {
                 try {
                     sharelibPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
                         .toUri().toString();
+                    LOG.debug(sharelibPath);
                 }
                 catch (IOException ioe) {
                     // ignore exception because we're just doing instrumentation
