@@ -93,6 +93,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  </configuration>\r\n" +
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -136,6 +137,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  </configuration>\r\n" +
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -174,6 +176,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "  <name-node>bar</name-node>\r\n" +
                 "</pig>";
         e = e.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        e = e.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
         assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
 
     }
@@ -215,6 +218,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <name-node>bar</name-node>\r\n" +
              "</hive>";
         a = a.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        a = a.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
         assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
@@ -250,6 +254,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <arg>/tmp2/data.txt</arg>\r\n" +
              "</distcp>";
         b = b.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        b = b.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
         assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
     }
 
