@@ -35,12 +35,15 @@
         <module>hadoop-1</module>
         <module>hadoop-distcp-1</module>
         <module>hadoop-test-1</module>
+        <module>hadoop-utils-1</module>
         <module>hadoop-2</module>
         <module>hadoop-test-2</module>
         <module>hadoop-distcp-2</module>
+        <module>hadoop-utils-2</module>
         <module>hadoop-0.23</module>
         <module>hadoop-test-0.23</module>
         <module>hadoop-distcp-0.23</module>
+        <module>hadoop-utils-0.23</module>
     </modules>
 
     <build>
@@ -75,6 +78,7 @@
                 <module>hadoop-3</module>
                 <module>hadoop-test-3</module>
                 <module>hadoop-distcp-3</module>
+                <module>hadoop-utils-3</module>
             </modules>
         </profile>
     </profiles>

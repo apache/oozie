@@ -78,6 +78,7 @@ public class TestLauncher extends XFsTestCase {
 
         Configuration actionConf = new XConfiguration();
         LauncherMapperHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+        LauncherMapperHelper.setupYarnRestartHandling(jobConf, jobConf, "1@a");
 
         assertEquals("1", actionConf.get("oozie.job.id"));
         assertEquals("1@a", actionConf.get("oozie.action.id"));

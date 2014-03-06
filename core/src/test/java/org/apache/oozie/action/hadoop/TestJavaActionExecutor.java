@@ -25,11 +25,9 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -57,7 +55,6 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -88,9 +85,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
-        assertEquals(null, ae.getLauncherClasses());
+        assertEquals(Arrays.asList(JavaMain.class), ae.getLauncherClasses());
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
         try {
@@ -241,7 +239,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
-        assertEquals("MAIN-CLASS", ae.getLauncherMain(conf, actionXml));
+        assertEquals("MAIN-CLASS", actionConf.get("oozie.action.java.main", "null"));
+        assertEquals("org.apache.oozie.action.hadoop.JavaMain", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
 

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -42,6 +43,12 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", DistcpActionExecutor.class.getName());
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testSetupMethods() throws Exception {
+        DistcpActionExecutor ae = new DistcpActionExecutor();
+        assertEquals(Arrays.asList(JavaMain.class), ae.getLauncherClasses());
     }
 
     public void testDistCpFile() throws Exception {

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1722 When an ApplicationMaster restarts, it restarts the launcher job (rkanter)
 OOZIE-1727 Upgrade hadoop-minikdc (puru via rkanter)
 OOZIE-1711 TestLiteWorkflowAppParser fails against Hadoop 2 (rkanter)
 OOZIE-1714 Update Derby driver version to latest (rkanter)

@@ -58,6 +58,11 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hadoop-utils</artifactId>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
