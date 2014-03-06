@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1223 too many extjs cookies can cause the web UI to stop responding (puru via rkanter)
 OOZIE-1722 When an ApplicationMaster restarts, it restarts the launcher job (rkanter)
 OOZIE-1727 Upgrade hadoop-minikdc (puru via rkanter)
 OOZIE-1711 TestLiteWorkflowAppParser fails against Hadoop 2 (rkanter)

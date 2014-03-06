@@ -30,6 +30,19 @@ $(document).ready(function() {
     }
 });
 
+Ext.override(Ext.Component, {
+    saveState : function() {
+        if (Ext.state.Manager && this.stateful !== false) {
+            var state = this.getState();
+            if (this.fireEvent('beforestatesave', this, state) !== false) {
+                Ext.state.Manager.set(this.stateId || this.id, state);
+                this.fireEvent('statesave', this, state);
+            }
+        }
+    },
+    stateful : false
+});
+
 function getLogs(url, textArea, shouldParseResponse, errorMsg) {
     textArea.getEl().dom.value = '';
 
