@@ -17,11 +17,8 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
@@ -33,12 +30,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
@@ -51,6 +49,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -65,18 +65,17 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
+import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.ELEvaluationException;
+import org.apache.openjpa.lib.log.Log;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
 
 public class JavaActionExecutor extends ActionExecutor {
   
@@ -526,6 +525,7 @@ public class JavaActionExecutor extends ActionExecutor {
   
   protected void addShareLib(Path appPath, Configuration conf,
       String[] actionShareLibNames) throws ActionExecutorException {
+    LOG.error("actionShareLibNames:"+StringUtils.join(actionShareLibNames));
     if (actionShareLibNames != null) {
       String user = conf.get("user.name");
       FileSystem fs;
@@ -695,7 +695,10 @@ public class JavaActionExecutor extends ActionExecutor {
     // libpath
     if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
       // add action specific sharelibs
+      LOG.error("addShareLib");
       addShareLib(appPath, conf, getShareLibNames(context, actionXml, conf));
+    }else{
+      LOG.error("NOT   addShareLib");
     }
   }
   
