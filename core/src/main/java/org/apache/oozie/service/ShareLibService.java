@@ -603,6 +603,16 @@ public class ShareLibService implements Service, Instrumentable {
             public String getValue() {
                 String sharelibPath = "(unavailable)";
                 try {
+                    if(services == null)
+                      System.out.println("services ************ is null");
+                    
+                    else if(services.get(WorkflowAppService.class) == null)
+                      System.out.println("services.get(WorkflowAppService.class) ************ is null");
+                    else if(services.get(WorkflowAppService.class).getSystemLibPath() == null)
+                    {
+                      System.out.println("services.get(WorkflowAppService.class).getSystemLibPath() ************ is null");
+                    }
+                      
                     sharelibPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
                         .toUri().toString();
                     LOG.error("sharelibPath"+sharelibPath);
