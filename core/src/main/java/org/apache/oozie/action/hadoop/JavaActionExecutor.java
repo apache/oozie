@@ -1429,7 +1429,6 @@ public class JavaActionExecutor extends ActionExecutor {
   protected String[] getShareLibNames(Context context, Element actionXml,
       Configuration conf) {
     String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
-    LOG.error("names:"+names.toString());
     if (names == null || names.length == 0) {
       try {
         XConfiguration jobConf = new XConfiguration(new StringReader(context

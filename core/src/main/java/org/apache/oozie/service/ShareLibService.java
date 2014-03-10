@@ -545,7 +545,9 @@ public class ShareLibService implements Service, Instrumentable {
      */
     public Path getLatestLibPath(Path rootDir, final String prefix) throws IOException {
         Date max = new Date(0L);
-        Path path = null;
+     //   Path path = null;
+        //@author by mengsun
+        Path path = rootDir;
         PathFilter directoryFilter = new PathFilter() {
             @Override
             public boolean accept(Path path) {
