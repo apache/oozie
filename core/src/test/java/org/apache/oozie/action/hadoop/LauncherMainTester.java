@@ -19,6 +19,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
 
@@ -29,8 +30,11 @@ public class LauncherMainTester {
             System.out.println("Hello World!");
         }
         if (args.length == 1) {
-            if (args[0].equals("ex")) {
-                throw new Throwable("throwing exception");
+            if (args[0].equals("throwable")) {
+                throw new Throwable("throwing throwable");
+            }
+            if (args[0].equals("exception")) {
+                throw new IOException("throwing exception");
             }
             if (args[0].equals("exit0")) {
                 System.exit(0);

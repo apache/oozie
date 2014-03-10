@@ -176,7 +176,30 @@ public class TestLauncher extends XFsTestCase {
     public void testException() throws Exception {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        final RunningJob runningJob = _test("ex");
+        final RunningJob runningJob = _test("exception");
+        waitFor(2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
+        assertTrue(runningJob.isSuccessful());
+
+        Configuration conf = new XConfiguration();
+        conf.set("user.name", getTestUser());
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, actionDir, conf);
+        assertTrue(fs.exists(LauncherMapperHelper.getActionDataSequenceFilePath(actionDir)));
+        assertTrue(LauncherMapperHelper.isMainDone(runningJob));
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
+        assertFalse(LauncherMapperHelper.hasOutputData(actionData));
+        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherMapperHelper.isMainDone(runningJob));
+    }
+
+    public void testThrowable() throws Exception {
+        Path actionDir = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        final RunningJob runningJob = _test("throwable");
         waitFor(2000, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {

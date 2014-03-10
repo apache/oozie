@@ -54,6 +54,8 @@ public class TestMapReduceMain extends MainTestCase {
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
+        jobConf.set("mapreduce.job.tags", "" + System.currentTimeMillis());
+        setSystemProperty("oozie.job.launch.time", "" + System.currentTimeMillis());
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         OutputStream os = new FileOutputStream(actionXml);
