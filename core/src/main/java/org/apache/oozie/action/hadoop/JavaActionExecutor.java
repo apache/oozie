@@ -526,6 +526,7 @@ public class JavaActionExecutor extends ActionExecutor {
   protected void addShareLib(Path appPath, Configuration conf,
       String[] actionShareLibNames) throws ActionExecutorException {
     LOG.error("actionShareLibNames:"+StringUtils.join(actionShareLibNames));
+    LOG.error("actionShareLibNames:"+actionShareLibNames.toString());
     if (actionShareLibNames != null) {
       String user = conf.get("user.name");
       FileSystem fs;
@@ -534,6 +535,8 @@ public class JavaActionExecutor extends ActionExecutor {
         Path systemLibPath = Services.get().get(WorkflowAppService.class)
             .getSystemLibPath();
         LOG.error("systemLibPath:"+systemLibPath);
+        LOG.error("systemLibPath.toUri().getScheme():----"+systemLibPath.toUri().getScheme().toString());
+        LOG.error("systemLibPath.toUri().getAuthority():-----"+systemLibPath.toUri().getAuthority().toString());
         if (systemLibPath.toUri().getScheme() != null
             && systemLibPath.toUri().getAuthority() != null) {
           fs = Services.get().get(HadoopAccessorService.class)
@@ -547,12 +550,14 @@ public class JavaActionExecutor extends ActionExecutor {
           if (systemLibPath != null) {
             ShareLibService shareLibService = Services.get().get(
                 ShareLibService.class);
+            LOG.error(" TEST shareLibService:----------------------------"+shareLibService.toString());
             List<Path> listOfPaths = shareLibService
                 .getShareLibJars(actionShareLibName);
+            LOG.error("listOfPaths:--------------"+listOfPaths.toString());
             if (listOfPaths != null && !listOfPaths.isEmpty()) {
               
               for (Path actionLibPath : listOfPaths) {
-                LOG.error("actionLibPath:"+actionLibPath);
+                LOG.error("actionLibPath:"+actionLibPath.toString());
                 DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
                 DistributedCache.createSymlink(conf);
               }
@@ -579,6 +584,7 @@ public class JavaActionExecutor extends ActionExecutor {
       try {
         List<Path> listOfPaths = shareLibService
             .getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+        LOG.error("TEST listOfPaths:---------------"+listOfPaths.toString());
         //modify by @mengsun for the empty list 
         if (listOfPaths != null && !listOfPaths.isEmpty()) {
           FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
@@ -696,6 +702,7 @@ public class JavaActionExecutor extends ActionExecutor {
     if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
       // add action specific sharelibs
       LOG.error("addShareLib");
+      LOG.error("TEST appPath is ------------"+appPath.toString());
       addShareLib(appPath, conf, getShareLibNames(context, actionXml, conf));
     }else{
       LOG.error("NOT   addShareLib");
@@ -1422,7 +1429,7 @@ public class JavaActionExecutor extends ActionExecutor {
   protected String[] getShareLibNames(Context context, Element actionXml,
       Configuration conf) {
     String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
-    LOG.error("names:"+names);
+    LOG.error("names:"+names.toString());
     if (names == null || names.length == 0) {
       try {
         XConfiguration jobConf = new XConfiguration(new StringReader(context

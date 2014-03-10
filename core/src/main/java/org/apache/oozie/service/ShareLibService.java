@@ -275,6 +275,7 @@ public class ShareLibService implements Service, Instrumentable {
                 }
             }
         }
+        LOG.error(shareLibMap.get(actionKey).toString());
         return shareLibMap.get(actionKey);
     }
 
@@ -612,7 +613,18 @@ public class ShareLibService implements Service, Instrumentable {
                     {
                       System.out.println("services.get(WorkflowAppService.class).getSystemLibPath() ************ is null");
                     }
-                      
+                    else if(getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX) == null){
+                      System.out.println("services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)------is null");
+                    }  
+                    else if(getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
+                        .toUri() == null){
+                      System.out.println("getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX).toUri()-----is null");
+                    }
+                    else if(getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
+                        .toUri().toString() == null)
+                    {
+                      System.out.println("getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX).toUri().toString()---------is null");
+                    }
                     sharelibPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
                         .toUri().toString();
                     LOG.error("sharelibPath"+sharelibPath);
