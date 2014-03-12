@@ -27,7 +27,7 @@ Oozie supports whitelisting Hadoop services (JobTracker, HDFS), via 2 configurat
 ...
 </verbatim>
 
-The value must follow the pattern =[<AUTHORITY>,]*=. Where =<AUTHORITY>= is the =HOST:PORT= of
+The value must follow the pattern =[AUTHORITY,...]=. Where =AUTHORITY= is the =HOST:PORT= of
 the Hadoop service (JobTracker, HDFS).
 
 If the value is empty any HOST:PORT is accepted. Emtpy is the default value.
