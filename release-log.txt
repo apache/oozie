@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1543 Minor typo in Hive Action documentation (anbu78 via rkanter)
 OOZIE-1650 Whitelisting docs are incorrect (anbu78 via rkanter)
 OOZIE-1733 Fix test failures caused by OOZIE-1722 (rkanter)
 OOZIE-1223 too many extjs cookies can cause the web UI to stop responding (puru via rkanter)
