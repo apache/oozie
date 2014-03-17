@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1698 Action sharelib configuration document lacks the "oozie." prefix (qwertymaniac via rohini)
 OOZIE-1712 Oozie page does not render in Internet Explorer 9 on Windows (omaliuvanchuk via rohini)
 OOZIE-1720 Oozie Hive action doesn't honour mapred.job.name (mithun via rohini)
 OOZIE-1543 Minor typo in Hive Action documentation (anbu78 via rkanter)
