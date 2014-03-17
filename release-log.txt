@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1720 Oozie Hive action doesn't honour mapred.job.name (mithun via rohini)
 OOZIE-1543 Minor typo in Hive Action documentation (anbu78 via rkanter)
 OOZIE-1650 Whitelisting docs are incorrect (anbu78 via rkanter)
 OOZIE-1733 Fix test failures caused by OOZIE-1722 (rkanter)
