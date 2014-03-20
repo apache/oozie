@@ -179,6 +179,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter("lastActionNumber", cjBean.getLastActionNumber());
                 query.setParameter("lastActionTime", cjBean.getLastActionTimestamp());
                 query.setParameter("nextMatdTime", cjBean.getNextMaterializedTimestamp());
+                query.setParameter("lastModifiedTime", cjBean.getLastModifiedTimestamp());
                 query.setParameter("id", cjBean.getId());
                 break;
             default:

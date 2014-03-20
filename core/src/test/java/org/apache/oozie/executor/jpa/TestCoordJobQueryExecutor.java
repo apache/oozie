@@ -152,6 +152,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("lastActionNumber"), cjBean.getLastActionNumber());
         assertEquals(query.getParameterValue("lastActionTime"), cjBean.getLastActionTimestamp());
         assertEquals(query.getParameterValue("nextMatdTime"), cjBean.getNextMaterializedTimestamp());
+        assertEquals(query.getParameterValue("lastModifiedTime"), cjBean.getLastModifiedTimestamp());
         assertEquals(query.getParameterValue("id"), cjBean.getId());
         em.close();
     }
@@ -167,6 +168,15 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING, job1);
         CoordinatorJobBean job2 = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job1.getId());
         assertEquals(job2.getStatus(), CoordinatorJob.Status.SUCCEEDED);
+
+        CoordinatorJobBean job3 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        Date initialLMT = job3.getLastModifiedTime();
+        job3.setLastModifiedTime(new Date()); // similar to what's done by e.g. the change command
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_CHANGE, job3);
+        job3 = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job3.getId());
+        Date afterChangeLMT = job3.getLastModifiedTime();
+        assertNotNull(job3.getLastModifiedTimestamp());
+        assertTrue(afterChangeLMT.after(initialLMT));
 
     }
 

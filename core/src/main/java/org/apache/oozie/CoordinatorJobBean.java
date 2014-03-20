@@ -75,7 +75,7 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "UPDATE_COORD_JOB_MATERIALIZE", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastActionTimestamp = :lastActionTime, w.lastActionNumber = :lastActionNumber, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_CHANGE", query = "update CoordinatorJobBean w set w.endTimestamp = :endTime, w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.concurrency = :concurrency, w.pauseTimestamp = :pauseTime, w.lastActionNumber = :lastActionNumber, w.lastActionTimestamp = :lastActionTime, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_CHANGE", query = "update CoordinatorJobBean w set w.endTimestamp = :endTime, w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.concurrency = :concurrency, w.pauseTimestamp = :pauseTime, w.lastActionNumber = :lastActionNumber, w.lastActionTimestamp = :lastActionTime, w.nextMaterializedTimestamp = :nextMatdTime, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
         @NamedQuery(name = "DELETE_COORD_JOB", query = "delete from CoordinatorJobBean w where w.id = :id"),
 
