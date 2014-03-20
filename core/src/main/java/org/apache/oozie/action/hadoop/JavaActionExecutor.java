@@ -535,10 +535,10 @@ public class JavaActionExecutor extends ActionExecutor {
         Path systemLibPath = Services.get().get(WorkflowAppService.class)
             .getSystemLibPath();
         LOG.error("systemLibPath:"+systemLibPath);
-        LOG.error("systemLibPath.toUri().getScheme():----"+systemLibPath.toUri().getScheme().toString());
-        LOG.error("systemLibPath.toUri().getAuthority():-----"+systemLibPath.toUri().getAuthority().toString());
         if (systemLibPath.toUri().getScheme() != null
             && systemLibPath.toUri().getAuthority() != null) {
+          LOG.error("systemLibPath.toUri().getScheme():----"+systemLibPath.toUri().getScheme().toString());
+          LOG.error("systemLibPath.toUri().getAuthority():-----"+systemLibPath.toUri().getAuthority().toString());
           fs = Services.get().get(HadoopAccessorService.class)
               .createFileSystem(user, systemLibPath.toUri(), conf);
         } else {
@@ -550,9 +550,11 @@ public class JavaActionExecutor extends ActionExecutor {
           if (systemLibPath != null) {
             ShareLibService shareLibService = Services.get().get(
                 ShareLibService.class);
+            if(shareLibService != null)
             LOG.error(" TEST shareLibService:----------------------------"+shareLibService.toString());
             List<Path> listOfPaths = shareLibService
                 .getShareLibJars(actionShareLibName);
+            if(listOfPaths !=null)
             LOG.error("listOfPaths:--------------"+listOfPaths.toString());
             if (listOfPaths != null && !listOfPaths.isEmpty()) {
               
@@ -602,6 +604,7 @@ public class JavaActionExecutor extends ActionExecutor {
             DistributedCache.createSymlink(conf);
           }
         }
+        LOG.error("ZUI ZHONG listOfPaths:**************"+listOfPaths.toString());
       } catch (IOException ex) {
         throw new ActionExecutorException(
             ActionExecutorException.ErrorType.FAILED, "It should never happen",
@@ -1429,18 +1432,24 @@ public class JavaActionExecutor extends ActionExecutor {
   protected String[] getShareLibNames(Context context, Element actionXml,
       Configuration conf) {
     String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
+    LOG.error("NNNNNNNNNNNNNNNNNNNN"+getType());
     if (names == null || names.length == 0) {
       try {
         XConfiguration jobConf = new XConfiguration(new StringReader(context
             .getWorkflow().getConf()));
         names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
+        LOG.error("MMMMMMMMMMMMMMMMM"+new StringReader(context
+            .getWorkflow().getConf()));
         if (names == null || names.length == 0) {
           names = Services.get().getConf()
               .getStrings(ACTION_SHARELIB_FOR + getType());
+          LOG.error("KKKKKKKKKK"+names);
           if (names == null || names.length == 0) {
             String name = getDefaultShareLibName(actionXml);
+            LOG.error("UUUUUUUUUUUUUUU"+name);
             if (name != null) {
               names = new String[] {name};
+              LOG.error("FFFFFFFFFFFF"+names);
             }
           }
         }
@@ -1448,7 +1457,10 @@ public class JavaActionExecutor extends ActionExecutor {
         throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
       }
     }
-    LOG.error("names:"+names);
+    if(names!=null){
+        for(String name:names)
+        LOG.error("names:VVVVVVVVVVVVVVVV"+name.toString());
+    }
     return names;
   }
   
