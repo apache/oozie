@@ -156,7 +156,7 @@ public class TestBundleEngineSimple extends TestCase {
         }
         // one of the values is a whitespace:
         try {
-            BundleEngine.parseBulkFilter(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME + "=aaa, ,bbb");
+            BundleEngine.parseBulkFilter(BulkResponseImpl.BULK_FILTER_BUNDLE + "=aaa, ,bbb");
             fail("BundleEngineException expected.");
         }
         catch (BundleEngineException bee) {
