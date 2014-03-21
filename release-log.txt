@@ -141,7 +141,6 @@ OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mack
 
 -- Oozie 4.0.1 release (unreleased)
 
-OOZIE-1549 Update hcat documentation to mention hcatalog-pig-adapter jar (bowenzhangusa via rohini)
 OOZIE-1736 Switch to Hadoop 2.3.0 for the hadoop-2 profile (rkanter)
 OOZIE-1670 Workflow kill command doesn't kill child job for map-reduce action (puru via rohini)
 OOZIE-1630 <prepare> operations fail when path doesn't have scheme (ryota)
