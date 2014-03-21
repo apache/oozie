@@ -93,7 +93,7 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
                     // bundle
         }
         catch (JPAExecutorException jex) {
-            assertTrue(jex.getMessage().contains("No bundle entries found"));
+            assertTrue(jex.getMessage().contains("No entries found for given bundle(s)"));
         }
     }
 
@@ -134,12 +134,38 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         BulkJPAExecutor bulkjpa = new BulkJPAExecutor(BundleEngine.parseBulkFilter(request), 1, 10);
         try {
             jpaService.execute(bulkjpa);
-            fail(); // exception expected due to >1 records found for same
-                    // bundle name
         }
         catch (JPAExecutorException jex) {
-            assertTrue(jex.getMessage().contains("Non-unique bundles present for same bundle name"));
+            fail(); // should not throw exception as this case is now supported
         }
+    }
+
+    public void testBundleId() throws Exception {
+        String request = "bundle=" + bundleId + ";actionstatus=FAILED;"
+                + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z";
+
+        List<BulkResponseImpl> brList = _execQuery(request);
+        assertEquals(1, brList.size()); // only 1 action satisfies the
+                                        // conditions
+        BulkResponseImpl br = brList.get(0);
+        assertEquals(bundleId, br.getBundle().getId());
+        assertEquals("Coord1", br.getCoordinator().getAppName());
+        assertEquals(CoordinatorAction.Status.FAILED, br.getAction().getStatus());
+        assertEquals(DateUtils.parseDateUTC(CREATE_TIME).toString(), br.getAction().getCreatedTime().toString());
+    }
+
+    public void testBundleIdWithCoordId() throws Exception {
+        // fetching coord Ids
+        JPAService jpaService = Services.get().get(JPAService.class);
+        List<String> coordIds = jpaService.execute(new CoordJobsGetFromParentIdJPAExecutor(bundleId, 10));
+
+        // there are 3 coordinators but giving range as only two of them
+        String coordIdsStr = coordIds.get(0) + "," + coordIds.get(1);
+        String request = "bundle=" + bundleId + ";coordinators=" + coordIdsStr + ";actionstatus=KILLED";
+        List<BulkResponseImpl> brList = _execQuery(request);
+        assertEquals(2, brList.size()); // 2 actions satisfy the conditions
+        assertEquals(brList.get(0).getAction().getId(), "Coord1@2");
+        assertEquals(brList.get(1).getAction().getId(), "Coord2@1");
     }
 
     private List<BulkResponseImpl> _execQuery(String request) throws JPAExecutorException, BundleEngineException {

@@ -110,6 +110,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
             + "</sla:info>";
 
     protected String bundleName;
+    protected String bundleId;
     protected String CREATE_TIME = "2012-07-22T00:00Z";
 
     public XDataTestCase() {
@@ -1420,7 +1421,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         assertNotNull(jpaService);
         // adding the bundle job
         BundleJobBean bundle = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
-        String bundleId = bundle.getId();
+        bundleId = bundle.getId();
         bundleName = bundle.getAppName();
 
         // adding coordinator job(s) for this bundle

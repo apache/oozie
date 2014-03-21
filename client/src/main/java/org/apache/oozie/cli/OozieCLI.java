@@ -362,8 +362,8 @@ public class OozieCLI {
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Option bulkMonitor = new Option(BULK_OPTION, true, "key-value pairs to filter bulk jobs response. e.g. bundle=<B>\\;" +
                 "coordinators=<C>\\;actionstatus=<S>\\;startcreatedtime=<SC>\\;endcreatedtime=<EC>\\;" +
-                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; coordinators and actionstatus can be multiple comma separated values" +
-                "bundle and coordinators are 'names' of those jobs. Bundle name is mandatory, other params are optional");
+                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; bundle, coordinators and actionstatus can be multiple comma separated values" +
+                "bundle and coordinators can be id(s) or appName(s) of those jobs. Specifying bundle is mandatory, other params are optional");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();

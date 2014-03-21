@@ -24,12 +24,15 @@ import java.net.URLEncoder;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobsGetFromParentIdJPAExecutor;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -150,10 +153,6 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
                 JSONObject jbundle = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_BUNDLE);
                 JSONObject jcoord = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_COORDINATOR);
                 JSONObject jaction = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_ACTION);
-
-                assertNotNull(jbundle);
-                assertNotNull(jcoord);
-                assertNotNull(jaction);
 
                 assertEquals(jbundle.get(JsonTags.BUNDLE_JOB_NAME), "BUNDLE-TEST");
                 assertEquals(jcoord.get(JsonTags.COORDINATOR_JOB_NAME), "Coord1");
@@ -286,7 +285,61 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 // WS call will throw BAD_REQUEST code 400 error because no
                 // records found for this bundle
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertFalse(HttpServletResponse.SC_BAD_REQUEST == conn.getResponseCode());
+
+                return null;
+            }
+        });
+    }
+
+    public void testBundleId() throws Exception {
+        runTest("/v1/jobs", V1JobsServlet.class, false, new Callable<Void>() {
+            public Void call() throws Exception {
+
+                String bulkRequest = "bundle=" + bundleId + ";coordinators=Coord1;"
+                        + "actionStatus=FAILED;startcreatedtime=2012-07-21T00:00Z";
+                JSONArray array = _requestToServer(bulkRequest);
+
+                assertEquals(1, array.size());
+                JSONObject jbundle = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_BUNDLE);
+                JSONObject jcoord = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_COORDINATOR);
+                JSONObject jaction = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_ACTION);
+
+                assertNotNull(jbundle);
+                assertNotNull(jcoord);
+                assertNotNull(jaction);
+
+                assertEquals(jbundle.get(JsonTags.BUNDLE_JOB_ID), bundleId);
+                assertEquals(jcoord.get(JsonTags.COORDINATOR_JOB_NAME), "Coord1");
+                assertEquals(jcoord.get(JsonTags.COORDINATOR_JOB_STATUS), "RUNNING");
+                assertEquals(jaction.get(JsonTags.COORDINATOR_ACTION_STATUS), "FAILED");
+                assertEquals((jaction.get(JsonTags.COORDINATOR_ACTION_CREATED_TIME).toString().split(", "))[1],
+                        DateUtils.parseDateUTC(CREATE_TIME).toGMTString());
+                return null;
+            }
+        });
+    }
+
+    public void testBundleIdWithCoordId() throws Exception {
+        // fetching coord Ids
+        JPAService jpaService = Services.get().get(JPAService.class);
+        List<String> coordIds = jpaService.execute(new CoordJobsGetFromParentIdJPAExecutor(bundleId, 10));
+        // there are 3 coordinators but giving range as only two of them
+        final String coordIdsStr = coordIds.get(0) + "," + coordIds.get(1);
+
+        runTest("/v1/jobs", V1JobsServlet.class, false, new Callable<Void>() {
+            public Void call() throws Exception {
+                // giving range as 2 of the total 3 coordinators
+                String bulkRequest = "bundle=" + bundleId + ";coordinators=" + coordIdsStr + ";actionstatus=KILLED";
+                JSONArray array = _requestToServer(bulkRequest);
+
+                assertEquals(2, array.size());
+                JSONObject jbundle = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_BUNDLE);
+                JSONObject jaction1 = (JSONObject) ((JSONObject) array.get(0)).get(JsonTags.BULK_RESPONSE_ACTION);
+                JSONObject jaction2 = (JSONObject) ((JSONObject) array.get(1)).get(JsonTags.BULK_RESPONSE_ACTION);
+
+                assertEquals(jaction1.get(JsonTags.COORDINATOR_ACTION_ID), "Coord1@2");
+                assertEquals(jaction2.get(JsonTags.COORDINATOR_ACTION_ID), "Coord2@1");
 
                 return null;
             }

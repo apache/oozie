@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1704 Add ability to use Bulk API with bundle ID (mona)
 OOZIE-1718 Coord Job Query UPDATE_COORD_JOB_CHANGE does not update last modified time (mona)
 OOZIE-1693 UI timeout while loading job table (puru via rohini)
 OOZIE-1698 Action sharelib configuration document lacks the "oozie." prefix (qwertymaniac via rohini)
