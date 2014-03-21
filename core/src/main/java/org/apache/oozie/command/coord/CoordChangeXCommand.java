@@ -316,19 +316,25 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
         try {
             if (newEndTime != null) {
-                coordJob.setEndTime(newEndTime);
-                if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED){
-                    coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                boolean dontChange = coordJob.getEndTime().before(newEndTime)
+                        && coordJob.getNextMaterializedTime() != null
+                        && coordJob.getNextMaterializedTime().after(newEndTime);
+                if (!dontChange) {
+                    coordJob.setEndTime(newEndTime);
+                    if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
+                        coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                    }
+                    if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
+                            || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+                        // Check for backward compatibility for Oozie versions (3.2 and before)
+                        // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
+                        // PAUSEDWITHERROR is not supported
+                        coordJob.setStatus(StatusUtils
+                                .getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+                    }
+                    coordJob.setPending();
+                    coordJob.resetDoneMaterialization();
                 }
-                if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                        || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-                    // Check for backward compatibility for Oozie versions (3.2 and before)
-                    // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
-                    // PAUSEDWITHERROR is not supported
-                    coordJob.setStatus(StatusUtils.getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
-                }
-                coordJob.setPending();
-                coordJob.resetDoneMaterialization();
             }
 
             if (newConcurrency != null) {
@@ -367,6 +373,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 coordJob.setDoneMaterialization();
             }
 
+            coordJob.setLastModifiedTime(new Date());
             updateList.add(coordJob);
             jpaService.execute(new BulkUpdateDeleteJPAExecutor(updateList, deleteList, false));
 
