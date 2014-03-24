@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1751 Default authentication type using env variable for oozie CLI (puru via rohini)
 OOZIE-1753 Update create-release-artifact script for git (rkanter)
 OOZIE-1704 Add ability to use Bulk API with bundle ID (mona)
 OOZIE-1718 Coord Job Query UPDATE_COORD_JOB_CHANGE does not update last modified time (mona)

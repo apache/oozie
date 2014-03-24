@@ -80,6 +80,7 @@ public class OozieCLI {
     public static final String ENV_OOZIE_URL = "OOZIE_URL";
     public static final String ENV_OOZIE_DEBUG = "OOZIE_DEBUG";
     public static final String ENV_OOZIE_TIME_ZONE = "OOZIE_TIMEZONE";
+    public static final String ENV_OOZIE_AUTH = "OOZIE_AUTH";
     public static final String WS_HEADER_PREFIX = "header:";
 
     public static final String HELP_CMD = "help";
@@ -154,6 +155,7 @@ public class OozieCLI {
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
+            "the env variable '" + ENV_OOZIE_AUTH + "' is used as default value for the '-" + AUTH_OPTION + "' option",
             "custom headers for Oozie web services can be specified using '-D" + WS_HEADER_PREFIX + "NAME=VALUE'" };
 
     private static final String RULER;
@@ -741,6 +743,12 @@ public class OozieCLI {
      */
     protected String getAuthOption(CommandLine commandLine) {
         String authOpt = commandLine.getOptionValue(AUTH_OPTION);
+        if (authOpt == null) {
+            authOpt = System.getenv(ENV_OOZIE_AUTH);
+        }
+        if (commandLine.hasOption(DEBUG_OPTION)) {
+            System.out.println(" Auth type : " + authOpt);
+        }
         return authOpt;
     }
 

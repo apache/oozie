@@ -19,6 +19,7 @@ The =oozie= CLI interacts with Oozie via its WS API.
 usage:
       the env variable 'OOZIE_URL' is used as default value for the '-oozie' option
       the env variable 'OOZIE_TIMEZONE' is used as default value for the '-timezone' option
+      the env variable 'OOZIE_AUTH' is used as default value for the '-auth' option
       custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
 
       oozie help : display usage
