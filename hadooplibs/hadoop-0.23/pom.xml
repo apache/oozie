@@ -39,6 +39,11 @@
             <version>0.23.5</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+            <version>0.23.5</version>
+        </dependency>
     </dependencies>
 
     <build>
