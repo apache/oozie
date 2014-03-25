@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1713 Avoid creating dummy input file for each launcher job (puru via rohini)
 OOZIE-1701 TestXTestCase#testWaitFor and TestXTestCase#testBaseDir have the errors (omaliuvanchuk via rohini)
 OOZIE-1751 Default authentication type using env variable for oozie CLI (puru via rohini)
 OOZIE-1753 Update create-release-artifact script for git (rkanter)

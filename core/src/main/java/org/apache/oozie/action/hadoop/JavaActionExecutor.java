@@ -134,6 +134,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public static List<Class> getCommonLauncherClasses() {
         List<Class> classes = new ArrayList<Class>();
         classes.add(LauncherMapper.class);
+        classes.add(OozieLauncherInputFormat.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         return classes;
     }

@@ -155,14 +155,7 @@ public class LauncherMapperHelper {
         OutputStream os = fs.create(new Path(actionDir, LauncherMapper.ACTION_CONF_XML));
         actionConf.writeXml(os);
         os.close();
-
-        Path inputDir = new Path(actionDir, "input");
-        fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "dummy.txt")));
-        writer.write("dummy");
-        writer.close();
-
-        launcherConf.set("mapred.input.dir", inputDir.toString());
+        launcherConf.setInputFormat(OozieLauncherInputFormat.class);
         launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
     }
 
