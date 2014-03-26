@@ -1167,6 +1167,54 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+*Getting all the Workflows corresponding to a Coordinator Action:*
+
+A coordinator action kicks off different workflows for its original run and all subsequent reruns.
+Getting a list of those workflow ids is a useful tool to keep track of your actions' runs and
+to go debug the workflow job logs if required. Along with ids, it also lists their statuses,
+and start and end times for quick reference.
+
+Both v1 and v2 API are supported. v0 is not supported.
+
+<verbatim>
+GET /oozie/v2/job/0000001-111219170928042-oozie-joe-C@1?show=allruns
+</verbatim>
+
+*Response*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{"workflows":[
+    {
+        "startTime":"Mon, 24 Mar 2014 23:40:53 GMT",
+        "id":"0000001-140324163709596-oozie-chit-W",
+        "status":"SUCCEEDED",
+        "endTime":"Mon, 24 Mar 2014 23:40:54 GMT"
+    },
+    {
+        "startTime":"Mon, 24 Mar 2014 23:44:01 GMT",
+        "id":"0000000-140324164318985-oozie-chit-W",
+        "status":"SUCCEEDED",
+        "endTime":"Mon, 24 Mar 2014 23:44:01 GMT"
+    },
+    {
+        "startTime":"Mon, 24 Mar 2014 23:44:24 GMT",
+        "id":"0000001-140324164318985-oozie-chit-W",
+        "status":"SUCCEEDED",
+        "endTime":"Mon, 24 Mar 2014 23:44:24 GMT"
+    }
+]}
+</verbatim>
+
+An alternate API is also available for the same output. With this API, one can pass the coordinator *JOB* Id
+followed by query params - type=action and scope=<action-number>. One single action number can be passed at a time.
+
+<verbatim>
+GET /oozie/v2/job/0000001-111219170928042-oozie-joe-C?show=allruns&type=action&scope=1
+</verbatim>
+
 ---++++ Job Application Definition
 
 A HTTP GET request retrieves the workflow or a coordinator job definition file.

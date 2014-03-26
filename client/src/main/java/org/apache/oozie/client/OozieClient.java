@@ -741,7 +741,6 @@ public class OozieClient {
         }
     }
 
-
     private class JMSInfo extends ClientCallable<JMSConnectionInfo> {
 
         JMSInfo() {
@@ -1031,6 +1030,32 @@ public class OozieClient {
         }
     }
 
+    private class WfsForCoordAction extends ClientCallable<List<WorkflowJob>> {
+
+        WfsForCoordAction(String coordActionId) {
+            super("GET", RestConstants.JOB, notEmpty(coordActionId, "coordActionId"), prepareParams(
+                    RestConstants.JOB_SHOW_PARAM, RestConstants.ALL_WORKFLOWS_FOR_COORD_ACTION));
+        }
+
+        @Override
+        protected List<WorkflowJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray workflows = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
+                if (workflows == null) {
+                    workflows = new JSONArray();
+                }
+                return JsonToBean.createWorkflowJobList(workflows);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+
     private class BundleJobInfo extends ClientCallable<BundleJob> {
 
         BundleJobInfo(String jobId) {
@@ -1106,6 +1131,10 @@ public class OozieClient {
      */
     public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len) throws OozieClientException {
         return new CoordJobInfo(jobId, filter, start, len).call();
+    }
+
+    public List<WorkflowJob> getWfsForCoordAction(String coordActionId) throws OozieClientException {
+        return new WfsForCoordAction(coordActionId).call();
     }
 
     /**

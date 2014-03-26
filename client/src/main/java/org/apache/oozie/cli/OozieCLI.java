@@ -152,6 +152,8 @@ public class OozieCLI {
 
     public static final String AVAILABLE_SERVERS_OPTION = "servers";
 
+    public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
@@ -303,6 +305,8 @@ public class OozieCLI {
                 "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
+        Option getAllWorkflows = new Option(ALL_WORKFLOWS_FOR_COORD_ACTION, false,
+                "Get workflow jobs corresponding to a coordinator action including all the reruns");
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -339,6 +343,7 @@ public class OozieCLI {
         jobOptions.addOption(rerun_coord);
         jobOptions.addOption(rerun_refresh);
         jobOptions.addOption(rerun_nocleanup);
+        jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
         addAuthOptions(jobOptions);
         return jobOptions;
@@ -968,11 +973,16 @@ public class OozieCLI {
                             options.contains(VERBOSE_OPTION));
                 }
                 else if (optionValue.contains("-C@")) {
-                    String filter = commandLine.getOptionValue(FILTER_OPTION);
-                    if (filter != null) {
-                        throw new OozieCLIException("Filter option is not supported for a Coordinator action");
+                    if (options.contains(ALL_WORKFLOWS_FOR_COORD_ACTION)) {
+                        printWfsForCoordAction(wc.getWfsForCoordAction(optionValue), timeZoneId);
                     }
-                    printCoordAction(wc.getCoordActionInfo(optionValue), timeZoneId);
+                    else {
+                        String filter = commandLine.getOptionValue(FILTER_OPTION);
+                        if (filter != null) {
+                            throw new OozieCLIException("Filter option is not supported for a Coordinator action");
+                        }
+                        printCoordAction(wc.getCoordActionInfo(optionValue), timeZoneId);
+                    }
                 }
                 else if (optionValue.contains("-W@")) {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
@@ -1579,6 +1589,21 @@ public class OozieCLI {
         }
         else {
             System.out.println("No Jobs match your criteria!");
+        }
+    }
+
+    void printWfsForCoordAction(List<WorkflowJob> jobs, String timeZoneId) throws IOException {
+        if (jobs != null && jobs.size() > 0) {
+            System.out.println(String.format("%-41s%-10s%-24s%-24s", "Job ID", "Status", "Started", "Ended"));
+            System.out.println(RULER);
+
+            for (WorkflowJob job : jobs) {
+                System.out
+                        .println(String.format("%-41s%-10s%-24s%-24s", maskIfNull(job.getId()), job.getStatus(),
+                                maskDate(job.getStartTime(), timeZoneId, false),
+                                maskDate(job.getEndTime(), timeZoneId, false)));
+                System.out.println(RULER);
+            }
         }
     }
 

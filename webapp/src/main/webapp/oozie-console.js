@@ -1199,6 +1199,78 @@ function coordJobDetailsPopup(response, request) {
              */
         }
     }
+
+    var rerunActionText = new Ext.form.Label({
+        text : 'Enter Coordinator Action number : ',
+        ctCls: 'spaces'
+    });
+    var rerunActionTextBox = new Ext.form.TextField({
+        fieldLabel: 'RerunAction',
+        name: 'RerunAction',
+        width: 150,
+        value: ''
+    });
+    var store = new Ext.data.JsonStore({
+        baseParams: {
+            scope: 0,
+        },
+        root: 'workflows',
+        fields: ['id', 'status', 'startTime', 'endTime'],
+        proxy: new Ext.data.HttpProxy({
+            url: getOozieBase() + 'job/' + coordJobId + '?show=allruns&type=action',
+            timeout: 300000
+        })
+    });
+    store.proxy.conn.method = "GET";
+
+    var rerunsUnit = new Ext.grid.GridPanel({
+        autoScroll: true,
+        height: 200,
+        autoRender: true,
+        store: store,
+        columns: [new Ext.grid.RowNumberer(), {
+            header: 'Workflow Id',
+            dataIndex: 'id',
+            id: 'id',
+            width: 240
+        },{
+            header: 'Workflow Status',
+            dataIndex: 'status',
+            id: 'status',
+            width: 200
+        },{
+            header: 'Started',
+            dataIndex: 'startTime',
+            id: 'startTime',
+            width: 240
+        },{
+            header: 'Ended',
+            dataIndex: 'endTime',
+            id: 'endTime',
+            width: 240
+        }],
+        listeners: {
+            cellclick: function (rerunsUnit, rowIndex, colIndex) {
+                var obj = store.getAt(rowIndex);
+                jobDetailsGridWindow(obj.data.id);
+            },
+        },
+        frame: false
+    });
+    function populateReruns(coordActionId) {
+        var actionNum = rerunActionTextBox.getValue();
+        store.baseParams.scope = actionNum;
+        store.reload();
+    }
+    var getRerunsButton = new Ext.Button({
+        text: 'Get Workflows',
+        ctCls: 'x-btn-over',
+        ctCls: 'spaces',
+        handler: function() {
+            populateReruns(rerunsUnit);
+        }
+    });
+
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
@@ -1225,7 +1297,12 @@ function coordJobDetailsPopup(response, request) {
            items: jobLogArea,
            tbar: [
                    actionsText,actionsTextBox, getLogButton]
-	   }]
+       },{
+           title: 'Coord Action Reruns',
+           items: rerunsUnit,
+           tbar: [
+               rerunActionText, rerunActionTextBox, getRerunsButton]
+       }]
 });
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -1235,6 +1312,9 @@ function coordJobDetailsPopup(response, request) {
         }
         else if (selectedTab.title == 'Coord Job Definition') {
             fetchDefinition(coordJobId);
+        }
+        else if (selectedTab.title == 'Coord Action Reruns') {
+            rerunsUnit.setVisible(true);
         }
         coord_jobs_grid.setVisible(false);
     });

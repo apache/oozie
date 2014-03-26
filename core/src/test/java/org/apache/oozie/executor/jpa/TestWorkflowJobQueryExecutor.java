@@ -19,11 +19,17 @@ package org.apache.oozie.executor.jpa;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
@@ -309,6 +315,20 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
     }
 
     public void testGetList() throws Exception {
-        // TODO
+        // GET_WORKFLOWS_PARENT_COORD_RERUN
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, null, null, false,
+                false, 1);
+        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJob.getId() + "@2");
+        CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob.getId(), 2,
+                CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
+        // second wf after rerunning coord action, having same parent id
+        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJob.getId() + "@2");
+        final CoordinatorEngine ce = new CoordinatorEngine(getTestUser());
+        List<WorkflowJobBean> wfsForRerun = ce.getReruns(coordAction1.getId());
+        assertEquals(2, wfsForRerun.size());
+        assertEquals(wfJob1.getId(), wfsForRerun.get(0).getId());
+        assertEquals(wfJob2.getId(), wfsForRerun.get(1).getId());
     }
 }

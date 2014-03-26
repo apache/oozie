@@ -35,10 +35,11 @@ import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.GraphGenerator;
 import org.apache.oozie.util.XLog;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.xml.sax.SAXException;
 
 
 @SuppressWarnings("serial")
@@ -1029,6 +1030,46 @@ public class V1JobServlet extends BaseJobServlet {
     protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
+    @Override
+    protected JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        JSONObject json = new JSONObject();
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
+                .getCoordinatorEngine(getUser(request));
+        String coordActionId;
+        String type = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
+        String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
+        // for getting allruns for coordinator action - 2 alternate endpoints
+        if (type != null && type.equals(RestConstants.JOB_COORD_SCOPE_ACTION) && scope != null) {
+            // endpoint - oozie/v2/coord-job-id?type=action&scope=action-num&show=allruns
+            String jobId = getResourceName(request);
+            coordActionId = Services.get().get(UUIDService.class).generateChildId(jobId, scope);
+        }
+        else {
+            // endpoint - oozie/v2/coord-action-id?show=allruns
+            coordActionId = getResourceName(request);
+        }
+        try {
+            List<WorkflowJobBean> wfs = coordEngine.getReruns(coordActionId);
+            JSONArray array = new JSONArray();
+            if (wfs != null) {
+                for (WorkflowJobBean wf : wfs) {
+                    JSONObject json1 = new JSONObject();
+                    json1.put(JsonTags.WORKFLOW_ID, wf.getId());
+                    json1.put(JsonTags.WORKFLOW_STATUS, wf.getStatus().toString());
+                    json1.put(JsonTags.WORKFLOW_START_TIME, JsonUtils.formatDateRfc822(wf.getStartTime(), "GMT"));
+                    json1.put(JsonTags.WORKFLOW_ACTION_END_TIME, JsonUtils.formatDateRfc822(wf.getEndTime(), "GMT"));
+                    array.add(json1);
+                }
+            }
+            json.put(JsonTags.WORKFLOWS_JOBS, array);
+            return json;
+        }
+        catch (CoordinatorEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
     }
 
 }

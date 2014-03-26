@@ -28,6 +28,8 @@ usage:
 .
       oozie job <OPTIONS> : job operations
                 -action <arg>         coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids (requires -log)
+                -allruns              Get workflow jobs corresponding to a coordinator action
+                                      including all the reruns
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -change <arg>         change a coordinator/bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
@@ -413,7 +415,7 @@ The =rerun= option reruns coordinator actions belonging to specified coordinator
 After the command is executed the rerun coordiator action will be in =WAITING= status.
 
 
----+++ Checking the Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
+---+++ Checking the Information and Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
 
 Example:
 
@@ -481,6 +483,29 @@ External ChildIDs : null
 The two fields External Stats and External ChildIDs display the action statistics information (that includes counter information in case of MR action and PigStats information in case of a pig action) and child ids of the given job.
 
 Note that the user can turn on/off External Stats by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in workflow.xml. By default, it is set to false (not to collect External Stats). External ChildIDs will always be stored.
+
+---+++ Listing all the Workflows for a Coordinator Action
+
+A coordinator action kicks off different workflows for its original run and all subsequent reruns.
+Getting a list of those workflow ids is a useful tool to keep track of your actions' runs and
+to go debug the workflow job logs if required. Along with ids, it also lists their statuses,
+and start and end times for quick reference.
+
+This is achieved by using the Coordinator Action info command and specifying a flag *=allruns=*
+along with the =info= command.
+
+<verbatim>
+$ oozie job -info 0000001-111219170928042-oozie-joe-C@1 -allruns -oozie http://localhost:11000/oozie
+.
+Job ID                                   Status    Started                 Ended
+.----------------------------------------------------------------------------------------------------
+0000001-140324163709596-oozie-joe-W     SUCCEEDED 2014-03-24 23:40 GMT    2014-03-24 23:40 GMT
+.----------------------------------------------------------------------------------------------------
+0000000-140324164318985-oozie-joe-W     SUCCEEDED 2014-03-24 23:44 GMT    2014-03-24 23:44 GMT
+.----------------------------------------------------------------------------------------------------
+0000001-140324164318985-oozie-joe-W     SUCCEEDED 2014-03-24 23:44 GMT    2014-03-24 23:44 GMT
+.----------------------------------------------------------------------------------------------------
+</verbatim>
 
 ---+++ Checking the xml definition of a Workflow, Coordinator or Bundle Job
 

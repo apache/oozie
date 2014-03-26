@@ -168,4 +168,6 @@ public interface RestConstants {
 
     public static final String ALL_SERVER_REQUEST = "allservers";
 
+    public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+
 }

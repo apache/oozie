@@ -242,7 +242,12 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, job, timeZoneId);
         }
-
+        else if (show.equals(RestConstants.ALL_WORKFLOWS_FOR_COORD_ACTION)) {
+            stopCron();
+            JSONObject json = getJobsByParentId(request, response);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
         else if (show.equals(RestConstants.JOB_SHOW_JMS_TOPIC)) {
             stopCron();
             String jmsTopicName = getJMSTopicName(request, response);
@@ -398,5 +403,17 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      * @throws IOException
      */
     abstract String getJMSTopicName(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
+
+    /**
+     * abstract method to get workflow job ids from the parent id
+     * i.e. coordinator action
+     * @param request
+     * @param response
+     * @return comma-separated list of workflow job ids
+     * @throws XServletException
+     * @throws IOException
+     */
+    abstract JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 }

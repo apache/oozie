@@ -50,6 +50,9 @@ import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
@@ -681,5 +684,17 @@ public class CoordinatorEngine extends BaseEngine {
             }
         }
         return map;
+    }
+
+    public List<WorkflowJobBean> getReruns(String coordActionId) throws CoordinatorEngineException {
+        List<WorkflowJobBean> wfBeans;
+        try {
+            wfBeans = WorkflowJobQueryExecutor.getInstance().getList(WorkflowJobQuery.GET_WORKFLOWS_PARENT_COORD_RERUN,
+                    coordActionId);
+        }
+        catch (JPAExecutorException e) {
+            throw new CoordinatorEngineException(e);
+        }
+        return wfBeans;
     }
 }
