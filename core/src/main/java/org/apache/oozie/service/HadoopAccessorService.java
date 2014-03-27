@@ -346,7 +346,7 @@ public class HadoopAccessorService implements Service {
             }
         }
         //modify by kim for use the hfds fs
-        conf.set("fs.default.name", "hdfs://"+hostPort);
+   //     conf.set("fs.default.name", "hdfs://"+hostPort);
         return conf;
     }
 

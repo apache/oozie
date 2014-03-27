@@ -586,7 +586,8 @@ public class JavaActionExecutor extends ActionExecutor {
       try {
         List<Path> listOfPaths = shareLibService
             .getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
-        LOG.error("TEST listOfPaths:---------------"+listOfPaths.toString());
+        if(listOfPaths!=null)
+ //       LOG.error("TEST listOfPaths:---------------"+listOfPaths.toString());
         //modify by @mengsun for the empty list 
         if (listOfPaths != null && !listOfPaths.isEmpty()) {
           FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
@@ -595,7 +596,7 @@ public class JavaActionExecutor extends ActionExecutor {
             DistributedCache.createSymlink(conf);
           }
         }
-        
+  //      LOG.error("ZZZZZZZZZZZZZZZZZZZZZ"+getType());
         listOfPaths = shareLibService.getSystemLibJars(getType());
         if (listOfPaths != null && !listOfPaths.isEmpty()) {
           FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
@@ -604,7 +605,8 @@ public class JavaActionExecutor extends ActionExecutor {
             DistributedCache.createSymlink(conf);
           }
         }
-        LOG.error("ZUI ZHONG listOfPaths:**************"+listOfPaths.toString());
+    //    if(listOfPaths!=null)
+  //      LOG.error("ZUI ZHONG listOfPaths:**************"+listOfPaths.toString());
       } catch (IOException ex) {
         throw new ActionExecutorException(
             ActionExecutorException.ErrorType.FAILED, "It should never happen",
@@ -676,7 +678,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
       }
     }
-    
+ //   LOG.error("QQQQQQQQQQQQQQQQQQQQQQQQQQUYUYUYUYU");
     addAllShareLibs(appPath, conf, context, actionXml);
   }
   
@@ -704,11 +706,11 @@ public class JavaActionExecutor extends ActionExecutor {
     // libpath
     if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
       // add action specific sharelibs
-      LOG.error("addShareLib");
-      LOG.error("TEST appPath is ------------"+appPath.toString());
+//      LOG.error("addShareLib");
+ //     LOG.error("TEST appPath is ------------"+appPath.toString());
       addShareLib(appPath, conf, getShareLibNames(context, actionXml, conf));
     }else{
-      LOG.error("NOT   addShareLib");
+ //     LOG.error("NOT   addShareLib");
     }
   }
   
@@ -750,7 +752,7 @@ public class JavaActionExecutor extends ActionExecutor {
         launcherJobConf.set(ACTION_SHARELIB_FOR + getType(),
             actionShareLibProperty);
       }
-      setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
+     setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
       
       String jobName = launcherJobConf.get(HADOOP_JOB_NAME);
       if (jobName == null || jobName.isEmpty()) {
@@ -1432,24 +1434,24 @@ public class JavaActionExecutor extends ActionExecutor {
   protected String[] getShareLibNames(Context context, Element actionXml,
       Configuration conf) {
     String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
-    LOG.error("NNNNNNNNNNNNNNNNNNNN"+getType());
+//    LOG.error("NNNNNNNNNNNNNNNNNNNN"+getType());
     if (names == null || names.length == 0) {
       try {
         XConfiguration jobConf = new XConfiguration(new StringReader(context
             .getWorkflow().getConf()));
         names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
-        LOG.error("MMMMMMMMMMMMMMMMM"+new StringReader(context
-            .getWorkflow().getConf()));
+  //      LOG.error("MMMMMMMMMMMMMMMMM"+new StringReader(context
+  //          .getWorkflow().getConf()));
         if (names == null || names.length == 0) {
           names = Services.get().getConf()
               .getStrings(ACTION_SHARELIB_FOR + getType());
-          LOG.error("KKKKKKKKKK"+names);
+   //       LOG.error("KKKKKKKKKK"+names);
           if (names == null || names.length == 0) {
             String name = getDefaultShareLibName(actionXml);
-            LOG.error("UUUUUUUUUUUUUUU"+name);
+     //       LOG.error("UUUUUUUUUUUUUUU"+name);
             if (name != null) {
               names = new String[] {name};
-              LOG.error("FFFFFFFFFFFF"+names);
+       //       LOG.error("FFFFFFFFFFFF"+names);
             }
           }
         }
@@ -1457,10 +1459,10 @@ public class JavaActionExecutor extends ActionExecutor {
         throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
       }
     }
-    if(names!=null){
-        for(String name:names)
-        LOG.error("names:VVVVVVVVVVVVVVVV"+name.toString());
-    }
+  //  if(names!=null){
+  //      for(String name:names)
+  //      LOG.error("names:VVVVVVVVVVVVVVVV"+name.toString());
+  //  }
     return names;
   }
   

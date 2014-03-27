@@ -107,16 +107,16 @@ public class ShareLibService implements Service, Instrumentable {
             URI uri = launcherlibPath.toUri();
             if(uri!=null)
               LOG.error("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU"+uri);
-            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
-//            fs = launcherlibPath.getFileSystem(has.createJobConf(uri.getAuthority()));
+//            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+            fs = launcherlibPath.getFileSystem(has.createJobConf(uri.getAuthority()));
             if(fs!=null) LOG.error("FS YYYYYYYYYYYYYYYYYYYYYYYYYYY");
             updateLauncherLib();
             updateShareLib();
             //Only one server should purge sharelib
-    //        if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
+        //    if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
                 purgeLibs(fs, LAUNCHER_PREFIX);
                 purgeLibs(fs, SHARED_LIB_PREFIX);
-    //        }
+        //    }
         }
         catch (Exception e) {
             LOG.error("Not able to cache shareLib. Admin need to issue oozlie cli command to update sharelib.", e);
@@ -215,6 +215,8 @@ public class ShareLibService implements Service, Instrumentable {
      */
     private void copyJarContainingClasses(List<Class> classes, FileSystem fs, Path executorDir, String type)
             throws IOException {
+ //     if(executorDir!=null)
+ //       LOG.error("IIIIIIIII"+executorDir);
         fs.mkdirs(executorDir);
         Set<String> localJarSet = new HashSet<String>();
         for (Class c : classes) {
@@ -230,10 +232,14 @@ public class ShareLibService implements Service, Instrumentable {
         for (String localJarStr : localJarSet) {
             File localJar = new File(localJarStr);
             fs.copyFromLocalFile(new Path(localJar.getPath()), executorDir);
+     //       if(localJar!=null)
+    //          LOG.error("LLLLLLLLLLLL"+localJar.getName());
             Path path = new Path(executorDir, localJar.getName());
             listOfPaths.add(path);
             LOG.info(localJar.getName() + " uploaded to " + executorDir.toString());
         }
+  //      if(listOfPaths!=null)
+  //      LOG.error("QQQQQQ"+type+"wwwwwwwww"+listOfPaths.toString());
         launcherLibMap.put(type, listOfPaths);
 
     }
@@ -311,26 +317,34 @@ public class ShareLibService implements Service, Instrumentable {
         List<Path> returnList = new ArrayList<Path>();
         // Sharelib map is empty means that on previous or startup attempt of
         // caching launcher jars has failed.Trying to reload
-        LOG.error("getSystemLibJars lalalalallalalallala");
+  //      LOG.error("getSystemLibJars lalalalallalalallala");
         if (isShipLauncherEnabled) {
             if (launcherLibMap.isEmpty()) {
                 synchronized (ShareLibService.class) {
                     if (launcherLibMap.isEmpty()) {
-                        LOG.error("kai shi updateLauncherLib");
+    //                    LOG.error("kai shi updateLauncherLib");
                         updateLauncherLib();
                     }
                 }
             }
-            returnList = launcherLibMap.get(actionKey);
+ //           if(returnList!=null)
+//            LOG.error("CCCCCCCCCCCC"+returnList.toString());
+  //          LOG.error("OOOOOOOOOOOOO"+launcherLibMap);
+            if(launcherLibMap.get(actionKey)!=null)
+                returnList.addAll(launcherLibMap.get(actionKey));
+   //         if(returnList!=null)
+   //           LOG.error("DDDDDDDDDD"+returnList.toString());
         }
-        LOG.error("MEI YOU updateLauncherLib");
+ //       LOG.error("MEI YOU updateLauncherLib"+actionKey);
         if (actionKey.equals(JavaActionExecutor.OOZIE_COMMON_LIBDIR)) {
-          LOG.error("JIN RU");
+   //       LOG.error("JIN RU");
             List<Path> sharelibList = getShareLibJars(actionKey);
-            LOG.error("***&&&&&"+sharelibList);
+     //       LOG.error("***&&&&&"+sharelibList);
             if (sharelibList != null) {
-              LOG.error("sharelibList != null");
+         //     LOG.error("sharelibList != null");
                 returnList.addAll(sharelibList);
+  //              if(returnList!=null)
+   //               LOG.error("EEEEEEEEEEEE"+returnList.toString());
             }
         }
         return returnList;
