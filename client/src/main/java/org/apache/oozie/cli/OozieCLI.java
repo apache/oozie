@@ -720,7 +720,7 @@ public class OozieCLI {
      * @return change value specified by -value.
      * @throws OozieCLIException
      */
-    private String getChangeValue(CommandLine commandLine) throws OozieCLIException {
+	private String getChangeValue(CommandLine commandLine) throws OozieCLIException {
         String changeValue = commandLine.getOptionValue(CHANGE_VALUE_OPTION);
 
         if (changeValue == null) {

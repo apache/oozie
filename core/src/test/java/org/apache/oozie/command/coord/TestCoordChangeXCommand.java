@@ -542,6 +542,105 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
     }
 
+    // Status change from failed- successful
+    public void testCoordStatus_Failed() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        String status = "status=RUNNING";
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.FAILED, start,
+                end, end, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+
+        try {
+            new CoordChangeXCommand(job.getId(), status).call();
+            JPAService jpaService = Services.get().get(JPAService.class);
+
+            CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+            CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+
+            assertEquals(coordJob.getStatusStr(), "RUNNING");
+        }
+        catch (CommandException e) {
+            e.printStackTrace();
+            if (e.getErrorCode() != ErrorCode.E1022) {
+                fail("Error code should be E1022");
+            }
+        }
+    }
+
+    //  Status change from Killed- successful
+    public void testCoordStatus_Killed() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        String status = "status=RUNNING";
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start,
+                end, end, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+
+        try {
+            new CoordChangeXCommand(job.getId(), status).call();
+            JPAService jpaService = Services.get().get(JPAService.class);
+
+            CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+            CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+
+            assertEquals(coordJob.getStatusStr(), "RUNNING");
+        }
+        catch (CommandException e) {
+            e.printStackTrace();
+            if (e.getErrorCode() != ErrorCode.E1022) {
+                fail("Error code should be E1022");
+            }
+        }
+    }
+
+    // Check status change from Succeeded-  exception
+    public void testCoordStatus_Changefailed() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 5 hrs
+        String status = "status=RUNNING";
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.SUCCEEDED, start,
+                end, end, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+
+        try {
+            new CoordChangeXCommand(job.getId(), status).call();
+        }
+        catch (CommandException e) {
+            assertTrue(e.getMessage().contains("Invalid coordinator job change value RUNNING"));
+        }
+    }
+
+    // Check status change - with multiple option. Pause can't be applied to killed job, old behavior.
+    public void testCoord_throwException() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 4 hrs
+        String status = "status=RUNNING;pausetime=" + DateUtils.formatDateOozieTZ(end);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start,
+                end, end, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
+
+        try {
+            new CoordChangeXCommand(job.getId(), status).call();
+            fail("should throw Exception");
+        }
+        catch (CommandException e) {
+            assertTrue(e.getMessage().contains("Cannot change a killed coordinator job"));
+        }
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
             Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);

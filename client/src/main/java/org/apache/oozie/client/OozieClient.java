@@ -148,6 +148,8 @@ public class OozieClient {
 
     public static final String CHANGE_VALUE_CONCURRENCY = "concurrency";
 
+    public static final String CHANGE_VALUE_STATUS = "status";
+
     public static final String LIBPATH = "oozie.libpath";
 
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";

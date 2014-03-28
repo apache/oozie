@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -33,6 +34,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
@@ -66,6 +68,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private Date newPauseTime = null;
     private Date oldPauseTime = null;
     private boolean resetPauseTime = false;
+    private CoordinatorJob.Status jobStatus = null;
     private CoordinatorJobBean coordJob;
     private JPAService jpaService = null;
     private Job.Status prevStatus;
@@ -77,6 +80,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         ALLOWED_CHANGE_OPTIONS.add("endtime");
         ALLOWED_CHANGE_OPTIONS.add("concurrency");
         ALLOWED_CHANGE_OPTIONS.add("pausetime");
+        ALLOWED_CHANGE_OPTIONS.add(OozieClient.CHANGE_VALUE_STATUS);
+
     }
 
     /**
@@ -103,7 +108,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         Map<String, String> map = JobUtils.parseChangeValue(changeValue);
 
         if (map.size() > ALLOWED_CHANGE_OPTIONS.size()) {
-            throw new CommandException(ErrorCode.E1015, changeValue, "must change endtime|concurrency|pausetime");
+            throw new CommandException(ErrorCode.E1015, changeValue, "must change endtime|concurrency|pausetime|status");
         }
 
         java.util.Iterator<Entry<String, String>> iter = map.entrySet().iterator();
@@ -113,7 +118,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             String value = entry.getValue();
 
             if (!ALLOWED_CHANGE_OPTIONS.contains(key)) {
-                throw new CommandException(ErrorCode.E1015, changeValue, "must change endtime|concurrency|pausetime");
+                throw new CommandException(ErrorCode.E1015, changeValue, "must change endtime|concurrency|pausetime|status");
             }
 
             if (!key.equals(OozieClient.CHANGE_VALUE_PAUSETIME) && value.equalsIgnoreCase("")) {
@@ -153,6 +158,13 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 catch (Exception ex) {
                     throw new CommandException(ErrorCode.E1015, value, "must be a valid date");
                 }
+            }
+        }
+
+        if (map.containsKey(OozieClient.CHANGE_VALUE_STATUS)) {
+            String value = map.get(OozieClient.CHANGE_VALUE_STATUS);
+            if (!StringUtils.isEmpty(value)) {
+                jobStatus = CoordinatorJob.Status.valueOf(value);
             }
         }
     }
@@ -211,6 +223,27 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         Date d = new Date();
         if (newPauseTime.before(d)) {
             throw new CommandException(ErrorCode.E1015, newPauseTime, "must be a non-past time");
+        }
+    }
+
+    /**
+     * Check if status change is valid.
+     *
+     * @param coordJob the coord job
+     * @param jobStatus the job status
+     * @throws CommandException the command exception
+     */
+    private void checkStatusChange(CoordinatorJobBean coordJob, CoordinatorJob.Status jobStatus)
+            throws CommandException {
+        if (!jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+            throw new CommandException(ErrorCode.E1015, jobStatus, " must be RUNNING");
+        }
+
+        if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
+                CoordinatorJob.Status.KILLED))) {
+            throw new CommandException(ErrorCode.E1015, jobStatus,
+                    " Only FAILED or KILLED job can be changed to RUNNING. Current job status is "
+                            + coordJob.getStatus());
         }
     }
 
@@ -301,10 +334,13 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      * @param newPauseTime new pause time.
      * @throws CommandException thrown if new values are not valid.
      */
-    private void check(CoordinatorJobBean coordJob, Date newEndTime, Integer newConcurrency, Date newPauseTime)
-            throws CommandException {
+    private void check(CoordinatorJobBean coordJob, Date newEndTime, Integer newConcurrency, Date newPauseTime,
+            CoordinatorJob.Status jobStatus) throws CommandException {
+
         if (coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
-            throw new CommandException(ErrorCode.E1016);
+            if (jobStatus == null || (newEndTime != null || newConcurrency != null || newPauseTime != null)) {
+                throw new CommandException(ErrorCode.E1016);
+            }
         }
 
         if (newEndTime != null) {
@@ -313,6 +349,9 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
 
         if (newPauseTime != null) {
             checkPauseTime(coordJob, newPauseTime);
+        }
+        if (jobStatus != null) {
+            checkStatusChange(coordJob, jobStatus);
         }
     }
 
@@ -379,6 +418,17 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                     processLookaheadActions(coordJob, newPauseTime);
                 }
             }
+            if (jobStatus != null) {
+                coordJob.setStatus(jobStatus);
+                LOG.info("Coord status is changed to RUNNING from " + prevStatus);
+                coordJob.setPending();
+                if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+                    if (coordJob.getNextMaterializedTime() != null
+                            && coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
+                        coordJob.resetDoneMaterialization();
+                    }
+                }
+            }
 
             if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime().compareTo(coordJob.getNextMaterializedTime()) <= 0) {
                 LOG.info("[" + coordJob.getId() + "]: all actions have been materialized, job status = " + coordJob.getStatus()
@@ -442,7 +492,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void verifyPrecondition() throws CommandException,PreconditionException {
-        check(this.coordJob, newEndTime, newConcurrency, newPauseTime);
+        check(this.coordJob, newEndTime, newConcurrency, newPauseTime, jobStatus);
     }
 
     /* (non-Javadoc)

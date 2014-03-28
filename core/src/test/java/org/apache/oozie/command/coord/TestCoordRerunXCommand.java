@@ -821,6 +821,43 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         store2.closeTrx();
     }
 
+    /*
+     * Test rerun of failed action
+     */
+    public void testCoordRerunFailedCoordAction() throws Exception {
+        final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
+        final int actionNum = 1;
+        final String actionId = jobId + "@" + actionNum;
+        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store.beginTrx();
+        try {
+            addRecordToJobTable(jobId, store, CoordinatorJob.Status.RUNNING);
+            addRecordToActionTable(jobId, actionNum, actionId, store, CoordinatorAction.Status.FAILED,
+                    "coord-rerun-action1.xml");
+            store.commitTrx();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not update db.");
+        }
+        finally {
+            store.closeTrx();
+        }
+
+        try {
+            final OozieClient coordClient = LocalOozie.getCoordClient();
+            coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), false,
+                    true);
+        }
+        catch (OozieClientException ex) {
+            ex.printStackTrace();
+            fail("Coord rerun failed");
+        }
+        CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
+        assertEquals(action2.getStatus(), CoordinatorAction.Status.WAITING);
+    }
+
     /**
      * Tests functionality of the coord rerun for backward support is true. </p> Insert a coordinator job with SUCCEEDED
      * and coordinator actions with pending false, but one of action is FAILED.

@@ -321,23 +321,29 @@ $oozie job -kill <coord_Job_id> [-action 1, 3-4, 7-40] [-date 2009-01-01T01:00Z:
    * Single date specified in -date must be able to find an action with matched nominal time to be effective.
    * After the command is executed the killed coordiator action will have =KILLED= status.
 
----+++ Changing endtime/concurrency/pausetime of a Coordinator Job
+---+++ Changing endtime/concurrency/pausetime/status of a Coordinator Job
 
 Example:
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
+$ oozie job -oozie http://localhost:11000/oozie -change 0000001-140321155112907-oozie-puru-C  -value status=RUNNING
 </verbatim>
 
-The =change= option changes a coordinator job that is not in =KILLED= status.
+The =endtime/concurrency/pausetime= option changes a coordinator job that is not in =KILLED= status.
 
 Valid value names are:
 
    * endtime: the end time of the coordinator job.
    * concurrency: the concurrency of the coordinator job.
    * pausetime: the pause time of the coordinator job.
+   * status: new status for coordinator job.
 
-Repeated value names are not allowed. New end time must not be before job's start time and last action time.
+Repeated value names are not allowed. New end time must not be before job's start time and last action time. Currently status only
+takes RUNNING and can be used to change the status of FAILED or KILLED coordinator job to RUNNING and resuming materialization.
+This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED or
+KILLED coordinator actions they have to be rerun separately.
+
 New concurrency value has to be a valid integer. All lookahead actions will be revoked according to the new pause time. Also empty string "" can be used to reset pause time to none.
 
 After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.

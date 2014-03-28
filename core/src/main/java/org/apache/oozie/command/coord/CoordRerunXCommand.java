@@ -262,16 +262,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
-        if (coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-            LOG.info("CoordRerunXCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid=" + jobId);
-            // Call the parent so the pending flag is reset and state transition
-            // of bundle can happen
-            if (coordJob.getBundleId() != null) {
-                bundleStatusUpdate.call();
-            }
-            throw new CommandException(ErrorCode.E1018,
-                    "coordinator job is failed. So all actions are not eligible to rerun!");
-        }
 
         // no actioins have been created for PREP job
         if (coordJob.getStatus() == CoordinatorJob.Status.PREP) {
