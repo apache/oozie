@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1593 Oozie HCatCredential provider needs to include hadoop rpc protection to work with encrypted secure clusters (bzhang)
 OOZIE-1735 Support resuming of failed coordinator job and rerun of a failed coordinator action (puru via rohini)
 OOZIE-1746 New API to fetch workflows corresponding to coordinator action reruns (mona)
 OOZIE-1713 Avoid creating dummy input file for each launcher job (puru via rohini)
