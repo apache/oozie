@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.servlet;
 
+import org.apache.oozie.client.rest.RestConstants;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 
@@ -52,7 +53,8 @@ public class MyJsonRestServlet extends JsonRestServlet {
             new ResourceInfo("resource", Arrays.asList("GET"), Collections.EMPTY_LIST)};
 
     static ResourceInfo[] WILDCARD_RESOURCE = {
-            new ResourceInfo("*", Arrays.asList("GET"), Collections.EMPTY_LIST)};
+            new ResourceInfo("*", Arrays.asList("GET", "PUT"),
+            Arrays.asList(new ParameterInfo("action", String.class, false, Arrays.asList("PUT"))))};
 
     static ResourceInfo[] MULTIPLE_RESOURCES = {
             new ResourceInfo("resource1", Arrays.asList("GET"), Collections.EMPTY_LIST),
@@ -113,4 +115,19 @@ public class MyJsonRestServlet extends JsonRestServlet {
         response.setStatus(HttpServletResponse.SC_OK);
     }
 
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+
+      String jobId = getResourceName(request);
+      String action = request.getParameter(RestConstants.ACTION_PARAM);
+
+      if (action == null || action.isEmpty()) {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      if (jobId.isEmpty()) {
+        throw new IllegalArgumentException("Job Id cannot be empty " + jobId);
+      }
+    }
 }

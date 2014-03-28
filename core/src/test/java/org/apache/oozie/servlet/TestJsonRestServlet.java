@@ -185,6 +185,14 @@ public class TestJsonRestServlet extends XTestCase {
         });
     }
 
+    public void testNoResourceWithParam() throws Exception {
+        runTest(MyJsonRestServlet.WILDCARD_RESOURCE, new Callable<Void>() {
+            public Void call() throws Exception {
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("PUT", "/", "action=kill"));
+                return null;
+            }
+        });
+    }
 
     public void testMultipleResources() throws Exception {
         runTest(MyJsonRestServlet.MULTIPLE_RESOURCES, new Callable<Void>() {
