@@ -603,8 +603,11 @@ public class ShareLibService implements Service, Instrumentable {
             public String getValue() {
                 String sharelibPath = "(unavailable)";
                 try {
-                    sharelibPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(), SHARED_LIB_PREFIX)
-                        .toUri().toString();
+                    Path libPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
+                            SHARED_LIB_PREFIX);
+                    if (libPath != null) {
+                        sharelibPath = libPath.toUri().toString();
+                    }
                 }
                 catch (IOException ioe) {
                     // ignore exception because we're just doing instrumentation
