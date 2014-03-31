@@ -193,7 +193,16 @@ public class JMSTopicService implements Service {
             }
         }
         else if (appType == AppType.WORKFLOW_JOB || appType == AppType.WORKFLOW_ACTION) {
-            topicName = topicMap.get(JobType.WORKFLOW);
+            topicName = topicMap.get(JobType.WORKFLOW.value);
+            if (appType == AppType.WORKFLOW_ACTION) {
+                id = parentJobId;
+            }
+        }
+        else if (appType == AppType.BUNDLE_JOB || appType == AppType.BUNDLE_ACTION) {
+            topicName = topicMap.get(JobType.BUNDLE.value);
+            if (appType == AppType.BUNDLE_ACTION) {
+                id = parentJobId;
+            }
         }
 
         if (topicName == null) {

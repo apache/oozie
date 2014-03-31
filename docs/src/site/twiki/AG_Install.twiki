@@ -570,7 +570,7 @@ identifier (e.g. default) assigned to a semi-colon separated key#value list of p
      <property>
         <name>oozie.jms.producer.connection.properties</name>
         <value>
-            default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616
+            java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;java.naming.provider.url#tcp://localhost:61616;connectionFactoryNames#ConnectionFactory
         </value>
      </property>
      </verbatim>
@@ -584,7 +584,7 @@ about the various jobs.
             default=${username}
         </value>
         <description>
-            Topic options are ${username} or a fixed string which can be specified as default or for a
+            Topic options are ${username}, ${jobId}, or a fixed string which can be specified as default or for a
             particular job type.
             For e.g To have a fixed string topic for workflows, coordinators and bundles,
             specify in the following comma-separated format: {jobtype1}={some_string1}, {jobtype2}={some_string2}
