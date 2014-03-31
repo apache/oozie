@@ -110,7 +110,6 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String KILLED = "KILLED";
     private static final String FAILED = "FAILED";
     private static final String FAILED_KILLED = "FAILED/KILLED";
-    private static final String RUNNING = "RUNNING";
     protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
 
@@ -1228,15 +1227,15 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                 }
                 else {
-                    context.setExternalStatus(RUNNING);
-                    LOG.info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                            action.getExternalId(), action.getExternalStatus());
+                    context.setExternalStatus("RUNNING");
+                    LOG.info(XLog.STD, "checking action, hadoop job ID [{0}] status [RUNNING]",
+                            runningJob.getID());
                 }
             }
             else {
-                context.setExternalStatus(RUNNING);
-                LOG.info(XLog.STD, "checking action, external ID [{0}] status [{1}]",
-                        action.getExternalId(), action.getExternalStatus());
+                context.setExternalStatus("RUNNING");
+                LOG.info(XLog.STD, "checking action, hadoop job ID [{0}] status [RUNNING]",
+                        runningJob.getID());
             }
         }
         catch (Exception ex) {
