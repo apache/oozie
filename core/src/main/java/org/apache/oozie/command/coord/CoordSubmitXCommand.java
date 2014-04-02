@@ -635,7 +635,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalFreq = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-freq");
         evalNofuncs = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-nofuncs");
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
-        evalSla = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-sla-submit");
         evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
         evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
     }
@@ -782,6 +781,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 resolveTagContents("value", tmpProp, evalData);
             }
         }
+        evalSla = CoordELEvaluator.createELEvaluatorForDataAndConf(conf, "coord-sla-submit", dataNameList);
         resolveSLA(eAppXml, coordJob);
         return eAppXml;
     }

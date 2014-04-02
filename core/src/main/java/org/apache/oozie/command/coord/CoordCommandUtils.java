@@ -413,20 +413,21 @@ public class CoordCommandUtils {
     }
 
     /**
-     * @param eSla
-     * @param nominalTime
+     * @param eAction
+     * @param coordAction
      * @param conf
      * @return boolean to determine whether the SLA element is present or not
      * @throws CoordinatorJobException
      */
-    public static boolean materializeSLA(Element eSla, Date nominalTime, Configuration conf)
+    public static boolean materializeSLA(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
             throws CoordinatorJobException {
+        Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
         if (eSla == null) {
             // eAppXml.getNamespace("sla"));
             return false;
         }
         try {
-            ELEvaluator evalSla = CoordELEvaluator.createSLAEvaluator(nominalTime, conf);
+            ELEvaluator evalSla = CoordELEvaluator.createSLAEvaluator(eAction, coordAction, conf);
             List<Element> elemList = eSla.getChildren();
             for (Element elem : elemList) {
                 String updated;
@@ -500,10 +501,6 @@ public class CoordCommandUtils {
         eAction.setAttribute("action-nominal-time", DateUtils.formatDateOozieTZ(nominalTime));
         eAction.setAttribute("action-actual-time", DateUtils.formatDateOozieTZ(actualTime));
 
-        boolean isSla = CoordCommandUtils.materializeSLA(
-                eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla")),
-                nominalTime, conf);
-
         // Setting up action bean
         actionBean.setCreatedConf(XmlUtils.prettyPrint(conf).toString());
         actionBean.setRunConf(XmlUtils.prettyPrint(conf).toString());
@@ -524,6 +521,7 @@ public class CoordCommandUtils {
             }
         }
         actionBean.setNominalTime(nominalTime);
+        boolean isSla = CoordCommandUtils.materializeSLA(eAction, actionBean, conf);
         if (isSla == true) {
             actionBean.setSlaXml(XmlUtils.prettyPrint(
                     eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla")))

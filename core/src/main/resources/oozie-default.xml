@@ -915,9 +915,19 @@
     <property>
         <name>oozie.service.ELService.functions.coord-sla-submit</name>
         <value>
+            coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dataOut_echo,
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_nominalTime_echo_fixed,
+            coord:actualTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actualTime_echo_wrap,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateOffset_echo,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_formatTime_echo,
+            coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph1_coord_actionId_echo,
+            coord:name=org.apache.oozie.coord.CoordELFunctions#ph1_coord_name_echo,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_databaseOut_echo,
+            coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_tableOut_echo,
+            coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1072,9 +1082,19 @@
     <property>
         <name>oozie.service.ELService.functions.coord-sla-create</name>
         <value>
+            coord:dataOut=org.apache.oozie.coord.CoordELFunctions#ph3_coord_dataOut,
             coord:nominalTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_nominalTime,
+            coord:actualTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_actualTime,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateOffset,
+            coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph2_coord_formatTime,
+            coord:actionId=org.apache.oozie.coord.CoordELFunctions#ph2_coord_actionId,
+            coord:name=org.apache.oozie.coord.CoordELFunctions#ph2_coord_name,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_databaseOut,
+            coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_tableOut,
+            coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

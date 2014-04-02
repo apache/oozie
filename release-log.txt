@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1725 add coord EL functions to be used in SLA tag (ryota)
 OOZIE-1765 JMS Notifications for Workflows not always on the correct topic (rkanter)
 OOZIE-1732 Sharelib instrumentation fails if sharelib.system.libpath is not created (ryota)
 OOZIE-1692 modify log message when checking completion of child job in Map-Reduce action (ryota)

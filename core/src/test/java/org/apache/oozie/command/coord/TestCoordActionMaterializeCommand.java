@@ -51,12 +51,23 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
 
     public void testActionMater() throws Exception {
         String jobId = "0000000-" + new Date().getTime() + "-testActionMater-C";
-
-        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
+        String startTimeStr = "2009-03-06T10:00Z";
+        Date startTime = DateUtils.parseDateOozieTZ(startTimeStr);
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         addRecordToJobTable(jobId, startTime, endTime);
         new CoordActionMaterializeCommand(jobId, startTime, endTime).call();
         CoordinatorActionBean action = checkCoordAction(jobId + "@1");
+        assertEquals(action.getActionNumber(), 1);
+        assertEquals(action.getNominalTime(), startTime);
+        assertTrue(action.getMissingDependencies().indexOf("file:///tmp/coord/workflows/2009/03/01") > -1);
+        String actionXml = action.getActionXml();
+        String slaNotifMsg = actionXml.substring(actionXml.indexOf("<sla:notification-msg>") + 22,
+                actionXml.indexOf("</sla:notification-msg>"));
+        String expectedSlaMsg = "Notifying User for 2009-03-06T10:00Z,"
+                + DateUtils.formatDateOozieTZ(action.getCreatedTime()) + ",2009-03-06,2009-03-07T10:00Z,"
+                + action.getId() + ",NAME,testValue,testUser,"
+                + "file:///tmp/coord/workflows/2009/22myOutputDatabase,myOutputTable,'datestamp=20090306'";
+        assertEquals(expectedSlaMsg, slaNotifMsg);
     }
 
     public void testActionMaterWithPauseTime1() throws Exception {
@@ -107,7 +118,8 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         coordJob.setUser("testUser");
         coordJob.setGroup("testGroup");
         coordJob.setTimeZone("America/Los_Angeles");
-        String confStr = "<configuration></configuration>";
+        String confStr = "<configuration><property><name>testProperty</name><value>testValue</value></property>"
+                + "<property><name>user.name</name><value>testUser</value></property></configuration>";
         coordJob.setConf(confStr);
         String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-03-06T010:00Z' end='2009-03-11T10:00Z' timezone='America/Los_Angeles' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
@@ -122,8 +134,6 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(0)}</instance>";
         appXml += "<instance>${coord:latest(-1)}</instance>";
-        //appXml += "<start-instance>${coord:current(-2)}</start-instance>";
-        //appXml += "<end-instance>${coord:current(0)}</end-instance>";
         appXml += "</data-in>";
         appXml += "</input-events>";
         appXml += "<output-events>";
@@ -132,6 +142,13 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(-1)}</instance>";
+        appXml += "</data-out>";
+        appXml += "<data-out name='aggregated-logs' dataset='Stats'>";
+        appXml += "<dataset name='Stats' frequency='1' initial-instance='2009-01-01T01:00Z' ";
+        appXml += "timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<uri-template>hcat://foo:11002/myOutputDatabase/myOutputTable/datestamp=${YEAR}${MONTH}${DAY}";
+        appXml += "</uri-template></dataset>";
+        appXml += "<instance>${coord:current(0)}</instance>";
         appXml += "</data-out>";
         appXml += "</output-events>";
         appXml += "<action>";
@@ -149,16 +166,19 @@ public class TestCoordActionMaterializeCommand extends XTestCase {
         appXml += "</configuration>";
         appXml += "</workflow>";
         appXml += " <sla:info>"
-                // + " <sla:client-id>axonite-blue</sla:client-id>"
                 + " <sla:app-name>test-app</sla:app-name>"
                 + " <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>"
                 + " <sla:should-start>5</sla:should-start>"
                 + " <sla:should-end>120</sla:should-end>"
-                + " <sla:notification-msg>Notifying User for ${coord:nominalTime()} nominal time </sla:notification-msg>"
-                + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
+                + " <sla:notification-msg>Notifying User for ${coord:nominalTime()},${coord:actualTime()},"
+                + "${coord:formatTime(coord:nominalTime(),'yyyy-MM-dd')},${coord:dateOffset(coord:nominalTime(), 1, 'DAY')},"
+                + "${coord:actionId()},${coord:name()},${coord:conf('testProperty')},${coord:user()},${coord:dataOut('LOCAL_A')}"
+                + "${coord:databaseOut('aggregated-logs')},${coord:tableOut('aggregated-logs')},"
+                + "${coord:dataOutPartitions('aggregated-logs')}"
+                + "</sla:notification-msg>" + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
                 + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
-                + " <sla:qa-contact>abc@example.com</sla:qa-contact>" + " <sla:se-contact>abc@example.com</sla:se-contact>"
-                + "</sla:info>";
+                + " <sla:qa-contact>abc@example.com</sla:qa-contact>"
+                + " <sla:se-contact>abc@example.com</sla:se-contact>" + "</sla:info>";
         appXml += "</action>";
         appXml += "</coordinator-app>";
         /*try {
