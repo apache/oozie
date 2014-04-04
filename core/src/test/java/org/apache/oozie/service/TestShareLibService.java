@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -50,6 +51,7 @@ public class TestShareLibService extends XFsTestCase {
     Services services;
     private static String testCaseDirPath;
     String shareLibPath = "shareLibPath";
+    SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 
     @Override
     protected void setUp() throws Exception {
@@ -253,32 +255,29 @@ public class TestShareLibService extends XFsTestCase {
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
         FileSystem fs = getFileSystem();
-        // for directory created 8 days back to be deleted
-        int expire1 = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) + 1;
-        // for directory created 6 days back NOT to be deleted
-        int noexpire = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) - 1;
-        // for directory created 5 days back NOT to be deleted
-        int noexpire1 = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) - 2;
+        long expiryTime = System.currentTimeMillis()
+                - TimeUnit.MILLISECONDS.convert(
+                        services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7), TimeUnit.DAYS);
 
-        Date expireDate = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * expire1));
-        Date noexpireDate = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * noexpire));
-        Date noexpireDate1 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * noexpire1));
-        String expireTs = new SimpleDateFormat("yyyyMMddHHmmss").format(expireDate);
-        String noexpireTs = new SimpleDateFormat("yyyyMMddHHmmss").format(noexpireDate);
-        String noexpireTs1 = new SimpleDateFormat("yyyyMMddHHmmss").format(noexpireDate1);
+        // for directory created 8 days back to be deleted
+        String expireTs = dt.format(new Date(expiryTime - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        // for directory created 6 days back NOT to be deleted
+        String noexpireTs = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        // for directory created 5 days back NOT to be deleted
+        String noexpireTs1 = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
+
         Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
         Path expirePath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + expireTs);
         Path noexpirePath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + noexpireTs);
         Path noexpirePath1 = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + noexpireTs1);
-        fs.mkdirs(expirePath);
-        fs.mkdirs(noexpirePath);
-        fs.mkdirs(noexpirePath1);
+
+        createDirs(fs, expirePath, noexpirePath, noexpirePath1);
         try {
             services.init();
-            assertEquals(3, fs.listStatus(basePath).length);
+            assertEquals(4, fs.listStatus(basePath).length);
             assertTrue(fs.exists(noexpirePath));
             assertTrue(fs.exists(noexpirePath1));
-            assertTrue(!fs.exists(expirePath));
+            assertTrue(fs.exists(expirePath));
         }
         finally {
             services.destroy();
@@ -292,33 +291,66 @@ public class TestShareLibService extends XFsTestCase {
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
         FileSystem fs = getFileSystem();
-        // for directory created 8 days back to be deleted
-        int expire1 = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) + 1;
-        // for directory created 6 days back NOT to be deleted
-        int noexpire = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) - 1;
-        // for directory created 5 days back NOT to be deleted
-        int noexpire1 = services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7) - 2;
 
-        Date expireDate = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * expire1));
-        Date noexpireDate = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * noexpire));
-        Date noexpireDate1 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * noexpire1));
-        String expireTs = new SimpleDateFormat("yyyyMMddHHmmss").format(expireDate);
-        String noexpireTs = new SimpleDateFormat("yyyyMMddHHmmss").format(noexpireDate);
-        String noexpireTs1 = new SimpleDateFormat("yyyyMMddHHmmss").format(noexpireDate1);
+        long expiryTime = System.currentTimeMillis()
+                - TimeUnit.MILLISECONDS.convert(
+                        services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7), TimeUnit.DAYS);
+
+        // for directory created 8 days back to be deleted
+        String expireTs = dt.format(new Date(expiryTime - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        // for directory created 6 days back NOT to be deleted
+        String noexpireTs = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        // for directory created 5 days back NOT to be deleted
+        String noexpireTs1 = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
+
         Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
         Path expirePath = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + expireTs);
         Path noexpirePath = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs);
 
         Path noexpirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs1);
+        createDirs(fs, expirePath, noexpirePath, noexpirePath1);
 
-        fs.mkdirs(expirePath);
-        fs.mkdirs(noexpirePath);
-        fs.mkdirs(noexpirePath1);
         services.init();
-        assertEquals(3, fs.listStatus(basePath).length);
+        assertEquals(4, fs.listStatus(basePath).length);
         assertTrue(fs.exists(noexpirePath));
         assertTrue(fs.exists(noexpirePath1));
-        assertTrue(!fs.exists(expirePath));
+        assertTrue(fs.exists(expirePath));
+        services.destroy();
+    }
+
+    // Logic is to keep all share-lib between current timestamp and 7days old + 1 latest sharelib older than 7 days.
+    // refer OOZIE-1761
+    @Test
+    public void testPurgeJar() throws Exception {
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
+        FileSystem fs = getFileSystem();
+        // for directory created 8 days back to be deleted
+        long expiryTime = System.currentTimeMillis()
+                - TimeUnit.MILLISECONDS.convert(
+                        services.getConf().getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION, 7), TimeUnit.DAYS);
+
+        String expireTs = dt.format(new Date(expiryTime - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        String expireTs1 = dt.format(new Date(expiryTime - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
+        String noexpireTs = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        String noexpireTs1 = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
+        Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+
+        Path expirePath = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + expireTs);
+        Path expirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + expireTs1);
+        Path noexpirePath = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs);
+        Path noexpirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs1);
+
+        createDirs(fs, expirePath, expirePath1, noexpirePath, noexpirePath1);
+        services.init();
+        assertEquals(4, fs.listStatus(basePath).length);
+        assertTrue(fs.exists(noexpirePath));
+        assertTrue(fs.exists(noexpirePath1));
+        assertTrue(fs.exists(expirePath));
+        assertTrue(!fs.exists(expirePath1));
+
         services.destroy();
     }
 
@@ -355,21 +387,14 @@ public class TestShareLibService extends XFsTestCase {
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
         FileSystem fs = getFileSystem();
-
-        Date day1 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 1));
-        Date day2 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 2));
-        Date day3 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 3));
-        String dir1 = new SimpleDateFormat("yyyyMMddHHmmss").format(day1);
-        String dir2 = new SimpleDateFormat("yyyyMMddHHmmss").format(day2);
-        String dir3 = new SimpleDateFormat("yyyyMMddHHmmss").format(day3);
+        String dir1 = dt.format(new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+        String dir2 = dt.format(new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
+        String dir3 = dt.format(new Date(System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(3, TimeUnit.DAYS)));
         Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
         Path path1 = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + dir1);
         Path path2 = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + dir2);
-
         Path path3 = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + dir3);
-        fs.mkdirs(path1);
-        fs.mkdirs(path2);
-        fs.mkdirs(path3);
+        createDirs(fs, path1, path2, path3);
         createFile(path1.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
         services.init();
         ShareLibService shareLibService = Services.get().get(ShareLibService.class);
@@ -531,6 +556,12 @@ public class TestShareLibService extends XFsTestCase {
         }
         catch (IOException ex) {
             ex.printStackTrace();
+        }
+    }
+
+    private void createDirs(FileSystem fs, Path... paths) throws IOException {
+        for (Path path : paths) {
+            fs.mkdirs(path);
         }
     }
 

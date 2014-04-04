@@ -92,6 +92,8 @@ public class ShareLibService implements Service, Instrumentable {
 
     FileSystem fs;
 
+    final long retentionTime = 1000 * 60 * 60 * 24 * Services.get().getConf().getInt(LAUNCHERJAR_LIB_RETENTION, 7);
+
     @Override
     public void init(Services services) throws ServiceException {
         this.services = services;
@@ -106,8 +108,9 @@ public class ShareLibService implements Service, Instrumentable {
             updateShareLib();
             //Only one server should purge sharelib
             if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
-                purgeLibs(fs, LAUNCHER_PREFIX);
-                purgeLibs(fs, SHARED_LIB_PREFIX);
+                final Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
+                purgeLibs(fs, LAUNCHER_PREFIX, current);
+                purgeLibs(fs, SHARED_LIB_PREFIX, current);
             }
         }
         catch (Exception e) {
@@ -359,14 +362,26 @@ public class ShareLibService implements Service, Instrumentable {
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws ParseException the parse exception
      */
-    private void purgeLibs(FileSystem fs, final String prefix) throws IOException, ParseException {
-        Configuration conf = services.getConf();
+    private void purgeLibs(FileSystem fs, final String prefix, final Date current) throws IOException, ParseException {
         Path executorLibBasePath = services.get(WorkflowAppService.class).getSystemLibPath();
-
         PathFilter directoryFilter = new PathFilter() {
             @Override
             public boolean accept(Path path) {
-                return path.getName().startsWith(prefix);
+                if (path.getName().startsWith(prefix)) {
+                    String name = path.getName().toString();
+                    String time = name.substring(prefix.length());
+                    Date d = null;
+                    try {
+                        d = dateFormat.parse(time);
+                    }
+                    catch (ParseException e) {
+                        return false;
+                    }
+                    return (current.getTime() - d.getTime()) > retentionTime;
+                }
+                else {
+                    return false;
+                }
             }
         };
         FileStatus[] dirList = fs.listStatus(executorLibBasePath, directoryFilter);
@@ -376,20 +391,14 @@ public class ShareLibService implements Service, Instrumentable {
             public int compare(FileStatus o1, FileStatus o2) {
                 return o2.getPath().getName().compareTo(o1.getPath().getName());
             }
-
         });
-        Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
-        // Always keep top two, so start counter from 3
-        long retentionTime = 1000 * 60 * 60 * 24 * conf.getInt(LAUNCHERJAR_LIB_RETENTION, 7);
-        for (int i = 2; i < dirList.length; i++) {
+
+        //Logic is to keep all share-lib between current timestamp and 7days old + 1 latest sharelib older than 7 days.
+        // refer OOZIE-1761
+        for (int i = 1; i < dirList.length; i++) {
             Path dirPath = dirList[i].getPath();
-            String name = dirPath.getName().toString();
-            String time = name.substring(prefix.length());
-            Date d = dateFormat.parse(time);
-            if ((current.getTime() - d.getTime()) > retentionTime) {
-                fs.delete(dirPath, true);
-                LOG.info("Deleted old launcher jar lib directory {0}", dirPath.getName());
-            }
+            fs.delete(dirPath, true);
+            LOG.info("Deleted old launcher jar lib directory {0}", dirPath.getName());
         }
     }
 
