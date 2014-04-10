@@ -1012,10 +1012,11 @@ public class OozieClient {
 
     private class CoordJobInfo extends ClientCallable<CoordinatorJob> {
 
-        CoordJobInfo(String jobId, String filter, int start, int len) {
+        CoordJobInfo(String jobId, String filter, int start, int len, String order) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
-                    RestConstants.JOB_SHOW_INFO, RestConstants.JOB_FILTER_PARAM, filter, RestConstants.OFFSET_PARAM, Integer.toString(start),
-                    RestConstants.LEN_PARAM, Integer.toString(len)));
+                    RestConstants.JOB_SHOW_INFO, RestConstants.JOB_FILTER_PARAM, filter, RestConstants.OFFSET_PARAM,
+                    Integer.toString(start), RestConstants.LEN_PARAM, Integer.toString(len), RestConstants.ORDER_PARAM,
+                    order));
         }
 
         @Override
@@ -1118,7 +1119,7 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public CoordinatorJob getCoordJobInfo(String jobId) throws OozieClientException {
-        return new CoordJobInfo(jobId, null, -1, -1).call();
+        return new CoordJobInfo(jobId, null, -1, -1, "asc").call();
     }
 
     /**
@@ -1128,11 +1129,13 @@ public class OozieClient {
      * @param filter filter the status filter
      * @param start starting index in the list of actions belonging to the job
      * @param len number of actions to be returned
+     * @param order order to list coord actions (e.g, desc)
      * @return the job info.
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
-    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len) throws OozieClientException {
-        return new CoordJobInfo(jobId, filter, start, len).call();
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len, String order)
+            throws OozieClientException {
+        return new CoordJobInfo(jobId, filter, start, len, order).call();
     }
 
     public List<WorkflowJob> getWfsForCoordAction(String coordActionId) throws OozieClientException {

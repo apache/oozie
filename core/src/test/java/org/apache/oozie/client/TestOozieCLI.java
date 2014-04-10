@@ -846,11 +846,24 @@ public class TestOozieCLI extends DagServletTestCase {
                 MockCoordinatorEngineService.reset();
                 args = new String[] { "job", "-oozie", oozieUrl, "-info",
                         MockCoordinatorEngineService.JOB_ID + 1 + MockCoordinatorEngineService.JOB_ID_END,
-                        "-len", "10", "-offset", "5" };
+                        "-len", "10", "-offset", "5", "-order", "desc", "-filter", "status=FAILED"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(5));
                 assertEquals(MockCoordinatorEngineService.length, new Integer(10));
+                assertEquals(MockCoordinatorEngineService.order, "desc");
+                assertEquals(MockCoordinatorEngineService.filter, "status=FAILED");
+
+                MockCoordinatorEngineService.reset();
+                args = new String[] { "job", "-oozie", oozieUrl, "-info",
+                        MockCoordinatorEngineService.JOB_ID + 1 + MockCoordinatorEngineService.JOB_ID_END,
+                        "-len", "10", "-offset", "5", "-order", "desc", "-filter", "status!=FAILED"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
+                assertEquals(MockCoordinatorEngineService.offset, new Integer(5));
+                assertEquals(MockCoordinatorEngineService.length, new Integer(10));
+                assertEquals(MockCoordinatorEngineService.order, "desc");
+                assertEquals(MockCoordinatorEngineService.filter, "status!=FAILED");
 
                 return null;
             }

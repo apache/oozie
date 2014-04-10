@@ -131,6 +131,7 @@ public class OozieCLI {
     public static final String DATE_OPTION = "date";
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
+    public static final String ORDER_OPTION = "order";
 
     public static final String UPDATE_SHARELIB_OPTION = "sharelibupdate";
 
@@ -285,7 +286,12 @@ public class OozieCLI {
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
-                "status=<S1>[;status=<S2>]* (All Coordinator actions satisfying any one of the status filters will be retreived. Currently, only supported for Coordinator job)");
+                "status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]* "
+                + "(All Coordinator actions satisfying the status filters will be retreived. "
+                + "Positive filters '=' concatenated with OR and negative filters '!=' with AND. "
+                + "Currently, only supported for Coordinator job)");
+        Option order = new Option(ORDER_OPTION, true,
+                "order to show coord actions (default ascending order, 'desc' for descending order, requires -info)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
         Option timezone = new Option(TIME_ZONE_OPTION, true,
@@ -338,6 +344,7 @@ public class OozieCLI {
         jobOptions.addOption(offset);
         jobOptions.addOption(len);
         jobOptions.addOption(filter);
+        jobOptions.addOption(order);
         jobOptions.addOption(action);
         jobOptions.addOption(date);
         jobOptions.addOption(rerun_coord);
@@ -969,7 +976,8 @@ public class OozieCLI {
                     s = commandLine.getOptionValue(LEN_OPTION);
                     int len = Integer.parseInt((s != null) ? s : "-1");
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
-                    printCoordJob(wc.getCoordJobInfo(optionValue, filter, start, len), timeZoneId,
+                    String order = commandLine.getOptionValue(ORDER_OPTION);
+                    printCoordJob(wc.getCoordJobInfo(optionValue, filter, start, len, order), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
                 else if (optionValue.contains("-C@")) {

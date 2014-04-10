@@ -67,6 +67,8 @@ public class CoordinatorEngine extends BaseEngine {
     public final static String COORD_ACTIONS_LOG_MAX_COUNT = "oozie.coord.actions.log.max.count";
     private final static int COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT = 50;
     private int maxNumActionsForLog;
+    public final static String POSITIVE_FILTER = "positive";
+    public final static String NEGATIVE_FILTER = "negative";
 
     /**
      * Create a system Coordinator engine, with no user and no group.
@@ -154,9 +156,9 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
             throws BaseEngineException {
-        List<String> filterList = parseStatusFilter(filter);
+        Map<String, List<String>> filterMap = parseStatusFilter(filter);
         try {
-            return new CoordJobXCommand(jobId, filterList, start, length, desc)
+            return new CoordJobXCommand(jobId, filterMap, start, length, desc)
                     .call();
         }
         catch (CommandException ex) {
@@ -546,18 +548,25 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     // Parses the filter string (e.g status=RUNNING;status=WAITING) and returns a list of status values
-    private List<String> parseStatusFilter(String filter) throws CoordinatorEngineException {
-        List<String> filterList = new ArrayList<String>();
+    private Map<String, List<String>> parseStatusFilter(String filter) throws CoordinatorEngineException {
+        Map<String, List<String>> filterMap = new HashMap<String, List<String>>();
         if (filter != null) {
             //split name;value pairs
             StringTokenizer st = new StringTokenizer(filter, ";");
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
                 if (token.contains("=")) {
-                    String[] pair = token.split("=");
+                    boolean negative = false;
+                    String[] pair = null;
+                    if(token.contains("!=")) {
+                        negative = true;
+                        pair = token.split("!=");
+                    }else {
+                        pair = token.split("=");
+                    }
                     if (pair.length != 2) {
                         throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                                "elements must be name=value pairs");
+                                "elements must be name=value or name!=value pairs");
                     }
                     if (pair[0].equalsIgnoreCase("status")) {
                         String statusValue = pair[1];
@@ -572,6 +581,18 @@ public class CoordinatorEngine extends BaseEngine {
                             throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
                                 "invalid status value [{0}]." + " Valid status values are: [{1}]", statusValue, validStatusList));
                         }
+                        String filterType = negative ? NEGATIVE_FILTER : POSITIVE_FILTER;
+                        String oppositeFilterType = negative ? POSITIVE_FILTER : NEGATIVE_FILTER;
+                        List<String> filterList = filterMap.get(filterType);
+                        if (filterList == null) {
+                            filterList = new ArrayList<String>();
+                            filterMap.put(filterType, filterList);
+                        }
+                        List<String> oFilterList = filterMap.get(oppositeFilterType);
+                        if (oFilterList != null && oFilterList.contains(statusValue)) {
+                            throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
+                                    "the status [{0}] specified in both positive and negative filters", statusValue));
+                        }
                         filterList.add(statusValue);
                     } else {
                         // Check for incorrect filter option
@@ -580,11 +601,11 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                 } else {
                     throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                             "elements must be name=value pairs");
+                             "elements must be name=value or name!=value pairs");
                 }
             }
         }
-        return filterList;
+        return filterMap;
     }
 
     /**

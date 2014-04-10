@@ -1215,6 +1215,27 @@ followed by query params - type=action and scope=<action-number>. One single act
 GET /oozie/v2/job/0000001-111219170928042-oozie-joe-C?show=allruns&type=action&scope=1
 </verbatim>
 
+*Retrieve a subset of actions*
+
+Query parameters, =offset= and =length= can be specified with a workflow job to retrieve specific actions. Default is offset=0, len=1000
+<verbatim>
+GET /oozie/v1/job/0000002-130507145349661-oozie-joe-W?show=info&offset=5&len=10
+</verbatim>
+Query parameters, =offset=, =length=, =filter= can be specified with a coordinator job to retrieve specific actions. 
+Query parameter, =order= with value "desc" can be used to retrieve the latest coordinator actions materialized instead of actions from @1.
+Query parameters =filter= can be used to retrieve coodinator actions matching specific status.
+Default is offset=0, len=0 for v2/job (i.e., does not return any coordinator actions) and offset=0, len=1000 with v1/job and v0/job.
+So if you need actions to be returned with v2 API, specifying =len= parameter is necessary.
+Default =order= is "asc".
+<verbatim>
+GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&offset=5&len=10&filter=status%3DKILLED&order=desc
+</verbatim>
+Note that the filter is URL encoded, its decoded value is <code>status=KILLED</code>.
+<verbatim>
+GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&filter=status%21%3DSUCCEEDED&order=desc
+</verbatim>
+This retrives coordinator actions except for SUCCEEDED status, which is useful for debugging.
+
 ---++++ Job Application Definition
 
 A HTTP GET request retrieves the workflow or a coordinator job definition file.

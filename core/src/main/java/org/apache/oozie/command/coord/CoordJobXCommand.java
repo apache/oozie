@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -43,7 +44,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     private int start = 1;
     private int len = Integer.MAX_VALUE;
     private boolean desc = false;
-    private List<String> filterList;
+    private Map<String, List<String>> filterMap;
 
     /**
      * Constructor for loading a coordinator job information
@@ -51,7 +52,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
      * @param id coord jobId
      */
     public CoordJobXCommand(String id) {
-        this(id, Collections.<String>emptyList(), 1, Integer.MAX_VALUE, false);
+        this(id, null, 1, Integer.MAX_VALUE, false);
     }
 
     /**
@@ -60,12 +61,13 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
      * @param id coord jobId
      * @param start starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
+     * @param filetrList
      */
-    public CoordJobXCommand(String id, List<String> filterList, int start, int length, boolean desc) {
+    public CoordJobXCommand(String id, Map<String, List<String>> filterMap, int start, int length, boolean desc) {
         super("job.info", "job.info", 1);
         this.id = ParamChecker.notEmpty(id, "id");
         this.getActionInfo = true;
-        this.filterList = filterList;
+        this.filterMap = filterMap;
         this.start = start;
         this.len = length;
         this.desc = desc;
@@ -130,8 +132,8 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
                         coordActions = new ArrayList<CoordinatorActionBean>();
                     }
                     else {
-                        coordActions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(id, filterList,
-                                start, len, desc));
+                        coordActions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(id, filterMap, start,
+                                len, desc));
                     }
                     coordJob.setActions(coordActions);
                     coordJob.setNumActions(numAction);
