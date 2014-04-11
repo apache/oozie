@@ -85,7 +85,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
             String conditions = actionQuery(em, bundleBeans, actionTimes, responseList);
 
             // Query to get the count of records
-            long total = countQuery(conditions, em, bundleBeans);
+            long total = countQuery(conditions, em, bundleBeans, actionTimes);
 
             BulkResponseInfo bulk = new BulkResponseInfo(responseList, start, len, total);
             return bulk;
@@ -217,7 +217,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
      * @param bundles
      * @return total count of coord actions
      */
-    private long countQuery(String clause, EntityManager em, List<BundleJobBean> bundles) {
+    private long countQuery(String clause, EntityManager em, List<BundleJobBean> bundles, Map<String, Timestamp> times) {
         Query q = em.createNamedQuery("BULK_MONITOR_COUNT_QUERY");
         StringBuilder getTotal = new StringBuilder(q.toString() + " ");
         // Query: select COUNT(a) from CoordinatorActionBean a, CoordinatorJobBean c
@@ -233,6 +233,11 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         // AND c.bundleId IN (... list of bundle ids) i.e. replace single :bundleId with list
         getTotal = getTotal.replace(offset - 6, offset + 20, inClause(bundleIds, "bundleId", 'c').toString());
         q = em.createQuery(getTotal.toString());
+        Iterator<Entry<String, Timestamp>> iter = times.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Timestamp> time = iter.next();
+            q.setParameter(time.getKey(), time.getValue());
+        }
         long total = ((Long) q.getSingleResult()).longValue();
         return total;
     }
