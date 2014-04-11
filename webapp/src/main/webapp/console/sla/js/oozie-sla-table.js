@@ -190,16 +190,15 @@ function drawTable(jsonData) {
                     if (aData.expectedDuration == -1) {
                         $(rowAllColumns[10]).html("");
                     } else {
-                        // Convert from minutes to milliseconds
-                        $(rowAllColumns[10]).html(timeElapsed(aData.expectedDuration * 60000));
+                        $(rowAllColumns[10]).html(timeElapsed(aData.expectedDuration));
                     }
                     if (aData.actualDuration == -1) {
                         $(rowAllColumns[11]).html("");
                     } else {
-                        $(rowAllColumns[11]).html(timeElapsed(aData.actualDuration * 60000));
+                        $(rowAllColumns[11]).html(timeElapsed(aData.actualDuration));
                     }
                     if (aData.durDiff || aData.durDiff == 0) {
-                        $(rowAllColumns[12]).html(timeElapsed(aData.durDiff * 60000));
+                        $(rowAllColumns[12]).html(timeElapsed(aData.durDiff));
                     }
                     $("td:first", nRow).html(iDisplayIndexFull + 1);
                     return nRow;
