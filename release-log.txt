@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1719 v1/jobs api returns null for parentId even when it exists (ryota)
 OOZIE-1773 bulk API returns total = 0 when it's not (ryota)
 OOZIE-1774 Expected/Actual Duration on UI SLA Tab doesn't show correct information (ryota)
 OOZIE-1754 add order(sort) option and exclude filter for coord job Info (ryota)
