@@ -345,16 +345,18 @@ Valid value names are:
    * pausetime: the pause time of the coordinator job.
    * status: new status for coordinator job.
 
-Repeated value names are not allowed. New end time must not be before job's start time and last action time. Currently status only
-takes RUNNING and can be used to change the status of FAILED or KILLED coordinator job to RUNNING and resuming materialization.
-This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED or
-KILLED coordinator actions they have to be rerun separately.
-
-New concurrency value has to be a valid integer. All lookahead actions will be revoked according to the new pause time. Also empty string "" can be used to reset pause time to none.
+Conditions and usage:
+   * Repeated value names are not allowed.
+   * New end time should not be before job's start time and last action time.
+   * If end time is before job start time and if the job has not materialized any actions, then job status is changed to SUCCEEDED.
+   * Currently status only takes RUNNING and can be used to change the status of FAILED or KILLED coordinator job to RUNNING and resuming materialization. This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED or KILLED coordinator actions they have to be rerun separately.
+   * New concurrency value has to be a valid integer.
+   * All lookahead actions which are in WAITING/READY state will be revoked according to the new pause/end time. If any action after new pause/end time is not in WAITING/READY state, an exception will be thrown.
+   * Also empty string "" can be used to reset pause time to none.
 
 After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.
 
----+++ Changing pausetime of a Bundle Job
+---+++ Changing endtime/pausetime of a Bundle Job
 
 Example:
 
@@ -366,11 +368,11 @@ The =change= option changes a bundle job that is not in =KILLED= status.
 
 Valid value names are:
    * pausetime: the pause time of the bundle job.
+   * endtime: the end time of the bundle job.
 
-Repeated value names are not allowed. An empty string "" can be used to reset pause time to none.
+Repeated value names are not allowed. An empty string "" can be used to reset pause time to none. New end time should not be before job's kickoff time.
 
-After the command is executed the job's pause time should be changed.
-
+Bundle will execute pause/end date change command on each coordinator job. Refer conditions and usage section of coordinator change command for more details [[DG_CommandLineTool#Changing_endtimeconcurrencypausetimestatus_of_a_Coordinator_Job][Coordinator job change command]].
 ---+++ Rerunning a Workflow Job
 
 Example:

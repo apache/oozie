@@ -196,12 +196,9 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         try {
             new CoordChangeXCommand(jobId, "endtime=1900-12-20T05:00Z").call();
-            fail("Should not reach here.");
         }
         catch (CommandException ex) {
-            if (ex.getErrorCode() != ErrorCode.E1015) {
-                fail("Error code should be E1015.");
-            }
+            fail("Should not throw exception");
         }
 
         try {
@@ -215,7 +212,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
 
         try {
-            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T01:03Z").call();
+            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T00:00Z").call();
             fail("Should not reach here.");
         }
         catch (CommandException ex) {
@@ -235,7 +232,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
 
         try {
-            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T01:08Z").call();
+            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T00:08Z").call();
             fail("Should not reach here.");
         }
         catch (CommandException ex) {
@@ -398,14 +395,123 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertTrue(coordJob.isDoneMaterialization());
 
         String newEndTime = convertDateToString(startTime.getTime() + 20 * 60 * 1000);
-
         new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
-
         coordJob = jpaService.execute(coordGetCmd);
         assertFalse(Job.Status.RUNNING == coordJob.getStatus());
         assertFalse(coordJob.isPending());
         assertTrue(coordJob.isDoneMaterialization());
+    }
 
+    // Testcase to test deletion of lookahead action in case of end-date change
+    public void testCoordChangeEndTimeDeleteAction() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T05:00Z");
+        Date changeEndTime = DateUtils.parseDateOozieTZ("2013-08-01T02:00Z");
+        String endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(changeEndTime);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING,
+                startTime, endTime, endTime, true, false, 4);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T01:00Z"));
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T03:00Z"));
+        JPAService jpaService = Services.get().get(JPAService.class);
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(coordJob.getEndTime(), changeEndTime);
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+        assertEquals(2, coordJob.getLastActionNumber());
+        try {
+            jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 2));
+        }
+        catch (JPAExecutorException jpae) {
+            fail(" Action should be there");
+        }
+        try {
+            jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(job.getId(), 3));
+            fail("Expected to fail as action 3 should have been deleted");
+        }
+        catch (JPAExecutorException jpae) {
+            assertEquals(ErrorCode.E0603, jpae.getErrorCode());
+        }
+        assertEquals(DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"), coordJob.getNextMaterializedTime());
+        assertEquals(DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"), coordJob.getLastActionTime());
+    }
+
+    // Testcase to test deletion of lookahead action in case of end-date change
+    // Added one more test case to test processLookaheadActions with day frequency and SUSPENDED status.
+    public void testProcessLookaheadActions() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-08-29T00:00Z");
+
+        Date changeEndTime = DateUtils.parseDateOozieTZ("2013-08-05T00:00Z");
+        String endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(changeEndTime);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.SUSPENDED,
+                startTime, endTime, endTime, true, false, 6);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-02T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-03T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-04T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 5, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-05T00:00Z"));
+        addRecordToCoordActionTable(job.getId(), 6, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-06T00:00Z"));
+
+        job.setFrequency("1");
+        job.setTimeUnit(Timeunit.DAY);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(coordJob.getEndTime(), changeEndTime);
+        assertEquals(Job.Status.SUSPENDED, coordJob.getStatus());
+        assertEquals(4, coordJob.getLastActionNumber());
+        assertEquals(DateUtils.parseDateOozieTZ("2013-08-05T00:00Z"), coordJob.getNextMaterializedTime());
+        assertEquals(DateUtils.parseDateOozieTZ("2013-08-05T00:00Z"), coordJob.getLastActionTime());
+        assertEquals(changeEndTime, coordJob.getEndTime());
+    }
+
+    // Testcase to check status for coord whose enddate is set before startdate.
+    public void testCoordChangeEndTimeBeforeStart() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 4 hrs
+        Date endTime = new Date(start.getTime() - 3000);
+
+        String endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(endTime);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.PREP, start, end,
+                end, true, false, 0);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+
+        assertEquals(Job.Status.PREP, coordJob.getStatus());
+        assertEquals(0, coordJob.getLastActionNumber());
+
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+
+        coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(endTime));
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+        Date newEndTime = new Date(start.getTime() - 2000);
+        endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(newEndTime);
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+        coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(newEndTime));
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
     }
 
     /**
@@ -442,20 +548,21 @@ public class TestCoordChangeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordChangePauseTime() throws Exception {
-        Date start = new Date();
-        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
-        Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
+        Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T04:59Z");
+
+        Date pauseTime = new Date(startTime.getTime() + (3 * 60 * 60 * 1000));  //2 hrs
         String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
-        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
-                end, end, true, false, 4);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, startTime,
+                endTime, endTime, true, false, 4);
         CoordinatorActionBean ca1 = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
         CoordinatorActionBean ca2 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", 0);
+                "coord-action-get.xml", 0, DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
         CoordinatorActionBean ca3 = addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.WAITING,
-                "coord-action-get.xml", 0);
+                "coord-action-get.xml", 0, DateUtils.parseDateOozieTZ("2013-08-01T03:00Z"));
         CoordinatorActionBean ca4 = addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING,
-                "coord-action-get.xml", 0);
+                "coord-action-get.xml", 0, DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
 
         SLARegistrationBean slaRegBean1 = new SLARegistrationBean();
         slaRegBean1.setId(ca1.getId());
@@ -493,7 +600,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException jpae) {
             assertEquals(ErrorCode.E0603, jpae.getErrorCode());
-            jpae.printStackTrace();
         }
 
         try {
@@ -502,7 +608,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException jpae) {
             assertEquals(ErrorCode.E0603, jpae.getErrorCode());
-            jpae.printStackTrace();
         }
 
         slaRegBean1 = jpaService.execute(new SLARegistrationGetJPAExecutor(slaRegBean1.getId()));
@@ -519,24 +624,37 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertNotNull(slaSummaryBean1);
     }
 
-    //Checks that RUNNING coord action is not deleted
-    public void testCoordActionDelete() throws Exception {
-        Date start = new Date();
-        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000));    //4 hrs
-        Date pauseTime = new Date(start.getTime() + (2 * 60 * 60 * 1000));  //2 hrs
+    // Checks that RUNNING coord action is not deleted
+    public void testChangeTimeDeleteRunning() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T04:59Z");
+        Date pauseTime = new Date(startTime.getTime() + (2 * 60 * 60 * 1000)); // 2 hrs
         String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
-        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
-                end, end, true, false, 4);
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING,
+                startTime, endTime, endTime, true, false, 4);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0);
-        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
-
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
+        addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T03:00Z"));
+        addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
         try {
             new CoordChangeXCommand(job.getId(), pauseTimeChangeStr).call();
             fail("Should not reach here.");
-        } catch(CommandException e) {
-            if(e.getErrorCode() != ErrorCode.E1022) {
+        }
+        catch (CommandException e) {
+            if (e.getErrorCode() != ErrorCode.E1022) {
+                fail("Error code should be E1022");
+            }
+        }
+        String endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(pauseTime);
+        try {
+            new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+            fail("Should not reach here.");
+        }
+        catch (CommandException e) {
+            if (e.getErrorCode() != ErrorCode.E1022) {
                 fail("Error code should be E1022");
             }
         }
@@ -640,7 +758,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             assertTrue(e.getMessage().contains("Cannot change a killed coordinator job"));
         }
     }
-
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
             Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);

@@ -809,7 +809,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
         String missDeps = getTestCaseFileUri("2009/01/29/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/22/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/15/_SUCCESS") + "#"

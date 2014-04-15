@@ -512,7 +512,26 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName, int pending) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending);
+        return addRecordToCoordActionTable(jobId, actionNum, status, resourceXmlName, pending, null);
+    }
+
+    /**
+     * Insert coord action for testing.
+     *
+     * @param jobId coord job id
+     * @param actionNum action number
+     * @param status coord action status
+     * @param resourceXmlName xml file name
+     * @param pending pending counter
+     * @param action nominal time
+     * @return coord action bean
+     * @throws Exception thrown if unable to create coord action bean
+     */
+    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, int pending, Date actionNominalTime)
+            throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending,
+                actionNominalTime);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -569,8 +588,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
             String resourceXmlName, int pending) throws Exception {
-        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z");
+        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z", null);
     }
+
+    protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
+            String resourceXmlName, int pending, Date actionNominalTime) throws Exception {
+        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z", actionNominalTime);
+    }
+
 
     /**
      * Create coord action bean
@@ -584,12 +609,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName, int pending, String oozieTimeZoneMask) throws Exception {
+            String resourceXmlName, int pending, String oozieTimeZoneMask, Date actionNominalTime) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
         actionXml = actionXml.replace("${TZ}", oozieTimeZoneMask);
-        String actionNominalTime = getActionNominalTime(actionXml);
 
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(actionId);
@@ -598,7 +622,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setActionNumber(actionNum);
         action.setPending(pending);
         try {
-            action.setNominalTime(DateUtils.parseDateOozieTZ(actionNominalTime));
+            if (actionNominalTime == null) {
+                String nominalTime = getActionNominalTime(actionXml);
+
+                action.setNominalTime(DateUtils.parseDateOozieTZ(nominalTime));
+            }
+            else {
+                action.setNominalTime(actionNominalTime);
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -1504,7 +1535,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
             CoordinatorAction.Status status, String resourceXmlName, String missingDependencies,
             String pushMissingDependencies, String oozieTimeZoneMask) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0,
-                oozieTimeZoneMask);
+                oozieTimeZoneMask, null);
         action.setMissingDependencies(missingDependencies);
         action.setPushMissingDependencies(pushMissingDependencies);
         try {
