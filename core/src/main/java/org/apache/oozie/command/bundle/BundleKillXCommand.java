@@ -129,17 +129,22 @@ public class BundleKillXCommand extends KillTransitionXCommand {
         else {
             // Due to race condition bundle action pending might be true
             // while coordinator is killed.
-            if (action.isPending() && action.getCoordId() != null) {
-                try {
-                    CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB,
-                            action.getCoordId());
-                    if (!coordJob.isPending() && coordJob.isTerminalStatus()) {
-                        action.decrementAndGetPending();
-                        action.setStatus(coordJob.getStatus());
-                    }
+            if (action.isPending()) {
+                if (action.getCoordId() == null) {
+                    action.setPending(0);
                 }
-                catch (JPAExecutorException e) {
-                    LOG.warn("Error in checking coord job status:" + action.getCoordId(), e);
+                else {
+                    try {
+                        CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance().get(
+                                CoordJobQuery.GET_COORD_JOB, action.getCoordId());
+                        if (!coordJob.isPending() && coordJob.isTerminalStatus()) {
+                            action.setPending(0);
+                            action.setStatus(coordJob.getStatus());
+                        }
+                    }
+                    catch (JPAExecutorException e) {
+                        LOG.warn("Error in checking coord job status:" + action.getCoordId(), e);
+                    }
                 }
             }
         }
