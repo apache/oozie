@@ -876,7 +876,7 @@ Content-Type: application/json;charset=UTF-8
 
 ---++++ Managing a Job
 
-A HTTP PUT request starts, suspends, resumes, kills, or dryruns a job.
+A HTTP PUT request starts, suspends, resumes, kills, update or dryruns a job.
 
 *Request:*
 
@@ -1049,6 +1049,36 @@ PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z;concurrenc
 <verbatim>
 HTTP/1.1 200 OK
 </verbatim>
+
+---+++++ Updating coordinator definition and properties
+Existing coordinator definition and properties will be replaced by new definition and properties. Refer [[DG_CommandLineTool#Updating_coordinator_definition_and_properties][Updating coordinator definition and properties]]
+
+<verbatim>
+PUT oozie/v2/job/0000000-140414102048137-oozie-puru-C?action=update
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{"update":
+     {"diff":"**********Job definition changes**********\n******************************************\n**********Job conf changes****************\n@@ -8,16 +8,12 @@\n
+          <value>hdfs:\/\/localhost:9000\/user\/purushah\/examples\/apps\/aggregator\/coordinator.xml<\/value>\r\n   <\/property>\r\n   <property>\r\n
+          -    <name>user.name<\/name>\r\n
+          -    <value>purushah<\/value>\r\n
+          -    <\/property>\r\n
+          -  <property>\r\n     <name>start<\/name>\r\n
+               <value>2010-01-01T01:00Z<\/value>\r\n   <\/property>\r\n   <property>\r\n
+          -    <name>newproperty<\/name>\r\n
+          -    <value>new<\/value>\r\n
+          +    <name>user.name<\/name>\r\n
+          +    <value>purushah<\/value>\r\n   <\/property>\r\n   <property>\r\n
+               <name>queueName<\/name>\r\n******************************************\n"
+      }
+}
+</verbatim>
+
 
 ---++++ Job Information
 

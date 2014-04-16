@@ -781,6 +781,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>3.3.1.201403241930-r</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-utils</artifactId>
                 <version>${hadooplib.version}</version>

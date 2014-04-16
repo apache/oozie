@@ -66,6 +66,7 @@ usage:
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
                                       coordinator job; new pausetime value for changing a bundle job
                 -verbose              verbose mode
+                -update               Update coordinator definition and properties
 .
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
@@ -633,6 +634,59 @@ specified path must be an HDFS path.
 
 If the workflow is accepted (i.e. Oozie is able to successfully read and parse it), it will return ="OK"=; otherwise, it will return
 an error message describing why it was rejected.
+
+---+++ Updating coordinator definition and properties
+Existing coordinator definition will be replaced by new definition. The refreshed coordinator would keep the same coordinator ID, state, and coordinator actions.
+All created coord action(including in WAITING) will use old configuration.
+One can rerun actions with -refresh option, -refresh option will use new configuration to rerun coord action
+
+Update command also verifies coordinator definition like submit command, if there is any issue with definition, update will fail.
+Update command with -dryrun will show coordinator definition and properties differences.
+Config option is optional, if not specified existing coordinator property is used to find coordinator path.
+
+Update command doesn't allow update of coordinator name, frequency, start time, end time and timezone and will fail on an attempt to change any of them. To change end time of coordinator use the =-change= command
+
+<verbatim>
+$ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0000005-140402104721140-oozie-puru-C -dryrun
+
+**********Job definition changes**********
+@@ -3,8 +3,8 @@
+     <concurrency>1</concurrency>
+   </controls>
+   <input-events>
+-    <data-in name="input" dataset="raw-logs">
+-      <dataset name="raw-logs" frequency="20" initial-instance="2010-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
++    <data-in name="input" dataset="raw-logs-rename">
++      <dataset name="raw-logs-rename" frequency="20" initial-instance="2010-01-01T00:00Z" timezone="UTC" freq_timeunit="MINUTE" end_of_duration="NONE">
+         <uri-template>hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/</uri-template>
+         <done-flag />
+       </dataset>
+**********************************
+**********Job conf changes**********
+@@ -8,10 +8,6 @@
+     <value>hdfs://localhost:9000/user/purushah/examples/apps/aggregator/coordinator.xml</value>
+   </property>
+   <property>
+-    <name>old</name>
+-    <value>test</value>
+-  </property>
+-  <property>
+     <name>user.name</name>
+     <value>purushah</value>
+   </property>
+@@ -28,6 +24,10 @@
+     <value>hdfs://localhost:9000</value>
+   </property>
+   <property>
++    <name>adding</name>
++    <value>new</value>
++  </property>
++  <property>
+     <name>jobTracker</name>
+     <value>localhost:9001</value>
+   </property>
+**********************************
+</verbatim>
 
 ---++ Jobs Operations
 

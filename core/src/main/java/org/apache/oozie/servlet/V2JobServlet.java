@@ -22,11 +22,19 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XConfiguration;
 import org.json.simple.JSONObject;
 
 @SuppressWarnings("serial")
@@ -75,4 +83,40 @@ public class V2JobServlet extends V1JobServlet {
             throws XServletException, IOException {
         return super.getJobsByParentId(request, response);
     }
+
+    /**
+     * Update coord job.
+     *
+     * @param request the request
+     * @param response the response
+     * @return the JSON object
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
+                .getCoordinatorEngine(getUser(request));
+        JSONObject json = new JSONObject();
+        try {
+            Configuration conf= new XConfiguration(request.getInputStream());
+            String jobId = getResourceName(request);
+            boolean dryrun = StringUtils.isEmpty(request.getParameter(RestConstants.JOB_ACTION_DRYRUN)) ? false
+                    : Boolean.parseBoolean(request.getParameter(RestConstants.JOB_ACTION_DRYRUN));
+            boolean showDiff = StringUtils.isEmpty(request.getParameter(RestConstants.JOB_ACTION_SHOWDIFF)) ? true
+                    : Boolean.parseBoolean(request.getParameter(RestConstants.JOB_ACTION_SHOWDIFF));
+
+            String diff = coordEngine.updateJob(conf, jobId, dryrun, showDiff);
+            JSONObject diffJson = new JSONObject();
+            diffJson.put(JsonTags.COORD_UPDATE_DIFF, diff);
+            json.put(JsonTags.COORD_UPDATE, diffJson);
+        }
+        catch (CoordinatorEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+        return json;
+    }
+
 }

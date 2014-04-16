@@ -628,6 +628,73 @@ public class OozieClient {
     }
 
     /**
+     * Update coord definition.
+     *
+     * @param jobId the job id
+     * @param conf the conf
+     * @param dryrun the dryrun
+     * @param showDiff the show diff
+     * @return the string
+     * @throws OozieClientException the oozie client exception
+     */
+    public String updateCoord(String jobId, Properties conf, String dryrun, String showDiff)
+            throws OozieClientException {
+        return (new UpdateCoord(jobId, conf, dryrun, showDiff)).call();
+    }
+
+    /**
+     * Update coord definition without properties.
+     *
+     * @param jobId the job id
+     * @param dryrun the dryrun
+     * @param showDiff the show diff
+     * @return the string
+     * @throws OozieClientException the oozie client exception
+     */
+    public String updateCoord(String jobId, String dryrun, String showDiff) throws OozieClientException {
+        return (new UpdateCoord(jobId, dryrun, showDiff)).call();
+    }
+
+    /**
+     * The Class UpdateCoord.
+     */
+    private class UpdateCoord extends ClientCallable<String> {
+        private final Properties conf;
+
+        public UpdateCoord(String jobId, Properties conf, String jobActionDryrun, String showDiff) {
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_COORD_UPDATE, RestConstants.JOB_ACTION_DRYRUN, jobActionDryrun,
+                    RestConstants.JOB_ACTION_SHOWDIFF, showDiff));
+            this.conf = conf;
+        }
+
+        public UpdateCoord(String jobId, String jobActionDryrun, String showDiff) {
+            this(jobId, new Properties(), jobActionDryrun, showDiff);
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            writeToXml(conf, conn.getOutputStream());
+
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject update = (JSONObject) json.get(JsonTags.COORD_UPDATE);
+                if (update != null) {
+                    return (String) update.get(JsonTags.COORD_UPDATE_DIFF);
+                }
+                else {
+                    return "";
+                }
+            }
+            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    /**
      * dryrun for a given job
      *
      * @param conf Job configuration.

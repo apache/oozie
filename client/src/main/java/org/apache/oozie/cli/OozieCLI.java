@@ -115,6 +115,8 @@ public class OozieCLI {
     public static final String DEFINITION_OPTION = "definition";
     public static final String CONFIG_CONTENT_OPTION = "configcontent";
     public static final String SQOOP_COMMAND_OPTION = "command";
+    public static final String SHOWDIFF_OPTION = "diff";
+    public static final String UPDATE_OPTION = "update";
 
     public static final String DO_AS_OPTION = "doas";
 
@@ -275,6 +277,9 @@ public class OozieCLI {
                 "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
         Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without"
                 + " actually executing it");
+        Option update = new Option(UPDATE_OPTION, true, "Update coord definition and properties");
+        Option showdiff = new Option(SHOWDIFF_OPTION, true,
+                "Show diff of the new coord definition and properties with the existing one (default true)");
         Option start = new Option(START_OPTION, true, "start a job");
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
@@ -325,6 +330,7 @@ public class OozieCLI {
         actions.addOption(resume);
         actions.addOption(kill);
         actions.addOption(change);
+        actions.addOption(update);
         actions.addOption(info);
         actions.addOption(rerun);
         actions.addOption(log);
@@ -353,6 +359,12 @@ public class OozieCLI {
         jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
         addAuthOptions(jobOptions);
+        jobOptions.addOption(showdiff);
+
+        //Needed to make dryrun and update mutually exclusive options
+        OptionGroup updateOption = new OptionGroup();
+        updateOption.addOption(dryrun);
+        jobOptions.addOptionGroup(updateOption);
         return jobOptions;
     }
 
@@ -829,7 +841,7 @@ public class OozieCLI {
             else if (options.contains(START_OPTION)) {
                 wc.start(commandLine.getOptionValue(START_OPTION));
             }
-            else if (options.contains(DRYRUN_OPTION)) {
+            else if (options.contains(DRYRUN_OPTION) && !options.contains(UPDATE_OPTION)) {
                 String dryrunStr = wc.dryrun(getConfiguration(wc, commandLine));
                 if (dryrunStr.equals("OK")) {  // workflow
                     System.out.println("OK");
@@ -1062,6 +1074,29 @@ public class OozieCLI {
                 else {
                     System.out.println("ERROR:  job id [" + commandLine.getOptionValue(CONFIG_CONTENT_OPTION)
                             + "] doesn't end with either C or W or B");
+                }
+            }
+            else if (options.contains(UPDATE_OPTION)) {
+                String coordJobId = commandLine.getOptionValue(UPDATE_OPTION);
+                Properties conf = null;
+
+                String dryrun = "";
+                String showdiff = "";
+
+                if (commandLine.getOptionValue(CONFIG_OPTION) != null) {
+                    conf = getConfiguration(wc, commandLine);
+                }
+                if (options.contains(DRYRUN_OPTION)) {
+                    dryrun = "true";
+                }
+                if (commandLine.getOptionValue(SHOWDIFF_OPTION) != null) {
+                    showdiff = commandLine.getOptionValue(SHOWDIFF_OPTION);
+                }
+                if (conf == null) {
+                    System.out.println(wc.updateCoord(coordJobId, dryrun, showdiff));
+                }
+                else {
+                    System.out.println(wc.updateCoord(coordJobId, conf, dryrun, showdiff));
                 }
             }
         }

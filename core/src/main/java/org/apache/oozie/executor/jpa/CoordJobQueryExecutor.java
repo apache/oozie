@@ -112,6 +112,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter("timeUnit", cjBean.getTimeUnitStr());
                 query.setParameter("appNamespace", cjBean.getAppNamespace());
                 query.setParameter("bundleId", cjBean.getBundleId());
+                query.setParameter("matThrottling", cjBean.getMatThrottling());
                 query.setParameter("id", cjBean.getId());
                 break;
             case UPDATE_COORD_JOB_STATUS:

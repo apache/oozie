@@ -203,6 +203,8 @@ public enum ErrorCode {
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
     E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
     E1022(XLog.STD, "Cannot delete running/completed coordinator action: [{0}]"),
+    E1023(XLog.STD, "Coord Job update Error: [{0}]"),
+
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 

@@ -50,6 +50,7 @@ import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
+import org.apache.oozie.command.coord.CoordUpdateXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
@@ -717,5 +718,26 @@ public class CoordinatorEngine extends BaseEngine {
             throw new CoordinatorEngineException(e);
         }
         return wfBeans;
+    }
+
+    /**
+     * Update coord job definition.
+     *
+     * @param conf the conf
+     * @param jobId the job id
+     * @param dryrun the dryrun
+     * @param showDiff the show diff
+     * @return the string
+     * @throws CoordinatorEngineException the coordinator engine exception
+     */
+    public String updateJob(Configuration conf, String jobId, boolean dryrun, boolean showDiff)
+            throws CoordinatorEngineException {
+        try {
+            CoordUpdateXCommand update = new CoordUpdateXCommand(dryrun, conf, jobId, showDiff);
+            return update.call();
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
     }
 }
