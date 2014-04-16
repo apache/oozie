@@ -38,12 +38,18 @@ import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
@@ -714,12 +720,11 @@ public class TestStatusTransitService extends XDataTestCase {
 
     /**
      * Inserts a coordinator job in KILLED state with pending materialization.
-     * Make sure the status changes to DONEWITHERROR if there is at least one
-     * coordinator action in NON-KILLED state
+     * Make sure the status doesn't change to DONEWITHERROR
      *
      * @throws Exception
      */
-    public void testCoordStatusTransitServiceTransitionToDoneWithError() throws Exception {
+    public void testCoordNotTransitionfromKilled() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, true, false);
         addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         Runnable runnable = new StatusTransitRunnable();
@@ -729,7 +734,7 @@ public class TestStatusTransitService extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
-        assertEquals(CoordinatorJob.Status.DONEWITHERROR, coordJob.getStatus());
+        assertEquals(CoordinatorJob.Status.KILLED, coordJob.getStatus());
 
     }
 
@@ -840,13 +845,13 @@ public class TestStatusTransitService extends XDataTestCase {
         });
 
         CoordinatorJobBean coordJob = jpaService.execute(new CoordJobGetJPAExecutor("action1"));
-        assertEquals(Job.Status.DONEWITHERROR, coordJob.getStatus());
+        assertEquals(Job.Status.KILLED, coordJob.getStatus());
 
         BundleActionBean bab = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action1"));
-        assertEquals(Job.Status.DONEWITHERROR, bab.getStatus());
+        assertEquals(Job.Status.KILLED, bab.getStatus());
 
         job = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-        assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
+        assertEquals(Job.Status.KILLED, job.getStatus());
     }
 
     /**
@@ -976,11 +981,11 @@ public class TestStatusTransitService extends XDataTestCase {
     /**
      * Test : kill a bundle job with coord jobs as DONEWITHERROR
      * <p/>
-     * Initially the bundle job should be KILLED and then DONEWITHERROR
+     * Bundle status should be kill.
      *
      * @throws Exception
      */
-    public void testBundleStatusTransitServiceKilled1() throws Exception {
+    public void testBundleStatusNotTransitionFromKilled() throws Exception {
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -1013,12 +1018,12 @@ public class TestStatusTransitService extends XDataTestCase {
         waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 BundleJobBean bundle = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-                return bundle.getStatus() == Job.Status.DONEWITHERROR;
+                return bundle.getStatus() == Job.Status.KILLED;
             }
         });
 
         bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
-        assertEquals(Job.Status.DONEWITHERROR, bundleJob.getStatus());
+        assertEquals(Job.Status.KILLED, bundleJob.getStatus());
 
     }
 
@@ -1397,4 +1402,77 @@ public class TestStatusTransitService extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
     }
 
+    // Test coord transition from killed to running when one action is rerun.
+    public void testCoordStatusTransitRunningFromKilled() throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false,
+                1);
+        final CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.RUNNING, "coord-action-get.xml", null, "RUNNING", 0);
+
+        new CoordKillXCommand(coordJob.getId()).call();
+        final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        waitFor(5 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean coordJob = jpaService.execute(coordJobGetCmd);
+                return coordJob.getStatusStr().equals("KILLED");
+            }
+        });
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        sleep(1000);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        assertEquals(CoordinatorJob.Status.KILLED, coordJob.getStatus());
+        coordAction.setStatus(CoordinatorAction.Status.RUNNING);
+        coordJob.setPending();
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING, coordJob);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, coordAction);
+        runnable.run();
+        sleep(1000);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
+    }
+
+    // Test bundle transition from killed to running when one action is rerun.
+    public void testBundleStatusTransitRunningFromKilled() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final String bundleId = bundleJob.getId();
+        BundleActionBean bundleAction1 = addRecordToBundleActionTable(bundleId, "action1-C", 1, Job.Status.RUNNING);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        addRecordToCoordJobTableWithBundle(bundleId, "action1-C", CoordinatorJob.Status.RUNNING, start, end, false,
+                true, 1);
+        bundleJob.setPending();
+        bundleAction1.setStatus(Job.Status.KILLED);
+        bundleAction1.setPending(0);
+        BundleActionQueryExecutor.getInstance().executeUpdate(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, bundleAction1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        sleep(1000);
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(Job.Status.KILLED, bundleJob.getStatus());
+        bundleAction1 = jpaService.execute(new BundleActionGetJPAExecutor(bundleId, "action1-C"));
+        assertEquals(Job.Status.KILLED, bundleAction1.getStatus());
+
+        bundleAction1.setPending(1);
+        bundleAction1.setStatus(Job.Status.RUNNING);
+        bundleJob.setPending();
+        BundleActionQueryExecutor.getInstance().executeUpdate(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, bundleAction1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
+        runnable.run();
+        sleep(1000);
+        bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
+        assertEquals(CoordinatorJob.Status.RUNNING, bundleJob.getStatus());
+    }
 }

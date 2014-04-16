@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1796 Job status should not transition from KILLED (puru via rohini)
 OOZIE-1781 UI - Last Modified time is not displayed for coord action in coord job info grid (puru via mona)
 OOZIE-1792 Ability to kill bundle stuck in RUNNING due to inconsistent pending states (rohini)
 OOZIE-1703 User should be able to set coord end-time before start time (puru via rohini)

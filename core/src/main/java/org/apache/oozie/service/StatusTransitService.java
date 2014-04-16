@@ -337,6 +337,11 @@ public class StatusTransitService implements Service {
             }
 
             if (bundleActions.size() == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesDoneWithError)) {
+                // If all bundle action is done and bundle is killed, then don't change the status.
+                if (bundleStatus[0].equals(Job.Status.KILLED)) {
+                    bundleStatus[0] = Job.Status.KILLED;
+                    return true;
+                }
                 // If all the bundle actions are succeeded then bundle job should be succeeded.
                 if (bundleActions.size() == totalValuesSucceed) {
                     bundleStatus[0] = Job.Status.SUCCEEDED;
@@ -382,6 +387,12 @@ public class StatusTransitService implements Service {
             }
 
             if (coordActionsCount == (totalValuesSucceed + totalValuesFailed + totalValuesKilled + totalValuesTimeOut)) {
+
+                // If all coord action is done and coord is killed, then don't change the status.
+                if (coordStatus[0].equals(Job.Status.KILLED)) {
+                    coordStatus[0] = Job.Status.KILLED;
+                    return true;
+                }
                 // If all the coordinator actions are succeeded then coordinator job should be succeeded.
                 if (coordActionsCount == totalValuesSucceed && isDoneMaterialization) {
                     coordStatus[0] = Job.Status.SUCCEEDED;
