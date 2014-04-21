@@ -124,15 +124,6 @@ public class TestV0JobServlet extends DagServletTestCase {
         _testAction(RestConstants.JOB_ACTION_RERUN, conf);
     }
 
-    public void testInvalidReRunConfigurations() throws Exception {
-        Configuration conf = new XConfiguration();
-        Path appPath = new Path(getFsTestCaseDir(), "app");
-        getFileSystem().mkdirs(appPath);
-        getFileSystem().create(new Path(appPath, "workflow.xml")).close();
-        conf.set(OozieClient.APP_PATH, appPath.toString());
-        _testAction(RestConstants.JOB_ACTION_RERUN, conf);
-    }
-
     private void _testNonJsonResponses(final String show, final String contentType, final String response)
             throws Exception {
         runTest("/v0/job/*", V0JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {

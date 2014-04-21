@@ -17,25 +17,33 @@
  */
 package org.apache.oozie.command.wf;
 
+import java.util.Date;
 import java.util.Properties;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
-import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.command.coord.CoordActionStartXCommand;
+import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 
-public class TestReRunXCommand extends XFsTestCase {
+public class TestReRunXCommand extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -227,4 +235,89 @@ public class TestReRunXCommand extends XFsTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
         assertEquals("wf_test-feed_test", wfClient.getJobInfo(jobId1).getAppName());
     }
+
+    //rerun should use existing wf conf
+    public void testRerunWithExistingConf() throws IOException, OozieClientException {
+        Reader reader = IOUtils.getResourceAsReader("rerun-wf.xml", -1);
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        IOUtils.copyCharStream(reader, writer);
+        Path path = getFsTestCaseDir();
+        getFileSystem().create(new Path(path, "p2"));
+        final OozieClient wfClient = LocalOozie.getClient();
+        final Properties conf = wfClient.createConfiguration();
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        conf.setProperty("nnbase", path.toString());
+        conf.setProperty("base", path.toUri().getPath());
+
+        Properties newConf = wfClient.createConfiguration();
+        newConf.setProperty("base", path.toUri().getPath());
+        final String jobId = wfClient.submit(conf);
+        wfClient.start(jobId);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId).getStatus());
+        try {
+            wfClient.reRun(jobId, newConf);
+        }
+        catch (OozieClientException e) {
+            assertTrue(e.getCause().getMessage().contains(ErrorCode.E0401.toString()));
+        }
+        newConf = wfClient.createConfiguration();
+        // Skip a non-executed node
+        getFileSystem().delete(new Path(path, "p2"), true);
+        newConf.setProperty(OozieClient.RERUN_SKIP_NODES, "fs1");
+        wfClient.reRun(jobId, newConf);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId).getStatus());
+    }
+
+    //rerun should use existing coord conf
+    public void testRerunWithExistingCoodConf() throws Exception {
+        final OozieClient wfClient = LocalOozie.getClient();
+
+        Date start = DateUtils.parseDateOozieTZ("2009-12-15T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-12-16T01:00Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false,
+                1);
+
+        CoordinatorActionBean action = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
+
+        String actionId = action.getId();
+        new CoordActionStartXCommand(actionId, getTestUser(), "myapp", "myjob").call();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
+                    + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
+        }
+        final String wfId = action.getExternalId();
+        wfClient.kill(wfId);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(wfId).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        Properties newConf = wfClient.createConfiguration();
+        newConf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
+        wfClient.reRun(wfId, newConf);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(wfId).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(wfId).getStatus());
+
+    }
+
 }

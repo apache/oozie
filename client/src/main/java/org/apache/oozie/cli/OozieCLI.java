@@ -707,12 +707,12 @@ public class OozieCLI {
     }
 
     private Properties getConfiguration(OozieClient wc, CommandLine commandLine) throws IOException {
+        if (!isConfigurationSpecified(wc, commandLine)) {
+            throw new IOException("configuration is not specified");
+        }
         Properties conf = wc.createConfiguration();
         String configFile = commandLine.getOptionValue(CONFIG_OPTION);
-        if (configFile == null) {
-            throw new IOException("configuration file not specified");
-        }
-        else {
+        if (configFile != null) {
             File file = new File(configFile);
             if (!file.exists()) {
                 throw new IOException("configuration file [" + configFile + "] not found");
@@ -732,6 +732,28 @@ public class OozieCLI {
             conf.putAll(commandLineProperties);
         }
         return conf;
+    }
+
+    /**
+     * Check if configuration has specified
+     * @param wc
+     * @param commandLine
+     * @return
+     * @throws IOException
+     */
+    private boolean isConfigurationSpecified(OozieClient wc, CommandLine commandLine) throws IOException {
+        boolean isConf = false;
+        String configFile = commandLine.getOptionValue(CONFIG_OPTION);
+        if (configFile == null) {
+            isConf = false;
+        }
+        else {
+            isConf = new File(configFile).exists();
+        }
+        if (commandLine.hasOption("D")) {
+            isConf = true;
+        }
+        return isConf;
     }
 
     /**
@@ -904,7 +926,12 @@ public class OozieCLI {
             }
             else if (options.contains(RERUN_OPTION)) {
                 if (commandLine.getOptionValue(RERUN_OPTION).contains("-W")) {
-                    wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(wc, commandLine));
+                    if (isConfigurationSpecified(wc, commandLine)) {
+                        wc.reRun(commandLine.getOptionValue(RERUN_OPTION), getConfiguration(wc, commandLine));
+                    }
+                    else {
+                        wc.reRun(commandLine.getOptionValue(RERUN_OPTION), new Properties());
+                    }
                 }
                 else if (commandLine.getOptionValue(RERUN_OPTION).contains("-B")) {
                     String bundleJobId = commandLine.getOptionValue(RERUN_OPTION);

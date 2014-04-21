@@ -25,6 +25,8 @@
 ---++ ReRun
 
    * Reloads the configs.
+   * If no configuration is passed, existing coordinator/workflow configuration will be used. If configuration is passed then, it will be merged with existing workflow configuration. Input configuration will take the precedence.
+   * Currently there is no way to remove an existing configuration but only override by passing a different value in the input configuration.
    * Creates a new Workflow Instance with the same wfId.
    * Deletes the actions that are not skipped from the DB and copies data from old Workflow Instance to new one for skipped actions.
    * Action handler will skip the nodes given in the config with the same exit transition as before.

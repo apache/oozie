@@ -117,8 +117,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             if (!requestUser.equals(UNDEF)) {
                 conf.set(OozieClient.USER_NAME, requestUser);
             }
-            BaseJobServlet.checkAuthorizationForApp(conf);
-            JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            if (conf.get(OozieClient.APP_PATH) != null) {
+                BaseJobServlet.checkAuthorizationForApp(conf);
+                JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            }
             reRunJob(request, response, conf);
             startCron();
             response.setStatus(HttpServletResponse.SC_OK);

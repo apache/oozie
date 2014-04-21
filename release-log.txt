@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1797 Workflow rerun command should use existing workflow properties (puru via rohini)
 OOZIE-1769 An option to update coord properties/definition (puru via rohini)
 OOZIE-1796 Job status should not transition from KILLED (puru via rohini)
 OOZIE-1781 UI - Last Modified time is not displayed for coord action in coord job info grid (puru via mona)
