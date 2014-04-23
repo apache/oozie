@@ -1196,6 +1196,21 @@ public class OozieClient {
      * @param filter filter the status filter
      * @param start starting index in the list of actions belonging to the job
      * @param len number of actions to be returned
+     * @return the job info.
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len)
+            throws OozieClientException {
+        return new CoordJobInfo(jobId, filter, start, len, "asc").call();
+    }
+
+    /**
+     * Get the info of a coordinator job and subset actions.
+     *
+     * @param jobId job Id.
+     * @param filter filter the status filter
+     * @param start starting index in the list of actions belonging to the job
+     * @param len number of actions to be returned
      * @param order order to list coord actions (e.g, desc)
      * @return the job info.
      * @throws OozieClientException thrown if the job info could not be retrieved.
