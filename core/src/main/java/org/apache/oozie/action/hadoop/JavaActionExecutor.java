@@ -554,6 +554,10 @@ public class JavaActionExecutor extends ActionExecutor {
         if (shareLibService != null) {
             try {
                 List<Path> listOfPaths = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+                if (listOfPaths == null || listOfPaths.isEmpty()) {
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "EJ001",
+                            "Could not locate Oozie sharelib");
+                }
                 FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
                 for (Path actionLibPath : listOfPaths) {
                     DistributedCache.addFileToClassPath(actionLibPath, conf, fs);

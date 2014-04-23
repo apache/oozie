@@ -53,6 +53,7 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.oozie.ErrorCode;
 
 public class ShareLibService implements Service, Instrumentable {
 
@@ -97,15 +98,23 @@ public class ShareLibService implements Service, Instrumentable {
     @Override
     public void init(Services services) throws ServiceException {
         this.services = services;
+        sharelibMappingFile = services.getConf().get(SHARELIB_MAPPING_FILE, "");
+        isShipLauncherEnabled = services.getConf().getBoolean(SHIP_LAUNCHER_JAR, false);
+        Path launcherlibPath = getLauncherlibPath();
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        URI uri = launcherlibPath.toUri();
         try {
-            sharelibMappingFile = services.getConf().get(SHARELIB_MAPPING_FILE, "");
-            isShipLauncherEnabled = services.getConf().getBoolean(SHIP_LAUNCHER_JAR, false);
-            Path launcherlibPath = getLauncherlibPath();
-            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            URI uri = launcherlibPath.toUri();
             fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             updateLauncherLib();
             updateShareLib();
+        } catch(IOException ioe) {
+            // We don't want to actually fail init by throwing an Exception, so only create the ServiceException and log it
+            ServiceException se = new ServiceException(ErrorCode.E0104, getClass().getName(),
+                    "Not able to cache sharelib.  An Admin needs to install the sharelib with oozie-setup.sh and issue the "
+                            + "'oozie admin' CLI command to update the sharelib", ioe);
+            LOG.error(se);
+        }
+        try {
             //Only one server should purge sharelib
             if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
                 final Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
@@ -114,7 +123,7 @@ public class ShareLibService implements Service, Instrumentable {
             }
         }
         catch (Exception e) {
-            LOG.error("Not able to cache shareLib. Admin need to issue oozlie cli command to update sharelib.", e);
+            LOG.error("There was an issue purging the sharelib", e);
         }
 
     }

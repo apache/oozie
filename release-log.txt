@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1621 Add proper error code and error message for sharelib exceptions. (rkanter)
 OOZIE-1785 Add oozie email action xsd to OozieCli.java (jagatsingh via rohini)
 OOZIE-1527 Fix scalability issues with coordinator materialization (puru via rohini)
 OOZIE-1797 Workflow rerun command should use existing workflow properties (puru via rohini)

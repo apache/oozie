@@ -104,6 +104,7 @@
             org.apache.oozie.service.AuthorizationService,
             org.apache.oozie.service.UserGroupInformationService,
             org.apache.oozie.service.HadoopAccessorService,
+            org.apache.oozie.service.JobsConcurrencyService,
             org.apache.oozie.service.URIHandlerService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
@@ -128,8 +129,7 @@
             org.apache.oozie.service.PauseTransitService,
             org.apache.oozie.service.GroupsService,
             org.apache.oozie.service.ProxyUserService,
-            org.apache.oozie.service.XLogStreamingService,
-            org.apache.oozie.service.JobsConcurrencyService
+            org.apache.oozie.service.XLogStreamingService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.

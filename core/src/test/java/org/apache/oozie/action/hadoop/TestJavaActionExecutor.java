@@ -1193,12 +1193,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path jar5Path = new Path(otherShareLibPath, "jar5.jar");
         getFileSystem().create(jar5Path).close();
 
-        Path launcherPath = new Path(systemLibPath, "oozie");
-        getFileSystem().mkdirs(launcherPath);
-        Path jar6Path = new Path(launcherPath, "jar5.jar");
-        getFileSystem().create(jar6Path).close();
-
-
         String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" +
@@ -1223,6 +1217,18 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
         ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
+        try {
+            ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
+            fail();
+        } catch (ActionExecutorException aee) {
+            assertEquals("EJ001", aee.getErrorCode());
+            assertEquals("Could not locate Oozie sharelib", aee.getMessage());
+        }
+        Path launcherPath = new Path(systemLibPath, "oozie");
+        getFileSystem().mkdirs(launcherPath);
+        Path jar6Path = new Path(launcherPath, "jar6.jar");
+        getFileSystem().create(jar6Path).close();
+        Services.get().get(ShareLibService.class).updateShareLib();
         ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
 
         URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
@@ -1231,6 +1237,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar2Path.toString()));
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
         assertTrue(cacheFilesStr.contains(jar4Path.toString()));
+        assertFalse(cacheFilesStr.contains(jar5Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar6Path.toString()));
 
         // Test per workflow action sharelib setting
         workflow = (WorkflowJobBean) context.getWorkflow();
@@ -1256,6 +1264,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
         assertTrue(cacheFilesStr.contains(jar4Path.toString()));
         assertTrue(cacheFilesStr.contains(jar5Path.toString()));
+        assertTrue(cacheFilesStr.contains(jar6Path.toString()));
     }
 
     public void testAddShareLibSchemeAndAuthority() throws Exception {
