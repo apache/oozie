@@ -68,6 +68,7 @@ public class SchemaService implements Service {
         "oozie-workflow-0.2.5.xsd",
         "oozie-workflow-0.3.xsd",
         "oozie-workflow-0.4.xsd",
+        "oozie-workflow-0.4.5.xsd",
         "oozie-workflow-0.5.xsd"};
     private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd", "oozie-coordinator-0.2.xsd",
         "oozie-coordinator-0.3.xsd", "oozie-coordinator-0.4.xsd"};
