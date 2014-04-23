@@ -1730,6 +1730,8 @@ public class OozieCLI {
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "email-action-0.1.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "email-action-0.2.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "distcp-action-0.1.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "distcp-action-0.2.xsd")));
