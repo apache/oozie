@@ -61,7 +61,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         GET_COORD_JOB_MATERIALIZE,
         GET_COORD_JOB_SUSPEND_KILL,
         GET_COORD_JOB_STATUS_PARENTID,
-        GET_COORD_JOBS_CHANGED
+        GET_COORD_JOBS_CHANGED,
+        GET_COORD_JOBS_OLDER_FOR_MATERILZATION
     };
 
     private static CoordJobQueryExecutor instance = new CoordJobQueryExecutor();
@@ -208,6 +209,14 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
             case GET_COORD_JOBS_CHANGED:
                 query.setParameter("lastModifiedTime", new Timestamp(((Date)parameters[0]).getTime()));
                 break;
+            case GET_COORD_JOBS_OLDER_FOR_MATERILZATION:
+                query.setParameter("matTime", new Timestamp(((Date)parameters[0]).getTime()));
+                int limit = (Integer) parameters[1];
+                if (limit > 0) {
+                    query.setMaxResults(limit);
+                }
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -288,6 +297,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setConfBlob((StringBlob) arr[17]);
                 bean.setJobXmlBlob((StringBlob) arr[18]);
                 bean.setAppNamespace((String) arr[19]);
+                bean.setTimeUnitStr((String) arr[20]);
                 break;
             case GET_COORD_JOB_SUSPEND_KILL:
                 bean = new CoordinatorJobBean();
@@ -310,6 +320,10 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 break;
             case GET_COORD_JOBS_CHANGED:
                 bean = (CoordinatorJobBean) ret;
+                break;
+            case GET_COORD_JOBS_OLDER_FOR_MATERILZATION:
+                bean = new CoordinatorJobBean();
+                bean.setId((String) ret);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "

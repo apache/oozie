@@ -408,21 +408,29 @@
 
     <!--  CoordMaterializeTriggerService -->
 
-	<property>
-		<name>oozie.service.CoordMaterializeTriggerService.lookup.interval
-		</name>
-		<value>300</value>
-		<description> Coordinator Job Lookup trigger command is scheduled at
-			this "interval" (in seconds).</description>
-	</property>
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.lookup.interval
+        </name>
+        <value>300</value>
+        <description> Coordinator Job Lookup interval.(in seconds).
+        </description>
+    </property>
 
-	<property>
-		<name>oozie.service.CoordMaterializeTriggerService.materialization.window
-		</name>
-		<value>3600</value>
-		<description> Coordinator Job Lookup command materialized each job for
-			this next "window" duration</description>
-	</property>
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.scheduling.interval
+        </name>
+        <value>300</value>
+        <description> The frequency at which the CoordMaterializeTriggerService will run.</description>
+    </property>
+
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.materialization.window
+        </name>
+        <value>3600</value>
+        <description> Coordinator Job Lookup command materialized each
+            job for this next "window" duration
+        </description>
+    </property>
 
     <property>
         <name>oozie.service.CoordMaterializeTriggerService.callable.batch.size</name>

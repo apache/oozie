@@ -24,10 +24,9 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
-import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobsToBeMaterializedJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.DateUtils;
@@ -43,6 +42,8 @@ public class CoordMaterializeTriggerService implements Service {
      * Time interval, in seconds, at which the Job materialization service will be scheduled to run.
      */
     public static final String CONF_LOOKUP_INTERVAL = CONF_PREFIX + "lookup.interval";
+
+    public static final String CONF_SCHEDULING_INTERVAL = CONF_PREFIX + "scheduling.interval";
     /**
      * This configuration defined the duration for which job should be materialized in future
      */
@@ -58,7 +59,8 @@ public class CoordMaterializeTriggerService implements Service {
 
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
-    private static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
+    public static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
+    private static final int CONF_SCHEDULING_INTERVAL_DEFAULT = 300;
     private static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
     private static final int CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT = 50;
 
@@ -116,11 +118,7 @@ public class CoordMaterializeTriggerService implements Service {
                 // get list of all jobs that have actions that should be materialized.
                 int materializationLimit = Services.get().getConf()
                         .getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT, CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT);
-                // account for under-utilization of limit due to jobs maxed out
-                // against mat_throttle. hence repeat
-                if (materializeCoordJobs(currDate, materializationLimit, LOG)) {
-                    materializeCoordJobs(currDate, materializationLimit, LOG);
-                }
+                materializeCoordJobs(currDate, materializationLimit, LOG);
             }
 
             catch (Exception ex) {
@@ -128,43 +126,27 @@ public class CoordMaterializeTriggerService implements Service {
             }
         }
 
-        private boolean materializeCoordJobs(Date currDate, int limit, XLog LOG) {
+        private void materializeCoordJobs(Date currDate, int limit, XLog LOG) throws JPAExecutorException {
             try {
-                JPAService jpaService = Services.get().get(JPAService.class);
-                CoordJobsToBeMaterializedJPAExecutor cmatcmd = new CoordJobsToBeMaterializedJPAExecutor(currDate, limit);
-                List<CoordinatorJobBean> materializeJobs = jpaService.execute(cmatcmd);
-                int rejected = 0;
-                LOG.info("CoordMaterializeTriggerService - Curr Date= " + DateUtils.formatDateOozieTZ(currDate)  + ", Num jobs to materialize = "
-                        + materializeJobs.size());
+                List<CoordinatorJobBean> materializeJobs = CoordJobQueryExecutor.getInstance().getList(
+                        CoordJobQuery.GET_COORD_JOBS_OLDER_FOR_MATERILZATION, currDate, limit);
+                LOG.info("CoordMaterializeTriggerService - Curr Date= " + DateUtils.formatDateOozieTZ(currDate)
+                        + ", Num jobs to materialize = " + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(coordJob.getId())) {
                         Services.get().get(InstrumentationService.class).get()
                                 .incr(INSTRUMENTATION_GROUP, INSTR_MAT_JOBS_COUNTER, 1);
-                        int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob
-                                .getId()));
-                        LOG.info("Job :" + coordJob.getId() + "  numWaitingActions : " + numWaitingActions
-                                + " MatThrottle : " + coordJob.getMatThrottling());
-                        // update lastModifiedTime so next time others get picked up in LRU fashion
+                        queueCallable(new CoordMaterializeTransitionXCommand(coordJob.getId(), materializationWindow));
                         coordJob.setLastModifiedTime(new Date());
+                        // TODO In place of calling single query, we should call bulk update.
                         CoordJobQueryExecutor.getInstance().executeUpdate(
                                 CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, coordJob);
-                        if (numWaitingActions >= coordJob.getMatThrottling()) {
-                            LOG.info("info for JobID [" + coordJob.getId() + "] " + numWaitingActions
-                                    + " actions already waiting. MatThrottle is : " + coordJob.getMatThrottling());
-                            rejected++;
-                            continue;
-                        }
-                        queueCallable(new CoordMaterializeTransitionXCommand(coordJob.getId(), materializationWindow));
                     }
-                }
-                if (materializeJobs.size() == limit && rejected > 0) {
-                    return true;
                 }
             }
             catch (JPAExecutorException jex) {
                 LOG.warn("JPAExecutorException while attempting to materialize coordinator jobs", jex);
             }
-            return false;
         }
 
         /**
@@ -200,10 +182,12 @@ public class CoordMaterializeTriggerService implements Service {
         int materializationWindow = conf.getInt(CONF_MATERIALIZATION_WINDOW, CONF_MATERIALIZATION_WINDOW_DEFAULT);
         // default is 300sec (5min)
         int lookupInterval = Services.get().getConf().getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT);
+        // default is 300sec (5min)
+        int schedulingInterval = Services.get().getConf().getInt(CONF_SCHEDULING_INTERVAL, CONF_SCHEDULING_INTERVAL_DEFAULT);
 
         Runnable lookupTriggerJobsRunnable = new CoordMaterializeTriggerRunnable(materializationWindow, lookupInterval);
 
-        services.get(SchedulerService.class).schedule(lookupTriggerJobsRunnable, 10, lookupInterval,
+        services.get(SchedulerService.class).schedule(lookupTriggerJobsRunnable, 10, schedulingInterval,
                                                       SchedulerService.Unit.SEC);
     }
 

@@ -18,7 +18,6 @@
 package org.apache.oozie.command.coord;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +34,8 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsSubsetJPAExecutor;
 import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
@@ -471,6 +472,95 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.PREP);
+    }
+
+    /**
+     * Test lookup materialization for catchup jobs
+     *
+     * @throws Exception
+     */
+    public void testMaterizationLookup() throws Exception {
+        long TIME_IN_MIN = 60 * 1000;
+        long TIME_IN_HOURS = TIME_IN_MIN * 60;
+        long TIME_IN_DAY = TIME_IN_HOURS * 24;
+        JPAService jpaService = Services.get().get(JPAService.class);
+        // test with days
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-05-03T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false,
+                0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(3);
+        job.setFrequency("1");
+        job.setTimeUnitStr("DAY");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY * 3), job.getNextMaterializedTime());
+
+        // test with hours
+        startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        endTime = DateUtils.parseDateOozieTZ("2009-05-03T23:59Z");
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(10);
+        job.setFrequency("1");
+        job.setTimeUnitStr("HOUR");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_HOURS * 10), job.getNextMaterializedTime());
+
+        // test with hours, time should not pass the current time.
+        startTime = new Date(new Date().getTime() - TIME_IN_DAY * 3);
+        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(10);
+        job.setFrequency("1");
+        job.setTimeUnitStr("DAY");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY ), job.getNextMaterializedTime());
+
+        // test with hours, time should not pass the current time.
+        startTime = new Date(new Date().getTime());
+        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(10);
+        job.setFrequency("1");
+        job.setTimeUnitStr("DAY");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY), job.getNextMaterializedTime());
+
+        // for current job in min, should not exceed hour windows
+        startTime = new Date(new Date().getTime());
+        endTime = new Date(startTime.getTime() + TIME_IN_HOURS * 24);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setMatThrottling(20);
+        job.setFrequency("5");
+        job.setTimeUnitStr("MINUTE");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_HOURS), job.getNextMaterializedTime());
+
+        // for current job in hour, should not exceed hour windows
+        startTime = new Date(new Date().getTime());
+        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 24);
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setMatThrottling(20);
+        job.setFrequency("1");
+        job.setTimeUnitStr("DAY");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY), job.getNextMaterializedTime());
+
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,

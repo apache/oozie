@@ -45,6 +45,7 @@ import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
@@ -59,13 +60,14 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 
 /**
  * Materialize actions for specified start and end time for coordinator job.
  */
 @SuppressWarnings("deprecation")
 public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCommand {
-    private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
+
     private JPAService jpaService = null;
     private CoordinatorJobBean coordJob = null;
     private String jobId = null;
@@ -74,6 +76,13 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private final int materializationWindow;
     private int lastActionNumber = 1; // over-ride by DB value
     private CoordinatorJob.Status prevStatus = null;
+
+    static final private int lookAheadWindow = Services
+            .get()
+            .getConf()
+            .getInt(CoordMaterializeTriggerService.CONF_LOOKUP_INTERVAL,
+                    CoordMaterializeTriggerService.CONF_LOOKUP_INTERVAL_DEFAULT);
+
     /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
      */
@@ -84,6 +93,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      *
      * @param jobId coordinator job id
      * @param materializationWindow materialization window to calculate end time
+     * @param lookahead window
      */
     public CoordMaterializeTransitionXCommand(String jobId, int materializationWindow) {
         super("coord_mater", "coord_mater", 1);
@@ -186,6 +196,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         startMatdTime = DateUtils.toDate(new Timestamp(startTimeMilli));
         endMatdTime = DateUtils.toDate(new Timestamp(endTimeMilli));
+        endMatdTime = getMaterializationTimeForCatchUp(endMatdTime);
         // if MaterializationWindow end time is greater than endTime
         // for job, then set it to endTime of job
         Date jobEndTime = coordJob.getEndTime();
@@ -195,6 +206,54 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end=" + DateUtils.formatDateOozieTZ(endMatdTime)
                 + ", window=" + materializationWindow);
+    }
+
+    /**
+     * Get materialization for window for catch-up jobs. for current jobs,it reruns currentMatdate, For catch-up, end
+     * Mataterilized Time = startMatdTime + MatThrottling * frequency
+     *
+     * @param currentMatTime
+     * @return
+     * @throws CommandException
+     * @throws JDOMException
+     */
+    private Date getMaterializationTimeForCatchUp(Date currentMatTime) throws CommandException {
+        if (currentMatTime.after(new Date())) {
+            return currentMatTime;
+        }
+        int frequency = 0;
+        try {
+            frequency = Integer.parseInt(coordJob.getFrequency());
+        }
+        catch (NumberFormatException e) {
+            return currentMatTime;
+        }
+
+        TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
+        TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+        Calendar startInstance = Calendar.getInstance(appTz);
+        startInstance.setTime(startMatdTime);
+        Calendar endMatInstance = null;
+        Calendar previousInstance = startInstance;
+        for (int i = 1; i <= coordJob.getMatThrottling(); i++) {
+            endMatInstance = (Calendar) startInstance.clone();
+            endMatInstance.add(freqTU.getCalendarUnit(), i * frequency);
+            if (endMatInstance.getTime().compareTo(new Date()) >= 0) {
+                if (previousInstance.after(currentMatTime)) {
+                    return previousInstance.getTime();
+                }
+                else {
+                    return currentMatTime;
+                }
+            }
+            previousInstance = endMatInstance;
+        }
+        if (endMatInstance == null) {
+            return currentMatTime;
+        }
+        else {
+            return endMatInstance.getTime();
+        }
     }
 
     /* (non-Javadoc)
@@ -223,7 +282,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         if (startTime == null) {
             startTime = coordJob.getStartTimestamp();
 
-            if (startTime.after(new Timestamp(System.currentTimeMillis() + LOOKAHEAD_WINDOW * 1000))) {
+            if (startTime.after(new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000))) {
                 throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId="
                         + jobId + " job's start time is not reached yet - nothing to materialize");
             }
@@ -311,7 +370,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
 
         String frequency = coordJob.getFrequency();
-        TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
+        TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);
         start.setTime(startMatdTime);
