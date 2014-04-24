@@ -86,7 +86,7 @@
 
          <!-- Sharelib component versions -->
          <hive.version>0.10.0</hive.version>
-         <pig.version>0.10.1</pig.version>
+         <pig.version>0.12.1</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
          <sqoop.classifier>hadoop100</sqoop.classifier>
@@ -790,6 +790,18 @@
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-utils</artifactId>
                 <version>${hadooplib.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dk.brics.automaton</groupId>
+                <artifactId>automaton</artifactId>
+                <version>1.11-8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>2.1</version>
             </dependency>
 
         </dependencies>

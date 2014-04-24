@@ -114,6 +114,16 @@
             <artifactId>oozie-hadoop-utils</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+           <groupId>dk.brics.automaton</groupId>
+            <artifactId>automaton</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
