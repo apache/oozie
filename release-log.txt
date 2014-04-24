@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1737 Oozie log streaming is slow (puru via rohini)
 OOZIE-1794 java-opts and java-opt in the Java action don't always work properly in YARN (rkanter)
 OOZIE-1799 Document hcatalog integration steps for Oozie in a secure cluster (venkatnrangan via bzhang)
 OOZIE-1585 Upgrade oozie to pig 0.12.1 (bzhang)

@@ -28,8 +28,8 @@ import java.util.Properties;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.ZKUtils;
 
 public class TestZKXLogStreamingService extends ZKXTestCase {
@@ -146,14 +146,14 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
     }
 
     public void testNoDashInConversionPattern() throws Exception{
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("USER", "oozie");
         xf.setLogLevel("DEBUG|INFO");
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
@@ -188,10 +188,10 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
 
     private boolean doStreamDisabledCheck() throws Exception {
         Services.get().get(XLogService.class).init(Services.get());
-        return doStreamLog(new XLogStreamer.Filter()).equals("Log streaming disabled!!");
+        return doStreamLog(new XLogFilter()).equals("Log streaming disabled!!");
     }
 
-    protected String doStreamLog(XLogStreamer.Filter xf) throws Exception {
+    protected String doStreamLog(XLogFilter xf) throws Exception {
         StringWriter w = new StringWriter();
         ZKXLogStreamingService zkxlss = new ZKXLogStreamingService();
         try {
@@ -210,14 +210,14 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
     }
 
     public void testStreamingWithMultipleOozieServers() throws Exception {
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "0000003-130610102426873-oozie-rkan-W");
         xf.setLogLevel("WARN|INFO");
         File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");

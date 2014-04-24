@@ -20,10 +20,10 @@ package org.apache.oozie.service;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.ErrorCode;
@@ -174,9 +174,9 @@ public class XLogService implements Service, Instrumentable {
             XLog.Info.reset();
             XLog.Info.defineParameter(USER);
             XLog.Info.defineParameter(GROUP);
-            XLogStreamer.Filter.reset();
-            XLogStreamer.Filter.defineParameter(USER);
-            XLogStreamer.Filter.defineParameter(GROUP);
+            XLogFilter.reset();
+            XLogFilter.defineParameter(USER);
+            XLogFilter.defineParameter(GROUP);
 
             // Getting configuration for oozie log via WS
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -282,7 +282,7 @@ public class XLogService implements Service, Instrumentable {
     public void destroy() {
         LogManager.shutdown();
         XLog.Info.reset();
-        XLogStreamer.Filter.reset();
+        XLogFilter.reset();
     }
 
     /**

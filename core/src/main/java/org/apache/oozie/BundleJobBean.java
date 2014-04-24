@@ -798,4 +798,22 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
         return DateUtils.toDate(startTimestamp);
     }
 
+    /**
+     * @return true if in terminal status
+     */
+    public boolean isTerminalStatus() {
+        boolean isTerminal = false;
+        switch (getStatus()) {
+            case SUCCEEDED:
+            case FAILED:
+            case KILLED:
+            case DONEWITHERROR:
+                isTerminal = true;
+                break;
+            default:
+                isTerminal = false;
+                break;
+        }
+        return isTerminal;
+    }
 }

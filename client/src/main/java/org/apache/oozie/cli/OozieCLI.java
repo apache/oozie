@@ -302,6 +302,10 @@ public class OozieCLI {
         Option timezone = new Option(TIME_ZONE_OPTION, true,
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option log = new Option(LOG_OPTION, true, "job log");
+        Option logFilter = new Option(
+                RestConstants.LOG_FILTER_OPTION, true,
+                "job log search parameter. Can be specified as -logfilter opt1=val1;opt2=val1;opt3=val1. "
+                + "Supported options are recent, start, end, loglevel, text, limit and debug");
         Option definition = new Option(DEFINITION_OPTION, true, "job definition");
         Option config_content = new Option(CONFIG_CONTENT_OPTION, true, "job configuration");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
@@ -358,6 +362,7 @@ public class OozieCLI {
         jobOptions.addOption(rerun_nocleanup);
         jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
+        jobOptions.addOption(logFilter);
         addAuthOptions(jobOptions);
         jobOptions.addOption(showdiff);
 
@@ -1056,6 +1061,10 @@ public class OozieCLI {
             }
             else if (options.contains(LOG_OPTION)) {
                 PrintStream ps = System.out;
+                String logFilter = null;
+                if (options.contains(RestConstants.LOG_FILTER_OPTION)) {
+                    logFilter = commandLine.getOptionValue(RestConstants.LOG_FILTER_OPTION);
+                }
                 if (commandLine.getOptionValue(LOG_OPTION).contains("-C")) {
                     String logRetrievalScope = null;
                     String logRetrievalType = null;
@@ -1068,7 +1077,8 @@ public class OozieCLI {
                         logRetrievalScope = commandLine.getOptionValue(DATE_OPTION);
                     }
                     try {
-                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), logRetrievalType, logRetrievalScope, ps);
+                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), logRetrievalType, logRetrievalScope,
+                                logFilter, ps);
                     }
                     finally {
                         ps.close();
@@ -1076,7 +1086,7 @@ public class OozieCLI {
                 }
                 else {
                     if (!options.contains(ACTION_OPTION) && !options.contains(DATE_OPTION)) {
-                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, ps);
+                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, logFilter, ps);
                     }
                     else {
                         throw new OozieCLIException("Invalid options provided for log retrieval. " + ACTION_OPTION

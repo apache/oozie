@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class SimpleTimestampedMessageParser extends TimestampedMessageParser {
 
-    public SimpleTimestampedMessageParser(BufferedReader reader, XLogStreamer.Filter filter) {
+    public SimpleTimestampedMessageParser(BufferedReader reader, XLogFilter filter) {
         super(reader, filter);
     }
 

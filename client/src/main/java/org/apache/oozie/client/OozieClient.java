@@ -910,21 +910,35 @@ public class OozieClient {
      * @param jobId job Id.
      * @param logRetrievalType Based on which filter criteria the log is retrieved
      * @param logRetrievalScope Value for the retrieval type
+     * @param logFilter log filter
+     * @param ps Printstream of command line interface
+     * @throws OozieClientException thrown if the job info could not be retrieved.
+     */
+    public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, String logFilter,
+            PrintStream ps) throws OozieClientException {
+        new JobLog(jobId, logRetrievalType, logRetrievalScope, logFilter, ps).call();
+    }
+
+    /**
+     * Get the log of a job.
+     *
+     * @param jobId job Id.
+     * @param logRetrievalType Based on which filter criteria the log is retrieved
+     * @param logRetrievalScope Value for the retrieval type
      * @param ps Printstream of command line interface
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
             throws OozieClientException {
-        new JobLog(jobId, logRetrievalType, logRetrievalScope, ps).call();
+        getJobLog(jobId, logRetrievalType, logRetrievalScope, null, ps);
     }
 
     private class JobLog extends JobMetadata {
         JobLog(String jobId) {
             super(jobId, RestConstants.JOB_SHOW_LOG);
         }
-
-        JobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps) {
-            super(jobId, logRetrievalType, logRetrievalScope, RestConstants.JOB_SHOW_LOG, ps);
+        JobLog(String jobId, String logRetrievalType, String logRetrievalScope, String logFilter, PrintStream ps) {
+            super(jobId, logRetrievalType, logRetrievalScope, RestConstants.JOB_SHOW_LOG, logFilter, ps);
         }
     }
 
@@ -984,10 +998,11 @@ public class OozieClient {
                     metaType));
         }
 
-        JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, PrintStream ps) {
+        JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, String logFilter,
+                PrintStream ps) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
-                    logRetrievalScope));
+                    logRetrievalScope, RestConstants.LOG_FILTER_OPTION, logFilter));
             printStream = ps;
         }
 

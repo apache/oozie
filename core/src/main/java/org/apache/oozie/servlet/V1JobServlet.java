@@ -267,15 +267,20 @@ public class V1JobServlet extends BaseJobServlet {
     @Override
     protected void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        String jobId = getResourceName(request);
-        if (jobId.endsWith("-W")) {
-            streamWorkflowJobLog(request, response);
+        try {
+            String jobId = getResourceName(request);
+            if (jobId.endsWith("-W")) {
+                streamWorkflowJobLog(request, response);
+            }
+            else if (jobId.endsWith("-B")) {
+                streamBundleJobLog(request, response);
+            }
+            else {
+                streamCoordinatorJobLog(request, response);
+            }
         }
-        else if (jobId.endsWith("-B")) {
-            streamBundleJob(request, response);
-        }
-        else {
-            streamCoordinatorJobLog(request, response);
+        catch (Exception e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, e.getMessage());
         }
     }
 
@@ -987,7 +992,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param response servlet response
      * @throws XServletException
      */
-    private void streamBundleJob(HttpServletRequest request, HttpServletResponse response)
+    private void streamBundleJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);

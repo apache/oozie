@@ -17,9 +17,9 @@
  */
 package org.apache.oozie;
 
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
@@ -47,6 +47,8 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
@@ -400,15 +402,21 @@ public class DagEngine extends BaseEngine {
      * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
      */
     @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
-        XLogStreamer.Filter filter = new XLogStreamer.Filter();
-        filter.setParameter(DagXLogInfoService.JOB, jobId);
-        WorkflowJob job = getJob(jobId);
-        Date lastTime = job.getEndTime();
-        if (lastTime == null) {
-            lastTime = job.getLastModifiedTime();
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            DagEngineException {
+        try {
+            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            filter.setParameter(DagXLogInfoService.JOB, jobId);
+            WorkflowJob job = getJob(jobId);
+            Date lastTime = job.getEndTime();
+            if (lastTime == null) {
+                lastTime = job.getLastModifiedTime();
+            }
+            Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
         }
-        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+        catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();

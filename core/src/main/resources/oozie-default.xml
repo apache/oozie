@@ -2052,4 +2052,25 @@
         wf.name=,action.name=,action.type=,launcher=true"
         </description>
     </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.max.log.scan.duration</name>
+        <value>-1</value>
+        <description>
+        Max log scan duration in hours. If log scan request end_date - start_date > value,
+        then exception is thrown to reduce the scan duration. -1 indicate no limit.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.max.actionlist.log.scan.duration</name>
+        <value>-1</value>
+        <description>
+        Max log scan duration in hours for coordinator job when list of actions are specified.
+        If log streaming request end_date - start_date > value, then exception is thrown to reduce the scan duration.
+        -1 indicate no limit.
+        This setting is separate from max.log.scan.duration as we want to allow higher durations when actions are specified.
+        </description>
+    </property>
+
 </configuration>

@@ -1344,6 +1344,17 @@ Content-Type: text/plain;charset=UTF-8
 ...
 </verbatim>
 
+---++++ Filtering the server logs with logfilter options
+User can provide multiple option to filter logs using -logfilter opt1=val1;opt2=val1;opt3=val1. This can be used to fetch only just logs of interest faster as fetching Oozie server logs is slow due to the overhead of pattern matching.
+
+<verbatim>
+GET /oozie/v1/job/0000003-140319184715726-oozie-puru-C?show=log&logfilter=limit=3;loglevel=WARN
+</verbatim>
+
+
+Refer to the [[DG_CommandLineTool#Filtering_the_server_logs_with_logfilter_options][Filtering the server logs with logfilter options]] for more details.
+
+
 ---++++ Job graph
 
 An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG image).

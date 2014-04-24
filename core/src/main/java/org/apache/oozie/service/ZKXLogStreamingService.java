@@ -36,6 +36,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.util.AuthUrlClient;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.SimpleTimestampedMessageParser;
 import org.apache.oozie.util.TimestampedMessageParser;
 import org.apache.oozie.util.XLog;
@@ -101,7 +102,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
      * @throws IOException thrown if the log cannot be streamed.
      */
     @Override
-    public void streamLog(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+    public void streamLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
             throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         if (xLogService.getLogOverWS()) {
@@ -132,7 +133,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
      * @param writer
      * @throws IOException
      */
-    private void collateLogs(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer) throws IOException {
+    private void collateLogs(XLogFilter filter, Date startTime, Date endTime, Writer writer) throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         List<String> badOozies = new ArrayList<String>();
         List<ServiceInstance<Map>> oozies = null;
@@ -174,6 +175,11 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                         badOozies.add(otherId);
                     }
                 }
+            }
+
+            //If log param debug is set, we need to write start date and end date to outputstream.
+            if(filter.isDebugMode()){
+                writer.write(filter.getDebugMessage());
             }
 
             // Add a message about any servers we couldn't contact

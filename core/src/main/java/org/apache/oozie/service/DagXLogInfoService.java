@@ -17,7 +17,7 @@
  */
 package org.apache.oozie.service;
 
-import org.apache.oozie.util.XLogStreamer;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
@@ -58,10 +58,10 @@ public class DagXLogInfoService implements Service {
         XLog.Info.defineParameter(JOB);
         XLog.Info.defineParameter(ACTION);
 
-        XLogStreamer.Filter.defineParameter(TOKEN);
-        XLogStreamer.Filter.defineParameter(APP);
-        XLogStreamer.Filter.defineParameter(JOB);
-        XLogStreamer.Filter.defineParameter(ACTION);
+        XLogFilter.defineParameter(TOKEN);
+        XLogFilter.defineParameter(APP);
+        XLogFilter.defineParameter(JOB);
+        XLogFilter.defineParameter(ACTION);
 
     }
 

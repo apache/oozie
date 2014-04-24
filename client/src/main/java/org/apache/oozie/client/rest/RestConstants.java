@@ -174,4 +174,6 @@ public interface RestConstants {
 
     public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
 
+    public static final String LOG_FILTER_OPTION = "logfilter";
+
 }
