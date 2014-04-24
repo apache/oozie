@@ -242,6 +242,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("MAIN-CLASS", actionConf.get("oozie.action.java.main", "null"));
         assertEquals("org.apache.oozie.action.hadoop.JavaMain", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
+        assertTrue(conf.get("mapreduce.map.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
 
         assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
@@ -1061,8 +1062,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Configuration conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
 
-        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT1"));
-        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT2"));
+        assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
 
         actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
@@ -1086,8 +1087,90 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
 
-        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT1"));
-        assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPT2"));
+        assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
+
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
+                + "<property><name>a</name><value>AA</value></property>"
+                + "<property><name>b</name><value>BB</value></property>"
+                + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>JAVA-OPT3</value></property>"
+                + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "<java-opt>JAVA-OPT1</java-opt>"
+                + "<java-opt>JAVA-OPT2</java-opt>" + "<arg>A1</arg>" + "<arg>A2</arg>" + "<file>f.jar</file>"
+                + "<archive>a.tar</archive>" + "</java>";
+
+        wfBean = addRecordToWfJobTable("test1", actionXml);
+        action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        context = new Context(wfBean, action);
+
+        actionXmlconf = XmlUtils.parseXml(action.getConf());
+
+        actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
+
+        assertEquals("JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
+        assertEquals("JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
+
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
+                + "<property><name>a</name><value>AA</value></property>"
+                + "<property><name>b</name><value>BB</value></property>"
+                + "<property><name>oozie.launcher.mapreduce.map.java.opts</name><value>JAVA-OPT3</value></property>"
+                + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "<java-opt>JAVA-OPT1</java-opt>"
+                + "<java-opt>JAVA-OPT2</java-opt>" + "<arg>A1</arg>" + "<arg>A2</arg>" + "<file>f.jar</file>"
+                + "<archive>a.tar</archive>" + "</java>";
+
+        wfBean = addRecordToWfJobTable("test1", actionXml);
+        action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        context = new Context(wfBean, action);
+
+        actionXmlconf = XmlUtils.parseXml(action.getConf());
+
+        actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
+
+        assertEquals("-Xmx200m JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
+
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>"
+                + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
+                + "<property><name>a</name><value>AA</value></property>"
+                + "<property><name>b</name><value>BB</value></property>"
+                + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>JAVA-OPT3</value></property>"
+                + "<property><name>oozie.launcher.mapreduce.map.java.opts</name><value>JAVA-OPT4</value></property>"
+                + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "<java-opt>JAVA-OPT1</java-opt>"
+                + "<java-opt>JAVA-OPT2</java-opt>" + "<arg>A1</arg>" + "<arg>A2</arg>" + "<file>f.jar</file>"
+                + "<archive>a.tar</archive>" + "</java>";
+
+        wfBean = addRecordToWfJobTable("test1", actionXml);
+        action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        context = new Context(wfBean, action);
+
+        actionXmlconf = XmlUtils.parseXml(action.getConf());
+
+        actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        conf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlconf, actionConf);
+
+        assertEquals("JAVA-OPT3 JAVA-OPT4 JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
+        assertEquals("JAVA-OPT3 JAVA-OPT4 JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
     }
 
     public void testActionLibsPath() throws Exception {
@@ -1624,6 +1707,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("2560", launcherConf.get(JavaActionExecutor.YARN_AM_RESOURCE_MB));
         // heap size in child.opts (2048 + 512)
         int heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
+        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true", launcherConf.get("mapreduce.map.java.opts"));
         // There's an extra parameter (-Xmx1024m) in here when using YARN that's not here when using MR1
         if (createJobConf().get("yarn.resourcemanager.address") != null) {
             assertEquals("-Xmx1024m -Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx2560m",
@@ -1633,6 +1718,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx2560m",
                     launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
         }
+        assertEquals(2560, heapSize);
 
         // env
         assertEquals("A=foo", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
@@ -1664,7 +1750,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // heap size (2560 + 512)
         heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx2560m -XX:NewRatio=8 -Xmx3072m",
+        assertEquals("-Xmx1536m -Xmx2560m -XX:NewRatio=8", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx1536m -Xmx2560m -XX:NewRatio=8", launcherConf.get("mapreduce.map.java.opts"));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx2560m -XX:NewRatio=8 -Xmx3072m",
                 launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
         assertEquals(3072, heapSize);
 
@@ -1700,8 +1788,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // heap size (limit to 3584)
         heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx4000m -XX:NewRatio=8 -Xmx3584m",
+        assertEquals("-Xmx1536m -Xmx4000m -XX:NewRatio=8", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx1536m -Xmx4000m -XX:NewRatio=8", launcherConf.get("mapreduce.map.java.opts"));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx4000m -XX:NewRatio=8 -Xmx3584m",
                 launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
+        assertEquals(3584, heapSize);
 
         // env (equqls to mapreduce.map.env + am.env)
         assertEquals("A=foo,B=bar", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
@@ -1721,7 +1812,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                         + "<configuration>"
                         + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
                         + "<value>-Xmx1024m -Djava.net.preferIPv4Stack=true </value></property>"
-                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx1536m</value></property>"
+                        + "<property><name>oozie.launcher.mapreduce.map.java.opts</name><value>-Xmx1536m</value></property>"
                         + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
                         + "<java-opt>-Xmx2048m</java-opt>"
                         + "<java-opt>-Dkey1=val1</java-opt>"
@@ -1741,7 +1832,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // heap size (2048 + 512)
         int heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx2048m -Dkey1=val1 -Dkey2=val2 -Xmx2560m",
+        assertEquals("-Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1 -Dkey2=val2", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1 -Dkey2=val2", launcherConf.get("mapreduce.map.java.opts"));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1 -Dkey2=val2 -Xmx2560m",
                 launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
         assertEquals(2560, heapSize);
 
@@ -1756,7 +1849,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                         + "<configuration>"
                         + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
                         + "<value>-Xmx1024m -Djava.net.preferIPv4Stack=true </value></property>"
-                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx1536m</value></property>"
+                        + "<property><name>oozie.launcher.mapreduce.map.java.opts</name><value>-Xmx1536m</value></property>"
                         + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
                         + "<java-opts>-Xmx2048m -Dkey1=val1</java-opts>"
                         + "</java>");
@@ -1765,7 +1858,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // heap size (2048 + 512)
         heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx1536m -Xmx2048m -Dkey1=val1 -Xmx2560m",
+        assertEquals("-Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1", launcherConf.get("mapreduce.map.java.opts"));
+        assertEquals("-Xmx1024m -Djava.net.preferIPv4Stack=true -Xmx200m -Xmx1536m -Xmx2048m -Dkey1=val1 -Xmx2560m",
                 launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
         assertEquals(2560, heapSize);
 
@@ -1780,7 +1875,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                         + "<configuration>"
                         + "<property><name>oozie.launcher.yarn.app.mapreduce.am.command-opts</name>"
                         + "<value>-Xmx2048m -Djava.net.preferIPv4Stack=true </value></property>"
-                        + "<property><name>oozie.launcher.mapred.child.java.opts</name><value>-Xmx3072m</value></property>"
+                        + "<property><name>oozie.launcher.mapreduce.map.java.opts</name><value>-Xmx3072m</value></property>"
                         + "</configuration>" + "<main-class>MAIN-CLASS</main-class>"
                         + "<java-opts>-Xmx1024m -Dkey1=val1</java-opts>"
                         + "</java>");
@@ -1789,7 +1884,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // heap size (2048 + 512)
         heapSize = ae.extractHeapSizeMB(launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS));
-        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx3072m -Xmx1024m -Dkey1=val1 -Xmx2560m",
+        assertEquals("-Xmx200m -Xmx3072m -Xmx1024m -Dkey1=val1", launcherConf.get("mapred.child.java.opts"));
+        assertEquals("-Xmx200m -Xmx3072m -Xmx1024m -Dkey1=val1", launcherConf.get("mapreduce.map.java.opts"));
+        assertEquals("-Xmx2048m -Djava.net.preferIPv4Stack=true -Xmx200m -Xmx3072m -Xmx1024m -Dkey1=val1 -Xmx2560m",
                 launcherConf.get(JavaActionExecutor.YARN_AM_COMMAND_OPTS).trim());
         assertEquals(2560, heapSize);
     }

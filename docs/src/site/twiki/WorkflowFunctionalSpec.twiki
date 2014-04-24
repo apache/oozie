@@ -1421,9 +1421,21 @@ hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value]
 In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars
 need to be placed in workflow lib directory or specified using =archive= tag.
 
-The =java-opts= element, if present, contains the command line parameters which are to be used to start the JVM that
-will execute the Java application. Using this element is equivalent to use the =mapred.child.java.opts= configuration
-property.
+The =java-opts= and =java-opt= elements, if present, contains the command line parameters which are to be used to start the JVM that
+will execute the Java application. Using this element is equivalent to using the =mapred.child.java.opts=
+or =mapreduce.map.java.opts= configuration properties, with the advantage that Oozie will append to these properties instead of
+simply setting them (e.g. if you have one of these properties specified in mapred-site.xml, setting it again in
+the =configuration= element will override it, but using =java-opts= or =java-opt= will instead append to it, preserving the original
+value).  You can have either one =java-opts=, multiple =java-opt=, or neither; you cannot use both at the same time.  In any case,
+Oozie will set both =mapred.child.java.opts= and =mapreduce.map.java.opts= to the same value based on combining them.  In other
+words, after Oozie is finished:
+<verbatim>
+mapred.child.java.opts  <-- "<mapred.child.java.opts> <mapreduce.map.java.opts> <java-opt...|java-opts>"
+mapreduce.map.java.opts <-- "<mapred.child.java.opts> <mapreduce.map.java.opts> <java-opt...|java-opts>"
+</verbatim>
+In the case that parameters are repeated, the latest instance of the parameter is used by Java.  This means that =java-opt=
+(or =java-opts=) has the highest priority, followed by =mapreduce.map.java.opts=, and finally =mapred.child.java.opts=.  When
+multiple =java-opt= are specified, they are included from top to bottom ordering, where the bottom has highest priority.
 
 The =arg= elements, if present, contains arguments for the main function. The value of each =arg= element is considered
 a single argument and they are passed to the =main= method in the same order.

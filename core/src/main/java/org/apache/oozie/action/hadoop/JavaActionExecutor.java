@@ -280,13 +280,10 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         launcherConf.setInt(YARN_AM_RESOURCE_MB, memoryMB);
 
-        // child.java.opts
-        String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS);
-        if (launcherMapOpts == null) {
-            launcherMapOpts = launcherConf.get(HADOOP_CHILD_JAVA_OPTS);
-        }
+        // We already made mapred.child.java.opts and mapreduce.map.java.opts equal, so just start with one of them
+        String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS, "");
         String amChildOpts = launcherConf.get(YARN_AM_COMMAND_OPTS);
-        StringBuffer optsStr = new StringBuffer();
+        StringBuilder optsStr = new StringBuilder();
         int heapSizeForMap = extractHeapSizeMB(launcherMapOpts);
         int heapSizeForAm = extractHeapSizeMB(amChildOpts);
         int heapSize = Math.max(heapSizeForMap, heapSizeForAm) + YARN_MEMORY_MB_MIN;
@@ -297,16 +294,12 @@ public class JavaActionExecutor extends ActionExecutor {
         if (amChildOpts != null) {
             optsStr.append(amChildOpts);
         }
-        if (launcherMapOpts != null) {
-            optsStr.append(" ");
-            optsStr.append(launcherMapOpts);
-        }
+        optsStr.append(" ").append(launcherMapOpts.trim());
         if (heapSize > 0) {
             // append calculated total heap size to the end
-            optsStr.append(" ");
-            optsStr.append("-Xmx" + heapSize + "m");
+            optsStr.append(" ").append("-Xmx").append(heapSize).append("m");
         }
-        launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString());
+        launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString().trim());
 
         // child.env
         String launcherMapEnv = launcherConf.get(HADOOP_MAP_JAVA_ENV);
@@ -759,21 +752,22 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             LauncherMapperHelper.setupMainArguments(launcherJobConf, args);
 
+            // Make mapred.child.java.opts and mapreduce.map.java.opts equal, but give values from the latter priority; also append
+            // <java-opt> and <java-opts> and give those highest priority
+            StringBuilder opts = new StringBuilder(launcherJobConf.get(HADOOP_CHILD_JAVA_OPTS, ""));
+            if (launcherJobConf.get(HADOOP_MAP_JAVA_OPTS) != null) {
+                opts.append(" ").append(launcherJobConf.get(HADOOP_MAP_JAVA_OPTS));
+            }
             List<Element> javaopts = actionXml.getChildren("java-opt", ns);
             for (Element opt: javaopts) {
-                String opts = launcherJobConf.get("mapred.child.java.opts", "");
-                opts = opts + " " + opt.getTextTrim();
-                opts = opts.trim();
-                launcherJobConf.set("mapred.child.java.opts", opts);
+                opts.append(" ").append(opt.getTextTrim());
             }
-
             Element opt = actionXml.getChild("java-opts", ns);
             if (opt != null) {
-                String opts = launcherJobConf.get("mapred.child.java.opts", "");
-                opts = opts + " " + opt.getTextTrim();
-                opts = opts.trim();
-                launcherJobConf.set("mapred.child.java.opts", opts);
+                opts.append(" ").append(opt.getTextTrim());
             }
+            launcherJobConf.set(HADOOP_CHILD_JAVA_OPTS, opts.toString().trim());
+            launcherJobConf.set(HADOOP_MAP_JAVA_OPTS, opts.toString().trim());
 
             // setting for uber mode
             if (launcherJobConf.getBoolean(HADOOP_YARN_UBER_MODE, false)) {
