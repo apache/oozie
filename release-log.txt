@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1794 java-opts and java-opt in the Java action don't always work properly in YARN (rkanter)
 OOZIE-1799 Document hcatalog integration steps for Oozie in a secure cluster (venkatnrangan via bzhang)
 OOZIE-1585 Upgrade oozie to pig 0.12.1 (bzhang)
 OOZIE-1768 Workflow schema 0.4.5 was removed (rkanter)
