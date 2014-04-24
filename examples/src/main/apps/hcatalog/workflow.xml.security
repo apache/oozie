@@ -16,8 +16,20 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:0.5" name="pig-wf">
+    <credentials>
+      <credential name='hcatauth' type='hcat'>
+         <property>
+            <name>hcat.metastore.uri</name>
+            <value>thrift://<host>:<port></value>
+         </property>
+         <property>
+             <name>hcat.metastore.principal</name>
+             <value>hive/<host>@<realm></value>
+         </property>
+      </credential>
+    </credentials>
     <start to="pig-node"/>
-    <action name="pig-node">
+    <action name="pig-node" cred="hcatauth">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>

@@ -20,3 +20,13 @@ Running the coordinator example with HCatalog (End-to-end test)
 7. Run Oozie job using the job.properties. Coordinator actions will be in WAITING
 8. Make input dependencies available throught HCat client by "alter table invites add partition (ds='2010-01-01', region='usa')". This event will start the workflows with pig action
 9. First workflow will SUCCEED as expected, however second one will fail due to 'partition already exists' error. Disregard this. The example demonstrates working as expected.
+10. When running in a secure cluster
+   a. The files job.properties.security and workflow.xml.security can be
+      used and modified as needed.  Please refer to those two files and follow
+       the instructions.
+   b. Make sure oozie-site.xml under /etc/oozie/conf has the following property
+      specified.
+       <property>
+         <name>oozie.credentials.credentialclasses</name>
+         <value>hcat=org.apache.oozie.action.hadoop.HCatCredentials</value>
+       </property>

@@ -22,6 +22,9 @@ queueName=default
 examplesRoot=examples
 oozie.use.system.libpath=true
 
+hive.metastore.sasl.enabled=true
+hive.metastore.kerberos.principal=hive/<host>@<realm>
+
 
 oozie.coord.application.path=${nameNode}/user/${user.name}/${examplesRoot}/apps/hcatalog
 hcatNode=hcat://localhost:11002
