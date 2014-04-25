@@ -682,6 +682,13 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setFrequency(val);
         TimeUnit tmp = (evalFreq.getVariable("timeunit") == null) ? TimeUnit.MINUTE : ((TimeUnit) evalFreq
                 .getVariable("timeunit"));
+        try {
+            Integer.parseInt(val);
+        }
+        catch (NumberFormatException ex) {
+            tmp=TimeUnit.CRON;
+        }
+
         addAnAttribute("freq_timeunit", eAppXml, tmp.toString());
         // TimeUnit
         coordJob.setTimeUnit(CoordinatorJob.Timeunit.valueOf(tmp.toString()));

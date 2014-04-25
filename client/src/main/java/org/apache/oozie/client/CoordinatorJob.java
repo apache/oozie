@@ -36,7 +36,7 @@ public interface CoordinatorJob extends Job {
      * Defines the possible frequency unit of an Oozie application.
      */
     public static enum Timeunit {
-        MINUTE, HOUR, DAY, WEEK, MONTH, END_OF_DAY, END_OF_MONTH, NONE
+        MINUTE, HOUR, DAY, WEEK, MONTH, END_OF_DAY, END_OF_MONTH, CRON, NONE
     }
 
     /**

@@ -136,6 +136,26 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         }
     }
 
+    public void testBasicSubmitWithCronFrequency() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"0 10 * * *\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls>  <action> "
+                + "<workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "</workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+
+        String jobId = sc.call();
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = (CoordinatorJobBean) sc.getJob();
+        assertEquals(job.getTimeUnitStr(), "CRON");
+    }
+
     public void testBasicSubmitWithIdenticalStartAndEndTime() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
