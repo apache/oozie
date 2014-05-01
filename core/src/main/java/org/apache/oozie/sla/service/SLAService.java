@@ -41,6 +41,8 @@ public class SLAService implements Service {
     public static final String CONF_ALERT_EVENTS = CONF_PREFIX + "alert.events";
     public static final String CONF_EVENTS_MODIFIED_AFTER = CONF_PREFIX + "events.modified.after";
     public static final String CONF_JOB_EVENT_LATENCY = CONF_PREFIX + "job.event.latency";
+    //Time interval, in seconds, at which SLA Worker will be scheduled to run
+    public static final String CONF_SLA_CHECK_INTERVAL = CONF_PREFIX + "check.interval";
 
     private static SLACalculator calcImpl;
     private static boolean slaEnabled = false;
@@ -66,7 +68,8 @@ public class SLAService implements Service {
 
             Runnable slaThread = new SLAWorker(calcImpl);
             // schedule runnable by default every 30 sec
-            services.get(SchedulerService.class).schedule(slaThread, 10, 30, SchedulerService.Unit.SEC);
+            int slaCheckInterval = services.getConf().getInt(CONF_SLA_CHECK_INTERVAL, 30);
+            services.get(SchedulerService.class).schedule(slaThread, 10, slaCheckInterval, SchedulerService.Unit.SEC);
             slaEnabled = true;
             LOG.info("SLAService initialized with impl [{0}] capacity [{1}]", calcImpl.getClass().getName(),
                     conf.get(SLAService.CONF_CAPACITY));

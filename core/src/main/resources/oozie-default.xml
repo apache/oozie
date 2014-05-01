@@ -2002,6 +2002,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.sla.service.SLAService.check.interval</name>
+        <value>30</value>
+        <description>
+             Time interval, in seconds, at which SLA Worker will be scheduled to run
+        </description>
+    </property>
+
     <!-- ZooKeeper configuration -->
     <property>
         <name>oozie.zookeeper.connection.string</name>
