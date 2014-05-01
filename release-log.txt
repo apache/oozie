@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1709 CoordELFunctions.getCurrentInstance() is expensive (shwethags via rohini) 
 OOZIE-1787 parameterize interval of SLAService updating SlaStatus (ryota)
 OOZIE-1777 duplicated log message in Pig launcher's stdout (ryota)
 OOZIE-1748 When using cron-like syntax, the "Time Unit" field says "MINUTE"
