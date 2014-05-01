@@ -114,10 +114,12 @@
             <scope>provided</scope>
          </dependency>
 
+        <!-- All oozie sharelib has to be part of webapp, so that ShareLibService can copy all systemlib
+        jars when "oozie.action.ship.launcher.jar" is set to true -->
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-oozie</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
