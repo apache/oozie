@@ -139,7 +139,9 @@ public class OozieSharelibCLI {
             Path srcPath = new Path(srcFile.toString());
 
             Services services = new Services();
-            services.getConf().set(Services.CONF_SERVICE_CLASSES, "org.apache.oozie.service.LiteWorkflowAppService, org.apache.oozie.service.HadoopAccessorService");
+            services.getConf().set(Services.CONF_SERVICE_CLASSES,
+                "org.apache.oozie.service.LiteWorkflowAppService, org.apache.oozie.service.HadoopAccessorService");
+            services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "");
             services.init();
             WorkflowAppService lwas = services.get(WorkflowAppService.class);
             HadoopAccessorService has = services.get(HadoopAccessorService.class);
