@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1806 Java Action type jobs are failing with hadoop-0.20.0 and earlier versions on oozie trunk (sathish.mittal via rohini)
 OOZIE-1823 OozieSharelibCLI shouldn't load ext services (rkanter)
 OOZIE-1762 Sharelib with oozie.action.ship.launcher.jar=true should copy oozie-hadoop-utils.jar (puru via mona)
 OOZIE-1709 CoordELFunctions.getCurrentInstance() is expensive (shwethags via rohini) 

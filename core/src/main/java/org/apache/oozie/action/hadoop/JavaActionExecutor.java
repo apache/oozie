@@ -66,6 +66,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -524,7 +525,7 @@ public class JavaActionExecutor extends ActionExecutor {
                         if (listOfPaths != null && !listOfPaths.isEmpty()) {
 
                             for (Path actionLibPath : listOfPaths) {
-                                DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                                JobUtils.addFileToClassPath(actionLibPath, conf, fs);
                                 DistributedCache.createSymlink(conf);
                             }
                         }
@@ -554,13 +555,13 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
                 FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
                 for (Path actionLibPath : listOfPaths) {
-                    DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                    JobUtils.addFileToClassPath(actionLibPath, conf, fs);
                     DistributedCache.createSymlink(conf);
                 }
                 listOfPaths = shareLibService.getSystemLibJars(getType());
                 if (listOfPaths != null) {
                     for (Path actionLibPath : listOfPaths) {
-                        DistributedCache.addFileToClassPath(actionLibPath, conf, fs);
+                        JobUtils.addFileToClassPath(actionLibPath, conf, fs);
                         DistributedCache.createSymlink(conf);
                     }
                 }
