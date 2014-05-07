@@ -39,7 +39,8 @@
             <useProjectArtifact>true</useProjectArtifact>
             <outputDirectory>oozie-tools-${project.version}/libtools</outputDirectory>
             <unpack>false</unpack>
-            <scope>compile</scope>
+            <!-- runtime scope assembles compile and runtime dependencies, but skips those with provided scope. -->
+            <scope>runtime</scope>
             <excludes>
                  <exclude>*:*:pom:*</exclude>
             </excludes>
