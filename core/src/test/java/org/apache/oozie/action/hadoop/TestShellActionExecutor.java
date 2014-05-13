@@ -32,6 +32,7 @@ import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
@@ -170,6 +171,10 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @throws Exception
      */
     public void testEnvVar() throws Exception {
+        Services.get().destroy();
+        Services services = new Services();
+        services.getConf().setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
+        services.init();
 
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
@@ -189,7 +194,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         // Submit the action
         final RunningJob launcherJob = submitAction(context);
-        waitFor(30 * 1000, new Predicate() { // Wait for the external job to
+        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
                     // finish
                     public boolean evaluate() throws Exception {
                         return launcherJob.isComplete();
