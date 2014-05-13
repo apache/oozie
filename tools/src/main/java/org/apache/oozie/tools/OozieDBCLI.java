@@ -194,7 +194,6 @@ public class OozieDBCLI {
     private void upgradeDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
-        verifyDBState();
         String version = BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
 
         if (!verifyOozieSysTable(false, false)) { // If OOZIE_SYS table doesn't
@@ -231,7 +230,7 @@ public class OozieDBCLI {
 
     private void upgradeDBTo40(String sqlFile, boolean run) throws Exception {
         upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_4_0);
-        postUpgradeTasks(sqlFile, run, false);
+        postUpgradeTasksFor40(sqlFile, run);
         ddlTweaks(sqlFile, run);
     }
 
@@ -403,6 +402,41 @@ public class OozieDBCLI {
                 conn.close();
             }
         }
+    }
+
+    private void postUpgradeTasksFor40(String sqlFile, boolean run) throws Exception {
+        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        writer.println();
+        Connection conn = (run) ? createConnection() : null;
+        try {
+            if (!getDBVendor().equals("derby")) {
+                String  updateMissingDependenciesQuery;
+                if (getDBVendor().equals("sqlserver")){
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO_MSSQL;
+                } else {
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO;
+                }
+
+                writer.println(updateMissingDependenciesQuery + ";");
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column");
+                if (run) {
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(updateMissingDependenciesQuery);
+                    st.close();
+                }
+            }
+            else {
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column in Derby");
+                replaceForDerby(";", "!!");
+            }
+            System.out.println("DONE");
+            writer.close();
+        }
+        finally {
+            if (run) {
+                conn.close();
+            }
+      }
     }
 
     private static final String COORD_ACTION_ID_DEPS = "SELECT ID, MISSING_DEPENDENCIES FROM COORD_ACTIONS";
