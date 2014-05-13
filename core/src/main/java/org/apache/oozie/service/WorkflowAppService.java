@@ -151,7 +151,6 @@ public abstract class WorkflowAppService implements Service {
             throw new WorkflowException(ErrorCode.E0710, ex.getMessage(), ex);
         }
     }
-
     /**
      * Create proto configuration. <p/> The proto configuration includes the user,group and the paths which need to be
      * added to distributed cache. These paths include .jar,.so and the resource file paths.
@@ -168,9 +167,12 @@ public abstract class WorkflowAppService implements Service {
             URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
             Configuration conf = has.createJobConf(uri.getAuthority());
+            XConfiguration protoConf = new XConfiguration();
+
 
             String user = jobConf.get(OozieClient.USER_NAME);
             conf.set(OozieClient.USER_NAME, user);
+            protoConf.set(OozieClient.USER_NAME, user);
 
             FileSystem fs = has.createFileSystem(user, uri, conf);
 
@@ -227,7 +229,7 @@ public abstract class WorkflowAppService implements Service {
                 }
             }
 
-            conf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));
+            protoConf.setStrings(APP_LIB_PATH_LIST, filePaths.toArray(new String[filePaths.size()]));
 
             //Add all properties start with 'oozie.'
             for (Map.Entry<String, String> entry : jobConf) {
@@ -235,14 +237,12 @@ public abstract class WorkflowAppService implements Service {
                     String name = entry.getKey();
                     String value = entry.getValue();
                     // if property already exists, should not overwrite
-                    if(conf.get(name) == null) {
-                        conf.set(name, value);
+                    if(protoConf.get(name) == null) {
+                        protoConf.set(name, value);
                     }
                 }
             }
-            XConfiguration retConf = new XConfiguration();
-            XConfiguration.copy(conf, retConf);
-            return retConf;
+            return protoConf;
         }
         catch (IOException ex) {
             throw new WorkflowException(ErrorCode.E0712, jobConf.get(OozieClient.APP_PATH), ex.getMessage(), ex);

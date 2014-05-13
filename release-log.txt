@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1825 Optimize wf_jobs protoconf storage (puru via rohini)
 OOZIE-1831 Oozie upgrade fails if workflow jobs are in running or suspended state (satish.mittal via rohini)
 OOZIE-1690 TestShellActionExecutor#testEnvVar failed for Windows (omaliuvanchuk via rkanter)
 OOZIE-1243 libtools dir should not include hadoop JARs (satish.mittal via rohini)
