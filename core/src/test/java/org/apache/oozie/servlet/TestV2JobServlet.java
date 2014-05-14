@@ -17,6 +17,7 @@
  */
 package org.apache.oozie.servlet;
 
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.rest.JsonTags;
 import org.json.simple.JSONObject;
@@ -143,6 +144,80 @@ public class TestV2JobServlet extends DagServletTestCase {
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                return null;
+            }
+        });
+    }
+
+    public void testCoordJobIgnore() throws Exception {
+        runTest("/v2/job/*", V2JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_IGNORE);
+
+                // url - oozie/v2/coord_job_id?action=ignore
+                URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_IGNORE);
+                url = createURL(MockCoordinatorEngineService.JOB_ID
+                        + (MockCoordinatorEngineService.coordJobs.size() + 1), params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
+
+                return null;
+            }
+        });
+    }
+    public void testCoordActionIgnore() throws Exception {
+        runTest("/v2/job/*", V2JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_IGNORE);
+                params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, RestConstants.JOB_COORD_SCOPE_ACTION);
+                params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1");
+
+                // url - oozie/v2/coord_job_id?action=ignore
+                URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_IGNORE, MockCoordinatorEngineService.did);
+
+                // negative test for non-existent action
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_IGNORE);
+                params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, RestConstants.JOB_COORD_SCOPE_ACTION);
+                params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1");
+                url = createURL(MockCoordinatorEngineService.JOB_ID
+                        + (MockCoordinatorEngineService.coordJobs.size() + 1), params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                conn.setDoOutput(true);
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals(RestConstants.JOB_ACTION_IGNORE, MockCoordinatorEngineService.did);
+
                 return null;
             }
         });

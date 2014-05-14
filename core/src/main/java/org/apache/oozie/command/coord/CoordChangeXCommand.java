@@ -201,15 +201,26 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     private void checkStatusChange(CoordinatorJobBean coordJob, CoordinatorJob.Status jobStatus)
             throws CommandException {
-        if (!jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
-            throw new CommandException(ErrorCode.E1015, jobStatus, " must be RUNNING");
+        if (!jobStatus.equals(CoordinatorJob.Status.RUNNING) && !jobStatus.equals(CoordinatorJob.Status.IGNORED)) {
+            throw new CommandException(ErrorCode.E1015, jobStatus, " must be RUNNING or IGNORED");
         }
 
-        if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
-                CoordinatorJob.Status.KILLED))) {
-            throw new CommandException(ErrorCode.E1015, jobStatus,
-                    " Only FAILED or KILLED job can be changed to RUNNING. Current job status is "
-                            + coordJob.getStatus());
+        if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+            if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
+                    CoordinatorJob.Status.KILLED) || coordJob.getStatus().equals(CoordinatorJob.Status.IGNORED))) {
+                throw new CommandException(ErrorCode.E1015, jobStatus,
+                        " Only FAILED, KILLED, IGNORED job can be changed to RUNNING. Current job status is "
+                                + coordJob.getStatus());
+            }
+        }
+        else {
+            if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
+                    CoordinatorJob.Status.KILLED))
+                    || coordJob.isPending()) {
+                throw new CommandException(ErrorCode.E1015, jobStatus,
+                        " Only FAILED or KILLED non-pending job can be changed to IGNORED. Current job status is "
+                                + coordJob.getStatus() + " and pending status is " + coordJob.isPending());
+            }
         }
     }
 
@@ -299,7 +310,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private void check(CoordinatorJobBean coordJob, Date newEndTime, Integer newConcurrency, Date newPauseTime,
             CoordinatorJob.Status jobStatus) throws CommandException {
 
-        if (coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
+        if (coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
             if (jobStatus == null || (newEndTime != null || newConcurrency != null || newPauseTime != null)) {
                 throw new CommandException(ErrorCode.E1016);
             }
@@ -396,13 +408,16 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             }
             if (jobStatus != null) {
                 coordJob.setStatus(jobStatus);
-                LOG.info("Coord status is changed to RUNNING from " + prevStatus);
-                coordJob.setPending();
+                LOG.info("Coord status is changed to " + jobStatus + " from " + prevStatus);
                 if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+                    coordJob.setPending();
                     if (coordJob.getNextMaterializedTime() != null
                             && coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
                         coordJob.resetDoneMaterialization();
                     }
+                } else if (jobStatus.equals(CoordinatorJob.Status.IGNORED)) {
+                    coordJob.resetPending();
+                    coordJob.setDoneMaterialization();
                 }
             }
 

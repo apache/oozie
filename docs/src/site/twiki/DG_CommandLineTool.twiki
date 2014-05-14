@@ -69,6 +69,8 @@ usage:
                 -update               Update coordinator definition and properties
                 -logfilter            job log search parameter. Can be specified as -logfilter opt1=val1;opt2=val1;opt3=val1.
                                       Supported options are recent, start, end, loglevel, text, limit and debug.
+                -ignore <arg>         ignore a coordinator job or action
+                                      (requires '-action' to ignore a coordinator action, if no option given, ignore a coodinator job)
 .
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
@@ -352,10 +354,11 @@ Conditions and usage:
    * Repeated value names are not allowed.
    * New end time should not be before job's start time and last action time.
    * If end time is before job start time and if the job has not materialized any actions, then job status is changed to SUCCEEDED.
-   * Currently status only takes RUNNING and can be used to change the status of FAILED or KILLED coordinator job to RUNNING and resuming materialization. This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED or KILLED coordinator actions they have to be rerun separately.
+   * Currently status only takes RUNNING and can be used to change the status of FAILED, KILLED, IGNORED coordinator job to RUNNING and resuming materialization. This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED, KILLED or IGNORED coordinator actions they have to be rerun separately.
    * New concurrency value has to be a valid integer.
    * All lookahead actions which are in WAITING/READY state will be revoked according to the new pause/end time. If any action after new pause/end time is not in WAITING/READY state, an exception will be thrown.
    * Also empty string "" can be used to reset pause time to none.
+   * Endtime/concurency/pausetime of IGNORED Job cannot be changed.
 
 After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.
 
@@ -409,7 +412,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
 (if neither -action nor -date is given, the exception will be thrown.)
 </verbatim>
 
-The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
+The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=, =IGNORED=) coordiantor action when coordiator job
 is not in =FAILED= or =KILLED= state.
 
 After the command is executed the rerun coordiator action will be in =WAITING= status.
@@ -754,6 +757,36 @@ $ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0
    </property>
 **********************************
 </verbatim>
+
+---+++ Ignore a Coordinator Job
+
+Example:
+
+<verbatim>
+$oozie job -ignore <coord_Job_id>
+</verbatim>
+
+The =ignore= option changes a coordinator job in =KILLED=, =FAILED= to =IGNORED= state.
+When a coordinator job in a bundle is in =IGNORED= state, the coordinator job doesn't impact the state of the bundle job.
+For example, when a coordinator job in a bundle failed and afterwards ignored, the bundle job becomes =SUCCEEDED= instead of =DONEWITHERROR= as long as other coordinator jobs in the bundle succeeded.
+ A ignored coordinator job can be changed to =RUNNING= using -change command.
+ Refer to the [[DG_CommandLineTool#Changing_endtimeconcurrencypausetimestatus_of_a_Coordinator_Job][Coordinator job change command]] for details.
+
+---+++ Ignore a Coordinator Action or Multiple Coordinator Actions
+
+Example:
+
+<verbatim>
+$oozie job -ignore <coord_Job_id> -action 1,3-4,7-40
+</verbatim>
+The =ignore= option changes a coordinator action(s) in terminal state (=KILLED=, =FAILED=, =TIMEDOUT=) to =IGNORED= state, while not changing the state of the coordinator job.
+When a coordinator action is in =IGNORED= state, the action doesn't impact the state of a coordinator job.
+For example, when a coordinator action failed and afterwards ignored, a coordinator job becomes =SUCCEEDED= instead of =DONEWITHERROR= as long
+ as other coordinator actions succeeded.
+
+A ignored coordinator action can be rerun using -rerun command.
+Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details.
+When a workflow job of a ignored coordinator action is rerun, the coordinator action becomes =RUNNING= state.
 
 ---++ Jobs Operations
 

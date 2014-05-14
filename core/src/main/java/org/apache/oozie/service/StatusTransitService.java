@@ -189,7 +189,7 @@ public class StatusTransitService implements Service {
                             Job.Status[] bundleStatus = new Job.Status[1];
                             bundleStatus[0] = bundleJob.getStatus();
                             List<BundleActionBean> bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                                BundleActionQuery.GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE, jobId);
+                                BundleActionQuery.GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE, jobId);
                             HashMap<Job.Status, Integer> bundleActionStatus = new HashMap<Job.Status, Integer>();
                             boolean foundPending = false;
                             for (BundleActionBean bAction : bundleActions) {
@@ -744,10 +744,11 @@ public class StatusTransitService implements Service {
                     }
                     // Running coord job might have pending false
                     Job.Status coordJobStatus = coordJob.getStatus();
-                    if (coordJob.isPending() || coordJobStatus.equals(Job.Status.PAUSED)
+                    if ((coordJob.isPending() || coordJobStatus.equals(Job.Status.PAUSED)
                             || coordJobStatus.equals(Job.Status.RUNNING)
                             || coordJobStatus.equals(Job.Status.RUNNINGWITHERROR)
-                            || coordJobStatus.equals(Job.Status.PAUSEDWITHERROR)) {
+                            || coordJobStatus.equals(Job.Status.PAUSEDWITHERROR))
+                            && !coordJobStatus.equals(Job.Status.IGNORED)) {
                         pendingJobCheckList.add(coordJob);
                     }
                 }

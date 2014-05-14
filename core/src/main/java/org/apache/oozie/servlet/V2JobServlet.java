@@ -18,19 +18,26 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -119,4 +126,66 @@ public class V2JobServlet extends V1JobServlet {
         return json;
     }
 
+    /**
+     * Ignore a coordinator job
+     * @param request request object
+     * @param response response object
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        String jobId = getResourceName(request);
+        if (jobId.endsWith("-W")) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Workflow Ignore Not supported");
+        } else if (jobId.endsWith("-B")) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Bundle Ignore Not supported");
+        } else {
+            return ignoreCoordinatorJob(request, response);
+        }
+
+    }
+
+    /**
+     * Ignore a coordinator job/action
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws XServletException
+     */
+    @SuppressWarnings("unchecked")
+    private JSONObject ignoreCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException {
+        JSONObject json = null;
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
+                getUser(request));
+        String jobId = getResourceName(request);
+        String type = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
+        String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
+        String changeValue = "status=" + CoordinatorAction.Status.IGNORED;
+        List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
+        try {
+            if (type != null && !type.equals(RestConstants.JOB_COORD_SCOPE_ACTION)) {
+                throw new CommandException(ErrorCode.E1024, "Currently ignore only support -action option");
+            }
+            CoordinatorActionInfo coordInfo = null;
+            if(scope == null || scope.isEmpty()) {
+                coordEngine.change(jobId, changeValue);
+            } else{
+                coordInfo = coordEngine.ignore(jobId, type, scope);
+            }
+            if(coordInfo != null) {
+                coordActions = coordInfo.getCoordActions();
+                json = new JSONObject();
+                json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
+            }
+            return json;
+        }
+        catch (CommandException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (CoordinatorEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
 }

@@ -35,7 +35,6 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsRunningJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -102,7 +101,8 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         super.eagerVerifyPrecondition();
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
                 || coordJob.getStatus() == CoordinatorJob.Status.FAILED
-                || coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
+                || coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
             LOG.info("CoordSuspendXCommand is not going to execute because "
                     + "job finished or failed or killed, id = " + jobId + ", status = " + coordJob.getStatus());
             throw new PreconditionException(ErrorCode.E0728, jobId, coordJob.getStatus().toString());

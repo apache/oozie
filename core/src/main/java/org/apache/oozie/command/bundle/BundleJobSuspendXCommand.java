@@ -114,7 +114,7 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
 
         try {
             bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleJob.getId());
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleJob.getId());
         }
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E1311, jobId);

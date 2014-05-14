@@ -638,6 +638,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
             case FAILED:
             case KILLED:
             case DONEWITHERROR:
+            case IGNORED:
                 isTerminal = true;
                 break;
             default:

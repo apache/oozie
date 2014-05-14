@@ -25,7 +25,7 @@ import java.util.Date;
 
 public interface CoordinatorAction {
     /**
-     * Defines the possible stati of an application instance.
+     * Defines the possible status of an application instance.
      */
     public static enum Status {
         WAITING,
@@ -37,7 +37,7 @@ public interface CoordinatorAction {
         SUCCEEDED,
         KILLED,
         FAILED,
-        DISCARDED
+        IGNORED
     }
 
     /**

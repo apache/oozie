@@ -48,7 +48,7 @@ public class CoordJobGetActionsStatusJPAExecutor implements JPAExecutor<List<Coo
     @Override
     public List<CoordinatorAction.Status> execute(EntityManager em) throws JPAExecutorException {
         try {
-            Query q = em.createNamedQuery("GET_COORD_ACTIONS_STATUS");
+            Query q = em.createNamedQuery("GET_COORD_ACTIONS_STATUS_UNIGNORED");
             q.setParameter("jobId", coordJobId);
             List<String> coordStatusResultList = q.getResultList();
             List<CoordinatorAction.Status> coordStatus = new ArrayList<CoordinatorAction.Status>();

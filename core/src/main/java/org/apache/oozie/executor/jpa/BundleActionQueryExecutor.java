@@ -44,10 +44,10 @@ public class BundleActionQueryExecutor extends
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME,
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID,
         GET_BUNDLE_ACTION,
-        GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
         GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME,
         GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN,
-        GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE
+        GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE
     };
 
     private static BundleActionQueryExecutor instance = new BundleActionQueryExecutor();
@@ -108,7 +108,7 @@ public class BundleActionQueryExecutor extends
             case GET_BUNDLE_ACTION:
                 query.setParameter("bundleActionId", parameters[0]);
                 break;
-            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+            case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
                 break;
             case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
@@ -118,7 +118,7 @@ public class BundleActionQueryExecutor extends
                 Timestamp ts = new Timestamp(System.currentTimeMillis() - (Long)parameters[0] * 1000);
                 query.setParameter("lastModifiedTime", ts);
                 break;
-            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+            case GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
                 break;
             default:
@@ -153,7 +153,7 @@ public class BundleActionQueryExecutor extends
         Object[] arr;
         switch (namedQuery) {
             case GET_BUNDLE_ACTION:
-            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+            case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 bean = (BundleActionBean) ret;
                 break;
             case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
@@ -169,7 +169,7 @@ public class BundleActionQueryExecutor extends
                 bean.setCoordId((String) arr[3]);
                 bean.setCoordName((String) arr[4]);
                 break;
-            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+            case GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE:
                 bean = new BundleActionBean();
                 arr = (Object[]) ret;
                 bean.setCoordId((String) arr[0]);

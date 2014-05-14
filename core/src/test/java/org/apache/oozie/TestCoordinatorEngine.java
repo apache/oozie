@@ -500,7 +500,9 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [status=blahblah], invalid status value [blahblah]. Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT SUCCEEDED KILLED FAILED DISCARDED ]", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [status=blahblah], invalid status value [blahblah]."
+                    + " Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT "
+                    + "SUCCEEDED KILLED FAILED IGNORED ]", ex.getMessage());
         }
 
         // Check for empty status value
@@ -509,7 +511,9 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [status=\"\"], invalid status value [\"\"]. Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT SUCCEEDED KILLED FAILED DISCARDED ]", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [status=\"\"], invalid status value [\"\"]. "
+                    + "Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT "
+                    + "SUCCEEDED KILLED FAILED IGNORED ]", ex.getMessage());
         }
 
         // Check for invalid filter option

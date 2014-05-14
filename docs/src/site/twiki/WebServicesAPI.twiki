@@ -1682,6 +1682,26 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++++ Managing a Job
+---+++++ Ignore a Coordinator Job or Action
+
+A ignore request is done with an HTTP PUT request with a =ignore=
+
+The =type= parameter supports =action= only.
+The =scope= parameter can contain coodinator action id(s) to be ignored.
+Multiple action ids can be passed to the =scope= parameter
+
+*Request:*
+
+Ignore a coordinator job
+<verbatim>
+PUT /oozie/v2/job/job-3?action=ignore
+</verbatim>
+
+Ignore coordinator actions
+<verbatim>
+PUT /oozie/v2/job/job-3?action=ignore&type=action&scope=3-4
+</verbatim>
 </noautolink>
 
 

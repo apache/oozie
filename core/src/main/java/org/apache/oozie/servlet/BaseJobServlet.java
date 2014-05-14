@@ -109,6 +109,17 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             response.setStatus(HttpServletResponse.SC_OK);
         }
+        else if (action.equals(RestConstants.JOB_ACTION_IGNORE)) {
+            stopCron();
+            JSONObject json = ignoreJob(request, response);
+            startCron();
+            if (json != null) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else {
+            response.setStatus(HttpServletResponse.SC_OK);
+            }
+        }
         else if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
             validateContentType(request, RestConstants.XML_CONTENT_TYPE);
             Configuration conf = new XConfiguration(request.getInputStream());
@@ -161,6 +172,9 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                     RestConstants.ACTION_PARAM, action);
         }
     }
+
+    abstract JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
 
     /**
      * Validate the configuration user/group. <p/>

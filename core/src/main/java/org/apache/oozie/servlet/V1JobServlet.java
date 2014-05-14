@@ -177,6 +177,10 @@ public class V1JobServlet extends BaseJobServlet {
             changeCoordinatorJob(request, response);
         }
     }
+    @Override
+    protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 
     /*
      * protected method to reRun a job

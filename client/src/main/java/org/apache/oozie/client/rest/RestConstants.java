@@ -70,6 +70,8 @@ public interface RestConstants {
 
     public static final String JOB_ACTION_RERUN = "rerun";
 
+    public static final String JOB_ACTION_IGNORE = "ignore";
+
     public static final String JOB_COORD_ACTION_RERUN = "coord-rerun";
 
     public static final String JOB_COORD_UPDATE = "update";

@@ -80,7 +80,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         sleep(2000);
 
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertEquals(true, actions.get(0).isCritical());
@@ -130,20 +130,20 @@ public class TestBundleStartXCommand extends XDataTestCase {
         sleep(2000);
 
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         assertEquals(2, actions.size());
 
         final String jobId = job.getId();
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {
                 List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                        BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, jobId);
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
                 return actions.get(0).getStatus().equals(Job.Status.RUNNING)
                         && actions.get(1).getStatus().equals(Job.Status.RUNNING);
             }
         });
 
-        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
                 job.getId());
         assertEquals(Job.Status.RUNNING, actions.get(0).getStatus());
         assertEquals(true, actions.get(0).isCritical());
@@ -175,7 +175,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         sleep(2000);
 
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertEquals(true, actions.get(0).isCritical());
@@ -265,7 +265,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         assertEquals(job.getStatus(), Job.Status.RUNNING);
         sleep(2000);
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         assertNull(actions.get(0).getCoordId());
         assertEquals(Job.Status.FAILED, actions.get(0).getStatus());
         Runnable runnable = new StatusTransitRunnable();

@@ -42,6 +42,7 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.util.CoordActionsInDateRange;
+import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
 import org.apache.oozie.command.coord.CoordActionsKillXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
 import org.apache.oozie.command.coord.CoordJobXCommand;
@@ -211,7 +212,18 @@ public class CoordinatorEngine extends BaseEngine {
     public void change(String jobId, String changeValue) throws CoordinatorEngineException {
         try {
             new CoordChangeXCommand(jobId, changeValue).call();
-            LOG.info("User " + user + " changed the Coordinator job " + jobId + " to " + changeValue);
+            LOG.info("User " + user + " changed the Coordinator job [" + jobId + "] to " + changeValue);
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
+    public CoordinatorActionInfo ignore(String jobId, String type, String scope) throws CoordinatorEngineException {
+        try {
+            LOG.info("User " + user + " ignore a Coordinator Action (s) [" + scope + "] of the Coordinator Job ["
+                    + jobId + "]");
+            return new CoordActionsIgnoreXCommand(jobId, type, scope).call();
         }
         catch (CommandException e) {
             throw new CoordinatorEngineException(e);

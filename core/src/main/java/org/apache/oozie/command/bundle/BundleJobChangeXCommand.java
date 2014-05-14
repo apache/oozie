@@ -219,7 +219,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, bundleJob.getId());
             this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleJob.getId());
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleJob.getId());
         }
         catch (JPAExecutorException Ex) {
             throw new CommandException(ErrorCode.E1311, this.jobId);

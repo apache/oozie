@@ -156,7 +156,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public void change(String jobId, String changeValue) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_CHANGE;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, false);
+            started.set(idx, true);
         }
 
         @Override
@@ -164,6 +164,13 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of rerun"));
         }
 
+        @Override
+        public CoordinatorActionInfo ignore(String jobId, String type, String scope) throws CoordinatorEngineException {
+            did = RestConstants.JOB_ACTION_IGNORE;
+            int idx = validateCoordinatorIdx(jobId);
+            started.set(idx, true);
+            return null;
+        }
         @Override
         public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh,
                 boolean noCleanup) throws BaseEngineException {

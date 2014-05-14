@@ -106,9 +106,10 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
                 || coordJob.getStatus() == CoordinatorJob.Status.FAILED
                 || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                || coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
-            LOG.info("CoordKillXCommand not killed - job either finished SUCCEEDED, FAILED, KILLED or DONEWITHERROR, job id = "
-                    + jobId + ", status = " + coordJob.getStatus());
+                || coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
+            LOG.info("CoordKillXCommand not killed - job either finished SUCCEEDED, FAILED, KILLED, DONEWITHERROR"
+                    + " or IGNORED,job id = " + jobId + ", status = " + coordJob.getStatus());
             throw new PreconditionException(ErrorCode.E1020, jobId);
         }
     }

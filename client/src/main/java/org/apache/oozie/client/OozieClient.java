@@ -788,6 +788,17 @@ public class OozieClient {
         new JobAction(jobId, RestConstants.JOB_ACTION_CHANGE, changeValue).call();
     }
 
+    /**
+     * Ignore a coordinator job.
+     *
+     * @param jobId coord job Id.
+     * @param scope list of coord actions to be ignored
+     * @throws OozieClientException thrown if the job could not be changed.
+     */
+    public List<CoordinatorAction> ignore(String jobId, String scope) throws OozieClientException {
+        return new CoordIgnore(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, scope).call();
+    }
+
     private class JobInfo extends ClientCallable<WorkflowJob> {
 
         JobInfo(String jobId, int start, int len) {
@@ -1259,7 +1270,6 @@ public class OozieClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected List<WorkflowJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
@@ -1382,6 +1392,30 @@ public class OozieClient {
         }
     }
 
+    private class CoordIgnore extends ClientCallable<List<CoordinatorAction>> {
+        CoordIgnore(String jobId, String rerunType, String scope) {
+            super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_ACTION_IGNORE, RestConstants.JOB_COORD_RANGE_TYPE_PARAM,
+                    rerunType, RestConstants.JOB_COORD_SCOPE_PARAM, scope));
+        }
+
+        @Override
+        protected List<CoordinatorAction> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                if(json != null) {
+                    JSONArray coordActions = (JSONArray) json.get(JsonTags.COORDINATOR_ACTIONS);
+                    return JsonToBean.createCoordinatorActionList(coordActions);
+                }
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
     private class CoordRerun extends ClientCallable<List<CoordinatorAction>> {
 
         CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
@@ -1507,7 +1541,6 @@ public class OozieClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
@@ -1532,7 +1565,6 @@ public class OozieClient {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());

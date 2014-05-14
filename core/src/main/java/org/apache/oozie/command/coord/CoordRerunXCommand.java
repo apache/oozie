@@ -263,16 +263,22 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
 
-        // no actioins have been created for PREP job
-        if (coordJob.getStatus() == CoordinatorJob.Status.PREP) {
+        // no actions have been created for PREP job
+        if (coordJob.getStatus() == CoordinatorJob.Status.PREP || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
             LOG.info("CoordRerunXCommand is not able to run, job status=" + coordJob.getStatus() + ", jobid=" + jobId);
             // Call the parent so the pending flag is reset and state transition
             // of bundle can happen
             if (coordJob.getBundleId() != null) {
                 bundleStatusUpdate.call();
             }
-            throw new CommandException(ErrorCode.E1018,
-                    "coordinator job is PREP so no actions are materialized to rerun!");
+            if (coordJob.getStatus() == CoordinatorJob.Status.PREP) {
+                throw new CommandException(ErrorCode.E1018,
+                        "coordinator job is PREP so no actions are materialized to rerun!");
+            }
+            else {
+                throw new CommandException(ErrorCode.E1018,
+                        "coordinator job is IGNORED, please change it to RUNNING before rerunning actions");
+            }
         }
     }
 

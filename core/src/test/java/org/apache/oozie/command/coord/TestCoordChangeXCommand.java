@@ -660,6 +660,50 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
     }
 
+    public void testCoordStatus_Ignored() throws Exception {
+        Date start = new Date();
+        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        String statusToRUNNING = "status=RUNNING";
+        String statusToIGNORED = "status=IGNORED";
+        final CoordinatorJobBean job1 = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.IGNORED, start,
+                end, end, false, false, 4);
+        final CoordinatorJobBean job2 = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start,
+                end, end, false, false, 4);
+        final CoordinatorJobBean job3 = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, start,
+                end, end, false, false, 4);
+        final CoordinatorJobBean job4 = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.FAILED, start,
+                end, end, true, false, 4);
+
+        // Status change from IGNORED to RUNNING
+        new CoordChangeXCommand(job1.getId(), statusToRUNNING).call();
+        CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance()
+                .get(CoordJobQuery.GET_COORD_JOB, job1.getId());
+        assertEquals(coordJob.getStatus(), Job.Status.RUNNING);
+
+        // Status change from KILLED -> IGNORED
+        new CoordChangeXCommand(job2.getId(), statusToIGNORED).call();
+        coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job2.getId());
+        assertEquals(coordJob.getStatus(), Job.Status.IGNORED);
+
+        // Status change from RUNNING -> IGNORED
+        try {
+            new CoordChangeXCommand(job3.getId(), statusToIGNORED).call();
+        }
+        catch (CommandException ex) {
+            assertEquals(ErrorCode.E1015, ex.getErrorCode());
+            assertTrue(ex.getMessage().indexOf(
+                    "Only FAILED or KILLED non-pending job can be changed to IGNORED") > -1);
+        }
+        // Status change from FAILED -> IGNORED when coord job is pending
+        try {
+            new CoordChangeXCommand(job4.getId(), statusToIGNORED).call();
+        }
+        catch (CommandException ex) {
+            assertEquals(ErrorCode.E1015, ex.getErrorCode());
+            assertTrue(ex.getMessage().indexOf(
+                    "Only FAILED or KILLED non-pending job can be changed to IGNORED") > -1);
+        }
+    }
     // Status change from failed- successful
     public void testCoordStatus_Failed() throws Exception {
         Date start = new Date();

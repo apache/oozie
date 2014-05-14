@@ -117,6 +117,7 @@ public class OozieCLI {
     public static final String SQOOP_COMMAND_OPTION = "command";
     public static final String SHOWDIFF_OPTION = "diff";
     public static final String UPDATE_OPTION = "update";
+    public static final String IGNORE_OPTION = "ignore";
 
     public static final String DO_AS_OPTION = "doas";
 
@@ -322,6 +323,9 @@ public class OozieCLI {
                 "set/override value for given property").create("D");
         Option getAllWorkflows = new Option(ALL_WORKFLOWS_FOR_COORD_ACTION, false,
                 "Get workflow jobs corresponding to a coordinator action including all the reruns");
+        Option ignore = new Option(IGNORE_OPTION, true,
+                "change status of a coordinator job or action to IGNORED"
+                + " (-action required to ignore coord actions)");
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -340,6 +344,7 @@ public class OozieCLI {
         actions.addOption(log);
         actions.addOption(definition);
         actions.addOption(config_content);
+        actions.addOption(ignore);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -895,6 +900,16 @@ public class OozieCLI {
             else if (options.contains(RESUME_OPTION)) {
                 wc.resume(commandLine.getOptionValue(RESUME_OPTION));
             }
+            else if (options.contains(IGNORE_OPTION)) {
+                String ignoreScope = null;
+                if (options.contains(ACTION_OPTION)) {
+                    ignoreScope = commandLine.getOptionValue(ACTION_OPTION);
+                    if (ignoreScope == null || ignoreScope.isEmpty()) {
+                        throw new OozieCLIException("-" + ACTION_OPTION + " is empty");
+                    }
+                }
+                printCoordActionsStatus(wc.ignore(commandLine.getOptionValue(IGNORE_OPTION), ignoreScope));
+            }
             else if (options.contains(KILL_OPTION)) {
                 if (commandLine.getOptionValue(KILL_OPTION).contains("-C")
                         && (options.contains(DATE_OPTION) || options.contains(ACTION_OPTION))) {
@@ -1260,6 +1275,17 @@ public class OozieCLI {
         }
     }
 
+    private void printCoordActionsStatus(List<CoordinatorAction> actions) {
+        if (actions != null && actions.size() > 0) {
+            System.out.println("Action ID" + VERBOSE_DELIMITER + "Nominal Time" + VERBOSE_DELIMITER + "Status");
+            System.out.println(RULER);
+            for (CoordinatorAction action : actions) {
+                System.out.println(maskIfNull(action.getId()) + VERBOSE_DELIMITER
+                        + maskDate(action.getNominalTime(), null, false) + VERBOSE_DELIMITER
+                        + maskIfNull(action.getStatus().name()));
+            }
+        }
+    }
 
     @VisibleForTesting
     void printWorkflowAction(WorkflowAction action, String timeZoneId, boolean verbose) {

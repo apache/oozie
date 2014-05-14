@@ -88,7 +88,6 @@ public class BundleJobXCommand extends XCommand<BundleJobBean> {
             BundleJobBean bundleJob = null;
             if (jpaService != null) {
                 bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(id));
-
                 List<CoordinatorJobBean> coordinators = jpaService.execute(new BundleJobGetCoordinatorsJPAExecutor(id));
                 bundleJob.setCoordJobs(coordinators);
             }

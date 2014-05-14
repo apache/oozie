@@ -160,7 +160,7 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         try {
             bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, bundleId);
             bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleId);
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleId);
         }
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E0604, bundleId);
