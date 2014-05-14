@@ -129,7 +129,8 @@
             org.apache.oozie.service.PauseTransitService,
             org.apache.oozie.service.GroupsService,
             org.apache.oozie.service.ProxyUserService,
-            org.apache.oozie.service.XLogStreamingService
+            org.apache.oozie.service.XLogStreamingService,
+            org.apache.oozie.service.JvmPauseMonitorService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -2080,5 +2081,29 @@
         This setting is separate from max.log.scan.duration as we want to allow higher durations when actions are specified.
         </description>
     </property>
+
+    <!-- JvmPauseMonitorService Configuration -->
+    <property>
+        <name>oozie.service.JvmPauseMonitorService.warn-threshold.ms</name>
+        <value>10000</value>
+        <description>
+            The JvmPauseMonitorService runs a thread that repeatedly tries to detect when the JVM pauses, which could indicate
+            that the JVM or host machine is overloaded or other problems.  This thread sleeps for 500ms; if it sleeps for
+            significantly longer, then there is likely a problem.  This property specifies the threadshold for when Oozie should log
+            a WARN level message; there is also a counter named "jvm.pause.warn-threshold".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.JvmPauseMonitorService.info-threshold.ms</name>
+        <value>1000</value>
+        <description>
+            The JvmPauseMonitorService runs a thread that repeatedly tries to detect when the JVM pauses, which could indicate
+            that the JVM or host machine is overloaded or other problems.  This thread sleeps for 500ms; if it sleeps for
+            significantly longer, then there is likely a problem.  This property specifies the threadshold for when Oozie should log
+            an INFO level message; there is also a counter named "jvm.pause.info-threshold".
+        </description>
+    </property>
+
 
 </configuration>
