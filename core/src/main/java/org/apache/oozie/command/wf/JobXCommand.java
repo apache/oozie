@@ -32,8 +32,8 @@ import org.apache.oozie.util.ParamChecker;
  */
 public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
     private final String id;
-    private final int start = 1;
-    private final int len = Integer.MAX_VALUE;
+    private int start = 1;
+    private int len = Integer.MAX_VALUE;
     private WorkflowJobBean workflow;
 
     public JobXCommand(String id) {
@@ -49,6 +49,8 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
     public JobXCommand(String id, int start, int length) {
         super("job.info", "job.info", 1, true);
         this.id = ParamChecker.notEmpty(id, "id");
+        this.start = start;
+        this.len = length;
     }
 
     /* (non-Javadoc)
