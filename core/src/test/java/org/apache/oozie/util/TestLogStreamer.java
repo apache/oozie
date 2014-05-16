@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,7 +31,6 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XTestCase;
 
 public class TestLogStreamer extends XTestCase {
@@ -40,7 +40,7 @@ public class TestLogStreamer extends XTestCase {
 
     private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
 
-    public void testStreamLog() throws IOException, CommandException, ServiceException {
+    public void testStreamLog() throws IOException, CommandException, ServiceException, ParseException {
         new Services().init();
 
         long currTime = System.currentTimeMillis();
@@ -148,7 +148,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 10 * 3600000), new Date(currTime - 5 * 3600000), 4096);
+        str.streamLog(sw, DateUtils.parseDateOozieTZ("2009-06-24T02:43Z"), new Date(currTime - 5 * 3600000), 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -294,7 +294,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
 
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 5000), new Date(currTime + 5000), 4096);
+        str.streamLog(sw, null, null, 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
         // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering

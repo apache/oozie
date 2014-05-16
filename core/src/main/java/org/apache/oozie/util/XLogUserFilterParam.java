@@ -56,6 +56,8 @@ public class XLogUserFilterParam {
     private boolean isDebug = false;
     private String searchText;
 
+    private String params;
+
     public static final ThreadLocal<SimpleDateFormat> dt = new ThreadLocal<SimpleDateFormat>() {
         @Override
         protected SimpleDateFormat initialValue() {
@@ -104,6 +106,8 @@ public class XLogUserFilterParam {
      * @throws Exception
      */
     private void parseFilterParam(String param) throws Exception {
+        this.params = param;
+
         if (StringUtils.isEmpty(param)) {
             return;
         }
@@ -264,13 +268,7 @@ public class XLogUserFilterParam {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append(START_TIME).append("=").append(getStartDate()).append(";");
-        sb.append(END_TIME).append("=").append(getEndDate()).append(";");
-        sb.append(LOG_LEVEL).append("=").append(getLogLevel()).append(";");
-        sb.append(LIMIT).append("=").append(getLimit()).append(";");
-        sb.append(RECENT_LOG_OFFSET).append("=").append(getRecent()).append(";");
-        return sb.toString();
+        return params;
     }
 
     private int getOffsetInMinute(String offset) throws IOException {

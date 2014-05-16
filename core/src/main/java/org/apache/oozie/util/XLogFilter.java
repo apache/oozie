@@ -52,6 +52,7 @@ public class XLogFilter {
     private Date startDate;
     private boolean isActionList = false;
     private String formattedEndDate;
+    private String formattedStartDate;
 
     // TODO Patterns to be read from config file
     private static final String DEFAULT_REGEX = "[^\\]]*";
@@ -121,6 +122,11 @@ public class XLogFilter {
      * @return
      */
     public boolean matches(ArrayList<String> logParts) {
+        if (getStartDate() != null) {
+            if (logParts.get(0).substring(0, 19).compareTo(getFormattedStartDate()) < 0) {
+                return false;
+            }
+        }
         String logLevel = logParts.get(1);
         String logMessage = logParts.get(2);
         if (this.logLevels == null || this.logLevels.containsKey(logLevel.toUpperCase())) {
@@ -206,6 +212,9 @@ public class XLogFilter {
         return formattedEndDate;
     }
 
+    public String getFormattedStartDate() {
+        return formattedStartDate;
+    }
 
     public Date getStartDate() {
         return startDate;
@@ -274,6 +283,7 @@ public class XLogFilter {
         }
 
         formattedEndDate = XLogUserFilterParam.dt.get().format(getEndDate());
+        formattedStartDate = XLogUserFilterParam.dt.get().format(getStartDate());
     }
 
     /**
