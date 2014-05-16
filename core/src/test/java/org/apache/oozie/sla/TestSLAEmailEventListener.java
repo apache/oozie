@@ -340,6 +340,28 @@ public class TestSLAEmailEventListener extends XTestCase {
         assertEquals(msgs.length, 0);
     }
 
+    public void testNoDestAddress() throws Exception {
+        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        SLARegistrationBean eventBean = event.getSLARegistrationBean();
+        Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
+        // set empty address as alert contact
+        eventBean.setAlertContact("");
+        event.setEventStatus(EventStatus.START_MISS);
+        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        eventBean.setAppType(AppType.COORDINATOR_ACTION);
+        eventBean.setAppName("Test-SLA-Start-Miss");
+        eventBean.setUser("dummyuser");
+        eventBean.setExpectedStart(startDate);
+        eventBean.setNotificationMsg("notification of start miss");
+        eventBean.setAppType(AppType.COORDINATOR_ACTION);
+        event.setActualStart(DateUtils.parseDateUTC("2013-01-01T01:00Z"));
+
+        slaEmailListener.onStartMiss(event);
+
+        MimeMessage[] msgs = greenMail.getReceivedMessages();
+        assertEquals(msgs.length, 0);
+    }
+
     public void testMultipleDestAddress() throws Exception {
         SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
         SLARegistrationBean eventBean = event.getSLARegistrationBean();

@@ -159,10 +159,16 @@ public class SLAEmailEventListener extends SLAEventListener {
     }
 
     private void sendSLAEmail(SLAEvent event) throws Exception {
-        Message message = new MimeMessage(session);
-        setMessageHeader(message, event);
-        setMessageBody(message, event);
-        sendEmail(message);
+        // If no address is provided, the user did not want to send an email so simply log it and do nothing
+        if (event.getAlertContact() == null || event.getAlertContact().trim().length() == 0) {
+            LOG.info("No destination address provided; an SLA alert email will not be sent");
+        } else {
+            // Create and send an email
+            Message message = new MimeMessage(session);
+            setMessageHeader(message, event);
+            setMessageBody(message, event);
+            sendEmail(message);
+        }
     }
 
     @Override
