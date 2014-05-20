@@ -144,7 +144,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         if (!wfAction.isPending() || wfAction.getStatus() != WorkflowActionBean.Status.RUNNING) {
             throw new PreconditionException(ErrorCode.E0815, wfAction.isPending(), wfAction.getStatusStr());
         }
-        if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
+        if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.SUSPENDED) {
             wfAction.setLastCheckTime(new Date());
             try {
                 WorkflowActionQueryExecutor.getInstance().executeUpdate(

@@ -81,21 +81,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId(), 10);
 
-        Long counterVal = new Long(0);
+        long counterVal;
 
         try {
             counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         } catch (NullPointerException e){
             //counter might be null
+            counterVal = 0L;
         }
 
-        assertEquals(new Long(0), new Long(counterVal));
+        assertEquals(0L, counterVal);
 
         checkCmd.call();
 
         //precondition failed because of actionCheckDelay > 0
         counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
-        assertEquals(new Long(1), new Long(counterVal));
+        assertEquals(1L, counterVal);
     }
 
     /**
@@ -111,21 +112,22 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
 
-        Long counterVal = new Long(0);
+        long counterVal;
 
         try {
             counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         } catch (NullPointerException e){
             //counter might be null
+            counterVal = 0L;
         }
 
-        assertEquals(new Long(0), new Long(counterVal));
+        assertEquals(0L, counterVal);
 
         checkCmd.call();
 
         //precondition failed because of pending = false
         counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
-        assertEquals(new Long(1), new Long(counterVal));
+        assertEquals(1L, counterVal);
     }
 
     /**
@@ -141,25 +143,26 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
 
-        Long counterVal = new Long(0);
+        long counterVal;
 
         try{
             counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         } catch (NullPointerException e){
             //counter might be null
+            counterVal = 0L;
         }
 
-        assertEquals(new Long(0), new Long(counterVal));
+        assertEquals(0L, counterVal);
 
         checkCmd.call();
 
         //precondition failed because of action != RUNNING
         counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
-        assertEquals(new Long(1), new Long(counterVal));
+        assertEquals(1L, counterVal);
     }
 
     /**
-     * Test : verify the PreconditionException is thrown when job != RUNNING
+     * Test : verify the PreconditionException is thrown when job != RUNNING && job != SUSPENDED
      *
      * @throws Exception
      */
@@ -167,25 +170,75 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Instrumentation inst = Services.get().get(InstrumentationService.class).get();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
         ActionCheckXCommand checkCmd = new ActionCheckXCommand(action.getId());
 
-        Long counterVal = new Long(0);
+        long counterVal;
 
         try {
             counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
         } catch (NullPointerException e){
             //counter might be null
+            counterVal = 0L;
         }
 
-        assertEquals(new Long(0), new Long(counterVal));
+        assertEquals(0L, counterVal);
 
         checkCmd.call();
 
-        //precondition failed because of job != RUNNING
-        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
-        assertEquals(new Long(1), new Long(counterVal));
+        //precondition failed because of job != RUNNING && job != SUSPENDED
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
+            .get(checkCmd.getName() + ".preconditionfailed").getValue();
+        assertEquals(1L, counterVal);
+
+        job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        checkCmd = new ActionCheckXCommand(action.getId());
+
+        checkCmd.call();
+
+        //precondition passed because job == RUNNING so counter shouldn't have incremented
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
+            .get(checkCmd.getName() + ".preconditionfailed").getValue();
+        assertEquals(1L, counterVal);
+
+        job = this.addRecordToWfJobTable(WorkflowJob.Status.SUSPENDED, WorkflowInstance.Status.SUSPENDED);
+        action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        checkCmd = new ActionCheckXCommand(action.getId());
+
+        checkCmd.call();
+
+        //precondition passed because job == SUSPENDED so counter shouldn't have incremented
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
+            .get(checkCmd.getName() + ".preconditionfailed").getValue();
+        assertEquals(1L, counterVal);
+
+        job = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        checkCmd = new ActionCheckXCommand(action.getId());
+
+        checkCmd.call();
+
+        //precondition failed because of job != RUNNING && job != SUSPENDED
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
+            .get(checkCmd.getName() + ".preconditionfailed").getValue();
+        assertEquals(2L, counterVal);
+
+        job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        checkCmd = new ActionCheckXCommand(action.getId());
+
+        checkCmd.call();
+
+        //precondition failed because of job != RUNNING && job != SUSPENDED
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
+            .get(checkCmd.getName() + ".preconditionfailed").getValue();
+        assertEquals(3L, counterVal);
     }
 
     public void testActionCheck() throws Exception {

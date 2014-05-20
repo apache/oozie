@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1849 If the underlying job finishes while a Workflow is suspended, Oozie can take a while to realize it (rkanter)
 OOZIE-1835 NullPointerException from SLAEmailEventListener (rkanter)
 OOZIE-1809 offset and len options are ignored in oozie job -info for workflow (ryota)
 OOZIE-1826 Add thread which detects JVM pauses (rkanter)
