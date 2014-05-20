@@ -113,7 +113,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             }
             // Otherwise, we have to go collate relevant logs from the other Oozie servers
             else {
-                collateLogs(filter, startTime, endTime, writer);
+                collateLogs(filter, startTime, endTime, writer, params);
             }
         }
         else {
@@ -133,7 +133,8 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
      * @param writer
      * @throws IOException
      */
-    private void collateLogs(XLogFilter filter, Date startTime, Date endTime, Writer writer) throws IOException {
+    private void collateLogs(XLogFilter filter, Date startTime, Date endTime, Writer writer,
+            Map<String, String[]> params) throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         List<String> badOozies = new ArrayList<String>();
         List<ServiceInstance<Map>> oozies = null;
@@ -164,7 +165,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                      // Server from trying aggregate logs from the other Oozie servers (and creating an infinite recursion)
                         final String url = otherUrl + "/v" + OozieClient.WS_PROTOCOL_VERSION + "/" + RestConstants.JOB
                                 + "/" + jobId + "?" + RestConstants.JOB_SHOW_PARAM + "=" + RestConstants.JOB_SHOW_LOG
-                                + "&" + RestConstants.ALL_SERVER_REQUEST + "=false";
+                                + "&" + RestConstants.ALL_SERVER_REQUEST + "=false" + AuthUrlClient.getQueryParamString(params);
 
                         BufferedReader reader = AuthUrlClient.callServer(url);
                         parsers.add(new SimpleTimestampedMessageParser(reader, filter));
