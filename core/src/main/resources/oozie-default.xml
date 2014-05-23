@@ -2048,6 +2048,14 @@
     </property>
 
     <property>
+        <name>oozie.service.ShareLibService.purge.interval</name>
+        <value>1</value>
+        <description>
+            How often, in days, Oozie should check for old ShareLibs and LauncherLibs to purge from HDFS.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.jobinfo.enable</name>
         <value>false</value>
         <description>

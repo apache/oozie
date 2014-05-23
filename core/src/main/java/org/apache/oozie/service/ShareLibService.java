@@ -63,6 +63,8 @@ public class ShareLibService implements Service, Instrumentable {
 
     public static final String SHIP_LAUNCHER_JAR = "oozie.action.ship.launcher.jar";
 
+    public static final String PURGE_INTERVAL = CONF_PREFIX + "ShareLibService.purge.interval";
+
     private static final String PERMISSION_STRING = "-rwxr-xr-x";
 
     public static final String LAUNCHER_PREFIX = "launcher_";
@@ -114,18 +116,25 @@ public class ShareLibService implements Service, Instrumentable {
                             + "'oozie admin' CLI command to update the sharelib", ioe);
             LOG.error(se);
         }
-        try {
-            //Only one server should purge sharelib
-            if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
-                final Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
-                purgeLibs(fs, LAUNCHER_PREFIX, current);
-                purgeLibs(fs, SHARED_LIB_PREFIX, current);
+        Runnable purgeLibsRunnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.flush();
+                try {
+                    //Only one server should purge sharelib
+                    if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
+                        final Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
+                        purgeLibs(fs, LAUNCHER_PREFIX, current);
+                        purgeLibs(fs, SHARED_LIB_PREFIX, current);
+                    }
+                }
+                catch (IOException e) {
+                    LOG.error("There was an issue purging the sharelib", e);
+                }
             }
-        }
-        catch (Exception e) {
-            LOG.error("There was an issue purging the sharelib", e);
-        }
-
+        };
+        services.get(SchedulerService.class).schedule(purgeLibsRunnable, 10,
+                services.getConf().getInt(PURGE_INTERVAL, 1) * 60 * 60 * 24, SchedulerService.Unit.SEC);
     }
 
     /**
@@ -369,15 +378,14 @@ public class ShareLibService implements Service, Instrumentable {
      * @param fs the fs
      * @param prefix the prefix
      * @throws IOException Signals that an I/O exception has occurred.
-     * @throws ParseException the parse exception
      */
-    private void purgeLibs(FileSystem fs, final String prefix, final Date current) throws IOException, ParseException {
+    private void purgeLibs(FileSystem fs, final String prefix, final Date current) throws IOException {
         Path executorLibBasePath = services.get(WorkflowAppService.class).getSystemLibPath();
         PathFilter directoryFilter = new PathFilter() {
             @Override
             public boolean accept(Path path) {
                 if (path.getName().startsWith(prefix)) {
-                    String name = path.getName().toString();
+                    String name = path.getName();
                     String time = name.substring(prefix.length());
                     Date d = null;
                     try {

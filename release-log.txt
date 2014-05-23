@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1783 Sharelib purging only occurs at Oozie startup (rkanter)
 OOZIE-1689 HA support for OOZIE-7(Ability to view the log information corresponding to particular coordinator action) (puru via mona)
 OOZIE-1849 If the underlying job finishes while a Workflow is suspended, Oozie can take a while to realize it (rkanter)
 OOZIE-1835 NullPointerException from SLAEmailEventListener (rkanter)
