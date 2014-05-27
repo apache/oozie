@@ -30,6 +30,7 @@ import javax.persistence.Persistence;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
+import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
@@ -51,6 +52,7 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
+import org.apache.openjpa.lib.jdbc.DecoratingDataSource;
 import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 
 /**
@@ -94,6 +96,37 @@ public class JPAService implements Service, Instrumentable {
     @Override
     public void instrument(Instrumentation instr) {
         this.instr = instr;
+
+        final BasicDataSource dataSource = getBasicDataSource();
+        if (dataSource != null) {
+            instr.addSampler("jdbc", "connections.active", 60, 1, new Instrumentation.Variable<Long>() {
+                @Override
+                public Long getValue() {
+                    return (long) dataSource.getNumActive();
+                }
+            });
+            instr.addSampler("jdbc", "connections.idle", 60, 1, new Instrumentation.Variable<Long>() {
+                @Override
+                public Long getValue() {
+                    return (long) dataSource.getNumIdle();
+                }
+            });
+        }
+    }
+
+    private BasicDataSource getBasicDataSource() {
+        // Get the BasicDataSource object; it could be wrapped in a DecoratingDataSource
+        // It might also not be a BasicDataSource if the user configured something different
+        BasicDataSource basicDataSource = null;
+        OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
+        Object connectionFactory = spi.getConfiguration().getConnectionFactory();
+        if (connectionFactory instanceof DecoratingDataSource) {
+            DecoratingDataSource decoratingDataSource = (DecoratingDataSource) connectionFactory;
+            basicDataSource = (BasicDataSource) decoratingDataSource.getInnermostDelegate();
+        } else if (connectionFactory instanceof BasicDataSource) {
+            basicDataSource = (BasicDataSource) connectionFactory;
+        }
+        return basicDataSource;
     }
 
     /**
