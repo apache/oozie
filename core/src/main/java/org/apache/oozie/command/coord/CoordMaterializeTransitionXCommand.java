@@ -17,13 +17,6 @@
  */
 package org.apache.oozie.command.coord;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
@@ -39,8 +32,8 @@ import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
@@ -50,17 +43,24 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Materialize actions for specified start and end time for coordinator job.
@@ -130,6 +130,15 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     if (EventHandlerService.isEnabled()) {
                         CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
                     }
+
+                    // TODO: time 100s should be configurable
+                    queue(new CoordActionNotificationXCommand(coordAction), 100);
+
+                    //Delay for input check = (nominal time - now)
+                    long checkDelay = coordAction.getNominalTime().getTime() - new Date().getTime();
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
+                        Math.max(checkDelay, 0));
+
                     if (coordAction.getPushMissingDependencies() != null) {
                         // TODO: Delay in catchup mode?
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
@@ -482,10 +491,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         insertList.add(actionBean);
         writeActionSlaRegistration(actionXml, actionBean);
-
-        // TODO: time 100s should be configurable
-        queue(new CoordActionNotificationXCommand(actionBean), 100);
-        queue(new CoordActionInputCheckXCommand(actionBean.getId(), actionBean.getJobId()), 100);
     }
 
     private void writeActionSlaRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {
