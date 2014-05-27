@@ -26,7 +26,7 @@ import org.apache.oozie.lock.MemoryLocks;
  * Service that provides in-memory locks.  Assumes no other Oozie servers are using the database.
  */
 public class MemoryLocksService implements Service, Instrumentable {
-    private static final String INSTRUMENTATION_GROUP = "locks";
+    protected static final String INSTRUMENTATION_GROUP = "locks";
     private MemoryLocks locks;
 
     /**

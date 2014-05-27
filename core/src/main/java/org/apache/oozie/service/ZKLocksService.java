@@ -18,6 +18,7 @@
 package org.apache.oozie.service;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.oozie.ErrorCode;
@@ -37,6 +38,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
     private ZKUtils zk;
     private static XLog LOG = XLog.getLog(ZKLocksService.class);
     private static final String LOCKS_NODE = "/locks/";
+    private final AtomicLong lockCount = new AtomicLong();
 
     /**
      * Initialize the zookeeper locks service
@@ -52,6 +54,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         catch (Exception ex) {
             throw new ServiceException(ErrorCode.E1700, ex.getMessage(), ex);
         }
+        lockCount.set(0);
     }
 
     /**
@@ -73,7 +76,13 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
      */
     @Override
     public void instrument(Instrumentation instr) {
-        // nothing to instrument
+        // Similar to MemoryLocksService's instrumentation, though this is only the number of locks this Oozie server currently has
+        instr.addVariable(INSTRUMENTATION_GROUP, "locks", new Instrumentation.Variable<Long>() {
+            @Override
+            public Long getValue() {
+                return lockCount.get();
+            }
+        });
     }
 
     /**
@@ -131,6 +140,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
 
         private ZKLockToken(InterProcessMutex lock) {
             this.lock = lock;
+            lockCount.incrementAndGet();
         }
 
         /**
@@ -140,6 +150,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         public void release() {
             try {
                 lock.release();
+                lockCount.decrementAndGet();
             }
             catch (Exception ex) {
                 LOG.warn("Could not release lock: " + ex.getMessage(), ex);
