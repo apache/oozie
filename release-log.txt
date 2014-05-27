@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1834 sla should-start is supposed to be optional but it is not (rkanter)
 OOZIE-1838 jdbc.connections.active sampler does not show up (rkanter)
 OOZIE-1801 ZKLocksService instrumentation should say how many locks this server has (rkanter)
 OOZIE-1819 Avoid early queueing of CoordActionInputCheckXCommand (shwethags via rohini)

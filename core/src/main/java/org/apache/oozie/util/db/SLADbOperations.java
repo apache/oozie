@@ -53,16 +53,17 @@ public class SLADbOperations {
         Date nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
-        if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {
-            throw new RuntimeException("should-start can't be empty");
-        }
-        int relExpectedStart = Integer.parseInt(strRelExpectedStart);
-        if (relExpectedStart < 0) {
+        if (strRelExpectedStart != null && strRelExpectedStart.length() > 0) {
+            int relExpectedStart = Integer.parseInt(strRelExpectedStart);
+            if (relExpectedStart < 0) {
+                sla.setExpectedStart(null);
+            }
+            else {
+                Date expectedStart = new Date(nominalTime.getTime() + relExpectedStart * 60 * 1000);
+                sla.setExpectedStart(expectedStart);
+            }
+        } else {
             sla.setExpectedStart(null);
-        }
-        else {
-            Date expectedStart = new Date(nominalTime.getTime() + relExpectedStart * 60 * 1000);
-            sla.setExpectedStart(expectedStart);
         }
 
         // Setting expected end time
@@ -120,17 +121,17 @@ public class SLADbOperations {
         Date nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
-        if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {
-            throw new RuntimeException("should-start can't be empty");
-        }
-        int relExpectedStart = Integer.parseInt(strRelExpectedStart);
-        if (relExpectedStart < 0) {
+        if (strRelExpectedStart != null && strRelExpectedStart.length() > 0) {
+            int relExpectedStart = Integer.parseInt(strRelExpectedStart);
+            if (relExpectedStart < 0) {
+                sla.setExpectedStart(null);
+            }
+            else {
+                Date expectedStart = new Date(nominalTime.getTime() + relExpectedStart * 60 * 1000);
+                sla.setExpectedStart(expectedStart);
+            }
+        } else {
             sla.setExpectedStart(null);
-        }
-        else {
-            Date expectedStart = new Date(nominalTime.getTime()
-                    + relExpectedStart * 60 * 1000);
-            sla.setExpectedStart(expectedStart);
         }
 
         // Setting expected end time
