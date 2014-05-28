@@ -18,6 +18,7 @@
 package org.apache.oozie.command;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -77,13 +78,13 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      * @param em
      * @throws CommandException
      */
-    public void generateEvents(CoordinatorJobBean coordJob) throws CommandException {
+    public void generateEvents(CoordinatorJobBean coordJob, Date startTime) throws CommandException {
         for(UpdateEntry entry : updateList){
             JsonBean actionBean = entry.getBean();
             if (actionBean instanceof CoordinatorActionBean) {
                 CoordinatorActionBean caBean = (CoordinatorActionBean) actionBean;
                 caBean.setJobId(coordJob.getId());
-                CoordinatorXCommand.generateEvent(caBean, coordJob.getUser(), coordJob.getAppName(), null);
+                CoordinatorXCommand.generateEvent(caBean, coordJob.getUser(), coordJob.getAppName(), startTime);
             }
             // TODO generate Coord Job event
         }

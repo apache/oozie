@@ -93,6 +93,7 @@ public class SLAService implements Service {
         return slaEnabled;
     }
 
+    @VisibleForTesting
     public SLACalculator getSLACalculator() {
         return calcImpl;
     }

@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1775 TestEventGeneration.testCoordinatorActionEvent is failing and CoordRerunX should generate event (mona)
 OOZIE-1844 HA - Lock mechanism for CoordMaterializeTriggerService (puru via rohini)
 OOZIE-1834 sla should-start is supposed to be optional but it is not (rkanter)
 OOZIE-1838 jdbc.connections.active sampler does not show up (rkanter)

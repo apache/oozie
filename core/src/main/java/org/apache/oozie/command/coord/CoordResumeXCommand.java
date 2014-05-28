@@ -38,6 +38,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionsSuspendedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
@@ -164,6 +165,11 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            if (EventHandlerService.isEnabled()) {
+                // good enough to set event start time as coord's last modified time
+                // updated when set to running
+                generateEvents(coordJob, coordJob.getLastModifiedTime());
+            }
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

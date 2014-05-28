@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.event;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -85,6 +84,7 @@ import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -320,18 +320,20 @@ public class TestEventGeneration extends XDataTestCase {
         ((LiteWorkflowInstance) wfInstance).setStatus(WorkflowInstance.Status.SUSPENDED);
         wfJob.setWorkflowInstance(wfInstance);
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, wfJob);
+        queue.clear();
         new CoordResumeXCommand(coord.getId()).call();
-        Thread.sleep(5000);
+        waitForEventGeneration(1000);
         CoordinatorActionEvent cevent = (CoordinatorActionEvent) queue.poll();
         assertEquals(EventStatus.STARTED, cevent.getEventStatus());
         assertEquals(AppType.COORDINATOR_ACTION, cevent.getAppType());
         assertEquals(action.getId(), cevent.getId());
         assertEquals(action.getJobId(), cevent.getParentId());
         assertEquals(action.getNominalTime(), cevent.getNominalTime());
-        assertEquals(wfJob.getStartTime(), cevent.getStartTime());
+        coord = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, coord.getId());
+        assertEquals(coord.getLastModifiedTime(), cevent.getStartTime());
 
         // Action going to WAITING on Coord Rerun
-        action.setStatus(CoordinatorAction.Status.SUCCEEDED);
+        action.setStatus(CoordinatorAction.Status.KILLED);
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         queue.clear();
         new CoordRerunXCommand(coord.getId(), RestConstants.JOB_COORD_SCOPE_ACTION, "1", false, true)
@@ -653,6 +655,15 @@ public class TestEventGeneration extends XDataTestCase {
         action.setConf(actionXml);
         jpaService.execute(new WorkflowActionInsertJPAExecutor(action));
         return action.getId();
+    }
+
+    private void waitForEventGeneration(int wait) {
+        waitFor(wait, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return ehs.getEventQueue().peek() != null;
+            }
+        });
     }
 
 }

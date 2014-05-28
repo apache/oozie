@@ -436,6 +436,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertTrue(SLAStatus.IN_PROCESS == slaEvent.getSLAStatus() || SLAStatus.NOT_STARTED == slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
+        ehs.getEventQueue().clear();
         // test that sla processes the Job Event from Start command
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
