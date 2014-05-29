@@ -814,6 +814,8 @@ Valid coordinator job status transitions are:
    * *PREPPAUSED --> PREP | KILLED*
    * *PAUSED --> SUSPENDED | RUNNING | KILLED*
    * *PAUSEDWITHERROR --> SUSPENDEDWITHERROR | RUNNINGWITHERROR | KILLED*
+   * *FAILED | KILLED --> IGNORED*
+   * *IGNORED --> RUNNING*
 
 When a coordinator job is submitted, oozie parses the coordinator job XML. Oozie then creates a record for the coordinator with status *PREP* and returns a unique ID. The coordinator is also started immediately if pause time is not set.
 
@@ -835,6 +837,8 @@ A coordinator job creates workflow jobs (commonly coordinator actions) only for 
 
 When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status. If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or *TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
 
+A coordinator job in *FAILED* or *KILLED* status can be changed to *IGNORED* status. A coordinator job in *IGNORED* status can be changed to
+ *RUNNING* status.
 
 ---++++ 6.1.3. Coordinator Action
 
@@ -870,12 +874,17 @@ A coordinator action in *WAITING*, *READY*, *SUBMITTED* or *RUNNING* status can 
 
 A coordinator action in *SUBMITTED* or *RUNNING* status can also fail, changing to *FAILED* status.
 
+A coordinator action in *FAILED*, *KILLED*, or *TIMEDOUT* status can be changed to *IGNORED* status. A coordinator action in *IGNORED* status can be
+ rerun, changing to *WAITING* status.
+
 Valid coordinator action status transitions are:
 
    * *WAITING --> READY | TIMEDOUT | KILLED*
    * *READY --> SUBMITTED | KILLED*
    * *SUBMITTED --> RUNNING | KILLED | FAILED*
    * *RUNNING --> SUCCEEDED | KILLED | FAILED*
+   * *FAILED | KILLED | TIMEDOUT --> IGNORED*
+   * *IGNORED --> WAITING*
 
 ---++++ 6.1.4. Input Events
 
