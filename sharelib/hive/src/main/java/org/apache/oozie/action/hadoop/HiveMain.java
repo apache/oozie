@@ -87,10 +87,15 @@ public class HiveMain extends LauncherMain {
         String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
         if (delegationToken != null) {
             hiveConf.set("mapreduce.job.credentials.binary", delegationToken);
+            hiveConf.set("tez.credentials.path", delegationToken);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to: " + delegationToken);
             System.out.println("------------------------");
             System.setProperty("mapreduce.job.credentials.binary", delegationToken);
+            System.out.println("------------------------");
+            System.out.println("Setting env property for tez.credentials.path to: " + delegationToken);
+            System.out.println("------------------------");
+            System.setProperty("tez.credentials.path", delegationToken);
         } else {
             System.out.println("Non-Kerberos execution");
         }
