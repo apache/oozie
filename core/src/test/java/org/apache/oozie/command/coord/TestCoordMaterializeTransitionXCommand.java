@@ -18,6 +18,7 @@
 package org.apache.oozie.command.coord;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
@@ -563,6 +565,33 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     }
 
+    public void testLastOnlyMaterialization() throws Exception {
+
+        long now = System.currentTimeMillis();
+        Date startTime = DateUtils.toDate(new Timestamp(now - 180 * 60 * 1000));    // 3 hours ago
+        Date endTime = DateUtils.toDate(new Timestamp(now + 180 * 60 * 1000));      // 3 hours from now
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "10",
+                CoordinatorJob.Execution.LAST_ONLY);
+        // This would normally materialize the throttle amount and within a 1 hour window; however, with LAST_ONLY this should
+        // ignore those parameters and materialize everything in the past
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[19];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+
+        startTime = DateUtils.toDate(new Timestamp(now));                           // now
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "10",
+                CoordinatorJob.Execution.LAST_ONLY);
+        // We're starting from "now" this time (i.e. present/future), so it should materialize things normally
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+        expectedStatuses = new CoordinatorActionBean.Status[6];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, String freq) throws Exception {
         return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq);
@@ -570,6 +599,11 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, int timeout, String freq) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, CoordinatorJob.Execution.FIFO);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+            Date pauseTime, int timeout, String freq, CoordinatorJob.Execution execution) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
@@ -579,6 +613,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         coordJob.setTimeout(timeout);
         coordJob.setConcurrency(3);
         coordJob.setMatThrottling(20);
+        coordJob.setExecutionOrder(execution);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -691,6 +726,27 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             }
         }
 
+        catch (JPAExecutorException se) {
+            se.printStackTrace();
+            fail("Job ID " + jobId + " was not stored properly in db");
+        }
+    }
+
+    private void checkCoordActionsStatus(String jobId, CoordinatorActionBean.Status[] statuses) {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(jobId,
+                    null, 1, 1000, false));
+
+            if (actions.size() != statuses.length) {
+                fail("Should have " + statuses.length + " actions created for job " + jobId + ", but has " + actions.size()
+                        + " actions.");
+            }
+
+            for (int i=0; i < statuses.length; i++ ) {
+                assertEquals(statuses[i], actions.get(i).getStatus());
+            }
+        }
         catch (JPAExecutorException se) {
             se.printStackTrace();
             fail("Job ID " + jobId + " was not stored properly in db");

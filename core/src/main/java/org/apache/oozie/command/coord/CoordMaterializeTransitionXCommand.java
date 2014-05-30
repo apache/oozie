@@ -219,7 +219,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
     /**
      * Get materialization for window for catch-up jobs. for current jobs,it reruns currentMatdate, For catch-up, end
-     * Mataterilized Time = startMatdTime + MatThrottling * frequency
+     * Mataterilized Time = startMatdTime + MatThrottling * frequency; unless LAST_ONLY execution order is set, in which
+     * case it returns now (to materialize all actions in the past)
      *
      * @param currentMatTime
      * @return
@@ -229,6 +230,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private Date getMaterializationTimeForCatchUp(Date currentMatTime) throws CommandException {
         if (currentMatTime.after(new Date())) {
             return currentMatTime;
+        }
+        if (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY)) {
+            return new Date();
         }
         int frequency = 0;
         try {
@@ -397,7 +401,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // Move to the End of duration, if needed.
         DateUtils.moveToEnd(origStart, endOfFlag);
 
-        Date effStart = (Date) startMatdTime.clone();
         StringBuilder actionStrings = new StringBuilder();
         Date jobPauseTime = coordJob.getPauseTime();
         Calendar pause = null;
@@ -407,9 +410,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         String action = null;
-        JPAService jpaService = Services.get().get(JPAService.class);
         int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
         int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
+        // If LAST_ONLY and all materialization is in the past, ignore maxActionsToBeCreated
+        boolean ignoreMaxActions =
+                coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) && endMatdTime.before(new Date());
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
                 + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
 
@@ -422,7 +427,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         boolean firstMater = true;
-        while (start.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
+        while (start.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
             if (pause != null && start.compareTo(pause) >= 0) {
                 break;
             }

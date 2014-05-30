@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1319 "LAST_ONLY" in execution control for coordinator job still runs all the actions (rkanter)
 OOZIE-1862 Add hadoop token file location for Hive/Tez jobs (venkatnrangan via bzhang)
 OOZIE-1775 TestEventGeneration.testCoordinatorActionEvent is failing and CoordRerunX should generate event (mona)
 OOZIE-1844 HA - Lock mechanism for CoordMaterializeTriggerService (puru via rohini)

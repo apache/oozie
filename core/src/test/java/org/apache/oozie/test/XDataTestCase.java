@@ -523,7 +523,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status coord action status
      * @param resourceXmlName xml file name
      * @param pending pending counter
-     * @param action nominal time
+     * @param actionNominalTime
      * @return coord action bean
      * @throws Exception thrown if unable to create coord action bean
      */
@@ -1525,7 +1525,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, false, true);
 
-        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+        return addInitRecords(missingDependencies, pushMissingDependencies, oozieTimeZoneMask, job, 1);
+    }
+
+    protected String addInitRecords(String missingDependencies, String pushMissingDependencies, String oozieTimeZoneMask,
+            CoordinatorJobBean job, int actionNum) throws Exception {
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), actionNum,
                 CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", missingDependencies,
                 pushMissingDependencies, oozieTimeZoneMask);
         return action.getId();
@@ -1591,6 +1596,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
         action.setCreatedTime(new Date(actionCreationTime));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
+    }
+
+    protected void setCoordActionNominalTime(String actionId, long actionNominalTime) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        action.setNominalTime(new Date(actionNominalTime));
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
     }
 

@@ -186,6 +186,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         bean.setBundleId("dummy-bundleid");
         bean.setOrigJobXml("dummy-origjobxml");
         bean.setSlaXml("<sla></sla>");
+        bean.setExecution("LIFO");  // FIFO is the default
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, bean);
         CoordinatorJobBean retBean;
         // GET_COORD_JOB_USER_APPNAME
@@ -203,6 +204,11 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getAppName(), retBean.getAppName());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
         assertEquals(bean.getAppNamespace(), retBean.getAppNamespace());
+        assertEquals(bean.getExecution(), retBean.getExecution());
+        assertEquals(bean.getFrequency(), retBean.getFrequency());
+        assertEquals(bean.getTimeUnit(), retBean.getTimeUnit());
+        assertEquals(bean.getTimeZone(), retBean.getTimeZone());
+        assertEquals(bean.getEndTime(), retBean.getEndTime());
         assertNull(retBean.getConf());
         assertNull(retBean.getJobXmlBlob());
         assertNull(retBean.getOrigJobXmlBlob());
@@ -252,6 +258,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getBundleId(), retBean.getBundleId());
         assertEquals(bean.getConf(), retBean.getConf());
         assertEquals(bean.getJobXml(), retBean.getJobXml());
+        assertEquals(bean.getExecution(), retBean.getExecution());
         assertNull(retBean.getOrigJobXmlBlob());
         assertNull(retBean.getSlaXmlBlob());
         // GET_COORD_JOB_SUSPEND_KILL

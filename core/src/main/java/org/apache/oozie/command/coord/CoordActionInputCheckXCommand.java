@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +37,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
@@ -88,6 +91,40 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         this.jobId = jobId;
     }
 
+    /**
+     * Computes the nominal time of the next action.
+     * Based on CoordMaterializeTransitionXCommand#materializeActions
+     *
+     * @return the nominal time of the next action
+     * @throws ParseException
+     */
+    private Date computeNextNominalTime() throws ParseException {
+        Date nextNominalTime;
+        boolean isCronFrequency = false;
+        int freq = -1;
+        try {
+            freq = Integer.parseInt(coordJob.getFrequency());
+        } catch (NumberFormatException e) {
+            isCronFrequency = true;
+        }
+
+        if (isCronFrequency) {
+            nextNominalTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(coordAction.getNominalTime(), coordJob);
+        } else {
+            Calendar nextNominalTimeCal = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
+            nextNominalTimeCal.setTime(coordAction.getNominalTime());
+            TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+            nextNominalTimeCal.add(freqTU.getCalendarUnit(), freq);
+            nextNominalTime = nextNominalTimeCal.getTime();
+        }
+
+        // If the next nominal time is after the job's end time, then this is the last action, so return null
+        if (nextNominalTime.after(coordJob.getEndTime())) {
+            nextNominalTime = null;
+        }
+        return nextNominalTime;
+    }
+
     @Override
     protected Void execute() throws CommandException {
         LOG.debug("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
@@ -113,6 +150,25 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         try {
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
             cron.start();
+            if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.LAST_ONLY)) {
+                Date now = new Date();
+                Date nextNominalTime = computeNextNominalTime();
+                if (nextNominalTime != null) {
+                    // If the current time is after the next action's nominal time, then we've passed the window where this action
+                    // should be started; so set it to SKIPPED
+                    if (now.after(nextNominalTime)) {
+                        LOG.info("LAST_ONLY execution: Preparing to skip action [{0}] because the current time [{1}] is later than "
+                                + "the nominal time [{2}] of the next action]", coordAction.getId(),
+                                DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
+                        queue(new CoordActionSkipXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
+                        return null;
+                    } else {
+                        LOG.debug("LAST_ONLY execution: Not skipping action [{0}] because the current time [{1}] is earlier than "
+                                + "the nominal time [{2}] of the next action]", coordAction.getId(),
+                                DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
+                    }
+                }
+            }
             StringBuilder existList = new StringBuilder();
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();

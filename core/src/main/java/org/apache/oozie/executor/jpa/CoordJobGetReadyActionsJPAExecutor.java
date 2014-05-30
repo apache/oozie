@@ -59,20 +59,13 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
             if (executionOrder.equalsIgnoreCase("FIFO")) {
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_FIFO");
             }
-            else {
+            else {      // LIFO or LAST_ONLY
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_LIFO");
             }
             q.setParameter("jobId", coordJobId);
 
-            // if executionOrder is LAST_ONLY, only retrieve first record in LIFO,
-            // otherwise, use numResults if it is positive.
-            if (executionOrder.equalsIgnoreCase("LAST_ONLY")) {
-                q.setMaxResults(1);
-            }
-            else {
-                if (numResults > 0) {
-                    q.setMaxResults(numResults);
-                }
+            if (numResults > 0) {
+                q.setMaxResults(numResults);
             }
             List<Object[]> objectArrList = q.getResultList();
             actionBeans = new ArrayList<CoordinatorActionBean>();
