@@ -117,12 +117,12 @@
         <dependency>
            <groupId>dk.brics.automaton</groupId>
             <artifactId>automaton</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
