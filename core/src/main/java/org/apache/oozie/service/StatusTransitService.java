@@ -426,7 +426,7 @@ public class StatusTransitService implements Service {
             if (bundleActionStatus.containsKey(Job.Status.PREP)) {
                 // If all the bundle actions are PREP then bundle job should be RUNNING.
                 if (bundleActions.size() > bundleActionStatus.get(Job.Status.PREP)) {
-                    bundleStatus[0] = Job.Status.RUNNING;
+                    bundleStatus[0] = getRunningStatus(bundleActionStatus);
                     ret = true;
                 }
             }
@@ -618,19 +618,23 @@ public class StatusTransitService implements Service {
                 List<BundleActionBean> bundleActions, Job.Status[] bundleStatus) {
             boolean ret = false;
             if (bundleStatus[0] != Job.Status.PREP) {
-                if (bundleActionStatus.containsKey(Job.Status.FAILED)
-                        || bundleActionStatus.containsKey(Job.Status.KILLED)
-                        || bundleActionStatus.containsKey(Job.Status.DONEWITHERROR)
-                        || bundleActionStatus.containsKey(Job.Status.RUNNINGWITHERROR)) {
-                    bundleStatus[0] = Job.Status.RUNNINGWITHERROR;
-                }
-                else {
-                    bundleStatus[0] = Job.Status.RUNNING;
-                }
+                bundleStatus[0] = getRunningStatus(bundleActionStatus);
                 ret = true;
             }
             return ret;
 
+        }
+
+        private Job.Status getRunningStatus(HashMap<Job.Status, Integer> bundleActionStatus) {
+            if (bundleActionStatus.containsKey(Job.Status.FAILED)
+                    || bundleActionStatus.containsKey(Job.Status.KILLED)
+                    || bundleActionStatus.containsKey(Job.Status.DONEWITHERROR)
+                    || bundleActionStatus.containsKey(Job.Status.RUNNINGWITHERROR)) {
+                return Job.Status.RUNNINGWITHERROR;
+            }
+            else {
+                return Job.Status.RUNNING;
+            }
         }
 
         private void updateBundleJob(boolean isPending, BundleJobBean bundleJob, Job.Status bundleStatus)

@@ -1475,4 +1475,33 @@ public class TestStatusTransitService extends XDataTestCase {
         bundleJob = jpaService.execute(new BundleJobGetJPAExecutor(bundleId));
         assertEquals(CoordinatorJob.Status.RUNNING, bundleJob.getStatus());
     }
+
+    // Test bundle transition from running to runningwitherror when one action is killed.
+    public void testBundleStatusTransitRunningWithError() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        new Services().init();
+
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, "action1-C", 0, Job.Status.PREP);
+        addRecordToBundleActionTable(bundleId, "action2-C", 0, Job.Status.RUNNING);
+        BundleActionBean action3 = addRecordToBundleActionTable(bundleId, "action3-C", 0, Job.Status.DONEWITHERROR);
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.RUNNINGWITHERROR, bundleJob.getStatus());
+
+        action3.setStatus(Job.Status.SUSPENDED);
+        action3.setPending(1);
+        action3.setLastModifiedTime(new Date());
+        BundleActionQueryExecutor.getInstance().executeUpdate(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, action3);
+        runnable = new StatusTransitRunnable();
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
+
+    }
 }
