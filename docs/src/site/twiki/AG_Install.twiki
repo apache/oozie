@@ -422,7 +422,16 @@ the Oozie server to enable Oozie to work with HCatalog.
 *Adding HCatalog jars to Oozie war:*
 
  For Oozie server to talk to HCatalog server, HCatalog and hive jars need to be in the server classpath.
-hive-site.xml which has the configuration to talk to the HCatalog server also needs to be in the classpath.
+hive-site.xml which has the configuration to talk to the HCatalog server also needs to be in the classpath or specified by the
+following configuration property in oozie-site.xml:
+<verbatim>
+  <property>
+    <name>oozie.service.HCatAccessorService.hcat.configuration</name>
+    <value>/local/filesystem/path/to/hive-site.xml</value>
+  </property>
+</verbatim>
+The hive-site.xml can also be placed in a location on HDFS and the above property can have a value
+of =hdfs://HOST:PORT/path/to/hive-site.xml= to point there instead of the local file system.
 
 The oozie-[version]-hcataloglibs.tar.gz in the oozie distribution bundles the required hcatalog and hive jars that
 needs to be placed in the Oozie server classpath. If using a version of HCatalog bundled in

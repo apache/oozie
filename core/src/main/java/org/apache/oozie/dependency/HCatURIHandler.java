@@ -177,6 +177,10 @@ public class HCatURIHandler implements URIHandler {
     }
 
     private HCatClient getHCatClient(URI uri, Configuration conf, String user) throws HCatAccessorException {
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        if (hcatService.getHCatConf() != null) {
+            conf = hcatService.getHCatConf();
+        }
         final HiveConf hiveConf = new HiveConf(conf, this.getClass());
         String serverURI = getMetastoreConnectURI(uri);
         if (!serverURI.equals("")) {

@@ -27,6 +27,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
@@ -52,6 +53,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         services = new Services();
         services.getConf().set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.setService(HCatAccessorService.class);
         services.init();
     }
 
