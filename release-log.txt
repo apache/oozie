@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1828 Introduce counters JobStatus terminal states metrics (rkanter)
 OOZIE-1724 Make it easier to specify the HCat hive-site.xml for the Oozie Server (rkanter)
 OOZIE-1812 Bundle status is always in RUNNING if one of the action status is in PREP (puru via rohini)
 OOZIE-1848 Pig actions fail due to missing joda-time jar from pig sharelib (bzhang)

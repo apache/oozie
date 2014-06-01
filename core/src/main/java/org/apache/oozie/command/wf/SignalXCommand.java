@@ -73,8 +73,6 @@ import org.apache.oozie.client.OozieClient;
 @SuppressWarnings("deprecation")
 public class SignalXCommand extends WorkflowXCommand<Void> {
 
-    protected static final String INSTR_SUCCEEDED_JOBS_COUNTER_NAME = "succeeded";
-
     private JPAService jpaService = null;
     private String jobId;
     private String actionId;
@@ -282,6 +280,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     boolean isUserRetry = false;
                     ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry,
                             isUserRetry);
+                    InstrumentUtils.incrJobCounter(INSTR_KILLED_JOBS_COUNTER_NAME, 1, getInstrumentation());
                     try {
                         String tmpNodeConf = nodeDef.getConf();
                         String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);

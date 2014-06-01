@@ -32,6 +32,11 @@ import org.apache.oozie.event.WorkflowJobEvent;
  * @param <T>
  */
 public abstract class WorkflowXCommand<T> extends XCommand<T> {
+
+    protected static final String INSTR_SUCCEEDED_JOBS_COUNTER_NAME = "succeeded";
+    protected static final String INSTR_KILLED_JOBS_COUNTER_NAME = "killed";
+    protected static final String INSTR_FAILED_JOBS_COUNTER_NAME = "failed";
+
     /**
      * Base class constructor for workflow commands.
      *

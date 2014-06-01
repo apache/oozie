@@ -58,8 +58,6 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
 
-    protected static final String INSTR_FAILED_JOBS_COUNTER = "failed";
-
     protected static final String RECOVERY_ID_SEPARATOR = "@";
 
     public ActionXCommand(String name, String type, int priority) {
@@ -197,7 +195,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
                 action.resetPending();
                 queue(new NotificationXCommand(workflow, action));
                 queue(new KillXCommand(workflow.getId()));
-                InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+                InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }
             catch (WorkflowException ex) {
                 throw new CommandException(ex);
