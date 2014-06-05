@@ -23,7 +23,7 @@ The goal of this document is to define a coordinator engine system specialized i
    * #6.5 Updated to mention about =parameters= element as of schema 0.4
 ---+++!! 23/NOV/2011:
 
-   * Update execution order typo 
+   * Update execution order typo
 ---+++!! 05/MAY/2011:
 
    * Update coordinator schema 0.2
@@ -63,7 +63,7 @@ The goal of this document is to define a coordinator engine system specialized i
 ---+++!! 03/SEP/2009:
 
    * Change #2. Definitions. Some rewording in the definitions
-   * Change #6.6.4. Replaced =${coord:next(int n)}= with =${coord:version(int n)}= EL Fuction
+   * Change #6.6.4. Replaced =${coord:next(int n)}= with =${coord:version(int n)}= EL Function
    * Added #6.6.5. Dataset Instance Resolution for Instances Before the Initial Instance
 
 ---++ 1. Coordinator Overview
@@ -156,7 +156,8 @@ For example =2009-08-10T13:10+0530= is August 10th 2009 at 13:10 GMT+0530, India
 
 It is valid to express the end of day as a '24:00' hour (i.e. =2009-08-10T24:00Z=).
 
-However, for all calculations and display, Oozie resolves such dates as the zero hour of the following day (i.e. =2009-08-11T00:00Z=). 
+However, for all calculations and display, Oozie resolves such dates as the zero hour of the following day
+(i.e. =2009-08-11T00:00Z=).
 
 ---+++ 4.2. Timezone Representation
 
@@ -208,15 +209,20 @@ Coordinator Frequencies can also be expressed using cron syntax.
 | =${coord:months(int n)}= | _variable_ | =${coord:months(1)}= --> minutes in a 1 full month from the current date |
 | =${cron syntax}= | _variable_ | =${0,10 15 * * 2-6}= --> a job that runs every weekday at 3:00pm and 3:10pm UTC time|
 
-Note that, though =${coord:days(int n)}= and =${coord:months(int n)}= EL functions are used to calculate minutes precisely including variations due to daylight saving time for Frequency representation, when specified for coordinator timeout interval, one day is calculated as 24 hours and one month is calculated as 30 days for simplicity.
+Note that, though =${coord:days(int n)}= and =${coord:months(int n)}= EL functions are used to calculate minutes precisely including
+variations due to daylight saving time for Frequency representation, when specified for coordinator timeout interval, one day is
+calculated as 24 hours and one month is calculated as 30 days for simplicity.
 
 ---++++ 4.4.1. The coord:days(int n) and coord:endOfDays(int n) EL functions
 
 The =${coord:days(int n)}= and =${coord:endOfDays(int n)}= EL functions should be used to handle day based frequencies.
 
-Constant values should not be used to indicate a day based frequency (every 1 day, every 1 week, etc) because the number of hours in every day is not always the same for timezones that observe daylight-saving time.
+Constant values should not be used to indicate a day based frequency (every 1 day, every 1 week, etc) because the number of hours in
+every day is not always the same for timezones that observe daylight-saving time.
 
-It is a good practice to use always these EL functions instead of using a constant expression (i.e. =24 * 60=) even if the timezone for which the application is being written for does not support daylight saving time. This makes application foolproof to country legislations changes and also makes applications portable across timezones.
+It is a good practice to use always these EL functions instead of using a constant expression (i.e. =24 * 60=) even if the timezone
+for which the application is being written for does not support daylight saving time. This makes application foolproof to country
+legislation changes and also makes applications portable across timezones.
 
 ---+++++ 4.4.1.1. The coord:days(int n) EL function
 
@@ -567,7 +573,10 @@ A synchronous dataset definition contains the following information:
    * *%BLUE% uri-template:%ENDCOLOR%* The URI template that identifies the dataset and can be resolved into concrete URIs to identify a particular dataset instance. The URI template is constructed using:
       * *%BLUE% constants %ENDCOLOR%* See the allowable EL Time Constants below. Ex: ${YEAR}/${MONTH}.
       * *%BLUE% variables %ENDCOLOR%* Variables must be resolved at the time a coordinator job is submitted to the coordinator engine. They are normally provided a job parameters (configuration properties). Ex: ${market}/${language}
-   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. If done-flag is not specified, then Oozie configures Hadoop to create a _SUCCESS file in the output directory. If the done flag is set to empty, then Coordinator looks for the existence of the directory itself.
+   * *%BLUE% done-flag:%ENDCOLOR%* This flag denotes when a dataset instance is ready to be consumed.
+      * If the done-flag is omitted the coordinator will wait for the presence of a _SUCCESS file in the directory (Note: MapReduce jobs create this on successful completion automatically).
+      * If the done-flag is present but empty, then the existence of the directory itself indicates that the dataset is ready.
+      * If the done-flag is present but non-empty, Oozie will check for the presence of the named file within the directory, and will be considered ready (done) when the file exists.
 
 The following EL constants can be used within synchronous dataset URI templates:
 
@@ -576,12 +585,12 @@ The following EL constants can be used within synchronous dataset URI templates:
 | =MONTH= | _DD_ | 2 digits representing the month of the year, January = 1 |
 | =DAY= | _DD_ | 2 digits representing the day of the month |
 | =HOUR= | _HH_ | 2 digits representing the hour of the day, in 24 hour format, 0 - 23 |
-| =MINUTE= | _mm_ | 2 digits reprensenting the minute of the hour, 0 - 59 |
+| =MINUTE= | _mm_ | 2 digits representing the minute of the hour, 0 - 59 |
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 
 <verbatim>
-  <dataset name="[NAME]" frequency="[FREQUENCY]" 
+  <dataset name="[NAME]" frequency="[FREQUENCY]"
            initial-instance="[DATETIME]" timezone="[TIMEZONE]">
     <uri-template>[URI TEMPLATE]</uri-template>
     <done-flag>[FILE NAME]</done-flag>
@@ -609,7 +618,7 @@ The dataset would resolve to the following URIs and Coordinator looks for the ex
 
 <verbatim>
   [market] will be replaced with user given property.
-  
+
   hdfs://foo:8020/usr/app/[market]/2009/02/15/data
   hdfs://foo:8020/usr/app/[market]/2009/02/16/data
   hdfs://foo:8020/usr/app/[market]/2009/02/17/data
@@ -635,7 +644,7 @@ The dataset would resolve to the following URIs:
   ...
 </verbatim>
 
-The dataset are ready until '_SUCCESS' exists in each path:
+The dataset instances are not ready until '_SUCCESS' exists in each path:
 
 <verbatim>
   hdfs://foo:8020/usr/app/stats/2009/01/data/_SUCCESS
@@ -666,7 +675,7 @@ The dataset would resolve to the following URIs:
   ...
 </verbatim>
 
-The dataset are ready until 'trigger.dat' exists in each path:
+The dataset instances are not ready until 'trigger.dat' exists in each path:
 
 <verbatim>
   hdfs://foo:8020/usr/app/stats/2009/01/data/trigger.dat
@@ -835,7 +844,12 @@ Conversely, when a user requests to resume a *SUSPENDED* coordinator job, oozie 
 
 A coordinator job creates workflow jobs (commonly coordinator actions) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
 
-When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status. If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or *TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
+When the coordinator job materialization finishes and all workflow jobs finish, oozie updates the coordinator status accordingly.
+For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status.
+If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator
+job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or
+*TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the
+coordinator job into *DONEWITHERROR*.
 
 A coordinator job in *FAILED* or *KILLED* status can be changed to *IGNORED* status. A coordinator job in *IGNORED* status can be changed to
  *RUNNING* status.
@@ -958,28 +972,28 @@ A synchronous coordinator definition is a is defined by a name, start time and e
    * *%BLUE% end: %ENDCOLOR%* The end datetime for the job. When actions will stop being materialized. Refer to section #3 'Datetime Representation' for syntax details.
    * *%BLUE% timezone:%ENDCOLOR%* The timezone of the coordinator application.
    * *%BLUE% frequency: %ENDCOLOR%* The frequency, in minutes, to materialize actions. Refer to section #4 'Time Interval Representation' for syntax details.
-   * Control information: 
-      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materizlization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=.
+   * Control information:
+      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materialization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=.
       * *%BLUE% concurrency: %ENDCOLOR%* The maximum number of actions for this job that can be running at the same time. This value allows to materialize and submit multiple instances of the coordinator app, and allows operations to catchup on delayed processing. The default value is =1=.
-      * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are: 
+      * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are:
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
          * =LAST_ONLY= (see explanation below).
       * *%BLUE% throttle: %ENDCOLOR%* The maximum coordinator actions are allowed to be in WAITING state concurrently. The default value is =12=.
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
-   * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events. 
-      * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset. 
+   * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events.
+      * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset.
          * *%BLUE% name: %ENDCOLOR%* input condition name.
          * *%BLUE% dataset: %ENDCOLOR%* dataset name.
          * *%BLUE% instance: %ENDCOLOR%* refers to a single dataset instance (the time for a synchronous dataset).
          * *%BLUE% start-instance: %ENDCOLOR%* refers to the beginning of an instance range (the time for a synchronous dataset).
          * *%BLUE% end-instance: %ENDCOLOR%* refers to the end of an instance range (the time for a synchronous dataset).
-   * *%BLUE% output-events: %ENDCOLOR%* The coordinator job output events. 
-      * *%BLUE% data-out: %ENDCOLOR%* It defines one job output that resolves to a dataset instance. 
+   * *%BLUE% output-events: %ENDCOLOR%* The coordinator job output events.
+      * *%BLUE% data-out: %ENDCOLOR%* It defines one job output that resolves to a dataset instance.
          * *%BLUE% name: %ENDCOLOR%* output name.
          * *%BLUE% dataset: %ENDCOLOR%* dataset name.
          * *%BLUE% instance: %ENDCOLOR%* dataset instance that will be generated by coordinator action.
-   * *%BLUE% action: %ENDCOLOR%* The coordinator action to execute. 
+   * *%BLUE% action: %ENDCOLOR%* The coordinator action to execute.
       * *%BLUE% workflow: %ENDCOLOR%* The workflow job invocation. Workflow job properties can refer to the defined data-in and data-out elements.
 
 *LAST_ONLY:* While =FIFO= and =LIFO= simply specify the order in which READY actions should be executed, =LAST_ONLY= can actually
@@ -997,11 +1011,11 @@ to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
 *%PURPLE% Syntax: %ENDCOLOR%*
 
 <verbatim>
-   <coordinator-app name="[NAME]" frequency="[FREQUENCY]" 
-                    start="[DATETIME]" end="[DATETIME]" timezone="[TIMEZONE]" 
+   <coordinator-app name="[NAME]" frequency="[FREQUENCY]"
+                    start="[DATETIME]" end="[DATETIME]" timezone="[TIMEZONE]"
                     xmlns="uri:oozie:coordinator:0.1">
       <controls>
-        <timeout>[TIME_PERIOD]</timeout> 
+        <timeout>[TIME_PERIOD]</timeout>
         <concurrency>[CONCURRENCY]</concurrency>
         <execution>[EXECUTION_STRATEGY]</execution>
       </controls>
@@ -1011,7 +1025,7 @@ to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
         ...
 .
         <!-- Synchronous datasets -->
-	    <dataset name="[NAME]" frequency="[FREQUENCY]" 
+	    <dataset name="[NAME]" frequency="[FREQUENCY]"
 	             initial-instance="[DATETIME]" timezone="[TIMEZONE]">
 	      <uri-template>[URI_TEMPLATE]</uri-template>
         </dataset>
@@ -1048,7 +1062,7 @@ to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
             ...
          </configuration>
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1334,7 +1348,7 @@ For the second coordinator action it would resolve to:
 
 And so on.
 
----+++ 6.4. Asynchronous Coordinator Application Definition 
+---+++ 6.4. Asynchronous Coordinator Application Definition
    * TBD
 
 ---+++ 6.5. Parameterization of Coordinator Applications
@@ -1377,7 +1391,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1392,10 +1406,10 @@ In the above example there are 6 configuration parameters (variables) that have 
 
 IMPORTANT: Note that this example is not completely correct as it always consumes the last 24 instances of the 'logs' dataset. It is assumed that all days have 24 hours. For timezones that observe daylight saving this application will not work as expected as it will consume the wrong number of dataset instances in DST switch days. To be able to handle these scenarios, the =${coord:hoursInDays(int n)}= and =${coord:daysInMonths(int n)}= EL functions must be used (refer to section #6.6.2 and #6.6.3).
 
-If the above 6 properties are not specified, the job will fail. 
+If the above 6 properties are not specified, the job will fail.
 
-As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said 
-properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided. 
+As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided.
 
 *Example:*
 
@@ -1432,7 +1446,7 @@ The previous parameterized coordinator application definition with formal parame
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1535,7 +1549,7 @@ a. Coordinator application definition that creates a coordinator action once a d
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1562,7 +1576,7 @@ b. Coordinator application definition that creates a coordinator action once an 
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1616,7 +1630,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1703,7 +1717,7 @@ Coordinator application definitions. A data-pipeline with two coordinator-applic
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -2023,7 +2037,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -3693,7 +3707,7 @@ the notification:
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:sla="uri:oozie:sla:0.1" elementFormDefault="qualified"
 	targetNamespace="uri:oozie:sla:0.1">
-	
+
         <xs:element name="info" type="sla:SLA-INFO" />
 
 	<xs:complexType name="SLA-INFO">
