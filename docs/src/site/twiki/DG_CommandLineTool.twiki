@@ -412,10 +412,10 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
 (if neither -action nor -date is given, the exception will be thrown.)
 </verbatim>
 
-The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=, =IGNORED=) coordiantor action when coordiator job
+The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=, =IGNORED=) coordinator action when coordinator job
 is not in =FAILED= or =KILLED= state.
 
-After the command is executed the rerun coordiator action will be in =WAITING= status.
+After the command is executed the rerun coordinator action will be in =WAITING= status.
 
 Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
 
@@ -432,7 +432,7 @@ $oozie job -rerun <bundle_Job_id> [-nocleanup] [-refresh]
 
 The =rerun= option reruns coordinator actions belonging to specified coordinators within the specified date range.
 
-After the command is executed the rerun coordiator action will be in =WAITING= status.
+After the command is executed the rerun coordinator action will be in =WAITING= status.
 
 
 ---+++ Checking the Information and Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
@@ -795,7 +795,7 @@ When a workflow job of a ignored coordinator action is rerun, the coordinator ac
 Example:
 
 <verbatim>
-$ oozie jobs -oozie http://localhost:11000/oozie -localtime -len 2 -fliter status=RUNNING
+$ oozie jobs -oozie http://localhost:11000/oozie -localtime -len 2 -filter status=RUNNING
 .
 Job Id                          Workflow Name         Status     Run  User      Group     Created                Started                 Ended
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------

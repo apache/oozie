@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1686 Typo in DG_CommandLineTool (anbu78 via ryota)
 OOZIE-1804 Improve documentation for Coordinator Specification (lars_francke via rkanter)
 OOZIE-1828 Introduce counters JobStatus terminal states metrics (rkanter)
 OOZIE-1724 Make it easier to specify the HCat hive-site.xml for the Oozie Server (rkanter)
