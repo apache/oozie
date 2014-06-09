@@ -58,6 +58,7 @@ import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.jdom.Element;
@@ -190,6 +191,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 completed = workflowInstance.signal(wfAction.getExecutionPath(), wfAction.getSignalValue());
             }
             catch (WorkflowException e) {
+               LOG.error("Workflow action failed : " + e.getMessage(), e);
                 wfJob.setStatus(WorkflowJob.Status.valueOf(workflowInstance.getStatus().toString()));
                 completed = true;
             }

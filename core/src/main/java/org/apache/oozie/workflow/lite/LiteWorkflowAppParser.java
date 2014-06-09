@@ -18,6 +18,7 @@
 package org.apache.oozie.workflow.lite;
 
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -28,6 +29,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -152,7 +154,7 @@ public class LiteWorkflowAppParser {
 
             Element wfDefElement = XmlUtils.parseXml(strDef);
             ParameterVerifier.verifyParameters(jobConf, wfDefElement);
-            LiteWorkflowApp app = parse(strDef, wfDefElement, configDefault);
+            LiteWorkflowApp app = parse(strDef, wfDefElement, configDefault, jobConf);
             Map<String, VisitStatus> traversed = new HashMap<String, VisitStatus>();
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
             validate(app, app.getNode(StartNodeDef.START), traversed);
@@ -376,11 +378,14 @@ public class LiteWorkflowAppParser {
      *
      * @param strDef
      * @param root
+     * @param configDefault
+     * @param jobConf
      * @return LiteWorkflowApp
      * @throws WorkflowException
      */
     @SuppressWarnings({"unchecked"})
-    private LiteWorkflowApp parse(String strDef, Element root, Configuration configDefault) throws WorkflowException {
+    private LiteWorkflowApp parse(String strDef, Element root, Configuration configDefault, Configuration jobConf)
+            throws WorkflowException {
         Namespace ns = root.getNamespace();
         LiteWorkflowApp def = null;
         Element global = null;
@@ -451,6 +456,18 @@ public class LiteWorkflowAppParser {
                                         String credStr = eNode.getAttributeValue(CRED_A);
                                         String userRetryMaxStr = eNode.getAttributeValue(USER_RETRY_MAX_A);
                                         String userRetryIntervalStr = eNode.getAttributeValue(USER_RETRY_INTERVAL_A);
+                                        try {
+                                            if (!StringUtils.isEmpty(userRetryMaxStr)) {
+                                                userRetryMaxStr = ELUtils.resolveAppName(userRetryMaxStr, jobConf);
+                                            }
+                                            if (!StringUtils.isEmpty(userRetryIntervalStr)) {
+                                                userRetryIntervalStr = ELUtils.resolveAppName(userRetryIntervalStr,
+                                                        jobConf);
+                                            }
+                                        }
+                                        catch (Exception e) {
+                                            throw new WorkflowException(ErrorCode.E0703, e.getMessage());
+                                        }
 
                                         String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                                         def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,

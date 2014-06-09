@@ -18,12 +18,12 @@
 package org.apache.oozie.workflow.lite;
 
 
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
 
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
@@ -1252,4 +1252,24 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
         }
     }
+
+    // Test parameterization of retry-max and retry-interval
+    public void testParameterizationRetry() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
+
+        String wf = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"test\" > "
+                + "<global> <job-tracker>localhost</job-tracker><name-node>localhost</name-node></global>"
+                + "<start to=\"retry\"/><action name=\"retry\" retry-max=\"${retryMax}\" retry-interval=\"${retryInterval}\">"
+                + "<java> <main-class>com.retry</main-class>" + "</java>" + "<ok to=\"end\"/>" + "<error to=\"end\"/>"
+                + "</action> <end name=\"end\"/></workflow-app>";
+        Configuration conf = new Configuration();
+        conf.set("retryMax", "3");
+        conf.set("retryInterval", "10");
+        LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
+        assertEquals(app.getNode("retry").getUserRetryMax(), "3");
+        assertEquals(app.getNode("retry").getUserRetryInterval(), "10");
+    }
+
 }
