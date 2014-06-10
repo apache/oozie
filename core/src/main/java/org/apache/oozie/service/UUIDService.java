@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class UUIDService implements Service {
         String genType = services.getConf().get(CONF_GENERATOR, "counter").trim();
         if (genType.equals("counter")) {
             counter = new AtomicLong();
-            startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
+            startTime = getStartTime();
         }
         else {
             if (!genType.equals("random")) {
@@ -73,6 +73,14 @@ public class UUIDService implements Service {
     public void destroy() {
         counter = null;
         startTime = null;
+    }
+
+    /**
+     * Get Server start time
+     * @return
+     */
+    public String getStartTime() {
+        return new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
     }
 
     /**
@@ -103,15 +111,7 @@ public class UUIDService implements Service {
     public String generateId(ApplicationType type) {
         StringBuilder sb = new StringBuilder();
 
-        if (counter != null) {
-            sb.append(longPadding(counter.getAndIncrement())).append('-').append(startTime);
-        }
-        else {
-            sb.append(UUID.randomUUID().toString());
-            if (sb.length() > (37 - systemId.length())) {
-                sb.setLength(37 - systemId.length());
-            }
-        }
+        sb.append(getSequence());
         sb.append('-').append(systemId);
         sb.append('-').append(type.getType());
         // limitation due to current DB schema for action ID length (100)
@@ -119,6 +119,24 @@ public class UUIDService implements Service {
             throw new RuntimeException(XLog.format("ID exceeds limit of 40 characters, [{0}]", sb));
         }
         return sb.toString();
+    }
+
+    public String getSequence() {
+        StringBuilder sb = new StringBuilder();
+        if (counter != null) {
+            sb.append(longPadding(getID())).append('-').append(startTime);
+        }
+        else {
+            sb.append(UUID.randomUUID().toString());
+            if (sb.length() > (37 - systemId.length())) {
+                sb.setLength(37 - systemId.length());
+            }
+        }
+        return sb.toString();
+    }
+
+    public long getID() {
+        return counter.getAndIncrement();
     }
 
     /**

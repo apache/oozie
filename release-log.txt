@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1715 Distributed ID sequence for HA (puru via rkanter)
 OOZIE-1870 Workflow action doen't resolve retry-max and retry-interval (puru via rohini)
 OOZIE-1686 Typo in DG_CommandLineTool (anbu78 via ryota)
 OOZIE-1804 Improve documentation for Coordinator Specification (lars_francke via rkanter)

@@ -153,7 +153,7 @@ public class ZKUtils {
 
     private void createClient() throws Exception {
         // Connect to the ZooKeeper server
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        RetryPolicy retryPolicy = ZKUtils.getRetryPloicy();
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
         String zkNamespace = Services.get().getConf().get(ZK_NAMESPACE, "oozie");
         ACLProvider aclProvider;
@@ -374,5 +374,14 @@ public class ZKUtils {
         public List<ACL> getAclForPath(String path) {
             return saslACL;
         }
+    }
+
+    /**
+     * Returns retry policy
+     *
+     * @return RetryPolicy
+     */
+    public static RetryPolicy getRetryPloicy() {
+        return new ExponentialBackoffRetry(1000, 3);
     }
 }

@@ -751,7 +751,8 @@ make Oozie use the ZooKeeper versions of these services instead of the default i
     <value>
         org.apache.oozie.service.ZKLocksService,
         org.apache.oozie.service.ZKXLogStreamingService,
-        org.apache.oozie.service.ZKJobsConcurrencyService
+        org.apache.oozie.service.ZKJobsConcurrencyService,
+        org.apache.oozie.service.ZKUUIDService
     </value>
 </property>
 </verbatim>
@@ -829,6 +830,23 @@ Also, in your zoo.cfg for ZooKeeper, make sure to set the following properties:
 authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
 kerberos.removeHostFromPrincipal=true
 kerberos.removeRealmFromPrincipal=true
+</verbatim>
+
+---++++ JobId sequence
+Oozie in HA mode, uses ZK to generate job id sequence. Job Ids are of following format.
+<Id sequence>-<yyMMddHHmmss(server start time)>-<system_id>-<W/C/B>
+
+Where, <systemId> is configured as =oozie.system.id= (default is "oozie-" + "user.name")
+W/C/B is suffix to job id indicating that generated job is a type of workflow or coordinator or bundle.
+
+Maximum allowed character for job id sequence is 40. "Id sequence" is stored in ZK and reset to 0 once maximum job id sequence is
+reached. Maximum job id sequence is configured as =oozie.service.ZKUUIDService.jobid.sequence.max=, default value is 99999999990.
+
+<verbatim>
+<property>
+    <name>oozie.service.ZKUUIDService.jobid.sequence.max</name>
+    <value>99999999990</value>
+</property>
 </verbatim>
 
 ---++ Starting and Stopping Oozie
