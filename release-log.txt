@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1869 Sharelib update shows vip/load balancer address as one of the hostname (puru via ryota)
 OOZIE-1861 Pig action should work with tez mode (rohini)
 OOZIE-1703 User should be able to set coord end-time before start time (puru via rohini)
 OOZIE-1715 Distributed ID sequence for HA (puru via rkanter)

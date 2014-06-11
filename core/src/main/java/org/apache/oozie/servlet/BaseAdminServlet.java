@@ -258,7 +258,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     private JSONObject updateLocalShareLib(HttpServletRequest request) {
         ShareLibService shareLibService = Services.get().get(ShareLibService.class);
         JSONObject json = new JSONObject();
-        json.put(JsonTags.SHARELIB_UPDATE_HOST, request.getServerName() + ":" + request.getServerPort());
+        json.put(JsonTags.SHARELIB_UPDATE_HOST, Services.get().getConf().get("oozie.base.url"));
         try {
             json.putAll(shareLibService.updateShareLib());
             json.put(JsonTags.SHARELIB_UPDATE_STATUS, "Successful");
