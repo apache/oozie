@@ -186,10 +186,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     private void checkPauseTime(CoordinatorJobBean coordJob, Date newPauseTime)
             throws CommandException {
-        // New pauseTime has to be a non-past time.
-        if (newPauseTime.before(coordJob.getStartTime())) {
-            throw new CommandException(ErrorCode.E1015, newPauseTime, "must be a non-past time");
-        }
+        //no check.
     }
 
     /**
@@ -349,32 +346,43 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 if (!dontChange) {
                     coordJob.setEndTime(newEndTime);
                     // OOZIE-1703, we should SUCCEEDED the coord, if it's in PREP and new endtime is before start time
-                    if (coordJob.getStatus() == CoordinatorJob.Status.PREP && coordJob.getStartTime().after(newEndTime)) {
-                        LOG.info("Changing coord status to SUCCEEDED, because it's in PREP and new end time is before start time. "
-                                + "Startime is " + coordJob.getStartTime() + " and new end time is " + newEndTime);
-                        coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
-                        coordJob.setDoneMaterialization();
-                        coordJob.resetPending();
-                    }
-                    else {
-                        //move it to running iff neendtime is after starttime.
-                        if (newEndTime.after(coordJob.getStartTime())) {
-                            if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
-                                coordJob.setStatus(CoordinatorJob.Status.RUNNING);
-                            }
-                            if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                                    || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-                                // Check for backward compatibility for Oozie versions (3.2 and before)
-                                // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
-                                // PAUSEDWITHERROR is not supported
-                                coordJob.setStatus(StatusUtils
-                                        .getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
-                            }
-                            coordJob.setPending();
-                            coordJob.resetDoneMaterialization();
+                    if (coordJob.getStartTime().compareTo(newEndTime) >= 0) {
+                        if (coordJob.getStatus() != CoordinatorJob.Status.PREP) {
                             processLookaheadActions(coordJob, newEndTime);
                         }
+                        if (coordJob.getStatus() == CoordinatorJob.Status.PREP
+                                || coordJob.getStatus() == CoordinatorJob.Status.RUNNING) {
+                            LOG.info("Changing coord status to SUCCEEDED, because it's in " + coordJob.getStatus()
+                                    + " and new end time is before start time. Startime is " + coordJob.getStartTime()
+                                    + " and new end time is " + newEndTime);
+                            coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
+                            coordJob.resetPending();
+                        }
+                        coordJob.setDoneMaterialization();
                     }
+                    else {
+                        // move it to running iff newdtime is after starttime.
+                        if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
+                            coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                        }
+                        if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
+                                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+                            // Check for backward compatibility for Oozie versions (3.2 and before)
+                            // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
+                            // PAUSEDWITHERROR is not supported
+                            coordJob.setStatus(StatusUtils
+                                    .getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+                        }
+                        coordJob.setPending();
+                        coordJob.resetDoneMaterialization();
+                        processLookaheadActions(coordJob, newEndTime);
+                    }
+                }
+                else {
+                    LOG.info("Didn't change endtime. Endtime is in between coord end time and next materialization time."
+                            + "Coord endTime = " + DateUtils.formatDateOozieTZ(newEndTime)
+                            + " next materialization time ="
+                            + DateUtils.formatDateOozieTZ(coordJob.getNextMaterializedTime()));
                 }
             }
 

@@ -202,26 +202,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
 
         try {
-            new CoordChangeXCommand(jobId, "pausetime=1900-12-20T05:00Z").call();
-            fail("Should not reach here.");
-        }
-        catch (CommandException ex) {
-            if (ex.getErrorCode() != ErrorCode.E1015) {
-                fail("Error code should be E1015.");
-            }
-        }
-
-        try {
-            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T00:00Z").call();
-            fail("Should not reach here.");
-        }
-        catch (CommandException ex) {
-            if (ex.getErrorCode() != ErrorCode.E1015) {
-                fail("Error code should be E1015.");
-            }
-        }
-
-        try {
             new CoordChangeXCommand(jobId, "pausetime=null").call();
             fail("Should not reach here.");
         }
@@ -232,13 +212,10 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         }
 
         try {
-            new CoordChangeXCommand(jobId, "pausetime=2009-02-01T00:08Z").call();
-            fail("Should not reach here.");
+            new CoordChangeXCommand(jobId, "pausetime=" + pauseTime).call();
         }
         catch (CommandException ex) {
-            if (ex.getErrorCode() != ErrorCode.E1015) {
-                fail("Error code should be E1015.");
-            }
+            fail("Should not throw exception");
         }
     }
 
@@ -395,7 +372,12 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertTrue(coordJob.isDoneMaterialization());
 
         String newEndTime = convertDateToString(startTime.getTime() + 20 * 60 * 1000);
+        try{
         new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
+        } catch(Exception e){
+            assertTrue(e.getMessage().contains(
+                    "Didn't change endtime. Endtime is in between coord end time and next materialization time"));
+        }
         coordJob = jpaService.execute(coordGetCmd);
         assertFalse(Job.Status.RUNNING == coordJob.getStatus());
         assertFalse(coordJob.isPending());
@@ -498,13 +480,12 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         assertEquals(Job.Status.PREP, coordJob.getStatus());
         assertEquals(0, coordJob.getLastActionNumber());
-
         new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
-
         coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         coordJob = jpaService.execute(coordGetCmd);
         assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(endTime));
         assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+
         Date newEndTime = new Date(start.getTime() - 2000);
         endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(newEndTime);
         new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
@@ -512,6 +493,26 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         coordJob = jpaService.execute(coordGetCmd);
         assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(newEndTime));
         assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+
+        // setting end date after startdate should make coord in running state
+        newEndTime = new Date(start.getTime() + (4 * 60 * 60 * 1000));
+        endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(newEndTime);
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+        coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(newEndTime));
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+
+        // setting end date before startdate should make coord in SUCCEEDED state
+        newEndTime = new Date(start.getTime() - 1000);
+        endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(newEndTime);
+        new CoordChangeXCommand(job.getId(), endTimeChangeStr).call();
+        coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(DateUtils.formatDateOozieTZ(coordJob.getEndTime()), DateUtils.formatDateOozieTZ(newEndTime));
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+
+
     }
 
     /**
