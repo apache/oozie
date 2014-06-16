@@ -268,8 +268,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestActionCreationTimeWithPushDependency() throws Exception {
+        setupServicesForHCatalog(services);
         Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
-
+        services.init();
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
@@ -400,7 +401,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestCurrentTimeWithPushDependency() throws Exception {
+        setupServicesForHCatalog(services);
         Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
+        services.init();
 
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);

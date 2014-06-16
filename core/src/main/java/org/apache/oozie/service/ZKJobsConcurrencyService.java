@@ -207,4 +207,14 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
         return params == null || params.get(RestConstants.ALL_SERVER_REQUEST) == null || params.isEmpty()
                 || !params.get(RestConstants.ALL_SERVER_REQUEST)[0].equalsIgnoreCase("false");
     }
+
+    /**
+     * Return if it is running in HA mode
+     *
+     * @return
+     */
+    @Override
+    public boolean isHighlyAvailableMode() {
+        return true;
+    }
 }

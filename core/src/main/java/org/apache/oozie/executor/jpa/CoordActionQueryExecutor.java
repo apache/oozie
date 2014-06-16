@@ -25,10 +25,16 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -48,6 +54,7 @@ public class CoordActionQueryExecutor extends
         UPDATE_COORD_ACTION_FOR_MODIFIED_DATE,
         UPDATE_COORD_ACTION_RERUN,
         GET_COORD_ACTION,
+        GET_COORD_ACTION_STATUS,
         GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID,
         GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME
     };
@@ -174,6 +181,7 @@ public class CoordActionQueryExecutor extends
         CoordActionQuery caQuery = (CoordActionQuery) namedQuery;
         switch (caQuery) {
             case GET_COORD_ACTION:
+            case GET_COORD_ACTION_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
@@ -198,10 +206,11 @@ public class CoordActionQueryExecutor extends
     public CoordinatorActionBean get(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        CoordinatorActionBean bean = (CoordinatorActionBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0605, query.toString());
         }
+        CoordinatorActionBean bean = constructBean(namedQuery, ret);
         return bean;
     }
 
@@ -222,10 +231,18 @@ public class CoordActionQueryExecutor extends
 
     private CoordinatorActionBean constructBean(CoordActionQuery namedQuery, Object ret) throws JPAExecutorException {
         CoordinatorActionBean bean;
+        Object[] arr;
         switch (namedQuery) {
+            case GET_COORD_ACTION:
+                bean = (CoordinatorActionBean) ret;
+                break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
                 bean = new CoordinatorActionBean();
                 bean.setJobId((String) ret);
+                break;
+            case GET_COORD_ACTION_STATUS:
+                bean = new CoordinatorActionBean();
+                bean.setStatusStr((String)ret);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "

@@ -131,5 +131,4 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
             assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
         }
     }
-
 }

@@ -464,5 +464,4 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
             throw new Exception("Action ID " + actionId + " was not stored properly in db");
         }
     }
-
 }

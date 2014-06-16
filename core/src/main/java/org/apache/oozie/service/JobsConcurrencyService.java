@@ -134,4 +134,12 @@ public class JobsConcurrencyService implements Service, Instrumentable {
     public boolean isAllServerRequest(Map<String, String[]> params) {
         return false;
     }
+
+    /**
+     * Check if it is running in HA mode
+     * @return false
+     */
+    public boolean isHighlyAvailableMode(){
+        return false;
+    }
 }

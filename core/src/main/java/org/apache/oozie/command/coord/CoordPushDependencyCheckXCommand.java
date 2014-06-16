@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -43,6 +44,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.RecoveryService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
@@ -207,6 +209,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     protected void onAllPushDependenciesAvailable() throws CommandException {
         coordAction.setPushMissingDependencies("");
+        Services.get().get(PartitionDependencyManagerService.class)
+                .removeCoordActionWithDependenciesAvailable(coordAction.getId());
         if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
             Date nominalTime = coordAction.getNominalTime();
             Date currentTime = new Date();

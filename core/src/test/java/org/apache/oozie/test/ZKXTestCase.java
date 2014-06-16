@@ -49,7 +49,7 @@ import org.apache.oozie.util.ZKUtils;
  * <p>
  * To use security, see {@link ZKXTestCaseWithSecurity}.
  */
-public abstract class ZKXTestCase extends XTestCase {
+public abstract class ZKXTestCase extends XDataTestCase {
     private TestingServer zkServer;
     private CuratorFramework client = null;
     private ServiceDiscovery<Map> sDiscovery = null;

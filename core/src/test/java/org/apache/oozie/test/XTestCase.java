@@ -1068,6 +1068,11 @@ public abstract class XTestCase extends TestCase {
 
     protected Services setupServicesForHCatalog() throws ServiceException {
         Services services = new Services();
+        setupServicesForHCataLogImpl(services);
+        return services;
+    }
+
+    private void setupServicesForHCataLogImpl(Services services) {
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," +
@@ -1081,8 +1086,11 @@ public abstract class XTestCase extends TestCase {
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         setSystemProperty("java.naming.factory.initial", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
         setSystemProperty("java.naming.provider.url", "vm://localhost?broker.persistent=false");
-        return services;
     }
 
+    protected Services setupServicesForHCatalog(Services services) throws ServiceException {
+        setupServicesForHCataLogImpl(services);
+        return services;
+    }
 }
 
