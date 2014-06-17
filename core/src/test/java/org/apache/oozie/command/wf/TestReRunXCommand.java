@@ -144,7 +144,7 @@ public class TestReRunXCommand extends XDataTestCase {
 
         final String jobId1 = wfClient.submit(conf);
         wfClient.start(jobId1);
-        waitFor(40 * 1000, new Predicate() {
+        waitFor(200 * 1000, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.KILLED;
@@ -163,7 +163,7 @@ public class TestReRunXCommand extends XDataTestCase {
         conf.setProperty("cmd3", "echo");      // expected to succeed
 
         wfClient.reRun(jobId1, conf);
-        waitFor(40 * 1000, new Predicate() {
+        waitFor(200 * 1000, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
