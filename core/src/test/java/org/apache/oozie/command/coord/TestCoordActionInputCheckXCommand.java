@@ -831,6 +831,46 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         checkCoordActionStatus(actionId5, CoordinatorAction.Status.WAITING);
     }
 
+    @Test
+    public void testNone() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        job.setExecutionOrder(CoordinatorJobBean.Execution.NONE);
+        job.setFrequency("10");
+        job.setTimeUnit(Timeunit.MINUTE);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String missingDeps = "hdfs:///dirx/filex";
+
+        // nominal time is one hour past. So aciton will be skipped
+        String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
+        Date nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);     // 1 hour ago
+        setCoordActionNominalTime(actionId1, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId1, job.getId()).call();
+        checkCoordActionStatus(actionId1, CoordinatorAction.Status.SKIPPED);
+
+        // Nominal time is 60 minutes from now, action should be in WAITING stage
+        String actionId2 = addInitRecords(missingDeps, null, TZ, job, 2);
+        nomTime = new Date(new Date().getTime() + 60 * 60 * 1000);          // 1 hour from now
+        setCoordActionNominalTime(actionId2, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId2, job.getId()).call();
+        checkCoordActionStatus(actionId2, CoordinatorAction.Status.WAITING);
+
+        // Nominal times of both actions are more than one minute past, so both will be skipped
+        String actionId3 = addInitRecords(missingDeps, null, TZ, job, 3);
+        nomTime = new Date(new Date().getTime() - 5 * 60 * 1000);           // 5 minutes ago
+        setCoordActionNominalTime(actionId3, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId3, job.getId()).call();
+        checkCoordActionStatus(actionId3, CoordinatorAction.Status.SKIPPED);
+
+        String actionId4 = addInitRecords(missingDeps, null, TZ, job, 4);
+        nomTime = new Date(new Date().getTime() - 2 * 60 * 1000);           // 2 minutes ago
+        setCoordActionNominalTime(actionId4, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId4, job.getId()).call();
+        checkCoordActionStatus(actionId4, CoordinatorAction.Status.SKIPPED);
+
+
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
             Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
 

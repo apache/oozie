@@ -267,11 +267,11 @@ public class CoordinatorStore extends Store {
 
     /**
      * Return CoordinatorActions for a jobID. Action should be in READY state. Number of returned actions should be <=
-     * concurrency number. Sort returned actions based on execution order (FIFO, LIFO, LAST_ONLY)
+     * concurrency number. Sort returned actions based on execution order (FIFO, LIFO, LAST_ONLY, NONE)
      *
      * @param id job ID
      * @param numResults number of results to return
-     * @param executionOrder execution for this job - FIFO, LIFO, LAST_ONLY
+     * @param executionOrder execution for this job - FIFO, LIFO, LAST_ONLY, NONE
      * @return List of CoordinatorActionBean
      * @throws StoreException
      */
@@ -284,7 +284,7 @@ public class CoordinatorStore extends Store {
 
                                                                   List<CoordinatorActionBean> caBeans;
                                                                   Query q;
-                                                                  // check if executionOrder is FIFO, LIFO, or LAST_ONLY
+                                                                  // check if executionOrder is FIFO, LIFO, NONE or LAST_ONLY
                                                                   if (executionOrder.equalsIgnoreCase("FIFO")) {
                                                                       q = entityManager.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_FIFO");
                                                                   }

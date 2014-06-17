@@ -231,7 +231,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         if (currentMatTime.after(new Date())) {
             return currentMatTime;
         }
-        if (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY)) {
+        if (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) ||
+                coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE)) {
             return new Date();
         }
         int frequency = 0;
@@ -414,7 +415,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
         // If LAST_ONLY and all materialization is in the past, ignore maxActionsToBeCreated
         boolean ignoreMaxActions =
-                coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) && endMatdTime.before(new Date());
+                (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) ||
+                        coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE))
+                        && endMatdTime.before(new Date());
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
                 + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
 

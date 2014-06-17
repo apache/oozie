@@ -55,11 +55,11 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
         List<CoordinatorActionBean> actionBeans = null;
         try {
             Query q;
-            // check if executionOrder is FIFO, LIFO, or LAST_ONLY
+            // check if executionOrder is FIFO, LIFO, LAST_ONLY, or NONE
             if (executionOrder.equalsIgnoreCase("FIFO")) {
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_FIFO");
             }
-            else {      // LIFO or LAST_ONLY
+            else {      // LIFO, LAST_ONLY, or NONE
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_LIFO");
             }
             q.setParameter("jobId", coordJobId);

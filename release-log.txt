@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1875 Add "NONE" to coordinator job execution_order (bzhang)
 OOZIE-1879 Workflow Rerun causes error depending on the order of forked nodes (rkanter)
 OOZIE-1659 oozie-site is missing email-action-0.2 schema (jagatsingh via rkanter)
 OOZIE-1492 Make sure HA works with HCat (ryota)

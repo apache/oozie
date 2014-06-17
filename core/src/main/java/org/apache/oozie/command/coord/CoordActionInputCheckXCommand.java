@@ -150,8 +150,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         try {
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
             cron.start();
+            Date now = new Date();
             if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.LAST_ONLY)) {
-                Date now = new Date();
                 Date nextNominalTime = computeNextNominalTime();
                 if (nextNominalTime != null) {
                     // If the current time is after the next action's nominal time, then we've passed the window where this action
@@ -169,6 +169,27 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     }
                 }
             }
+            else if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.NONE)) {
+                // If the current time is after the nominal time of this action plus some tolerance,
+                // then we've passed the window where this action
+                // should be started; so set it to SKIPPED
+                Calendar cal = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
+                cal.setTime(nominalTime);
+                cal.add(Calendar.MINUTE, Services.get().getConf().getInt("oozie.coord.execution.none.tolerance", 1));
+                nominalTime = cal.getTime();
+                if (now.after(nominalTime)) {
+                    LOG.info("NONE execution: Preparing to skip action [{0}] because the current time [{1}] is later than "
+                            + "the nominal time [{2}] of the current action]", coordAction.getId(),
+                            DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nominalTime));
+                    queue(new CoordActionSkipXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
+                    return null;
+                } else {
+                    LOG.debug("NONE execution: Not skipping action [{0}] because the current time [{1}] is earlier than "
+                            + "the nominal time [{2}] of the current action]", coordAction.getId(),
+                            DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(coordAction.getNominalTime()));
+                }
+            }
+
             StringBuilder existList = new StringBuilder();
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();

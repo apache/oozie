@@ -780,7 +780,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             val = Execution.FIFO.toString();
         }
         coordJob.setExecutionOrder(Execution.valueOf(val));
-        String[] acceptedVals = { Execution.LIFO.toString(), Execution.FIFO.toString(), Execution.LAST_ONLY.toString() };
+        String[] acceptedVals = { Execution.LIFO.toString(), Execution.FIFO.toString(), Execution.LAST_ONLY.toString(),
+            Execution.NONE.toString()};
         ParamChecker.isMember(val, acceptedVals, "execution");
 
         // datasets

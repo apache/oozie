@@ -881,6 +881,9 @@ A coordinator action may remain in *READY* status for a while, without starting 
 A coordinator action in *READY* or *WAITING* status changes to *SKIPPED* status if the execution strategy is LAST_ONLY and the
 current time is past the next action's nominal time.  See section 6.3 for more details.
 
+A coordinator action in *READY* or *WAITING* status changes to *SKIPPED* status if the execution strategy is NONE and the
+current time is past the action's nominal time + 1 minute.  See section 6.3 for more details.
+
 A coordinator action in *READY* status changes to *SUBMITTED* status if total current *RUNNING* and *SUBMITTED* actions are less than concurrency execution limit.
 
 A coordinator action in *SUBMITTED* status changes to *RUNNING* status when the workflow engine start execution of the coordinator action.
@@ -931,7 +934,7 @@ The execution policies for the actions of a coordinator job can be defined in th
 
    * Timeout: A coordinator job can specify the timeout for its coordinator actions, this is, how long the coordinator action will be in *WAITING* or *READY* status before giving up on its execution.
    * Concurrency: A coordinator job can specify the concurrency for its coordinator actions, this is, how many coordinator actions are allowed to run concurrently ( *RUNNING* status) before the coordinator engine starts throttling them.
-   * Execution strategy: A coordinator job can specify the execution strategy of its coordinator actions when there is backlog of coordinator actions in the coordinator engine. The different execution strategies are 'oldest first', 'newest first' and 'last one only'. A backlog normally happens because of delayed input data, concurrency control or because manual re-runs of coordinator jobs.
+   * Execution strategy: A coordinator job can specify the execution strategy of its coordinator actions when there is backlog of coordinator actions in the coordinator engine. The different execution strategies are 'oldest first', 'newest first', 'none' and 'last one only'. A backlog normally happens because of delayed input data, concurrency control or because manual re-runs of coordinator jobs.
    * Throttle: A coordinator job can specify the materialization or creation throttle value for its coordinator actions, this is, how many maximum coordinator actions are allowed to be in WAITING state concurrently.
 
 ---++++ 6.1.7. Data Pipeline Application
@@ -979,6 +982,7 @@ A synchronous coordinator definition is a is defined by a name, start time and e
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
          * =LAST_ONLY= (see explanation below).
+         * =NONE= (discards all older materialization, see explanation below).
       * *%BLUE% throttle: %ENDCOLOR%* The maximum coordinator actions are allowed to be in WAITING state concurrently. The default value is =12=.
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
    * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events.
@@ -1007,6 +1011,15 @@ of =TIMEDOUT=).  =LAST_ONLY= is useful if you want a recurring job, but do not a
 always want the latest action.  For example, if you have a coordinator running every 10 minutes and take Oozie down for 1 hour, when
 Oozie comes back, there would normally be 6 actions =READY= to run.  However, with =LAST_ONLY=, only the current one will go
 to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
+
+*NONE:* Similar to LAST_ONLY except all older materializations are skipped. When =NONE= is set, an action that is =WAITING=
+or =READY= will be =SKIPPED= when the current time is more than a certain configured number of minutes (tolerance) past the action's
+nominal time. By default, the threshold is 1 minute. For example, suppose action 1 and 2
+are both =WAITING=, the current time is 5:20pm, and both actions' nominal times are before 5:19pm. Both actions
+will become SKIPPED, assuming they don't transition to =SUBMITTED= (or a terminal state) before then.  Another way of thinking about
+this is to view it as similar to setting the =timeout= equal to 1 minute which is the smallest time unit, except that the =SKIPPED= status doesn't cause the
+coordinator job to eventually become =DONEWITHERROR= and can actually become =SUCCEEDED= (i.e. it's a "good" version
+of =TIMEDOUT=).
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 

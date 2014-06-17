@@ -29,7 +29,7 @@ public interface CoordinatorJob extends Job {
      * Defines the possible execution order of an Oozie application.
      */
     public static enum Execution {
-        FIFO, LIFO, LAST_ONLY
+        FIFO, LIFO, LAST_ONLY, NONE
     }
 
     /**

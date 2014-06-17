@@ -1843,7 +1843,17 @@
         </description>
     </property>
 
-	<!-- Coordinator Actions default length -->
+    <!-- Coordinator "NONE" execution order default time tolerance -->
+    <property>
+        <name>oozie.coord.execution.none.tolerance</name>
+        <value>1</value>
+        <description>
+            Default time tolerance in minutes after action nominal time for an action to be skipped
+            when execution order is "NONE"
+        </description>
+    </property>
+
+    <!-- Coordinator Actions default length -->
 	<property>
 		<name>oozie.coord.actions.default.length</name>
 		<value>1000</value>

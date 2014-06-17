@@ -53,7 +53,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     /**
      * Check for READY actions and change state to SUBMITTED by a command to submit the job to WF engine.
      * This method checks all the actions associated with a jobId to figure out which actions
-     * to start (based on concurrency and execution order [FIFO, LIFO, LAST_ONLY])
+     * to start (based on concurrency and execution order [FIFO, LIFO, LAST_ONLY, NONE])
      *
      */
     protected Void execute() throws CommandException {
