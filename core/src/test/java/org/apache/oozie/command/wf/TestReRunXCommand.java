@@ -24,13 +24,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.List;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.action.hadoop.ShellActionExecutor;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.test.XDataTestCase;
@@ -39,7 +42,9 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 
@@ -108,6 +113,69 @@ public class TestReRunXCommand extends XDataTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
+    }
+
+    /**
+     * This tests a specific edge case where rerun can fail when there's a fork, the actions in the fork succeed, but an action
+     * after the fork fails.  Previously, the rerun would step through the forked actions in the order they were listed in the
+     * fork action's XML; if they happened to finish in a different order, this would cause an error during rerun.  This is fixed by
+     * enforcing the same order in LiteWorkflowInstance#signal, which this test verifies.
+     *
+     * @throws Exception
+     */
+    public void testRerunFork() throws Exception {
+        // We need the shell schema and action for this test
+        Services.get().getConf().set(ActionService.CONF_ACTION_EXECUTOR_EXT_CLASSES, ShellActionExecutor.class.getName());
+        Services.get().setService(ActionService.class);
+        Services.get().getConf().set(SchemaService.WF_CONF_EXT_SCHEMAS, "shell-action-0.3.xsd");
+        Services.get().setService(SchemaService.class);
+
+        Reader reader = IOUtils.getResourceAsReader("rerun-wf-fork.xml", -1);
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        IOUtils.copyCharStream(reader, writer);
+
+        final OozieClient wfClient = LocalOozie.getClient();
+        Properties conf = wfClient.createConfiguration();
+        conf.setProperty("nameNode", getNameNodeUri());
+        conf.setProperty("jobTracker", getJobTrackerUri());
+        conf.setProperty(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        conf.setProperty("cmd3", "echo1");      // expected to fail
+
+        final String jobId1 = wfClient.submit(conf);
+        wfClient.start(jobId1);
+        waitFor(40 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId1).getStatus());
+        List<WorkflowAction> actions = wfClient.getJobInfo(jobId1).getActions();
+        assertEquals(WorkflowAction.Status.OK, actions.get(1).getStatus());     // fork
+        assertEquals(WorkflowAction.Status.OK, actions.get(2).getStatus());     // sh1
+        assertEquals(WorkflowAction.Status.OK, actions.get(3).getStatus());     // sh2
+        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // join
+        assertEquals(WorkflowAction.Status.ERROR, actions.get(5).getStatus());  // sh3
+
+        // rerun failed node, which is after the fork
+        conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
+        conf.setProperty("cmd3", "echo");      // expected to succeed
+
+        wfClient.reRun(jobId1, conf);
+        waitFor(40 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(jobId1).getStatus());
+        actions = wfClient.getJobInfo(jobId1).getActions();
+        assertEquals(WorkflowAction.Status.OK, actions.get(1).getStatus());     // fork
+        assertEquals(WorkflowAction.Status.OK, actions.get(2).getStatus());     // sh1
+        assertEquals(WorkflowAction.Status.OK, actions.get(3).getStatus());     // sh2
+        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // join
+        assertEquals(WorkflowAction.Status.OK, actions.get(5).getStatus());     // sh3
     }
 
     /*

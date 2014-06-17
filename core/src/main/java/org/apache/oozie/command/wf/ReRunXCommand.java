@@ -158,8 +158,16 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             // Resetting the conf to contain all the resolved values is necessary to ensure propagation of Oozie properties to Hadoop calls downstream
             conf = ((XConfiguration) conf).resolve();
 
+            // Prepare the action endtimes map
+            Map<String, Date> actionEndTimes = new HashMap<String, Date>();
+            for (WorkflowActionBean action : actions) {
+                if (action.getEndTime() != null) {
+                    actionEndTimes.put(action.getName(), action.getEndTime());
+                }
+            }
+
             try {
-                newWfInstance = workflowLib.createInstance(app, conf, jobId);
+                newWfInstance = workflowLib.createInstance(app, conf, jobId, actionEndTimes);
             }
             catch (WorkflowException e) {
                 throw new CommandException(e);
