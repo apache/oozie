@@ -34,6 +34,7 @@ import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.JobUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -506,13 +507,9 @@ public class HadoopAccessorService implements Service {
         try {
             UserGroupInformation ugi = getUGI(user);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
                 public Void run() throws Exception {
-                    Configuration defaultConf = new Configuration();
-                    XConfiguration.copy(conf, defaultConf);
-                    //Doing this NOP add first to have the FS created and cached
-                    DistributedCache.addFileToClassPath(file, defaultConf);
-
-                    DistributedCache.addFileToClassPath(file, conf);
+                    JobUtils.addFileToClassPath(file, conf, null);
                     return null;
                 }
             });

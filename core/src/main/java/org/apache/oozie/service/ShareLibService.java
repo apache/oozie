@@ -668,4 +668,15 @@ public class ShareLibService implements Service, Instrumentable {
             }
         });
     }
+
+    /**
+     * Returns file system for shared libraries.
+     * <p/>
+     * If WorkflowAppService#getSystemLibPath doesn't have authority then a default one assumed
+     *
+     * @return file system for shared libraries
+     */
+    public FileSystem getFileSystem() {
+        return fs;
+    }
 }

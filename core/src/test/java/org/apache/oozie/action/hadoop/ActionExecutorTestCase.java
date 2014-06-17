@@ -61,12 +61,16 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        beforeSetUp();
         super.setUp();
         setSystemProps();
         new Services().init();
     }
 
     protected void setSystemProps() throws Exception {
+    }
+
+    protected void beforeSetUp() throws Exception {
     }
 
     @Override

@@ -349,11 +349,27 @@ public class JavaActionExecutor extends ActionExecutor {
             throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
         Namespace ns = element.getNamespace();
         Iterator<Element> it = element.getChildren("job-xml", ns).iterator();
+        HashMap<String, FileSystem> filesystemsMap = new HashMap<String, FileSystem>();
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         while (it.hasNext()) {
             Element e = it.next();
             String jobXml = e.getTextTrim();
-            Path path = new Path(appPath, jobXml);
-            FileSystem fs = context.getAppFileSystem();
+            Path pathSpecified = new Path(jobXml);
+            Path path = pathSpecified.isAbsolute() ? pathSpecified : new Path(appPath, jobXml);
+            FileSystem fs;
+            if (filesystemsMap.containsKey(path.toUri().getAuthority())) {
+              fs = filesystemsMap.get(path.toUri().getAuthority());
+            }
+            else {
+              if (path.toUri().getAuthority() != null) {
+                fs = has.createFileSystem(context.getWorkflow().getUser(), path.toUri(),
+                        has.createJobConf(path.toUri().getAuthority()));
+              }
+              else {
+                fs = context.getAppFileSystem();
+              }
+              filesystemsMap.put(path.toUri().getAuthority(), fs);
+            }
             Configuration jobXmlConf = new XConfiguration(fs.open(path));
             try {
                 String jobXmlConfString = XmlUtils.prettyPrint(jobXmlConf).toString();
@@ -432,22 +448,11 @@ public class JavaActionExecutor extends ActionExecutor {
                 else if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
                         String user = conf.get("user.name");
-                        Path pathToAdd;
-                        // if filePath and appPath belong to same cluster, add URI path component else add absolute URI
-                        if (uri.getScheme() != null && uri.getHost() != null &&
-                            uri.getPort() > 0 && baseUri.getScheme() != null &&
-                            baseUri.getHost() != null && baseUri.getPort() > 0 &&
-                            uri.getScheme().equalsIgnoreCase(baseUri.getScheme()) &&
-                            uri.getHost().equalsIgnoreCase(baseUri.getHost()) &&
-                            uri.getPort() == baseUri.getPort()) {
-                          pathToAdd = new Path(uri.getPath());
-                        } else {
-                          pathToAdd = new Path(uri.normalize());
-                        }
+                        Path pathToAdd = new Path(uri.normalize());
                         Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, pathToAdd, conf);
                     }
                     else {
-                        DistributedCache.addCacheFile(uri, conf);
+                        DistributedCache.addCacheFile(uri.normalize(), conf);
                     }
                 }
                 else { // regular files
@@ -502,25 +507,14 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addShareLib(Path appPath, Configuration conf, String[] actionShareLibNames)
+    protected void addShareLib(Configuration conf, String[] actionShareLibNames)
             throws ActionExecutorException {
         if (actionShareLibNames != null) {
-            String user = conf.get("user.name");
-            FileSystem fs;
             try {
-
-                Path systemLibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
-                if (systemLibPath.toUri().getScheme() != null && systemLibPath.toUri().getAuthority() != null) {
-                    fs = Services.get().get(HadoopAccessorService.class)
-                            .createFileSystem(user, systemLibPath.toUri(), conf);
-                }
-                else {
-                    fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
-                }
-                for (String actionShareLibName : actionShareLibNames) {
-
-                    if (systemLibPath != null) {
-                        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+                ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+                FileSystem fs = shareLibService.getFileSystem();
+                if (fs != null) {
+                  for (String actionShareLibName : actionShareLibNames) {
                         List<Path> listOfPaths = shareLibService.getShareLibJars(actionShareLibName);
                         if (listOfPaths != null && !listOfPaths.isEmpty()) {
 
@@ -531,10 +525,6 @@ public class JavaActionExecutor extends ActionExecutor {
                         }
                     }
                 }
-            }
-            catch (HadoopAccessorException ex) {
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ex.getErrorCode()
-                        .toString(), ex.getMessage());
             }
             catch (IOException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
@@ -661,7 +651,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // Action sharelibs are only added if user has specified to use system libpath
         if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
             // add action specific sharelibs
-            addShareLib(appPath, conf, getShareLibNames(context, actionXml, conf));
+            addShareLib(conf, getShareLibNames(context, actionXml, conf));
         }
     }
 
