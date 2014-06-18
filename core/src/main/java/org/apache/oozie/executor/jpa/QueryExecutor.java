@@ -72,4 +72,7 @@ public abstract class QueryExecutor<T, E extends Enum<E>> {
     public abstract Query getSelectQuery(E namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException;
 
+    public abstract Object getSingleValue(E namedQuery, Object... parameters)
+            throws JPAExecutorException;
+
 }

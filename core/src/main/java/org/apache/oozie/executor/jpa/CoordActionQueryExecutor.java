@@ -258,4 +258,9 @@ public class CoordActionQueryExecutor extends
             instance = null;
         }
     }
+
+    @Override
+    public Object getSingleValue(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
+    }
 }

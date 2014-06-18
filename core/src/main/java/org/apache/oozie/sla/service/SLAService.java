@@ -18,6 +18,7 @@
 package org.apache.oozie.sla.service;
 
 import java.util.Date;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
@@ -31,6 +32,7 @@ import org.apache.oozie.sla.SLACalculator;
 import org.apache.oozie.sla.SLACalculatorMemory;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.util.XLog;
+
 import com.google.common.annotations.VisibleForTesting;
 
 public class SLAService implements Service {
@@ -43,6 +45,9 @@ public class SLAService implements Service {
     public static final String CONF_JOB_EVENT_LATENCY = CONF_PREFIX + "job.event.latency";
     //Time interval, in seconds, at which SLA Worker will be scheduled to run
     public static final String CONF_SLA_CHECK_INTERVAL = CONF_PREFIX + "check.interval";
+    public static final String CONF_SLA_CHECK_INITIAL_DELAY = CONF_PREFIX + "check.initial.delay";
+    public static final String CONF_SLA_CALC_LOCK_TIMEOUT = CONF_PREFIX + "oozie.sla.calc.default.lock.timeout";
+    public static final String CONF_SLA_HISTORY_PURGE_INTERVAL = CONF_PREFIX + "history.purge.interval";
 
     private static SLACalculator calcImpl;
     private static boolean slaEnabled = false;
@@ -69,7 +74,9 @@ public class SLAService implements Service {
             Runnable slaThread = new SLAWorker(calcImpl);
             // schedule runnable by default every 30 sec
             int slaCheckInterval = services.getConf().getInt(CONF_SLA_CHECK_INTERVAL, 30);
-            services.get(SchedulerService.class).schedule(slaThread, 10, slaCheckInterval, SchedulerService.Unit.SEC);
+            int slaCheckInitialDelay = services.getConf().getInt(CONF_SLA_CHECK_INITIAL_DELAY, 10);
+            services.get(SchedulerService.class).schedule(slaThread, slaCheckInitialDelay, slaCheckInterval,
+                    SchedulerService.Unit.SEC);
             slaEnabled = true;
             LOG.info("SLAService initialized with impl [{0}] capacity [{1}]", calcImpl.getClass().getName(),
                     conf.get(SLAService.CONF_CAPACITY));

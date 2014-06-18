@@ -20,6 +20,7 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -406,5 +407,10 @@ public class WorkflowActionQueryExecutor extends
             jpaService = null;
             instance = null;
         }
+    }
+
+    @Override
+    public Object getSingleValue(WorkflowActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 }

@@ -31,9 +31,9 @@ import org.apache.oozie.event.CoordinatorJobEvent;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.service.EventHandlerService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.listener.SLAJobEventListener;
 import org.apache.oozie.sla.service.SLAService;
@@ -114,7 +114,7 @@ public class TestSLAJobEventListener extends XTestCase {
                 "coord-app-name1", actualStart, actualEnd);
         listener.onCoordinatorJobEvent(cje);
 
-        SLASummaryBean summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("cj1"));
+        SLASummaryBean summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "cj1");
         // check that end and duration sla has been calculated
         assertEquals(6, summary.getEventProcessed());
 
@@ -130,7 +130,7 @@ public class TestSLAJobEventListener extends XTestCase {
         cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("ca1"));
+        summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "ca1");
         // check that all events are processed
         assertEquals(8, summary.getEventProcessed());
         assertEquals(EventStatus.END_MISS, summary.getEventStatus());

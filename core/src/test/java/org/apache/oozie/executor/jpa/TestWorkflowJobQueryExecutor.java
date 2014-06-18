@@ -202,6 +202,15 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertNull(retBean.getProtoActionConf());
         assertNull(retBean.getSlaXml());
         assertNull(retBean.getConf());
+        // GET_WORKFLOW_START_END_TIME
+        retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_START_END_TIME, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getStartTime().getTime(), retBean.getStartTime().getTime());
+        assertEquals(bean.getEndTime().getTime(), retBean.getEndTime().getTime());
+        assertNull(retBean.getWorkflowInstance());
+        assertNull(retBean.getProtoActionConf());
+        assertNull(retBean.getSlaXml());
+        assertNull(retBean.getConf());
         // GET_WORKFLOW_USER_GROUP
         retBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_USER_GROUP, bean.getId());
         assertEquals(bean.getUser(), retBean.getUser());

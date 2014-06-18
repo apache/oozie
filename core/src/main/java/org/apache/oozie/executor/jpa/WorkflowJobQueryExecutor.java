@@ -50,6 +50,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         UPDATE_WORKFLOW_RERUN,
         GET_WORKFLOW,
         GET_WORKFLOW_STARTTIME,
+        GET_WORKFLOW_START_END_TIME,
         GET_WORKFLOW_USER_GROUP,
         GET_WORKFLOW_SUSPEND,
         GET_WORKFLOW_ACTION_OP,
@@ -170,6 +171,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         switch (namedQuery) {
             case GET_WORKFLOW:
             case GET_WORKFLOW_STARTTIME:
+            case GET_WORKFLOW_START_END_TIME:
             case GET_WORKFLOW_USER_GROUP:
             case GET_WORKFLOW_SUSPEND:
             case GET_WORKFLOW_ACTION_OP:
@@ -211,6 +213,13 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 arr = (Object[]) ret;
                 bean.setId((String) arr[0]);
                 bean.setStartTime(DateUtils.toDate((Timestamp) arr[1]));
+                break;
+            case GET_WORKFLOW_START_END_TIME:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[1]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[2]));
                 break;
             case GET_WORKFLOW_USER_GROUP:
                 bean = new WorkflowJobBean();
@@ -352,5 +361,10 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             jpaService = null;
             instance = null;
         }
+    }
+
+    @Override
+    public Object getSingleValue(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 }

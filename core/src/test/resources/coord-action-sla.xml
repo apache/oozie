@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <coordinator-app name="test-coord-sla" frequency="${coord:days(1)}"
-                 start="2009-01-01T08:01Z" end="2009-01-02T08:01Z"
+                 start="2009-01-02T08:01Z" end="2009-01-03T08:00Z"
                  timezone="America/Los_Angeles"
                  xmlns="uri:oozie:coordinator:0.4"
                  xmlns:sla="uri:oozie:sla:0.2">

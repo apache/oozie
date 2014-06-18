@@ -21,8 +21,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
@@ -204,6 +206,11 @@ public class BundleActionQueryExecutor extends
             jpaService = null;
             instance = null;
         }
+    }
+
+    @Override
+    public Object getSingleValue(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 
 }

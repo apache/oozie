@@ -18,7 +18,9 @@
 package org.apache.oozie.test;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -33,6 +35,7 @@ import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.FixedJsonInstanceSerializer;
 import org.apache.oozie.util.ZKUtils;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Provides a version of XTestCase that also runs a ZooKeeper server and provides some utilities for interacting and simulating ZK
@@ -63,6 +66,23 @@ public abstract class ZKXTestCase extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
+        setUpZK();
+    }
+
+    protected void setUp(Configuration conf) throws Exception {
+        super.setUp();
+        Services services = new Services();
+        if(conf != null && conf.size()>0){
+            for (Iterator<Entry<String, String>> itr = (Iterator<Entry<String, String>>) conf.iterator(); itr.hasNext();) {
+                Entry<String, String> entry = itr.next();
+                services.getConf().set(entry.getKey(), entry.getValue());
+            }
+        }
+        services.init();
+        setUpZK();
+    }
+
+    private void setUpZK() throws Exception {
         zkServer = setupZKServer();
         Services.get().getConf().set("oozie.zookeeper.connection.string", zkServer.getConnectString());
         setSystemProperty("oozie.instance.id", ZK_ID);

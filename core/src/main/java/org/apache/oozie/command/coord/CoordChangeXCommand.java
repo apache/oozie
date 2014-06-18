@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -40,10 +41,12 @@ import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
@@ -266,12 +269,13 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 if (SLAService.isEnabled()) {
                     Services.get().get(SLAService.class).removeRegistration(actionId);
                 }
-                SLARegistrationBean slaReg = jpaService.execute(new SLARegistrationGetJPAExecutor(actionId));
+                SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
                 if (slaReg != null) {
                     LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
                     deleteList.add(slaReg);
                 }
-                SLASummaryBean slaSummaryBean = jpaService.execute(new SLASummaryGetJPAExecutor(actionId));
+                SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
+                        SLASummaryQuery.GET_SLA_SUMMARY, actionId);
                 if (slaSummaryBean != null) {
                     LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
                     deleteList.add(slaSummaryBean);

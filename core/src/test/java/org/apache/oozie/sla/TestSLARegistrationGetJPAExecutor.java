@@ -25,7 +25,8 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -55,8 +56,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        SLARegistrationGetJPAExecutor readCmd = new SLARegistrationGetJPAExecutor(jobId);
-        SLARegistrationBean bean = jpaService.execute(readCmd);
+        SLARegistrationBean bean = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, jobId);
         assertEquals(jobId, bean.getId());
         assertEquals(AppType.WORKFLOW_JOB, bean.getAppType());
         assertEquals(current, bean.getExpectedStart());

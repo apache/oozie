@@ -20,7 +20,9 @@ package org.apache.oozie.sla;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
@@ -33,16 +35,17 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -75,6 +78,18 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         super.tearDown();
     }
 
+    private void createWorkflow(List<String> idList) throws Exception {
+        List<JsonBean> insertList = new ArrayList<JsonBean>();
+        for (String id : idList) {
+            WorkflowJobBean workflow = new WorkflowJobBean();
+            workflow.setId(id);
+            workflow.setStatusStr("PREP");
+            workflow.setStartTime(new Date());
+            insertList.add(workflow);
+        }
+        BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
+    }
+
     @Test
     public void testLoadOnRestart() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
@@ -85,6 +100,11 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         String jobId2 = slaRegBean2.getId();
         SLARegistrationBean slaRegBean3 = _createSLARegistration("job-3", AppType.WORKFLOW_JOB);
         String jobId3 = slaRegBean3.getId();
+        List<String> idList = new ArrayList<String>();
+        idList.add(slaRegBean1.getId());
+        idList.add(slaRegBean2.getId());
+        idList.add(slaRegBean3.getId());
+        createWorkflow(idList);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         slaRegBean1.setAppName("app-name");
@@ -166,7 +186,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertEquals(2, slaCalcMemory.size()); // 2 out of 3 jobs in map
         slaCalcMemory.addJobStatus(jobId3, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
                 sdf.parse("2011-03-09"), sdf.parse("2011-04-09"));
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId3));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId3);
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(sdf.parse("2011-03-09"), slaSummary.getActualStart());
         assertEquals(sdf.parse("2011-04-09"), slaSummary.getActualEnd());
@@ -193,7 +213,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,slaSummaryBean);
 
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
 
         // Simulate a lost success event
         WorkflowJobBean wjb = new WorkflowJobBean();
@@ -209,7 +229,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("job-1", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(AppType.WORKFLOW_JOB, slaSummary.getAppType());
@@ -237,7 +257,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         slaCalcMemory.init(new Configuration(false));
 
         assertEquals(0, slaCalcMemory.size());
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("FAILED", slaSummary.getJobStatus());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(sdf.parse("2012-02-07"), slaSummary.getActualStart());
@@ -303,7 +323,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("job-1", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(AppType.WORKFLOW_ACTION, slaSummary.getAppType());
@@ -354,7 +374,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId1));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
+
         assertEquals("job-1", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(AppType.COORDINATOR_ACTION, slaSummary.getAppType());
@@ -379,12 +400,12 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         String jobId = slaRegBean.getId();
         slaCalcMemory.addRegistration(jobId, slaRegBean);
         assertEquals(1, slaCalcMemory.size());
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         assertEquals(SLAStatus.NOT_STARTED, slaSummary.getSLAStatus());
         assertEquals("PREP", slaSummary.getJobStatus());
         slaCalcMemory.updateJobSla(jobId);
         assertEquals(2, ehs.getEventQueue().size());
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // both start miss and end miss (101)
         assertEquals(5, slaSummary.getEventProcessed());
         assertEquals(SLAEvent.EventStatus.END_MISS, slaSummary.getEventStatus());
@@ -397,14 +418,14 @@ public class TestSLACalculatorMemory extends XDataTestCase {
                 sdf.parse("2012-01-01"), null);
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUSPENDED.toString(), EventStatus.SUSPEND,
                 sdf.parse("2012-01-01"), null);
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         assertEquals(WorkflowJob.Status.SUSPENDED.toString(), slaSummary.getJobStatus());
         assertEquals(5, slaSummary.getEventProcessed());
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
                 sdf.parse("2012-01-01"), sdf.parse("2012-01-02"));
 
         assertEquals(3, ehs.getEventQueue().size());
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // All events processed and actual times stored (1000)
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
@@ -432,7 +453,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         slaCalcMemory.addRegistration(jobId, slaRegBean);
         assertEquals(1, slaCalcMemory.size());
         slaCalcMemory.updateJobSla(jobId);
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // Duration bit should be processed as expected duration is not set
         assertEquals(3, slaSummary.getEventProcessed());
         // check only start event in queue
@@ -446,7 +467,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
                 sdf.parse("2012-01-01"), sdf.parse("2012-01-02"));
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // all should be processed
         assertEquals(8, slaSummary.getEventProcessed());
         // check only end event is in queue
@@ -466,7 +487,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.KILLED.toString(), EventStatus.FAILURE, null,
                 sdf.parse("2012-01-02"));
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // Actual start null, so all events processed
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(1, ehs.getEventQueue().size());
@@ -491,13 +512,15 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         String jobId = slaRegBean.getId();
         slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
         slaCalcMemory.updateJobSla(jobId);
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+
         assertEquals(1, slaSummary.getEventProcessed());
         assertEquals(SLAStatus.NOT_STARTED, slaSummary.getSLAStatus());
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED,
                 new Date(System.currentTimeMillis()), null);
         slaCalcMemory.updateJobSla(jobId);
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+
         assertEquals(1, slaSummary.getEventProcessed());
         assertEquals(SLAStatus.IN_PROCESS, slaSummary.getSLAStatus());
         assertEquals(WorkflowJob.Status.RUNNING.toString(), slaSummary.getJobStatus());
@@ -518,19 +541,20 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         String jobId = slaRegBean.getId();
         slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
         slaCalcMemory.updateJobSla(jobId);
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
-        slaRegBean = jpaService.execute(new SLARegistrationGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+        slaRegBean = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, jobId);
         assertNotNull(slaRegBean.getCreatedTimestamp());
         assertEquals(slaRegBean.getCreatedTimestamp(), slaSummary.getCreatedTimestamp());
         // Only end sla should be processed (100)
         assertEquals(4, slaSummary.getEventProcessed());
         slaCalcMemory.updateJobSla(jobId);
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         assertEquals(4, slaSummary.getEventProcessed());
         assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
         slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS,
                 new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000));
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+
         // Only Duration sla should be processed as end is already processed
         // (110)
         assertEquals(6, slaSummary.getEventProcessed());
@@ -538,7 +562,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         // Recieve start event
         assertTrue(slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED,
                 new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000)));
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         // Start event received so all bits should be processed (111)
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
@@ -563,7 +587,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
             slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED, new Date(
                     System.currentTimeMillis() - 3600 * 1000), null);
             slaCalcMemory.updateJobSla(jobId);
-            SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+            SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
             // The actual end times are not stored, but sla's processed so (111)
             assertEquals(7, slaSummary.getEventProcessed());
             // Moved from map to history set
@@ -571,11 +595,10 @@ public class TestSLACalculatorMemory extends XDataTestCase {
             // Add terminal state event so actual end time is stored
             slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.SUCCEEDED.toString(), EventStatus.SUCCESS, new Date(
                     System.currentTimeMillis() - 3600 * 1000), new Date(System.currentTimeMillis()));
-            slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+            slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
             // The actual times are stored, so event processed(1000)
             assertEquals(8, slaSummary.getEventProcessed());
             assertEquals(3, ehs.getEventQueue().size());
-
     }
 
     private SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {
@@ -583,6 +606,33 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         bean.setId(jobId);
         bean.setAppType(appType);
         return bean;
+    }
+
+    public void testHistoryPurge() throws Exception{
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(new Configuration(false));
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
+        slaRegBean.setExpectedStart(startTime); // 1 hour back
+        slaRegBean.setExpectedDuration(1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+        slaCalcMemory.updateJobSla(jobId);
+        slaCalcMemory.addJobStatus(jobId, WorkflowJob.Status.RUNNING.toString(), EventStatus.STARTED, new Date(
+                System.currentTimeMillis() - 3600 * 1000), null);
+        slaCalcMemory.updateJobSla(jobId);
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+        // The actual end times are not stored, but sla's processed so (111)
+        assertEquals(7, slaSummary.getEventProcessed());
+        assertTrue(slaCalcMemory.isJobIdInHistorySet(job1.getId()));
+        job1.setStatusStr("SUCCEEDED");
+        job1.setLastModifiedTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, job1);
+        slaCalcMemory.new HistoryPurgeWorker().run();
+        assertFalse(slaCalcMemory.isJobIdInHistorySet(job1.getId()));
     }
 
 }

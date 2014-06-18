@@ -53,11 +53,12 @@ import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -242,7 +243,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
 
         // assert for values in summary bean to be reset
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         assertEquals( 0, slaSummary.getEventProcessed());
         assertEquals(-1, slaSummary.getActualDuration());
         assertNull(slaSummary.getActualStart());
@@ -443,6 +444,10 @@ public class TestSLAEventGeneration extends XDataTestCase {
         new CoordActionStartXCommand(actionId, getTestUser(), appName, jobId).call();
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
+        SLASummaryBean suBean = new SLASummaryBean();
+        suBean.setId(actionId);
+        suBean.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED, suBean);
         ehs.new EventWorker().run();
         slaEvent = skipToSLAEvent();
         assertEquals(actionId, slaEvent.getId());
@@ -576,6 +581,10 @@ public class TestSLAEventGeneration extends XDataTestCase {
         new StartXCommand(jobId).call();
         slaEvent = slas.getSLACalculator().get(jobId);
         slaEvent.setEventProcessed(0); //resetting to receive sla events
+        SLASummaryBean suBean = new SLASummaryBean();
+        suBean.setId(jobId);
+        suBean.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED, suBean);
         waitForEventGeneration(200);
         ehs.new EventWorker().run();
         waitForEventGeneration(300);

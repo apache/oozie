@@ -19,8 +19,19 @@
 package org.apache.oozie.sla;
 
 import java.util.Date;
+
 import org.apache.oozie.AppType;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.JobsConcurrencyService;
+import org.apache.oozie.service.MemoryLocksService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.service.SLAService;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XLog;
 
 /**
  * Class used by SLAService to store SLA objects and perform calculations and
@@ -28,6 +39,7 @@ import org.apache.oozie.client.event.SLAEvent;
  */
 public class SLACalcStatus extends SLAEvent {
 
+    public static String SLA_ENTITYKEY_PREFIX = "sla-";
     private SLARegistrationBean regBean;
     private String jobStatus;
     private SLAStatus slaStatus;
@@ -37,6 +49,7 @@ public class SLACalcStatus extends SLAEvent {
     private long actualDuration = -1;
     private Date lastModifiedTime;
     private byte eventProcessed;
+    private LockToken lock;
 
     public SLACalcStatus(SLARegistrationBean reg) {
         this();
@@ -264,4 +277,55 @@ public class SLACalcStatus extends SLAEvent {
         return lastModifiedTime;
     }
 
+    public String getEntityKey() {
+        return SLA_ENTITYKEY_PREFIX + this.getId();
+    }
+    /**
+     * Obtain an exclusive lock on the {link #getEntityKey}.
+     * <p/>
+     * A timeout of {link #getLockTimeOut} is used when trying to obtain the lock.
+     *
+     * @throws InterruptedException thrown if an interruption happened while trying to obtain the lock
+     */
+    public void acquireLock() throws InterruptedException {
+        // only get ZK lock when multiple servers running
+        if (Services.get().get(JobsConcurrencyService.class).isHighlyAvailableMode()) {
+            lock = Services.get().get(MemoryLocksService.class).getWriteLock(getEntityKey(), getLockTimeOut());
+            if (lock == null) {
+                XLog.getLog(getClass()).debug("Could not aquire lock for [{0}]", getEntityKey());
+            }
+            else {
+                XLog.getLog(getClass()).debug("Acquired lock for [{0}]", getEntityKey());
+            }
+        }
+        else {
+            lock = new DummyToken();
+        }
+    }
+
+    private static class DummyToken implements LockToken {
+        @Override
+        public void release() {
+        }
+    }
+
+    public boolean isLocked() {
+        boolean locked = false;
+        if(lock != null) {
+            locked = true;
+        }
+        return locked;
+    }
+
+    public void releaseLock(){
+        if (lock != null) {
+            lock.release();
+            lock = null;
+            XLog.getLog(getClass()).debug("Released lock for [{0}]", getEntityKey());
+        }
+    }
+
+    public long getLockTimeOut() {
+        return Services.get().getConf().getLong(SLAService.CONF_SLA_CALC_LOCK_TIMEOUT, 5 * 1000);
+    }
 }

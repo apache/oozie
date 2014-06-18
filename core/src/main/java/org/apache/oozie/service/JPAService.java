@@ -71,7 +71,6 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
     public static final String CONF_CONN_DATA_SOURCE = CONF_PREFIX + "connection.data.source";
     public static final String CONF_CONN_PROPERTIES = CONF_PREFIX + "connection.properties";
-
     public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
     public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
     public static final String CONF_VALIDATE_DB_CONN = CONF_PREFIX + "validate.db.connection";

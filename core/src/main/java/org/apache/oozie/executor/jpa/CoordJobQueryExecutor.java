@@ -372,4 +372,9 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         }
     }
 
+    @Override
+    public Object getSingleValue(CoordJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
+    }
+
 }
