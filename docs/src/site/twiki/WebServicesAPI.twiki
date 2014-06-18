@@ -191,7 +191,10 @@ Content-Type: application/json;charset=UTF-8
 
 _Identical to the corresponding Oozie v0 WS API_
 
-A HTTP GET request returns the Oozie instrumentation information.
+A HTTP GET request returns the Oozie instrumentation information.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Instrumentation is enabled, then Metrics is unavailable.
 
 *Request:*
 
@@ -267,6 +270,90 @@ Content-Type: application/json;charset=UTF-8
     },
     ...
   ]
+}
+</verbatim>
+
+---++++ Oozie Metrics
+
+_Available in the Oozie v2 WS API and later_
+
+A HTTP GET request returns the Oozie metrics information.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Metrics is enabled, then Instrumentation is unavailable.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/metrics
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+   "gauges" : {
+        "jvm.memory.non-heap.committed" : {
+          "value" : 62590976
+        },
+        "oozie.mode" : {
+          "value" : "NORMAL"
+        },
+        ...
+    },
+    "timers" : {
+        "commands.action.end.call.timer" : {
+          "mean" : 108.5,
+          "p50" : 111.5,
+          "p75" : 165.5,
+          "p999" : 169,
+          "count" : 4,
+          "p95" : 169,
+          "max" : 169,
+          "mean_rate" : 0,
+          "duration_units" : "milliseconds",
+          "p98" : 169,
+          "m1_rate" : 0,
+          "rate_units" : "calls/millisecond",
+          "m15_rate" : 0,
+          "stddev" : 62.9417720330995,
+          "m5_rate" : 0,
+          "p99" : 169,
+          "min" : 42
+        },
+        ...
+    },
+    "histograms" : {
+        "callablequeue.threads.active.histogram" : {
+          "p999" : 1,
+          "mean" : 0.0625,
+          "min" : 0,
+          "p75" : 0,
+          "p95" : 1,
+          "count" : 48,
+          "p98" : 1,
+          "stddev" : 0.24462302739504083,
+          "max" : 1,
+          "p99" : 1,
+          "p50" : 0
+        },
+        ...
+    },
+    "counters" : {
+        "commands.job.info.executions" : {
+          "count" : 9
+        },
+        "jpa.CoordJobsGetPendingJPAExecutor" : {
+          "count" : 1
+        },
+        "jpa.GET_WORKFLOW" : {
+          "count" : 10
+        },
+        ...
+    }
 }
 </verbatim>
 

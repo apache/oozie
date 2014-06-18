@@ -244,7 +244,7 @@ function treeNodeFromXml(XmlEl) {
     return result;
 }
 
-function treeNodeFromJson(json, rootText) {
+function treeNodeFromJsonInstrumentation(json, rootText) {
     var result = new Ext.tree.TreeNode({
         text: rootText
     });
@@ -255,13 +255,51 @@ function treeNodeFromJson(json, rootText) {
                 if (typeof json[i] == 'object') {
                     var c;
                     if (json[i]['group']) {
-                        c = treeNodeFromJson(json[i]['data'], json[i]['group']);
+                        c = treeNodeFromJsonInstrumentation(json[i]['data'], json[i]['group']);
                     }
                     else {
-                        c = treeNodeFromJson(json[i], json[i]['name']);
+                        c = treeNodeFromJsonInstrumentation(json[i], json[i]['name']);
                     }
                     if (c)
                         result.appendChild(c);
+                }
+                else if (typeof json[i] != 'function') {
+                    result.appendChild(new Ext.tree.TreeNode({
+                        text: i + " -> " + json[i]
+                    }));
+                }
+            }
+            else {
+                result.appendChild(new Ext.tree.TreeNode({
+                    text: i + " -> " + json[i]
+                }));
+            }
+        }
+    }
+    else {
+        result.appendChild(new Ext.tree.TreeNode({
+            text: json
+        }));
+    }
+    return result;
+}
+
+function treeNodeFromJsonMetrics(json, rootText) {
+    var result = new Ext.tree.TreeNode({
+        text: rootText
+    });
+    //  For Elements, process attributes and children
+    if (typeof json === 'object') {
+        for (var i in json) {
+            if (json[i]) {
+                if (typeof json[i] == 'object') {
+                    var c;
+                    if (json[i]) {
+                        c = treeNodeFromJsonMetrics(json[i], i);
+                        if (c) {
+                            result.appendChild(c);
+                        }
+                    }
                 }
                 else if (typeof json[i] != 'function') {
                     result.appendChild(new Ext.tree.TreeNode({
@@ -2147,23 +2185,54 @@ var viewInstrumentation = new Ext.Action({
             url: getOozieBase() + 'admin/instrumentation',
             success: function(response, request) {
                 var jsonData = eval("(" + response.responseText + ")");
-                var timers = treeNodeFromJson(jsonData["timers"], "timers");
+                var timers = treeNodeFromJsonInstrumentation(jsonData["timers"], "timers");
                 timers.expanded = false;
-                var samplers = treeNodeFromJson(jsonData["samplers"], "samplers");
+                var samplers = treeNodeFromJsonInstrumentation(jsonData["samplers"], "samplers");
                 samplers.expanded = false;
-                var counters = treeNodeFromJson(jsonData["counters"], "counters");
+                var counters = treeNodeFromJsonInstrumentation(jsonData["counters"], "counters");
                 counters.expanded = false;
-                var variables = treeNodeFromJson(jsonData["variables"], "variables");
+                var variables = treeNodeFromJsonInstrumentation(jsonData["variables"], "variables");
                 variables.expanded = false;
-                while (treeRoot.hasChildNodes()) {
-                    var child = treeRoot.firstChild;
-                    treeRoot.removeChild(child);
+                while (instrumentationTreeRoot.hasChildNodes()) {
+                    var child = instrumentationTreeRoot.firstChild;
+                    instrumentationTreeRoot.removeChild(child);
                 }
-                treeRoot.appendChild(samplers);
-                treeRoot.appendChild(counters);
-                treeRoot.appendChild(timers);
-                treeRoot.appendChild(variables);
-                treeRoot.expand(false, true);
+                instrumentationTreeRoot.appendChild(samplers);
+                instrumentationTreeRoot.appendChild(counters);
+                instrumentationTreeRoot.appendChild(timers);
+                instrumentationTreeRoot.appendChild(variables);
+                instrumentationTreeRoot.expand(false, true);
+            }
+
+        });
+    }
+
+});
+var viewMetrics = new Ext.Action({
+    text: "&nbsp;&nbsp;&nbsp;",
+    icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+    handler: function() {
+        Ext.Ajax.request({
+            url: getOozieBase() + 'admin/metrics',
+            success: function(response, request) {
+                var jsonData = eval("(" + response.responseText + ")");
+                var timers = treeNodeFromJsonMetrics(jsonData["timers"], "timers");
+                timers.expanded = false;
+                var histograms = treeNodeFromJsonMetrics(jsonData["histograms"], "histograms");
+                histograms.expanded = false;
+                var counters = treeNodeFromJsonMetrics(jsonData["counters"], "counters");
+                counters.expanded = false;
+                var gauges = treeNodeFromJsonMetrics(jsonData["gauges"], "gauges");
+                gauges.expanded = false;
+                while (metricsTreeRoot.hasChildNodes()) {
+                    var child = metricsTreeRoot.firstChild;
+                    metricsTreeRoot.removeChild(child);
+                }
+                metricsTreeRoot.appendChild(counters);
+                metricsTreeRoot.appendChild(timers);
+                metricsTreeRoot.appendChild(histograms);
+                metricsTreeRoot.appendChild(gauges);
+                metricsTreeRoot.expand(false, true);
             }
 
         });
@@ -2199,8 +2268,13 @@ var viewOSDetails = new Ext.Action({
     }
 });
 
-var treeRoot = new Ext.tree.TreeNode({
+var instrumentationTreeRoot = new Ext.tree.TreeNode({
     text: "Instrumentation",
+    expanded: true
+});
+
+var metricsTreeRoot = new Ext.tree.TreeNode({
+    text: "Metrics",
     expanded: true
 });
 
@@ -2349,16 +2423,25 @@ function initConsole() {
         animCollapse: false,
         title: "System Info"
     });
-    var resultArea = new Ext.tree.TreePanel({
+    var instrumentationArea = new Ext.tree.TreePanel({
         autoScroll: true,
         useArrows: true,
         height: 300,
-        root: treeRoot,
+        root: instrumentationTreeRoot,
         tbar: [viewInstrumentation, {
             xtype: 'tbfill'
         }, checkStatus, serverVersion],
         title: 'Instrumentation'
-
+    });
+    var metricsArea = new Ext.tree.TreePanel({
+        autoScroll: true,
+        useArrows: true,
+        height: 300,
+        root: metricsTreeRoot,
+        tbar: [viewMetrics, {
+            xtype: 'tbfill'
+        }, checkStatus, serverVersion],
+        title: 'Metrics'
     });
 
     var slaDashboard = new Ext.Panel({
@@ -2606,7 +2689,12 @@ function initConsole() {
         tabs.add(slaDashboard);
     }
     tabs.add(adminGrid);
-    tabs.add(resultArea);
+    if (isInstrumentationServiceEnabled == "true") {
+        tabs.add(instrumentationArea);
+    }
+    if (isMetricsInstrumentationServiceEnabled == "true") {
+        tabs.add(metricsArea);
+    }
     tabs.add(settingsArea);
     tabs.setActiveTab(jobs_grid);
     // showing Workflow Jobs active tab as default
@@ -2639,7 +2727,12 @@ function initConsole() {
     checkStatus.execute();
     viewConfig.execute();
     serverVersion.execute();
-    viewInstrumentation.execute();
+    if (isInstrumentationServiceEnabled == "true") {
+        viewInstrumentation.execute();
+    }
+    if (isMetricsInstrumentationServiceEnabled == "true") {
+        viewMetrics.execute();
+    }
     var jobId = getReqParam("job");
     if (jobId != "") {
         if (jobId.endsWith("-C")) {

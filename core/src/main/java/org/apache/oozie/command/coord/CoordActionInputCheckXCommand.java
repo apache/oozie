@@ -54,7 +54,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.StatusUtils;
@@ -145,11 +144,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
 
         StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());
-        Instrumentation.Cron cron = new Instrumentation.Cron();
         boolean isChangeInDependency = false;
         try {
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-            cron.start();
             Date now = new Date();
             if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.LAST_ONLY)) {
                 Date nextNominalTime = computeNextNominalTime();
@@ -259,9 +256,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             updateCoordAction(coordAction, isChangeInDependency);
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
-        }
-        finally {
-            cron.stop();
         }
         return null;
     }

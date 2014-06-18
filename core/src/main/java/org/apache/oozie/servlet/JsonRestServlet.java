@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class JsonRestServlet extends HttpServlet {
 
-    private static final String JSTON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
 
     protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\"UTF-8\"";
 
@@ -367,7 +367,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             throws IOException {
         response.setStatus(statusCode);
         JSONObject json = bean.toJSONObject(timeZoneId);
-        response.setContentType(JSTON_UTF8);
+        response.setContentType(JSON_UTF8);
         json.writeJSONString(response.getWriter());
     }
 
@@ -396,7 +396,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             response.sendError(statusCode);
         }
         response.setStatus(statusCode);
-        response.setContentType(JSTON_UTF8);
+        response.setContentType(JSON_UTF8);
         json.writeJSONString(response.getWriter());
     }
 

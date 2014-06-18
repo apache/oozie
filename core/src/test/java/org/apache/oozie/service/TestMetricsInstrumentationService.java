@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,14 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.MetricsInstrumentation;
 
-public class TestInstrumentationService extends XTestCase {
+public class TestMetricsInstrumentationService extends XTestCase {
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        new Services().init();
+        Services services = new Services();
+        services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.MetricsInstrumentationService");
+        services.init();
     }
 
     @Override
@@ -39,11 +41,11 @@ public class TestInstrumentationService extends XTestCase {
         assertNotNull(Services.get().get(InstrumentationService.class));
         assertNotNull(Services.get().get(InstrumentationService.class).get());
         Instrumentation instr = Services.get().get(InstrumentationService.class).get();
-        assertFalse(instr instanceof MetricsInstrumentation);
+        assertTrue(instr instanceof MetricsInstrumentation);
     }
 
     public void testIsEnabled() {
-        assertTrue(InstrumentationService.isEnabled());
-        assertFalse(MetricsInstrumentationService.isEnabled());
+        assertFalse(InstrumentationService.isEnabled());
+        assertTrue(MetricsInstrumentationService.isEnabled());
     }
 }

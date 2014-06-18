@@ -21,10 +21,12 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.VersionInfo;
+import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.ErrorCode;
 
@@ -218,11 +220,24 @@ public class Services {
         }
         InstrumentationService instrService = get(InstrumentationService.class);
         if (instrService != null) {
+            Instrumentation instr = instrService.get();
             for (Service service : services.values()) {
                 if (service instanceof Instrumentable) {
-                    ((Instrumentable) service).instrument(instrService.get());
+                    ((Instrumentable) service).instrument(instr);
                 }
             }
+            instr.addVariable("oozie", "version", new Instrumentation.Variable<String>() {
+                @Override
+                public String getValue() {
+                    return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
+                }
+            });
+            instr.addVariable("oozie", "mode", new Instrumentation.Variable<String>() {
+                @Override
+                public String getValue() {
+                    return getSystemMode().toString();
+                }
+            });
         }
         log.info("Initialized");
         log.info("Running with JARs for Hadoop version [{0}]", VersionInfo.getVersion());

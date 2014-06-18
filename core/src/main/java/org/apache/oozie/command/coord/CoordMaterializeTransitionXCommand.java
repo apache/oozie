@@ -357,9 +357,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 throw new CommandException(ErrorCode.E1011, jex);
             }
             throw new CommandException(ErrorCode.E1012, e.getMessage(), e);
+        } finally {
+            cron.stop();
+            instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".materialize", cron);
         }
-        cron.stop();
-
     }
 
     /**

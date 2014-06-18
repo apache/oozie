@@ -38,6 +38,7 @@ import org.apache.oozie.service.XLogService;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.store.WorkflowStore;
+import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
@@ -295,7 +296,7 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
             FaultInjection.deactivate("org.apache.oozie.command.SkipCommitFaultInjection");
             cron.stop();
             instrumentation.addCron(INSTRUMENTATION_GROUP, name, cron);
-            incrCommandCounter(1);
+            InstrumentUtils.incrCommandCounter(name, 1, instrumentation);
             log.trace(logMask, "End");
             if (locks != null) {
                 for (LockToken lock : locks) {
@@ -503,47 +504,6 @@ public abstract class Command<T, S extends Store> implements XCallable<T> {
         XLog.Info.get().clearParameter(DagXLogInfoService.JOB);
         XLog.Info.get().clearParameter(DagXLogInfoService.APP);
         XLog.Info.get().clearParameter(DagXLogInfoService.TOKEN);
-    }
-
-    /**
-     * Convenience method to increment counters.
-     *
-     * @param group the group name.
-     * @param name the counter name.
-     * @param count increment count.
-     */
-    private void incrCounter(String group, String name, int count) {
-        if (instrumentation != null) {
-            instrumentation.incr(group, name, count);
-        }
-    }
-
-    /**
-     * Used to increment command counters.
-     *
-     * @param count the increment count.
-     */
-    protected void incrCommandCounter(int count) {
-        incrCounter(INSTRUMENTATION_GROUP, name, count);
-    }
-
-    /**
-     * Used to increment job counters. The counter name s the same as the command name.
-     *
-     * @param count the increment count.
-     */
-    protected void incrJobCounter(int count) {
-        incrJobCounter(name, count);
-    }
-
-    /**
-     * Used to increment job counters.
-     *
-     * @param name the job name.
-     * @param count the increment count.
-     */
-    protected void incrJobCounter(String name, int count) {
-        incrCounter(INSTRUMENTATION_JOB_GROUP, name, count);
     }
 
     /**

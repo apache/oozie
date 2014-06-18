@@ -127,8 +127,6 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
                 throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
             }
 
-            Instrumentation.Cron cron = new Instrumentation.Cron();
-            cron.start();
             try {
                 materializeJobs(false, job, jobConf, store);
                 updateJobTable(job, store);
@@ -142,7 +140,6 @@ public class CoordActionMaterializeCommand extends CoordinatorCommand<Void> {
                 log.error("Excepion thrown :", e);
                 throw new CommandException(ErrorCode.E1001, e.getMessage(), e);
             }
-            cron.stop();
         }
         else {
             log.info("WARN: action is not in PREMATER state!  It's in state=" + job.getStatus());

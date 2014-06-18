@@ -34,6 +34,8 @@ import java.util.Map;
  */
 public class XLog implements Log {
 
+    public static final String INSTRUMENTATION_LOG_NAME = "oozieinstrumentation";
+
     /**
      * <code>LogInfo</code> stores contextual information to create log prefixes. <p/> <code>LogInfo</code> uses a
      * <code>ThreadLocal</code> to propagate the context. <p/> <code>LogInfo</code> context parameters are configurable

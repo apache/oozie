@@ -204,7 +204,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
         lock = Services.get().get(MemoryLocksService.class).getWriteLock(getEntityKey(), getLockTimeOut());
         if (lock == null) {
-            Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".lockTimeOut", 1);
             if (isReQueueRequired()) {
                 //if not acquire the lock, re-queue itself with default delay
@@ -242,7 +241,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
 
         commandQueue = null;
-        Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
         instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".executions", 1);
         Instrumentation.Cron callCron = new Instrumentation.Cron();
         try {
@@ -324,6 +322,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
         catch (Error er) {
             LOG.error("Error, ", er);
+            instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".errors", 1);
             throw er;
         }
         finally {

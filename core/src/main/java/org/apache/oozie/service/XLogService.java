@@ -312,11 +312,6 @@ public class XLogService implements Service, Instrumentable {
      * @param instr instrumentation to use.
      */
     public void instrument(Instrumentation instr) {
-        instr.addVariable("oozie", "version", new Instrumentation.Variable<String>() {
-            public String getValue() {
-                return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
-            }
-        });
         instr.addVariable(INSTRUMENTATION_GROUP, "config.file", new Instrumentation.Variable<String>() {
             public String getValue() {
                 return log4jFileName;
