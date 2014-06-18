@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1807 Make bundle change command synchronous (puru via rohini)
 OOZIE-1678 HA support for SLA (ryota)
 OOZIE-1685 Oozie doesn’t process correctly workflows with a non-default name node (benjzh via rohini)
 OOZIE-1875 Add "NONE" to coordinator job execution_order (bzhang)

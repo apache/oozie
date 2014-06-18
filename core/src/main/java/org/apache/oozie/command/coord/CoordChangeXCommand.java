@@ -359,13 +359,14 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                             LOG.info("Changing coord status to SUCCEEDED, because it's in " + coordJob.getStatus()
                                     + " and new end time is before start time. Startime is " + coordJob.getStartTime()
                                     + " and new end time is " + newEndTime);
+
                             coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
                             coordJob.resetPending();
                         }
                         coordJob.setDoneMaterialization();
                     }
                     else {
-                        // move it to running iff newdtime is after starttime.
+                        // move it to running iff new end time is after starttime.
                         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
                             coordJob.setStatus(CoordinatorJob.Status.RUNNING);
                         }
@@ -382,6 +383,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                         processLookaheadActions(coordJob, newEndTime);
                     }
                 }
+
                 else {
                     LOG.info("Didn't change endtime. Endtime is in between coord end time and next materialization time."
                             + "Coord endTime = " + DateUtils.formatDateOozieTZ(newEndTime)
@@ -453,7 +455,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             LOG.info("ENDED CoordChangeXCommand for jobId=" + jobId);
             // update bundle action
             if (coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                //ignore pending as it'sync command
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus, true);
                 bundleStatusUpdate.call();
             }
         }

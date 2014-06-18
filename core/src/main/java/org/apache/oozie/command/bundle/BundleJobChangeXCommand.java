@@ -162,6 +162,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
+        StringBuffer changeReport = new StringBuffer();
         try {
             if (isChangePauseTime || isChangeEndTime) {
                 if (isChangePauseTime) {
@@ -179,17 +180,27 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                 for (BundleActionBean action : this.bundleActions) {
                     // queue coord change commands;
                     if (action.getStatus() != Job.Status.KILLED && action.getCoordId() != null) {
-                        queue(new CoordChangeXCommand(action.getCoordId(), changeValue));
-                        LOG.info("Queuing CoordChangeXCommand coord job = " + action.getCoordId() + " to change "
-                                + changeValue);
-                        action.setPending(action.getPending() + 1);
-                        updateList.add(new UpdateEntry<BundleActionQuery>(
-                                BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, action));
+                        try {
+                            new CoordChangeXCommand(action.getCoordId(), changeValue).call();
+                        }
+                        catch (Exception e) {
+                            String errorMsg = action.getCoordId() + " : " + e.getMessage();
+                            LOG.info("Change command failed " + errorMsg);
+                            changeReport.append("[ ").append(errorMsg).append(" ]");
+                        }
+                    }
+                    else {
+                        String errorMsg = action.getCoordId() + " : Coord is in killed state";
+                        LOG.info("Change command failed " + errorMsg);
+                        changeReport.append("[ ").append(errorMsg).append(" ]");
                     }
                 }
                 updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME,
                         bundleJob));
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            }
+            if(!changeReport.toString().isEmpty()){
+                throw new CommandException(ErrorCode.E1320, changeReport.toString());
             }
             return null;
         }

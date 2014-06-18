@@ -232,6 +232,7 @@ public enum ErrorCode {
     E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
     E1318(XLog.STD, "No coord jobs for the bundle=[{0}], fail the bundle"),
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
+    E1320(XLog.STD, "Bundle Job change error, [{0}]"),
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
 
