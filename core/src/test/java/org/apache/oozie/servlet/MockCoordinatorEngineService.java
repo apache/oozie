@@ -37,6 +37,8 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordUpdateXCommand;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.util.DateUtils;
 
@@ -59,6 +61,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static List<CoordinatorJob> coordJobs;
     public static List<Boolean> started;
     public static final int INIT_COORD_COUNT = 4;
+
 
     static {
         reset();
@@ -224,6 +227,19 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             did = RestConstants.JOB_SHOW_LOG;
             validateCoordinatorIdx(jobId);
             writer.write(LOG);
+        }
+
+        @Override
+        public String updateJob(Configuration conf, String jobId, boolean dryrun, boolean showDiff)
+                throws CoordinatorEngineException {
+            if (dryrun) {
+                did = RestConstants.JOB_COORD_UPDATE + "&" + RestConstants.JOB_ACTION_DRYRUN;
+            }
+            else {
+                did = RestConstants.JOB_COORD_UPDATE;
+            }
+            validateCoordinatorIdx(jobId);
+            return "";
         }
 
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {

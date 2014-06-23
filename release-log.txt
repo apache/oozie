@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1878 Can't execute dryrun on the CLI (puru via rohini)
 OOZIE-1741 Add new coord EL function to get input partitions value string (satish.mittal via rohini) 
 OOZIE-1817 Oozie timers are not biased (rkanter)
 OOZIE-1807 Make bundle change command synchronous (puru via rohini)
