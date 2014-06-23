@@ -61,7 +61,6 @@ public class CoordMaterializeTriggerService implements Service {
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
     public static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
-    private static final int CONF_SCHEDULING_INTERVAL_DEFAULT = 300;
     private static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
     private static final int CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT = 50;
 
@@ -210,7 +209,7 @@ public class CoordMaterializeTriggerService implements Service {
         // default is 300sec (5min)
         int lookupInterval = Services.get().getConf().getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT);
         // default is 300sec (5min)
-        int schedulingInterval = Services.get().getConf().getInt(CONF_SCHEDULING_INTERVAL, CONF_SCHEDULING_INTERVAL_DEFAULT);
+        int schedulingInterval = Services.get().getConf().getInt(CONF_SCHEDULING_INTERVAL, lookupInterval);
 
         Runnable lookupTriggerJobsRunnable = new CoordMaterializeTriggerRunnable(materializationWindow, lookupInterval);
 

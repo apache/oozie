@@ -417,12 +417,15 @@
         </description>
     </property>
 
+    <!-- Enable this if you want different scheduling interval for CoordMaterializeTriggerService.
+    By default it will use lookup interval as scheduling interval
     <property>
         <name>oozie.service.CoordMaterializeTriggerService.scheduling.interval
         </name>
         <value>300</value>
         <description> The frequency at which the CoordMaterializeTriggerService will run.</description>
     </property>
+    -->
 
     <property>
         <name>oozie.service.CoordMaterializeTriggerService.materialization.window
