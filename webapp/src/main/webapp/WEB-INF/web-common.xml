@@ -222,6 +222,11 @@
 
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
         <url-pattern>*.js</url-pattern>
     </filter-mapping>
 
