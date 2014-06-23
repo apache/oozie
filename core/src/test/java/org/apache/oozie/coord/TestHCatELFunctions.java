@@ -274,6 +274,38 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     /**
+     * Test HCat dataInPartition EL function (phase 1) which echo back the EL
+     * function itself
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDataInPartitionsPh1() throws Exception {
+        init("coord-job-submit-data");
+        String expr = "${coord:dataInPartitions('ABC', 'hive-export')}";
+        // +ve test
+        eval.setVariable("oozie.dataname.ABC", "data-in");
+        assertEquals("${coord:dataInPartitions('ABC', 'hive-export')}", CoordELFunctions.evalAndWrap(eval, expr));
+        // -ve test
+        expr = "${coord:dataInPartitions('ABCD', 'hive-export')}";
+        try {
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("should throw exception because Data-in is not defined");
+        }
+        catch (Exception ex) {
+        }
+        // -ve test
+        expr = "${coord:dataInPartitions('ABCD')}";
+        eval.setVariable("oozie.dataname.ABCD", "data-in");
+        try {
+            CoordELFunctions.evalAndWrap(eval, expr);
+            fail("should throw exception because EL function requires 2 parameters");
+        }
+        catch (Exception ex) {
+        }
+    }
+
+    /**
      * Test HCat dataOutPartition EL function (phase 1) which echo back the EL
      * function itself
      *
@@ -496,6 +528,31 @@ public class TestHCatELFunctions extends XHCatTestCase {
         String expr = "${coord:dataInPartitionMax('ABC','datastamp')}";
         String res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("20"));
+    }
+
+    /**
+     * Test dataInPartitions EL function (phase 3) which returns the complete partition value string of a single partition
+     * in case of hive-export type.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDataInPartitions() throws Exception {
+        init("coord-action-start");
+        String expr = "${coord:dataInPartitions('ABC', 'hive-export')}";
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        String res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("datastamp='20120230',region='us'") || res.equals("region='us',datastamp='20120230'"));
+        // -ve test; execute EL function with any other type than hive-export
+        try {
+            expr = "${coord:dataInPartitions('ABC', 'invalid-type')}";
+            eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us");
+            eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+            res = CoordELFunctions.evalAndWrap(eval, expr);
+            fail("EL function should throw exception because of invalid type");
+        } catch (Exception e) {
+        }
     }
 
     private void init(String tag) throws Exception {

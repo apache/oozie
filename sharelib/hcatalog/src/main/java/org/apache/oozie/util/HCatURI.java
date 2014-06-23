@@ -260,6 +260,35 @@ public class HCatURI {
         return filter.toString();
     }
 
+    /**
+     * Get the entire partition value string from partition map.
+     * In case of type hive-export, it can be used to create entire partition value string
+     * that can be used in Hive query for partition export/import.
+     *
+     * type hive-export
+     * @return partition value string
+     */
+    public String toPartitionValueString(String type) {
+        StringBuilder value = new StringBuilder();
+        if (type.equals("hive-export")) {
+            String comparator = "=";
+            String separator = ",";
+            for (Map.Entry<String, String> entry : partitions.entrySet()) {
+                if (value.length() > 1) {
+                    value.append(separator);
+                }
+                value.append(entry.getKey());
+                value.append(comparator);
+                value.append(PARTITION_VALUE_QUOTE);
+                value.append(entry.getValue());
+                value.append(PARTITION_VALUE_QUOTE);
+            }
+        } else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+        return value.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -2855,6 +2855,192 @@ C = foreach B generate foo, bar;
 store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
 </blockquote>
 
+---++++ 6.8.8 coord:dataInPartitions(String name, String type) EL function
+
+The =${coord:dataInPartitions(String name, String type)}= EL function resolves to a list of partition key-value
+pairs for the input-event dataset. Currently the only type supported is 'hive-export'. The 'hive-export' type
+supports only one partition instance and it can be used to create the complete partition value string that can
+be used in a hive query for partition export/import.
+
+The example below illustrates a hive export-import job triggered by a coordinator, using the EL functions for HCat database,
+table, input partitions. The example replicates the hourly processed data across hive tables.
+
+*%GREEN% Example: %ENDCOLOR%*
+
+#HCatHiveExampleOne
+
+*Coordinator application definition:*
+
+<blockquote>
+    <coordinator-app xmlns="uri:oozie:coordinator:0.3" name="app-coord"
+    frequency="${coord:hours(1)}" start="2014-03-28T08:00Z"
+    end="2030-01-01T00:00Z" timezone="UTC">
+
+    <datasets>
+        <dataset name="Stats-1" frequency="${coord:hours(1)}"
+            initial-instance="2014-03-28T08:00Z" timezone="UTC">
+            <uri-template>hcat://foo:11002/myInputDatabase1/myInputTable1/year=${YEAR};month=${MONTH};day=${DAY};hour=${HOUR}
+            </uri-template>
+        </dataset>
+        <dataset name="Stats-2" frequency="${coord:hours(1)}"
+            initial-instance="2014-03-28T08:00Z" timezone="UTC">
+            <uri-template>hcat://foo:11002/myInputDatabase2/myInputTable2/year=${YEAR};month=${MONTH};day=${DAY};hour=${HOUR}
+            </uri-template>
+        </dataset>
+    </datasets>
+    <input-events>
+        <data-in name="processed-logs-1" dataset="Stats-1">
+            <instance>${coord:current(0)}</instance>
+        </data-in>
+    </input-events>
+    <output-events>
+        <data-out name="processed-logs-2" dataset="Stats-2">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+    <action>
+      <workflow>
+        <app-path>hdfs://bar:8020/usr/joe/logsreplicator-wf</app-path>
+        <configuration>
+          <property>
+            <name>EXPORT_DB</name>
+            <value>${coord:databaseIn('processed-logs-1')}</value>
+          </property>
+          <property>
+            <name>EXPORT_TABLE</name>
+            <value>${coord:tableIn('processed-logs-1')}</value>
+          </property>
+          <property>
+            <name>IMPORT_DB</name>
+            <value>${coord:databaseOut('processed-logs-2')}</value>
+          </property>
+          <property>
+            <name>IMPORT_TABLE</name>
+            <value>${coord:tableOut('processed-logs-2')}</value>
+          </property>
+          <property>
+            <name>EXPORT_PARTITION</name>
+            <value>${coord:dataInPartitions('processed-logs-1', 'hive-export')}</value>
+          </property>
+          <property>
+            <name>EXPORT_PATH</name>
+            <value>hdfs://bar:8020/staging/${coord:formatTime(coord:nominalTime(), 'yyyy-MM-dd-HH')}/data</value>
+          </property>
+        </configuration>
+      </workflow>
+    </action>
+</coordinator-app>
+</blockquote>
+
+Parameterizing the input/output databases and tables using the corresponding EL function as shown will make them
+available in the hive action of the workflow 'logsreplicator-wf'.
+
+Each coordinator action will use as input events the hourly instances of the 'processed-logs-1' dataset. The
+=${coord:dataInPartitions(String name, String type)}= function enables the coordinator application to pass the
+partition corresponding to hourly dataset instances to the workflow job triggered by the coordinator action.
+The workflow passes this partition value to the hive export script that exports the hourly partition from source
+database to the staging location referred as =EXPORT_PATH=. The hive import script imports the hourly partition from
+=EXPORT_PATH= staging location into the target database.
+
+#HCatWorkflow
+
+*Workflow definition:*
+
+<blockquote>
+<workflow-app xmlns="uri:oozie:workflow:0.3" name="logsreplicator-wf">
+    <start to="table-export"/>
+    <action name="table-export">
+        <hive:hive xmlns:hive="uri:oozie:hive-action:0.2" xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <job-xml>${wf:appPath()}/conf/hive-site.xml</job-xml>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>oozie.launcher.mapred.job.priority</name>
+                    <value>${jobPriority}</value>
+                </property>
+            </configuration>
+            <script>${wf:appPath()}/scripts/table-export.hql</script>
+            <param>sourceDatabase=${EXPORT_DB}</param>
+            <param>sourceTable=${EXPORT_TABLE}</param>
+            <param>sourcePartition=${EXPORT_PARTITION}</param>
+            <param>sourceStagingDir=${EXPORT_PATH}</param>
+        </hive:hive>
+        <ok to="table-import"/>
+        <error to="fail"/>
+    </action>
+    <action name="table-import">
+        <hive:hive xmlns:hive="uri:oozie:hive-action:0.2" xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <job-xml>${wf:appPath()}/conf/hive-site.xml</job-xml>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>oozie.launcher.mapred.job.priority</name>
+                    <value>${jobPriority}</value>
+                </property>
+            </configuration>
+            <script>${wf:appPath()}/scripts/table-import.hql</script>
+            <param>targetDatabase=${IMPORT_DB}</param>
+            <param>targetTable=${IMPORT_TABLE}</param>
+            <param>targetPartition=${EXPORT_PARTITION}</param>
+            <param>sourceStagingDir=${EXPORT_PATH}</param>
+        </hive:hive>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>
+            Workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]
+        </message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</blockquote>
+
+Ensure that the following jars are in classpath, with versions corresponding to hcatalog installation:
+hcatalog-core.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar, hive-serde.jar,
+ libfb303.jar. The hive-site.xml needs to be present in classpath as well.
+
+*Example Hive Export script:*
+The following script exports a particular Hive table partition into staging location, where the partition value
+ is computed through =${coord:dataInPartitions(String name, String type)}= EL function.
+<blockquote>
+export table ${sourceDatabase}.${sourceTable} partition (${sourcePartition}) to '${sourceStagingDir}';
+</blockquote>
+
+For example, for the 2014-03-28T08:00Z run with the given dataset instances and ${coord:dataInPartitions(
+'processed-logs-1', 'hive-export'), the above Hive script with resolved values would look like:
+<blockquote>
+export table myInputDatabase1/myInputTable1 partition (year='2014',month='03',day='28',hour='08') to 'hdfs://bar:8020/staging/2014-03-28-08';
+</blockquote>
+
+*Example Hive Import script:*
+The following script imports a particular Hive table partition from staging location, where the partition value is computed
+ through =${coord:dataInPartitions(String name, String type)}= EL function.
+<blockquote>
+use ${targetDatabase};
+alter table ${targetTable} drop if exists partition ${targetPartition};
+import table ${targetTable} partition (${targetPartition}) from '${sourceStagingDir}';
+</blockquote>
+
+For example, for the 2014-03-28T08:00Z run with the given dataset instances and ${coord:dataInPartitions(
+'processed-logs-2', 'hive-export'), the above Hive script with resolved values would look like:
+
+<blockquote>
+use myInputDatabase2;
+alter table myInputTable2 drop if exists partition (year='2014',month='03',day='28',hour='08');
+import table myInputTable2 partition (year='2014',month='03',day='28',hour='08') from 'hdfs://bar:8020/staging/2014-03-28-08';
+</blockquote>
+
 
 ---+++ 6.9. Parameterization of Coordinator Application
 

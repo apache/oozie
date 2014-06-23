@@ -115,6 +115,12 @@ public class HCatELFunctions {
         return echoUnResolved("dataOutPartitions", "'" + dataOutName + "'");
     }
 
+    public static String ph1_coord_dataInPartitions_echo(String dataInName, String type) {
+        // Checking if the dataIn/dataOut is correct?
+        isValidDataEvent(dataInName);
+        return echoUnResolved("dataInPartitions", "'" + dataInName + "', '" + type + "'");
+    }
+
     public static String ph1_coord_dataOutPartitionValue_echo(String dataOutName, String partition) {
         // Checking if the dataIn/dataOut is correct?
         isValidDataEvent(dataOutName);
@@ -263,6 +269,47 @@ public class HCatELFunctions {
         catch (URISyntaxException e) {
             throw new RuntimeException("Parsing exception for HCatURI " + uri + ". details: " + e);
         }
+    }
+
+    /**
+     * Used to specify the entire HCat partition defining input for workflow job. <p/> Look for two evaluator-level
+     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the data-in HCat URI.
+     * <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something unresolved,
+     * this function will echo back the original function <p/> otherwise it sends the partition.
+     *
+     * @param dataInName : DataIn name
+     * @param type : for action type: hive-export
+     */
+    public static String ph3_coord_dataInPartitions(String dataInName, String type) {
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        String uri = (String) eval.getVariable(".datain." + dataInName);
+        Boolean unresolved = (Boolean) eval.getVariable(".datain." + dataInName + ".unresolved");
+        if (unresolved != null && unresolved.booleanValue() == true) {
+            return "${coord:dataInPartitions('" + dataInName + "', '" + type + "')}";
+        }
+        String partitionValue = null;
+        if (uri != null) {
+            if (type.equals("hive-export")) {
+                String[] uriList = uri.split(CoordELFunctions.DIR_SEPARATOR);
+                if (uriList.length > 1) {
+                    throw new RuntimeException("Multiple partitions not supported for hive-export type. Dataset name: "
+                        + dataInName + " URI: " + uri);
+                }
+                try {
+                    partitionValue = new HCatURI(uri).toPartitionValueString(type);
+                }
+                catch (URISyntaxException e) {
+                    throw new RuntimeException("Parsing exception for HCatURI " + uri, e);
+                }
+            } else {
+                  throw new RuntimeException("Unsupported type: " + type + " dataset name: " + dataInName);
+            }
+        }
+        else {
+            XLog.getLog(HCatELFunctions.class).warn("URI is null");
+            return null;
+        }
+        return partitionValue;
     }
 
     /**
