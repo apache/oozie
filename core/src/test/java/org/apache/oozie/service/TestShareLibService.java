@@ -101,6 +101,25 @@ public class TestShareLibService extends XFsTestCase {
     }
 
     @Test
+    public void testfailFast() throws Exception {
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.FAIL_FAST_ON_STARTUP, "true");
+        //Set dummyfile as metafile which doesn't exist.
+        conf.set(ShareLibService.SHARELIB_MAPPING_FILE, String.valueOf(new Date().getTime()));
+        try {
+            services.init();
+            fail("Should throw exception");
+        }
+        catch(Throwable e){
+            assertTrue(e.getMessage().contains("E0104: Could not fully initialize service"));
+        } finally {
+            services.destroy();
+        }
+    }
+
+    @Test
     public void testCreateLauncherLibPath() throws Exception {
         services = new Services();
         setSystemProps();

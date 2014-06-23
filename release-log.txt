@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1877 Setting to fail oozie server startup in case of sharelib misconfiguration (puru via rohini)
 OOZIE-1388 Add a admin servlet to show thread stack trace and CPU usage per thread (rohini)
 OOZIE-1893 Recovery service will never recover bundle action if CoordSubmitXCommand command is lost (puru via rohini)
 OOZIE-1878 Can't execute dryrun on the CLI (puru via rohini)

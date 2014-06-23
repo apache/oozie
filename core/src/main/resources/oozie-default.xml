@@ -2057,6 +2057,14 @@
             oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
             oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
         </description>
+
+    </property>
+        <property>
+        <name>oozie.service.ShareLibService.fail.fast.on.startup</name>
+        <value>false</value>
+        <description>
+            Fails server starup if sharelib initilzation fails.
+        </description>
     </property>
 
     <property>

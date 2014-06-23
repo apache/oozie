@@ -39,7 +39,6 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -53,6 +52,7 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.oozie.ErrorCode;
 
 public class ShareLibService implements Service, Instrumentable {
@@ -64,6 +64,8 @@ public class ShareLibService implements Service, Instrumentable {
     public static final String SHIP_LAUNCHER_JAR = "oozie.action.ship.launcher.jar";
 
     public static final String PURGE_INTERVAL = CONF_PREFIX + "ShareLibService.purge.interval";
+
+    public static final String FAIL_FAST_ON_STARTUP = CONF_PREFIX + "ShareLibService.fail.fast.on.startup";
 
     private static final String PERMISSION_STRING = "-rwxr-xr-x";
 
@@ -102,6 +104,7 @@ public class ShareLibService implements Service, Instrumentable {
         this.services = services;
         sharelibMappingFile = services.getConf().get(SHARELIB_MAPPING_FILE, "");
         isShipLauncherEnabled = services.getConf().getBoolean(SHIP_LAUNCHER_JAR, false);
+        boolean failOnfailure = services.getConf().getBoolean(FAIL_FAST_ON_STARTUP, false);
         Path launcherlibPath = getLauncherlibPath();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
@@ -109,12 +112,20 @@ public class ShareLibService implements Service, Instrumentable {
             fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             updateLauncherLib();
             updateShareLib();
-        } catch(IOException ioe) {
-            // We don't want to actually fail init by throwing an Exception, so only create the ServiceException and log it
-            ServiceException se = new ServiceException(ErrorCode.E0104, getClass().getName(),
-                    "Not able to cache sharelib.  An Admin needs to install the sharelib with oozie-setup.sh and issue the "
-                            + "'oozie admin' CLI command to update the sharelib", ioe);
-            LOG.error(se);
+        } catch(Throwable e) {
+            if (failOnfailure) {
+                LOG.error("Sharelib initialization fails", e);
+                throw new ServiceException(ErrorCode.E0104, getClass().getName(), "Sharelib initialization fails. "
+                        + e.getMessage());
+            }
+            else {
+                // We don't want to actually fail init by throwing an Exception, so only create the ServiceException and
+                // log it
+                ServiceException se = new ServiceException(ErrorCode.E0104, getClass().getName(),
+                        "Not able to cache sharelib. An Admin needs to install the sharelib with oozie-setup.sh and issue the "
+                                + "'oozie admin' CLI command to update the sharelib", e);
+                LOG.error(se);
+            }
         }
         Runnable purgeLibsRunnable = new Runnable() {
             @Override
