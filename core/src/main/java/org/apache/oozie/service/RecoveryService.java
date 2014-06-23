@@ -183,7 +183,7 @@ public class RecoveryService implements Service {
                         log.error("CoordId is null for Bundle action " + baction.getBundleActionId());
                         continue;
                     }
-                    if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(baction.getCoordId())) {
+                    if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(baction.getBundleId())) {
                         if (baction.getStatus() == Job.Status.PREP && baction.getCoordId() == null) {
                             BundleJobBean bundleJob = null;
                             if (jpaService != null) {
