@@ -287,6 +287,16 @@
             Completed bundle jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
+
+    <property>
+        <name>oozie.service.PurgeService.purge.old.coord.action</name>
+        <value>false</value>
+        <description>
+            Whether to purge completed workflows and their corresponding coordinator actions
+            of long running coordinator jobs if the completed workflow jobs are older than the value
+            specified in oozie.service.PurgeService.older.than.
+        </description>
+    </property>
     
     <property>
 		<name>oozie.service.PurgeService.purge.limit</name>

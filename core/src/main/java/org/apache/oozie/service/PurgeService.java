@@ -32,6 +32,7 @@ public class PurgeService implements Service {
     public static final String CONF_OLDER_THAN = CONF_PREFIX + "older.than";
     public static final String COORD_CONF_OLDER_THAN = CONF_PREFIX + "coord.older.than";
     public static final String BUNDLE_CONF_OLDER_THAN = CONF_PREFIX + "bundle.older.than";
+    public static final String PURGE_OLD_COORD_ACTION = CONF_PREFIX + "purge.old.coord.action";
     /**
      * Time interval, in seconds, at which the purge jobs service will be scheduled to run.
      */
@@ -47,6 +48,7 @@ public class PurgeService implements Service {
         private int coordOlderThan;
         private int bundleOlderThan;
         private int limit;
+        private boolean purgeOldCoordAction = false;
 
         public PurgeRunnable(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
             this.wfOlderThan = wfOlderThan;
@@ -55,11 +57,20 @@ public class PurgeService implements Service {
             this.limit = limit;
         }
 
+        public PurgeRunnable(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit,
+                             boolean purgeOldCoordAction) {
+            this.wfOlderThan = wfOlderThan;
+            this.coordOlderThan = coordOlderThan;
+            this.bundleOlderThan = bundleOlderThan;
+            this.limit = limit;
+            this.purgeOldCoordAction = purgeOldCoordAction;
+        }
+
         public void run() {
             // Only queue the purge command if this is the first server
             if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
                 Services.get().get(CallableQueueService.class).queue(
-                        new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit));
+                        new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit, purgeOldCoordAction));
             }
         }
 
@@ -75,7 +86,7 @@ public class PurgeService implements Service {
         Configuration conf = services.getConf();
         Runnable purgeJobsRunnable = new PurgeRunnable(conf.getInt(
                 CONF_OLDER_THAN, 30), conf.getInt(COORD_CONF_OLDER_THAN, 7), conf.getInt(BUNDLE_CONF_OLDER_THAN, 7),
-                                      conf.getInt(PURGE_LIMIT, 100));
+                                      conf.getInt(PURGE_LIMIT, 100), conf.getBoolean(PURGE_OLD_COORD_ACTION, false));
         services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10, conf.getInt(CONF_PURGE_INTERVAL, 3600),
                                                       SchedulerService.Unit.SEC);
     }

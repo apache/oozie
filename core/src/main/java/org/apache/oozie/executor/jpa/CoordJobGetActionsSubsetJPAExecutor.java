@@ -101,6 +101,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             StringBuilder statusClause = new StringBuilder();
             getStatusClause(statusClause, filterMap.get(CoordinatorEngine.POSITIVE_FILTER), true);
             getStatusClause(statusClause, filterMap.get(CoordinatorEngine.NEGATIVE_FILTER), false);
+            getIdClause(statusClause);
             // Insert 'where' before 'order by'
             sbTotal.insert(offset, statusClause);
             q = em.createQuery(sbTotal.toString());
@@ -108,8 +109,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         if (desc) {
             q = em.createQuery(q.toString().concat(" desc"));
         }
-        q.setParameter("jobId", coordJobId);
-        q.setFirstResult(start - 1);
+        q.setParameter("jobId", coordJobId);;
         q.setMaxResults(len);
         return q;
     }
@@ -124,19 +124,40 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             for (String statusVal : filterList) {
                 if (!isStatus) {
                     if (positive) {
-                        sb.append(" and a.statusStr IN (\'" + statusVal + "\'");
+                        sb.append(" and a.statusStr IN (\'").append(statusVal).append("\'");
                     }
                     else {
-                        sb.append(" and a.statusStr NOT IN (\'" + statusVal + "\'");
+                        sb.append(" and a.statusStr NOT IN (\'").append(statusVal).append("\'");
                     }
                     isStatus = true;
                 }
                 else {
-                    sb.append(",\'" + statusVal + "\'");
+                    sb.append(",\'").append(statusVal).append("\'");
                 }
             }
             sb.append(") ");
         }
+        return sb;
+    }
+
+    // Form the where clause for coord action ids
+    private StringBuilder getIdClause(StringBuilder sb) {
+        if (sb == null) {
+            sb = new StringBuilder();
+        }
+        sb.append("and a.id IN (");
+        boolean isFirst = true;
+        for (int i = start; i < start + len; i++) {
+            if (isFirst) {
+                sb.append("\'").append(coordJobId).append("@").append(i).append("\'");
+                isFirst = false;
+            }
+            else {
+                sb.append(", \'").append(coordJobId).append("@").append(i).append("\'");
+            }
+        }
+        sb.append(") ");
+
         return sb;
     }
 

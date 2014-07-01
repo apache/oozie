@@ -18,8 +18,10 @@
 package org.apache.oozie.executor.jpa;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.HashSet;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -35,6 +37,7 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestWorkflowJobQueryExecutor extends XDataTestCase {
@@ -339,5 +342,26 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(2, wfsForRerun.size());
         assertEquals(wfJob1.getId(), wfsForRerun.get(0).getId());
         assertEquals(wfJob2.getId(), wfsForRerun.get(1).getId());
+
+        // GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN
+        coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, null, null, false,
+                false, 1);
+        wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJob.getId() + "@1");
+        wfJob1.setEndTime(DateUtils.parseDateOozieTZ("2009-12-18T03:00Z"));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, wfJob1);
+        wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJob.getId() + "@2");
+        wfJob2.setEndTime(DateUtils.parseDateOozieTZ("2009-12-18T03:00Z"));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, wfJob2);
+        long olderthan = 30;
+        List<WorkflowJobBean> jobBeans = WorkflowJobQueryExecutor.getInstance().getList(
+                WorkflowJobQuery.GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN, olderthan,
+                0, 10);
+
+        HashSet<String> jobIds = new HashSet<String>(Arrays.asList(wfJob1.getId(), wfJob2.getId()));
+        assertEquals(2, jobBeans.size());
+        assertTrue(jobIds.contains(jobBeans.get(0).getId()));
+        assertTrue(jobIds.contains(jobBeans.get(1).getId()));
     }
 }

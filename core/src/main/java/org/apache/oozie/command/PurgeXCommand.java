@@ -22,10 +22,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.executor.jpa.BundleJobsDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetForPurgeJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionsDeleteJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobsCountNotForPurgeFromParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetForPurgeJPAExecutor;
@@ -50,21 +54,30 @@ public class PurgeXCommand extends XCommand<Void> {
     private int wfOlderThan;
     private int coordOlderThan;
     private int bundleOlderThan;
+    private boolean purgeOldCoordAction = false;
     private final int limit;
     private List<String> wfList;
+    private List<String> coordActionList;
     private List<String> coordList;
     private List<String> bundleList;
     private int wfDel;
     private int coordDel;
+    private int coordActionDel;
     private int bundleDel;
 
     public PurgeXCommand(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
+        this(wfOlderThan, coordOlderThan, bundleOlderThan, limit, false);
+    }
+
+    public PurgeXCommand(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit, boolean purgeOldCoordAction) {
         super("purge", "purge", 0);
         this.wfOlderThan = wfOlderThan;
         this.coordOlderThan = coordOlderThan;
         this.bundleOlderThan = bundleOlderThan;
+        this.purgeOldCoordAction = purgeOldCoordAction;
         this.limit = limit;
         wfList = new ArrayList<String>();
+        coordActionList = new ArrayList<String>();
         coordList = new ArrayList<String>();
         bundleList = new ArrayList<String>();
         wfDel = 0;
@@ -87,6 +100,20 @@ public class PurgeXCommand extends XCommand<Void> {
                     size = wfList.size();
                     wfList.addAll(jpaService.execute(new WorkflowJobsGetForPurgeJPAExecutor(wfOlderThan, wfList.size(), limit)));
                 } while(size != wfList.size());
+                if (purgeOldCoordAction) {
+                    LOG.debug("Purging workflows of long running coordinators is turned on");
+                    do {
+                        size = coordActionList.size();
+                        long olderThan = wfOlderThan;
+                        List<WorkflowJobBean> jobBeans = WorkflowJobQueryExecutor.getInstance().getList(
+                                WorkflowJobQuery.GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN, olderThan,
+                                coordActionList.size(), limit);
+                        for (WorkflowJobBean bean : jobBeans) {
+                            coordActionList.add(bean.getParentId());
+                            wfList.add(bean.getId());
+                        }
+                    } while(size != coordActionList.size());
+                }
                 do {
                     size = coordList.size();
                     coordList.addAll(jpaService.execute(
@@ -112,7 +139,7 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
-        LOG.debug("STARTED Purge to purge Workflow Jobs older than [{0}] days, Coordinator Jobs older than [{1}] days, and Bundle"
+        LOG.info("STARTED Purge to purge Workflow Jobs older than [{0}] days, Coordinator Jobs older than [{1}] days, and Bundle"
                 + "jobs older than [{2}] days.", wfOlderThan, coordOlderThan, bundleOlderThan);
 
         // Process parentless workflows to purge them and their children
@@ -125,6 +152,15 @@ public class PurgeXCommand extends XCommand<Void> {
             }
         }
 
+        // Process coordinator actions of long running coordinators and purge them
+        if (!coordActionList.isEmpty()) {
+            try {
+                purgeCoordActions(coordActionList);
+            }
+            catch (JPAExecutorException je) {
+                throw new CommandException(je);
+            }
+        }
         // Processs parentless coordinators to purge them and their children
         if (!coordList.isEmpty()) {
             try {
@@ -145,7 +181,8 @@ public class PurgeXCommand extends XCommand<Void> {
             }
         }
 
-        LOG.debug("ENDED Purge deleted [{0}] workflows, [{1}] coordinators, [{2}] bundles", wfDel, coordDel, bundleDel);
+        LOG.info("ENDED Purge deleted [{0}] workflows, [{1}] coordinatorActions, [{2}] coordinators, [{3}] bundles",
+                wfDel, coordActionDel, coordDel, bundleDel);
         return null;
     }
 
@@ -158,6 +195,9 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     private void processWorkflows(List<String> wfs) throws JPAExecutorException {
         List<String> wfsToPurge = processWorkflowsHelper(wfs);
+        for (String id: wfsToPurge) {
+            LOG.debug("Purging workflow " + id);
+        }
         purgeWorkflows(wfsToPurge);
     }
 
@@ -212,6 +252,7 @@ public class PurgeXCommand extends XCommand<Void> {
                     new WorkflowJobsCountNotForPurgeFromCoordParentIdJPAExecutor(wfOlderThan, coordId));
             if (numChildrenNotReady == 0) {
                 coordsToPurge.add(coordId);
+                LOG.debug("Purging coordinator " + coordId);
                 // Get all of the direct children for this coord
                 List<String> children = new ArrayList<String>();
                 int size;
@@ -245,6 +286,7 @@ public class PurgeXCommand extends XCommand<Void> {
                     new CoordJobsCountNotForPurgeFromParentIdJPAExecutor(coordOlderThan, bundleId));
             if (numChildrenNotReady == 0) {
                 bundlesToPurge.add(bundleId);
+                LOG.debug("Purging bundle " + bundleId);
                 // Get all of the direct children for this bundle
                 List<String> children = new ArrayList<String>();
                 int size;
@@ -278,6 +320,20 @@ public class PurgeXCommand extends XCommand<Void> {
         }
     }
 
+    /**
+     * Purge coordActions of long running coordinators and purge them
+     *
+     * @param coordActions List of coordActions to purge
+     * @throws JPAExecutorException If a JPA executor has a problem
+     */
+    private void purgeCoordActions(List<String> coordActions) throws JPAExecutorException {
+        coordActionDel = coordActions.size();
+        for (int startIndex = 0; startIndex < coordActions.size(); ) {
+            int endIndex = (startIndex + limit < coordActions.size()) ? (startIndex + limit) : coordActions.size();
+            jpaService.execute(new CoordActionsDeleteJPAExecutor(coordActions.subList(startIndex, endIndex)));
+            startIndex = endIndex;
+        }
+    }
     /**
      * Purge the coordinators in SOME order in batches of size 'limit' (its in reverse order only for convenience)
      *

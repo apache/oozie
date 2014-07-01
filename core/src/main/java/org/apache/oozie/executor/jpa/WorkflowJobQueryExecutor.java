@@ -59,7 +59,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         GET_WORKFLOW_KILL,
         GET_WORKFLOW_RESUME,
         GET_WORKFLOW_STATUS,
-        GET_WORKFLOWS_PARENT_COORD_RERUN
+        GET_WORKFLOWS_PARENT_COORD_RERUN,
+        GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
@@ -184,6 +185,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 break;
             case GET_WORKFLOWS_PARENT_COORD_RERUN:
                 query.setParameter("parentId", parameters[0]);
+                break;
+            case GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN:
+                long dayInMs = 24 * 60 * 60 * 1000;
+                long olderThanDays = (Long) parameters[0];
+                Timestamp maxEndtime = new Timestamp(System.currentTimeMillis() - (olderThanDays * dayInMs));
+                query.setParameter("endTime", maxEndtime);
+                query.setFirstResult((Integer) parameters[1]);
+                query.setMaxResults((Integer) parameters[2]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -321,6 +330,12 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setStatusStr((String) arr[1]);
                 bean.setStartTime(DateUtils.toDate((Timestamp) arr[2]));
                 bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
+                break;
+            case GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setParentId((String) arr[1]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
