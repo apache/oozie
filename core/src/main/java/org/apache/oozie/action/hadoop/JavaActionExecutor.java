@@ -1126,6 +1126,8 @@ public class JavaActionExecutor extends ActionExecutor {
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
         boolean exception = false;
+        LOG = XLog.resetPrefix(LOG);
+        LogUtils.setLogInfo(action, new XLog.Info());
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             FileSystem actionFs = context.getAppFileSystem();
