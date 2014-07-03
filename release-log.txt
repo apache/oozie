@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1821 Oozie java action fails due to AlreadyBeingCreatedException (abhishek.agarwal via rkanter)
 OOZIE-1532 Purging should remove completed children job for long running coordinator jobs (bzhang)
 OOZIE-1909 log prefix information missing in JavaActionExecutor.check (ryota)
 OOZIE-1907 DB upgrade from 3.3.0 to trunk fails on derby (rkanter)

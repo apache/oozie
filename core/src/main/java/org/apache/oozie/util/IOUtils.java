@@ -26,6 +26,7 @@ import java.io.Writer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.Closeable;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.jar.JarOutputStream;
@@ -256,5 +257,21 @@ public abstract class IOUtils {
         JarOutputStream zos = new JarOutputStream(new FileOutputStream(jar), new Manifest());
         zipDir(classesDir, "", zos);
         return jar;
+    }
+
+    /**
+     * Close a list of resources. </p> Any thrown exceptions are suppressed.
+     * @param objects list of objects to close
+     */
+    public static void closeSafely(Closeable... objects) {
+        for (Closeable object : objects) {
+            try {
+                if (null != object) {
+                    object.close();
+                }
+            } catch (Throwable th) {
+                // ignore
+            }
+        }
     }
 }
