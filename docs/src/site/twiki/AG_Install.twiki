@@ -798,7 +798,7 @@ their own HA, they should have their own namespace.  The default value is shown 
 </property>
 </verbatim>
 
-5. Change the value of OOZIE_BASE_URL in oozie-env.sh to point to the loadbalancer or virtual IP, for example:
+5. Change the value of =OOZIE_BASE_URL= in oozie-env.sh to point to the loadbalancer or virtual IP, for example:
 
 <verbatim>
 export OOZIE_BASE_URL="http://my.loadbalancer.hostname:11000/oozie"
@@ -811,20 +811,22 @@ default is =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
 export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
 </verbatim>
 
-7. Start the ZooKeeper servers.
+7. (Optional) If using a secure cluster, see [[AG_Install#Security][Security]] below on configuring Kerberos with Oozie HA.
 
-8. Start the Oozie servers.
+8. Start the ZooKeeper servers.
+
+9. Start the Oozie servers.
 
 Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
 be missing information until that server comes back up.
 
 ---++++ Security
 
-Oozie HA works with the existing Oozie security framework and settings. For log streaming to work properly in a secure
-setup =oozie.authentication.type= must be set properly on each server (though this is already required if using security in the
-first place).
+Oozie HA works with the existing Oozie security framework and settings.
+See the [[AG_Install#Oozie_User_Authentication_Configuration][Oozie User Authentication Configuration]] section for details.
+Below are some additional steps and information specific to Oozie HA:
 
-(Optional) To prevent unauthorized users or programs from interacting with or reading the znodes used by Oozie in ZooKeeper,
+1. (Optional) To prevent unauthorized users or programs from interacting with or reading the znodes used by Oozie in ZooKeeper,
 you can tell Oozie to use Kerberos-backed ACLs.  To enforce this for all of the Oozie-related znodes, simply add the following
 property to oozie-site.xml in all Oozie servers and set it to =true=.  The default is =false=.
 
@@ -851,6 +853,28 @@ authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
 kerberos.removeHostFromPrincipal=true
 kerberos.removeRealmFromPrincipal=true
 </verbatim>
+
+2. Until Hadoop 2.5.0 and later, there is a known limitation where each Oozie server can only use one HTTP principal.  However,
+for Oozie HA, we need to use two HTTP principals: =HTTP/oozie-server-host@realm= and =HTTP/load-balancer-host@realm=.  This
+allows access to each Oozie server directly and through the load balancer.  While users should always go through the load balancer,
+certain features (e.g. log streaming) require the Oozie servers to talk to each other directly; it can also be helpful for an
+administrator to talk directly to an Oozie server.  So, if using a Hadoop version prior to 2.5.0, you will have to choose which
+HTTP principal to use as you cannot use both; it is recommended to choose =HTTP/load-balancer-host@realm= so users can connect
+through the load balancer.  This will prevent Oozie servers from talking to each other directly, which will effectively disable
+log streaming.
+
+For Hadoop 2.5.0 and later:
+
+2a. When creating the keytab used by Oozie, make sure to include Oozie's principal and the two HTTP principals mentioned above.
+
+2b. Set =oozie.authentication.kerberos.principal= to * (that is, an asterisks) so it will use both HTTP principals.
+
+For earlier versions of Hadoop:
+
+2a. When creating the keytab used by Oozie, make sure to include Oozie's principal and the load balancer HTTP principal
+
+2b. Set =oozie.authentication.kerberos.principal= to =HTTP/load-balancer-host@realm=.
+
 
 ---++++ JobId sequence
 Oozie in HA mode, uses ZK to generate job id sequence. Job Ids are of following format.
