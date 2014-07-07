@@ -349,20 +349,14 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
         if (!ignoreSize && currentSize != null && currentSize.get() >= maxSize) {
             return false;
         }
-        boolean accepted;
-        lock.lock();
-        try {
-            accepted = queues[queueElement.getPriority()].offer(queueElement);
-            debug("offer([{0}]), to P[{1}] delay[{2}ms] accepted[{3}]", queueElement.getElement().toString(),
-                  queueElement.getPriority(), queueElement.getDelay(TimeUnit.MILLISECONDS), accepted);
-            if (accepted) {
-                if (currentSize != null) {
-                    currentSize.incrementAndGet();
-                }
-                queueElement.inQueue = true;
+        boolean accepted = queues[queueElement.getPriority()].offer(queueElement);
+        debug("offer([{0}]), to P[{1}] delay[{2}ms] accepted[{3}]", queueElement.getElement().toString(),
+              queueElement.getPriority(), queueElement.getDelay(TimeUnit.MILLISECONDS), accepted);
+        if (accepted) {
+            if (currentSize != null) {
+                currentSize.incrementAndGet();
             }
-        } finally {
-            lock.unlock();
+            queueElement.inQueue = true;
         }
         return accepted;
     }
