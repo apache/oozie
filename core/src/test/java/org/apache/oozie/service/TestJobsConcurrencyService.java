@@ -38,11 +38,11 @@ public class TestJobsConcurrencyService extends XTestCase {
         super.tearDown();
     }
 
-    public void testIsFirstServer() throws Exception {
+    public void testIsLeader() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
             jcs.init(null);
-            assertTrue(jcs.isFirstServer());
+            assertTrue(jcs.isLeader());
         }
         finally {
             jcs.destroy();

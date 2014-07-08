@@ -133,7 +133,7 @@ public class ShareLibService implements Service, Instrumentable {
                 System.out.flush();
                 try {
                     //Only one server should purge sharelib
-                    if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
+                    if (Services.get().get(JobsConcurrencyService.class).isLeader()) {
                         final Date current = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime();
                         purgeLibs(fs, LAUNCHER_PREFIX, current);
                         purgeLibs(fs, SHARED_LIB_PREFIX, current);

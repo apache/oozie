@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1916 Use Curator leader latch instead of checking the order of Oozie servers (rkanter)
 OOZIE-1886 Queue operation talking longer time (shwethags via rohini)
 OOZIE-1865 Oozie servers can't talk to each other with Oozie HA and Kerberos (rkanter)
 OOZIE-1821 Oozie java action fails due to AlreadyBeingCreatedException (abhishek.agarwal via rkanter)

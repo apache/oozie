@@ -63,7 +63,7 @@ import org.apache.zookeeper.data.Stat;
  * to add additional metadata in the future, we share a Map.  They keys are defined in {@link ZKMetadataKeys}.
  * <p>
  * For the service discovery, the structure in ZooKeeper is /oozie.zookeeper.namespace/ZK_BASE_SERVICES_PATH/ (default is
- * /oozie/services/).  There is currently only one service, named "servers" under which each Oozie server creates a ZNode named
+ * /oozie/services/).  ZKUtils has a service named "servers" under which each Oozie server creates a ZNode named
  * ${OOZIE_SERVICE_INSTANCE} (default is the hostname) that contains the metadata payload.  For example, with the default settings,
  * an Oozie server named "foo" would create a ZNode at /oozie/services/servers/foo where the foo ZNode contains the metadata.
  * <p>
@@ -95,7 +95,10 @@ public class ZKUtils {
     public static final String ZK_SECURE = "oozie.zookeeper.secure";
 
     private static final String ZK_OOZIE_SERVICE = "servers";
-    private static final String ZK_BASE_SERVICES_PATH = "/services";
+    /**
+     * Services that need to put a node in zookeeper should go under here.  Try to keep this area clean and organized.
+     */
+    public static final String ZK_BASE_SERVICES_PATH = "/services";
 
     private static Set<Object> users = new HashSet<Object>();
     private CuratorFramework client = null;

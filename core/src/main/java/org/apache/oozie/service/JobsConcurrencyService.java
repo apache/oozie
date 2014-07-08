@@ -80,7 +80,7 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      *
      * @return true
      */
-    public boolean isFirstServer() {
+    public boolean isLeader() {
         return true;
     }
 

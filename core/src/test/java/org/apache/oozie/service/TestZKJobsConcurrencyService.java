@@ -54,20 +54,56 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
         }
     }
 
-    public void testIsFirstServer() throws Exception {
+    public void testIsLeader() throws Exception {
         ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
-        // We'll use some DummyZKXOozies here to pretend to be other Oozie servers that will influence isFirstServer()
-        // once they are running in that it will only return true for the first Oozie "server"
+        // We'll use some DummyZKXOozies here to pretend to be other Oozie servers.  It chooses randomly so we can't check that a
+        // specific server gets chosen.
         DummyZKOozie dummyOozie = null;
         DummyZKOozie dummyOozie2 = null;
         try {
-            dummyOozie = new DummyZKOozie("a", "http://blah");
             zkjcs.init(Services.get());
-            assertFalse(zkjcs.isFirstServer());
-            dummyOozie2 = new DummyZKOozie("b", "http://blah");
-            assertFalse(zkjcs.isFirstServer());
-            dummyOozie.teardown();
-            assertTrue(zkjcs.isFirstServer());
+            dummyOozie = new DummyZKOozie("a", "http://blah", true);
+            dummyOozie2 = new DummyZKOozie("b", "http://blah", true);
+            sleep(3 * 1000);
+            if (zkjcs.isLeader()) {
+                assertFalse(dummyOozie.isLeader());
+                assertFalse(dummyOozie2.isLeader());
+                zkjcs.destroy();
+                sleep(3 * 1000);
+                if (dummyOozie.isLeader()) {
+                    assertFalse(dummyOozie2.isLeader());
+                } else if (dummyOozie2.isLeader()) {
+                    assertFalse(dummyOozie.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else if (dummyOozie.isLeader()) {
+                assertFalse(zkjcs.isLeader());
+                assertFalse(dummyOozie2.isLeader());
+                dummyOozie.teardown();
+                sleep(3 * 1000);
+                if (zkjcs.isLeader()) {
+                    assertFalse(dummyOozie2.isLeader());
+                } else if (dummyOozie2.isLeader()) {
+                    assertFalse(zkjcs.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else if (dummyOozie2.isLeader()) {
+                assertFalse(zkjcs.isLeader());
+                assertFalse(dummyOozie.isLeader());
+                dummyOozie2.teardown();
+                sleep(3 * 1000);
+                if (zkjcs.isLeader()) {
+                    assertFalse(dummyOozie.isLeader());
+                } else if (dummyOozie.isLeader()) {
+                    assertFalse(zkjcs.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else {
+                fail("No leader");
+            }
         }
         finally {
             zkjcs.destroy();
