@@ -30,14 +30,15 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.event.EventQueue;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
@@ -164,27 +165,26 @@ public class TestHASLAService extends ZKXTestCase {
 
     public void testSLAUpdateWithHA() throws Exception {
 
-        String id1 = "0000000-130521183438837-oozie-test-C@1";
-        String id2 = "0000001-130521183438837-oozie-test-C@1";
-        String id3 = "0000002-130521183438837-oozie-test-C@1";
-        String id4 = "0000003-130521183438837-oozie-test-C@1";
-        String id5 = "0000004-130521183438837-oozie-test-C@1";
-        String id6 = "0000005-130521183438837-oozie-test-C@1";
-        Date expectedStartTS = new Date(System.currentTimeMillis() - 2 * 3600 * 1000);
+        String id1 = "0000001-130521183438837-oozie-test-C@1";
+        String id2 = "0000002-130521183438837-oozie-test-C@1";
+        String id3 = "0000003-130521183438837-oozie-test-C@1";
+        String id4 = "0000004-130521183438837-oozie-test-C@1";
+        String id5 = "0000005-130521183438837-oozie-test-C@1";
+        String id6 = "0000006-130521183438837-oozie-test-C@1";
+        Date expectedStartTS = new Date(System.currentTimeMillis() - 2 * 3600 * 1000); // 2 hrs passed
         Date expectedEndTS1 = new Date(System.currentTimeMillis() + 1 * 3600 * 1000); // 1 hour ahead
         Date expectedEndTS2 = new Date(System.currentTimeMillis() - 1 * 3600 * 1000); // 1 hour passed
-        // Coord Action 1-4 not started yet
+        // Coord Action of jobs 1-4 not started yet
         createDBEntry(id1, expectedStartTS, expectedEndTS1);
         createDBEntry(id2, expectedStartTS, expectedEndTS1);
         createDBEntry(id3, expectedStartTS, expectedEndTS1);
         createDBEntry(id4, expectedStartTS, expectedEndTS1);
-        // Coord Action 5-6 already started and currently running (to test history set)
+        // Coord Action of jobs 5-6 already started and currently running (to test history set)
         createDBEntryForStarted(id5, expectedStartTS, expectedEndTS2);
         createDBEntryForStarted(id6, expectedStartTS, expectedEndTS2);
 
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
-        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         slaCalcMem.init(Services.get().getConf());
         List<String> slaMapKeys = new ArrayList<String>();
         Iterator<String> itr = slaCalcMem.iterator();
@@ -209,14 +209,14 @@ public class TestHASLAService extends ZKXTestCase {
             }
             assertEquals(6, slaMapKeys.size());
 
-            // Coord Action 1,3 run and update status on non-dummy server
+            // Coord Action 1,3 run and update status on *non-dummy* server
             updateCoordAction(id1, "RUNNING");
             slaCalcMem
                     .addJobStatus(id1, CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(), null);
             updateCoordAction(id3, "FAILED");
             slaCalcMem.addJobStatus(id3, CoordinatorAction.Status.FAILED.name(), EventStatus.FAILURE, null, new Date());
 
-            // Coord Action 2,4 run and update status on dummy server
+            // Coord Action 2,4 run and update status on *dummy* server
             updateCoordAction(id2, "RUNNING");
             dummySlaCalcMem.addJobStatus(id2, CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
                     null);
@@ -244,10 +244,10 @@ public class TestHASLAService extends ZKXTestCase {
 
             Byte eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id3);
-            assertEquals(8, eventProc.intValue());
+            assertEquals(8, eventProc.byteValue());
             eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id4);
-            assertEquals(8, eventProc.intValue());
+            assertEquals(8, eventProc.byteValue());
 
             // Action 5 was processed as END_MISS in updateAllSlaStatus, put into history set
             assertTrue(slaCalcMem.isJobIdInHistorySet(id5));
@@ -258,10 +258,10 @@ public class TestHASLAService extends ZKXTestCase {
 
             eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id5);
-            assertEquals(7, eventProc.intValue());
+            assertEquals(7, eventProc.byteValue());
             eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id6);
-            assertEquals(7, eventProc.intValue());
+            assertEquals(7, eventProc.byteValue());
 
             // Action 1 Succeeded on non-dummy server
             updateCoordAction(id1, "SUCCEEDED");
@@ -284,10 +284,10 @@ public class TestHASLAService extends ZKXTestCase {
             assertNull(dummySlaCalcMem.get(id2));
             eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id1);
-            assertEquals(8, eventProc.intValue());
+            assertEquals(8, eventProc.byteValue());
             eventProc = (Byte) SLASummaryQueryExecutor.getInstance().getSingleValue(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, id2);
-            assertEquals(8, eventProc.intValue());
+            assertEquals(8, eventProc.byteValue());
 
             // Test HistoryPurgeWorker purges Action 5,6 from history set
             updateCoordAction(id5, "SUCCEEDED");
@@ -295,8 +295,59 @@ public class TestHASLAService extends ZKXTestCase {
             assertFalse(slaCalcMem.isJobIdInHistorySet(id5));
             updateCoordAction(id6, "SUCCEEDED");
             dummySlaCalcMem.new HistoryPurgeWorker().run();
-            assertFalse(slaCalcMem.isJobIdInHistorySet(id6));
+            assertFalse(dummySlaCalcMem.isJobIdInHistorySet(id6));
 
+        }
+        finally {
+            if (dummyOozie_1 != null) {
+                dummyOozie_1.teardown();
+            }
+        }
+    }
+
+    public void testNoDuplicateEventsInHA() throws Exception {
+        String id1 = "0000001-130521183438837-oozie-test-C@1";
+        Date expectedStartTS = new Date(System.currentTimeMillis() - 2 * 3600 * 1000); // get MISS
+        Date expectedEndTS = new Date(System.currentTimeMillis() - 1 * 3600 * 1000); // get MISS
+        createDBEntry(id1, expectedStartTS, expectedEndTS);
+
+        SLAService slas = Services.get().get(SLAService.class);
+        SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
+        slaCalcMem.init(Services.get().getConf()); // loads the job in sla map
+
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        EventQueue ehs_q = ehs.getEventQueue();
+
+        DummyZKOozie dummyOozie_1 = null;
+        try {
+            // start another dummy oozie instance (dummy sla and event handler services)
+            dummyOozie_1 = new DummyZKOozie("a", "http://blah");
+            DummySLACalculatorMemory dummySlaCalcMem = new DummySLACalculatorMemory();
+            dummySlaCalcMem.init(Services.get().getConf());
+            EventHandlerService dummyEhs = new EventHandlerService();
+            dummySlaCalcMem.setEventHandlerService(dummyEhs);
+            dummyEhs.init(Services.get());
+            EventQueue dummyEhs_q = dummyEhs.getEventQueue();
+
+            // Action started on Server 1
+            updateCoordAction(id1, "RUNNING");
+            slaCalcMem
+                    .addJobStatus(id1, CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(), null);
+            SLACalcStatus s1 = (SLACalcStatus) ehs_q.poll();
+            assertEquals(SLAStatus.IN_PROCESS, s1.getSLAStatus());
+
+            // Action ended on Server 2
+            updateCoordAction(id1, "FAILED");
+            dummySlaCalcMem.addJobStatus(id1, CoordinatorAction.Status.FAILED.name(), EventStatus.FAILURE, new Date(
+                    System.currentTimeMillis() - 1800 * 1000),
+                    new Date());
+            dummyEhs_q.poll(); // getting rid of the duration_miss event
+            SLACalcStatus s2 = (SLACalcStatus) dummyEhs_q.poll();
+            assertEquals(SLAStatus.MISS, s2.getSLAStatus());
+
+            slaCalcMem.updateAllSlaStatus();
+            dummySlaCalcMem.updateAllSlaStatus();
+            assertEquals(0, ehs_q.size()); // no dupe event should be created again by Server 1
         }
         finally {
             if (dummyOozie_1 != null) {

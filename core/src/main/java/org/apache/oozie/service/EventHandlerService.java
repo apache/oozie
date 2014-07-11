@@ -33,6 +33,7 @@ import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class EventHandlerService implements Service {
         try {
             Configuration conf = services.getConf();
             LOG = XLog.getLog(getClass());
+            LOG = XLog.resetPrefix(LOG);
             Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) conf.getClass(CONF_EVENT_QUEUE, null);
             eventQueue = queueImpl == null ? new MemoryEventQueue() : (EventQueue) queueImpl.newInstance();
             eventQueue.init(conf);
@@ -206,7 +208,8 @@ public class EventHandlerService implements Service {
         return listenerMap.toString();
     }
 
-    public void queueEvent(Event event) {
+    public synchronized void queueEvent(Event event) {
+        setLogPrefix(LOG, event);
         LOG.debug("Queueing event : {0}", event);
         LOG.trace("Stack trace while queueing event : {0}", event, new Throwable());
         eventQueue.add(event);
@@ -216,7 +219,24 @@ public class EventHandlerService implements Service {
         return eventQueue;
     }
 
+    private void setLogPrefix(XLog logObj, Event event) {
+        logObj = XLog.resetPrefix(logObj);
+        if (event instanceof JobEvent) {
+            JobEvent je = (JobEvent) event;
+            LogUtils.setLogPrefix(je.getId(), je.getAppName(), new XLog.Info());
+        }
+        else if (event instanceof SLAEvent) {
+            SLAEvent se = (SLAEvent) event;
+            LogUtils.setLogPrefix(se.getId(), se.getAppName(), new XLog.Info());
+        }
+    }
+
     public class EventWorker implements Runnable {
+        private XLog workerLog;
+
+        public EventWorker() {
+            workerLog = XLog.getLog(getClass());
+        }
 
         @Override
         public void run() {
@@ -227,7 +247,10 @@ public class EventHandlerService implements Service {
                 if (!eventQueue.isEmpty()) {
                     List<Event> work = eventQueue.pollBatch();
                     for (Event event : work) {
-                        LOG.debug("Processing event : {0}", event);
+                        synchronized (workerLog) {
+                            setLogPrefix(workerLog, event);
+                            LOG.debug("Processing event : {0}", event);
+                        }
                         MessageType msgType = event.getMsgType();
                         List<?> listeners = listenerMap.get(msgType);
                         if (listeners != null) {

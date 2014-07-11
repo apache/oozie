@@ -21,16 +21,13 @@ package org.apache.oozie.sla;
 import java.util.Date;
 
 import org.apache.oozie.AppType;
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.SLAEvent;
-import org.apache.oozie.command.CommandException;
 import org.apache.oozie.lock.LockToken;
-import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
-import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -51,9 +48,12 @@ public class SLACalcStatus extends SLAEvent {
     private byte eventProcessed;
     private LockToken lock;
 
+    private XLog LOG;
+
     public SLACalcStatus(SLARegistrationBean reg) {
         this();
         setSLARegistrationBean(reg);
+        setLogPrefix();
     }
 
     public SLACalcStatus(SLASummaryBean summary, SLARegistrationBean regBean) {
@@ -82,6 +82,7 @@ public class SLACalcStatus extends SLAEvent {
         setEventStatus(summary.getEventStatus());
         setLastModifiedTime(summary.getLastModifiedTime());
         setEventProcessed(summary.getEventProcessed());
+        setLogPrefix();
     }
 
     /**
@@ -98,11 +99,13 @@ public class SLACalcStatus extends SLAEvent {
         setActualEnd(a.getActualEnd());
         setActualDuration(a.getActualDuration());
         setEventProcessed(a.getEventProcessed());
+        setLogPrefix();
     }
 
     public SLACalcStatus() {
         setMsgType(MessageType.SLA);
         setLastModifiedTime(new Date());
+        LOG = XLog.getLog(getClass());
     }
 
     public SLARegistrationBean getSLARegistrationBean() {
@@ -292,10 +295,10 @@ public class SLACalcStatus extends SLAEvent {
         if (Services.get().get(JobsConcurrencyService.class).isHighlyAvailableMode()) {
             lock = Services.get().get(MemoryLocksService.class).getWriteLock(getEntityKey(), getLockTimeOut());
             if (lock == null) {
-                XLog.getLog(getClass()).debug("Could not aquire lock for [{0}]", getEntityKey());
+            LOG.debug("Could not aquire lock for [{0}]", getEntityKey());
             }
             else {
-                XLog.getLog(getClass()).debug("Acquired lock for [{0}]", getEntityKey());
+                LOG.debug("Acquired lock for [{0}]", getEntityKey());
             }
         }
         else {
@@ -321,11 +324,16 @@ public class SLACalcStatus extends SLAEvent {
         if (lock != null) {
             lock.release();
             lock = null;
-            XLog.getLog(getClass()).debug("Released lock for [{0}]", getEntityKey());
+            LOG.debug("Released lock for [{0}]", getEntityKey());
         }
     }
 
     public long getLockTimeOut() {
         return Services.get().getConf().getLong(SLAService.CONF_SLA_CALC_LOCK_TIMEOUT, 5 * 1000);
+    }
+
+    private void setLogPrefix() {
+        LOG = XLog.resetPrefix(LOG);
+        LogUtils.setLogPrefix(this.getId(), this.getAppName(), new XLog.Info());
     }
 }

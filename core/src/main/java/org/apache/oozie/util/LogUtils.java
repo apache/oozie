@@ -125,4 +125,10 @@ public class LogUtils {
         XLog.Info.get().setParameters(logInfo);
     }
 
+    public static void setLogPrefix(String jobId, String appName, XLog.Info logInfo) {
+        logInfo.setParameter(DagXLogInfoService.JOB, jobId);
+        logInfo.setParameter(DagXLogInfoService.APP, appName);
+        XLog.Info.get().setParameters(logInfo);
+    }
+
 }
