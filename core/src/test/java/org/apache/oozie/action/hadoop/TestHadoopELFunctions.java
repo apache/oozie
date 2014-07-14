@@ -33,6 +33,7 @@ import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 
 public class TestHadoopELFunctions extends ActionExecutorTestCase {
@@ -163,4 +164,37 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
         assertEquals(new Long(33),
                 eval.evaluate("${hadoop:counters('H')['job_201111300933_0004']['MAP_INPUT_RECORDS']}", Long.class));
     }
+
+    public void testHadoopConfFunctions() throws Exception {
+        XConfiguration jobConf = new XConfiguration();
+        XConfiguration.copy(createJobConf(), jobConf);
+
+        String testHadoopOptionValue = jobConf.get("mapred.tasktracker.map.tasks.maximum");
+        jobConf.set("test.name.node.uri", getNameNodeUri());
+        jobConf.set("test.hadoop.option", "mapred.tasktracker.map.tasks.maximum");
+
+        WorkflowJobBean workflow = new WorkflowJobBean();
+        workflow.setProtoActionConf("<configuration/>");
+        LiteWorkflowApp wfApp = new LiteWorkflowApp("x", "<workflow-app/>",
+                        new StartNodeDef(
+                            LiteWorkflowStoreService.LiteControlNodeHandler.class, "a"));
+        wfApp.addNode(new EndNodeDef("a",
+                          LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        WorkflowInstance wi = new LiteWorkflowInstance(wfApp, jobConf, "1");
+
+        workflow.setWorkflowInstance(wi);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        jobConf.writeXml(baos);
+        workflow.setProtoActionConf(baos.toString());
+
+        final WorkflowActionBean action = new WorkflowActionBean();
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator(
+                    "workflow");
+        DagELFunctions.configureEvaluator(eval, workflow, action);
+
+        assertEquals(testHadoopOptionValue,
+                eval.evaluate("${hadoop:conf(wf:conf('test.name.node.uri'), wf:conf('test.hadoop.option'))}",
+                        String.class));
+    }
+
 }

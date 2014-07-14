@@ -616,6 +616,7 @@
             wf:actionTrackerUri=org.apache.oozie.DagELFunctions#wf_actionTrackerUri,
             wf:actionExternalStatus=org.apache.oozie.DagELFunctions#wf_actionExternalStatus,
             hadoop:counters=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_counters,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
             fs:exists=org.apache.oozie.action.hadoop.FsELFunctions#fs_exists,
             fs:isDir=org.apache.oozie.action.hadoop.FsELFunctions#fs_isDir,
             fs:dirSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_dirSize,
@@ -720,7 +721,8 @@
             coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfDays,
             coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -733,7 +735,8 @@
             coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
             coord:months=org.apache.oozie.coord.CoordELFunctions#ph1_coord_months,
             coord:hours=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hours,
-            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes
+            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -780,7 +783,8 @@
         <name>oozie.service.ELService.functions.coord-job-submit-nofuncs</name>
         <value>
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -833,7 +837,8 @@
             coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_formatTime_echo,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
-            coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo
+            coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -894,7 +899,8 @@
             coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionMax_echo,
             coord:dataInPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitions_echo,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -950,7 +956,8 @@
             coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_databaseOut_echo,
             coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_tableOut_echo,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1006,7 +1013,8 @@
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
-            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range
+            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1062,7 +1070,8 @@
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
-            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range
+            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1117,7 +1126,8 @@
             coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_databaseOut,
             coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_tableOut,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1183,7 +1193,8 @@
             coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionMax,
             coord:dataInPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitions,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

@@ -2011,6 +2011,36 @@ Below is the workflow that describes how to access specific information using ha
 </workflow-app>
 </verbatim>
 
+#Hadoop Configuration EL Function
+*String hadoop:conf(String hadoopConfHostPort, String propName)*
+
+It returns the value of a property of Hadoop configuration.
+
+The hadoopConfHostPort is the 'host:port' of a Hadoop cluster, such as 'NameNodeHostAddress:Port' and
+'JobTrackerHostAddress:Port'. The propName is the name of target property. If hadoopConfHostPort could
+be connected, Hadoop Conf EL Function will return the value of propName from the specific host address
+and port. If hadoopConfHostPort could not be connected, Hadoop Conf EL Function will generate a default
+hadoop configuration object directly, and then return the value of target property.
+
+*Example of usage of Hadoop Configuration EL Function:*
+
+<verbatim>
+<action name="mr-node">
+    <map-reduce>
+        <job-tracker>${jobTracker}</job-tracker>
+        <name-node>${nameNode}</name-node>
+        <configuration>
+            <property>
+                <name>mapreduce.map.java.opts</name>
+                <value>${hadoop:conf("9.181.7.69:9001","mapreduce.map.java.opts")} -Xss512k </value>
+            </property>
+        </configuration>
+    </map-reduce>
+    <ok to="end"/>
+    <error to="fail"/>
+</action>
+</verbatim>
+
 ---++++ 4.2.6 Hadoop Jobs EL Function
 
 The function _wf:actionData()_ can be used to access Hadoop ID's for actions such as Pig, by specifying the key as _hadoopJobs_.

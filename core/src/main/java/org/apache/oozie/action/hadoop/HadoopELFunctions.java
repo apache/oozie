@@ -17,7 +17,10 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -56,6 +59,19 @@ public class HadoopELFunctions {
             instance.setTransientVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR + HADOOP_COUNTERS, counters);
         }
         return counters;
+    }
+
+    public static String hadoop_conf(String hadoopConfHostPort, String propName) {
+        Configuration conf = Services.get().get(HadoopAccessorService.class)
+            .createJobConf(hadoopConfHostPort);
+        String prop = conf.get(propName);
+        if (prop == null || prop.equals("")) {
+            conf = new Configuration();
+            prop = conf.get(propName);
+        }
+        if (prop == null)
+            prop = "";
+        return prop;
     }
 
     @SuppressWarnings("unchecked")
