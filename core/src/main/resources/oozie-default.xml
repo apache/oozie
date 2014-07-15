@@ -98,6 +98,7 @@
         <value>
             org.apache.oozie.service.SchedulerService,
             org.apache.oozie.service.InstrumentationService,
+            org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.CallableQueueService,
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
@@ -106,7 +107,6 @@
             org.apache.oozie.service.HadoopAccessorService,
             org.apache.oozie.service.JobsConcurrencyService,
             org.apache.oozie.service.URIHandlerService,
-            org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
             org.apache.oozie.service.SchemaService,
             org.apache.oozie.service.LiteWorkflowAppService,
