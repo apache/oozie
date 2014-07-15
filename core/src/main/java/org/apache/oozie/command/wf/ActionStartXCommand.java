@@ -259,7 +259,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                     }
                 }
 
-                LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action status=" + wfAction.getStatusStr());
+                LOG.info(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action status=" + wfAction.getStatusStr());
 
                 updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_START, wfAction));
                 wfJob.setLastModifiedTime(new Date());
@@ -270,7 +270,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                 if(slaEvent != null) {
                     insertList.add(slaEvent);
                 }
-                LOG.warn(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action updated in DB!");
+                LOG.info(XLog.STD, "[***" + wfAction.getId() + "***]" + "Action updated in DB!");
             }
         }
         catch (ActionExecutorException ex) {

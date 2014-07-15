@@ -2497,25 +2497,43 @@ Coordinator applications that use HCatalog data dependencies.
 
 ---++++ 6.8.1 coord:databaseIn(String name), coord:databaseOut(String name) EL function
 
-The functions =${coord:databaseIn(String name}= and =${coord:databaseOut(String name}= are used to pass the database
+The functions =${coord:databaseIn(String name)}= and =${coord:databaseOut(String name)}= are used to pass the database
 name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
 by a coordinator action.
 
-These functions take as argument - name of the dataset and give as string the 'database' name of that dataset.
-If dataset belongs to 'input-events', use =${coord:databaseIn(String name}=, else if it belongs to 'output-events',
-use =${coord:databaseOut(String name}=.
+For input database, you should pass the "data-in" name attribute of your 'input-events' configured in the coordinator.
+Similarly for output database, pass the "data-out" name attribute of your 'output-events'.
+
+To illustrate it better:
+If data belongs to 'input-events' and the name attribute of your =<data-in>= is "raw-logs",
+use =${coord:databaseIn('raw-logs')}=.
+Else if it belongs to 'output-events', and the name attribute of your =<data-out>= is "processed-logs",
+use =${coord:databaseOut('processed-logs')}=.
+Taking this passed argument as input, the EL functions give as string the 'database' name corresponding to your input or output data events.
+
+Pitfall: Please note NOT to pass the =<dataset>= name itself (as defined under combined set =<datasets>=),
+as this function works on the 'data-in' and 'data-out' names.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
 ---++++ 6.8.2 coord:tableIn(String name), coord:tableOut(String name) EL function
 
-The functions =${coord:tableIn(String name}= and =${coord:tableOut(String name}= are used to pass the table
+The functions =${coord:tableIn(String name)}= and =${coord:tableOut(String name)}= are used to pass the table
 name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
 by a coordinator action.
 
-These functions take as argument - name of the dataset and give as string the 'table' name of that dataset.
-If dataset belongs to 'input-events', use =${coord:tableIn(String name}=, else if it belongs to 'output-events',
-use =${coord:tableOut(String name}=.
+For input table, you should pass the "data-in" name attribute of your 'input-events' configured in the coordinator.
+Similarly for output table, pass the "data-out" name attribute of your 'output-events'.
+
+To illustrate it better:
+If data belongs to 'input-events' and the name attribute of your =<data-in>= is "raw-logs",
+use =${coord:tableIn('raw-logs')}=.
+Similarly, if it belongs to 'output-events', and the name attribute of your =<data-out>= is "processed-logs",
+use =${coord:tableOut('processed-logs')}=.
+Taking this passed argument as input, the EL functions give as string the 'table' name corresponding to your input or output data events.
+
+Pitfall: Please note NOT to pass the =<dataset>= name itself (as defined under combined set =<datasets>=),
+as this function works on the 'data-in' and 'data-out' names.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
@@ -2588,7 +2606,7 @@ aggregated daily output.
           <configuration>
             <property>
               <name>IN_DB</name>
-              <value>${coord:databaseIn('Click-data')}</value>
+              <value>${coord:databaseIn('raw-logs')}</value>
             </property>
             <property>
               <name>IN_TABLE</name>
