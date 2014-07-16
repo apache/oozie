@@ -71,7 +71,7 @@
 
         <hadoop.version>1.1.1</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
-        <hcatalog.version>0.5.0</hcatalog.version>
+        <hcatalog.version>0.13.1</hcatalog.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
@@ -85,7 +85,7 @@
         <hadoop.auth.version>2.0.2-alpha</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
-         <hive.version>0.10.0</hive.version>
+         <hive.version>0.13.1</hive.version>
          <pig.version>0.12.1</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
@@ -503,12 +503,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.6.6</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-builtins</artifactId>
-                <version>${hive.version}</version>
             </dependency>
 
            <dependency>

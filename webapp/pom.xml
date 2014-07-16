@@ -129,6 +129,18 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-distcp</artifactId>
             <scope>provided</scope>

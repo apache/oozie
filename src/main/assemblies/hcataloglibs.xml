@@ -26,7 +26,7 @@
     <fileSets>
         <!-- HCatalog libs -->
         <fileSet>
-            <directory>${basedir}/../hcataloglibs/hcatalog-0.5/target/hcataloglibs</directory>
+            <directory>${basedir}/../hcataloglibs/hive-hcatalog-0.13.1/target/hcataloglibs</directory>
             <outputDirectory>/hcataloglibs</outputDirectory>
         </fileSet>
     </fileSets>
