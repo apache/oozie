@@ -72,6 +72,7 @@ import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -83,7 +84,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class SLACalculatorMemory implements SLACalculator {
 
-    private static final XLog LOG = XLog.getLog(SLACalculatorMemory.class);
+    private static XLog LOG = XLog.getLog(SLACalculatorMemory.class);
     // TODO optimization priority based insertion/processing/bumping up-down
     protected Map<String, SLACalcStatus> slaMap;
     protected Set<String> historySet;
@@ -598,7 +599,9 @@ public class SLACalculatorMemory implements SLACalculator {
                 updateJobSla(jobId);
             }
             catch (Exception e) {
+                setLogPrefix(jobId);
                 LOG.error("Exception in SLA processing for job [{0}]", jobId, e);
+                LogUtils.clearLogPrefix();
             }
         }
     }
@@ -626,9 +629,11 @@ public class SLACalculatorMemory implements SLACalculator {
                 return true;
             }
             else {
+                setLogPrefix(reg.getId());
                 LOG.error(
                         "SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
                         reg.getId());
+                LogUtils.clearLogPrefix();
             }
         }
         catch (JPAExecutorException jpa) {
@@ -675,9 +680,11 @@ public class SLACalculatorMemory implements SLACalculator {
                 return true;
             }
             else {
+                setLogPrefix(reg.getId());
                 LOG.error(
                         "SLACalculator memory capacity reached. Cannot add or update new SLA Registration entry for job [{0}]",
                         reg.getId());
+                LogUtils.clearLogPrefix();
             }
         }
         catch (JPAExecutorException jpa) {
@@ -721,15 +728,19 @@ public class SLACalculatorMemory implements SLACalculator {
                 slaInfo.setEventProcessed(8);
                 historySet.remove(jobId);
                 hasSla = true;
-            } else {
+            }
+            else if (Services.get().get(JobsConcurrencyService.class).isHighlyAvailableMode()) {
                 // jobid might not exist in slaMap in HA Setting
                 SLARegistrationBean slaRegBean = SLARegistrationQueryExecutor.getInstance().get(
                         SLARegQuery.GET_SLA_REG_ALL, jobId);
-                SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY,
-                        jobId);
-                slaCalc = new SLACalcStatus(slaSummaryBean, slaRegBean);
-                if(slaCalc.getEventProcessed() < 7){
-                    slaMap.put(jobId, slaCalc);
+                if (slaRegBean != null) { // filter out jobs picked by SLA job event listener
+                                          // but not actually configured for SLA
+                    SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
+                            SLASummaryQuery.GET_SLA_SUMMARY, jobId);
+                    slaCalc = new SLACalcStatus(slaSummaryBean, slaRegBean);
+                    if (slaCalc.getEventProcessed() < 7) {
+                        slaMap.put(jobId, slaCalc);
+                    }
                 }
             }
         }
@@ -1079,5 +1090,9 @@ public class SLACalculatorMemory implements SLACalculator {
     @VisibleForTesting
     public boolean isJobIdInHistorySet(String jobId) {
         return this.historySet.contains(jobId);
+    }
+
+    private void setLogPrefix(String jobId) {
+        LOG = LogUtils.setLogInfo(LOG, jobId, null, null);
     }
 }

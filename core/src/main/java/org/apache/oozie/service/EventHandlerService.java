@@ -208,35 +208,19 @@ public class EventHandlerService implements Service {
         return listenerMap.toString();
     }
 
-    public synchronized void queueEvent(Event event) {
-        setLogPrefix(LOG, event);
+    public void queueEvent(Event event) {
+        LOG = LogUtils.setLogPrefix(LOG, event);
         LOG.debug("Queueing event : {0}", event);
         LOG.trace("Stack trace while queueing event : {0}", event, new Throwable());
         eventQueue.add(event);
+        LogUtils.clearLogPrefix();
     }
 
     public EventQueue getEventQueue() {
         return eventQueue;
     }
 
-    private void setLogPrefix(XLog logObj, Event event) {
-        logObj = XLog.resetPrefix(logObj);
-        if (event instanceof JobEvent) {
-            JobEvent je = (JobEvent) event;
-            LogUtils.setLogPrefix(je.getId(), je.getAppName(), new XLog.Info());
-        }
-        else if (event instanceof SLAEvent) {
-            SLAEvent se = (SLAEvent) event;
-            LogUtils.setLogPrefix(se.getId(), se.getAppName(), new XLog.Info());
-        }
-    }
-
     public class EventWorker implements Runnable {
-        private XLog workerLog;
-
-        public EventWorker() {
-            workerLog = XLog.getLog(getClass());
-        }
 
         @Override
         public void run() {
@@ -247,10 +231,8 @@ public class EventHandlerService implements Service {
                 if (!eventQueue.isEmpty()) {
                     List<Event> work = eventQueue.pollBatch();
                     for (Event event : work) {
-                        synchronized (workerLog) {
-                            setLogPrefix(workerLog, event);
-                            LOG.debug("Processing event : {0}", event);
-                        }
+                        LOG = LogUtils.setLogPrefix(LOG, event);
+                        LOG.debug("Processing event : {0}", event);
                         MessageType msgType = event.getMsgType();
                         List<?> listeners = listenerMap.get(msgType);
                         if (listeners != null) {

@@ -150,7 +150,7 @@ public class TestSLAService extends XDataTestCase {
         // As expected duration is not set, duration shall be processed and job removed from map
         assertEquals(2, slas.getSLACalculator().size());
         // test same job multiple events (start-met, end-met) through job status event
-        sla1 = _createSLARegistration("action-1", AppType.COORDINATOR_ACTION);
+        sla1 = _createSLARegistration("action@1", AppType.COORDINATOR_ACTION);
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);

@@ -53,7 +53,7 @@ public class SLACalcStatus extends SLAEvent {
     public SLACalcStatus(SLARegistrationBean reg) {
         this();
         setSLARegistrationBean(reg);
-        setLogPrefix();
+        LOG = LogUtils.setLogPrefix(LOG, this);
     }
 
     public SLACalcStatus(SLASummaryBean summary, SLARegistrationBean regBean) {
@@ -82,7 +82,7 @@ public class SLACalcStatus extends SLAEvent {
         setEventStatus(summary.getEventStatus());
         setLastModifiedTime(summary.getLastModifiedTime());
         setEventProcessed(summary.getEventProcessed());
-        setLogPrefix();
+        LOG = LogUtils.setLogPrefix(LOG, this);
     }
 
     /**
@@ -99,7 +99,7 @@ public class SLACalcStatus extends SLAEvent {
         setActualEnd(a.getActualEnd());
         setActualDuration(a.getActualDuration());
         setEventProcessed(a.getEventProcessed());
-        setLogPrefix();
+        LOG = LogUtils.setLogPrefix(LOG, this);
     }
 
     public SLACalcStatus() {
@@ -332,8 +332,4 @@ public class SLACalcStatus extends SLAEvent {
         return Services.get().getConf().getLong(SLAService.CONF_SLA_CALC_LOCK_TIMEOUT, 5 * 1000);
     }
 
-    private void setLogPrefix() {
-        LOG = XLog.resetPrefix(LOG);
-        LogUtils.setLogPrefix(this.getId(), this.getAppName(), new XLog.Info());
-    }
 }

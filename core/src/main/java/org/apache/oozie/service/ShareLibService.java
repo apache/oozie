@@ -472,6 +472,7 @@ public class ShareLibService implements Service, Instrumentable {
         else {
             Path shareLibpath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
                     SHARED_LIB_PREFIX);
+            LOG.debug("MONA******* sharelibpath"+ shareLibpath);
             loadShareLibfromDFS(tempShareLibMap, shareLibpath);
 
             if (shareLibpath != null) {
@@ -496,6 +497,7 @@ public class ShareLibService implements Service, Instrumentable {
     private void loadShareLibfromDFS(Map<String, List<Path>> shareLibMap, Path shareLibpath) throws IOException {
 
         if (shareLibpath == null) {
+            LOG.debug("MONA*******NULL? sharelibpath"+ shareLibpath);
             LOG.info("No share lib directory found");
             return;
 

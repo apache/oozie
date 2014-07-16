@@ -68,6 +68,7 @@ public class TestHASLAService extends ZKXTestCase {
         conf.setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 100000);
         conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
         super.setUp(conf);
+        Services.get().setService(ZKJobsConcurrencyService.class);
     }
 
     @Override

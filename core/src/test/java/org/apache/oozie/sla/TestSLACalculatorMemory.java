@@ -20,11 +20,12 @@ package org.apache.oozie.sla;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.WorkflowActionBean;
@@ -49,6 +50,7 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.After;
@@ -295,7 +297,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
-        SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_ACTION);
+        SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.WORKFLOW_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2012-03-07"));
@@ -324,7 +326,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
         SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
-        assertEquals("job-1", slaSummary.getId());
+        assertEquals("job@1", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(AppType.WORKFLOW_ACTION, slaSummary.getAppType());
         assertEquals("OK", slaSummary.getJobStatus());
@@ -341,7 +343,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(new Configuration(false));
-        SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.COORDINATOR_ACTION);
+        SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.COORDINATOR_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2012-03-07"));
@@ -376,7 +378,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertEquals(0, slaCalcMemory.size());
         SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
 
-        assertEquals("job-1", slaSummary.getId());
+        assertEquals("job@1", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
         assertEquals(AppType.COORDINATOR_ACTION, slaSummary.getAppType());
         assertEquals("FAILED", slaSummary.getJobStatus());
@@ -633,6 +635,30 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, job1);
         slaCalcMemory.new HistoryPurgeWorker().run();
         assertFalse(slaCalcMemory.isJobIdInHistorySet(job1.getId()));
+    }
+
+    public void testErrorLoggingWithJobIdPrefix() throws Exception {
+        SLAService slaService = Services.get().get(SLAService.class);
+        SLACalculator slaCalculator = slaService.getSLACalculator();
+        slaCalculator.addRegistration("dummy-id", _createSLARegistration("dummy-id", AppType.WORKFLOW_JOB));
+
+        TestLogAppender appender = getTestLogAppender();
+        Logger logger = Logger.getLogger(SLACalculatorMemory.class);
+        logger.addAppender(appender);
+        logger.setLevel(Level.ERROR);
+        try {
+            slaService.runSLAWorker();
+        }
+        finally {
+            logger.removeAppender(appender);
+        }
+
+        List<LoggingEvent> log = appender.getLog();
+        LoggingEvent firstLogEntry = log.get(0);
+        assertEquals(Level.ERROR, firstLogEntry.getLevel());
+        assertTrue(firstLogEntry.getMessage().toString().contains("JOB[dummy-id]"));
+        assertEquals("org.apache.oozie.sla.SLACalculatorMemory", firstLogEntry.getLoggerName());
+
     }
 
 }

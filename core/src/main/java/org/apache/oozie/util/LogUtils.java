@@ -17,13 +17,19 @@
  */
 package org.apache.oozie.util;
 
+import org.apache.oozie.AppType;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.event.Event;
+import org.apache.oozie.client.event.JobEvent;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.XLogService;
 
 /**
@@ -125,10 +131,52 @@ public class LogUtils {
         XLog.Info.get().setParameters(logInfo);
     }
 
-    public static void setLogPrefix(String jobId, String appName, XLog.Info logInfo) {
+    public static XLog setLogInfo(XLog logObj, String jobId, String actionId, String appName) {
+        clearLogPrefix();
+        XLog.Info logInfo = XLog.Info.get();
         logInfo.setParameter(DagXLogInfoService.JOB, jobId);
-        logInfo.setParameter(DagXLogInfoService.APP, appName);
-        XLog.Info.get().setParameters(logInfo);
+        if (actionId != null) {
+            logInfo.setParameter(DagXLogInfoService.ACTION, actionId);
+        }
+        if (appName != null) {
+            logInfo.setParameter(DagXLogInfoService.APP, appName);
+        }
+        return XLog.resetPrefix(logObj);
+    }
+
+    public static XLog setLogPrefix(XLog logObj, Event event) {
+        String jobId = null, actionId = null, appName = null;
+        if (event instanceof JobEvent) {
+            JobEvent je = (JobEvent) event;
+            if (je.getAppType() == AppType.WORKFLOW_JOB || je.getAppType() == AppType.COORDINATOR_JOB
+                    || je.getAppType() == AppType.BUNDLE_JOB) {
+                jobId = je.getId();
+            }
+            else {
+                actionId = je.getId();
+                jobId = Services.get().get(UUIDService.class).getId(actionId);
+            }
+            appName = je.getAppName();
+        }
+        else if (event instanceof SLAEvent) {
+            SLAEvent se = (SLAEvent) event;
+            if (se.getAppType() == AppType.WORKFLOW_JOB || se.getAppType() == AppType.COORDINATOR_JOB
+                    || se.getAppType() == AppType.BUNDLE_JOB) {
+                jobId = se.getId();
+            }
+            else {
+                actionId = se.getId();
+                jobId = Services.get().get(UUIDService.class).getId(actionId);
+            }
+            appName = se.getAppName();
+        }
+        return LogUtils.setLogInfo(logObj, jobId, actionId, appName);
+    }
+
+    public static void clearLogPrefix() {
+        XLog.Info.get().clearParameter(DagXLogInfoService.JOB);
+        XLog.Info.get().clearParameter(DagXLogInfoService.ACTION);
+        XLog.Info.get().clearParameter(DagXLogInfoService.APP);
     }
 
 }

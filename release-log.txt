@@ -1,9 +1,11 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1933 SLACalculatorMemory HA changes assume SLARegistrationBean exists for all jobs (mona)
+OOZIE-1935 Log level (ActionStartXCommand) and Doc fix (CoordinatorFunctionalSpec) (mona)
 OOZIE-1586 upgrade oozie to hive 13.1 (including hcatalog) (raviprak via rkanter)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)
 OOZIE-1740 Add a new function hadoop:conf() that can be invoked from the workflow.xml and will return a hadoop configuration option (sam liu via rkanter)
-OOZIE-1911 SLA calculation in HA mode does wrong bit comparison for 'start' and 'duration' (mna)
+OOZIE-1911 SLA calculation in HA mode does wrong bit comparison for 'start' and 'duration' (mona)
 OOZIE-1926 make gz blob compression as default (ryota)
 OOZIE-1916 Use Curator leader latch instead of checking the order of Oozie servers (rkanter)
 OOZIE-1886 Queue operation talking longer time (shwethags via rohini)

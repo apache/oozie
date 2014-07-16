@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.ArrayList;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.Shell;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -1159,5 +1162,32 @@ public abstract class XTestCase extends TestCase {
         setupServicesForHCataLogImpl(services);
         return services;
     }
+
+    protected class TestLogAppender extends AppenderSkeleton {
+        private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
+
+        @Override
+        public boolean requiresLayout() {
+            return false;
+        }
+
+        @Override
+        protected void append(final LoggingEvent loggingEvent) {
+            log.add(loggingEvent);
+        }
+
+        @Override
+        public void close() {
+        }
+
+        public List<LoggingEvent> getLog() {
+            return new ArrayList<LoggingEvent>(log);
+        }
+    }
+    
+    public TestLogAppender getTestLogAppender() {
+        return new TestLogAppender();
+    }
+
 }
 
