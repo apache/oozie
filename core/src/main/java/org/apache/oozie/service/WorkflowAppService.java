@@ -79,7 +79,6 @@ public abstract class WorkflowAppService implements Service {
         String path = conf.get(SYSTEM_LIB_PATH, " ");
         if (path.trim().length() > 0) {
             systemLibPath = new Path(path.trim());
-            XLog.getLog(getClass()).debug("MONA******* systemlibpath="+systemLibPath);
         }
 
         maxWFLength = conf.getInt(CONFG_MAX_WF_LENGTH, 100000);
@@ -330,7 +329,6 @@ public abstract class WorkflowAppService implements Service {
      * @return Oozie system libpath (sharelib) in HDFS if present, otherwise it returns <code>NULL</code>.
      */
     public Path getSystemLibPath() {
-        XLog.getLog(getClass()).debug("MONA******* getting systemlibpath="+systemLibPath);
         return systemLibPath;
     }
 }
