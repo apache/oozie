@@ -94,14 +94,14 @@ public class TestSLAJobEventListener extends XTestCase {
         assertEquals(1, serviceObj.getEventProcessed()); //Job switching to running is only partially
                                                        //sla processed. so state = 1
 
-        job = _createSLARegBean("wa1", AppType.WORKFLOW_ACTION);
+        job = _createSLARegBean("wfId1@wa1", AppType.WORKFLOW_ACTION);
         slas.addRegistrationEvent(job);
         assertEquals(2, slas.getSLACalculator().size());
         job.setExpectedStart(DateUtils.parseDateUTC("2012-07-22T00:00Z"));
-        WorkflowActionEvent wae = new WorkflowActionEvent("wa1", "wfId1", WorkflowAction.Status.RUNNING, "user1",
+        WorkflowActionEvent wae = new WorkflowActionEvent("wfId1@wa1", "wfId1", WorkflowAction.Status.RUNNING, "user1",
                 "wf-app-name1", actualStart, null);
         listener.onWorkflowActionEvent(wae);
-        serviceObj = slas.getSLACalculator().get("wa1");
+        serviceObj = slas.getSLACalculator().get("wfId1@wa1");
         // check that start sla has been calculated
         assertEquals(EventStatus.START_MISS, serviceObj.getEventStatus());
 
@@ -120,17 +120,17 @@ public class TestSLAJobEventListener extends XTestCase {
 
         assertEquals(EventStatus.END_MET, summary.getEventStatus());
 
-        job = _createSLARegBean("ca1", AppType.COORDINATOR_ACTION);
+        job = _createSLARegBean("cj1@ca1", AppType.COORDINATOR_ACTION);
         actualEnd = DateUtils.parseDateUTC("2012-07-22T02:00Z");
         slas.addRegistrationEvent(job);
         assertEquals(4, slas.getSLACalculator().size());
-        CoordinatorActionEvent cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.RUNNING, "user1",
+        CoordinatorActionEvent cae = new CoordinatorActionEvent("cj1@ca1", "cj1", CoordinatorAction.Status.RUNNING, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
+        cae = new CoordinatorActionEvent("cj1@ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "ca1");
+        summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "cj1@ca1");
         // check that all events are processed
         assertEquals(8, summary.getEventProcessed());
         assertEquals(EventStatus.END_MISS, summary.getEventStatus());
