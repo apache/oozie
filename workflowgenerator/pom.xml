@@ -24,12 +24,12 @@
   <parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.oozie</groupId>
   <artifactId>oozie-workflowgenerator</artifactId>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.2.0-SNAPSHOT</version>
   <packaging>war</packaging>
   <description>Apache Oozie WorkflowGenerator</description>
   <name>Apache Oozie WorkflowGenerator</name>

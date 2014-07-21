@@ -1,4 +1,7 @@
--- Oozie 4.1.0 release (trunk - unreleased)
+-- Oozie 4.2.0 release (trunk - unreleased)
+OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
+
+-- Oozie 4.1.0 release (4.1 - unreleased)
 
 OOZIE-1933 SLACalculatorMemory HA changes assume SLARegistrationBean exists for all jobs (mona)
 OOZIE-1935 Log level (ActionStartXCommand) and Doc fix (CoordinatorFunctionalSpec) (mona)
