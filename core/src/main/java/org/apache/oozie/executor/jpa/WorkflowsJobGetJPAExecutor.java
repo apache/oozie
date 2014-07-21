@@ -18,6 +18,8 @@
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -209,6 +211,26 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                             colArray.add(colVar);
                         }
                     }
+                    else{
+                      if (entry.getKey().equals(OozieClient.FILTER_CREATEDTIME)) {
+                        List<String> values = filter.get(OozieClient.FILTER_CREATEDTIME);
+                        colName = "createdTime";
+                        if (!isEnabled && !isId) {
+                            sb.append(seletStr).append(" where w.createdTimestamp > :createdTime0 and w.createdTimestamp <= :createdTime1");
+                            isId = true;
+                            isEnabled = true;
+                        }
+                        for (int i = 0; i < values.size(); i++) {
+                            colVar = "createdTime";
+                            colVar = colVar + index;
+
+                            index++;
+                            valArray.add(values.get(i));
+                            orArray.add(colName);
+                            colArray.add(colVar);
+                        }
+                    }
+                    }
                 }
             }
         }
@@ -231,9 +253,16 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                 q.setFirstResult(start - 1);
                 q.setMaxResults(len);
                 qTotal = em.createQuery(sbTotal.toString().replace(seletStr, countStr));
+                DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 for (int i = 0; i < orArray.size(); i++) {
-                    q.setParameter(colArray.get(i), valArray.get(i));
-                    qTotal.setParameter(colArray.get(i), valArray.get(i));
+                	if (("createdTime").equals(orArray.get(i))){
+                		q.setParameter(colArray.get(i), Timestamp.valueOf(valArray.get(i)));
+                        qTotal.setParameter(colArray.get(i), Timestamp.valueOf(valArray.get(i)));
+                	}
+                	else{
+                		q.setParameter(colArray.get(i), valArray.get(i));
+                        qTotal.setParameter(colArray.get(i), valArray.get(i));
+                	}
                 }
             }
         }

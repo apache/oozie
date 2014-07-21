@@ -125,6 +125,8 @@ public class OozieClient {
     public static final String FILTER_FREQUENCY = "frequency";
 
     public static final String FILTER_ID = "id";
+    
+    public static final String FILTER_CREATEDTIME = "createdtime";
 
     public static final String FILTER_UNIT = "unit";
 
