@@ -150,6 +150,8 @@ public class OozieClient {
 
     public static final String CHANGE_VALUE_CONCURRENCY = "concurrency";
 
+    public static final String CHANGE_VALUE_STATUS = "status";
+
     public static final String LIBPATH = "oozie.libpath";
 
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";
@@ -743,7 +745,6 @@ public class OozieClient {
         }
     }
 
-
     private class JMSInfo extends ClientCallable<JMSConnectionInfo> {
 
         JMSInfo() {
@@ -1013,10 +1014,11 @@ public class OozieClient {
 
     private class CoordJobInfo extends ClientCallable<CoordinatorJob> {
 
-        CoordJobInfo(String jobId, String filter, int start, int len) {
+        CoordJobInfo(String jobId, String filter, int start, int len, String order) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
-                    RestConstants.JOB_SHOW_INFO, RestConstants.JOB_FILTER_PARAM, filter, RestConstants.OFFSET_PARAM, Integer.toString(start),
-                    RestConstants.LEN_PARAM, Integer.toString(len)));
+                    RestConstants.JOB_SHOW_INFO, RestConstants.JOB_FILTER_PARAM, filter, RestConstants.OFFSET_PARAM,
+                    Integer.toString(start), RestConstants.LEN_PARAM, Integer.toString(len), RestConstants.ORDER_PARAM,
+                    order));
         }
 
         @Override
@@ -1032,6 +1034,32 @@ public class OozieClient {
             return null;
         }
     }
+
+    private class WfsForCoordAction extends ClientCallable<List<WorkflowJob>> {
+
+        WfsForCoordAction(String coordActionId) {
+            super("GET", RestConstants.JOB, notEmpty(coordActionId, "coordActionId"), prepareParams(
+                    RestConstants.JOB_SHOW_PARAM, RestConstants.ALL_WORKFLOWS_FOR_COORD_ACTION));
+        }
+
+        @Override
+        protected List<WorkflowJob> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                JSONArray workflows = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
+                if (workflows == null) {
+                    workflows = new JSONArray();
+                }
+                return JsonToBean.createWorkflowJobList(workflows);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
 
     private class BundleJobInfo extends ClientCallable<BundleJob> {
 
@@ -1093,7 +1121,7 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
     public CoordinatorJob getCoordJobInfo(String jobId) throws OozieClientException {
-        return new CoordJobInfo(jobId, null, -1, -1).call();
+        return new CoordJobInfo(jobId, null, -1, -1, "asc").call();
     }
 
     /**
@@ -1103,11 +1131,17 @@ public class OozieClient {
      * @param filter filter the status filter
      * @param start starting index in the list of actions belonging to the job
      * @param len number of actions to be returned
+     * @param order order to list coord actions (e.g, desc)
      * @return the job info.
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
-    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len) throws OozieClientException {
-        return new CoordJobInfo(jobId, filter, start, len).call();
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len, String order)
+            throws OozieClientException {
+        return new CoordJobInfo(jobId, filter, start, len, order).call();
+    }
+
+    public List<WorkflowJob> getWfsForCoordAction(String coordActionId) throws OozieClientException {
+        return new WfsForCoordAction(coordActionId).call();
     }
 
     /**

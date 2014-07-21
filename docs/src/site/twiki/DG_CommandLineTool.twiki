@@ -19,6 +19,7 @@ The =oozie= CLI interacts with Oozie via its WS API.
 usage:
       the env variable 'OOZIE_URL' is used as default value for the '-oozie' option
       the env variable 'OOZIE_TIMEZONE' is used as default value for the '-timezone' option
+      the env variable 'OOZIE_AUTH' is used as default value for the '-auth' option
       custom headers for Oozie web services can be specified using '-Dheader:NAME=VALUE'
 
       oozie help : display usage
@@ -27,6 +28,8 @@ usage:
 .
       oozie job <OPTIONS> : job operations
                 -action <arg>         coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids (requires -log)
+                -allruns              Get workflow jobs corresponding to a coordinator action
+                                      including all the reruns
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
                 -change <arg>         change a coordinator/bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
@@ -38,6 +41,12 @@ usage:
                 -info <arg>           info of a job
                 -kill <arg>           kill a job (coordinator requires -action or -date)
                 -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
+                -filter <arg>         status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]*
+                                      All coordinator actions satisfying the status filters will be retrieved.
+                                      Positive filters '=' concatenated with 'OR' and negative filters '!=' with 'AND'.
+                                      Currently, only supported for coordinator job.
+                -order <arg>          order to show coordinator actions (default ascending order, 'desc' for descending order, requires -info)
+                                      Currently, only supported for coordinator job.
                 -localtime            use local time (same as passing your time zone to -timezone).
                                       Overrides -timezone option
                 -log <arg>            job log
@@ -318,23 +327,29 @@ $oozie job -kill <coord_Job_id> [-action 1, 3-4, 7-40] [-date 2009-01-01T01:00Z:
    * Single date specified in -date must be able to find an action with matched nominal time to be effective.
    * After the command is executed the killed coordiator action will have =KILLED= status.
 
----+++ Changing endtime/concurrency/pausetime of a Coordinator Job
+---+++ Changing endtime/concurrency/pausetime/status of a Coordinator Job
 
 Example:
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value endtime=2011-12-01T05:00Z\;concurrency=100\;2011-10-01T05:00Z
+$ oozie job -oozie http://localhost:11000/oozie -change 0000001-140321155112907-oozie-puru-C  -value status=RUNNING
 </verbatim>
 
-The =change= option changes a coordinator job that is not in =KILLED= status.
+The =endtime/concurrency/pausetime= option changes a coordinator job that is not in =KILLED= status.
 
 Valid value names are:
 
    * endtime: the end time of the coordinator job.
    * concurrency: the concurrency of the coordinator job.
    * pausetime: the pause time of the coordinator job.
+   * status: new status for coordinator job.
 
-Repeated value names are not allowed. New end time must not be before job's start time and last action time.
+Repeated value names are not allowed. New end time must not be before job's start time and last action time. Currently status only
+takes RUNNING and can be used to change the status of FAILED or KILLED coordinator job to RUNNING and resuming materialization.
+This status change command does not affect the status of already materialized actions in the coordinator. If there are FAILED or
+KILLED coordinator actions they have to be rerun separately.
+
 New concurrency value has to be a valid integer. All lookahead actions will be revoked according to the new pause time. Also empty string "" can be used to reset pause time to none.
 
 After the command is executed the job's end time, concurrency or pause time should be changed. If an already-succeeded job changes its end time, its status will become running.
@@ -412,7 +427,7 @@ The =rerun= option reruns coordinator actions belonging to specified coordinator
 After the command is executed the rerun coordiator action will be in =WAITING= status.
 
 
----+++ Checking the Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
+---+++ Checking the Information and Status of a Workflow, Coordinator or Bundle Job or a Coordinator Action
 
 Example:
 
@@ -447,11 +462,11 @@ The =localtime= option displays times in local time, if not specified times are 
 The =verbose= option gives more detailed information for all the actions, if checking for workflow job or coordinator job.
 
 The =filter= option can be used to filter coordinator actions based on their status.
-The filter option syntax is: <code>[status=VALUE][\;status=VALUE]*</code>.
+The filter option syntax is: <code>[status=VALUE][\;status=VALUE]* or [status!=VALUE][\;status!=VALUE]*</code>.
 (Note escape <code>\</code> needed before semicolon to specify multiple names for filter in shell)
-Multiple values must be specified as different name value pairs. When multiple filters are specified,
-all Coordinator actions that satisfy any one of the filters will be retrieved.
-(The query will do an OR among all the filter values for the status)
+Multiple values must be specified as different name value pairs. 
+When multiple positive filters <code>=</code> are specified, all Coordinator actions that satisfy any one of the filters will be retrieved.(The query will do an OR among all the positive filter values for the status)
+When multiple negative filters <code>!=</code> are specified, all Coordinator actions that satisfy all of the filters will be retrieved.(The query will do an AND among all the negative filter values for the status)
 Currently, the filter option can be used only with an =info= option on Coordinator job.
 
 An example below shows how the =verbose= option can be used to gather action statistics information for a job:
@@ -480,6 +495,29 @@ External ChildIDs : null
 The two fields External Stats and External ChildIDs display the action statistics information (that includes counter information in case of MR action and PigStats information in case of a pig action) and child ids of the given job.
 
 Note that the user can turn on/off External Stats by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in workflow.xml. By default, it is set to false (not to collect External Stats). External ChildIDs will always be stored.
+
+---+++ Listing all the Workflows for a Coordinator Action
+
+A coordinator action kicks off different workflows for its original run and all subsequent reruns.
+Getting a list of those workflow ids is a useful tool to keep track of your actions' runs and
+to go debug the workflow job logs if required. Along with ids, it also lists their statuses,
+and start and end times for quick reference.
+
+This is achieved by using the Coordinator Action info command and specifying a flag *=allruns=*
+along with the =info= command.
+
+<verbatim>
+$ oozie job -info 0000001-111219170928042-oozie-joe-C@1 -allruns -oozie http://localhost:11000/oozie
+.
+Job ID                                   Status    Started                 Ended
+.----------------------------------------------------------------------------------------------------
+0000001-140324163709596-oozie-joe-W     SUCCEEDED 2014-03-24 23:40 GMT    2014-03-24 23:40 GMT
+.----------------------------------------------------------------------------------------------------
+0000000-140324164318985-oozie-joe-W     SUCCEEDED 2014-03-24 23:44 GMT    2014-03-24 23:44 GMT
+.----------------------------------------------------------------------------------------------------
+0000001-140324164318985-oozie-joe-W     SUCCEEDED 2014-03-24 23:44 GMT    2014-03-24 23:44 GMT
+.----------------------------------------------------------------------------------------------------
+</verbatim>
 
 ---+++ Checking the xml definition of a Workflow, Coordinator or Bundle Job
 

@@ -20,11 +20,13 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
@@ -41,17 +43,17 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     private int start = 1;
     private int len = 50;
     private boolean desc = false;
-    private List<String> filterList;
+    private Map<String,List<String>> filterMap;
 
     public CoordJobGetActionsSubsetJPAExecutor(String coordJobId) {
         ParamChecker.notNull(coordJobId, "coordJobId");
         this.coordJobId = coordJobId;
     }
 
-    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, List<String> filterList, int start, int len, boolean desc) {
+    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, Map<String, List<String>> filterMap,
+            int start, int len, boolean desc) {
         this(coordJobId);
-        ParamChecker.notNull(filterList, "filterList");
-        this.filterList = filterList;
+        this.filterMap = filterMap;
         this.start = start;
         this.len = len;
         this.desc = desc;
@@ -90,13 +92,15 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     }
 
     private Query setQueryParameters(Query q, EntityManager em){
-        if (!filterList.isEmpty()) {
+        if (filterMap != null) {
             // Add the filter clause
             String query = q.toString();
             StringBuilder sbTotal = new StringBuilder(query);
             int offset = query.lastIndexOf("order");
             // Get the 'where' clause for status filters
-            StringBuilder statusClause = getStatusClause(filterList);
+            StringBuilder statusClause = new StringBuilder();
+            getStatusClause(statusClause, filterMap.get(CoordinatorEngine.POSITIVE_FILTER), true);
+            getStatusClause(statusClause, filterMap.get(CoordinatorEngine.NEGATIVE_FILTER), false);
             // Insert 'where' before 'order by'
             sbTotal.insert(offset, statusClause);
             q = em.createQuery(sbTotal.toString());
@@ -111,19 +115,28 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     }
 
     // Form the where clause to filter by status values
-    private StringBuilder getStatusClause(List<String> filterList) {
-        StringBuilder sb = new StringBuilder();
-        boolean isStatus = false;
-        for (String statusVal : filterList) {
-            if (!isStatus) {
-                sb.append(" and a.statusStr IN (\'" + statusVal + "\'");
-                isStatus = true;
-            }
-            else {
-                sb.append(",\'" + statusVal + "\'");
-            }
+    private StringBuilder getStatusClause(StringBuilder sb, List<String> filterList, boolean positive) {
+        if (sb == null) {
+            sb = new StringBuilder();
         }
-        sb.append(") ");
+        boolean isStatus = false;
+        if (filterList != null && filterList.size() > 0) {
+            for (String statusVal : filterList) {
+                if (!isStatus) {
+                    if (positive) {
+                        sb.append(" and a.statusStr IN (\'" + statusVal + "\'");
+                    }
+                    else {
+                        sb.append(" and a.statusStr NOT IN (\'" + statusVal + "\'");
+                    }
+                    isStatus = true;
+                }
+                else {
+                    sb.append(",\'" + statusVal + "\'");
+                }
+            }
+            sb.append(") ");
+        }
         return sb;
     }
 

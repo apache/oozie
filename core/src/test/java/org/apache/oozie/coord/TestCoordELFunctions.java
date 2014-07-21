@@ -863,6 +863,9 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-job-submit-data");
         eval.setVariable("date", utcDate);
         assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+        init("coord-sla-submit");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
     }
 
     public void testFuture() throws Exception {
@@ -899,6 +902,8 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-action-start");
         expr = "${coord:nominalTime()}";
         assertEquals("2009-09-09T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-create");
+        assertEquals("2009-09-09T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testActualTime() throws Exception {
@@ -907,6 +912,11 @@ public class TestCoordELFunctions extends XTestCase {
         init("coord-action-start");
         expr = "${coord:actualTime()}";
         assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-submit");
+        assertEquals(expr, CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-create");
+        assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+
     }
 
     public void testDataIn() throws Exception {
@@ -927,11 +937,17 @@ public class TestCoordELFunctions extends XTestCase {
         String expr = "${coord:dataOut('ABC')}";
         assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
                 CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-create");
+        eval.setVariable(".dataout.ABC", "file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31");
+        assertEquals("file:///tmp/coord/US/2009/1/30,file:///tmp/coord/US/2009/1/31",
+                CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testActionId() throws Exception {
         init("coord-action-start");
         String expr = "${coord:actionId()}";
+        assertEquals("00000-oozie-C@1", CoordELFunctions.evalAndWrap(eval, expr));
+        init("coord-sla-create");
         assertEquals("00000-oozie-C@1", CoordELFunctions.evalAndWrap(eval, expr));
     }
 

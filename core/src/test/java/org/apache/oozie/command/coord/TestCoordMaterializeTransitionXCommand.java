@@ -589,8 +589,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void checkCoordActionsNominalTime(String jobId, int number, Date[] nominalTimes) {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
-            List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(
-                    jobId, new ArrayList<String>(), 1, 1000, false));
+            List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(jobId,
+                    null, 1, 1000, false));
 
             if (actions.size() != number) {
                 fail("Should have " + number + " actions created for job " + jobId + ", but has " + actions.size() + " actions.");

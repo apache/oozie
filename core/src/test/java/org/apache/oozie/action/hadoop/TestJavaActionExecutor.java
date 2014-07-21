@@ -25,11 +25,9 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -57,7 +55,6 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -88,9 +85,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
-        assertEquals(null, ae.getLauncherClasses());
+        assertEquals(Arrays.asList(JavaMain.class), ae.getLauncherClasses());
         Configuration conf = new XConfiguration();
         conf.set("user.name", "a");
         try {
@@ -241,7 +239,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
-        assertEquals("MAIN-CLASS", ae.getLauncherMain(conf, actionXml));
+        assertEquals("MAIN-CLASS", actionConf.get("oozie.action.java.main", "null"));
+        assertEquals("org.apache.oozie.action.hadoop.JavaMain", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
 
@@ -510,12 +509,40 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
     }
 
-    public void testExceptionSubmitError() throws Exception {
+        public void testExceptionSubmitException() throws Exception {
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                "<arg>ex</arg>" +
+                "<arg>exception</arg>" +
+                "</java>";
+
+        Context context = createContext(actionXml, null);
+        final RunningJob runningJob = submitAction(context);
+        waitFor(60 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
+        assertTrue(runningJob.isSuccessful());
+        assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
+        ActionExecutor ae = new JavaActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
+        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+    }
+
+    public void testExceptionSubmitThrowable() throws Exception {
+        String actionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>throwable</arg>" +
                 "</java>";
 
         Context context = createContext(actionXml, null);

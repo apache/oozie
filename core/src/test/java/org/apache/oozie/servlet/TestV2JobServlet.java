@@ -118,4 +118,33 @@ public class TestV2JobServlet extends DagServletTestCase {
             }
         });
     }
+
+    public void testGetCoordActionReruns() throws Exception {
+        runTest("/v2/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.ALL_WORKFLOWS_FOR_COORD_ACTION);
+
+                // url - oozie/v2/coord-action-id?show=allruns
+                URL url = createURL(MockCoordinatorEngineService.ACTION_ID + 1, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+
+                MockDagEngineService.reset();
+                params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, RestConstants.JOB_COORD_SCOPE_ACTION);
+                params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "2");
+
+                // url - oozie/v2/coord-job-id?type=action&scope=action-num&show=allruns
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 2, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                return null;
+            }
+        });
+    }
 }

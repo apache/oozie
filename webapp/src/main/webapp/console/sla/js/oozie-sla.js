@@ -18,11 +18,11 @@
 
 function initializeDatePicker() {
     $("#startDate").datetimepicker({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: 'yy-mm-dd'
    });
 
    $("#endDate").datetimepicker({
-        dateFormat: 'yy-mm-dd',
+        dateFormat: 'yy-mm-dd'
    });
 }
 

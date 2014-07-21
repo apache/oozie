@@ -131,8 +131,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     public static final String CONF_DEFAULT_MAX_TIMEOUT = Service.CONF_PREFIX + "coord.default.max.timeout";
 
-
     public static final String CONF_QUEUE_SIZE = Service.CONF_PREFIX + "CallableQueueService.queue.size";
+
+    public static final String CONF_CHECK_MAX_FREQUENCY = Service.CONF_PREFIX + "coord.check.maximum.frequency";
 
     private ELEvaluator evalFreq = null;
     private ELEvaluator evalNofuncs = null;
@@ -140,6 +141,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private ELEvaluator evalInst = null;
     private ELEvaluator evalAction = null;
     private ELEvaluator evalSla = null;
+    private ELEvaluator evalTimeout = null;
 
     static {
         String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
@@ -313,9 +315,19 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             throw new IllegalArgumentException("Coordinator Start Time must be earlier than End Time.");
         }
 
-        // Check if a coord job with cron frequency will materialize actions
         try {
-            Integer.parseInt(coordJob.getFrequency());
+            // Check if a coord job with cron frequency will materialize actions
+            int freq = Integer.parseInt(coordJob.getFrequency());
+
+            // Check if the frequency is faster than 5 min if enabled
+            if (Services.get().getConf().getBoolean(CONF_CHECK_MAX_FREQUENCY, true)) {
+                CoordinatorJob.Timeunit unit = coordJob.getTimeUnit();
+                if (freq == 0 || (freq < 5 && unit == CoordinatorJob.Timeunit.MINUTE)) {
+                    throw new IllegalArgumentException("Coordinator job with frequency [" + freq +
+                            "] minutes is faster than allowed maximum of 5 minutes ("
+                            + CONF_CHECK_MAX_FREQUENCY + " is set to true)");
+                }
+            }
         } catch (NumberFormatException e) {
             Date start = coordJob.getStartTime();
             Calendar cal = Calendar.getInstance();
@@ -623,8 +635,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalFreq = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-freq");
         evalNofuncs = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-nofuncs");
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
-        evalSla = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-sla-submit");
         evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
+        evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
     }
 
     /**
@@ -683,8 +695,26 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         coordJob.setTimeZone(val);
 
         // controls
-        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalFreq);
-        if (val == "") {
+        val = resolveTagContents("timeout", eAppXml.getChild("controls", eAppXml.getNamespace()), evalTimeout);
+        if (val != null && val != "") {
+            int t = Integer.parseInt(val);
+            tmp = (evalTimeout.getVariable("timeunit") == null) ? TimeUnit.MINUTE : ((TimeUnit) evalTimeout
+                    .getVariable("timeunit"));
+            switch (tmp) {
+                case HOUR:
+                    val = String.valueOf(t * 60);
+                    break;
+                case DAY:
+                    val = String.valueOf(t * 60 * 24);
+                    break;
+                case MONTH:
+                    val = String.valueOf(t * 60 * 24 * 30);
+                    break;
+                default:
+                    break;
+            }
+        }
+        else {
             val = Services.get().getConf().get(CONF_DEFAULT_TIMEOUT_NORMAL);
         }
 
@@ -751,6 +781,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 resolveTagContents("value", tmpProp, evalData);
             }
         }
+        evalSla = CoordELEvaluator.createELEvaluatorForDataAndConf(conf, "coord-sla-submit", dataNameList);
         resolveSLA(eAppXml, coordJob);
         return eAppXml;
     }

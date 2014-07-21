@@ -50,6 +50,9 @@ import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
@@ -61,6 +64,11 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class CoordinatorEngine extends BaseEngine {
     private static XLog LOG = XLog.getLog(CoordinatorEngine.class);
+    public final static String COORD_ACTIONS_LOG_MAX_COUNT = "oozie.coord.actions.log.max.count";
+    private final static int COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT = 50;
+    private int maxNumActionsForLog;
+    public final static String POSITIVE_FILTER = "positive";
+    public final static String NEGATIVE_FILTER = "negative";
 
     /**
      * Create a system Coordinator engine, with no user and no group.
@@ -72,6 +80,8 @@ public class CoordinatorEngine extends BaseEngine {
         else {
             LOG.debug("Oozie CoordinatorEngine is using XCommands.");
         }
+        maxNumActionsForLog = Services.get().getConf()
+                .getInt(COORD_ACTIONS_LOG_MAX_COUNT, COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT);
     }
 
     /**
@@ -146,9 +156,9 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
             throws BaseEngineException {
-        List<String> filterList = parseStatusFilter(filter);
+        Map<String, List<String>> filterMap = parseStatusFilter(filter);
         try {
-            return new CoordJobXCommand(jobId, filterList, start, length, desc)
+            return new CoordJobXCommand(jobId, filterMap, start, length, desc)
                     .call();
         }
         catch (CommandException ex) {
@@ -334,6 +344,11 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                 }
 
+                if (actionSet.size() >= maxNumActionsForLog) {
+                    throw new CommandException(ErrorCode.E0302,
+                            "Retrieving log of too many coordinator actions. Max count is "
+                                    + maxNumActionsForLog + " actions");
+                }
                 Iterator<String> actionsIterator = actionSet.iterator();
                 StringBuilder orSeparatedActions = new StringBuilder("");
                 boolean orRequired = false;
@@ -378,6 +393,11 @@ public class CoordinatorEngine extends BaseEngine {
                 }
                 catch (XException xe) {
                     throw new CommandException(ErrorCode.E0302, "Error in date range for coordinator actions", xe);
+                }
+                if(coordActionIdList.size() >= maxNumActionsForLog) {
+                    throw new CommandException(ErrorCode.E0302,
+                            "Retrieving log of too many coordinator actions. Max count is "
+                                    + maxNumActionsForLog + " actions");
                 }
                 StringBuilder orSeparatedActions = new StringBuilder("");
                 boolean orRequired = false;
@@ -527,20 +547,26 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-
     // Parses the filter string (e.g status=RUNNING;status=WAITING) and returns a list of status values
-    private List<String> parseStatusFilter(String filter) throws CoordinatorEngineException {
-        List<String> filterList = new ArrayList<String>();
+    private Map<String, List<String>> parseStatusFilter(String filter) throws CoordinatorEngineException {
+        Map<String, List<String>> filterMap = new HashMap<String, List<String>>();
         if (filter != null) {
             //split name;value pairs
             StringTokenizer st = new StringTokenizer(filter, ";");
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
                 if (token.contains("=")) {
-                    String[] pair = token.split("=");
+                    boolean negative = false;
+                    String[] pair = null;
+                    if(token.contains("!=")) {
+                        negative = true;
+                        pair = token.split("!=");
+                    }else {
+                        pair = token.split("=");
+                    }
                     if (pair.length != 2) {
                         throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                                "elements must be name=value pairs");
+                                "elements must be name=value or name!=value pairs");
                     }
                     if (pair[0].equalsIgnoreCase("status")) {
                         String statusValue = pair[1];
@@ -548,12 +574,24 @@ public class CoordinatorEngine extends BaseEngine {
                             CoordinatorAction.Status.valueOf(statusValue);
                         } catch (IllegalArgumentException ex) {
                             StringBuilder validStatusList = new StringBuilder();
-                            for (CoordinatorAction.Status status: CoordinatorAction.Status.values()){
+                            for (CoordinatorAction.Status status : CoordinatorAction.Status.values()){
                                 validStatusList.append(status.toString()+" ");
                             }
                             // Check for incorrect status value
                             throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
                                 "invalid status value [{0}]." + " Valid status values are: [{1}]", statusValue, validStatusList));
+                        }
+                        String filterType = negative ? NEGATIVE_FILTER : POSITIVE_FILTER;
+                        String oppositeFilterType = negative ? POSITIVE_FILTER : NEGATIVE_FILTER;
+                        List<String> filterList = filterMap.get(filterType);
+                        if (filterList == null) {
+                            filterList = new ArrayList<String>();
+                            filterMap.put(filterType, filterList);
+                        }
+                        List<String> oFilterList = filterMap.get(oppositeFilterType);
+                        if (oFilterList != null && oFilterList.contains(statusValue)) {
+                            throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
+                                    "the status [{0}] specified in both positive and negative filters", statusValue));
                         }
                         filterList.add(statusValue);
                     } else {
@@ -563,11 +601,11 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                 } else {
                     throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                             "elements must be name=value pairs");
+                             "elements must be name=value or name!=value pairs");
                 }
             }
         }
-        return filterList;
+        return filterMap;
     }
 
     /**
@@ -667,5 +705,17 @@ public class CoordinatorEngine extends BaseEngine {
             }
         }
         return map;
+    }
+
+    public List<WorkflowJobBean> getReruns(String coordActionId) throws CoordinatorEngineException {
+        List<WorkflowJobBean> wfBeans;
+        try {
+            wfBeans = WorkflowJobQueryExecutor.getInstance().getList(WorkflowJobQuery.GET_WORKFLOWS_PARENT_COORD_RERUN,
+                    coordActionId);
+        }
+        catch (JPAExecutorException e) {
+            throw new CoordinatorEngineException(e);
+        }
+        return wfBeans;
     }
 }

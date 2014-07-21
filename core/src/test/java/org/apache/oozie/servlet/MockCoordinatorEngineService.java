@@ -54,6 +54,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static String did = null;
     public static Integer offset = null;
     public static Integer length = null;
+    public static String order = null;
+    public static String filter = null;
     public static List<CoordinatorJob> coordJobs;
     public static List<Boolean> started;
     public static final int INIT_COORD_COUNT = 4;
@@ -66,6 +68,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         did = null;
         offset = null;
         length = null;
+        order = null;
+        filter = null;
         coordJobs = new ArrayList<CoordinatorJob>();
         started = new ArrayList<Boolean>();
         for (int i = 0; i < INIT_COORD_COUNT; i++) {
@@ -187,6 +191,8 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             did = RestConstants.JOB_SHOW_INFO;
             MockCoordinatorEngineService.offset = start;
             MockCoordinatorEngineService.length = length;
+            MockCoordinatorEngineService.order = desc ? "desc" : "asc";
+            MockCoordinatorEngineService.filter = filter;
             int idx = validateCoordinatorIdx(jobId);
             return (CoordinatorJobBean) coordJobs.get(idx);
         }

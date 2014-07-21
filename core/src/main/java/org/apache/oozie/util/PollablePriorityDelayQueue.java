@@ -39,8 +39,8 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
      */
     @Override
     public QueueElement<E> poll() {
+        lock.lock();
         try {
-            lock.lock();
             antiStarvation();
             QueueElement<E> e = null;
             int i = priorities;

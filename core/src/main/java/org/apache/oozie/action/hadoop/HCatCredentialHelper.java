@@ -25,6 +25,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.SaslRpcServer;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -39,6 +40,7 @@ public class HCatCredentialHelper {
     private static final String HIVE_METASTORE_SASL_ENABLED = "hive.metastore.sasl.enabled";
     private static final String HIVE_METASTORE_KERBEROS_PRINCIPAL = "hive.metastore.kerberos.principal";
     private static final String HIVE_METASTORE_LOCAL = "hive.metastore.local";
+    private static final String HADOOP_RPC_PROTECTION = "hadoop.rpc.protection";
 
     /**
      * This Function will set the HCat token to jobconf
@@ -49,7 +51,8 @@ public class HCatCredentialHelper {
      */
     public void set(JobConf launcherJobConf, String principal, String server) throws Exception {
         try {
-            HiveMetaStoreClient client = getHCatClient(principal, server);
+            HiveMetaStoreClient client = getHCatClient
+                (launcherJobConf, principal, server);
             XLog.getLog(getClass()).debug(
                     "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
                             + launcherJobConf.get(USER_NAME));
@@ -68,12 +71,14 @@ public class HCatCredentialHelper {
 
     /**
      * Getting the HCat client.
+     * @param jobConf
      * @param principal
      * @param server
      * @return HiveMetaStoreClient
      * @throws MetaException
      */
-    public HiveMetaStoreClient getHCatClient(String principal, String server) throws MetaException {
+    public HiveMetaStoreClient getHCatClient(JobConf launcherJobConf,
+        String principal, String server) throws MetaException {
         HiveConf hiveConf = null;
         HiveMetaStoreClient hiveclient = null;
         hiveConf = new HiveConf();
@@ -84,6 +89,12 @@ public class HCatCredentialHelper {
         hiveConf.set(HIVE_METASTORE_KERBEROS_PRINCIPAL, principal);
         hiveConf.set(HIVE_METASTORE_LOCAL, "false");
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, server);
+        String protection = launcherJobConf.get(HADOOP_RPC_PROTECTION,
+           SaslRpcServer.QualityOfProtection.AUTHENTICATION.name()
+              .toLowerCase());
+        XLog.getLog(getClass()).debug("getHCatClient, setting rpc protection to " + protection);
+        hiveConf.set(HADOOP_RPC_PROTECTION, protection);
+
         hiveclient = new HiveMetaStoreClient(hiveConf);
         return hiveclient;
     }

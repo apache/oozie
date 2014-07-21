@@ -20,6 +20,7 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -56,7 +57,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         GET_WORKFLOW_DEFINITION,
         GET_WORKFLOW_KILL,
         GET_WORKFLOW_RESUME,
-        GET_WORKFLOW_STATUS
+        GET_WORKFLOW_STATUS,
+        GET_WORKFLOWS_PARENT_COORD_RERUN
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
@@ -177,6 +179,9 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             case GET_WORKFLOW_RESUME:
             case GET_WORKFLOW_STATUS:
                 query.setParameter("id", parameters[0]);
+                break;
+            case GET_WORKFLOWS_PARENT_COORD_RERUN:
+                query.setParameter("parentId", parameters[0]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -299,6 +304,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean = new WorkflowJobBean();
                 bean.setId((String) parameters[0]);
                 bean.setStatusStr((String) ret);
+                break;
+            case GET_WORKFLOWS_PARENT_COORD_RERUN:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStatusStr((String) arr[1]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[2]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "

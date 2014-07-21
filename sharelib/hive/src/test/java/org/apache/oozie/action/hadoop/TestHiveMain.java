@@ -94,6 +94,9 @@ public class TestHiveMain extends MainTestCase {
             jobConf.set("javax.jdo.option.ConnectionUserName", "sa");
             jobConf.set("javax.jdo.option.ConnectionPassword", " ");
 
+            jobConf.set("mapreduce.job.tags", "" + System.currentTimeMillis());
+            setSystemProperty("oozie.job.launch.time", "" + System.currentTimeMillis());
+
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
             HiveActionExecutor.setHiveScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),

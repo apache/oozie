@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,8 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * PauseTransitService is the runnable which is scheduled to run at the configured interval, it checks all bundles
  * to see if they should be paused, un-paused or started.
@@ -52,7 +54,8 @@ public class PauseTransitService implements Service {
      * PauseTransitRunnable is the runnable which is scheduled to run at the configured interval, it checks all
      * bundles to see if they should be paused, un-paused or started.
      */
-    static class PauseTransitRunnable implements Runnable {
+    @VisibleForTesting
+    public static class PauseTransitRunnable implements Runnable {
         private JPAService jpaService = null;
         private LockToken lock;
 

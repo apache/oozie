@@ -79,7 +79,8 @@ public class TestPigMain extends PigTestCase {
         // option to specify whether stats should be stored or not
         jobConf.set("oozie.action.external.stats.write", Boolean.toString(writeStats));
 
-
+        jobConf.set("mapreduce.job.tags", "" + System.currentTimeMillis());
+        setSystemProperty("oozie.job.launch.time", "" + System.currentTimeMillis());
 
         SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), jobConf);
 

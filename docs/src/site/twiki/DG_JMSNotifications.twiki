@@ -50,10 +50,10 @@ String getTopicPrefix();
 </verbatim>
 
 The topic is obtained by concatenating topic prefix and the substituted value for topic pattern. The topic pattern
-can be a constant value like workflow or coordinator which the administrator has configured or ${username}.
-If ${username}, it has to be substitued with the name of the user who has submitted the job. Administrators can chose
-to publish messages to topics containing user names to avoid having one topic containing all messages and all users having
-to apply selectors to filter the message they are interested in.
+can be a constant value like workflow or coordinator which the administrator has configured or a variable (either ${username}
+or ${jobId}). If ${username}, it has to be substituted with the name of the user who has submitted the job; and if ${jobId} it has
+to be substituted with the job Id. Administrators can chose to publish messages to topics containing user names to avoid having one
+topic containing all messages and all users having to apply selectors to filter the message they are interested in.
 
 The getJMSTopicName API can be used if the job id is already known and will give the exact topic name to which the
 notifications for that job are published.
@@ -162,8 +162,7 @@ First, create the Oozie client and retrieve the JNDI properties to make a connec
    Properties jndiProperties = jmsInfo.getJNDIProperties();
    Context jndiContext = new InitialContext(jndiProperties);
    String connectionFactoryName = (String) jndiContext.getEnvironment().get("connectionFactoryNames");
-   ConnectionFactory connectionFactory = (ConnectionFactory);
-   jndiContext.lookup(connectionFactoryName);
+   ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup(connectionFactoryName);
    Connection connection = connectionFactory.createConnection();
    Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
    String topicPrefix = jmsInfo.getTopicPrefix();
@@ -173,6 +172,10 @@ First, create the Oozie client and retrieve the JNDI properties to make a connec
    String topicName = null;
    if (topicPattern.equals("${username}")) {
        topicName = "john";
+   // Following code checks if the topic pattern is
+   //'jobId', then the topic name is set to the job id
+   } else if (topicPattern.equals("${jobId}")) {
+       topicName = "0000004-140328125200198-oozie-oozi-W";
    }
    Destination topic = session.createTopic(topicPrefix+topicName);
    MessageConsumer consumer = session.createConsumer(topic);
@@ -185,12 +188,12 @@ interface needs to be implemented. Also, its onMessage() method  needs to be imp
 This method will be called whenever a message is available on the JMS bus.
 
 <verbatim>
-    public void onMessage(Message m) {
-       if (message.getStringProperty(JMSHeaderConsants.MSG_TYPE).equals(MessageType.SLA.name()){
+    public void onMessage(Message message) {
+       if (message.getStringProperty(JMSHeaderConstants.MESSAGE_TYPE).equals(MessageType.SLA.name())){
           SLAMessage slaMessage = JMSMessagingUtils.getEventMessage(message);
           // Further processing
        }
-       else if (message.getStringProperty(JMSHeaderConsants.APP_TYPE).equals(AppType.WORKFLOW_JOB.name()){
+       else if (message.getStringProperty(JMSHeaderConstants.APP_TYPE).equals(AppType.WORKFLOW_JOB.name())){
           WorkflowJobMessage wfJobMessage = JMSMessagingUtils.getEventMessage(message);
           // Further processing
        }

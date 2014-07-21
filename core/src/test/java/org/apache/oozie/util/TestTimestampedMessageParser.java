@@ -97,6 +97,45 @@ public class TestTimestampedMessageParser extends XTestCase {
         return file;
     }
 
+    static File prepareFile3(String dir) throws IOException {
+        File file = new File(dir + "/test3.log");
+        FileWriter fw = new FileWriter(file);
+
+        for (int i = 0; i < 10000; i++) {
+            String log = "2009-06-24 02:43:13," + i
+                    + " DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
+                    + "JOB[14-200904160239--found-C] ACTION[14-200904160239--example-C@1] End workflow state change\n";
+
+            fw.write(log);
+        }
+
+        fw.close();
+        return file;
+    }
+
+    public void testNofindLogs() {
+        // Test of OOZIE-1691
+        XLogStreamer.Filter.reset();
+        XLogStreamer.Filter.defineParameter("USER");
+        XLogStreamer.Filter.defineParameter("GROUP");
+        XLogStreamer.Filter.defineParameter("TOKEN");
+        XLogStreamer.Filter.defineParameter("APP");
+        XLogStreamer.Filter.defineParameter("JOB");
+        XLogStreamer.Filter.defineParameter("ACTION");
+        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        xf.setParameter("JOB", "14-200904160239--no-found-C");
+        xf.setLogLevel("DEBUG|WARN");
+        try {
+            File file = prepareFile3(getTestCaseDir());
+            StringWriter sw = new StringWriter();
+            new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
+            assertTrue(sw.toString().isEmpty());
+        }
+        catch (Exception e) {
+            fail("should not throw Exception");
+        }
+    }
+
     public void testProcessRemainingLog() throws IOException {
         XLogStreamer.Filter.reset();
         XLogStreamer.Filter.defineParameter("USER");

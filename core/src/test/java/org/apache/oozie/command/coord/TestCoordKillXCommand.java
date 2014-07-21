@@ -95,6 +95,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
         assertTrue(job.isDoneMaterialization());
+        assertNotNull(job.getLastModifiedTime());
         assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
 
         // Change job status to RUNNINGWITHERROR to simulate StatusTransitService changing it to
@@ -119,6 +120,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         job = jpaService.execute(coordJobGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
         assertTrue(job.isDoneMaterialization());
+        assertNotNull(job.getLastModifiedTime());
     }
 
     /**
@@ -149,6 +151,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         job = jpaService.execute(coordJobGetCmd);
         action = jpaService.execute(coordActionGetCmd);
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
+        assertNotNull(job.getLastModifiedTime());
         assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
     }
 

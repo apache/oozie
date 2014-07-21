@@ -2352,13 +2352,13 @@ libraries, to provide acess to more than one version at the same time.
 The share library override is supported at server level and at job level. The share library directory names are resolved
 using the following precedence order:
 
-   *  action.sharelib.for.#ACTIONTYPE# in the action configuration
-   *  action.sharelib.for.#ACTIONTYPE# in the job configuration
-   *  action.sharelib.for.#ACTIONTYPE# in the oozie server configuration
-   *  action's =ActionExecutor getDefaultShareLibName()= method
+   *  oozie.action.sharelib.for.#ACTIONTYPE# in the action configuration
+   *  oozie.action.sharelib.for.#ACTIONTYPE# in the job configuration
+   *  oozie.action.sharelib.for.#ACTIONTYPE# in the oozie server configuration
+   *  The action or custom action's =ActionExecutor getDefaultShareLibName()= method
 
 More than one share library directory name can be specified for an action by using a comma separated list (since Oozie 4.x).
-For example: When using HCatLoader and HCatStorer in pig, =action.sharelib.for.pig= can be set to =pig,hcatalog= to include
+For example: When using HCatLoader and HCatStorer in pig, =oozie.action.sharelib.for.pig= can be set to =pig,hcatalog= to include
 both pig and hcatalog jars.
 
 ---++ 18 User-Retry for Workflow Actions (since Oozie 3.1)

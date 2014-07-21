@@ -455,8 +455,8 @@ public class BundleEngine extends BaseEngine {
                     throw new BundleEngineException(ErrorCode.E0420, token, "elements must be name=value pairs");
                 }
             }
-            if(!bulkFilter.containsKey(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME)) {
-                throw new BundleEngineException(ErrorCode.E0305, BulkResponseImpl.BULK_FILTER_BUNDLE_NAME);
+            if (!bulkFilter.containsKey(BulkResponseImpl.BULK_FILTER_BUNDLE)) {
+                throw new BundleEngineException(ErrorCode.E0305, BulkResponseImpl.BULK_FILTER_BUNDLE);
             }
         }
         return bulkFilter;

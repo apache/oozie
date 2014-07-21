@@ -27,6 +27,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONObject;
 
 @SuppressWarnings("serial")
 public class V2JobServlet extends V1JobServlet {
@@ -67,5 +68,11 @@ public class V2JobServlet extends V1JobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
         return topicName;
+    }
+
+    @Override
+    protected JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        return super.getJobsByParentId(request, response);
     }
 }

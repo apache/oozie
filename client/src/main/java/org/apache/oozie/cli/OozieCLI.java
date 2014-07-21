@@ -80,6 +80,7 @@ public class OozieCLI {
     public static final String ENV_OOZIE_URL = "OOZIE_URL";
     public static final String ENV_OOZIE_DEBUG = "OOZIE_DEBUG";
     public static final String ENV_OOZIE_TIME_ZONE = "OOZIE_TIMEZONE";
+    public static final String ENV_OOZIE_AUTH = "OOZIE_AUTH";
     public static final String WS_HEADER_PREFIX = "header:";
 
     public static final String HELP_CMD = "help";
@@ -130,6 +131,7 @@ public class OozieCLI {
     public static final String DATE_OPTION = "date";
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
+    public static final String ORDER_OPTION = "order";
 
     public static final String UPDATE_SHARELIB_OPTION = "sharelibupdate";
 
@@ -151,9 +153,12 @@ public class OozieCLI {
 
     public static final String AVAILABLE_SERVERS_OPTION = "servers";
 
+    public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
+            "the env variable '" + ENV_OOZIE_AUTH + "' is used as default value for the '-" + AUTH_OPTION + "' option",
             "custom headers for Oozie web services can be specified using '-D" + WS_HEADER_PREFIX + "NAME=VALUE'" };
 
     private static final String RULER;
@@ -281,7 +286,12 @@ public class OozieCLI {
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
-                "status=<S1>[;status=<S2>]* (All Coordinator actions satisfying any one of the status filters will be retreived. Currently, only supported for Coordinator job)");
+                "status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]* "
+                + "(All Coordinator actions satisfying the status filters will be retreived. "
+                + "Positive filters '=' concatenated with OR and negative filters '!=' with AND. "
+                + "Currently, only supported for Coordinator job)");
+        Option order = new Option(ORDER_OPTION, true,
+                "order to show coord actions (default ascending order, 'desc' for descending order, requires -info)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
         Option timezone = new Option(TIME_ZONE_OPTION, true,
@@ -301,6 +311,8 @@ public class OozieCLI {
                 "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
+        Option getAllWorkflows = new Option(ALL_WORKFLOWS_FOR_COORD_ACTION, false,
+                "Get workflow jobs corresponding to a coordinator action including all the reruns");
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -332,11 +344,13 @@ public class OozieCLI {
         jobOptions.addOption(offset);
         jobOptions.addOption(len);
         jobOptions.addOption(filter);
+        jobOptions.addOption(order);
         jobOptions.addOption(action);
         jobOptions.addOption(date);
         jobOptions.addOption(rerun_coord);
         jobOptions.addOption(rerun_refresh);
         jobOptions.addOption(rerun_nocleanup);
+        jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
         addAuthOptions(jobOptions);
         return jobOptions;
@@ -362,8 +376,8 @@ public class OozieCLI {
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Option bulkMonitor = new Option(BULK_OPTION, true, "key-value pairs to filter bulk jobs response. e.g. bundle=<B>\\;" +
                 "coordinators=<C>\\;actionstatus=<S>\\;startcreatedtime=<SC>\\;endcreatedtime=<EC>\\;" +
-                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; coordinators and actionstatus can be multiple comma separated values" +
-                "bundle and coordinators are 'names' of those jobs. Bundle name is mandatory, other params are optional");
+                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; bundle, coordinators and actionstatus can be multiple comma separated values" +
+                "bundle and coordinators can be id(s) or appName(s) of those jobs. Specifying bundle is mandatory, other params are optional");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();
@@ -713,7 +727,7 @@ public class OozieCLI {
      * @return change value specified by -value.
      * @throws OozieCLIException
      */
-    private String getChangeValue(CommandLine commandLine) throws OozieCLIException {
+	private String getChangeValue(CommandLine commandLine) throws OozieCLIException {
         String changeValue = commandLine.getOptionValue(CHANGE_VALUE_OPTION);
 
         if (changeValue == null) {
@@ -741,6 +755,12 @@ public class OozieCLI {
      */
     protected String getAuthOption(CommandLine commandLine) {
         String authOpt = commandLine.getOptionValue(AUTH_OPTION);
+        if (authOpt == null) {
+            authOpt = System.getenv(ENV_OOZIE_AUTH);
+        }
+        if (commandLine.hasOption(DEBUG_OPTION)) {
+            System.out.println(" Auth type : " + authOpt);
+        }
         return authOpt;
     }
 
@@ -956,15 +976,21 @@ public class OozieCLI {
                     s = commandLine.getOptionValue(LEN_OPTION);
                     int len = Integer.parseInt((s != null) ? s : "-1");
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
-                    printCoordJob(wc.getCoordJobInfo(optionValue, filter, start, len), timeZoneId,
+                    String order = commandLine.getOptionValue(ORDER_OPTION);
+                    printCoordJob(wc.getCoordJobInfo(optionValue, filter, start, len, order), timeZoneId,
                             options.contains(VERBOSE_OPTION));
                 }
                 else if (optionValue.contains("-C@")) {
-                    String filter = commandLine.getOptionValue(FILTER_OPTION);
-                    if (filter != null) {
-                        throw new OozieCLIException("Filter option is not supported for a Coordinator action");
+                    if (options.contains(ALL_WORKFLOWS_FOR_COORD_ACTION)) {
+                        printWfsForCoordAction(wc.getWfsForCoordAction(optionValue), timeZoneId);
                     }
-                    printCoordAction(wc.getCoordActionInfo(optionValue), timeZoneId);
+                    else {
+                        String filter = commandLine.getOptionValue(FILTER_OPTION);
+                        if (filter != null) {
+                            throw new OozieCLIException("Filter option is not supported for a Coordinator action");
+                        }
+                        printCoordAction(wc.getCoordActionInfo(optionValue), timeZoneId);
+                    }
                 }
                 else if (optionValue.contains("-W@")) {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
@@ -1571,6 +1597,21 @@ public class OozieCLI {
         }
         else {
             System.out.println("No Jobs match your criteria!");
+        }
+    }
+
+    void printWfsForCoordAction(List<WorkflowJob> jobs, String timeZoneId) throws IOException {
+        if (jobs != null && jobs.size() > 0) {
+            System.out.println(String.format("%-41s%-10s%-24s%-24s", "Job ID", "Status", "Started", "Ended"));
+            System.out.println(RULER);
+
+            for (WorkflowJob job : jobs) {
+                System.out
+                        .println(String.format("%-41s%-10s%-24s%-24s", maskIfNull(job.getId()), job.getStatus(),
+                                maskDate(job.getStartTime(), timeZoneId, false),
+                                maskDate(job.getEndTime(), timeZoneId, false)));
+                System.out.println(RULER);
+            }
         }
     }
 

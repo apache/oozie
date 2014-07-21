@@ -96,7 +96,10 @@ public class HiveMain extends LauncherMain {
         }
 
         // Have to explicitly unset this property or Hive will not set it.
-        hiveConf.set("mapred.job.name", "");
+        // Reset if Oozie-defaults are set. Otherwise, honour user-selected job-name.
+        if (hiveConf.get("mapred.job.name", "").startsWith("oozie:action:")) {
+            hiveConf.set("mapred.job.name", "");
+        }
 
         // See https://issues.apache.org/jira/browse/HIVE-1411
         hiveConf.set("datanucleus.plugin.pluginRegistryBundleCheck", "LOG");
@@ -263,6 +266,8 @@ public class HiveMain extends LauncherMain {
             System.out.println("             " + arg);
         }
         System.out.println();
+
+//        LauncherMainHadoopUtils.killChildYarnJobs(hiveConf);
 
         System.out.println("=================================================================");
         System.out.println();

@@ -303,6 +303,13 @@ public abstract class JsonRestServlet extends HttpServlet {
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorCode.E1400.toString(),
                               ex.getMessage());
         }
+        catch (IllegalArgumentException ex){
+          XLog log = XLog.getLog(getClass());
+          log.warn("URL[{0} {1}] user error, {2}", request.getMethod(), getRequestUrl(request), ex.getMessage(), ex);
+          incrCounter(INSTR_TOTAL_FAILED_REQUESTS_COUNTER, 1);
+          sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E1603.toString(),
+                            ex.getMessage());
+        }
         catch (RuntimeException ex) {
             XLog log = XLog.getLog(getClass());
             log.error("URL[{0} {1}] error, {2}", request.getMethod(), getRequestUrl(request), ex.getMessage(), ex);

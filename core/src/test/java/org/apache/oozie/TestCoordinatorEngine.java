@@ -455,13 +455,34 @@ public class TestCoordinatorEngine extends XTestCase {
         job = ce.getCoordJob(jobId, "", 1, 2, false);
         assertEquals(job.getActions().size(), 2);
 
+        //Check for negative filter
+        job = ce.getCoordJob(jobId, "status!=RUNNING", 1, 2, false);
+        assertEquals(job.getActions().size(), 2);
+
+        //Check for multiple negative filter
+        job = ce.getCoordJob(jobId, "status!=RUNNING;status!=WAITING", 1, 2, false);
+        assertEquals(job.getActions().size(), 0);
+
+        //Check for combination of positive and negative filter
+        try {
+            job = ce.getCoordJob(jobId, "status=WAITING;status!=WAITING", 1, 2, false);
+        }
+        catch (CoordinatorEngineException ex) {
+            assertEquals(ErrorCode.E0421, ex.getErrorCode());
+            assertEquals(
+                    "E0421: Invalid job filter [status=WAITING;status!=WAITING], the status [WAITING] "
+                    + "specified in both positive and negative filters",
+                    ex.getMessage());
+        }
+
         //Check for missing "="
         try {
             job = ce.getCoordJob(jobId, "statusRUNNING", 1, 2, false);
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [statusRUNNING], elements must be name=value pairs", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [statusRUNNING], elements must be name=value or name!=value pairs",
+                    ex.getMessage());
         }
 
         //Check for missing value after "="
@@ -470,7 +491,7 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [status=], elements must be name=value pairs", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [status=], elements must be name=value or name!=value pairs", ex.getMessage());
         }
 
         // Check for invalid status value

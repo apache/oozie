@@ -37,8 +37,8 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
     private CoordinatorJobBean coordinator;
     private CoordinatorActionBean action;
 
-    public static final String BULK_FILTER_BUNDLE_NAME = "bundle";
-    public static final String BULK_FILTER_COORD_NAME = "coordinators";
+    public static final String BULK_FILTER_BUNDLE = "bundle";
+    public static final String BULK_FILTER_COORD = "coordinators";
     public static final String BULK_FILTER_LEVEL = "filterlevel";
     public static final String BULK_FILTER_STATUS = "actionstatus";
     public static final String BULK_FILTER_START_CREATED_EPOCH = "startcreatedtime";
@@ -51,8 +51,8 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     static {
 
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_BUNDLE_NAME);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_COORD_NAME);
+        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_BUNDLE);
+        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_COORD);
         BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_LEVEL);
         BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_STATUS);
         BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH);

@@ -93,6 +93,18 @@ public class TestXTestCase extends TestCase {
 
 
     public static class MyXTestCase extends XTestCase {
+        protected void setUp() throws Exception {
+            if(TESTING){
+                super.setUp();
+            }
+        }
+
+        protected void tearDown() throws Exception {
+            if(TESTING){
+                super.tearDown();
+            }
+        }
+
 
         public void testDummy() {
         }

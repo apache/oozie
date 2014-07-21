@@ -24,6 +24,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +45,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -70,8 +74,8 @@ public class LauncherMapperHelper {
     }
 
     public static void setupMainClass(Configuration launcherConf, String javaMainClass) {
-        // Only set the javaMainClass if its not null or empty string (should be the case except for java action), this way the user
-        // can override the action's main class via <configuration> property
+        // Only set the javaMainClass if its not null or empty string, this way the user can override the action's main class via
+        // <configuration> property
         if (javaMainClass != null && !javaMainClass.equals("")) {
             launcherConf.set(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
         }
@@ -151,15 +155,23 @@ public class LauncherMapperHelper {
         OutputStream os = fs.create(new Path(actionDir, LauncherMapper.ACTION_CONF_XML));
         actionConf.writeXml(os);
         os.close();
-
-        Path inputDir = new Path(actionDir, "input");
-        fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "dummy.txt")));
-        writer.write("dummy");
-        writer.close();
-
-        launcherConf.set("mapred.input.dir", inputDir.toString());
+        launcherConf.setInputFormat(OozieLauncherInputFormat.class);
         launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
+    }
+
+    public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String actionId)
+            throws NoSuchAlgorithmException {
+        launcherJobConf.setLong("oozie.job.launch.time", System.currentTimeMillis());
+        // Tags are limited to 100 chars so we need to hash them to make sure (the actionId otherwise doesn't have a max length)
+        String tag = getTag(actionId);
+        actionConf.set("mapreduce.job.tags", tag);
+    }
+
+    private static String getTag(String actionId) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        digest.update(actionId.getBytes(), 0, actionId.length());
+        String md5 = "oozie-" + new BigInteger(1, digest.digest()).toString(16);
+        return md5;
     }
 
     public static boolean isMainDone(RunningJob runningJob) throws IOException {

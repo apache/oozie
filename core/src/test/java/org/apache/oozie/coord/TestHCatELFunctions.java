@@ -148,6 +148,9 @@ public class TestHCatELFunctions extends XHCatTestCase {
         }
         catch (Exception ex) {
         }
+        init("coord-sla-submit");
+        eval.setVariable("oozie.dataname.ABCD", "data-out");
+        assertEquals("${coord:databaseOut('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -189,6 +192,11 @@ public class TestHCatELFunctions extends XHCatTestCase {
         }
         catch (Exception ex) {
         }
+
+        init("coord-sla-submit");
+        expr = "${coord:tableOut('ABC')}";
+        eval.setVariable("oozie.dataname.ABC", "data-out");
+        assertEquals("${coord:tableOut('ABC')}", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -284,6 +292,9 @@ public class TestHCatELFunctions extends XHCatTestCase {
         }
         catch (Exception ex) {
         }
+        init("coord-sla-submit");
+        eval.setVariable("oozie.dataname.ABCD", "data-out");
+        assertEquals("${coord:dataOutPartitions('ABCD')}", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -348,6 +359,12 @@ public class TestHCatELFunctions extends XHCatTestCase {
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         expr = "${coord:tableOut('ABC')}";
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
+
+        init("coord-sla-create", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:tableOut('ABC')}";
+        assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -402,6 +419,12 @@ public class TestHCatELFunctions extends XHCatTestCase {
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         String res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("'datastamp=20120230,region=us'") || res.equals("'region=us,datastamp=20120230'"));
+
+        init("coord-sla-create");
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20130230;region=euro");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("'datastamp=20130230,region=us'") || res.equals("'region=euro,datastamp=20130230'"));
     }
 
     /**
@@ -419,6 +442,16 @@ public class TestHCatELFunctions extends XHCatTestCase {
         String res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("20120230"));
 
+        expr = "${coord:dataOutPartitionValue('ABC','region')}";
+        res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("US"));
+
+        init("coord-sla-create");
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=US");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:dataOutPartitionValue('ABC','datastamp')}";
+        res = CoordELFunctions.evalAndWrap(eval, expr);
+        assertTrue(res.equals("20120230"));
         expr = "${coord:dataOutPartitionValue('ABC','region')}";
         res = CoordELFunctions.evalAndWrap(eval, expr);
         assertTrue(res.equals("US"));

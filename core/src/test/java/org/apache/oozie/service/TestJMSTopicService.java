@@ -67,17 +67,25 @@ public class TestJMSTopicService extends XDataTestCase {
         JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         assertEquals(wfj.getUser(), jmsTopicService.getTopic(wfj.getId()));
+        assertEquals(wfj.getUser(), jmsTopicService.getTopic(AppType.WORKFLOW_JOB, wfj.getUser(), wfj.getId(), null));
         WorkflowActionBean wab = addRecordToWfActionTable(wfj.getId(), "1", WorkflowAction.Status.RUNNING);
         assertEquals(wfj.getUser(), jmsTopicService.getTopic(wab.getId()));
+        assertEquals(wfj.getUser(), jmsTopicService.getTopic(AppType.WORKFLOW_ACTION, wfj.getUser(), wab.getId(), wab.getWfId()));
         CoordinatorJobBean cjb = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
-        assertEquals(wfj.getUser(), jmsTopicService.getTopic(cjb.getId()));
+        assertEquals(cjb.getUser(), jmsTopicService.getTopic(cjb.getId()));
+        assertEquals(cjb.getUser(), jmsTopicService.getTopic(AppType.COORDINATOR_JOB, cjb.getUser(), cjb.getId(), null));
         CoordinatorActionBean cab = addRecordToCoordActionTable(cjb.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-for-action-input-check.xml", 0);
-        assertEquals(wfj.getUser(), jmsTopicService.getTopic(cab.getId()));
+        assertEquals(cjb.getUser(), jmsTopicService.getTopic(cab.getId()));
+        assertEquals(cjb.getUser(),
+                jmsTopicService.getTopic(AppType.COORDINATOR_ACTION, cjb.getUser(), cab.getId(), cab.getJobId()));
         BundleJobBean bjb = addRecordToBundleJobTable(Job.Status.RUNNING, true);
-        assertEquals(wfj.getUser(), jmsTopicService.getTopic(bjb.getId()));
+        assertEquals(bjb.getUser(), jmsTopicService.getTopic(bjb.getId()));
+        assertEquals(bjb.getUser(), jmsTopicService.getTopic(AppType.BUNDLE_JOB, bjb.getUser(), bjb.getId(), null));
         BundleActionBean bab = addRecordToBundleActionTable(bjb.getId(), "1", 1, Job.Status.RUNNING);
-        assertEquals(wfj.getUser(), jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals(bjb.getUser(), jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals(bjb.getUser(),
+                jmsTopicService.getTopic(AppType.BUNDLE_ACTION, bjb.getUser(), bab.getBundleActionId(), bab.getBundleId()));
     }
 
     @Test
@@ -91,17 +99,27 @@ public class TestJMSTopicService extends XDataTestCase {
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         assertEquals(TOPIC_PREFIX, jmsTopicService.getTopicPrefix());
         assertEquals(TOPIC_PREFIX + wfj.getId(), jmsTopicService.getTopic(wfj.getId()));
+        assertEquals(TOPIC_PREFIX + wfj.getId(), jmsTopicService.getTopic(AppType.WORKFLOW_JOB, wfj.getUser(), wfj.getId(), null));
         WorkflowActionBean wab = addRecordToWfActionTable(wfj.getId(), "1", WorkflowAction.Status.RUNNING);
         assertEquals(TOPIC_PREFIX + wfj.getId(), jmsTopicService.getTopic(wab.getId()));
+        assertEquals(TOPIC_PREFIX + wfj.getId(),
+                jmsTopicService.getTopic(AppType.WORKFLOW_ACTION, wfj.getUser(), wab.getId(), wab.getWfId()));
         CoordinatorJobBean cjb = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
         assertEquals(TOPIC_PREFIX + cjb.getId(), jmsTopicService.getTopic(cjb.getId()));
+        assertEquals(TOPIC_PREFIX + cjb.getId(),
+                jmsTopicService.getTopic(AppType.COORDINATOR_JOB, cjb.getUser(), cjb.getId(), null));
         CoordinatorActionBean cab = addRecordToCoordActionTable(cjb.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-for-action-input-check.xml", 0);
         assertEquals(TOPIC_PREFIX + cjb.getId(), jmsTopicService.getTopic(cab.getId()));
+        assertEquals(TOPIC_PREFIX + cjb.getId(),
+                jmsTopicService.getTopic(AppType.COORDINATOR_ACTION, cjb.getUser(), cab.getId(), cab.getJobId()));
         BundleJobBean bjb = addRecordToBundleJobTable(Job.Status.RUNNING, true);
         assertEquals(TOPIC_PREFIX + bjb.getId(), jmsTopicService.getTopic(bjb.getId()));
+        assertEquals(TOPIC_PREFIX + bjb.getId(), jmsTopicService.getTopic(AppType.BUNDLE_JOB, bjb.getUser(), bjb.getId(), null));
         BundleActionBean bab = addRecordToBundleActionTable(bjb.getId(), "1", 1, Job.Status.RUNNING);
         assertEquals(TOPIC_PREFIX + bjb.getId(), jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals(TOPIC_PREFIX + bjb.getId(),
+                jmsTopicService.getTopic(AppType.BUNDLE_ACTION, bjb.getUser(), bab.getBundleActionId(), bab.getBundleId()));
     }
 
     @Test
@@ -116,17 +134,24 @@ public class TestJMSTopicService extends XDataTestCase {
         JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         assertEquals("workflow", jmsTopicService.getTopic(wfj.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_JOB, wfj.getUser(), wfj.getId(), null));
         WorkflowActionBean wab = addRecordToWfActionTable(wfj.getId(), "1", WorkflowAction.Status.RUNNING);
         assertEquals("workflow", jmsTopicService.getTopic(wab.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_ACTION, wfj.getUser(), wab.getId(), wab.getWfId()));
         CoordinatorJobBean cjb = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
         assertEquals("coord", jmsTopicService.getTopic(cjb.getId()));
+        assertEquals("coord", jmsTopicService.getTopic(AppType.COORDINATOR_JOB, cjb.getUser(), cjb.getId(), null));
         CoordinatorActionBean cab = addRecordToCoordActionTable(cjb.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-for-action-input-check.xml", 0);
         assertEquals("coord", jmsTopicService.getTopic(cab.getId()));
+        assertEquals("coord", jmsTopicService.getTopic(AppType.COORDINATOR_ACTION, cjb.getUser(), cab.getId(), cab.getJobId()));
         BundleJobBean bjb = addRecordToBundleJobTable(Job.Status.RUNNING, true);
         assertEquals("bundle", jmsTopicService.getTopic(bjb.getId()));
+        assertEquals("bundle", jmsTopicService.getTopic(AppType.BUNDLE_JOB, bjb.getUser(), bjb.getId(), null));
         BundleActionBean bab = addRecordToBundleActionTable(bjb.getId(), "1", 1, Job.Status.RUNNING);
         assertEquals("bundle", jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals("bundle",
+                jmsTopicService.getTopic(AppType.BUNDLE_ACTION, bjb.getUser(), bab.getBundleActionId(), bab.getBundleId()));
     }
 
     @Test
@@ -141,17 +166,24 @@ public class TestJMSTopicService extends XDataTestCase {
         JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         assertEquals("workflow", jmsTopicService.getTopic(wfj.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_JOB, wfj.getUser(), wfj.getId(), null));
         WorkflowActionBean wab = addRecordToWfActionTable(wfj.getId(), "1", WorkflowAction.Status.RUNNING);
         assertEquals("workflow", jmsTopicService.getTopic(wab.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_ACTION, wfj.getUser(), wab.getId(), wab.getWfId()));
         CoordinatorJobBean cjb = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
         assertEquals("coord", jmsTopicService.getTopic(cjb.getId()));
+        assertEquals("coord", jmsTopicService.getTopic(AppType.COORDINATOR_JOB, cjb.getUser(), cjb.getId(), null));
         CoordinatorActionBean cab = addRecordToCoordActionTable(cjb.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-for-action-input-check.xml", 0);
         assertEquals("coord", jmsTopicService.getTopic(cab.getId()));
+        assertEquals("coord", jmsTopicService.getTopic(AppType.COORDINATOR_ACTION, cjb.getUser(), cab.getId(), cab.getJobId()));
         BundleJobBean bjb = addRecordToBundleJobTable(Job.Status.RUNNING, true);
         assertEquals(bjb.getId(), jmsTopicService.getTopic(bjb.getId()));
+        assertEquals(bjb.getId(), jmsTopicService.getTopic(AppType.BUNDLE_JOB, bjb.getUser(), bjb.getId(), null));
         BundleActionBean bab = addRecordToBundleActionTable(bjb.getId(), "1", 1, Job.Status.RUNNING);
         assertEquals(bjb.getId(), jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals(bjb.getId(),
+                jmsTopicService.getTopic(AppType.BUNDLE_ACTION, bjb.getUser(), bab.getBundleActionId(), bab.getBundleId()));
     }
 
     @Test
@@ -165,18 +197,24 @@ public class TestJMSTopicService extends XDataTestCase {
         JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         assertEquals("workflow", jmsTopicService.getTopic(wfj.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_JOB, wfj.getUser(), wfj.getId(), null));
         WorkflowActionBean wab = addRecordToWfActionTable(wfj.getId(), "1", WorkflowAction.Status.RUNNING);
         assertEquals("workflow", jmsTopicService.getTopic(wab.getId()));
+        assertEquals("workflow", jmsTopicService.getTopic(AppType.WORKFLOW_ACTION, wfj.getUser(), wab.getId(), wab.getWfId()));
         CoordinatorJobBean cjb = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, true, true);
         assertEquals("coord", jmsTopicService.getTopic(cjb.getId()));
         CoordinatorActionBean cab = addRecordToCoordActionTable(cjb.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-for-action-input-check.xml", 0);
         assertEquals("coord", jmsTopicService.getTopic(cab.getId()));
+        assertEquals("coord", jmsTopicService.getTopic(AppType.COORDINATOR_ACTION, cjb.getUser(), cab.getId(), cab.getJobId()));
         BundleJobBean bjb = addRecordToBundleJobTable(Job.Status.RUNNING, true);
         // As no default is specified, user will be considered as topic
         assertEquals(bjb.getUser(), jmsTopicService.getTopic(bjb.getId()));
+        assertEquals(bjb.getUser(), jmsTopicService.getTopic(AppType.BUNDLE_JOB, bjb.getUser(), bjb.getId(), null));
         BundleActionBean bab = addRecordToBundleActionTable(bjb.getId(), "1", 1, Job.Status.RUNNING);
         assertEquals(bjb.getUser(), jmsTopicService.getTopic(bab.getBundleActionId()));
+        assertEquals(bjb.getUser(),
+                jmsTopicService.getTopic(AppType.BUNDLE_ACTION, bjb.getUser(), bab.getBundleActionId(), bab.getBundleId()));
     }
 
     @Test

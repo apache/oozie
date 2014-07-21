@@ -124,8 +124,10 @@ import org.json.simple.JSONObject;
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_USER", query = "select w.user from WorkflowJobBean w where w.id = :id"),
 
-    @NamedQuery(name = "GET_WORKFLOW_STATUS", query = "select w.statusStr from WorkflowJobBean w where w.id = :id")
-        })
+    @NamedQuery(name = "GET_WORKFLOW_STATUS", query = "select w.statusStr from WorkflowJobBean w where w.id = :id"),
+
+    @NamedQuery(name = "GET_WORKFLOWS_PARENT_COORD_RERUN", query = "select w.id, w.statusStr, w.startTimestamp, w.endTimestamp "
+            + "from WorkflowJobBean w where w.parentId = :parentId order by w.createdTimestamp")})
 @Table(name = "WF_JOBS")
 public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
 

@@ -50,6 +50,9 @@ public class TestStreamingMain extends MainTestCase {
         jobConf.set("user.name", getTestUser());
         jobConf.set("hadoop.job.ugi", getTestUser() + "," + getTestGroup());
 
+        jobConf.set("mapreduce.job.tags", "" + System.currentTimeMillis());
+        setSystemProperty("oozie.job.launch.time", "" + System.currentTimeMillis());
+
         SharelibUtils.addToDistributedCache("streaming", fs, getFsTestCaseDir(), jobConf);
 
         MapReduceActionExecutor.setStreaming(jobConf, "cat", "wc", null, null, null);

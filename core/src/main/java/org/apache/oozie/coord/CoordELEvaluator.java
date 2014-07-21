@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
@@ -113,18 +114,52 @@ public class CoordELEvaluator {
 
     /**
      * Create a SLA evaluator to be used during Materialization
-     *
-     * @param nominalTime
+     * @param eAction
+     * @param coordAction
      * @param conf
      * @return
      * @throws Exception
      */
-    public static ELEvaluator createSLAEvaluator(Date nominalTime, Configuration conf) throws Exception {
+    public static ELEvaluator createSLAEvaluator(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
+            throws Exception {
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("coord-sla-create");
         setConfigToEval(eval, conf);
         SyncCoordAction appInst = new SyncCoordAction();// TODO:
-        appInst.setNominalTime(nominalTime);
+        appInst.setNominalTime(coordAction.getNominalTime());
+        appInst.setActualTime(coordAction.getCreatedTime());
+        appInst.setActionId(coordAction.getId());
+        appInst.setName(eAction.getAttributeValue("name"));
         CoordELFunctions.configureEvaluator(eval, null, appInst);
+
+        Element events = eAction.getChild("output-events", eAction.getNamespace());
+        if (events != null) {
+            for (Object obj : events.getChildren("data-out", eAction.getNamespace())) {
+                Element data = (Element) obj;
+                if (data.getChild("uris", data.getNamespace()) != null) {
+                    String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
+                    uris = uris.replaceAll(CoordELFunctions.INSTANCE_SEPARATOR, CoordELFunctions.DIR_SEPARATOR);
+                    eval.setVariable(".dataout." + data.getAttributeValue("name"), uris);
+                }
+                if (data.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, data.getNamespace()) != null) {
+                    eval.setVariable(".dataout." + data.getAttributeValue("name") + ".unresolved", "true");
+                }
+            }
+        }
+        return eval;
+    }
+
+    /**
+     * Create an Evaluator using conf and input/output-data (used for sla)
+     * @param conf
+     * @param group
+     * @param dataNameList
+     * @return
+     * @throws Exception
+     */
+    public static ELEvaluator createELEvaluatorForDataAndConf(Configuration conf, String group,
+            HashMap<String, String> dataNameList) throws Exception {
+        ELEvaluator eval = createELEvaluatorForDataEcho(conf, group, dataNameList);
+        setConfigToEval(eval, conf);
         return eval;
     }
 

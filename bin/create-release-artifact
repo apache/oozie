@@ -27,7 +27,9 @@ run() {
   fi
 }
 
-branchUrl=`svn info | grep URL | awk '{print $2}'`
+branchUrl=`git ls-remote --get-url`
+
+branchName=`git rev-parse --abbrev-ref HEAD`
 
 tempDir="/tmp/oozie.$$"
 
@@ -35,11 +37,11 @@ run mkdir $tempDir
 
 run cd $tempDir
 
-run svn co $branchUrl oozie-src
+run git clone $branchUrl -b $branchName oozie-src
 
 run cd oozie-src
 
-find . -name .svn | xargs rm -rf
+rm -rf .git
 
 releaseVersion=`mvn help:evaluate -Dexpression=project.version | grep -v INFO | grep -v WARNING`
 

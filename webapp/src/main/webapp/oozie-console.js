@@ -30,6 +30,19 @@ $(document).ready(function() {
     }
 });
 
+Ext.override(Ext.Component, {
+    saveState : function() {
+        if (Ext.state.Manager && this.stateful !== false) {
+            var state = this.getState();
+            if (this.fireEvent('beforestatesave', this, state) !== false) {
+                Ext.state.Manager.set(this.stateId || this.id, state);
+                this.fireEvent('statesave', this, state);
+            }
+        }
+    },
+    stateful : false
+});
+
 function getLogs(url, textArea, shouldParseResponse, errorMsg) {
     textArea.getEl().dom.value = '';
 
@@ -70,7 +83,8 @@ function getLogs(url, textArea, shouldParseResponse, errorMsg) {
 
                 }
                 if (xhr.status != 200 && xhr.status != 0) {
-                    textArea.getEl().dom.value = "Error :\n" + xhr.responseText;
+                    var errorText = xhr.getResponseHeader('oozie-error-message');
+                    textArea.getEl().dom.value = "Error :\n" + (errorText ? errorText : xhr.responseText);
                 }
             } catch (e) {
             }
@@ -280,7 +294,7 @@ Ext.ux.Image = Ext.extend(Ext.BoxComponent, {
 
     autoEl: {
         tag: 'img',
-        src: Ext.BLANK_IMAGE_URL,
+        src: Ext.BLANK_IMAGE_URL
     },
 
     initComponent: function() {
@@ -434,7 +448,7 @@ function jobDetailsPopup(response, request) {
             name: 'endTime',
             width: 400,
             value: jobDetails["endTime"]
-        }, ]
+        } ]
     });
     var fs = new Ext.FormPanel({
         frame: true,
@@ -498,7 +512,7 @@ function jobDetailsPopup(response, request) {
             width: 170,
             sortable: true,
             dataIndex: 'endTime'
-        }, ],
+        } ],
         stripeRows: true,
         // autoHeight: true,
         autoScroll: true,
@@ -771,7 +785,7 @@ function jobDetailsPopup(response, request) {
             title: 'Job DAG',
             items: imageContainer,
             tbar: [{
-                text: "&nbsp;&nbsp;&nbsp;",
+                text: "&nbsp;&nbsp;&nbsp;"
                 // To avoid OOM
                 /*icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
                 handler: function() {
@@ -976,7 +990,7 @@ function coordJobDetailsPopup(response, request) {
             name: 'concurrency',
             width: 200,
             value: jobDetails["concurrency"]
-        }, ]
+        } ]
     });
     var fs = new Ext.FormPanel({
         frame: true,
@@ -1040,7 +1054,7 @@ function coordJobDetailsPopup(response, request) {
             width: 170,
             sortable: true,
             dataIndex: 'LastModifiedTime'
-        }, ],
+        } ],
         stripeRows: true,
         // autoHeight: true,
         autoScroll: true,
@@ -1143,7 +1157,7 @@ function coordJobDetailsPopup(response, request) {
                     width: 400,
                     value: actionStatus["trackerUri"]
 
-                }, ]
+                } ]
             });
             /*
              var detail = new Ext.FormPanel( {
@@ -1185,6 +1199,78 @@ function coordJobDetailsPopup(response, request) {
              */
         }
     }
+
+    var rerunActionText = new Ext.form.Label({
+        text : 'Enter Coordinator Action number : ',
+        ctCls: 'spaces'
+    });
+    var rerunActionTextBox = new Ext.form.TextField({
+        fieldLabel: 'RerunAction',
+        name: 'RerunAction',
+        width: 150,
+        value: ''
+    });
+    var store = new Ext.data.JsonStore({
+        baseParams: {
+            scope: 0,
+        },
+        root: 'workflows',
+        fields: ['id', 'status', 'startTime', 'endTime'],
+        proxy: new Ext.data.HttpProxy({
+            url: getOozieBase() + 'job/' + coordJobId + '?show=allruns&type=action',
+            timeout: 300000
+        })
+    });
+    store.proxy.conn.method = "GET";
+
+    var rerunsUnit = new Ext.grid.GridPanel({
+        autoScroll: true,
+        height: 200,
+        autoRender: true,
+        store: store,
+        columns: [new Ext.grid.RowNumberer(), {
+            header: 'Workflow Id',
+            dataIndex: 'id',
+            id: 'id',
+            width: 240
+        },{
+            header: 'Workflow Status',
+            dataIndex: 'status',
+            id: 'status',
+            width: 200
+        },{
+            header: 'Started',
+            dataIndex: 'startTime',
+            id: 'startTime',
+            width: 240
+        },{
+            header: 'Ended',
+            dataIndex: 'endTime',
+            id: 'endTime',
+            width: 240
+        }],
+        listeners: {
+            cellclick: function (rerunsUnit, rowIndex, colIndex) {
+                var obj = store.getAt(rowIndex);
+                jobDetailsGridWindow(obj.data.id);
+            },
+        },
+        frame: false
+    });
+    function populateReruns(coordActionId) {
+        var actionNum = rerunActionTextBox.getValue();
+        store.baseParams.scope = actionNum;
+        store.reload();
+    }
+    var getRerunsButton = new Ext.Button({
+        text: 'Get Workflows',
+        ctCls: 'x-btn-over',
+        ctCls: 'spaces',
+        handler: function() {
+            populateReruns(rerunsUnit);
+        }
+    });
+
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
@@ -1211,7 +1297,12 @@ function coordJobDetailsPopup(response, request) {
            items: jobLogArea,
            tbar: [
                    actionsText,actionsTextBox, getLogButton]
-	   }]
+       },{
+           title: 'Coord Action Reruns',
+           items: rerunsUnit,
+           tbar: [
+               rerunActionText, rerunActionTextBox, getRerunsButton]
+       }]
 });
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -1221,6 +1312,9 @@ function coordJobDetailsPopup(response, request) {
         }
         else if (selectedTab.title == 'Coord Job Definition') {
             fetchDefinition(coordJobId);
+        }
+        else if (selectedTab.title == 'Coord Action Reruns') {
+            rerunsUnit.setVisible(true);
         }
         coord_jobs_grid.setVisible(false);
     });
@@ -1300,7 +1394,7 @@ function bundleJobDetailsPopup(response, request) {
             name: 'group',
             width: 170,
             value: jobDetails["group"]
-        }, ]
+        } ]
     });
 
     var fs = new Ext.FormPanel({
@@ -1382,7 +1476,7 @@ function bundleJobDetailsPopup(response, request) {
             width: 200,
             sortable: true,
             dataIndex: 'nextMaterializedTime'
-        }, ],
+        } ],
         stripeRows: true,
         // autoHeight: true,
         autoScroll: true,
@@ -1546,7 +1640,7 @@ function showConfigurationInWindow(dataObject, windowTitle) {
             width: 240,
             sortable: true,
             dataIndex: 'value'
-        }, ],
+        } ],
         stripeRows: true,
         autoHeight: true,
         autoScroll: true,
@@ -1582,6 +1676,7 @@ var coord_jobs_store = new Ext.data.JsonStore({
         url: getOozieBase() + 'jobs'
     })
 });
+coord_jobs_store.proxy.conn.timeout = 300000;
 coord_jobs_store.proxy.conn.method = "GET";
 
 /* 
@@ -1601,6 +1696,7 @@ var jobs_store = new Ext.data.JsonStore({
         url: getOozieBase() + 'jobs'
     })
 });
+jobs_store.proxy.conn.timeout = 300000;
 jobs_store.proxy.conn.method = "GET";
 
 /* 
@@ -1622,6 +1718,7 @@ var bundle_jobs_store = new Ext.data.JsonStore({
         url: getOozieBase() + 'jobs'
     })
 });
+bundle_jobs_store.proxy.conn.timeout = 300000;
 bundle_jobs_store.proxy.conn.method = "GET";
 
 var configGridData = new Ext.data.JsonStore({
@@ -2046,6 +2143,7 @@ var timeZones_store = new Ext.data.JsonStore({
         url: getOozieBase() + 'admin' + "/available-timezones"
     })
 });
+timeZones_store.proxy.conn.timeout = 300000;
 timeZones_store.proxy.conn.method = "GET";
 
 function showCoordJobContextMenu(thisGrid, rowIndex, cellIndex, e) {
@@ -2118,7 +2216,7 @@ function initConsole() {
             width: 170,
             sortable: true,
             dataIndex: 'endTime'
-        }, ],
+        } ],
 
         stripeRows: true,
         autoScroll: true,
@@ -2165,7 +2263,7 @@ function initConsole() {
             sortable: true,
             renderer: valueRenderer,
             dataIndex: 'value'
-        }, ],
+        } ],
         height: 500,
         width: 1040,
         autoScroll: true,
@@ -2251,7 +2349,7 @@ function initConsole() {
             width: 170,
             sortable: true,
             dataIndex: 'nextMaterializedTime'
-        },],
+        }],
 
         stripeRows: true,
         autoScroll: true,
@@ -2322,7 +2420,7 @@ function initConsole() {
             width: 170,
             sortable: true,
             dataIndex: 'createdTime'
-        },],
+        }],
 
         stripeRows: true,
         autoScroll: true,

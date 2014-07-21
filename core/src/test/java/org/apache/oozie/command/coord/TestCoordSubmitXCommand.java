@@ -615,11 +615,17 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "<dataset name=\"Stats\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-01-01T01:00Z\" "
+                + "timezone=\"UTC\"><uri-template>hcat://foo:11002/myOutputDatabase/myOutputTable/datestamp=${YEAR}${MONTH}${DAY}"
+                + "</uri-template></dataset>"
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> "
+                + "<data-out name=\"aggregated-logs\" dataset=\"Stats\">"
+                + "<instance>${coord:current(0)}</instance></data-out>"
+                + "</output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> "
@@ -628,7 +634,12 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + " <sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>"
                 + " <sla:should-start>${5 * MINUTES}</sla:should-start>"
                 + " <sla:should-end>${ SLA_OFFSET * HOURS}</sla:should-end>"
-                + " <sla:notification-msg>Notifying User for ${coord:nominalTime()} nominal time </sla:notification-msg>"
+                + " <sla:notification-msg>Notifying User for ${coord:nominalTime()}, ${coord:actualTime()},"
+                + "${coord:formatTime(coord:nominalTime(),'yyyy-MM-dd')},${coord:dateOffset(coord:nominalTime(), 1, 'DAY')}"
+                + "${coord:actionId()},${coord:name()}, ${coord:conf('nameNode')},${coord:user()},${coord:dataOut('LOCAL_A')}"
+                + "${coord:databaseOut('aggregated-logs')},${coord:tableOut('aggregated-logs')},"
+                + "${coord:dataOutPartitions('aggregated-logs')}"
+                + "</sla:notification-msg>"
                 + " <sla:alert-contact>abc@example.com</sla:alert-contact>"
                 + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
                 + " <sla:qa-contact>abc@example.com</sla:qa-contact>"
@@ -1066,6 +1077,58 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 , job.getJobXml().contains(URI_TEMPLATE_INCLUDE_XML));
     }
 
+    /**
+     * Frequency faster/slower than than maximum
+     *
+     * @throws Exception
+     */
+    public void testCheckMaximumFrequency() throws Exception {
+        assertTrue(Services.get().getConf().getBoolean("oozie.service.coord.check.maximum.frequency", false));
+        _testCheckMaximumFrequencyHelper("5");
+        _testCheckMaximumFrequencyHelper("10");
+        _testCheckMaximumFrequencyHelper("${coord:hours(2)}");
+        _testCheckMaximumFrequencyHelper("${coord:days(3)}");
+        _testCheckMaximumFrequencyHelper("${coord:months(4)}");
+        try {
+            _testCheckMaximumFrequencyHelper("3");
+            fail();
+        } catch (CommandException ce) {
+            assertEquals(ErrorCode.E1003, ce.getErrorCode());
+            assertTrue(ce.getMessage().contains("Coordinator job with frequency [3] minutes is faster than allowed maximum of 5 "
+                    + "minutes"));
+        }
+        try {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", false);
+            _testCheckMaximumFrequencyHelper("5");
+            _testCheckMaximumFrequencyHelper("10");
+            _testCheckMaximumFrequencyHelper("${coord:hours(2)}");
+            _testCheckMaximumFrequencyHelper("${coord:days(3)}");
+            _testCheckMaximumFrequencyHelper("${coord:months(4)}");
+            _testCheckMaximumFrequencyHelper("3");
+        } finally {
+            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", true);
+        }
+    }
+
+    private void _testCheckMaximumFrequencyHelper(String freq) throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"" + freq + "\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>blah</value> </property> "
+                + "</configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        checkCoordJobs(jobId);
+    }
+
     private void _testConfigDefaults(boolean withDefaults) throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
@@ -1151,4 +1214,72 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             }
         }
     }
+
+    /**
+     * Test timeout setting
+     *
+     * @throws Exception
+     */
+    public void testSubmitWithTimeout() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        // timeout unit = DAY
+        String appXml1 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:days(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml1, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 14400);
+        // timeout unit = HOUR
+        String appXml2 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:hours(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml2, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 600);
+        // timeout unit = MINUTE
+        String appXml3 = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:minutes(10)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml3, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 10);
+        // timeout unit = MONTH
+        String appXml4 = "<coordinator-app name=\"NAME\" frequency=\"${coord:months(1)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2'> "
+                + "<controls> <timeout>${coord:months(1)}</timeout> </controls> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + "</action> </coordinator-app>";
+        writeToFile(appXml4, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        sc = new CoordSubmitXCommand(conf);
+        jobId = sc.call();
+        job = checkCoordJobs(jobId);
+        assertEquals(job.getTimeout(), 43200);
+    }
+
 }
