@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1934 coordinator action repeatedly picked up by cachePurgeWorker of PartitionDependencyManagerService (ryota)
 OOZIE-1933 SLACalculatorMemory HA changes assume SLARegistrationBean exists for all jobs (mona)
 OOZIE-1935 Log level (ActionStartXCommand) and Doc fix (CoordinatorFunctionalSpec) (mona)
 OOZIE-1586 upgrade oozie to hive 13.1 (including hcatalog) (raviprak via rkanter)

@@ -375,6 +375,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
     public void removeNonWaitingCoordActions(Set<String> coordActions) {
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
         for (String coordActionId : coordActions) {
+            LOG.info("Removing non waiting coord action {0} from partition dependency map", coordActionId);
             synchronized (actionPartitionMap) {
                 Map<String, Collection<String>> partitionMap = actionPartitionMap.get(coordActionId);
                 if (partitionMap != null) {

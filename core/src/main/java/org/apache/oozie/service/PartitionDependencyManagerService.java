@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,7 +108,9 @@ public class PartitionDependencyManagerService implements Service {
         private void purgeMissingDependency(int timeToLive) {
             long currentTime = new Date().getTime();
             Set<String> staleActions = new HashSet<String>();
-            for(String actionId : registeredCoordActionMap.keySet()) {
+            Iterator<String> actionItr = registeredCoordActionMap.keySet().iterator();
+            while(actionItr.hasNext()){
+                String actionId = actionItr.next();
                 Long regTime = registeredCoordActionMap.get(actionId);
                 if(regTime < (currentTime - timeToLive * 1000)){
                     CoordinatorActionBean caBean = null;
@@ -119,6 +122,7 @@ public class PartitionDependencyManagerService implements Service {
                     }
                     if(caBean != null && !caBean.getStatus().equals(CoordinatorAction.Status.WAITING)){
                         staleActions.add(actionId);
+                        actionItr.remove();
                     }
                 }
             }
