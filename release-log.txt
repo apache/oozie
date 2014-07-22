@@ -1,4 +1,5 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
+OOZIE-1925 upgrade tomcat to 6.0.41 (rkanter via shwethags)
 OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
