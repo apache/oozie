@@ -41,7 +41,7 @@ public class JavaMain extends LauncherMain {
 
         Configuration actionConf = loadActionConf();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+//        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
 
         Class<?> klass = actionConf.getClass(JAVA_MAIN_CLASS, Object.class);
         System.out.println("Main class        : " + klass.getName());
