@@ -2065,7 +2065,16 @@
         </description>
     </property>
 
-
+<!--
+    <property>
+        <name>oozie.instance.id</name>
+        <value>${OOZIE_HTTP_HOSTNAME}</value>
+        <description>
+        Each Oozie server should have its own unique instance id. The default is system property
+        =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+        </description>
+    </property>
+-->
 
 
     <!-- Sharelib Configuration -->

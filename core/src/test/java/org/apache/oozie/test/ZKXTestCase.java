@@ -87,7 +87,7 @@ public abstract class ZKXTestCase extends XDataTestCase {
     private void setUpZK() throws Exception {
         zkServer = setupZKServer();
         Services.get().getConf().set("oozie.zookeeper.connection.string", zkServer.getConnectString());
-        setSystemProperty("oozie.instance.id", ZK_ID);
+        Services.get().getConf().set("oozie.instance.id", ZK_ID);
         createClient();
         createServiceDiscovery();
     }

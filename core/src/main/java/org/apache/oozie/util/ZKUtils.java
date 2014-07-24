@@ -118,7 +118,7 @@ public class ZKUtils {
      */
     private ZKUtils() throws Exception {
         log = XLog.getLog(getClass());
-        zkId = System.getProperty(OOZIE_INSTANCE_ID);
+        zkId = Services.get().getConf().get(OOZIE_INSTANCE_ID, Services.get().getConf().get("oozie.http.hostname"));
         createClient();
         advertiseService();
         checkAndSetACLs();

@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.rest.JsonBean;
@@ -38,6 +40,7 @@ import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.util.AuthUrlClient;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -261,7 +264,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     private JSONObject updateLocalShareLib(HttpServletRequest request) {
         ShareLibService shareLibService = Services.get().get(ShareLibService.class);
         JSONObject json = new JSONObject();
-        json.put(JsonTags.SHARELIB_UPDATE_HOST, Services.get().getConf().get("oozie.base.url"));
+        json.put(JsonTags.SHARELIB_UPDATE_HOST, ConfigUtils.getOozieEffectiveUrl());
         try {
             json.putAll(shareLibService.updateShareLib());
             json.put(JsonTags.SHARELIB_UPDATE_STATUS, "Successful");
