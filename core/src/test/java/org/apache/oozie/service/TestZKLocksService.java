@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.*;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.zookeeper.data.Stat;
 
 public class TestZKLocksService extends ZKXTestCase {
     private XLog log = XLog.getLog(getClass());
@@ -415,4 +416,24 @@ public class TestZKLocksService extends ZKXTestCase {
         sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
+
+    public void testLockReaper() throws Exception {
+        Services.get().getConf().set(ZKLocksService.REAPING_THRESHOLD, "1");
+        ZKLocksService zkls = new ZKLocksService();
+        try {
+            zkls.init(Services.get());
+            for (int i = 0; i < 10; ++i) {
+                LockToken l = zkls.getReadLock(String.valueOf(i), 1);
+                l.release();
+
+            }
+            sleep(2000);
+            Stat stat = getClient().checkExists().forPath(ZKLocksService.LOCKS_NODE);
+            assertEquals(stat.getNumChildren(), 0);
+        }
+        finally {
+            zkls.destroy();
+        }
+    }
+
 }
