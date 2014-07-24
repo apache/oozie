@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.Shell.ShellCommandExecutor;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -58,6 +59,7 @@ import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+import org.apache.openjpa.lib.log.Log;
 import org.jdom.Element;
 
 /**
@@ -128,7 +130,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
             // Updating the list of data dependencies that are available and those that are yet not
-            boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+            boolean status = checkInput(actionXml, existList, nonExistList, actionConf,nominalTime);
             String pushDeps = coordAction.getPushMissingDependencies();
             // Resolve latest/future only when all current missingDependencies and
             // pushMissingDependencies are met
@@ -255,9 +257,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws Exception thrown of unable to check input path
      */
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf) throws Exception {
+            Configuration conf,Date nominalTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-        return checkResolvedUris(eAction, existList, nonExistList, conf);
+        return checkResolvedUris(eAction, existList, nonExistList, conf,nominalTime);
     }
 
     protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
@@ -422,14 +424,27 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws IOException thrown if unable to access the path
      */
     private boolean checkResolvedUris(Element eAction, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf) throws IOException {
+            Configuration conf,Date nominalTime) throws IOException {
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
-        if (inputList != null) {
-            if (nonExistList.length() > 0) {
-                checkListOfPaths(existList, nonExistList, conf);
-            }
-            return nonExistList.length() == 0;
+        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+   	    LOG.error("jjjjjjjjjjjjjjjjjjj");
+        if (shell != null && nominalTime != null) {
+        	 String doneShell = shell.getText();
+        	 String[] command = {"ls",nominalTime.toString()};
+        	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
+        	 shellCommandExecutor.execute();
+        	 String output = shellCommandExecutor.getOutput();
+        	 LOG.error("ccccccccccccccc"+command+output);
         }
+        else {
+        	if (inputList != null) {
+                if (nonExistList.length() > 0) {
+                    checkListOfPaths(existList, nonExistList, conf);
+                }
+                return nonExistList.length() == 0;
+            }
+        }
+        
         return true;
     }
 
