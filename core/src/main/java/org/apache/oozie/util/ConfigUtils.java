@@ -18,6 +18,7 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.servlet.ServicesLoader;
 
 /**
@@ -83,9 +84,9 @@ public class ConfigUtils {
         else {
             sb.append("http://");
         }
-        sb.append(System.getProperty("oozie.http.hostname"));
+        sb.append(Services.get().getConf().get("oozie.http.hostname"));
         sb.append(":");
-        sb.append(System.getProperty("oozie.http.port"));
+        sb.append(Services.get().getConf().get("oozie.http.port"));
         sb.append("/oozie");
         return sb.toString();
     }

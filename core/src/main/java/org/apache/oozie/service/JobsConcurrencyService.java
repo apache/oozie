@@ -33,11 +33,7 @@ import org.apache.oozie.util.ZKUtils;
  */
 public class JobsConcurrencyService implements Service, Instrumentable {
 
-    private static final Map<String, String> urls;
-    static {
-        urls = new HashMap<String, String>();
-        urls.put(System.getProperty(ZKUtils.OOZIE_INSTANCE_ID), ConfigUtils.getOozieEffectiveUrl());
-    }
+    private static  Map<String, String> urls;
 
     /**
      * Initialize the jobs concurrency service
@@ -46,6 +42,8 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      */
     @Override
     public void init(Services services) throws ServiceException {
+        urls = new HashMap<String, String>();
+        urls.put(services.getConf().get(ZKUtils.OOZIE_INSTANCE_ID), ConfigUtils.getOozieEffectiveUrl());
     }
 
     /**

@@ -81,25 +81,26 @@ public class ConfigurationService implements Service, Instrumentable {
     public static final String OOZIE_CONFIG_FILE = "oozie.config.file";
 
     private static final Set<String> IGNORE_SYS_PROPS = new HashSet<String>();
+    private static final Set<String> CONF_SYS_PROPS = new HashSet<String>();
+
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
     private static final Set<String> MASK_PROPS = new HashSet<String>();
 
     static {
-        IGNORE_SYS_PROPS.add(CONF_IGNORE_SYS_PROPS);
 
         //all this properties are seeded as system properties, no need to log changes
-        IGNORE_SYS_PROPS.add("oozie.http.hostname");
-        IGNORE_SYS_PROPS.add("oozie.http.port");
-        IGNORE_SYS_PROPS.add(ZKUtils.OOZIE_INSTANCE_ID);
-
+        IGNORE_SYS_PROPS.add(CONF_IGNORE_SYS_PROPS);
         IGNORE_SYS_PROPS.add(Services.OOZIE_HOME_DIR);
         IGNORE_SYS_PROPS.add(OOZIE_CONFIG_DIR);
         IGNORE_SYS_PROPS.add(OOZIE_CONFIG_FILE);
         IGNORE_SYS_PROPS.add(OOZIE_DATA_DIR);
-
         IGNORE_SYS_PROPS.add(XLogService.OOZIE_LOG_DIR);
         IGNORE_SYS_PROPS.add(XLogService.LOG4J_FILE);
         IGNORE_SYS_PROPS.add(XLogService.LOG4J_RELOAD);
+
+        CONF_SYS_PROPS.add("oozie.http.hostname");
+        CONF_SYS_PROPS.add("oozie.http.port");
+        CONF_SYS_PROPS.add(ZKUtils.OOZIE_INSTANCE_ID);
 
         // These properties should be masked when displayed because they contain sensitive info (e.g. password)
         MASK_PROPS.add(JPAService.CONF_PASSWORD);
@@ -252,6 +253,15 @@ public class ConfigurationService implements Service, Instrumentable {
                         log.warn("System property [{0}] no defined in Oozie configuration, ignored", name);
                     }
                 }
+            }
+        }
+
+        //Backward compatible, we should still support -Dparam.
+        for (String key : CONF_SYS_PROPS) {
+            String sysValue = System.getProperty(key);
+            if (sysValue != null && !IGNORE_SYS_PROPS.contains(key)) {
+                log.info("Overriding configuration with system property. Key [{0}], Value [{1}] ", key, sysValue);
+                configuration.set(key, sysValue);
             }
         }
 
