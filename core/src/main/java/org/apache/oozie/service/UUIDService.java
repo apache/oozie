@@ -56,7 +56,7 @@ public class UUIDService implements Service {
         String genType = services.getConf().get(CONF_GENERATOR, "counter").trim();
         if (genType.equals("counter")) {
             counter = new AtomicLong();
-            startTime = getStartTime();
+            resetStartTime();
         }
         else {
             if (!genType.equals("random")) {
@@ -76,11 +76,11 @@ public class UUIDService implements Service {
     }
 
     /**
-     * Get Server start time
+     * reset start time
      * @return
      */
-    public String getStartTime() {
-        return new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
+    protected void resetStartTime() {
+        startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
     }
 
     /**

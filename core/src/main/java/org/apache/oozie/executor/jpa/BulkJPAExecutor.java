@@ -42,6 +42,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
@@ -140,7 +141,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
      * @return PARAM_TYPE
      */
     private PARAM_TYPE getParamType(String id, char job) {
-        Pattern p = Pattern.compile("\\d{7}-\\d{15}-oozie-[a-z]{4}-" + job);
+        Pattern p = Pattern.compile("\\d{7}-\\d{15}-" + Services.get().getSystemId() + "-" + job);
         Matcher m = p.matcher(id);
         if (m.matches()) {
             return PARAM_TYPE.ID;

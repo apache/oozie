@@ -2166,13 +2166,4 @@
         </description>
     </property>
 
-    <property>
-        <name>oozie.service.ZKUUIDService.jobid.sequence.max</name>
-        <value>99999999990</value>
-        <description>
-        Maximum job id sequence for Oozie in HA mode. Current job id sequence is stored in ZK. Once the sequence reaches
-        maximum limit, server will reset job id sequence to 0.
-        </description>
-    </property>
-
 </configuration>

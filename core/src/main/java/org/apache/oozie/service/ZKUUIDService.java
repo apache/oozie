@@ -18,15 +18,14 @@
 
 package org.apache.oozie.service;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Service that provides distributed job id sequence via ZooKeeper.  Requires that a ZooKeeper ensemble is available.
@@ -41,14 +40,14 @@ public class ZKUUIDService extends UUIDService {
     public static final String CONF_SEQUENCE_MAX = CONF_PREFIX + "jobid.sequence.max";
 
     public static final String ZK_SEQUENCE_PATH = "job_id_sequence";
-    public static final long DEFULT_SEQUENCE_MAX = 99999999990l;
+
     public static final long RESET_VALUE = 0l;
     public static final int RETRY_COUNT = 3;
 
     private final static XLog LOG = XLog.getLog(ZKUUIDService.class);
 
     private ZKUtils zk;
-    Long maxSequence;
+    private static Long maxSequence =  9999990l;
 
     DistributedAtomicLong atomicIdGenerator;
 
@@ -58,7 +57,6 @@ public class ZKUUIDService extends UUIDService {
         super.init(services);
         try {
             zk = ZKUtils.register(this);
-            maxSequence = services.getConf().getLong(CONF_SEQUENCE_MAX, DEFULT_SEQUENCE_MAX);
             atomicIdGenerator = new DistributedAtomicLong(zk.getClient(), ZK_SEQUENCE_PATH, ZKUtils.getRetryPloicy());
         }
         catch (Exception ex) {
@@ -142,6 +140,7 @@ public class ZKUUIDService extends UUIDService {
                             throw new RuntimeException("Can't reset sequence");
                         }
                         atomicIdGenerator.forceSet(RESET_VALUE);
+                        resetStartTime();
                     }
                 }
                 finally {
@@ -156,13 +155,6 @@ public class ZKUUIDService extends UUIDService {
         }
     }
 
-    /**
-     * Get start time.
-     */
-    public String getStartTime(){
-        return new SimpleDateFormat("yyMMddHHmmss").format(new Date());
-    }
-
     @Override
     public void destroy() {
         if (zk != null) {
@@ -170,5 +162,10 @@ public class ZKUUIDService extends UUIDService {
         }
         zk = null;
         super.destroy();
+    }
+
+    @VisibleForTesting
+    public void setMaxSequence(long sequence) {
+        maxSequence = sequence;
     }
 }
