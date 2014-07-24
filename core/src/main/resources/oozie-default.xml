@@ -2166,4 +2166,22 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.ZKLocksService.locks.reaper.threshold</name>
+        <value>300</value>
+        <description>
+            The frequency at which the ChildReaper will run.
+            Duration should be in sec. Default is 5 min.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ZKLocksService.locks.reaper.threads</name>
+        <value>2</value>
+        <description>
+            Number of fixed threads used by ChildReaper to
+            delete empty locks.
+        </description>
+    </property>
+
 </configuration>
