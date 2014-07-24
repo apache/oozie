@@ -56,6 +56,7 @@ import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -287,14 +288,16 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Gets the dryrun output.
      *
-     * @param jobId the job id
+     * @param coordJob the coordinatorJobBean
      * @return the dry run
      * @throws Exception the exception
      */
     protected String getDryRun(CoordinatorJobBean coordJob) throws Exception{
+        int materializationWindow = conf.getInt(CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW,
+                CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW_DEFAULT);
         Date startTime = coordJob.getStartTime();
         long startTimeMilli = startTime.getTime();
-        long endTimeMilli = startTimeMilli + (3600 * 1000);
+        long endTimeMilli = startTimeMilli + (materializationWindow * 1000);
         Date jobEndTime = coordJob.getEndTime();
         Date endTime = new Date(endTimeMilli);
         if (endTime.compareTo(jobEndTime) > 0) {
@@ -304,8 +307,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         LOG.info("[" + jobId + "]: Update status to RUNNING");
         coordJob.setStatus(Job.Status.RUNNING);
         coordJob.setPending();
-        CoordActionMaterializeCommand coordActionMatCom = new CoordActionMaterializeCommand(jobId, startTime,
-                endTime);
         Configuration jobConf = null;
         try {
             jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
@@ -313,7 +314,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         catch (IOException e1) {
             LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), e1);
         }
-        String action = coordActionMatCom.materializeJobs(true, coordJob, jobConf, null);
+        String action = new CoordMaterializeTransitionXCommand(coordJob, materializationWindow, startTime,
+                endTime).materializeActions(true);
         String output = coordJob.getJobXml() + System.getProperty("line.separator")
         + "***actions for instance***" + action;
         return output;
@@ -323,9 +325,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * Queue MaterializeTransitionXCommand
      */
     protected void queueMaterializeTransitionXCommand(String jobId) {
-        // submit a command to materialize jobs for the next 1 hour (3600 secs)
-        // so we don't wait 10 mins for the Service to run.
-        queue(new CoordMaterializeTransitionXCommand(jobId, 3600), 100);
+        int materializationWindow = conf.getInt(CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW,
+                CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW_DEFAULT);
+        queue(new CoordMaterializeTransitionXCommand(jobId, materializationWindow), 100);
     }
 
     /**

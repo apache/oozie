@@ -101,6 +101,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         this.materializationWindow = materializationWindow;
     }
 
+    public CoordMaterializeTransitionXCommand(CoordinatorJobBean coordJob, int materializationWindow, Date startTime,
+                                              Date endTime) {
+        super("coord_mater", "coord_mater", 1);
+        this.jobId = ParamChecker.notEmpty(coordJob.getId(), "jobId");
+        this.materializationWindow = materializationWindow;
+        this.coordJob = coordJob;
+        this.startMatdTime = startTime;
+        this.endMatdTime = endTime;
+    }
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.MaterializeTransitionXCommand#transitToNext()
      */
@@ -412,7 +422,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         String action = null;
-        int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
+        int numWaitingActions = dryrun ? 0 : jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
         int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
         // If LAST_ONLY and all materialization is in the past, ignore maxActionsToBeCreated
         boolean ignoreMaxActions =

@@ -31,7 +31,6 @@ import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
@@ -380,6 +379,21 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             }
         });
         checkCoordActions(job.getId(), 0, CoordinatorJob.Status.PAUSED);
+    }
+
+    public void testGetDryrun() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
+        CoordinatorJobBean job = createCoordJob(CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
+        job.setFrequency("5");
+        job.setTimeUnit(Timeunit.MINUTE);
+        job.setMatThrottling(20);
+        String dryRunOutput = new CoordMaterializeTransitionXCommand(job, 3600, startTime, endTime).materializeActions(true);
+        String[] actions = dryRunOutput.split("action for new instance");
+        assertEquals(3, actions.length -1);
+        for(int i = 1; i < actions.length; i++) {
+            assertTrue(actions[i].contains("action-nominal-time"));
+        }
     }
 
     public void testTimeout() throws Exception {

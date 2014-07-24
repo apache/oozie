@@ -21,7 +21,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Exception thrown by {@link Command}s.
+ * Exception thrown by {@link XCommand}s.
  */
 public class CommandException extends XException {
 

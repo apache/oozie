@@ -61,7 +61,7 @@ public class CoordMaterializeTriggerService implements Service {
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
     public static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
-    private static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
+    public static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
     private static final int CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT = 50;
 
     /**
