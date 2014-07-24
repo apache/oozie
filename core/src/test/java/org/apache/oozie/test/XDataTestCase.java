@@ -1290,7 +1290,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean createBundleJob(Job.Status jobStatus, boolean pending) throws Exception {
+    protected BundleJobBean createBundleJob(String jobID, Job.Status jobStatus, boolean pending) throws Exception {
         Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
         Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
         writeCoordXml(coordPath1, "coord-job-bundle.xml");
@@ -1316,7 +1316,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set("appName", "bundle-app-name");
 
         BundleJobBean bundle = new BundleJobBean();
-        bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        bundle.setId(jobID);
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -1340,6 +1340,18 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         return bundle;
     }
+
+    /**
+     * Create bundle job bean
+     * @param jobStatus
+     * @param pending
+     * @return
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJob(Job.Status jobStatus, boolean pending) throws Exception {
+        return createBundleJob(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE), jobStatus, pending);
+    }
+
 
     /**
      * Create bundle job that contains bad coordinator jobs
@@ -1454,7 +1466,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
         BundleJobBean bundle = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
         bundleId = bundle.getId();
         bundleName = bundle.getAppName();
+        addCoordForBulkMonitor(bundleId);
+    }
 
+    protected void addCoordForBulkMonitor(String bundleId) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
         // adding coordinator job(s) for this bundle
         addRecordToCoordJobTableWithBundle(bundleId, "Coord1", CoordinatorJob.Status.RUNNING, true, true, 2);
         addRecordToCoordJobTableWithBundle(bundleId, "Coord2", CoordinatorJob.Status.RUNNING, true, true, 1);

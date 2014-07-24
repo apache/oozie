@@ -17,9 +17,18 @@
  */
 package org.apache.oozie.service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.oozie.BulkResponseInfo;
+import org.apache.oozie.BundleEngine;
+import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.client.Job;
+import org.apache.oozie.executor.jpa.BulkJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.ZKUtils;
@@ -131,19 +140,23 @@ public class TestZKUUIDService extends ZKXTestCase {
     }
 
     public void testResetSequence() throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddHHmmssSSS");
         Services service = Services.get();
         service.setService(ZKLocksService.class);
         ZKUUIDService uuid = new ZKUUIDService();
         try {
             setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
-            Services.get().getConf().set(ZKUUIDService.CONF_SEQUENCE_MAX, "900");
+            uuid.setMaxSequence(900);
             uuid.init(service);
             String id = uuid.generateId(ApplicationType.WORKFLOW);
+            Date d = dateFormat.parse(id.split("-")[1]);
             assertTrue(id.startsWith("0000000-"));
             for (int i = 0; i < 1000; i++) {
                 id = uuid.generateId(ApplicationType.WORKFLOW);
             }
             assertTrue(id.startsWith("0000100-"));
+            Date newDate = dateFormat.parse(id.split("-")[1]);
+            assertTrue(newDate.after(d));
         }
         finally {
             uuid.destroy();
@@ -158,10 +171,10 @@ public class TestZKUUIDService extends ZKXTestCase {
         final ZKUUIDService uuid1 = new ZKUUIDService();
         final ZKUUIDService uuid2 = new ZKUUIDService();
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
-        Services.get().getConf().set(ZKUUIDService.CONF_SEQUENCE_MAX, "5000");
-
         uuid1.init(service);
         uuid2.init(service);
+        uuid1.setMaxSequence(5000);
+        uuid2.setMaxSequence(5000);
 
         for (int i = 0; i < 5000; i++) {
             result.add(i, i);
@@ -197,6 +210,33 @@ public class TestZKUUIDService extends ZKXTestCase {
         finally {
             uuid1.destroy();
             uuid2.destroy();
+        }
+    }
+
+    public void testBulkJobForZKUUIDService() throws Exception {
+        Services service = Services.get();
+        ZKUUIDService uuid = new ZKUUIDService();
+        try {
+            setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
+            uuid.init(service);
+            String bundleId = uuid.generateId(ApplicationType.BUNDLE);
+            BundleJobBean bundle=createBundleJob(bundleId, Job.Status.SUCCEEDED, false);
+            JPAService jpaService = Services.get().get(JPAService.class);
+            BundleJobInsertJPAExecutor bundleInsertjpa = new BundleJobInsertJPAExecutor(bundle);
+            jpaService.execute(bundleInsertjpa);
+            addCoordForBulkMonitor(bundleId);
+            String request = "bundle=" + bundleId;
+            BulkJPAExecutor bulkjpa = new BulkJPAExecutor(BundleEngine.parseBulkFilter(request), 1, 1);
+            try {
+                BulkResponseInfo response = jpaService.execute(bulkjpa);
+                assertEquals(response.getResponses().get(0).getBundle().getId(), bundleId);
+            }
+            catch (JPAExecutorException jex) {
+                fail(); // should not throw exception as this case is now supported
+            }
+        }
+        finally {
+            uuid.destroy();
         }
     }
 
