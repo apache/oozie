@@ -569,7 +569,7 @@ public class CoordCommandUtils {
             StringBuilder nonExistList = new StringBuilder();
             StringBuilder nonResolvedList = new StringBuilder();
             getResolvedList(actionBean.getMissingDependencies(), nonExistList, nonResolvedList);
-            isPullDepAvailable = coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf,null);
+            isPullDepAvailable = coordActionInput.checkInput(actionXml, existList, nonExistList, actionConf);
         }
 
         if (isPullDepAvailable && isPushDepAvailable) {

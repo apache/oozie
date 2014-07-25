@@ -130,7 +130,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
             // Updating the list of data dependencies that are available and those that are yet not
-            boolean status = checkInput(actionXml, existList, nonExistList, actionConf,nominalTime);
+            boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+            //Chekckout done-shell
+            boolean shellStatus = checkShell(actionXml,nominalTime);
+            if (shellStatus == true){
+            	String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
+                actionXml.replace(0, actionXml.length(), newActionXml);
+                coordAction.setActionXml(actionXml.toString());
+                coordAction.setStatus(CoordinatorAction.Status.READY);
+                updateCoordAction(coordAction, true);
+                new CoordActionReadyXCommand(coordAction.getJobId()).call(getEntityKey());
+            }
             String pushDeps = coordAction.getPushMissingDependencies();
             // Resolve latest/future only when all current missingDependencies and
             // pushMissingDependencies are met
@@ -257,9 +267,30 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws Exception thrown of unable to check input path
      */
     protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf,Date nominalTime) throws Exception {
+            Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-        return checkResolvedUris(eAction, existList, nonExistList, conf,nominalTime);
+        return checkResolvedUris(eAction, existList, nonExistList, conf);
+    }
+    /**
+     * 
+     * @param actionXml
+     * @param conf
+     * @return
+     * @throws Exception
+     */
+    protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
+        Element eAction = XmlUtils.parseXml(actionXml.toString());
+        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+        LOG.error("jjjjjjjjjjjjjjjjjjj"+shell+"llllll"+shell.getText());
+        if (shell != null && nominalTime != null) {
+        	 String doneShell = shell.getText();
+        	 String[] command = {"ls",nominalTime.toString()};
+        	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
+        	 shellCommandExecutor.execute();
+        	 String output = shellCommandExecutor.getOutput();
+        	 LOG.error("ccccccccccccccc"+command+output);
+        }
+        return true;
     }
 
     protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
@@ -424,25 +455,14 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws IOException thrown if unable to access the path
      */
     private boolean checkResolvedUris(Element eAction, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf,Date nominalTime) throws IOException {
+            Configuration conf) throws IOException {
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
-        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
-   	    LOG.error("jjjjjjjjjjjjjjjjjjj");
-        if (shell != null && nominalTime != null) {
-        	 String doneShell = shell.getText();
-        	 String[] command = {"ls",nominalTime.toString()};
-        	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
-        	 shellCommandExecutor.execute();
-        	 String output = shellCommandExecutor.getOutput();
-        	 LOG.error("ccccccccccccccc"+command+output);
-        }
-        else {
-        	if (inputList != null) {
-                if (nonExistList.length() > 0) {
-                    checkListOfPaths(existList, nonExistList, conf);
-                }
-                return nonExistList.length() == 0;
+   	   
+    	if (inputList != null) {
+            if (nonExistList.length() > 0) {
+                checkListOfPaths(existList, nonExistList, conf);
             }
+            return nonExistList.length() == 0;
         }
         
         return true;
