@@ -28,12 +28,18 @@
     </xs:simpleType>
     <xs:complexType name="COORDINATOR-APP">
         <xs:sequence>
-            <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="done-shell" type="coordinator:DONE-SHELL" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
+        	<xs:element name="controls" type="coordinator:CONTROLS"
+        		minOccurs="0" maxOccurs="1" />
+        	<xs:element name="datasets" type="coordinator:DATASETS"
+        		minOccurs="0" maxOccurs="1" />
+        	<xs:element name="done-shell"
+        		type="coordinator:DONE-SHELL" minOccurs="0" maxOccurs="1" />
+        	<xs:element name="input-events"
+        		type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1" />
+        	<xs:element name="output-events"
+        		type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1" />
+        	<xs:element name="action" type="coordinator:ACTION"
+        		minOccurs="1" maxOccurs="1" />
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
         <xs:attribute name="frequency" type="xs:string" use="required"/>
@@ -134,6 +140,6 @@
 
 
 
-    <xs:complexType name="DONE-SHELL">
-    </xs:complexType>
+
+    <xs:complexType name="DONE-SHELL"></xs:complexType>
 </xs:schema>
