@@ -282,10 +282,10 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         Element shell = eAction.getChild("done-shell", eAction.getNamespace());
         Element shellpath = shell.getChild("shell-path", eAction.getNamespace());
-        LOG.error("jjjjjjjjjjjjjjjjjjj"+shell+"llllll"+shell.getText());
+        LOG.error("jjjjjjjjjjjjjjjjjjj"+shellpath+"llllll"+shellpath.getTextNormalize());
         if (shellpath != null && nominalTime != null) {
         	 String executeshell = shellpath.getTextNormalize();
-        	 String[] command = {"sudo -u hdfs",executeshell,nominalTime.toString()};
+        	 String[] command = {executeshell,nominalTime.toString()};
         	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
         	 shellCommandExecutor.execute();
         	 String output = shellCommandExecutor.getOutput();
