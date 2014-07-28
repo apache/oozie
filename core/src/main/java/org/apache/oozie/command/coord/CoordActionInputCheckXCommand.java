@@ -280,18 +280,24 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-//        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
-        Element shell = eAction.getChild("output-events", eAction.getNamespace());
+        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+        Element shellpath = shell.getChild("shell-path", eAction.getNamespace());
         LOG.error("jjjjjjjjjjjjjjjjjjj"+shell+"llllll"+shell.getText());
-        if (shell != null && nominalTime != null) {
-        	 String doneShell = shell.getText();
-        	 String[] command = {"ls",nominalTime.toString()};
+        if (shellpath != null && nominalTime != null) {
+        	 String executeshell = shellpath.getTextNormalize();
+        	 String[] command = {"sudo -u hdfs",executeshell,nominalTime.toString()};
         	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
         	 shellCommandExecutor.execute();
         	 String output = shellCommandExecutor.getOutput();
         	 LOG.error("ccccccccccccccc"+command+output);
+        	 if (output.indexOf("true") != -1){
+        		 return true;
+        	 }
+        	 else if (output.indexOf("false") != -1){
+        		 return false;
+        	 }
         }
-        return true;
+        return false;
     }
 
     protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
