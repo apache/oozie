@@ -280,7 +280,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+//        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+        Element shell = eAction.getChild("output-events", eAction.getNamespace());
         LOG.error("jjjjjjjjjjjjjjjjjjj"+shell+"llllll"+shell.getText());
         if (shell != null && nominalTime != null) {
         	 String doneShell = shell.getText();
