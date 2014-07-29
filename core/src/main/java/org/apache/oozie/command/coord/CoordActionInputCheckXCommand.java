@@ -134,6 +134,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
             //Chekckout done-shell
             boolean shellStatus = checkShell(actionXml,nominalTime);
+            LOG.error("sssssssssssssss"+shellStatus);
             if (shellStatus == true){
             	String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
@@ -302,7 +303,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
         	 shellCommandExecutor.execute();
         	 String outPut = shellCommandExecutor.getOutput();
-        	 LOG.error("ccccccccccccccc"+command[0]+outPut);
+        	 LOG.error("ccccccccccccccc"+command[0]+"oooooooooooo"+outPut+"yyyyyyyyyy"+outPut.indexOf("true")+"tttttttt"+outPut.indexOf("false"));
         	 if (outPut.indexOf("true") != -1){
         		 return true;
         	 }
