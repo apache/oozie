@@ -284,7 +284,10 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Element shell = eAction.getChild("done-shell", eAction.getNamespace());
         Element shellPath = shell.getChild("shell-path", eAction.getNamespace());
         Element shellNominalTime = shell.getChild("wf-nominalTime", eAction.getNamespace());
-        String doneNominalTime = shellNominalTime.getTextNormalize();
+        String doneNominalTime = "false";
+        if (shellNominalTime != null){
+            doneNominalTime = shellNominalTime.getTextNormalize();
+        }
         LOG.error("jjjjjjjjjjjjjjjjjjj"+shellPath+"llllll"+shellPath.getTextNormalize()+"uuuuuuu"+doneNominalTime);
         if (shellPath != null && nominalTime != null) {
         	 String executeshell = shellPath.getTextNormalize();
@@ -299,7 +302,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
         	 shellCommandExecutor.execute();
         	 String outPut = shellCommandExecutor.getOutput();
-        	 LOG.error("ccccccccccccccc"+command+outPut);
+        	 LOG.error("ccccccccccccccc"+command[0]+outPut);
         	 if (outPut.indexOf("true") != -1){
         		 return true;
         	 }
