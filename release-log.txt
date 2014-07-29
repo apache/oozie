@@ -5,6 +5,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1944 Recursive variable resolution broken when same parameter name in config-default and action conf (mona)
 OOZIE-1906 Service to periodically remove ZK lock (puru via rohini)
 OOZIE-1812 Bulk API with bundle Id should relax regex check for Id (puru via rohini)
 OOZIE-1915 Move system properties to conf properties (puru via rohini)

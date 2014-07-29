@@ -627,21 +627,20 @@ public class LiteWorkflowAppParser {
                 }
             }
             try {
-                XConfiguration actionConf;
-                Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
-                if (actionConfiguration == null) {
-                    actionConf = new XConfiguration();
-                }
-                else {
-                    actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(actionConfiguration)
-                            .toString()));
-                }
+                XConfiguration actionConf = new XConfiguration();
+                if (configDefault != null)
+                    XConfiguration.copy(configDefault, actionConf);
                 if (globalConfiguration != null) {
                     Configuration globalConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(
                             globalConfiguration).toString()));
-                    XConfiguration.injectDefaults(globalConf, actionConf);
+                    XConfiguration.copy(globalConf, actionConf);
                 }
-                XConfiguration.injectDefaults(configDefault, actionConf);
+                Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
+                if (actionConfiguration != null) {
+                    //copy and override
+                    XConfiguration.copy(new XConfiguration(new StringReader(XmlUtils.prettyPrint(
+                            actionConfiguration).toString())), actionConf);
+                }
                 int position = eActionConf.indexOf(actionConfiguration);
                 eActionConf.removeContent(actionConfiguration); //replace with enhanced one
                 Element eConfXml = XmlUtils.parseXml(actionConf.toXmlString(false));
