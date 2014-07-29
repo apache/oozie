@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -281,19 +282,28 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         Element shell = eAction.getChild("done-shell", eAction.getNamespace());
-        Element shellpath = shell.getChild("shell-path", eAction.getNamespace());
-        LOG.error("jjjjjjjjjjjjjjjjjjj"+shellpath+"llllll"+shellpath.getTextNormalize());
-        if (shellpath != null && nominalTime != null) {
-        	 String executeshell = shellpath.getTextNormalize();
-        	 String[] command = {executeshell,nominalTime.toString()};
+        Element shellPath = shell.getChild("shell-path", eAction.getNamespace());
+        Element shellNominalTime = shell.getChild("wf-nominalTime", eAction.getNamespace());
+        String doneNominalTime = shellNominalTime.getTextNormalize();
+        LOG.error("jjjjjjjjjjjjjjjjjjj"+shellPath+"llllll"+shellPath.getTextNormalize()+"uuuuuuu"+doneNominalTime);
+        if (shellPath != null && nominalTime != null) {
+        	 String executeshell = shellPath.getTextNormalize();
+//        	 String[] command = "true".equalsIgnoreCase(doneNominalTime)?{executeshell,nominalTime.toString()}:{executeshell};
+        	 ArrayList<String> list = new ArrayList<String>();
+        	 list.add(executeshell);
+        	 if ("true".equalsIgnoreCase(doneNominalTime)){
+        		 list.add(nominalTime.toString());
+        	 }
+        	 int size = list.size();
+        	 String[] command = (String[])list.toArray(new String[size]);
         	 ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
         	 shellCommandExecutor.execute();
-        	 String output = shellCommandExecutor.getOutput();
-        	 LOG.error("ccccccccccccccc"+command+output);
-        	 if (output.indexOf("true") != -1){
+        	 String outPut = shellCommandExecutor.getOutput();
+        	 LOG.error("ccccccccccccccc"+command+outPut);
+        	 if (outPut.indexOf("true") != -1){
         		 return true;
         	 }
-        	 else if (output.indexOf("false") != -1){
+        	 else if (outPut.indexOf("false") != -1){
         		 return false;
         	 }
         }
