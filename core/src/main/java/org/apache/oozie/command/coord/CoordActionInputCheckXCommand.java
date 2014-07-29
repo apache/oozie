@@ -161,7 +161,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-            if (status && (pushDeps == null || pushDeps.length() == 0)) {
+            if (status && (pushDeps == null || pushDeps.length() == 0) && shellStatus) {
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
