@@ -1,4 +1,4 @@
--- Oozie 4.1.0 release (trunk - unreleased)
+-- Oozie 4.1.0 release (4.1 - unreleased)
 
 OOZIE-1883 hostnameFilter has invalid url-pattern (dvillegas via rkanter)
 OOZIE-1925 upgrade tomcat to 6.0.41 (rkanter via shwethags)
