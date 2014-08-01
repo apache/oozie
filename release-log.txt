@@ -5,6 +5,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1883 hostnameFilter has invalid url-pattern (dvillegas via rkanter)
 OOZIE-1811 Current test failures in trunk (mona)
 OOZIE-1930 oozie coordinator "-info desc" returns earliest instead of latest actions when specifying "len" after oozie-1532 (bzhang)
 OOZIE-1944 Recursive variable resolution broken when same parameter name in config-default and action conf (mona)
