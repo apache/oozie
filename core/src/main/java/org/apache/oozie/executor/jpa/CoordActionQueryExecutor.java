@@ -25,18 +25,10 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.StringBlob;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.DateUtils;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Coordinator Action
@@ -60,21 +52,11 @@ public class CoordActionQueryExecutor extends
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
-    private static JPAService jpaService;
 
     private CoordActionQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<CoordinatorActionBean, CoordActionQueryExecutor.CoordActionQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new CoordActionQueryExecutor();
-        }
         return CoordActionQueryExecutor.instance;
     }
 
@@ -196,6 +178,7 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public int executeUpdate(CoordActionQuery namedQuery, CoordinatorActionBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -204,6 +187,7 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public CoordinatorActionBean get(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -217,6 +201,7 @@ public class CoordActionQueryExecutor extends
     @Override
     public List<CoordinatorActionBean> getList(CoordActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -249,14 +234,6 @@ public class CoordActionQueryExecutor extends
                         + namedQuery.name());
         }
         return bean;
-    }
-
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
     }
 
     @Override

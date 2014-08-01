@@ -26,14 +26,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Bundle Action
@@ -53,21 +48,11 @@ public class BundleActionQueryExecutor extends
     };
 
     private static BundleActionQueryExecutor instance = new BundleActionQueryExecutor();
-    private static JPAService jpaService;
 
     private BundleActionQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<BundleActionBean, BundleActionQueryExecutor.BundleActionQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new BundleActionQueryExecutor();
-        }
         return BundleActionQueryExecutor.instance;
     }
 
@@ -132,6 +117,7 @@ public class BundleActionQueryExecutor extends
 
     @Override
     public int executeUpdate(BundleActionQuery namedQuery, BundleActionBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -140,6 +126,7 @@ public class BundleActionQueryExecutor extends
 
     @Override
     public BundleActionBean get(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -188,6 +175,7 @@ public class BundleActionQueryExecutor extends
     @Override
     public List<BundleActionBean> getList(BundleActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -198,14 +186,6 @@ public class BundleActionQueryExecutor extends
             }
         }
         return beanList;
-    }
-
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
     }
 
     @Override

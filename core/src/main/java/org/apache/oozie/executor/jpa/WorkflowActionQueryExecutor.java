@@ -31,8 +31,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Query Executor that provides API to run query for Workflow Action
  */
@@ -62,21 +60,11 @@ public class WorkflowActionQueryExecutor extends
     };
 
     private static WorkflowActionQueryExecutor instance = new WorkflowActionQueryExecutor();
-    private static JPAService jpaService;
 
     private WorkflowActionQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<WorkflowActionBean, WorkflowActionQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new WorkflowActionQueryExecutor();
-        }
         return WorkflowActionQueryExecutor.instance;
     }
 
@@ -234,6 +222,7 @@ public class WorkflowActionQueryExecutor extends
 
     @Override
     public int executeUpdate(WorkflowActionQuery namedQuery, WorkflowActionBean actionBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, actionBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -376,6 +365,7 @@ public class WorkflowActionQueryExecutor extends
 
     @Override
     public WorkflowActionBean get(WorkflowActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -389,6 +379,7 @@ public class WorkflowActionQueryExecutor extends
     @Override
     public List<WorkflowActionBean> getList(WorkflowActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -399,14 +390,6 @@ public class WorkflowActionQueryExecutor extends
             }
         }
         return beanList;
-    }
-
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
     }
 
     @Override

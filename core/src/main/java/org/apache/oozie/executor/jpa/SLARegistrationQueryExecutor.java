@@ -27,8 +27,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Query Executor for SLA Event
  *
@@ -42,19 +40,11 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
     };
 
     private static SLARegistrationQueryExecutor instance = new SLARegistrationQueryExecutor();
-    private static JPAService jpaService;
 
     private SLARegistrationQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = Services.get().get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<SLARegistrationBean, SLARegistrationQueryExecutor.SLARegQuery> getInstance() {
-        if (instance == null) {
-            instance = new SLARegistrationQueryExecutor();
-        }
         return SLARegistrationQueryExecutor.instance;
     }
 
@@ -104,6 +94,7 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
 
     @Override
     public int executeUpdate(SLARegQuery namedQuery, SLARegistrationBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -112,6 +103,7 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
 
     @Override
     public SLARegistrationBean get(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -124,6 +116,7 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
 
     @Override
     public List<SLARegistrationBean> getList(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         @SuppressWarnings("unchecked")
@@ -156,14 +149,6 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
                         + namedQuery.name());
         }
         return bean;
-    }
-
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
     }
 
     @Override

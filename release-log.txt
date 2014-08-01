@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1811 Current test failures in trunk (mona)
 OOZIE_1930 oozie coordinator "-info desc" returns earliest instead of latest actions when specifying "len" after oozie-1532 (bzhang)
 OOZIE-1944 Recursive variable resolution broken when same parameter name in config-default and action conf (mona)
 OOZIE-1906 Service to periodically remove ZK lock (puru via rohini)
