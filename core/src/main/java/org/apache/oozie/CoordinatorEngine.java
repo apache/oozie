@@ -158,11 +158,11 @@ public class CoordinatorEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, java.lang.String, int, int)
      */
     @Override
-    public CoordinatorJobBean getCoordJob(String jobId, String filter, int start, int length, boolean desc)
+    public CoordinatorJobBean getCoordJob(String jobId, String filter, int offset, int length, boolean desc)
             throws BaseEngineException {
         Map<String, List<String>> filterMap = parseStatusFilter(filter);
         try {
-            return new CoordJobXCommand(jobId, filterMap, start, length, desc)
+            return new CoordJobXCommand(jobId, filterMap, offset, length, desc)
                     .call();
         }
         catch (CommandException ex) {

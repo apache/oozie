@@ -35,12 +35,12 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load coordinator actions by start and len (a subset) for a coordinator job.
+ * Load coordinator actions by offset and len (a subset) for a coordinator job.
  */
 public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
 
     private String coordJobId = null;
-    private int start = 1;
+    private int offset = 1;
     private int len = 50;
     private boolean desc = false;
     private Map<String,List<String>> filterMap;
@@ -51,10 +51,10 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     }
 
     public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, Map<String, List<String>> filterMap,
-            int start, int len, boolean desc) {
+            int offset, int len, boolean desc) {
         this(coordJobId);
         this.filterMap = filterMap;
-        this.start = start;
+        this.offset = offset;
         this.len = len;
         this.desc = desc;
     }
@@ -101,7 +101,6 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             StringBuilder statusClause = new StringBuilder();
             getStatusClause(statusClause, filterMap.get(CoordinatorEngine.POSITIVE_FILTER), true);
             getStatusClause(statusClause, filterMap.get(CoordinatorEngine.NEGATIVE_FILTER), false);
-            getIdClause(statusClause);
             // Insert 'where' before 'order by'
             sbTotal.insert(offset, statusClause);
             q = em.createQuery(sbTotal.toString());
@@ -109,7 +108,8 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         if (desc) {
             q = em.createQuery(q.toString().concat(" desc"));
         }
-        q.setParameter("jobId", coordJobId);;
+        q.setParameter("jobId", coordJobId);
+        q.setFirstResult(offset - 1);
         q.setMaxResults(len);
         return q;
     }
@@ -137,27 +137,6 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             }
             sb.append(") ");
         }
-        return sb;
-    }
-
-    // Form the where clause for coord action ids
-    private StringBuilder getIdClause(StringBuilder sb) {
-        if (sb == null) {
-            sb = new StringBuilder();
-        }
-        sb.append("and a.id IN (");
-        boolean isFirst = true;
-        for (int i = start; i < start + len; i++) {
-            if (isFirst) {
-                sb.append("\'").append(coordJobId).append("@").append(i).append("\'");
-                isFirst = false;
-            }
-            else {
-                sb.append(", \'").append(coordJobId).append("@").append(i).append("\'");
-            }
-        }
-        sb.append(") ");
-
         return sb;
     }
 
