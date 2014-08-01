@@ -820,14 +820,14 @@ public class V1JobServlet extends BaseJobServlet {
         String filter = request.getParameter(RestConstants.JOB_FILTER_PARAM);
         String orderStr = request.getParameter(RestConstants.ORDER_PARAM);
         boolean order = (orderStr != null && orderStr.equals("desc")) ? true : false;
-        int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
-        start = (start < 1) ? 1 : start;
+        int offset = (startStr != null) ? Integer.parseInt(startStr) : 1;
+        offset = (offset < 1) ? 1 : offset;
         // Get default number of coordinator actions to be retrieved
         int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = getCoordinatorJobLength(defaultLen, len);
         try {
-            CoordinatorJobBean coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
+            CoordinatorJobBean coordJob = coordEngine.getCoordJob(jobId, filter, offset, len, order);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {
