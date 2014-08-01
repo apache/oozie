@@ -78,6 +78,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
     JPAService jpa;
     Calendar cal;
     String alert_events = "START_MISS,END_MET,END_MISS";
+    private String[] excludeServices = { "org.apache.oozie.service.StatusTransitService",
+            "org.apache.oozie.service.ActionCheckerService" };
 
     private static final String SLA_XML_1 = "<workflow-app xmlns=\"uri:oozie:workflow:0.2\" "
             + "xmlns:sla=\"uri:oozie:sla:0.1\" name=\"test-wf-job-sla\">" + "<start to=\"myjava\"/>"
@@ -102,7 +104,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
         super.setUp();
         services = new Services();
         Configuration conf = services.getConf();
-        String excludeServices[] = { "org.apache.oozie.service.StatusTransitService" };
         setClassesToBeExcluded(conf, excludeServices);
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 EventHandlerService.class.getName() + "," + SLAService.class.getName());
@@ -431,14 +432,13 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
         assertEquals(30 * 60 * 1000, slaEvent.getExpectedDuration());
         assertEquals(alert_events, slaEvent.getAlertEvents());
-        waitForEventGeneration(200);
         slas.runSLAWorker();
         slaEvent = skipToSLAEvent();
-        assertTrue(SLAStatus.IN_PROCESS == slaEvent.getSLAStatus() || SLAStatus.NOT_STARTED == slaEvent.getSLAStatus());
+        assertTrue(SLAStatus.NOT_STARTED == slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
-        ehs.getEventQueue().clear();
         // test that sla processes the Job Event from Start command
+        ehs.getEventQueue().clear();
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         new CoordActionStartXCommand(actionId, getTestUser(), appName, jobId).call();

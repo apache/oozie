@@ -23,13 +23,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor for SLA Event
@@ -47,19 +43,11 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
     };
 
     private static SLASummaryQueryExecutor instance = new SLASummaryQueryExecutor();
-    private static JPAService jpaService;
 
     private SLASummaryQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = Services.get().get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<SLASummaryBean, SLASummaryQueryExecutor.SLASummaryQuery> getInstance() {
-        if (instance == null) {
-            instance = new SLASummaryQueryExecutor();
-        }
         return SLASummaryQueryExecutor.instance;
     }
 
@@ -132,6 +120,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public int executeUpdate(SLASummaryQuery namedQuery, SLASummaryBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -140,6 +129,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public SLASummaryBean get(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -152,6 +142,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public List<SLASummaryBean> getList(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         @SuppressWarnings("unchecked")
@@ -161,6 +152,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public Object getSingleValue(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -188,11 +180,4 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
         return bean;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
-    }
 }

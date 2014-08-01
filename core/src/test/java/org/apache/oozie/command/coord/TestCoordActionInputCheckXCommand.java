@@ -241,6 +241,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
+        Thread.sleep(1000);
         // providing some of the dataset dirs required as per coordinator specification with holes
         // before and after action creation time
         createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
