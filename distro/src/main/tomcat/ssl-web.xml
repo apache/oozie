@@ -205,7 +205,7 @@
 
     <filter-mapping>
         <filter-name>hostnameFilter</filter-name>
-        <url-pattern>*</url-pattern>
+        <url-pattern>/*</url-pattern>
     </filter-mapping>
 
     <filter-mapping>

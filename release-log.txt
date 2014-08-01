@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (trunk - unreleased)
 
+OOZIE-1883 hostnameFilter has invalid url-pattern (dvillegas via rkanter)
 OOZIE-1925 upgrade tomcat to 6.0.41 (rkanter via shwethags)
 OOZIE-1811 Current test failures in trunk (mona)
 OOZIE_1930 oozie coordinator "-info desc" returns earliest instead of latest actions when specifying "len" after oozie-1532 (bzhang)
