@@ -133,8 +133,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             // Updating the list of data dependencies that are available and those that are yet not
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
             //Chekckout done-shell
-            boolean shellStatus = checkShell(actionXml,nominalTime);
-            LOG.error("sssssssssssssss"+shellStatus);
+            boolean shellFlag = false;
+            boolean shellStatus = checkShell(actionXml,nominalTime,shellFlag);
+            LOG.error("sssssssssssssss"+shellStatus+"llllllll"+shellFlag);
             if (shellStatus == true){
             	String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
@@ -161,7 +162,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-            if (status && (pushDeps == null || pushDeps.length() == 0) && shellStatus) {
+            if (status && (pushDeps == null || pushDeps.length() == 0) && shellFlag == false) {
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
@@ -280,9 +281,12 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @return
      * @throws Exception
      */
-    protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
+    protected boolean checkShell(StringBuilder actionXml, Date nominalTime,boolean shellFlag) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+        if (shell != null){
+        	shellFlag = true;
+        }
         Element shellPath = shell.getChild("shell-path", eAction.getNamespace());
         Element shellNominalTime = shell.getChild("wf-nominalTime", eAction.getNamespace());
         String doneNominalTime = "false";
@@ -304,6 +308,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         	 shellCommandExecutor.execute();
         	 String outPut = shellCommandExecutor.getOutput();
         	 LOG.error("ccccccccccccccc"+command[0]+"oooooooooooo"+outPut+"yyyyyyyyyy"+outPut.indexOf("true")+"tttttttt"+outPut.indexOf("false"));
+        	 if (size > 1){
+            	 LOG.error("ccccccccccccccc"+command[0]+"oooooooooooo"+"wwwwwwww"+command[1]+outPut+"yyyyyyyyyy"+outPut.indexOf("true")+"tttttttt"+outPut.indexOf("false"));
+        	 }
         	 if (outPut.indexOf("true") != -1){
         		 return true;
         	 }
