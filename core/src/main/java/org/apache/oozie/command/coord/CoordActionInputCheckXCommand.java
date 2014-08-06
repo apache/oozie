@@ -134,9 +134,15 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
             //Chekckout done-shell
             boolean shellFlag = false;
-            boolean shellStatus = checkShell(actionXml,nominalTime,shellFlag);
+            Element eAction = XmlUtils.parseXml(actionXml.toString());
+            Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+            if (shell != null){
+            	shellFlag = true;
+            }
+            boolean shellStatus = checkShell(actionXml,nominalTime);
             LOG.error("sssssssssssssss"+shellStatus+"llllllll"+shellFlag);
             if (shellStatus == true){
+            	LOG.error("aaaaaaaaaaaaaaaaaaaa");
             	String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
@@ -163,6 +169,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 coordAction.setMissingDependencies(nonExistListStr);
             }
             if (status && (pushDeps == null || pushDeps.length() == 0) && shellFlag == false) {
+            	LOG.error("bbbbbbbbbbbbbb");
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
@@ -281,12 +288,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @return
      * @throws Exception
      */
-    protected boolean checkShell(StringBuilder actionXml, Date nominalTime,boolean shellFlag) throws Exception {
+    protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         Element shell = eAction.getChild("done-shell", eAction.getNamespace());
-        if (shell != null){
-        	shellFlag = true;
-        }
         Element shellPath = shell.getChild("shell-path", eAction.getNamespace());
         Element shellNominalTime = shell.getChild("wf-nominalTime", eAction.getNamespace());
         String doneNominalTime = "false";
