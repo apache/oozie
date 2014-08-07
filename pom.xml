@@ -39,7 +39,6 @@
     </organization>
 
     <properties>
-        <javaVersion>1.6</javaVersion>
         <targetJavaVersion>1.6</targetJavaVersion>
 
         <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
@@ -966,7 +965,7 @@
                             <version>[3.0.0,)</version>
                         </requireMavenVersion>
                         <requireJavaVersion>
-                            <version>[${javaVersion}.0,${javaVersion}.1000}]</version>
+                            <version>1.6</version>
                         </requireJavaVersion>
                     </rules>
                 </configuration>
