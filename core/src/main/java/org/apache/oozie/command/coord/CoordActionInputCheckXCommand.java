@@ -182,7 +182,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
                             getCoordInputCheckRequeueInterval());
                 }
-                updateCoordAction(coordAction, isChangeInDependency);
+                if(shellFlag == false){
+                    updateCoordAction(coordAction, isChangeInDependency);
+                }
             }
             else {
                 if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
@@ -192,7 +194,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     // Let CoordPushDependencyCheckXCommand queue the timeout
                     queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
                 }
-                updateCoordAction(coordAction, isChangeInDependency);
+                if(shellFlag == false){
+                    updateCoordAction(coordAction, isChangeInDependency);
+                }
             }
         }
         catch (Exception e) {
