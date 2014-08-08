@@ -248,6 +248,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getAppName(), retBean.getAppName());
         assertEquals(bean.getAppPath(), retBean.getAppPath());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
+        assertEquals(bean.getRun(), retBean.getRun());
         assertEquals(bean.getParentId(), retBean.getParentId());
         assertEquals(bean.getLogToken(), retBean.getLogToken());
         assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),

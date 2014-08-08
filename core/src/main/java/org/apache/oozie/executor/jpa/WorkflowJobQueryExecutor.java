@@ -248,10 +248,11 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setAppName((String) arr[3]);
                 bean.setAppPath((String) arr[4]);
                 bean.setStatusStr((String) arr[5]);
-                bean.setParentId((String) arr[6]);
-                bean.setLogToken((String) arr[7]);
-                bean.setWfInstanceBlob((BinaryBlob) (arr[8]));
-                bean.setProtoActionConfBlob((StringBlob) arr[9]);
+                bean.setRun((Integer) arr[6]);
+                bean.setParentId((String) arr[7]);
+                bean.setLogToken((String) arr[8]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[9]));
+                bean.setProtoActionConfBlob((StringBlob) arr[10]);
                 break;
             case GET_WORKFLOW_RERUN:
                 bean = new WorkflowJobBean();
