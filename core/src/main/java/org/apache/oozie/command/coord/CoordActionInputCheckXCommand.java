@@ -159,6 +159,9 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             coordAction.setLastModifiedTime(currentTime);
             coordAction.setActionXml(actionXml.toString());
+            if (shellFlag = true){
+            	return null;
+            }
             if (nonResolvedList.length() > 0 && status == false) {
                 nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
             }
@@ -168,7 +171,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 isChangeInDependency = true;
                 coordAction.setMissingDependencies(nonExistListStr);
             }
-            if (status && (pushDeps == null || pushDeps.length() == 0) && shellFlag == false) {
+            if (status && (pushDeps == null || pushDeps.length() == 0)) {
             	LOG.error("bbbbbbbbbbbbbb");
                 String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
                 actionXml.replace(0, actionXml.length(), newActionXml);
@@ -182,9 +185,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
                             getCoordInputCheckRequeueInterval());
                 }
-                if(shellFlag == false){
-                    updateCoordAction(coordAction, isChangeInDependency);
-                }
+                updateCoordAction(coordAction, isChangeInDependency);
             }
             else {
                 if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
@@ -194,9 +195,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     // Let CoordPushDependencyCheckXCommand queue the timeout
                     queue(new CoordPushDependencyCheckXCommand(coordAction.getId()));
                 }
-                if(shellFlag == false){
-                    updateCoordAction(coordAction, isChangeInDependency);
-                }
+                updateCoordAction(coordAction, isChangeInDependency);
             }
         }
         catch (Exception e) {
