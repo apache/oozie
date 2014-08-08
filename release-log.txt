@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1920 Capture Output for SSH Action doesn't work (Richard Williams via rkanter)
 OOZIE-1961 Remove requireJavaVersion from enforcer rules (lars_francke via rkanter)
 OOZIE-1883 hostnameFilter has invalid url-pattern (dvillegas via rkanter)
 OOZIE-1925 upgrade tomcat to 6.0.41 (rkanter via shwethags)
