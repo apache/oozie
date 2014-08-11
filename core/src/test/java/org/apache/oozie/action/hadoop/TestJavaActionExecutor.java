@@ -1788,6 +1788,75 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("A=foo,B=bar", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
     }
 
+    public void testUpdateConfForUberModeWithEnvDup() throws Exception {
+
+        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+
+        Element actionXml1 = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>"
+                + "<property><name>oozie.launcher.yarn.app.mapreduce.am.env</name>"
+                + "<value>JAVA_HOME=/home/blah/java/jdk64/current,A=foo,B=bar</value></property>"
+                + "<property><name>oozie.launcher.mapreduce.map.env</name>"
+                + "<value>JAVA_HOME=/home/blah/java/jdk64/latest,C=blah</value></property>" + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "</java>");
+        JavaActionExecutor ae = new JavaActionExecutor();
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+        JobConf launcherConf = new JobConf();
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml1, launcherConf);
+
+        // uber mode should be disabled since JAVA_HOME points to different paths in am.evn and map.env
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
+
+        // testing complicated env setting case
+        Element actionXml2 = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" + "<property>"
+                + "<name>oozie.launcher.yarn.app.mapreduce.am.env</name>"
+                + "<value>LD_LIBRARY_PATH=$HADOOP_HOME_1/lib/native/`$JAVA_HOME/bin/java -d32 -version;"
+                + "if [ $? -eq 0 ]; then echo Linux-i386-32; else echo Linux-amd64-64;fi`</value></property>"
+                + "<property>" + "<name>oozie.launcher.mapreduce.map.env</name>"
+                + "<value>LD_LIBRARY_PATH=$HADOOP_HOME_2/lib/native/`$JAVA_HOME/bin/java -d32 -version;"
+                + "if [ $? -eq 0 ]; then echo Linux-i386-32; else echo Linux-amd64-64;fi`</value></property>"
+                + "</configuration>" + "<main-class>MAIN-CLASS</main-class>" + "</java>");
+
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml2, launcherConf);
+
+        // uber mode should be disabled since LD_LIBRARY_PATH is different in am.evn and map.env
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
+
+        Element actionXml3 = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<configuration>"
+                        + "<property><name>oozie.launcher.yarn.app.mapreduce.am.env</name>"
+                        + "<value>JAVA_HOME=/home/blah/java/jdk64/current,PATH=A,PATH=B</value></property>"
+                        + "<property><name>oozie.launcher.mapreduce.map.env</name>"
+                        + "<value>JAVA_HOME=/home/blah/java/jdk64/current,PATH=A</value></property>"
+                        + "</configuration>" + "<main-class>MAIN-CLASS</main-class>" + "</java>");
+
+        launcherConf = ae.createBaseHadoopConf(context, actionXml3);
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml3, launcherConf);
+
+        // uber mode should be enabled since JAVA_HOME is the same, and PATH doesn't conflict
+        assertEquals("true", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
+
+        // JAVA_HOME, PATH=A duplication is removed
+        String a = launcherConf.get(JavaActionExecutor.YARN_AM_ENV);
+        assertEquals("JAVA_HOME=/home/blah/java/jdk64/current,PATH=A,PATH=B",
+                launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
+    }
+
     public void testUpdateConfForUberModeForJavaOpts() throws Exception {
         Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
 

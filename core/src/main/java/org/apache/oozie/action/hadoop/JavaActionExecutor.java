@@ -93,7 +93,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
-    private static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
+    public static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
     public static final String HADOOP_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
@@ -270,56 +270,116 @@ public class JavaActionExecutor extends ActionExecutor {
 
     void updateConfForUberMode(Configuration launcherConf) {
 
-        // memory.mb
-        int launcherMapMemoryMB = launcherConf.getInt(HADOOP_MAP_MEMORY_MB, 1536);
-        int amMemoryMB = launcherConf.getInt(YARN_AM_RESOURCE_MB, 1536);
-        // YARN_MEMORY_MB_MIN to provide buffer.
-        // suppose launcher map aggressively use high memory, need some headroom for AM
-        int memoryMB = Math.max(launcherMapMemoryMB, amMemoryMB) + YARN_MEMORY_MB_MIN;
-        // limit to 4096 in case of 32 bit
-        if(launcherMapMemoryMB < 4096 && amMemoryMB < 4096 && memoryMB > 4096){
-            memoryMB = 4096;
-        }
-        launcherConf.setInt(YARN_AM_RESOURCE_MB, memoryMB);
-
-        // We already made mapred.child.java.opts and mapreduce.map.java.opts equal, so just start with one of them
-        String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS, "");
-        String amChildOpts = launcherConf.get(YARN_AM_COMMAND_OPTS);
-        StringBuilder optsStr = new StringBuilder();
-        int heapSizeForMap = extractHeapSizeMB(launcherMapOpts);
-        int heapSizeForAm = extractHeapSizeMB(amChildOpts);
-        int heapSize = Math.max(heapSizeForMap, heapSizeForAm) + YARN_MEMORY_MB_MIN;
-        // limit to 3584 in case of 32 bit
-        if(heapSizeForMap < 4096 && heapSizeForAm < 4096 && heapSize > 3584) {
-            heapSize = 3584;
-        }
-        if (amChildOpts != null) {
-            optsStr.append(amChildOpts);
-        }
-        optsStr.append(" ").append(launcherMapOpts.trim());
-        if (heapSize > 0) {
-            // append calculated total heap size to the end
-            optsStr.append(" ").append("-Xmx").append(heapSize).append("m");
-        }
-        launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString().trim());
-
         // child.env
+        boolean hasConflictEnv = false;
         String launcherMapEnv = launcherConf.get(HADOOP_MAP_JAVA_ENV);
         if (launcherMapEnv == null) {
             launcherMapEnv = launcherConf.get(HADOOP_CHILD_JAVA_ENV);
         }
-        String envForAm = launcherConf.get(YARN_AM_ENV);
+        String amEnv = launcherConf.get(YARN_AM_ENV);
         StringBuffer envStr = new StringBuffer();
-        if (envForAm != null) {
-            envStr.append(envForAm);
+        HashMap<String, List<String>> amEnvMap = null;
+        HashMap<String, List<String>> launcherMapEnvMap = null;
+        if (amEnv != null) {
+            envStr.append(amEnv);
+            amEnvMap = populateEnvMap(amEnv);
         }
         if (launcherMapEnv != null) {
-            if (envForAm != null) {
-                envStr.append(",");
+            launcherMapEnvMap = populateEnvMap(launcherMapEnv);
+            if (amEnvMap != null) {
+                Iterator<String> envKeyItr = launcherMapEnvMap.keySet().iterator();
+                while (envKeyItr.hasNext()) {
+                    String envKey = envKeyItr.next();
+                    if (amEnvMap.containsKey(envKey)) {
+                        List<String> amValList = amEnvMap.get(envKey);
+                        List<String> launcherValList = launcherMapEnvMap.get(envKey);
+                        Iterator<String> valItr = launcherValList.iterator();
+                        while (valItr.hasNext()) {
+                            String val = valItr.next();
+                            if (!amValList.contains(val)) {
+                                hasConflictEnv = true;
+                                break;
+                            }
+                            else {
+                                valItr.remove();
+                            }
+                        }
+                        if (launcherValList.isEmpty()) {
+                            envKeyItr.remove();
+                        }
+                    }
+                }
             }
-            envStr.append(launcherMapEnv);
         }
-        launcherConf.set(YARN_AM_ENV, envStr.toString());
+        if (hasConflictEnv) {
+            launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, false);
+        }
+        else {
+            if (launcherMapEnvMap != null) {
+                for (String key : launcherMapEnvMap.keySet()) {
+                    List<String> launcherValList = launcherMapEnvMap.get(key);
+                    for (String val : launcherValList) {
+                        if (envStr.length() > 0) {
+                            envStr.append(",");
+                        }
+                        envStr.append(key).append("=").append(val);
+                    }
+                }
+            }
+
+            launcherConf.set(YARN_AM_ENV, envStr.toString());
+
+            // memory.mb
+            int launcherMapMemoryMB = launcherConf.getInt(HADOOP_MAP_MEMORY_MB, 1536);
+            int amMemoryMB = launcherConf.getInt(YARN_AM_RESOURCE_MB, 1536);
+            // YARN_MEMORY_MB_MIN to provide buffer.
+            // suppose launcher map aggressively use high memory, need some
+            // headroom for AM
+            int memoryMB = Math.max(launcherMapMemoryMB, amMemoryMB) + YARN_MEMORY_MB_MIN;
+            // limit to 4096 in case of 32 bit
+            if (launcherMapMemoryMB < 4096 && amMemoryMB < 4096 && memoryMB > 4096) {
+                memoryMB = 4096;
+            }
+            launcherConf.setInt(YARN_AM_RESOURCE_MB, memoryMB);
+
+            // We already made mapred.child.java.opts and
+            // mapreduce.map.java.opts equal, so just start with one of them
+            String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS, "");
+            String amChildOpts = launcherConf.get(YARN_AM_COMMAND_OPTS);
+            StringBuilder optsStr = new StringBuilder();
+            int heapSizeForMap = extractHeapSizeMB(launcherMapOpts);
+            int heapSizeForAm = extractHeapSizeMB(amChildOpts);
+            int heapSize = Math.max(heapSizeForMap, heapSizeForAm) + YARN_MEMORY_MB_MIN;
+            // limit to 3584 in case of 32 bit
+            if (heapSizeForMap < 4096 && heapSizeForAm < 4096 && heapSize > 3584) {
+                heapSize = 3584;
+            }
+            if (amChildOpts != null) {
+                optsStr.append(amChildOpts);
+            }
+            optsStr.append(" ").append(launcherMapOpts.trim());
+            if (heapSize > 0) {
+                // append calculated total heap size to the end
+                optsStr.append(" ").append("-Xmx").append(heapSize).append("m");
+            }
+            launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString().trim());
+        }
+    }
+
+    private HashMap<String, List<String>> populateEnvMap(String input) {
+        HashMap<String, List<String>> envMaps = new HashMap<String, List<String>>();
+        String[] envEntries = input.split(",");
+        for (String envEntry : envEntries) {
+            String[] envKeyVal = envEntry.split("=");
+            String envKey = envKeyVal[0].trim();
+            List<String> valList = envMaps.get(envKey);
+            if (valList == null) {
+                valList = new ArrayList<String>();
+            }
+            valList.add(envKeyVal[1].trim());
+            envMaps.put(envKey, valList);
+        }
+        return envMaps;
     }
 
     public int extractHeapSizeMB(String input) {
