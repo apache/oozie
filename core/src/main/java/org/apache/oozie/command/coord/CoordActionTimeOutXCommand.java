@@ -50,6 +50,11 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
         this.appName = ParamChecker.notEmpty(appName, "appName");
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionBean.getId());
+    }
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()
      */
@@ -110,7 +115,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(actionBean, logInfo);
+        LogUtils.setLogInfo(actionBean);
     }
 
     /* (non-Javadoc)

@@ -60,7 +60,7 @@ public class CoordPauseXCommand extends PauseTransitionXCommand {
     @Override
     public void loadState() throws CommandException {
         prevStatus = coordJob.getStatus();
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     /* (non-Javadoc)

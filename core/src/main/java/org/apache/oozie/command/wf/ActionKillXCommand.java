@@ -75,6 +75,11 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -97,8 +102,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP, jobId);
                 this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, actionId);
-                LogUtils.setLogInfo(wfJob, logInfo);
-                LogUtils.setLogInfo(wfAction, logInfo);
+                LogUtils.setLogInfo(wfJob);
+                LogUtils.setLogInfo(wfAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

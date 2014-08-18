@@ -78,7 +78,6 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
 
-    protected XLog.Info logInfo;
     protected static EventHandlerService eventService;
 
     /**
@@ -94,7 +93,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.priority = priority;
         this.key = name + "_" + UUID.randomUUID();
         createdTime = System.currentTimeMillis();
-        logInfo = new XLog.Info();
         instrumentation = Services.get().get(InstrumentationService.class).get();
         eventService = Services.get().get(EventHandlerService.class);
     }
@@ -109,6 +107,12 @@ public abstract class XCommand<T> implements XCallable<T> {
     public XCommand(String name, String type, int priority, boolean dryrun) {
         this(name, type, priority);
         this.dryrun = dryrun;
+    }
+
+    /**
+     * Set the thread local logInfo with the context of this command and reset log prefix.
+     */
+    protected void setLogInfo() {
     }
 
     /**
@@ -235,6 +239,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     @Override
     public final T call() throws CommandException {
+        setLogInfo();
         if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType()) && used.get()) {
             LOG.debug("Command [{0}] key [{1}]  already used for [{2}]", getName(), getEntityKey(), this.toString());
             return null;
@@ -247,7 +252,6 @@ public abstract class XCommand<T> implements XCallable<T> {
             callCron.start();
             if (!isSynchronous) {
                 eagerLoadState();
-                LOG = XLog.resetPrefix(LOG);
                 eagerVerifyPrecondition();
             }
             try {
@@ -272,7 +276,6 @@ public abstract class XCommand<T> implements XCallable<T> {
                     }
                     LOG.trace("Load state for [{0}]", getEntityKey());
                     loadState();
-                    LOG = XLog.resetPrefix(LOG);
                     LOG.trace("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
                     verifyPrecondition();
                     LOG.debug("Execute command [{0}] key [{1}]", getName(), getEntityKey());

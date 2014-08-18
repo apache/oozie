@@ -72,7 +72,6 @@ public class EventHandlerService implements Service {
         try {
             Configuration conf = services.getConf();
             LOG = XLog.getLog(getClass());
-            LOG = XLog.resetPrefix(LOG);
             Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) conf.getClass(CONF_EVENT_QUEUE, null);
             eventQueue = queueImpl == null ? new MemoryEventQueue() : (EventQueue) queueImpl.newInstance();
             eventQueue.init(conf);

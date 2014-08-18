@@ -56,7 +56,7 @@ public class BundlePauseXCommand extends PauseTransitionXCommand {
      */
     @Override
     public void loadState() throws CommandException {
-        LogUtils.setLogInfo(bundleJob, logInfo);
+        LogUtils.setLogInfo(bundleJob);
     }
 
     /* (non-Javadoc)

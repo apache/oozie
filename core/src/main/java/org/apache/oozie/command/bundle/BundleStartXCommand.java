@@ -114,7 +114,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
     public void loadState() throws CommandException {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
-            LogUtils.setLogInfo(bundleJob, logInfo);
+            LogUtils.setLogInfo(bundleJob);
             super.setJob(bundleJob);
         }
         catch (XException ex) {

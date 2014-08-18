@@ -90,6 +90,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         this.jobId = jobId;
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
     /**
      * Computes the nominal time of the next action.
      * Based on CoordMaterializeTransitionXCommand#materializeActions
@@ -648,7 +653,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        LogUtils.setLogInfo(coordAction, logInfo);
+        LogUtils.setLogInfo(coordAction);
     }
 
     @Override

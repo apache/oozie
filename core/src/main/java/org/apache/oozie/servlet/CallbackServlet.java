@@ -74,16 +74,8 @@ public class CallbackServlet extends JsonRestServlet {
         if (actionId == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
-        int idx = actionId.lastIndexOf('@', actionId.length());
-        String jobId;
-        if (idx == -1) {
-            jobId = actionId;
-        }
-        else {
-            jobId = actionId.substring(0, idx);
-        }
-        setLogInfo(jobId, actionId);
         log = XLog.getLog(getClass());
+        setLogInfo(actionId);
         log.debug("Received a CallbackServlet.doGet() with query string " + queryString);
 
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
@@ -113,16 +105,8 @@ public class CallbackServlet extends JsonRestServlet {
         if (actionId == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
-        int idx = actionId.lastIndexOf('@', actionId.length());
-        String jobId;
-        if (idx == -1) {
-            jobId = actionId;
-        }
-        else {
-            jobId = actionId.substring(0, idx);
-        }
-        setLogInfo(jobId, actionId);
         log = XLog.getLog(getClass());
+        setLogInfo(actionId);
         log.debug("Received a CallbackServlet.doPost() with query string " + queryString);
 
         validateContentType(request, RestConstants.TEXT_CONTENT_TYPE);

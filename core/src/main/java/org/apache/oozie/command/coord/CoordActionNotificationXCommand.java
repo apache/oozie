@@ -53,6 +53,11 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
         this.actionBean = actionBean;
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionBean.getId());
+    }
+
     /* (non-Javadoc)
      * @see org.apache.oozie.command.XCommand#execute()
      */
@@ -133,7 +138,7 @@ public class CoordActionNotificationXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     protected void loadState() throws CommandException {
-        LogUtils.setLogInfo(actionBean, logInfo);
+        LogUtils.setLogInfo(actionBean);
     }
 
     /* (non-Javadoc)

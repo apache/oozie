@@ -86,7 +86,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                 //Get actions which are not succeeded, failed, timed out or killed
                 this.actionList = jpaService.execute(new CoordJobGetActionsNotCompletedJPAExecutor(jobId));
                 prevStatus = coordJob.getStatus();
-                LogUtils.setLogInfo(coordJob, logInfo);
+                LogUtils.setLogInfo(coordJob);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

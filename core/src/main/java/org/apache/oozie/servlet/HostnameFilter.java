@@ -81,6 +81,7 @@ public class HostnameFilter implements Filter {
                 hostname = "???";
             }
             HOSTNAME_TL.set(hostname);
+            XLog.Info.get().clear();
             chain.doFilter(request, response);
         }
         finally {

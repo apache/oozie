@@ -99,6 +99,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         validateChangeValue(changeValue);
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
     /**
      * @param changeValue change value.
      * @throws CommandException thrown if changeValue cannot be parsed properly.
@@ -490,7 +495,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(e);
         }
 
-        LogUtils.setLogInfo(this.coordJob, logInfo);
+        LogUtils.setLogInfo(this.coordJob);
     }
 
     /* (non-Javadoc)

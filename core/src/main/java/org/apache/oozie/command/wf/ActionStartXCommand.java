@@ -91,6 +91,11 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -109,8 +114,8 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                     this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
                 }
                 this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, actionId);
-                LogUtils.setLogInfo(wfJob, logInfo);
-                LogUtils.setLogInfo(wfAction, logInfo);
+                LogUtils.setLogInfo( wfJob);
+                LogUtils.setLogInfo(wfAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

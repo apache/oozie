@@ -50,6 +50,11 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
+    @Override
     /**
      * Check for READY actions and change state to SUBMITTED by a command to submit the job to WF engine.
      * This method checks all the actions associated with a jobId to figure out which actions
@@ -157,7 +162,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     @Override

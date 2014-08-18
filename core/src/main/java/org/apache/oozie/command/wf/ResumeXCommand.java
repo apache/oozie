@@ -66,6 +66,11 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(id);
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         try {
             if (workflow.getStatus() == WorkflowJob.Status.SUSPENDED) {
@@ -187,7 +192,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(workflow, logInfo);
+        LogUtils.setLogInfo(workflow);
     }
 
     @Override

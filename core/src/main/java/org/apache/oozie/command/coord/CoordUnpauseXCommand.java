@@ -70,7 +70,7 @@ public class CoordUnpauseXCommand extends UnpauseTransitionXCommand {
     @Override
     public void loadState() throws CommandException {
         prevStatus = coordJob.getStatus();
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     /*

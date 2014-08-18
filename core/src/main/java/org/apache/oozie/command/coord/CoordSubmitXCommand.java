@@ -239,8 +239,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
             jobId = storeToDB(appXml, eJob, coordJob);
             // log job info for coordinator job
-            LogUtils.setLogInfo(coordJob, logInfo);
-            LOG = XLog.resetPrefix(LOG);
+            LogUtils.setLogInfo(coordJob);
 
             if (!dryrun) {
                 queueMaterializeTransitionXCommand(jobId);
@@ -1267,8 +1266,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             // this coord job is created from bundle
             coordJob.setBundleId(this.bundleId);
             // first use bundle id if submit thru bundle
-            logInfo.setParameter(DagXLogInfoService.JOB, this.bundleId);
-            LogUtils.setLogInfo(logInfo);
+            LogUtils.setLogInfo(this.bundleId);
         }
         if (this.coordName != null) {
             // this coord job is created from bundle

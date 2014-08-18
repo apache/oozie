@@ -140,7 +140,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             //verify the uniqueness of coord names
             verifyCoordNameUnique(resolvedJobXml);
             this.jobId = storeToDB(bundleBean, resolvedJobXml);
-            LogUtils.setLogInfo(bundleBean, logInfo);
+            LogUtils.setLogInfo(bundleBean);
 
             if (dryrun) {
                 Date startTime = bundleBean.getStartTime();

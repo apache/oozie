@@ -65,7 +65,7 @@ public class BundleUnpauseXCommand extends UnpauseTransitionXCommand {
      */
     @Override
     public void loadState() throws CommandException {
-        LogUtils.setLogInfo(bundleJob, logInfo);
+        LogUtils.setLogInfo(bundleJob);
     }
 
     /*

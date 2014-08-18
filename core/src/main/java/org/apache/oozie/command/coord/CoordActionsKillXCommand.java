@@ -85,7 +85,7 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_ACTION_KILL, jobId);
-                LogUtils.setLogInfo(coordJob, logInfo);
+                LogUtils.setLogInfo(coordJob);
                 coordActions = CoordUtils.getCoordActions(rangeType, coordJob.getId(), scope, true);
             }
             else {

@@ -69,6 +69,11 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(workflow.getId());
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         try {
             LOG.debug("STARTED CoordActionUpdateXCommand for wfId=" + workflow.getId());
@@ -177,7 +182,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 if (coordAction != null) {
                     coordJob = jpaService
                             .execute(new CoordinatorJobGetForUserAppnameJPAExecutor(coordAction.getJobId()));
-                    LogUtils.setLogInfo(coordAction, logInfo);
+                    LogUtils.setLogInfo(coordAction);
                     break;
                 }
                 if (retries < maxRetries) {

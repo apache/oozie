@@ -133,6 +133,6 @@ public class CoordActionsIgnoreXCommand extends IgnoreTransitionXCommand<Coordin
         }catch (Exception ex){
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
-        LogUtils.setLogInfo(this.coordJob, logInfo);
+        LogUtils.setLogInfo(this.coordJob);
     }
 }

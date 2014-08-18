@@ -38,97 +38,92 @@ import org.apache.oozie.service.XLogService;
 public class LogUtils {
 
     /**
-     * Set the log info with the context of the given coordinator bean.
+     * Set the thread local log info with the context of the given coordinator bean.
      *
      * @param cBean coordinator bean.
-     * @param logInfo log info
      */
-    public static void setLogInfo(CoordinatorJobBean cBean, XLog.Info logInfo) {
-        if (logInfo.getParameter(XLogService.GROUP) == null) {
-            logInfo.setParameter(XLogService.GROUP, cBean.getGroup());
-        }
-        if (logInfo.getParameter(XLogService.USER) == null) {
-            logInfo.setParameter(XLogService.USER, cBean.getUser());
-        }
-        logInfo.setParameter(DagXLogInfoService.JOB, cBean.getId());
-        logInfo.setParameter(DagXLogInfoService.TOKEN, "");
-        logInfo.setParameter(DagXLogInfoService.APP, cBean.getAppName());
-        XLog.Info.get().setParameters(logInfo);
+    public static void setLogInfo(CoordinatorJobBean cBean) {
+        XLog.Info.get().setParameter(XLogService.GROUP, cBean.getGroup());
+        XLog.Info.get().setParameter(XLogService.USER, cBean.getUser());
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, cBean.getId());
+        XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, "");
+        XLog.Info.get().setParameter(DagXLogInfoService.APP, cBean.getAppName());
+        XLog.Info.get().resetPrefix();
+
     }
 
     /**
-     * Set the log info with the context of the given coordinator action bean.
+     * Set the thread local log info with the context of the given coordinator action bean.
      *
      * @param action action bean.
-     * @param logInfo log info
      */
-    public static void setLogInfo(CoordinatorActionBean action, XLog.Info logInfo) {
-        logInfo.setParameter(DagXLogInfoService.JOB, action.getJobId());
-        logInfo.setParameter(DagXLogInfoService.ACTION, action.getId());
-        XLog.Info.get().setParameters(logInfo);
+    public static void setLogInfo(CoordinatorActionBean action) {
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
+        XLog.Info.get().resetPrefix();
     }
 
     /**
-     * Set the log info with the context of the given workflow bean.
+     * Set the thread local log info with the context of the given workflow bean.
      *
      * @param workflow workflow bean.
-     * @param logInfo log info
      */
-    public static void setLogInfo(WorkflowJobBean workflow, XLog.Info logInfo) {
-        logInfo.setParameter(XLogService.GROUP, workflow.getGroup());
-        logInfo.setParameter(XLogService.USER, workflow.getUser());
-        logInfo.setParameter(DagXLogInfoService.JOB, workflow.getId());
-        logInfo.setParameter(DagXLogInfoService.TOKEN, workflow.getLogToken());
-        logInfo.setParameter(DagXLogInfoService.APP, workflow.getAppName());
-        XLog.Info.get().setParameters(logInfo);
+    public static void setLogInfo(WorkflowJobBean workflow) {
+        XLog.Info.get().setParameter(XLogService.GROUP, workflow.getGroup());
+        XLog.Info.get().setParameter(XLogService.USER, workflow.getUser());
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, workflow.getId());
+        XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, workflow.getLogToken());
+        XLog.Info.get().setParameter(DagXLogInfoService.APP, workflow.getAppName());
+        XLog.Info.get().resetPrefix();
     }
 
     /**
-     * Set the log info with the context of the given action bean.
+     * Set the thread local log info with the context of the given action bean.
      *
      * @param action action bean.
-     * @param logInfo log info
      */
-    public static void setLogInfo(WorkflowActionBean action, XLog.Info logInfo) {
-        logInfo.setParameter(DagXLogInfoService.JOB, action.getJobId());
-        logInfo.setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
-        logInfo.setParameter(DagXLogInfoService.ACTION, action.getId());
-        XLog.Info.get().setParameters(logInfo);
+    public static void setLogInfo(WorkflowActionBean action) {
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+        XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
+        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
+        XLog.Info.get().resetPrefix();
     }
 
-    public static void setLogInfo(WorkflowAction action, XLog.Info logInfo) {
+    public static void setLogInfo(WorkflowAction action) {
         String actionId = action.getId();
-        logInfo.setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
-        logInfo.setParameter(DagXLogInfoService.ACTION, actionId);
-        XLog.Info.get().setParameters(logInfo);
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
+        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, actionId);
+        XLog.Info.get().resetPrefix();
     }
 
     /**
-     * Set the log info with the context of the given bundle bean.
+     * Set the thread local log info with the given id.
+     * @param id jobId or actionId
+     */
+    public static void setLogInfo(String id) {
+        if (id.contains("@")) {
+            String jobId = id.substring(0, id.indexOf("@"));
+            XLog.Info.get().setParameter(DagXLogInfoService.JOB, jobId);
+            XLog.Info.get().setParameter(DagXLogInfoService.ACTION, id);
+        } else {
+            XLog.Info.get().setParameter(DagXLogInfoService.JOB, id);
+            XLog.Info.get().setParameter(DagXLogInfoService.ACTION, "");
+        }
+        XLog.Info.get().resetPrefix();
+    }
+
+    /**
+     * Set the thread local log info with the context of the given bundle bean.
      *
      * @param bBean bundle bean.
-     * @param logInfo log info
      */
-    public static void setLogInfo(BundleJobBean bBean, XLog.Info logInfo) {
-        if (logInfo.getParameter(XLogService.GROUP) == null) {
-            logInfo.setParameter(XLogService.GROUP, bBean.getGroup());
-        }
-        if (logInfo.getParameter(XLogService.USER) == null) {
-            logInfo.setParameter(XLogService.USER, bBean.getUser());
-        }
-        logInfo.setParameter(DagXLogInfoService.JOB, bBean.getId());
-        logInfo.setParameter(DagXLogInfoService.TOKEN, "");
-        logInfo.setParameter(DagXLogInfoService.APP, bBean.getAppName());
-        XLog.Info.get().setParameters(logInfo);
-    }
-
-    /**
-     * Set the thread local log info with the context of the given Info object.
-     *
-     * @param logInfo log info
-     */
-    public static void setLogInfo(XLog.Info logInfo) {
-        XLog.Info.get().setParameters(logInfo);
+    public static void setLogInfo(BundleJobBean bBean) {
+        XLog.Info.get().setParameter(XLogService.GROUP, bBean.getGroup());
+        XLog.Info.get().setParameter(XLogService.USER, bBean.getUser());
+        XLog.Info.get().setParameter(DagXLogInfoService.JOB, bBean.getId());
+        XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, "");
+        XLog.Info.get().setParameter(DagXLogInfoService.APP, bBean.getAppName());
+        XLog.Info.get().resetPrefix();
     }
 
     public static XLog setLogInfo(XLog logObj, String jobId, String actionId, String appName) {

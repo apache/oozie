@@ -166,7 +166,7 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
             throw new CommandException(ErrorCode.E0604, bundleId);
         }
 
-        LogUtils.setLogInfo(bundleJob, logInfo);
+        LogUtils.setLogInfo(bundleJob);
     }
 
     /* (non-Javadoc)

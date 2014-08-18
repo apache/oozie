@@ -195,7 +195,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // calculate start materialize and end materialize time
         calcMatdTime();
 
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     /**

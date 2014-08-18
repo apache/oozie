@@ -245,7 +245,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     protected void eagerLoadState() throws CommandException {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, jobId);
-            LogUtils.setLogInfo(bundleJob, logInfo);
+            LogUtils.setLogInfo(bundleJob);
         }
         catch (JPAExecutorException ex) {
             throw new CommandException(ex);

@@ -233,7 +233,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             workflow.setWorkflowInstance(wfInstance);
             workflow.setExternalId(conf.get(OozieClient.EXTERNAL_ID));
 
-            LogUtils.setLogInfo(workflow, logInfo);
+            LogUtils.setLogInfo(workflow);
             JPAService jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 jpaService.execute(new WorkflowJobInsertJPAExecutor(workflow));

@@ -58,7 +58,6 @@ import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.jdom.Element;
@@ -96,6 +95,16 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        if (jobId != null) {
+            LogUtils.setLogInfo(jobId);
+        }
+        else if (actionId !=null) {
+            LogUtils.setLogInfo(actionId);
+        }
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -116,10 +125,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
-                LogUtils.setLogInfo(wfJob, logInfo);
+                LogUtils.setLogInfo(wfJob);
                 if (actionId != null) {
                     this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_SIGNAL, actionId);
-                    LogUtils.setLogInfo(wfAction, logInfo);
+                    LogUtils.setLogInfo(wfAction);
                 }
             }
             else {

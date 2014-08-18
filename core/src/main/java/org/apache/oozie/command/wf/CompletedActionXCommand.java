@@ -49,6 +49,11 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         this(actionId, externalStatus, actionData, 1);
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -63,7 +68,7 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
-        LogUtils.setLogInfo(this.wfactionBean, logInfo);
+        LogUtils.setLogInfo(this.wfactionBean);
     }
 
     /*

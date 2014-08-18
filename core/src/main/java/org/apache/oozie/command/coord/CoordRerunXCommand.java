@@ -253,7 +253,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     /* (non-Javadoc)

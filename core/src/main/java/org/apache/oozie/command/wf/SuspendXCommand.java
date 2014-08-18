@@ -56,6 +56,11 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(wfid);
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         try {
@@ -151,7 +156,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
-        LogUtils.setLogInfo(this.wfJobBean, logInfo);
+        LogUtils.setLogInfo(this.wfJobBean);
     }
 
     @Override
@@ -185,6 +190,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
+        LogUtils.setLogInfo(wfJobBean);
     }
 
     @Override

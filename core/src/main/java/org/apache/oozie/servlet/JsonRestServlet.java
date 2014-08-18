@@ -26,6 +26,7 @@ import org.apache.oozie.service.ProxyUserService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
@@ -566,15 +567,11 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
-     * Set the log info with the given information.
+     * Set the thread local log info with the given information.
      *
-     * @param jobid job ID.
      * @param actionid action ID.
      */
-    protected void setLogInfo(String jobid, String actionid) {
-        logInfo.setParameter(DagXLogInfoService.JOB, jobid);
-        logInfo.setParameter(DagXLogInfoService.ACTION, actionid);
-
-        XLog.Info.get().setParameters(logInfo);
+    protected void setLogInfo(String actionid) {
+        LogUtils.setLogInfo(actionid);
     }
 }

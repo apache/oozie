@@ -41,6 +41,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     private static final String NODE_NAME_PATTERN = "\\$nodeName";
 
     private String url;
+    private String id;
 
     //this variable is package private only for test purposes
     int retries = 0;
@@ -48,7 +49,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     public NotificationXCommand(WorkflowJobBean workflow) {
         super("job.notification", "job.notification", 0);
         ParamChecker.notNull(workflow, "workflow");
-        LogUtils.setLogInfo(workflow, logInfo);
+        id = workflow.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
@@ -60,8 +61,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
         super("action.notification", "job.notification", 0);
         ParamChecker.notNull(workflow, "workflow");
         ParamChecker.notNull(action, "action");
-        LogUtils.setLogInfo(workflow, logInfo);
-        LogUtils.setLogInfo(action, logInfo);
+        id = action.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
@@ -73,6 +73,11 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
                 url = url.replaceAll(STATUS_PATTERN, "S:" + action.getStatus().toString());
             }
         }
+    }
+
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(id);
     }
 
     @Override
@@ -95,8 +100,6 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
-        //if command is requeue, the logInfo has to set to thread local Info object again
-        LogUtils.setLogInfo(logInfo);
         if (url != null) {
             int timeout = Services.get().getConf().getInt(NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY,
                                                           NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);

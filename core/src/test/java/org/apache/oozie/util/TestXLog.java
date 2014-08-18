@@ -100,6 +100,71 @@ public class TestXLog extends XTestCase {
         assertEquals("A[a]", XLog.Info.get().createPrefix());
     }
 
+    public class LogPrinter {
+        XLog LOG = XLog.getLog(LogPrinter.class);
+        public void setMsgPrefix(String prefix) {
+            LOG.setMsgPrefix(prefix);
+        }
+        public String getLogMsgPrefix() {
+            return LOG.getMsgPrefix();
+        }
+        public String getThreadLocalPrefix() {
+            return XLog.Info.get().getPrefix();
+        }
+        public String getLogPrefix() {
+            return LOG.getMsgPrefix() != null ? LOG.getMsgPrefix() : XLog.Info.get().getPrefix();
+        }
+    }
+
+    public void testInfoThreadLocalPrefix() throws Exception {
+        XLog.Info.defineParameter("JOB");
+        XLog.Info.defineParameter("ACTION");
+
+        assertEquals("JOB[-] ACTION[-]", XLog.Info.get().createPrefix());
+
+        String jobId = "XXX-W";
+        LogUtils.setLogInfo(jobId+"@start");
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", XLog.Info.get().createPrefix());
+
+        final StringBuilder sb1 = new StringBuilder();
+        final StringBuilder sb2 = new StringBuilder();
+
+        final LogPrinter printer = new LogPrinter();
+
+        Thread t = new Thread() {
+            public void run() {
+                LogUtils.setLogInfo("XXX-W@hive");
+                sb1.append(printer.getLogMsgPrefix());
+                sb2.append(printer.getThreadLocalPrefix());
+            }
+        };
+        t.start();
+        t.join();
+
+        assertNull(printer.getLogMsgPrefix());
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
+
+        assertEquals("null", sb1.toString());
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@hive]", sb2.toString());
+    }
+
+    public void testLogMsg() throws Exception {
+        XLog.Info.defineParameter("JOB");
+        XLog.Info.defineParameter("ACTION");
+
+        final LogPrinter printer = new LogPrinter();
+        assertNull(printer.getLogMsgPrefix());
+
+        String jobId = "XXX-W";
+        LogUtils.setLogInfo(jobId+"@start");
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
+        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
+
+        printer.setMsgPrefix("prefix");
+        assertEquals("prefix", printer.getLogPrefix());
+    }
+
     public void testFactory() {
         XLog log = XLog.getLog(getClass());
         assertNotNull(log);
@@ -110,6 +175,7 @@ public class TestXLog extends XTestCase {
         XLog.Info.defineParameter("A");
         XLog.Info.get().setParameter("A", "a");
         XLog log = XLog.getLog(getClass());
+        log.setMsgPrefix(XLog.Info.get().createPrefix());
         assertEquals("A[a]", log.getMsgPrefix());
     }
 
@@ -118,7 +184,7 @@ public class TestXLog extends XTestCase {
         TestLog ops = new TestLog();
         XLog xLog = new XLog(log);
 
-        assertEquals("", xLog.getMsgPrefix());
+        assertNull(xLog.getMsgPrefix());
         xLog.setMsgPrefix("prefix");
         assertEquals("prefix", xLog.getMsgPrefix());
         xLog.setMsgPrefix(null);

@@ -39,6 +39,11 @@ public class DefinitionXCommand extends WorkflowXCommand<String> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return false;
     }
@@ -55,7 +60,7 @@ public class DefinitionXCommand extends WorkflowXCommand<String> {
 
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_DEFINITION, jobId);
-                LogUtils.setLogInfo(wfJob, logInfo);
+                LogUtils.setLogInfo(wfJob);
             }
             else {
                 LOG.error(ErrorCode.E0610);

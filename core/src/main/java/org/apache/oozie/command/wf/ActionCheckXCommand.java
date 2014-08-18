@@ -79,13 +79,18 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected void eagerLoadState() throws CommandException {
         try {
             this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, jobId);
             this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
                     actionId);
-            LogUtils.setLogInfo(wfJob, logInfo);
-            LogUtils.setLogInfo(wfAction, logInfo);
+            LogUtils.setLogInfo(wfJob);
+            LogUtils.setLogInfo(wfAction);
         }
         catch (JPAExecutorException ex) {
             throw new CommandException(ex);
@@ -135,8 +140,8 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(wfJob, logInfo);
-        LogUtils.setLogInfo(wfAction, logInfo);
+        LogUtils.setLogInfo(wfJob);
+        LogUtils.setLogInfo(wfAction);
     }
 
     @Override

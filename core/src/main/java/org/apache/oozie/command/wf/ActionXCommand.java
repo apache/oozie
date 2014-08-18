@@ -46,6 +46,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;

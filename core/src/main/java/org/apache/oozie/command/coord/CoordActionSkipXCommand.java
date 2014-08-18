@@ -51,6 +51,11 @@ public class CoordActionSkipXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionBean.getId());
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         if (actionBean.getStatus() == CoordinatorAction.Status.WAITING
                 || actionBean.getStatus() == CoordinatorAction.Status.READY) {
@@ -100,7 +105,7 @@ public class CoordActionSkipXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(actionBean, logInfo);
+        LogUtils.setLogInfo(actionBean);
     }
 
     @Override

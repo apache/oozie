@@ -73,7 +73,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
             this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
                     BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
-            LogUtils.setLogInfo(bundleJob, logInfo);
+            LogUtils.setLogInfo(bundleJob);
             super.setJob(bundleJob);
 
         }

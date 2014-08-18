@@ -97,6 +97,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         String pushMissingDeps = coordAction.getPushMissingDependencies();
         if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
@@ -352,7 +357,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
             if (coordAction != null) {
                 coordJob = jpaService.execute(new CoordJobGetJPAExecutor(coordAction.getJobId()));
-                LogUtils.setLogInfo(coordAction, logInfo);
+                LogUtils.setLogInfo(coordAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0605, actionId);
