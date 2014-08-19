@@ -8,6 +8,7 @@ test-patch
 *.iml
 *.ipr
 *.iws
+.idea
 
 # Structure101
 *.hsp
@@ -27,3 +28,4 @@ mkdistro-*.out
 distro/downloads
 SecurityAuth.audit
 build
+webapp/overlays

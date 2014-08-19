@@ -1,4 +1,5 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
+OOZIE-1968 Building modules independently (shwethags)
 OOZIE-1939 Incorrect job information is set while logging (seoeun25 via shwethags)
 OOZIE-1846 Convert CoordActionMaterializeCommand to an XCommand and remove Command (seoeun25 via shwethags)
 OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)

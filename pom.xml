@@ -950,6 +950,7 @@
                             <consoleOutput>true</consoleOutput>
                             <includeTestSourceDirectory>true</includeTestSourceDirectory>
                             <configLocation>src/main/resources/checkstyle.xml</configLocation>
+                            <headerLocation>src/main/resources/checkstyle-header.txt</headerLocation>
                         </configuration>
                     </execution>
                 </executions>
