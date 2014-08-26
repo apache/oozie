@@ -92,7 +92,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     }
 
     /**
-     * Instruments the memory locks service.
+     * Instruments the zk jobs concurrency service.
      *
      * @param instr instance to instrument the zookeeper jobs concurrency service to.
      */
