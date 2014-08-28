@@ -737,8 +737,8 @@ public class SLACalculatorMemory implements SLACalculator {
                                           // but not actually configured for SLA
                     SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
                             SLASummaryQuery.GET_SLA_SUMMARY, jobId);
-                    slaCalc = new SLACalcStatus(slaSummaryBean, slaRegBean);
-                    if (slaCalc.getEventProcessed() < 7) {
+                    if (slaSummaryBean.getEventProcessed() < 7) {
+                        slaCalc = new SLACalcStatus(slaSummaryBean, slaRegBean);
                         slaMap.put(jobId, slaCalc);
                     }
                 }
