@@ -8,6 +8,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1984 SLACalculator in HA mode performs duplicate operations on records with completed jobs (mona)
 OOZIE-1958 address duplication of env variables in oozie.launcher.yarn.app.mapreduce.am.env when running with uber mode (ryota)
 OOZIE-1920 Capture Output for SSH Action doesn't work (Richard Williams via rkanter)
 OOZIE-1961 Remove requireJavaVersion from enforcer rules (lars_francke via rkanter)
