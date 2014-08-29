@@ -1736,7 +1736,7 @@
             library path are used.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.command.default.lock.timeout</name>
         <value>5000</value>
@@ -1744,7 +1744,15 @@
             Default timeout (in milliseconds) for commands for acquiring an exclusive lock on an entity.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.command.default.requeue.delay</name>
+        <value>10000</value>
+        <description>
+            Default time (in milliseconds) for commands that are requeued for delayed execution.
+        </description>
+    </property>
+
    <!-- LiteWorkflowStoreService, Workflow Action Automatic Retry -->
 
     <property>
@@ -1754,7 +1762,7 @@
             Automatic retry max count for workflow action is 3 in default.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
         <value>10</value>

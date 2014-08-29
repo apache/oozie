@@ -65,6 +65,12 @@ public class TestXCommand extends XTestCase {
         }
 
         @Override
+        protected long getRequeueDelay() {
+            assertEquals(10 * 1000L, super.getRequeueDelay());
+            return 100;
+        }
+
+        @Override
         protected boolean isLockRequired() {
             return lockRequired;
         }

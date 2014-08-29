@@ -60,7 +60,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     public static final String INSTRUMENTATION_GROUP = "commands";
 
-    public static final Long DEFAULT_REQUEUE_DELAY = 10L;
+    public static final String DEFAULT_REQUEUE_DELAY = "oozie.command.default.requeue.delay";
 
     public XLog LOG = XLog.getLog(getClass());
 
@@ -503,11 +503,15 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Return the delay time for requeue
+     * <p/>
+     * The value is loaded from the Oozie configuration, the property {link #DEFAULT_REQUEUE_DELAY}.
+     * <p/>
+     * Subclasses should override this method if they want to use a different requeue delay time
      *
      * @return delay time when requeue itself
      */
-    protected Long getRequeueDelay() {
-        return DEFAULT_REQUEUE_DELAY;
+    protected long getRequeueDelay() {
+        return Services.get().getConf().getLong(DEFAULT_REQUEUE_DELAY, 10 * 1000L);
     }
 
     /**
