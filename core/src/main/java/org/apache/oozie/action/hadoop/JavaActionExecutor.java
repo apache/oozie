@@ -1252,10 +1252,10 @@ public class JavaActionExecutor extends ActionExecutor {
                             Properties props = PropertiesUtils.stringToProperties(actionData
                                     .get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
                             String errorCode = props.getProperty("error.code");
-                            if (errorCode.equals("0")) {
+                            if ("0".equals(errorCode)) {
                                 errorCode = "JA018";
                             }
-                            if (errorCode.equals("-1")) {
+                            if ("-1".equals(errorCode)) {
                                 errorCode = "JA019";
                             }
                             errorReason = props.getProperty("error.reason");
