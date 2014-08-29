@@ -94,6 +94,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        System.out.println("\n" + d +"\n");
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -138,6 +140,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -177,6 +180,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "</pig>";
         e = e.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         e = e.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        e = e.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
 
     }
@@ -219,6 +223,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</hive>";
         a = a.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         a = a.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        a = a.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
@@ -255,6 +260,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</distcp>";
         b = b.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         b = b.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        b = b.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
     }
 

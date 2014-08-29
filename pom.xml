@@ -68,7 +68,7 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>1.1.1</hadoop.version>
+        <hadoop.version>1.2.1</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hcatalog.version>0.13.1</hcatalog.version>
 
@@ -77,11 +77,6 @@
         <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
-        <!--
-        This is required while we support a a pre 0.23 version of Hadoop which does not have
-        the hadoop-auth artifact. After we phase-out pre 0.23 we can get rid of this property.
-        -->
-        <hadoop.auth.version>2.0.2-alpha</hadoop.auth.version>
 
          <!-- Sharelib component versions -->
          <hive.version>0.13.1</hive.version>
@@ -256,9 +251,9 @@
 
             <!-- client -->
             <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop.auth.version}</version>
+                <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-hadoop-auth</artifactId>
+                <version>${hadooplib.version}</version>
             </dependency>
 
             <dependency>
@@ -1026,11 +1021,6 @@
                         -->
                         <exclude>**/TestSsh*.java</exclude>
 
-                        <!-- Explictly use -Dtest=TestMapReduceActionExecutorUberJar to test the uber jar functionality.
-                             Requires at least Hadoop 1.2.0 or 2.2.0.
-                        -->
-                        <exclude>**/TestMapReduceActionExecutorUberJar.java</exclude>
-
                         <!-- Explictly use -Dtest=TestZKUtilsWithSecurity to test the ZKUtils with security.
                              It can conflict with other non-secure tests that use zookeeper
                         -->
@@ -1130,7 +1120,6 @@
             </activation>
             <properties>
                <hadoop.version>0.23.5</hadoop.version>
-               <hadoop.auth.version>0.23.5</hadoop.auth.version>
                <pig.classifier>h2</pig.classifier>
                <sqoop.classifier>hadoop23</sqoop.classifier>
             </properties>
@@ -1142,7 +1131,6 @@
             </activation>
             <properties>
                <hadoop.version>2.3.0</hadoop.version>
-               <hadoop.auth.version>2.3.0</hadoop.auth.version>
                <pig.classifier>h2</pig.classifier>
                <sqoop.classifier>hadoop200</sqoop.classifier>
             </properties>
@@ -1154,7 +1142,6 @@
             </activation>
             <properties>
                <hadoop.version>3.0.0-SNAPSHOT</hadoop.version>
-               <hadoop.auth.version>3.0.0-SNAPSHOT</hadoop.auth.version>
                <pig.classifier>h2</pig.classifier>
                <sqoop.classifier>hadoop200</sqoop.classifier>
             </properties>

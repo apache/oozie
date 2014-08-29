@@ -73,8 +73,8 @@
             <artifactId>oozie-client</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-auth</artifactId>
+                    <groupId>org.apache.oozie</groupId>
+                    <artifactId>oozie-hadoop-auth</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

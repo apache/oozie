@@ -657,9 +657,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     // With the oozie.action.mapreduce.uber.jar.enable property set to false, a workflow with an uber jar should fail
-    // (this happens before we get to Hadoop, so not having the correct version of Hadoop doesn't matter here; the
-    // TestMapReduceActionExecutorUberJar.testMapReduceWithUberJarEnabled() test actually tests the uber jar functionality, but
-    // this test is excluded by default)
     public void testMapReduceWithUberJarDisabled() throws Exception {
         Services serv = Services.get();
         boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
@@ -671,6 +668,19 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             assertEquals(ActionExecutorException.ErrorType.ERROR, aee.getErrorType());
             assertTrue(aee.getMessage().contains("oozie.action.mapreduce.uber.jar.enable"));
             assertTrue(aee.getMessage().contains("oozie.mapreduce.uber.jar"));
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+        }
+    }
+
+    public void testMapReduceWithUberJarEnabled() throws Exception {
+        Services serv = Services.get();
+        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        try {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
+            _testMapReduceWithUberJar();
         } catch (Exception e) {
             throw e;
         } finally {
