@@ -27,7 +27,6 @@
 	</module>
 
 	<module name="Header">
-		<property name="severity" value="warning"/>
 		<property name="headerFile" value="${checkstyle.header.file}"/>
 	</module>
 

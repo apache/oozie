@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayOutputStream;

@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.command;
 
 public abstract class IgnoreTransitionXCommand<T> extends TransitionXCommand<T> {

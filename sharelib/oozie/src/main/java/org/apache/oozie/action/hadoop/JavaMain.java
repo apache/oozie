@@ -16,14 +16,16 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.action.hadoop;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 
 public class JavaMain extends LauncherMain {
     public static final String JAVA_MAIN_CLASS = "oozie.action.java.main";
