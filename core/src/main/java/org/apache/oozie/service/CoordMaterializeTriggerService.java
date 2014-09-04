@@ -25,8 +25,11 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XCallable;
@@ -136,8 +139,10 @@ public class CoordMaterializeTriggerService implements Service {
 
         /**
          * Recover coordinator jobs that should be materialized
+         * @throws JPAExecutorException
          */
-        private void runCoordJobMatLookup() {
+        private void runCoordJobMatLookup() throws JPAExecutorException {
+            List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
             XLog.Info.get().clear();
             XLog LOG = XLog.getLog(getClass());
             try {
@@ -146,15 +151,19 @@ public class CoordMaterializeTriggerService implements Service {
                 // get list of all jobs that have actions that should be materialized.
                 int materializationLimit = Services.get().getConf()
                         .getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT, CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT);
-                materializeCoordJobs(currDate, materializationLimit, LOG);
+                materializeCoordJobs(currDate, materializationLimit, LOG, updateList);
             }
 
             catch (Exception ex) {
                 LOG.error("Exception while attempting to materialize coordinator jobs, {0}", ex.getMessage(), ex);
             }
+            finally {
+                BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            }
         }
 
-        private void materializeCoordJobs(Date currDate, int limit, XLog LOG) throws JPAExecutorException {
+        private void materializeCoordJobs(Date currDate, int limit, XLog LOG, List<UpdateEntry> updateList)
+                throws JPAExecutorException {
             try {
                 List<CoordinatorJobBean> materializeJobs = CoordJobQueryExecutor.getInstance().getList(
                         CoordJobQuery.GET_COORD_JOBS_OLDER_FOR_MATERILZATION, currDate, limit);
@@ -165,10 +174,8 @@ public class CoordMaterializeTriggerService implements Service {
                             .incr(INSTRUMENTATION_GROUP, INSTR_MAT_JOBS_COUNTER, 1);
                     queueCallable(new CoordMaterializeTransitionXCommand(coordJob.getId(), materializationWindow));
                     coordJob.setLastModifiedTime(new Date());
-                    // TODO In place of calling single query, we should call bulk update.
-                    CoordJobQueryExecutor.getInstance().executeUpdate(
-                            CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, coordJob);
-
+                    updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME,
+                            coordJob));
                 }
             }
             catch (JPAExecutorException jex) {
