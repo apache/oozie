@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1941 Bundle coordinator name can't be parameterized (puru)
 OOZIE-1966 Fix Headers in java code (shwethags via rkanter)
 OOZIE-1428 The delay time for requeue should be configurable (sree2k via rkanter)
 OOZIE-1830 Change hadoop-1 profile to use 1.2.1 (seoeun25 via rkanter)

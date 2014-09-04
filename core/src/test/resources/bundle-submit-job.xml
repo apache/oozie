@@ -15,11 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<bundle-app name='${appName}' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
+<bundle-app name='${appName}' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.2'>
           <controls> 
                  <kick-off-time>2099-02-01T00:00Z</kick-off-time>
           </controls>
-          <coordinator name='coord1' critical='true'>
+          <coordinator name='${coordName1}'  critical='true'>
                  <app-path>#app_path1</app-path>
                  <configuration>
                      <property>
@@ -36,7 +36,7 @@
                      </property>
                  </configuration>
           </coordinator>
-          <coordinator name='coord2' critical='false'>
+          <coordinator name='${coordName2}' critical='false'>
                  <app-path>#app_path2</app-path>
                  <configuration>
                      <property>

@@ -44,6 +44,7 @@ import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -242,12 +243,20 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                 List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
                 for (Element coordElem : coordElems) {
                     Attribute name = coordElem.getAttribute("name");
+
                     Configuration coordConf = mergeConfig(coordElem);
                     coordConf.set(OozieClient.BUNDLE_ID, jobId);
                     if (OozieJobInfo.isJobInfoEnabled()) {
                         coordConf.set(OozieJobInfo.BUNDLE_NAME, bundleJob.getAppName());
                     }
+                    String coordName=name.getValue();
+                    try {
+                        coordName = ELUtils.resolveAppName(coordName, coordConf);
+                    }
+                    catch (Exception e) {
+                        throw new CommandException(ErrorCode.E1321, e.getMessage(), e);
 
+                    }
                     queue(new CoordSubmitXCommand(coordConf, bundleJob.getId(), name.getValue()));
 
                 }

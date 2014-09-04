@@ -472,10 +472,17 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             for (Element elem : coordElems) {
                 Attribute name = elem.getAttribute("name");
                 if (name != null) {
-                    if (set.contains(name.getValue())) {
+                    String coordName = name.getValue();
+                    try {
+                        coordName = ELUtils.resolveAppName(name.getValue(), conf);
+                    }
+                    catch (Exception e) {
+                        throw new CommandException(ErrorCode.E1321, e.getMessage(), e);
+                    }
+                    if (set.contains(coordName)) {
                         throw new CommandException(ErrorCode.E1304, name);
                     }
-                    set.add(name.getValue());
+                    set.add(coordName);
                 }
                 else {
                     throw new CommandException(ErrorCode.E1305);

@@ -59,6 +59,7 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
@@ -195,11 +196,19 @@ public class RecoveryService implements Service {
                             List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
                             for (Element coordElem : coordElems) {
                                 Attribute name = coordElem.getAttribute("name");
-                                if (name.getValue().equals(baction.getCoordName())) {
-                                    Configuration coordConf = mergeConfig(coordElem, bundleJob);
+                                String coordName=name.getValue();
+                                Configuration coordConf = mergeConfig(coordElem, bundleJob);
+                                try {
+                                    coordName = ELUtils.resolveAppName(coordName, coordConf);
+                                }
+                                catch (Exception e) {
+                                    log.error("Error evaluating coord name " + e.getMessage(), e);
+                                    continue;
+                                }
+                                if (coordName.equals(baction.getCoordName())) {
                                     coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
                                     queueCallable(new CoordSubmitXCommand(coordConf,
-                                            bundleJob.getId(), name.getValue()));
+                                            bundleJob.getId(), coordName));
                                 }
                             }
                         }
