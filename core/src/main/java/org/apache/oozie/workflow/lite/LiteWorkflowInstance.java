@@ -727,8 +727,8 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
         @Override
         public int compare(String node1, String node2) {
-            Date date1 = FAR_INTO_THE_FUTURE;
-            Date date2 = FAR_INTO_THE_FUTURE;
+            Date date1 = null;
+            Date date2 = null;
             NodeInstance node1Instance = executionPaths.get(node1);
             if (node1Instance != null) {
                 date1 = this.actionEndTimes.get(node1Instance.nodeName);
@@ -737,6 +737,8 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
             if (node2Instance != null) {
                 date2 = this.actionEndTimes.get(node2Instance.nodeName);
             }
+            date1 = (date1 == null) ? FAR_INTO_THE_FUTURE : date1;
+            date2 = (date2 == null) ? FAR_INTO_THE_FUTURE : date2;
             return date1.compareTo(date2);
         }
 
