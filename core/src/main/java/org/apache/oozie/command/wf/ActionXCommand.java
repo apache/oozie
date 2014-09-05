@@ -216,7 +216,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         String errorCode = action.getErrorCode();
         Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
 
-        if (allowedRetryCode.contains(errorCode) && action.getUserRetryCount() < action.getUserRetryMax()) {
+        if ((allowedRetryCode.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL) || allowedRetryCode.contains(errorCode))
+                && action.getUserRetryCount() < action.getUserRetryMax()) {
             LOG.info("Preparing retry this action [{0}], errorCode [{1}], userRetryCount [{2}], "
                     + "userRetryMax [{3}], userRetryInterval [{4}]", action.getId(), errorCode, action
                     .getUserRetryCount(), action.getUserRetryMax(), action.getUserRetryInterval());

@@ -60,5 +60,27 @@ public class TestLiteWorkflowStoreService extends XTestCase {
         assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));   
     }
 
+    public void testRetryAllErrorCode() throws Exception {
+        String errorCodeWithWhitespaces = "\n\t\t" + ForTestingActionExecutor.TEST_ERROR + "," +
+                LiteWorkflowStoreService.USER_ERROR_CODE_ALL + "\n  ";
+        Configuration testConf = Services.get().get(ConfigurationService.class).getConf();
+        // Setting configuration parameter for retry.error.code
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE, errorCodeWithWhitespaces);
+        Set<String> allowedRetryCodes = LiteWorkflowStoreService.getUserRetryErrorCode();
+        assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));
+        assertTrue(allowedRetryCodes.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL));
+
+        // Setting configuration parameter for retry.error.code and retry.error.code.ext
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, "ALL");
+        allowedRetryCodes = LiteWorkflowStoreService.getUserRetryErrorCode();
+        assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));
+        assertTrue(allowedRetryCodes.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL));
+
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE, " ");
+        testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, "ALL");
+        allowedRetryCodes = LiteWorkflowStoreService.getUserRetryErrorCode();
+        assertTrue(allowedRetryCodes.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL));
+    }
+
 
 }

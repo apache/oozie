@@ -67,6 +67,8 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     public static final String NODE_DEF_VERSION_1 = "_oozie_inst_v_1";
     public static final String CONF_NODE_DEF_VERSION = CONF_PREFIX + "node.def.version";
 
+    public static final String USER_ERROR_CODE_ALL = "ALL";
+
     /**
      * Delegation method used by the Action and Decision {@link NodeHandler} on start. <p/> This method provides the
      * necessary information to create ActionExecutors.
