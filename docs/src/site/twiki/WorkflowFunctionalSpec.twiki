@@ -241,7 +241,7 @@ A workflow definition must have one =start= node.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
   ...
   <start to="[NODE-NAME]"/>
   ...
@@ -253,7 +253,7 @@ The =to= attribute is the name of first workflow node to execute.
 *Example:*
 
 <verbatim>
-<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <start to="firstHadoopJob"/>
     ...
@@ -275,7 +275,7 @@ A workflow definition must have one =end= node.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <end name="[NODE-NAME]"/>
     ...
@@ -287,7 +287,7 @@ The =name= attribute is the name of the transition to do to end the workflow job
 *Example:*
 
 <verbatim>
-<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <end name="end"/>
 </workflow-app>
@@ -308,7 +308,7 @@ A workflow definition may have zero or more =kill= nodes.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <kill name="[NODE-NAME]">
         <message>[MESSAGE-TO-LOG]</message>
@@ -326,7 +326,7 @@ A =kill= node does not have transition elements because it ends the workflow job
 *Example:*
 
 <verbatim>
-<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <kill name="killBecauseNoInput">
         <message>Input unavailable</message>
@@ -356,7 +356,7 @@ boolean value, =true= or =false=. For example:
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <decision name="[NODE-NAME]">
         <switch>
@@ -384,7 +384,7 @@ state if none of the predicates evaluates to true.
 *Example:*
 
 <verbatim>
-<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <decision name="mydecision">
         <switch>
@@ -417,7 +417,7 @@ the same =fork= node.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <fork name="[FORK-NODE-NAME]">
         <path start="[NODE-NAME]" />
@@ -440,7 +440,7 @@ fork arrive to the join node.
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <fork name="forking">
         <path start="firstparalleljob"/>
@@ -632,7 +632,7 @@ Pipe properties can be overridden by specifying them in the =job-xml= file or =c
 ---+++++ 3.2.2.4 Syntax
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <map-reduce>
@@ -709,7 +709,7 @@ The =mapper= and =reducer= process for streaming jobs, should specify the execut
 *Example:*
 
 <verbatim>
-<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="foo-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="myfirstHadoopJob">
         <map-reduce>
@@ -751,7 +751,7 @@ the workflow job configuration when creating the workflow job.
 *Streaming Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="firstjob">
         <map-reduce>
@@ -792,7 +792,7 @@ the workflow job configuration when creating the workflow job.
 *Pipes Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="firstjob">
         <map-reduce>
@@ -855,9 +855,9 @@ configuration.
 As with Hadoop map-reduce jobs, it  is possible to add files and archives to be available to the Pig job, refer to
 section [#FilesAchives][Adding Files and Archives for the Job].
 
-*Syntax for Pig actions in Oozie schema 0.2:*
+*Syntax for Pig actions in Oozie schema 0.2 and later:*
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.2">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <pig>
@@ -970,10 +970,10 @@ The =arguments= element, if present, contains arguments to be passed to the pig 
 
 All the above elements can be parameterized (templatized) using EL expressions.
 
-*Example for Oozie schema 0.2:*
+*Example for Oozie schema 0.2 and later:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.2">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="myfirstpigjob">
         <pig>
@@ -1148,7 +1148,7 @@ by any =job-xml= elements.
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.4">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="hdfscommands">
         <fs>
@@ -1259,7 +1259,7 @@ The parent workflow job will wait until the child workflow job has completed.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <sub-workflow>
@@ -1294,7 +1294,7 @@ The configuration of the =sub-workflow= action can be parameterized (templatized
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="a">
         <sub-workflow>
@@ -1382,7 +1382,7 @@ be assigned to it. The queue name must be specified as a configuration property.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <java>
@@ -1451,7 +1451,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="myfirstjavajob">
         <java>
@@ -1538,7 +1538,7 @@ By using properties
 Parameterized Workflow definition:
 
 <verbatim>
-<workflow-app name='hello-wf' xmlns="uri:oozie:workflow:0.1">
+<workflow-app name='hello-wf' xmlns="uri:oozie:workflow:0.5">
     ...
     <action name='firstjob'>
         <map-reduce>
@@ -1586,7 +1586,7 @@ properties are actually specified (i.e. before the job is executed and fails). D
 The previous parameterized workflow definition with formal parameters:
 
 <verbatim>
-<workflow-app name='hello-wf' xmlns="uri:oozie:workflow:0.4">
+<workflow-app name='hello-wf' xmlns="uri:oozie:workflow:0.5">
     <parameters>
         <property>
             <name>inputDir</name>
@@ -1838,7 +1838,7 @@ This function can also be used to access specific action statistics information.
 Below is the workflow that describes how to access specific information using hadoop:counters() EL function from the MR stats.
 *Workflow xml:*
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="map-reduce-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="map-reduce-wf">
     <start to="mr-node"/>
     <action name="mr-node">
         <map-reduce>
@@ -1957,7 +1957,7 @@ Below is the workflow that describes how to access specific information using ha
 Below is the workflow that describes how to access specific information using hadoop:counters() EL function from the Pig stats.
 *Workflow xml:*
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="pig-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="pig-wf">
     <start to="pig-node"/>
     <action name="pig-node">
         <pig>
@@ -2047,7 +2047,7 @@ The function _wf:actionData()_ can be used to access Hadoop ID's for actions suc
 An example is shown below.
 
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="pig-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="pig-wf">
     <start to="pig-node"/>
     <action name="pig-node">
         <pig>
@@ -2429,7 +2429,7 @@ and error codes as value, these error codes will be considered as User-Retry aft
 Examples of User-Retry in a workflow aciton is :
 
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.3" name="wf-name">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="wf-name">
 <action name="a" retry-max="2" retry-interval="1">
 </action>
 </verbatim>
@@ -2445,7 +2445,7 @@ Oozie will update use the specific declaration instead of the global one for tha
 Example of a global element:
 
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.4" name="wf-name">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="wf-name">
 <global>
    <job-tracker>${job-tracker}</job-tracker>
    <name-node>${namd-node}</name-node>
