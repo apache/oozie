@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1818 CoordMaterializeTransitionXCommand verifyPrecondition doesn't verify current time (puru)
 OOZIE-1653 Support ALL to allowed error code of the user retry (seoeun25 via rkanter)
 OOZIE-1923 ZKLocksService locks are not re-entrant like MemoryLocks (puru)
 OOZIE-1843 Bulk update for coord last modified time for CoordMaterializeTriggerService (puru)

@@ -313,6 +313,15 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             }
         }
 
+        if (coordJob.getNextMaterializedTimestamp() != null
+                && coordJob.getNextMaterializedTimestamp().after(
+                        new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000))) {
+            throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
+                    + " Request is for future time. Lookup time is  "
+                    + new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000) + " mat time is "
+                    + coordJob.getNextMaterializedTimestamp());
+        }
+
         if (coordJob.getLastActionTime() != null && coordJob.getLastActionTime().compareTo(coordJob.getEndTime()) >= 0) {
             throw new PreconditionException(ErrorCode.E1100, "ENDED Coordinator materialization for jobId = " + jobId
                     + ", all actions have been materialized from start time = " + coordJob.getStartTime()

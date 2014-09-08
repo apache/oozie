@@ -606,6 +606,26 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsStatus(job.getId(), expectedStatuses);
     }
 
+    public void testCurrentTimeCheck() throws Exception {
+        long now = System.currentTimeMillis();
+        Date startTime = DateUtils.toDate(new Timestamp(now)); // now
+        Date endTime = DateUtils.toDate(new Timestamp(now + 3 * 60 * 60 * 1000)); // 3 hours from now
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, "5",
+                20);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertEquals(job.getLastActionNumber(), 12);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        // unfortunatily XCommand doesn't throw exception on precondition
+        // assertEquals(e.getErrorCode(), ErrorCode.E1100);
+        // assertTrue(e.getMessage().contains("Request is for future time. Lookup time is"));
+
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
+        // getLastActionNumber should 12, last CoordMaterializeTransitionXCommand have failed
+        assertEquals(job.getLastActionNumber(), 12);
+    }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, String freq) throws Exception {
@@ -613,12 +633,25 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+            Date pauseTime, String freq, int matThrottling) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, CoordinatorJob.Execution.FIFO,
+                matThrottling);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, int timeout, String freq) throws Exception {
-        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, CoordinatorJob.Execution.FIFO);
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq,
+                CoordinatorJob.Execution.FIFO, 20);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, int timeout, String freq, CoordinatorJob.Execution execution) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, execution, 20);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+            Date pauseTime, int timeout, String freq, CoordinatorJob.Execution execution, int matThrottling)
+            throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
@@ -627,7 +660,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         coordJob.setTimeUnit(Timeunit.MINUTE);
         coordJob.setTimeout(timeout);
         coordJob.setConcurrency(3);
-        coordJob.setMatThrottling(20);
+        coordJob.setMatThrottling(matThrottling);
         coordJob.setExecutionOrder(execution);
 
         try {
