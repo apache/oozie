@@ -1085,8 +1085,8 @@ public class V1JobServlet extends BaseJobServlet {
      * not supported for v1
      */
     @Override
-    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
+            throws XServletException, IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
 }
