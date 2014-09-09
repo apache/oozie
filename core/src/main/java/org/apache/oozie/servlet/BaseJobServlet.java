@@ -162,8 +162,17 @@ public abstract class BaseJobServlet extends JsonRestServlet {
         }
         else if (action.equals(RestConstants.JOB_COORD_UPDATE)) {
             validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            Configuration conf = new XConfiguration(request.getInputStream());
             stopCron();
-            JSONObject json = updateJob(request, response);
+            String requestUser = getUser(request);
+            if (!requestUser.equals(UNDEF)) {
+                conf.set(OozieClient.USER_NAME, requestUser);
+            }
+            if (conf.get(OozieClient.COORDINATOR_APP_PATH) != null) {
+                BaseJobServlet.checkAuthorizationForApp(conf);
+                JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            }
+            JSONObject json = updateJob(request, response, conf);
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
@@ -445,11 +454,12 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request the request
      * @param response the response
+     * @param Configuration conf
      * @return the JSON object
      * @throws XServletException the x servlet exception
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    abstract JSONObject updateJob(HttpServletRequest request, HttpServletResponse response)
+    abstract JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException;
 }
 

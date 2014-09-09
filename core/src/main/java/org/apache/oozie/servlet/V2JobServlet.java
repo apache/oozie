@@ -41,7 +41,6 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XConfiguration;
 import org.json.simple.JSONObject;
 
 @SuppressWarnings("serial")
@@ -102,13 +101,12 @@ public class V2JobServlet extends V1JobServlet {
      */
     @SuppressWarnings("unchecked")
     @Override
-    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
+            throws XServletException, IOException {
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class)
                 .getCoordinatorEngine(getUser(request));
         JSONObject json = new JSONObject();
         try {
-            Configuration conf= new XConfiguration(request.getInputStream());
             String jobId = getResourceName(request);
             boolean dryrun = StringUtils.isEmpty(request.getParameter(RestConstants.JOB_ACTION_DRYRUN)) ? false
                     : Boolean.parseBoolean(request.getParameter(RestConstants.JOB_ACTION_DRYRUN));

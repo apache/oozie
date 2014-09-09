@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1957 Coord update command override group when oozie.service.AuthorizationService.default.group.as.acl is set and group/acl is not configured in job property (puru)
 OOZIE-1989 NPE during a rerun with forks (rkanter)
 OOZIE-1923 ZKLocksService locks are not re-entrant like MemoryLocks (puru)
 OOZIE-1945 NPE in JaveActionExecutor#check() (sree2k via rkanter)

@@ -117,7 +117,7 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
         LogUtils.setLogInfo(oldCoordJob, logInfo);
         if (!isConfChange) {
             try {
-                conf = new XConfiguration(new StringReader(coordJob.getConf()));
+                conf = new XConfiguration(new StringReader(oldCoordJob.getConf()));
             }
             catch (Exception e) {
                 throw new CommandException(ErrorCode.E1023, e.getMessage(), e);
