@@ -2075,6 +2075,15 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.zookeeper.connection.timeout</name>
+        <value>180</value>
+        <description>
+        Default ZK connection timeout (in sec). If connection is lost for more than timeout, then Oozie server will shutdown
+        itself.
+        </description>
+    </property>
+
 <!--
     <property>
         <name>oozie.instance.id</name>

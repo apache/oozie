@@ -19,6 +19,7 @@
 package org.apache.oozie.util;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.security.auth.login.Configuration;
+
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -40,8 +43,11 @@ import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.oozie.ErrorCode;
+
 import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_KEYTAB;
 import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_PRINCIPAL;
+
+import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.zookeeper.ZooDefs.Perms;
@@ -49,7 +55,6 @@ import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
-
 
 /**
  * This class provides a singleton for interacting with ZooKeeper that other classes can use.  It handles connecting to ZooKeeper,
@@ -72,6 +77,8 @@ import org.apache.zookeeper.data.Stat;
  * Oozie's existing security configuration parameters (b) use/convert every znode under the namespace (including the namespace
  * itself) to have ACLs such that only Oozie servers have access (i.e. if "service/host@REALM" is the Kerberos principal, then
  * "service" will be used for the ACLs).
+ * <p>
+ * Oozie server will shutdown itself if ZK connection is lost for ${ZK_CONNECTION_TIMEOUT}.
  */
 public class ZKUtils {
     /**
@@ -84,6 +91,11 @@ public class ZKUtils {
      * on talking to each other should have the same value for this.
      */
     public static final String ZK_NAMESPACE = "oozie.zookeeper.namespace";
+
+    /**
+     *Default ZK connection timeout ( in sec). If connection is lost for more than timeout, then Oozie server will shutdown itself.
+     */
+    public static final String ZK_CONNECTION_TIMEOUT = "oozie.zookeeper.connection.timeout";
 
     /**
      * oozie-env environment variable for specifying the Oozie instance ID
@@ -111,6 +123,7 @@ public class ZKUtils {
     private XLog log;
 
     private static ZKUtils zk = null;
+    private static int zkConnectionTimeout;
 
     /**
      * Private Constructor for the singleton; it connects to ZooKeeper and advertises this Oozie Server.
@@ -160,6 +173,8 @@ public class ZKUtils {
         RetryPolicy retryPolicy = ZKUtils.getRetryPloicy();
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
         String zkNamespace = Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+        zkConnectionTimeout = Services.get().getConf().getInt(ZK_CONNECTION_TIMEOUT, 180);
+
         ACLProvider aclProvider;
         if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
             log.info("Connecting to ZooKeeper with SASL/Kerberos and using 'sasl' ACLs");
@@ -177,8 +192,10 @@ public class ZKUtils {
                                             .connectString(zkConnectionString)
                                             .retryPolicy(retryPolicy)
                                             .aclProvider(aclProvider)
+                                            .connectionTimeoutMs(zkConnectionTimeout * 1000) // in ms
                                             .build();
         client.start();
+        client.getConnectionStateListenable().addListener(new ZKConnectionListener());
     }
 
     private void advertiseService() throws Exception {
@@ -387,5 +404,12 @@ public class ZKUtils {
      */
     public static RetryPolicy getRetryPloicy() {
         return new ExponentialBackoffRetry(1000, 3);
+    }
+    /**
+     * Return ZK connection timeout
+     * @return
+     */
+    public static int getZKConnectionTimeout(){
+        return zkConnectionTimeout;
     }
 }
