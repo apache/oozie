@@ -84,7 +84,7 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
      * @param jobId : Job ID to retrieve console URL
      * @return console URL
      */
-    static String getJobConsoleUrl(String jobId) {
+    public static String getJobConsoleUrl(String jobId) {
         String consoleUrl = Services.get().getConf().get("oozie.JobCommand.job.console.url", null);
         return (consoleUrl != null) ? consoleUrl + jobId : null;
     }

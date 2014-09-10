@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1813 Add service to report/kill rogue bundles and coordinator jobs (puru)
 OOZIE-1847 HA - Oozie servers should shutdown (or go in safe mode) in case of ZK failure (puru)
 OOZIE-1957 Coord update command override group when oozie.service.AuthorizationService.default.group.as.acl is set and group/acl is not configured in job property (puru)
 OOZIE-1818 CoordMaterializeTransitionXCommand verifyPrecondition doesn't verify current time (puru)

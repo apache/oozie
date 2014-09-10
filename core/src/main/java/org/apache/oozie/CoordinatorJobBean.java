@@ -32,6 +32,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -129,7 +131,10 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "GET_COORD_JOB_FOR_USER", query = "select w.user from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_STATUS_PARENTID", query = "select w.statusStr, w.bundleId from CoordinatorJobBean w where w.id = :id")
+        @NamedQuery(name = "GET_COORD_JOB_STATUS_PARENTID", query = "select w.statusStr, w.bundleId from CoordinatorJobBean w where w.id = :id")})
+
+@NamedNativeQueries({
+        @NamedNativeQuery(name = "GET_COORD_FOR_ABANDONEDCHECK", query = "select w.id, w.USER_NAME, w.group_name, w.APP_NAME from coord_jobs w where ( w.STATUS = 'RUNNING' or w.STATUS = 'RUNNINGWITHERROR' ) and w.start_time < ?2 and w.id in (select failedJobs.job_id from (select a.job_id from coord_actions a where ( a.STATUS = 'FAILED' or a.STATUS = 'TIMEDOUT'  or a.STATUS = 'SUSPENDED') group by a.job_id having count(*) >= ?1 ) failedJobs LEFT OUTER JOIN (select b.job_id from coord_actions b where b.STATUS = 'SUCCEEDED' group by b.job_id having count(*) > 0 ) successJobs   on  failedJobs.job_id = successJobs.job_id where successJobs.job_id is null )")
 
 })
 @Table(name = "COORD_JOBS")

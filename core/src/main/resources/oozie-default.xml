@@ -2203,4 +2203,40 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.check.interval
+        </name>
+        <value>1440</value>
+        <description>
+            Interval, in minutes, at which AbandonedCoordCheckerService should run.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.failure.limit
+        </name>
+        <value>25</value>
+        <description>
+            Failure limit. A job is considered to be abandoned/faulty if total number of actions in
+            failed/timedout/suspended >= "Failure limit" and there are no succeeded action.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.kill.jobs
+        </name>
+        <value>false</value>
+        <description>
+            If true, AbandonedCoordCheckerService will kill abandoned coords.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.job.older.than</name>
+        <value>2880</value>
+        <description>
+         In minutes, job will be considered as abandoned/faulty if job is older than this value.
+        </description>
+    </property>
+
 </configuration>

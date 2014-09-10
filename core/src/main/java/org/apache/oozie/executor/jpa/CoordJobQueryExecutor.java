@@ -26,6 +26,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
@@ -61,7 +62,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         GET_COORD_JOB_SUSPEND_KILL,
         GET_COORD_JOB_STATUS_PARENTID,
         GET_COORD_JOBS_CHANGED,
-        GET_COORD_JOBS_OLDER_FOR_MATERILZATION
+        GET_COORD_JOBS_OLDER_FOR_MATERILZATION,
+        GET_COORD_FOR_ABANDONEDCHECK
     };
 
     private static CoordJobQueryExecutor instance = new CoordJobQueryExecutor();
@@ -205,6 +207,10 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                     query.setMaxResults(limit);
                 }
                 break;
+            case GET_COORD_FOR_ABANDONEDCHECK:
+                query.setParameter(1, (Integer) parameters[0]);
+                query.setParameter(2, (Timestamp) parameters[1]);
+                break;
 
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -321,6 +327,15 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean = new CoordinatorJobBean();
                 bean.setId((String) ret);
                 break;
+            case GET_COORD_FOR_ABANDONEDCHECK:
+                bean = new CoordinatorJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
