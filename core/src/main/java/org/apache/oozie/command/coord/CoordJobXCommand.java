@@ -18,11 +18,8 @@
 
 package org.apache.oozie.command.coord;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorEngine.FILTER_COMPARATORS;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
@@ -33,7 +30,12 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionsSubsetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Command for loading a coordinator job information
@@ -44,7 +46,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     private int offset = 1;
     private int len = Integer.MAX_VALUE;
     private boolean desc = false;
-    private Map<String, List<String>> filterMap;
+    private Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap;
 
     /**
      * Constructor for loading a coordinator job information
@@ -57,14 +59,14 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
 
     /**
      * Constructor for loading a coordinator job information
-     *
      * @param id coord jobId
+     * @param filterMap
      * @param offset starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
-     * @param filterMap
      * @param desc boolean for whether the actions returned are in descending order
      */
-    public CoordJobXCommand(String id, Map<String, List<String>> filterMap, int offset, int length, boolean desc) {
+    public CoordJobXCommand(String id, Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap, int offset,
+        int length, boolean desc) {
         super("job.info", "job.info", 1);
         this.id = ParamChecker.notEmpty(id, "id");
         this.getActionInfo = true;
