@@ -145,6 +145,12 @@
             <artifactId>oozie-sharelib-distcp</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-hive2</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -189,7 +195,7 @@
                         <configuration>
                             <includeArtifactIds>
                                 oozie-sharelib-pig,oozie-sharelib-hive,oozie-sharelib-sqoop,oozie-sharelib-streaming,
-                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp
+                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp,oozie-sharelib-hive2
                             </includeArtifactIds>
                             <excludeTransitive>true</excludeTransitive>
                             <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>

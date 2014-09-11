@@ -361,6 +361,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

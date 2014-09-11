@@ -36,6 +36,7 @@
         <module>hcatalog</module>
         <module>pig</module>
         <module>hive</module>
+        <module>hive2</module>
         <module>sqoop</module>
         <module>oozie</module>
         <module>distcp</module>

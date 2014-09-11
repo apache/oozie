@@ -1818,6 +1818,8 @@ public class OozieCLI {
                         "ssh-action-0.1.xsd")));
                 sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                         "ssh-action-0.2.xsd")));
+                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                        "hive2-action-0.1.xsd")));
                 SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema schema = factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
                 Validator validator = schema.newValidator();

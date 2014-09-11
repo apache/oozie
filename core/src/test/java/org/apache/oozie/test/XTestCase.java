@@ -50,6 +50,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
@@ -80,6 +81,7 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
+import org.apache.oozie.test.hive.MiniHS2;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -412,6 +414,9 @@ public abstract class XTestCase extends TestCase {
      */
     @Override
     protected void tearDown() throws Exception {
+        if (hiveserver2 != null) {
+            hiveserver2.stop();
+        }
         resetSystemProperties();
         sysProps = null;
         testCaseDir = null;
@@ -873,6 +878,7 @@ public abstract class XTestCase extends TestCase {
     private static MiniDFSCluster dfsCluster2 = null;
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
+    private static MiniHS2 hiveserver2 = null;
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
@@ -989,6 +995,28 @@ public abstract class XTestCase extends TestCase {
             hcatServer.start();
             log.info("Metastore server started at " + hcatServer.getMetastoreURI());
         }
+    }
+
+    protected void setupHiveServer2() throws Exception {
+        if (hiveserver2 == null) {
+            setSystemProperty("test.tmp.dir", getTestCaseDir());
+            // Make HS2 use our Mini cluster by copying all configs to HiveConf; also had to hack MiniHS2
+            HiveConf hconf = new HiveConf();
+            Configuration jobConf = createJobConf();
+            for (Map.Entry<String, String> pair: jobConf) {
+                hconf.set(pair.getKey(), pair.getValue());
+            }
+            hiveserver2 = new MiniHS2(hconf, dfsCluster.getFileSystem());
+            hiveserver2.start(new HashMap<String, String>());
+        }
+    }
+
+    protected String getHiveServer2JdbcURL() {
+        return hiveserver2.getJdbcURL();
+    }
+
+    protected String getHiveServer2JdbcURL(String dbName) {
+        return hiveserver2.getJdbcURL(dbName);
     }
 
     private static void shutdownMiniCluster() {
