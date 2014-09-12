@@ -17,13 +17,7 @@
  */
 package org.apache.oozie;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
-import java.util.List;
-
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -34,6 +28,13 @@ import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XConfiguration;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URI;
+import java.util.List;
 
 public class TestCoordinatorEngine extends XTestCase {
     private Services services;
@@ -481,8 +482,8 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [statusRUNNING], elements must be name=value or name!=value pairs",
-                    ex.getMessage());
+            assertEquals("E0421: Invalid job filter [statusRUNNING], " +
+                    "filter should be of format <key><comparator><value> pairs", ex.getMessage());
         }
 
         //Check for missing value after "="
@@ -491,7 +492,8 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [status=], elements must be name=value or name!=value pairs", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [status=], invalid status value []. Valid status values are: ["
+                + StringUtils.join(CoordinatorAction.Status.values(), ", ") + "]", ex.getMessage());
         }
 
         // Check for invalid status value
@@ -501,8 +503,8 @@ public class TestCoordinatorEngine extends XTestCase {
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
             assertEquals("E0421: Invalid job filter [status=blahblah], invalid status value [blahblah]."
-                    + " Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT "
-                    + "SUCCEEDED KILLED FAILED IGNORED SKIPPED ]", ex.getMessage());
+                + " Valid status values are: ["
+                + StringUtils.join(CoordinatorAction.Status.values(), ", ") + "]", ex.getMessage());
         }
 
         // Check for empty status value
@@ -511,9 +513,9 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [status=\"\"], invalid status value [\"\"]. "
-                    + "Valid status values are: [WAITING READY SUBMITTED RUNNING SUSPENDED TIMEDOUT "
-                    + "SUCCEEDED KILLED FAILED IGNORED SKIPPED ]", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [status=\"\"], invalid status value [\"\"]."
+                + " Valid status values are: ["
+                + StringUtils.join(CoordinatorAction.Status.values(), ", ") + "]", ex.getMessage());
         }
 
         // Check for invalid filter option
@@ -522,7 +524,8 @@ public class TestCoordinatorEngine extends XTestCase {
         }
         catch (CoordinatorEngineException ex) {
             assertEquals(ErrorCode.E0421, ex.getErrorCode());
-            assertEquals("E0421: Invalid job filter [blahblah=blahblah], invalid filter [blahblah]. The only valid filter is \"status\"", ex.getMessage());
+            assertEquals("E0421: Invalid job filter [blahblah=blahblah], invalid filter [blahblah]. " +
+                "Valid filters [" + StringUtils.join(CoordinatorEngine.VALID_JOB_FILTERS, ", ") + "]", ex.getMessage());
         }
     }
 }

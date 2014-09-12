@@ -17,21 +17,7 @@
  */
 package org.apache.oozie;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
@@ -41,7 +27,6 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
-import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
 import org.apache.oozie.command.coord.CoordActionsKillXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
@@ -59,26 +44,59 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.util.CoordActionsInDateRange;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogUserFilterParam;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.io.Writer;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public class CoordinatorEngine extends BaseEngine {
-    private static XLog LOG = XLog.getLog(CoordinatorEngine.class);
+    private static final XLog LOG = XLog.getLog(CoordinatorEngine.class);
     public final static String COORD_ACTIONS_LOG_MAX_COUNT = "oozie.coord.actions.log.max.count";
     private final static int COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT = 50;
-    private int maxNumActionsForLog;
-    public final static String POSITIVE_FILTER = "positive";
-    public final static String NEGATIVE_FILTER = "negative";
+    private final int maxNumActionsForLog;
+
+    public enum FILTER_COMPARATORS {
+        //This ordering is important, dont change this
+        GREATER_EQUAL(">="), GREATER(">"), LESSTHAN_EQUAL("<="), LESSTHAN("<"), NOT_EQUALS("!="), EQUALS("=");
+
+        private final String sign;
+
+        FILTER_COMPARATORS(String sign) {
+            this.sign = sign;
+        }
+
+        public String getSign() {
+            return sign;
+        }
+    }
+
+    public static final String[] VALID_JOB_FILTERS = {OozieClient.FILTER_STATUS, OozieClient.FILTER_NOMINAL_TIME};
 
     /**
      * Create a system Coordinator engine, with no user and no group.
      */
     public CoordinatorEngine() {
-        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
+        if (!Services.get().getConf().getBoolean(USE_XCOMMAND, true)) {
             LOG.debug("Oozie CoordinatorEngine is not using XCommands.");
         }
         else {
@@ -160,10 +178,9 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, String filter, int offset, int length, boolean desc)
             throws BaseEngineException {
-        Map<String, List<String>> filterMap = parseStatusFilter(filter);
+        Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap = parseJobFilter(filter);
         try {
-            return new CoordJobXCommand(jobId, filterMap, offset, length, desc)
-                    .call();
+            return new CoordJobXCommand(jobId, filterMap, offset, length, desc).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);
@@ -574,7 +591,7 @@ public class CoordinatorEngine extends BaseEngine {
      * @throws CoordinatorEngineException
      */
     public CoordinatorJobInfo getCoordJobs(String filter, int start, int len) throws CoordinatorEngineException {
-        Map<String, List<String>> filterList = parseFilter(filter);
+        Map<String, List<String>> filterList = parseJobsFilter(filter);
 
         try {
             return new CoordJobsXCommand(filterList, start, len).call();
@@ -585,60 +602,68 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     // Parses the filter string (e.g status=RUNNING;status=WAITING) and returns a list of status values
-    private Map<String, List<String>> parseStatusFilter(String filter) throws CoordinatorEngineException {
-        Map<String, List<String>> filterMap = new HashMap<String, List<String>>();
+    public Map<Pair<String, FILTER_COMPARATORS>, List<Object>> parseJobFilter(String filter) throws
+        CoordinatorEngineException {
+        Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap = new HashMap<Pair<String,
+            FILTER_COMPARATORS>, List<Object>>();
         if (filter != null) {
-            //split name;value pairs
+            //split name value pairs
             StringTokenizer st = new StringTokenizer(filter, ";");
             while (st.hasMoreTokens()) {
-                String token = st.nextToken();
-                if (token.contains("=")) {
-                    boolean negative = false;
-                    String[] pair = null;
-                    if(token.contains("!=")) {
-                        negative = true;
-                        pair = token.split("!=");
-                    }else {
-                        pair = token.split("=");
-                    }
-                    if (pair.length != 2) {
-                        throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                                "elements must be name=value or name!=value pairs");
-                    }
-                    if (pair[0].equalsIgnoreCase("status")) {
-                        String statusValue = pair[1];
-                        try {
-                            CoordinatorAction.Status.valueOf(statusValue);
-                        } catch (IllegalArgumentException ex) {
-                            StringBuilder validStatusList = new StringBuilder();
-                            for (CoordinatorAction.Status status : CoordinatorAction.Status.values()){
-                                validStatusList.append(status.toString()+" ");
+                String token = st.nextToken().trim();
+                Pair<String, FILTER_COMPARATORS> pair = null;
+                for (FILTER_COMPARATORS comp : FILTER_COMPARATORS.values()) {
+                    if (token.contains(comp.getSign())) {
+                        int index = token.indexOf(comp.getSign());
+                        String key = token.substring(0, index);
+                        String valueStr = token.substring(index + comp.getSign().length());
+                        Object value;
+
+                        if (key.equalsIgnoreCase(OozieClient.FILTER_STATUS)) {
+                            value = valueStr.toUpperCase();
+                            try {
+                                CoordinatorAction.Status.valueOf((String) value);
+                            } catch (IllegalArgumentException ex) {
+                                // Check for incorrect status value
+                                throw new CoordinatorEngineException(ErrorCode.E0421, filter,
+                                    XLog.format("invalid status value [{0}]." + " Valid status values are: [{1}]",
+                                        valueStr, StringUtils.join(CoordinatorAction.Status.values(), ", ")));
                             }
-                            // Check for incorrect status value
-                            throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
-                                "invalid status value [{0}]." + " Valid status values are: [{1}]", statusValue, validStatusList));
+
+                            if (!(comp == FILTER_COMPARATORS.EQUALS || comp == FILTER_COMPARATORS.NOT_EQUALS)) {
+                                throw new CoordinatorEngineException(ErrorCode.E0421, filter,
+                                    XLog.format("invalid comparator [{0}] for status." + " Valid are = and !=",
+                                        comp.getSign()));
+                            }
+
+                            pair = Pair.of(OozieClient.FILTER_STATUS, comp);
+                        } else if (key.equalsIgnoreCase(OozieClient.FILTER_NOMINAL_TIME)) {
+                            try {
+                                value = new Timestamp(DateUtils.parseDateUTC(valueStr).getTime());
+                            } catch (ParseException e) {
+                                throw new CoordinatorEngineException(ErrorCode.E0421, filter,
+                                    XLog.format("invalid nominal time [{0}]." + " Valid format: " +
+                                            "[{1}]", valueStr, DateUtils.ISO8601_UTC_MASK));
+                            }
+                            pair = Pair.of(OozieClient.FILTER_NOMINAL_TIME, comp);
+                        } else {
+                            // Check for incorrect filter option
+                            throw new CoordinatorEngineException(ErrorCode.E0421, filter,
+                                XLog.format("invalid filter [{0}]." + " Valid filters [{1}]", key, StringUtils.join
+                                    (VALID_JOB_FILTERS, ", ")));
                         }
-                        String filterType = negative ? NEGATIVE_FILTER : POSITIVE_FILTER;
-                        String oppositeFilterType = negative ? POSITIVE_FILTER : NEGATIVE_FILTER;
-                        List<String> filterList = filterMap.get(filterType);
-                        if (filterList == null) {
-                            filterList = new ArrayList<String>();
-                            filterMap.put(filterType, filterList);
+                        if (!filterMap.containsKey(pair)) {
+                            filterMap.put(pair, new ArrayList<Object>());
                         }
-                        List<String> oFilterList = filterMap.get(oppositeFilterType);
-                        if (oFilterList != null && oFilterList.contains(statusValue)) {
-                            throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
-                                    "the status [{0}] specified in both positive and negative filters", statusValue));
-                        }
-                        filterList.add(statusValue);
-                    } else {
-                        // Check for incorrect filter option
-                        throw new CoordinatorEngineException(ErrorCode.E0421, filter, XLog.format(
-                                "invalid filter [{0}]." + " The only valid filter is \"status\"", pair[0]));
+                        filterMap.get(pair).add(value);
+                        break;
                     }
-                } else {
-                    throw new CoordinatorEngineException(ErrorCode.E0421, token,
-                             "elements must be name=value or name!=value pairs");
+                }
+
+                if (pair == null) {
+                    //token doesn't contain comparator
+                    throw new CoordinatorEngineException(ErrorCode.E0421, filter,
+                        "filter should be of format <key><comparator><value> pairs");
                 }
             }
         }
@@ -651,7 +676,7 @@ public class CoordinatorEngine extends BaseEngine {
      * @throws CoordinatorEngineException
      */
     @VisibleForTesting
-    Map<String, List<String>> parseFilter(String filter) throws CoordinatorEngineException {
+    Map<String, List<String>> parseJobsFilter(String filter) throws CoordinatorEngineException {
         Map<String, List<String>> map = new HashMap<String, List<String>>();
         boolean isTimeUnitSpecified = false;
         String timeUnit = "MINUTE";

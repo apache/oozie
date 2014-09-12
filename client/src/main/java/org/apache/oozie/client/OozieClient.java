@@ -17,6 +17,21 @@
  */
 package org.apache.oozie.client;
 
+import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonToBean;
+import org.apache.oozie.client.rest.RestConstants;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,22 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.apache.oozie.BuildInfo;
-import org.apache.oozie.client.rest.JsonTags;
-import org.apache.oozie.client.rest.JsonToBean;
-import org.apache.oozie.client.rest.RestConstants;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Client API to submit and manage Oozie workflow jobs against an Oozie intance.
@@ -122,6 +121,8 @@ public class OozieClient {
 
     public static final String FILTER_STATUS = "status";
 
+    public static final String FILTER_NOMINAL_TIME = "nominaltime";
+
     public static final String FILTER_FREQUENCY = "frequency";
 
     public static final String FILTER_ID = "id";
@@ -158,7 +159,7 @@ public class OozieClient {
 
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
-    };
+    }
 
     /**
      * debugMode =0 means no debugging. > 0 means debugging on.
@@ -171,7 +172,7 @@ public class OozieClient {
     private JSONArray supportedVersions;
     private final Map<String, String> headers = new HashMap<String, String>();
 
-    private static ThreadLocal<String> USER_NAME_TL = new ThreadLocal<String>();
+    private static final ThreadLocal<String> USER_NAME_TL = new ThreadLocal<String>();
 
     /**
      * Allows to impersonate other users in the Oozie server. The current user
@@ -1046,7 +1047,6 @@ public class OozieClient {
          *
          * @param reader reader to read into a string.
          * @param maxLen max content length allowed, if -1 there is no limit.
-         * @param ps Printstream of command line interface
          * @throws IOException
          */
         private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
