@@ -414,8 +414,9 @@ public abstract class XTestCase extends TestCase {
      */
     @Override
     protected void tearDown() throws Exception {
-        if (hiveserver2 != null) {
+        if (hiveserver2 != null && hiveserver2.isStarted()) {
             hiveserver2.stop();
+            hiveserver2 = null;
         }
         resetSystemProperties();
         sysProps = null;
