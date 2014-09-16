@@ -253,6 +253,10 @@ public class JavaActionExecutor extends ActionExecutor {
                 injectLauncherUseUberMode(launcherConf);
                 XConfiguration.copy(launcherConf, conf);
             }
+            e = actionXml.getChild("config-class", actionXml.getNamespace());
+            if (e != null) {
+                conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
+            }
             return conf;
         }
         catch (IOException ex) {

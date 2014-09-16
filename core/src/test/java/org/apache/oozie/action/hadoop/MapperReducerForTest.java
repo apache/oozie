@@ -18,6 +18,9 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
@@ -30,12 +33,34 @@ import java.util.Iterator;
 public class MapperReducerForTest implements Mapper, Reducer {
     public static final String GROUP = "g";
     public static final String NAME = "c";
+    /**
+     * If specified in the job conf, the mapper will write out the job.xml file here.
+     */
+    public static final String JOB_XML_OUTPUT_LOCATION = "oozie.job.xml.output.location";
 
     public static void main(String[] args) {
         System.out.println("hello!");
     }
 
+    @Override
     public void configure(JobConf jobConf) {
+        try {
+            String loc = jobConf.get(JOB_XML_OUTPUT_LOCATION);
+            if (loc != null) {
+                Path p = new Path(loc);
+                FileSystem fs = p.getFileSystem(jobConf);
+                if (!fs.exists(p)) {
+                    FSDataOutputStream out = fs.create(p);
+                    try {
+                        jobConf.writeXml(out);
+                    } finally {
+                        out.close();
+                    }
+                }
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     public void close() throws IOException {

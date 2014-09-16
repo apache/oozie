@@ -56,6 +56,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
@@ -63,6 +64,7 @@ import java.util.zip.ZipEntry;
 
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.util.PropertiesUtils;
 
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
@@ -544,6 +546,104 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
         _testSubmit("map-reduce", actionXml);
+    }
+
+    public void testMapReduceWithConfigClass() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        Path jobXml = new Path(getFsTestCaseDir(), "job.xml");
+        XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
+        conf.set(MapperReducerForTest.JOB_XML_OUTPUT_LOCATION, jobXml.toUri().toString());
+        conf.set("B", "b");
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + conf.toXmlString(false)
+                + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
+
+        _testSubmit("map-reduce", actionXml);
+        Configuration conf2 = new Configuration(false);
+        conf2.addResource(fs.open(jobXml));
+        assertEquals("a", conf2.get("A"));
+        assertEquals("c", conf2.get("B"));
+    }
+
+    public void testMapReduceWithConfigClassNotFound() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false)
+                + "<config-class>org.apache.oozie.does.not.exist</config-class>" + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        waitFor(120 * 2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertFalse(LauncherMapperHelper.isMainSuccessful(launcherJob));
+
+        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+                context.getProtoActionConf());
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        assertEquals("An Exception occured while instantiating the action config class",
+                errorProps.getProperty("exception.message"));
+        assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
+    }
+
+    public void testMapReduceWithConfigClassThrowException() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
+        conf.setBoolean("oozie.test.throw.exception", true);        // causes OozieActionConfiguratorForTest to throw an exception
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + conf.toXmlString(false)
+                + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        waitFor(120 * 2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertFalse(LauncherMapperHelper.isMainSuccessful(launcherJob));
+
+        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+                context.getProtoActionConf());
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        assertEquals("doh", errorProps.getProperty("exception.message"));
+        assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
     }
 
     public void testMapReduceWithCredentials() throws Exception {

@@ -58,6 +58,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = ACTION_PREFIX + "main.arg.count";
     static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
     static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
+    static final String OOZIE_ACTION_CONFIG_CLASS = ACTION_PREFIX + "config.class";
     static final String CONF_OOZIE_ACTION_FS_GLOB_MAX = "oozie.action.fs.glob.max";
     static final int GLOB_MAX_DEFAULT = 1000;
 
@@ -434,6 +435,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
         System.setProperty("oozie.job.launch.time", getJobConf().get("oozie.job.launch.time"));
+        String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
+        if (actionConfigClass != null) {
+            System.setProperty(OOZIE_ACTION_CONFIG_CLASS, actionConfigClass);
+        }
     }
 
     // Method to execute the prepare actions

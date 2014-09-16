@@ -568,10 +568,11 @@ Hadoop JobConf properties can be specified as part of
    * the =config-default.xml= or
    * JobConf XML file bundled with the workflow application or
    * <global> tag in workflow definition or
-   * Inline =map-reduce= action configuration. 
+   * Inline =map-reduce= action configuration or
+   * An implementation of OozieActionConfigurator specified by the <config-class> tag in workflow definition.
 
-The configuration properties are loaded in the following above order i.e. =streaming=, =job-xml= and =configuration=, and 
-the precedence order is later values override earlier values.
+The configuration properties are loaded in the following above order i.e. =streaming=, =job-xml=, =configuration=,
+and =config-class=, and the precedence order is later values override earlier values.
 
 Streaming and inline property values can be parameterized (templatized) using EL expressions.
 
@@ -579,7 +580,7 @@ The Hadoop =mapred.job.tracker= and =fs.default.name= properties must not be pre
 configuration.
 
 #FilesAchives
----++++ 3.2.2.1 Adding Files and Archives for the Job
+---+++++ 3.2.2.1 Adding Files and Archives for the Job
 
 The =file=, =archive= elements make available, to map-reduce jobs, files and archives. If the specified path is
 relative, it is assumed the file or archiver are within the application directory, in the corresponding sub-path.
@@ -595,8 +596,88 @@ To force a symlink for a file on the task running directory, use a '#' followed 
 
 Refer to Hadoop distributed cache documentation for details more details on files and archives.
 
+---+++++ 3.2.2.2 Configuring the MapReduce action with Java code
+
+Java code can be used to further configure the MapReduce action.  This can be useful if you already have "driver" code for your
+MapReduce action, if you're more familiar with MapReduce's Java API, if there's some configuration that requires logic, or some
+configuration that's difficult to do in straight XML (e.g. Avro).
+
+Create a class that implements the org.apache.oozie.action.hadoop.OozieActionConfigurator interface from the "oozie-sharelib-oozie"
+artifact.  It contains a single method that recieves a =JobConf= as an argument.  Any configuration properties set on this =JobConf=
+will be used by the MapReduce action.
+
+The OozieActionConfigurator has this signature:
+<verbatim>
+public interface OozieActionConfigurator {
+    public void configure(JobConf actionConf) throws OozieActionConfiguratorException;
+}
+</verbatim>
+where =actionConf= is the =JobConf= you can update.  If you need to throw an Exception, you can wrap it in
+an =OozieActionConfiguratorException=, also in the "oozie-sharelib-oozie" artifact.
+
+For example:
+<verbatim>
+package com.example;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.oozie.action.hadoop.OozieActionConfigurator;
+import org.apache.oozie.action.hadoop.OozieActionConfiguratorException;
+import org.apache.oozie.example.SampleMapper;
+import org.apache.oozie.example.SampleReducer;
+
+public class MyConfigClass implements OozieActionConfigurator {
+
+    @Override
+    public void configure(JobConf actionConf) throws OozieActionConfiguratorException {
+        if (actionConf.getUser() == null) {
+            throw new OozieActionConfiguratorException("No user set");
+        }
+        actionConf.setMapperClass(SampleMapper.class);
+        actionConf.setReducerClass(SampleReducer.class);
+        FileInputFormat.setInputPaths(actionConf, new Path("/user/" + actionConf.getUser() + "/input-data"));
+        FileOutputFormat.setOutputPath(actionConf, new Path("/user/" + actionConf.getUser() + "/output"));
+        ...
+    }
+}
+</verbatim>
+
+To use your config class in your MapReduce action, simply compile it into a jar, make the jar available to your action, and specify
+the class name in the =config-class= element (this requires at least schema 0.5):
+<verbatim>
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
+    ...
+    <action name="[NODE-NAME]">
+        <map-reduce>
+            ...
+            <job-xml>[JOB-XML-FILE]</job-xml>
+            <configuration>
+                <property>
+                    <name>[PROPERTY-NAME]</name>
+                    <value>[PROPERTY-VALUE]</value>
+                </property>
+                ...
+            </configuration>
+            <config-class>com.example.MyConfigClass</config-class>
+            ...
+        </map-reduce>
+        <ok to="[NODE-NAME]"/>
+        <error to="[NODE-NAME]"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+Another example of this can be found in the "map-reduce" example that comes with Oozie.
+
+A useful tip: The initial =JobConf= passed to the =configure= method includes all of the properties listed in the =configuration=
+section of the MR action in a workflow.  If you need to pass any information to your OozieActionConfigurator, you can simply put
+them here.
+
 #StreamingMapReduceAction
----+++++ 3.2.2.2 Streaming
+---+++++ 3.2.2.3 Streaming
 
 Streaming information can be specified in the =streaming= element.
 
@@ -613,7 +694,7 @@ The Mapper/Reducer can be overridden by a =mapred.mapper.class= or =mapred.reduc
 file or =configuration= elements.
 
 #PipesMapReduceAction
----+++++ 3.2.2.3 Pipes
+---+++++ 3.2.2.4 Pipes
 
 Pipes information can be specified in the =pipes= element.
 
@@ -629,10 +710,10 @@ the =file= and =archive= elements described in the previous section.
 
 Pipe properties can be overridden by specifying them in the =job-xml= file or =configuration= element.
 
----+++++ 3.2.2.4 Syntax
+---+++++ 3.2.2.5 Syntax
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <map-reduce>
@@ -670,6 +751,7 @@ Pipe properties can be overridden by specifying them in the =job-xml= file or =c
                 </property>
                 ...
             </configuration>
+            <config-class>com.example.MyConfigClass</config-class>
             <file>[FILE-PATH]</file>
             ...
             <archive>[FILE-PATH]</archive>
@@ -699,6 +781,11 @@ The =configuration= element, if present, contains JobConf properties for the Had
 
 Properties specified in the =configuration= element override properties specified in the file specified in the
  =job-xml= element.
+
+As of schema 0.5, the =config-class= element, if present, contains a class that implements OozieActionConfigurator that can be used
+to further configure the MapReduce job.
+
+Properties specified in the =config-class= class override properties specified in =configuration= element.
 
 External Stats can be turned on/off by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in the configuration element of workflow.xml. The default value for this property is _false_.
 
@@ -2639,6 +2726,7 @@ to be executed.
             </xs:choice>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="config-class" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
