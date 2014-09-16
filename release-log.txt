@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2003 Checkstyle issues (rkanter via shwethags)
 OOZIE-1457 Create a Hive Server 2 action (rkanter)
 OOZIE-1950 Coordinator job info should support timestamp (nominal time) (shwethags)
 OOZIE-1813 Add service to report/kill rogue bundles and coordinator jobs (puru)
