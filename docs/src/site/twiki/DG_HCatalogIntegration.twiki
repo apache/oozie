@@ -97,6 +97,9 @@ Refer to [[WorkflowFunctionalSpec][Workflow Functional Specification]] for more 
    * how to drop HCatalog partitions in the prepare block of a action
    * the HCatalog EL functions available to use in workflows
 
+Refer to [[DG_ActionAuthentication][Action Authentication]] for more information about
+   * how to access a secure HCatalog from any action (e.g. hive, pig, etc) in a workflow
+
 ---+++ Known Issues
    * When rerunning a coordinator action without specifying -nocleanup option if the 'output-event' are hdfs directories, then they are deleted. But if the 'output-event' is a hcatalog partition, currently the partition is not dropped.
 

@@ -2695,6 +2695,9 @@ coordinator action.
 hcatalog installation. Refer [[DG_HCatalogIntegration#HCatalogLibraries][HCatalog Libraries]] for the different ways
 to place them in the hadoop job classpath.
 
+*Important*: See [[DG_ActionAuthentication][Action Authentication]] for more information about how to access a secure HCatalog from
+any workflow action.
+
 *Example usage in Pig:*
 
 <blockquote>
