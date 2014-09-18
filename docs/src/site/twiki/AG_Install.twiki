@@ -281,8 +281,8 @@ simple | kerberos | #AUTHENTICATION_HANDLER_CLASSNAME#.
 The =token.validity= indicates how long (in seconds) an authentication token is valid before it has
 to be renewed.
 
-The =signature.secret= is the signature secret for signing the authentication tokens. If not set a random
-secret is generated at startup time.
+The =signature.secret= is the signature secret for signing the authentication tokens. It is recommended to not set this, in which
+case Oozie will randomly generate one on startup.
 
 The =oozie.authentication.cookie.domain= The domain to use for the HTTP cookie that stores the
 authentication token. In order to authentiation to work correctly across all Hadoop nodes web-consoles
@@ -880,6 +880,13 @@ For earlier versions of Hadoop:
 2a. When creating the keytab used by Oozie, make sure to include Oozie's principal and the load balancer HTTP principal
 
 2b. Set =oozie.authentication.kerberos.principal= to =HTTP/load-balancer-host@realm=.
+
+3. With Hadoop 2.6.0 and later, a rolling random secret that is synchronized across all Oozie servers will be used for signing the
+Oozie auth tokens.  This is done automatically when HA is enabled; no additional configuration is needed.
+
+For earlier versions of Hadoop, each server will have a different random secret.  This will still work but will likely result in
+additional calls to the KDC to authenticate users to the Oozie server (because the auth tokens will not be accepted by other
+servers, which will cause a fallback to Kerberos).
 
 
 ---++++ JobId sequence

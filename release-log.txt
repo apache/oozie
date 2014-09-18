@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1917 Authentication secret should be random by default and needs to coordinate with HA (rkanter)
 OOZIE-1853 Improve the Credentials documentation (rkanter)
 OOZIE-1954 Add a way for the MapReduce action to be configured by Java code (rkanter)
 OOZIE-2003 Checkstyle issues (rkanter via shwethags)
