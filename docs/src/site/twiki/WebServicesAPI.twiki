@@ -1473,6 +1473,30 @@ The node labels are the node names provided in the workflow XML.
 
 This API returns =HTTP 400= when run on a resource other than a workflow, viz. bundle and coordinator.
 
+---++++ Job Status
+
+An =HTTP GET= request that returns the current status (e.g. =SUCCEEDED=, =KILLED=, etc) of a given job.  If you are only interested
+in the status, and don't want the rest of the information that the =info= query provides, it is recommended to use this call
+as it is more efficient.
+
+*Request*
+<verbatim>
+GET /oozie/v2/job/0000000-140908152307821-oozie-rkan-C?show=status
+</verbatim>
+
+*Response*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  "status" : "SUCCEEDED"
+}
+</verbatim>
+
+It accepts any valid Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID.
+
 ---++++ Jobs Information
 
 A HTTP GET request retrieves workflow and coordinator jobs information.

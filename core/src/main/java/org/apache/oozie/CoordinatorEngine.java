@@ -39,6 +39,8 @@ import org.apache.oozie.command.coord.CoordResumeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
@@ -800,6 +802,43 @@ public class CoordinatorEngine extends BaseEngine {
         }
         catch (CommandException ex) {
             throw new CoordinatorEngineException(ex);
+        }
+    }
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws CoordinatorEngineException thrown if the job's status could not be obtained
+     */
+    @Override
+    public String getJobStatus(String jobId) throws CoordinatorEngineException {
+        try {
+            CoordinatorJobBean coordJob = CoordJobQueryExecutor.getInstance().get(
+                    CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB_STATUS, jobId);
+            return coordJob.getStatusStr();
+        }
+        catch (JPAExecutorException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
+    /**
+     * Return the status for an Action ID
+     *
+     * @param actionId action Id.
+     * @return the action's status
+     * @throws CoordinatorEngineException thrown if the action's status could not be obtained
+     */
+    public String getActionStatus(String actionId) throws CoordinatorEngineException {
+        try {
+            CoordinatorActionBean coordAction = CoordActionQueryExecutor.getInstance().get(
+                    CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION_STATUS, actionId);
+            return coordAction.getStatusStr();
+        }
+        catch (JPAExecutorException e) {
+            throw new CoordinatorEngineException(e);
         }
     }
 }

@@ -223,4 +223,37 @@ public class TestV2JobServlet extends DagServletTestCase {
             }
         });
     }
+
+    public void testJobStatus() throws Exception {
+        runTest("/v2/job/*", V2JobServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                MockDagEngineService.reset();
+                Map<String, String> params = new HashMap<String, String>();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_STATUS);
+                URL url = createURL(MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END, params);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals("SUCCEEDED", obj.get(JsonTags.STATUS));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockDagEngineService.did);
+
+                MockCoordinatorEngineService.reset();
+                params = new HashMap<String, String>();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_STATUS);
+                url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals("RUNNING", obj.get(JsonTags.STATUS));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockCoordinatorEngineService.did);
+
+                return null;
+            }
+        });
+    }
 }

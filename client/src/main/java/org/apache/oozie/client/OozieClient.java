@@ -46,11 +46,13 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -160,6 +162,26 @@ public class OozieClient {
 
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
+    }
+
+    private static final Set<String> COMPLETED_WF_STATUSES = new HashSet<String>();
+    private static final Set<String> COMPLETED_COORD_AND_BUNDLE_STATUSES = new HashSet<String>();
+    private static final Set<String> COMPLETED_COORD_ACTION_STATUSES = new HashSet<String>();
+    static {
+        COMPLETED_WF_STATUSES.add(WorkflowJob.Status.FAILED.toString());
+        COMPLETED_WF_STATUSES.add(WorkflowJob.Status.KILLED.toString());
+        COMPLETED_WF_STATUSES.add(WorkflowJob.Status.SUCCEEDED.toString());
+        COMPLETED_COORD_AND_BUNDLE_STATUSES.add(Job.Status.FAILED.toString());
+        COMPLETED_COORD_AND_BUNDLE_STATUSES.add(Job.Status.KILLED.toString());
+        COMPLETED_COORD_AND_BUNDLE_STATUSES.add(Job.Status.SUCCEEDED.toString());
+        COMPLETED_COORD_AND_BUNDLE_STATUSES.add(Job.Status.DONEWITHERROR.toString());
+        COMPLETED_COORD_AND_BUNDLE_STATUSES.add(Job.Status.IGNORED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.FAILED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.IGNORED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.KILLED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.SKIPPED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.SUCCEEDED.toString());
+        COMPLETED_COORD_ACTION_STATUSES.add(CoordinatorAction.Status.TIMEDOUT.toString());
     }
 
     /**
@@ -1808,6 +1830,88 @@ public class OozieClient {
 
     public List<BulkResponse> getBulkInfo(String filter, int start, int len) throws OozieClientException {
         return new BulkResponseStatus(filter, start, len).call();
+    }
+
+    /**
+     * Poll a job (Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID) and return when it has reached a
+     * terminal state.
+     * (i.e. FAILED, KILLED, SUCCEEDED)
+     *
+     * @param id The Job ID
+     * @param timeout timeout in minutes (negative values indicate no timeout)
+     * @param interval polling interval in minutes (must be positive)
+     * @param verbose if true, the current status will be printed out at each poll; if false, no output
+     * @throws OozieClientException thrown if the job's status could not be retrieved
+     */
+    public void pollJob(String id, int timeout, int interval, boolean verbose) throws OozieClientException {
+        notEmpty("id", id);
+        if (interval < 1) {
+            throw new IllegalArgumentException("interval must be a positive integer");
+        }
+        boolean noTimeout = (timeout < 1);
+        long endTime = System.currentTimeMillis() + timeout * 60 * 1000;
+        interval *= 60 * 1000;
+
+        final Set<String> completedStatuses;
+        if (id.endsWith("-W")) {
+            completedStatuses = COMPLETED_WF_STATUSES;
+        } else if (id.endsWith("-C")) {
+            completedStatuses = COMPLETED_COORD_AND_BUNDLE_STATUSES;
+        } else if (id.endsWith("-B")) {
+            completedStatuses = COMPLETED_COORD_AND_BUNDLE_STATUSES;
+        } else if (id.contains("-C@")) {
+            completedStatuses = COMPLETED_COORD_ACTION_STATUSES;
+        } else {
+            throw new IllegalArgumentException("invalid job type");
+        }
+
+        String status = getStatus(id);
+        if (verbose) {
+            System.out.println(status);
+        }
+        while(!completedStatuses.contains(status) && (noTimeout || System.currentTimeMillis() <= endTime)) {
+            try {
+                Thread.sleep(interval);
+            } catch (InterruptedException ie) {
+                // ignore
+            }
+            status = getStatus(id);
+            if (verbose) {
+                System.out.println(status);
+            }
+        }
+    }
+
+    /**
+     * Gets the status for a particular job (Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID).
+     *
+     * @param jobId given jobId
+     * @return the status
+     * @throws OozieClientException
+     */
+    public String getStatus(String jobId) throws OozieClientException {
+        return new Status(jobId).call();
+    }
+
+    private class Status extends ClientCallable<String> {
+
+        Status(String jobId) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    RestConstants.JOB_SHOW_STATUS));
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return (String) json.get(JsonTags.STATUS);
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
     }
 
     private class GetQueueDump extends ClientCallable<List<String>> {

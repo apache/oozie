@@ -93,6 +93,8 @@ public interface RestConstants {
 
     public static final String JOB_SHOW_KILL_PARAM = "show-kill";
 
+    public static final String JOB_SHOW_STATUS = "status";
+
     public static final String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 
     public static final String JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM = "date-scope";

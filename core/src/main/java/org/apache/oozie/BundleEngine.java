@@ -49,6 +49,8 @@ import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleRerunXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
@@ -469,5 +471,24 @@ public class BundleEngine extends BaseEngine {
             }
         }
         return bulkFilter;
+    }
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws BundleEngineException thrown if the job's status could not be obtained
+     */
+    @Override
+    public String getJobStatus(String jobId) throws BundleEngineException {
+        try {
+            BundleJobBean bundleJob = BundleJobQueryExecutor.getInstance().get(
+                    BundleJobQueryExecutor.BundleJobQuery.GET_BUNDLE_JOB_STATUS, jobId);
+            return bundleJob.getStatusStr();
+        }
+        catch (JPAExecutorException e) {
+            throw new BundleEngineException(e);
+        }
     }
 }

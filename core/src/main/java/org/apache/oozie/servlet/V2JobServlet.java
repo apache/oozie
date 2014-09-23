@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
@@ -39,6 +41,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -186,5 +189,33 @@ public class V2JobServlet extends V1JobServlet {
         catch (CoordinatorEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        String status;
+        String jobId = getResourceName(request);
+        try {
+            if (jobId.endsWith("-B")) {
+                BundleEngine engine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
+                status = engine.getJobStatus(jobId);
+            } else if (jobId.endsWith("-W")) {
+                DagEngine engine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
+                status = engine.getJobStatus(jobId);
+            } else {
+                CoordinatorEngine engine =
+                        Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request));
+                if (jobId.contains("-C@")) {
+                    status = engine.getActionStatus(jobId);
+                } else {
+                    status = engine.getJobStatus(jobId);
+                }
+            }
+        } catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        return status;
     }
 }

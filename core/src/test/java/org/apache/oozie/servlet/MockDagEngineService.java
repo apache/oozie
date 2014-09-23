@@ -183,6 +183,13 @@ public class MockDagEngineService extends DagEngineService {
         }
 
         @Override
+        public String getJobStatus(String jobId) throws DagEngineException {
+            did = RestConstants.JOB_SHOW_STATUS;
+            int idx = validateWorkflowIdx(jobId);
+            return workflows.get(idx).getStatus().toString();
+        }
+
+        @Override
         public String getDefinition(String jobId) throws DagEngineException {
             did = RestConstants.JOB_SHOW_DEFINITION;
             int idx = validateWorkflowIdx(jobId);

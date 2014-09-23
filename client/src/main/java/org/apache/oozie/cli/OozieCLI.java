@@ -119,6 +119,9 @@ public class OozieCLI {
     public static final String SHOWDIFF_OPTION = "diff";
     public static final String UPDATE_OPTION = "update";
     public static final String IGNORE_OPTION = "ignore";
+    public static final String POLL_OPTION = "poll";
+    public static final String TIMEOUT_OPTION = "timeout";
+    public static final String INTERVAL_OPTION = "interval";
 
     public static final String DO_AS_OPTION = "doas";
 
@@ -286,10 +289,11 @@ public class OozieCLI {
         Option suspend = new Option(SUSPEND_OPTION, true, "suspend a job");
         Option resume = new Option(RESUME_OPTION, true, "resume a job");
         Option kill = new Option(KILL_OPTION, true, "kill a job (coordinator can mention -action or -date)");
-        Option change = new Option(CHANGE_OPTION, true, "change a coordinator job");
+        Option change = new Option(CHANGE_OPTION, true, "change a coordinator or bundle job");
         Option changeValue = new Option(CHANGE_VALUE_OPTION, true,
                 "new endtime/concurrency/pausetime value for changing a coordinator job");
         Option info = new Option(INFO_OPTION, true, "info of a job");
+        Option poll = new Option(POLL_OPTION, true, "poll Oozie until a job reaches a terminal state or a timeout occurs");
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
@@ -312,7 +316,8 @@ public class OozieCLI {
         Option config_content = new Option(CONFIG_CONTENT_OPTION, true, "job configuration");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option action = new Option(ACTION_OPTION, true,
-                "coordinator rerun on action ids (requires -rerun); coordinator log retrieval on action ids (requires -log)");
+                "coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids"
+                        + "(requires -log)");
         Option date = new Option(DATE_OPTION, true,
                 "coordinator/bundle rerun on action dates (requires -rerun); coordinator log retrieval on action dates (requires -log)");
         Option rerun_coord = new Option(RERUN_COORD_OPTION, true, "bundle rerun on coordinator names (requires -rerun)");
@@ -327,6 +332,11 @@ public class OozieCLI {
         Option ignore = new Option(IGNORE_OPTION, true,
                 "change status of a coordinator job or action to IGNORED"
                 + " (-action required to ignore coord actions)");
+        Option timeout = new Option(TIMEOUT_OPTION, true, "timeout in minutes (default is 30, negative values indicate no "
+                + "timeout, requires -poll)");
+        timeout.setType(Integer.class);
+        Option interval = new Option(INTERVAL_OPTION, true, "polling interval in minutes (default is 5, requires -poll)");
+        interval.setType(Integer.class);
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -346,6 +356,7 @@ public class OozieCLI {
         actions.addOption(definition);
         actions.addOption(config_content);
         actions.addOption(ignore);
+        actions.addOption(poll);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -369,6 +380,8 @@ public class OozieCLI {
         jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
         jobOptions.addOption(logFilter);
+        jobOptions.addOption(timeout);
+        jobOptions.addOption(interval);
         addAuthOptions(jobOptions);
         jobOptions.addOption(showdiff);
 
@@ -1151,6 +1164,21 @@ public class OozieCLI {
                 else {
                     System.out.println(wc.updateCoord(coordJobId, conf, dryrun, showdiff));
                 }
+            }
+            else if (options.contains(POLL_OPTION)) {
+                String jobId = commandLine.getOptionValue(POLL_OPTION);
+                int timeout = 30;
+                int interval = 5;
+                String timeoutS = commandLine.getOptionValue(TIMEOUT_OPTION);
+                if (timeoutS != null) {
+                    timeout = Integer.parseInt(timeoutS);
+                }
+                String intervalS = commandLine.getOptionValue(INTERVAL_OPTION);
+                if (intervalS != null) {
+                    interval = Integer.parseInt(intervalS);
+                }
+                boolean verbose = commandLine.hasOption(VERBOSE_OPTION);
+                wc.pollJob(jobId, timeout, interval, verbose);
             }
         }
         catch (OozieClientException ex) {

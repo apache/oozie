@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1567 Provide a wait tool in Oozie (rkanter)
 OOZIE-2014 TestAuthFilterAuthOozieClient fails after OOZIE-1917 (rkanter)
 OOZIE-1917 Authentication secret should be random by default and needs to coordinate with HA (rkanter)
 OOZIE-1853 Improve the Credentials documentation (rkanter)

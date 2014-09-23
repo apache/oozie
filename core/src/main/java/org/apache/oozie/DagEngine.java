@@ -544,4 +544,22 @@ public class DagEngine extends BaseEngine {
             throw new DagEngineException(ex);
         }
     }
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws DagEngineException thrown if the job's status could not be obtained
+     */
+    @Override
+    public String getJobStatus(String jobId) throws DagEngineException {
+        try {
+            WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, jobId);
+            return wfJob.getStatusStr();
+        }
+        catch (JPAExecutorException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
 }

@@ -218,4 +218,12 @@ public abstract class BaseEngine {
         }
     }
 
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws BaseEngineException thrown if the job's status could not be obtained
+     */
+    public abstract String getJobStatus(String jobId) throws BaseEngineException;
 }

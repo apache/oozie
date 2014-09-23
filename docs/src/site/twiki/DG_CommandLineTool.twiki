@@ -27,55 +27,67 @@ usage:
       oozie version : show client version
 .
       oozie job <OPTIONS> : job operations
-                -action <arg>         coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids (requires -log)
+                -action <arg>         coordinator rerun/kill on action ids (requires -rerun/-kill);
+                                      coordinator log retrieval on action ids (requires -log)
                 -allruns              Get workflow jobs corresponding to a coordinator action
                                       including all the reruns
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
-                -change <arg>         change a coordinator/bundle job
+                -change <arg>         change a coordinator or bundle job
                 -config <arg>         job configuration file '.xml' or '.properties'
+                -configcontent <arg>  job configuration
+                -coordinator <arg>    bundle rerun on coordinator names (requires -rerun)
                 -D <property=value>   set/override value for given property
-                -date <arg>           coordinator/bundle rerun on action dates (requires -rerun)
+                -date <arg>           coordinator/bundle rerun on action dates (requires -rerun);
+                                      coordinator log retrieval on action dates (requires -log)
+                -debug                Use debug mode to see debugging statements on stdout
                 -definition <arg>     job definition
+                -diff <arg>           Show diff of the new coord definition and properties with the
+                                      existing one (default true)
                 -doas <arg>           doAs user, impersonates as the specified user
-                -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without actually executing it
+                -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0)
+                                      job without actually executing it
+                -filter <arg>         status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]*
+                                      (All Coordinator actions satisfying the status filters will
+                                      be retreived. Positive filters '=' concatenated with OR and
+                                      negative filters '!=' with AND. Currently, only supported for
+                                      Coordinator job)
+                -ignore <arg>         change status of a coordinator job or action to IGNORED
+                                      (-action required to ignore coord actions)
                 -info <arg>           info of a job
-                -kill <arg>           kill a job (coordinator requires -action or -date)
-                -len <arg>            number of actions to be returned, used for pagination(default 1000, requires -info)
-                -filter <arg>         All coordinator actions satisfying the filter will be retrieved.
-                                      Filter is of the format <key><comparator><value>[;<key><comparator><value>]*
-                                      key: status or nominaltime
-                                      comparator: =, !=, <, <=, >, >=
-                                      value: valid status like SUCCEEDED, KILLED, RUNNING etc. Only = and != apply for status
-                                      nominalTime is valid date of the format yyyy-MM-dd'T'HH:mm'Z' (like 2014-06-01T00:00Z)
-                                      Filter with '=' is concatenated with 'OR' and other filters are concatenated with 'AND'.
-                                      Currently, supported only for coordinator job.
-                -order <arg>          order to show coordinator actions (default ascending order, 'desc' for descending order, requires -info)
-                                      Currently, only supported for coordinator job.
+                -interval <arg>       polling interval in minutes (default is 5, requires -poll)
+                -kill <arg>           kill a job (coordinator can mention -action or -date)
+                -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
                 -localtime            use local time (same as passing your time zone to -timezone).
                                       Overrides -timezone option
                 -log <arg>            job log
-                -nocleanup            do not clean up output-events of the coordinator rerun actions
-                                      (requires -rerun)
-                -offset <arg>         offset of actions returned relative to all actions matching the filter criteria,
-                                      used for pagination (default '1', requires -info)
+                -logfilter <arg>      job log search parameter. Can be specified as -logfilter
+                                      opt1=val1;opt2=val1;opt3=val1. Supported options are recent,
+                                      start, end, loglevel, text, limit and debug
+                -nocleanup            do not clean up output-events of the coordiantor rerun
+                                      actions (requires -rerun)
+                -offset <arg>         job info offset of actions (default '1', requires -info)
                 -oozie <arg>          Oozie URL
-                -refresh              re-materialize the coordinator rerun actions (requires -rerun)
-                -rerun <arg>          rerun a job  (coordinator requires -action or -date; bundle requires -coordinator or -date)
+                -order <arg>          order to show coord actions (default ascending order, 'desc'
+                                      for descending order, requires -info)
+                -poll <arg>           poll Oozie until a job reaches a terminal state or a timeout
+                                      occurs
+                -refresh              re-materialize the coordinator rerun actions (requires
+                                      -rerun)
+                -rerun <arg>          rerun a job  (coordinator requires -action or -date, bundle
+                                      requires -coordinator or -date)
                 -resume <arg>         resume a job
                 -run                  run a job
                 -start <arg>          start a job
                 -submit               submit a job
                 -suspend <arg>        suspend a job
+                -timeout <arg>        timeout in minutes (default is 30, negative values indicate
+                                      no timeout, requires -poll)
                 -timezone <arg>       use time zone with the specified ID (default GMT).
                                       See 'oozie info -timezones' for a list
+                -update <arg>         Update coord definition and properties
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
-                                      coordinator job; new pausetime value for changing a bundle job
+                                      coordinator job
                 -verbose              verbose mode
-                -update               Update coordinator definition and properties
-                -logfilter            job log search parameter. Can be specified as -logfilter opt1=val1;opt2=val1;opt3=val1.
-                                      Supported options are recent, start, end, loglevel, text, limit and debug.
-                -ignore <arg>         ignore a coordinator job or action
-                                      (requires '-action' to ignore a coordinator action, if no option given, ignore a coodinator job)
 .
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
@@ -817,6 +829,28 @@ For example, when a coordinator action failed and afterwards ignored, a coordina
 A ignored coordinator action can be rerun using -rerun command.
 Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details.
 When a workflow job of a ignored coordinator action is rerun, the coordinator action becomes =RUNNING= state.
+
+---+++ Polling an Oozie job
+
+This command allows polling the Oozie server for an Oozie job until it reaches a completed status (e.g. =SUCCEEDED=, =KILLED=, etc).
+
+Example:
+
+<verbatim>
+$ oozie job -poll <job_id> -interval 10 -timeout 60 -verbose
+.
+RUNNING
+RUNNING
+RUNNING
+SUCCEEDED
+</verbatim>
+
+The =-poll= argument takes a valid Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID.
+
+All other arguments are optional:
+   * =verbose= will cause the job status to be printed at each poll; otherwise, there will be no output
+   * =interval=  allows specifying the polling interval in minutes (default is 5)
+   * =timeout= allows specifying the timeout in minutes (default is 30 minutes); negative values indicate no timeout
 
 ---++ Jobs Operations
 

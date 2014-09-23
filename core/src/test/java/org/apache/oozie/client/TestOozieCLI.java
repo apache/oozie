@@ -936,6 +936,37 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testJobPoll() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                MockDagEngineService.reset();
+                String[] args = new String[]{"job", "-oozie", oozieUrl, "-poll", MockDagEngineService.JOB_ID + "1" +
+                    MockDagEngineService.JOB_ID_END};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockDagEngineService.did);
+
+                args = new String[]{"job", "-oozie", oozieUrl, "-poll", MockDagEngineService.JOB_ID + "1" +
+                    MockDagEngineService.JOB_ID_END, "-interval", "10"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockDagEngineService.did);
+
+                args = new String[]{"job", "-oozie", oozieUrl, "-poll", MockDagEngineService.JOB_ID + "1" +
+                    MockDagEngineService.JOB_ID_END, "-timeout", "60"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockDagEngineService.did);
+
+                args = new String[]{"job", "-oozie", oozieUrl, "-poll", MockDagEngineService.JOB_ID + "1" +
+                    MockDagEngineService.JOB_ID_END, "-interval", "10", "-timeout", "60"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_STATUS, MockDagEngineService.did);
+
+                return null;
+            }
+        });
+    }
+
     public void testJobLog() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override
