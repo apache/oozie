@@ -1437,10 +1437,20 @@ starting the Java application. This capability enables Oozie to retry a Java app
 or non-transient failure (This can be used to cleanup any temporary data which may have been created by the Java
 application in case of failure).
 
-A =java= action can create a Hadoop configuration. The Hadoop configuration is made available as a local file to the
-Java application in its running directory, the file name is =oozie-action.conf.xml=. Similar to =map-reduce= and
- =pig= actions it is possible to refer a =job.xml= file and using inline configuration properties. For repeated
-configuration properties later values override earlier ones.
+A =java= action can create a Hadoop configuration for interacting with a cluster (e.g. launching a map-reduce job).
+Oozie prepares a Hadoop configuration file which includes the environments site configuration files (e.g. hdfs-site.xml, 
+mapred-site.xml, etc) plus the properties added to the =<configuration>= section of the =java= action. The Hadoop configuration 
+file is made available as a local file to the Java application in its running directory. It can be added to the =java= actions 
+Hadoop configuration by referencing the system property: =oozie-action.conf.xml=. For example:
+
+<verbatim>
+// loading action conf prepared by Oozie
+Configuration actionConf = new Configuration(false);
+actionConf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
+</verbatim>
+
+If =oozie.action.conf.xml= is not added then the job will pick up the mapred-default properties and this may result
+in unexpected behaviour. For repeated configuration properties later values override earlier ones.
 
 Inline property values can be parameterized (templatized) using EL expressions.
 
