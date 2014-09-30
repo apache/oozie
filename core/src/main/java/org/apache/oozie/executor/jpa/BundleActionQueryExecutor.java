@@ -43,7 +43,6 @@ public class BundleActionQueryExecutor extends
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID,
         GET_BUNDLE_ACTION,
         GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
-        GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME,
         GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN,
         GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE
     };
@@ -99,9 +98,6 @@ public class BundleActionQueryExecutor extends
             case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
                 break;
-            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
-                query.setParameter("lastModifiedTime", new Timestamp(((Date)parameters[0]).getTime()));
-                break;
             case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
                 Timestamp ts = new Timestamp(System.currentTimeMillis() - (Long)parameters[0] * 1000);
                 query.setParameter("lastModifiedTime", ts);
@@ -145,10 +141,6 @@ public class BundleActionQueryExecutor extends
             case GET_BUNDLE_ACTION:
             case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 bean = (BundleActionBean) ret;
-                break;
-            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
-                bean = new BundleActionBean();
-                bean.setBundleId((String) ret);
                 break;
             case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
                 bean = new BundleActionBean();

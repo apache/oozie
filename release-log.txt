@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1940 StatusTransitService has race condition (puru)
 OOZIE-1696 Document how to get the action conf in the Java action (jrkinley via rkanter)
 OOZIE-1567 Provide a wait tool in Oozie (rkanter)
 OOZIE-2014 TestAuthFilterAuthOozieClient fails after OOZIE-1917 (rkanter)

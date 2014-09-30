@@ -207,6 +207,8 @@ public enum ErrorCode {
     E1022(XLog.STD, "Cannot delete running/completed coordinator action: [{0}]"),
     E1023(XLog.STD, "Coord Job update Error: [{0}]"),
     E1024(XLog.STD, "Cannot run ignore command: [{0}]"),
+    E1025(XLog.STD, "Coord status transit error: [{0}]"),
+
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
@@ -235,6 +237,7 @@ public enum ErrorCode {
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
     E1320(XLog.STD, "Bundle Job change error, [{0}]"),
     E1321(XLog.STD, "Error evaluating coord name, [{0}]"),
+    E1322(XLog.STD, "Bundle status transit error: [{0}]"),
 
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),

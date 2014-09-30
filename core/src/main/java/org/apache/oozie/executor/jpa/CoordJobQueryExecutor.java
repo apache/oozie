@@ -64,7 +64,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         GET_COORD_JOB_STATUS_PARENTID,
         GET_COORD_JOBS_CHANGED,
         GET_COORD_JOBS_OLDER_FOR_MATERILZATION,
-        GET_COORD_FOR_ABANDONEDCHECK
+        GET_COORD_FOR_ABANDONEDCHECK,
+        GET_COORD_IDS_FOR_STATUS_TRANSIT
     };
 
     private static CoordJobQueryExecutor instance = new CoordJobQueryExecutor();
@@ -214,6 +215,10 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter(2, (Timestamp) parameters[1]);
                 break;
 
+            case GET_COORD_IDS_FOR_STATUS_TRANSIT:
+                query.setParameter("lastModifiedTime", new Timestamp(((Date) parameters[0]).getTime()));
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -343,6 +348,11 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setAppName((String) arr[3]);
                 break;
 
+            case GET_COORD_IDS_FOR_STATUS_TRANSIT:
+                bean = new CoordinatorJobBean();
+                bean.setId((String) ret);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -382,5 +392,4 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
     public Object getSingleValue(CoordJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         throw new UnsupportedOperationException();
     }
-
 }

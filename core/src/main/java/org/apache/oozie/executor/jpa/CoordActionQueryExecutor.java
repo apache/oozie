@@ -49,7 +49,9 @@ public class CoordActionQueryExecutor extends
         GET_COORD_ACTION,
         GET_COORD_ACTION_STATUS,
         GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID,
-        GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME
+        GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME,
+        GET_COORD_ACTIONS_STATUS_UNIGNORED,
+        GET_COORD_ACTIONS_PENDING_COUNT
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
@@ -170,6 +172,13 @@ public class CoordActionQueryExecutor extends
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
                 query.setParameter("lastModifiedTime", new Timestamp(((Date) parameters[0]).getTime()));
                 break;
+            case GET_COORD_ACTIONS_STATUS_UNIGNORED:
+                query.setParameter("jobId", parameters[0]);
+                break;
+            case GET_COORD_ACTIONS_PENDING_COUNT:
+                query.setParameter("jobId", parameters[0]);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + caQuery.name());
@@ -230,6 +239,13 @@ public class CoordActionQueryExecutor extends
                 bean = new CoordinatorActionBean();
                 bean.setStatusStr((String)ret);
                 break;
+            case GET_COORD_ACTIONS_STATUS_UNIGNORED:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setStatusStr((String)arr[0]);
+                bean.setPending((Integer)arr[1]);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
                         + namedQuery.name());
@@ -239,6 +255,13 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public Object getSingleValue(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
-        throw new UnsupportedOperationException();
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
+            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        }
+        return ret;
     }
 }

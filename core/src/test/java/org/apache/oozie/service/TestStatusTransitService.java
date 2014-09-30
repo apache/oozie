@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import java.util.Date;
@@ -55,6 +54,7 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -824,7 +824,8 @@ public class TestStatusTransitService extends XDataTestCase {
         assertNotNull(jpaService);
 
         final String bundleId = job.getId();
-        addRecordToBundleActionTable(bundleId, "action1", 0, Job.Status.KILLED);
+        CoordinatorJobBean coord1 = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
+        addRecordToBundleActionTable(bundleId, coord1.getId(), "action1", 0, Job.Status.KILLED);
 
         String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
         Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
@@ -1288,7 +1289,10 @@ public class TestStatusTransitService extends XDataTestCase {
         final String bundleId = bundleJob.getId();
         addRecordToBundleActionTable(bundleId, "action1", 1, Job.Status.PAUSED);
         addRecordToBundleActionTable(bundleId, "action2", 1, Job.Status.PAUSED);
-        addRecordToBundleActionTable(bundleId, "action3", 0, Job.Status.FAILED);
+        BundleActionBean bundleAction = addRecordToBundleActionTable(bundleId, "action3", 0, Job.Status.FAILED);
+        bundleAction.setCoordId("test");
+        BundleActionQueryExecutor.getInstance().executeUpdate(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, bundleAction);
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
@@ -1443,13 +1447,9 @@ public class TestStatusTransitService extends XDataTestCase {
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
         final JPAService jpaService = Services.get().get(JPAService.class);
         final String bundleId = bundleJob.getId();
-        BundleActionBean bundleAction1 = addRecordToBundleActionTable(bundleId, "action1-C", 1, Job.Status.RUNNING);
-        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
-        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
-        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
-
-        addRecordToCoordJobTableWithBundle(bundleId, "action1-C", CoordinatorJob.Status.RUNNING, start, end, false,
-                true, 1);
+        CoordinatorJobBean coord1 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        BundleActionBean bundleAction1 = addRecordToBundleActionTable(bundleId, coord1.getId(), "action1-C", 1,
+                Job.Status.RUNNING);
         bundleJob.setPending();
         bundleAction1.setStatus(Job.Status.KILLED);
         bundleAction1.setPending(0);
@@ -1467,7 +1467,9 @@ public class TestStatusTransitService extends XDataTestCase {
 
         bundleAction1.setPending(1);
         bundleAction1.setStatus(Job.Status.RUNNING);
+        bundleAction1.setLastModifiedTime(new Date());
         bundleJob.setPending();
+        bundleJob.setLastModifiedTime(new Date());
         BundleActionQueryExecutor.getInstance().executeUpdate(
                 BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID, bundleAction1);
         BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
@@ -1479,15 +1481,20 @@ public class TestStatusTransitService extends XDataTestCase {
 
     // Test bundle transition from running to runningwitherror when one action is killed.
     public void testBundleStatusTransitRunningWithError() throws Exception {
-        Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        new Services().init();
+        services = new Services();
+        services.init();
+
+        final CoordinatorJobBean coord1 = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
+        final CoordinatorJobBean coord2 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        final CoordinatorJobBean coord3 = addRecordToCoordJobTable(CoordinatorJob.Status.DONEWITHERROR, false, false);
 
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
         final String bundleId = bundleJob.getId();
-        addRecordToBundleActionTable(bundleId, "action1-C", 0, Job.Status.PREP);
-        addRecordToBundleActionTable(bundleId, "action2-C", 0, Job.Status.RUNNING);
-        BundleActionBean action3 = addRecordToBundleActionTable(bundleId, "action3-C", 0, Job.Status.DONEWITHERROR);
+        addRecordToBundleActionTable(bundleId, coord1.getId(), "action1-C", 0, Job.Status.PREP);
+        addRecordToBundleActionTable(bundleId, coord2.getId(), "action2-C", 0, Job.Status.RUNNING);
+        BundleActionBean action3 = addRecordToBundleActionTable(bundleId, coord3.getId(), "action3-C", 0,
+                Job.Status.DONEWITHERROR);
 
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
@@ -1504,5 +1511,123 @@ public class TestStatusTransitService extends XDataTestCase {
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
 
+    }
+
+    public void testBundleStatusTransitWithLock() throws Exception {
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        services = new Services();
+        services.init();
+
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+
+        final String jobId = bundleJob.getId();
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, "action1-C", 0, Job.Status.PREP);
+        addRecordToBundleActionTable(bundleId, "action2-C", 0, Job.Status.RUNNING);
+        addRecordToBundleActionTable(bundleId, "action3-C", 0, Job.Status.DONEWITHERROR);
+
+        JobLock lockThread = new JobLock(jobId);
+        new Thread(lockThread).start();
+
+        sleep(1000);
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
+        synchronized (lockThread) {
+            lockThread.notifyAll();
+        }
+        sleep(1000);
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.RUNNINGWITHERROR, bundleJob.getStatus());
+
+    }
+
+    public void testCoordStatusTransitWithLock() throws Exception {
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        services = new Services();
+        services.init();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, true, false,
+                1);
+        addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.KILLED, "coord-action-get.xml", null,
+                "KILLED", 0);
+
+        final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        JobLock lockThread = new JobLock(coordJob.getId());
+        new Thread(lockThread).start();
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        sleep(1000);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
+
+        synchronized (lockThread) {
+            lockThread.notifyAll();
+        }
+        runnable.run();
+        coordJob = jpaService.execute(coordJobGetCmd);
+        assertEquals(CoordinatorJob.Status.RUNNINGWITHERROR, coordJob.getStatus());
+
+    }
+
+    public void testBundleStatusCoordSubmitFails() throws Exception {
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        services = new Services();
+        services.init();
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, null, 0, Job.Status.FAILED);
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        // First try will kill the job.
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.FAILED, bundleJob.getStatus());
+        sleep(1000);
+        bundleJob.setStatus(Job.Status.RUNNING);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
+        runnable.run();
+        // second try will change the status.
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.FAILED, bundleJob.getStatus());
+
+    }
+
+    static class JobLock implements Runnable {
+        String jobId;
+
+        public JobLock(String jobId) {
+            this.jobId = jobId;
+        }
+
+        LockToken lock = null;
+
+        public void acquireLock() throws InterruptedException {
+            lock = Services.get().get(MemoryLocksService.class).getWriteLock(jobId, 0);
+        }
+
+        public void release() {
+            lock.release();
+        }
+
+        @Override
+        public void run() {
+            try {
+                acquireLock();
+                synchronized (this) {
+                    this.wait();
+                }
+                release();
+            }
+            catch (InterruptedException e) {
+            }
+        }
     }
 }

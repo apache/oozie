@@ -20,6 +20,7 @@ package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -48,7 +49,8 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         GET_BUNDLE_JOB,
         GET_BUNDLE_JOB_STATUS,
         GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME,
-        GET_BUNDLE_JOB_ID_JOBXML_CONF
+        GET_BUNDLE_JOB_ID_JOBXML_CONF,
+        GET_BUNDLE_IDS_FOR_STATUS_TRANSIT
     };
 
     private static BundleJobQueryExecutor instance = new BundleJobQueryExecutor();
@@ -134,6 +136,9 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
             case GET_BUNDLE_JOB_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
+            case GET_BUNDLE_IDS_FOR_STATUS_TRANSIT:
+                query.setParameter("lastModifiedTime", DateUtils.convertDateToTimestamp((Date)parameters[0]));
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -206,6 +211,12 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 bean.setJobXmlBlob((StringBlob) arr[1]);
                 bean.setConfBlob((StringBlob) arr[2]);
                 break;
+
+            case GET_BUNDLE_IDS_FOR_STATUS_TRANSIT:
+                bean = new BundleJobBean();
+                bean.setId((String) ret);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());

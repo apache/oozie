@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -97,10 +96,6 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("bundleActionId"), bean.getBundleId());
 
         query = BundleActionQueryExecutor.getInstance().getSelectQuery(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, em, bean.getLastModifiedTime());
-        assertEquals(query.getParameterValue("lastModifiedTime"), bean.getLastModifiedTimestamp());
-
-        query = BundleActionQueryExecutor.getInstance().getSelectQuery(
                 BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, em, (long) 100);
         Date date = DateUtils.toDate((Timestamp) (query.getParameterValue("lastModifiedTime")));
         assertTrue(date.before(Calendar.getInstance().getTime()));
@@ -138,20 +133,10 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
 
     public void testGetList() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
-        BundleActionBean bean1 = this.addRecordToBundleActionTable(job.getId(), "coord1", 0, Job.Status.PREP);
-        BundleActionBean bean2 = this.addRecordToBundleActionTable(job.getId(), "coord2", 1, Job.Status.RUNNING);
-        BundleActionBean bean3 = this.addRecordToBundleActionTable(job.getId(), "coord3", 1, Job.Status.RUNNING);
-        // GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME
-        Date timeBefore = new Date(bean1.getLastModifiedTime().getTime() - 1000 * 60);
+        this.addRecordToBundleActionTable(job.getId(), "coord1", 0, Job.Status.PREP);
+        this.addRecordToBundleActionTable(job.getId(), "coord2", 1, Job.Status.RUNNING);
+        this.addRecordToBundleActionTable(job.getId(), "coord3", 1, Job.Status.RUNNING);
         List<BundleActionBean> bActions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, timeBefore);
-        assertEquals(3, bActions.size());
-        Date timeAfter = new Date(bean3.getLastModifiedTime().getTime() + 100 * 60);
-        bActions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, timeAfter);
-        assertEquals(0, bActions.size());
-        // GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN
-        bActions = BundleActionQueryExecutor.getInstance().getList(
                 BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, (long) (1000 * 60));
         assertEquals(0, bActions.size());
         bActions = BundleActionQueryExecutor.getInstance().getList(
