@@ -15,24 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
+
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
+
 import org.apache.curator.framework.recipes.locks.ChildReaper;
 import org.apache.curator.framework.recipes.locks.Reaper;
+import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.utils.ThreadUtils;
+
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -78,7 +83,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
      */
     @Override
     public void destroy() {
-        if (reaper != null) {
+        if (reaper != null && ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
             try {
                 reaper.close();
             }
@@ -86,7 +91,6 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
                 LOG.error("Error closing childReaper", e);
             }
         }
-
         if (zk != null) {
             zk.unregister(this);
         }

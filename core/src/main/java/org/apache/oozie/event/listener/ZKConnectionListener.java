@@ -31,6 +31,8 @@ import org.apache.oozie.util.ZKUtils;
 public class ZKConnectionListener implements ConnectionStateListener {
 
     private XLog LOG = XLog.getLog(getClass());
+    private static ConnectionState connectionState;
+    public static final String CONF_SHUTDOWN_ON_TIMEOUT = "oozie.zookeeper.server.shutdown.ontimeout";
 
     public ZKConnectionListener() {
         LOG.info("ZKConnectionListener started");
@@ -38,13 +40,14 @@ public class ZKConnectionListener implements ConnectionStateListener {
 
     @Override
     public void stateChanged(final CuratorFramework client, final ConnectionState newState) {
+        connectionState = newState;
         LOG.trace("ZK connection status  = " + newState.toString());
-//        if (newState == ConnectionState.CONNECTED) {
-//             ZK connected
-//        }
+        // if (newState == ConnectionState.CONNECTED) {
+        // ZK connected
+        // }
         if (newState == ConnectionState.SUSPENDED) {
             LOG.warn("ZK connection is suspended, waiting for reconnect. If connection doesn't reconnect before "
-                    + ZKUtils.getZKConnectionTimeout() + " Oozie server will shutdown itself");
+                    + ZKUtils.getZKConnectionTimeout() + " (sec) Oozie server will shutdown itself");
         }
 
         if (newState == ConnectionState.RECONNECTED) {
@@ -53,10 +56,16 @@ public class ZKConnectionListener implements ConnectionStateListener {
         }
 
         if (newState == ConnectionState.LOST) {
-            LOG.fatal("ZK is connection is not reconnected in " + ZKUtils.getZKConnectionTimeout()
-                    + ", shutting down Oozie server");
-            Services.get().destroy();
-            System.exit(1);
+            LOG.fatal("ZK is not reconnected in " + ZKUtils.getZKConnectionTimeout());
+            if (Services.get().getConf().getBoolean(CONF_SHUTDOWN_ON_TIMEOUT, true)) {
+                LOG.fatal("Shutting down Oozie server");
+                Services.get().destroy();
+                System.exit(1);
+            }
         }
+    }
+
+    public static ConnectionState getZKConnectionState() {
+        return connectionState;
     }
 }

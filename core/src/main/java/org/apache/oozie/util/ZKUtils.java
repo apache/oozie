@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.util;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,6 +34,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.ACLProvider;
 import org.apache.curator.framework.imps.DefaultACLProvider;
+import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.utils.EnsurePath;
 import org.apache.curator.x.discovery.ServiceCache;
@@ -163,7 +163,9 @@ public class ZKUtils {
         // If there are no more classes using ZooKeeper, we should teardown everything.
         users.remove(user);
         if (users.isEmpty() && zk != null) {
-            zk.teardown();
+            if (ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
+                zk.teardown();
+            }
             zk = null;
         }
     }
@@ -172,7 +174,7 @@ public class ZKUtils {
         // Connect to the ZooKeeper server
         RetryPolicy retryPolicy = ZKUtils.getRetryPloicy();
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
-        String zkNamespace = Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+        String zkNamespace = getZKNameSpace();
         zkConnectionTimeout = Services.get().getConf().getInt(ZK_CONNECTION_TIMEOUT, 180);
 
         ACLProvider aclProvider;
@@ -404,6 +406,14 @@ public class ZKUtils {
      */
     public static RetryPolicy getRetryPloicy() {
         return new ExponentialBackoffRetry(1000, 3);
+    }
+
+    /**
+     * Returns configured zk namesapces
+     * @return oozie.zookeeper.namespace
+     */
+    public static String getZKNameSpace() {
+        return Services.get().getConf().get(ZK_NAMESPACE, "oozie");
     }
     /**
      * Return ZK connection timeout

@@ -2069,7 +2069,16 @@
         <value>180</value>
         <description>
         Default ZK connection timeout (in sec). If connection is lost for more than timeout, then Oozie server will shutdown
-        itself.
+        itself if oozie.zookeeper.server.shutdown.ontimeout is true.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.zookeeper.server.shutdown.ontimeout</name>
+        <value>true</value>
+        <description>
+            If true, Oozie server will shutdown itself on ZK
+            connection timeout.
         </description>
     </property>
 
