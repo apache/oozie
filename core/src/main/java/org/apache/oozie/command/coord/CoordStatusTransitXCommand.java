@@ -170,7 +170,9 @@ public class CoordStatusTransitXCommand extends StatusTransitXCommand {
 
     @Override
     protected boolean isSuspendedState() {
-        if (coordJob.getStatus() == Job.Status.SUSPENDED || coordJob.getStatus() == Job.Status.SUSPENDEDWITHERROR) {
+        if (coordJob.getStatus() == Job.Status.SUSPENDED
+                || coordJob.getStatus() == Job.Status.SUSPENDEDWITHERROR
+                || coordJob.getStatus() == Job.Status.PREPSUSPENDED) {
             return true;
         }
         else {
@@ -182,6 +184,8 @@ public class CoordStatusTransitXCommand extends StatusTransitXCommand {
     protected Status getSuspendedStatus() {
         if (coordJob.getStatus() == Job.Status.SUSPENDED || coordJob.getStatus() == Job.Status.SUSPENDEDWITHERROR) {
             return hasTerminatedActions() ? Job.Status.SUSPENDEDWITHERROR : Job.Status.SUSPENDED;
+        } else if (coordJob.getStatus() == Job.Status.PREPSUSPENDED) {
+            return Job.Status.PREPSUSPENDED;
         }
         else {
             return getBottomUpSuspendedState();
