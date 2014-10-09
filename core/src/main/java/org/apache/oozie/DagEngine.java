@@ -20,7 +20,6 @@ package org.apache.oozie;
 
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.service.DagXLogInfoService;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
@@ -292,7 +291,6 @@ public class DagEngine extends BaseEngine {
             XConfiguration.copy(conf, wfConf);
             validateReRunConfiguration(wfConf);
             new ReRunXCommand(jobId, wfConf).call();
-            start(jobId);
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);

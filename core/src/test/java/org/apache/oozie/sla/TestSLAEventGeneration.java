@@ -257,7 +257,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         ehs.getEventQueue().clear();
         slas.runSLAWorker();
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
-        assertEquals(SLAStatus.NOT_STARTED, slaEvent.getSLAStatus());
+        assertEquals(SLAStatus.IN_PROCESS, slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
     }

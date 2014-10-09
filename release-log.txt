@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2023 Job rerun can stuck in prep (puru)
 OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-1940 StatusTransitService has race condition (puru)
 OOZIE-1696 Document how to get the action conf in the Java action (jrkinley via rkanter)
