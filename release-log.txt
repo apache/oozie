@@ -1,7 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
 OOZIE-2023 Job rerun can stuck in prep (puru)
-OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-1940 StatusTransitService has race condition (puru)
 OOZIE-1696 Document how to get the action conf in the Java action (jrkinley via rkanter)
 OOZIE-1567 Provide a wait tool in Oozie (rkanter)
@@ -31,6 +30,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)
 OOZIE-1997 Oozie cannot materialize coordinator job with sqlserver in windows (bzhang)
 OOZIE-1989 NPE during a rerun with forks (rkanter)
