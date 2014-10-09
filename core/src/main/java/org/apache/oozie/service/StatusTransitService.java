@@ -600,7 +600,9 @@ public class StatusTransitService implements Service {
         private boolean checkCoordRunningStatus(HashMap<CoordinatorAction.Status, Integer> coordActionStatus,
                 int coordActionsCount, Job.Status[] coordStatus) {
             boolean ret = false;
-            if (coordStatus[0] != Job.Status.PREP) {
+            if (coordStatus[0] != Job.Status.PREP
+                    && coordStatus[0] != Job.Status.PREPSUSPENDED
+                    && coordStatus[0] !=  Job.Status.PREPPAUSED) {
                 if (coordActionStatus.containsKey(CoordinatorAction.Status.KILLED)
                         || coordActionStatus.containsKey(CoordinatorAction.Status.FAILED)
                         || coordActionStatus.containsKey(CoordinatorAction.Status.TIMEDOUT)) {

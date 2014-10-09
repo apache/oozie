@@ -437,6 +437,55 @@ public class TestStatusTransitService extends XDataTestCase {
         assertEquals(Job.Status.SUCCEEDED, coordJob1.getStatus());
     }
 
+    /**
+     * If you have a PREP coordinator job (with no actions) and you suspend it, it goes into PREPSUSPENDED.
+     * The StatusTransitService should not transition it to RUNNING automatically.  This test verifies that the job remains in
+     * PREPSUSPENDED; and transitions back to PREP after a resume command.
+     *
+     * @throws Exception
+     */
+    public void CoordStatusTransitServicePrepSuspendedPrep() throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        String currentDatePlusMonth = XDataTestCase.getCurrentDateafterIncrementingInMonths(1);
+        Date start = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+        Date end = DateUtils.parseDateOozieTZ(currentDatePlusMonth);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, true, false, 0);
+        final String coordJobId = coordJob.getId();
+
+        new CoordSuspendXCommand(coordJobId).call();
+
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJobId);
+        coordJob = jpaService.execute(coordJobGetCmd);
+
+        assertEquals(Job.Status.PREPSUSPENDED, coordJob.getStatus());
+
+        new StatusTransitRunnable().run();
+
+        CoordinatorJobBean coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId));
+        assertEquals(Job.Status.PREPSUSPENDED, coordJob1.getStatus());
+
+        new CoordResumeXCommand(coordJobId).call();
+
+        coordJob = jpaService.execute(coordJobGetCmd);
+
+        assertEquals(Job.Status.PREP, coordJob.getStatus());
+
+        new StatusTransitRunnable().run();
+
+        waitFor(20 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId));
+                return job.getStatus().equals(Job.Status.PREP);
+            }
+        });
+
+        coordJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId));
+        assertEquals(Job.Status.PREP, coordJob1.getStatus());
+    }
+
 
     /**
      * Test : all coord actions are running, job pending is reset

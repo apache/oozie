@@ -1,4 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
+
+OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-2023 Job rerun can stuck in prep (puru)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)
 OOZIE-1950 Coordinator job info should support timestamp (nominal time) (shwethags)
