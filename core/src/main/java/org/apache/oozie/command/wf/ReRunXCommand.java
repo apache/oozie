@@ -117,6 +117,16 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
+        setupReRun();
+        startWorkflow(jobId);
+        return null;
+    }
+
+    private void startWorkflow(String jobId) throws CommandException {
+        new StartXCommand(jobId).call();
+    }
+
+    private void setupReRun() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         LogUtils.setLogInfo(wfBean, logInfo);
         WorkflowInstance oldWfInstance = this.wfBean.getWorkflowInstance();
@@ -141,7 +151,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
                 configDefault = new Path(path, SubmitXCommand.CONFIG_DEFAULT);
-            } else {
+            }
+            else {
                 configDefault = new Path(path.getParent(), SubmitXCommand.CONFIG_DEFAULT);
             }
 
@@ -153,9 +164,10 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
 
-            // Resolving all variables in the job properties. This ensures the Hadoop Configuration semantics are preserved.
-            // The Configuration.get function within XConfiguration.resolve() works recursively to get the final value corresponding to a key in the map
-            // Resetting the conf to contain all the resolved values is necessary to ensure propagation of Oozie properties to Hadoop calls downstream
+            // Resolving all variables in the job properties. This ensures the Hadoop Configuration semantics are
+            // preserved. The Configuration.get function within XConfiguration.resolve() works recursively to get the
+            // final value corresponding to a key in the map Resetting the conf to contain all the resolved values is
+            // necessary to ensure propagation of Oozie properties to Hadoop calls downstream
             conf = ((XConfiguration) conf).resolve();
 
             // Prepare the action endtimes map
@@ -182,8 +194,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                     jobSlaXml = SubmitXCommand.resolveSla(eSla, evalSla);
                 }
                 writeSLARegistration(wfElem, jobSlaXml, newWfInstance.getId(),
-                            conf.get(SubWorkflowActionExecutor.PARENT_ID), conf.get(OozieClient.USER_NAME), appName,
-                            evalSla);
+                        conf.get(SubWorkflowActionExecutor.PARENT_ID), conf.get(OozieClient.USER_NAME), appName,
+                        evalSla);
             }
             wfBean.setAppName(appName);
             wfBean.setProtoActionConf(protoActionConf.toXmlString());
@@ -236,9 +248,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             throw new CommandException(je);
         }
 
-        return null;
     }
-
 
     @SuppressWarnings("unchecked")
 	private void writeSLARegistration(Element wfElem, String jobSlaXml, String id, String parentId, String user,

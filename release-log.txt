@@ -1,4 +1,5 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
+OOZIE-2023 Job rerun can stuck in prep (puru)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)
 OOZIE-1950 Coordinator job info should support timestamp (nominal time) (shwethags)
 OOZIE-1997 Oozie cannot materialize coordinator job with sqlserver in windows (bzhang)
