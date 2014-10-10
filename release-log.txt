@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2026 fix synchronization in SLACalculatorMemory.addJobStatus to avoid duplicated SLA message (ryota)
 OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-2023 Job rerun can stuck in prep (puru)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)
