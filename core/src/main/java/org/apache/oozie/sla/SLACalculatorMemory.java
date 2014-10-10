@@ -728,6 +728,9 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
                 slaInfo.setEventProcessed(8);
                 historySet.remove(jobId);
+                slaInfo.setLastModifiedTime(new Date());
+                SLASummaryQueryExecutor.getInstance().executeUpdate(
+                        SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, slaInfo);
                 hasSla = true;
             }
             else if (Services.get().get(JobsConcurrencyService.class).isHighlyAvailableMode()) {
@@ -773,11 +776,13 @@ public class SLACalculatorMemory implements SLACalculator {
                                 LOG.debug("Unknown Job Status for SLA purpose[{0}]", jobEventStatus);
                                 slaInfo = getSLASummaryBean(slaCalc);
                         }
-
                         if (slaCalc.getEventProcessed() == 7) {
                             slaInfo.setEventProcessed(8);
                             slaMap.remove(jobId);
                         }
+                        slaInfo.setLastModifiedTime(new Date());
+                        SLASummaryQueryExecutor.getInstance().executeUpdate(
+                                SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, slaInfo);
                         hasSla = true;
                     }
                 }
@@ -791,11 +796,6 @@ public class SLACalculatorMemory implements SLACalculator {
             LOG.trace("SLA Status Event - Job:" + jobId + " Status:" + slaCalc.getSLAStatus());
         }
 
-        if (hasSla) {
-            slaInfo.setLastModifiedTime(new Date());
-            SLASummaryQueryExecutor.getInstance().executeUpdate(
-                    SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, slaInfo);
-        }
         return hasSla;
     }
 
