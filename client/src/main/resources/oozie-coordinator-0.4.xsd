@@ -30,9 +30,18 @@
         <xs:sequence>
             <xs:element name="parameters" type="coordinator:PARAMETERS" minOccurs="0" maxOccurs="1"/>
             <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="1" maxOccurs="1">
+				<xs:element name="done-shell" type="coordinator:DONE-SHELL"
+					minOccurs="0" maxOccurs="1" />
+				<xs:sequence minOccurs="3" maxOccurs="3">
+					<xs:element name="datasets" type="coordinator:DATASETS"
+						minOccurs="0" maxOccurs="1" />
+					<xs:element name="input-events" type="coordinator:INPUTEVENTS"
+						minOccurs="0" maxOccurs="1" />
+					<xs:element name="output-events" type="coordinator:OUTPUTEVENTS"
+						minOccurs="0" maxOccurs="1" />
+				</xs:sequence>
+			</xs:choice>
             <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
@@ -144,4 +153,12 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="DONE-SHELL">
+		<xs:sequence minOccurs="1" maxOccurs="2">
+			<xs:element name="shell" type="xs:string" minOccurs="1"
+				maxOccurs="1" />
+			<xs:element name="wf-nominalTime" type="xs:string" minOccurs="0"
+				maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
 </xs:schema>

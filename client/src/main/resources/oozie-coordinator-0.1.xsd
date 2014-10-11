@@ -163,7 +163,7 @@
 	</xs:complexType>
 	<xs:complexType name="DONE-SHELL">
 		<xs:sequence minOccurs="1" maxOccurs="2">
-			<xs:element name="shell-path" type="xs:string" minOccurs="1"
+			<xs:element name="shell" type="xs:string" minOccurs="1"
 				maxOccurs="1" />
 			<xs:element name="wf-nominalTime" type="xs:string" minOccurs="0"
 				maxOccurs="1" />
