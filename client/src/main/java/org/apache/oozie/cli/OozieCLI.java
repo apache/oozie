@@ -17,33 +17,7 @@
  */
 package org.apache.oozie.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -71,7 +45,31 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
-import com.google.common.annotations.VisibleForTesting;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Oozie command line utility.
@@ -292,10 +290,12 @@ public class OozieCLI {
         Option offset = new Option(OFFSET_OPTION, true, "job info offset of actions (default '1', requires -info)");
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
-                "status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]* "
-                + "(All Coordinator actions satisfying the status filters will be retreived. "
-                + "Positive filters '=' concatenated with OR and negative filters '!=' with AND. "
-                + "Currently, only supported for Coordinator job)");
+                "<key><comparator><value>[;<key><comparator><value>]*\n"
+                    + "(All Coordinator actions satisfying the filters will be retreived).\n"
+                    + "key: status or nominaltime\n"
+                    + "comparator: =, !=, <, <=, >, >=. = is used as OR and others as AND\n"
+                    + "status: values are valid status like SUCCEEDED, KILLED etc. Only = and != apply for status\n"
+                    + "nominaltime: time of format yyyy-MM-dd'T'HH:mm'Z'");
         Option order = new Option(ORDER_OPTION, true,
                 "order to show coord actions (default ascending order, 'desc' for descending order, requires -info)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
