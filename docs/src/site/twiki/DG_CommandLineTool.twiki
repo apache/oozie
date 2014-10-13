@@ -46,11 +46,13 @@ usage:
                 -doas <arg>           doAs user, impersonates as the specified user
                 -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0)
                                       job without actually executing it
-                -filter <arg>         status=<S1>[;status=<S2>]* or status!=<S1>[;status!=<S2>]*
-                                      (All Coordinator actions satisfying the status filters will
-                                      be retreived. Positive filters '=' concatenated with OR and
-                                      negative filters '!=' with AND. Currently, only supported for
-                                      Coordinator job)
+                -filter <arg>         <key><comparator><value>[;<key><comparator><value>]*
+                                      (All Coordinator actions satisfying the filters will be retreived).
+                                      key: status or nominaltime
+                                      comparator: =, !=, <, <=, >, >=. = is used as OR and others as AND
+                                      status: values are valid status like SUCCEEDED, KILLED etc. Only = and != apply
+                                       for status.
+                                      nominaltime: time of format yyyy-MM-dd'T'HH:mm'Z'
                 -ignore <arg>         change status of a coordinator job or action to IGNORED
                                       (-action required to ignore coord actions)
                 -info <arg>           info of a job
