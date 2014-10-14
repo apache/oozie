@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2019 SLA miss processed on server2 not send email (puru)
 OOZIE-1391 Sub wf suspend doesn't update parent wf (jaydeepvishwakarma via shwethags)
 OOZIE-2023 Job rerun can stuck in prep (puru)
 OOZIE-1940 StatusTransitService has race condition (puru)
