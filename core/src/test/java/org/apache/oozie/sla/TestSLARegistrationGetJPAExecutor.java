@@ -87,4 +87,13 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
         }
     }
 
+    public void testSlaConfigStringToMap() {
+        String slaConfig = "{alert_contact=hadoopqa@oozie.com},{alert_events=START_MISS,DURATION_MISS,END_MISS},";
+        SLARegistrationBean bean = new SLARegistrationBean();
+        bean.setSlaConfig(slaConfig);
+        assertEquals(bean.getSlaConfigMap().size(), 2);
+        assertEquals(bean.getAlertEvents(), "START_MISS,DURATION_MISS,END_MISS");
+        assertEquals(bean.getAlertContact(), "hadoopqa@oozie.com");
+    }
+
 }
