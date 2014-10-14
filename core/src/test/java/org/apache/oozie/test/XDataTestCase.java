@@ -210,6 +210,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status coord job status
      * @param start start time
      * @param end end time
+     * @param created Time
      * @param pending true if pending is true
      * @param doneMatd true if doneMaterialization is true
      * @param lastActionNum last action number
@@ -218,8 +219,25 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
             boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
+        return addRecordToCoordJobTable(status, start, end, new Date(), pending, doneMatd, lastActionNum);
+    }
 
+    /**
+     * Insert coord job for testing.
+     *
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param created Time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
+            Date createdTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, createdTime, pending, doneMatd, lastActionNum);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -383,6 +401,26 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         return createCoordBean(appPath, appXml, status, start, end, pending, doneMatd, lastActionNum);
     }
+    /**
+     * Create coord job bean
+     *
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param created Time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws IOException
+     */
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, Date createTime, boolean pending,
+            boolean doneMatd, int lastActionNum) throws Exception {
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String appXml = writeCoordXml(appPath, start, end);
+
+        return createCoordBean(appPath, appXml, status, start, end, createTime, pending, doneMatd, lastActionNum);
+    }
 
     /**
      * Create coord job bean
@@ -407,13 +445,18 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     private CoordinatorJobBean createCoordBean(Path appPath, String appXml, CoordinatorJob.Status status, Date start,
             Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        return createCoordBean(appPath, appXml, status, start, end, new Date(), pending, doneMatd, lastActionNum);
+    }
+
+    private CoordinatorJobBean createCoordBean(Path appPath, String appXml, CoordinatorJob.Status status, Date start,
+            Date end, Date createdTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
         coordJob.setAppName("COORD-TEST");
         coordJob.setAppPath(appPath.toString());
         coordJob.setStatus(status);
         coordJob.setTimeZone("America/Los_Angeles");
-        coordJob.setCreatedTime(new Date());
+        coordJob.setCreatedTime(createdTime);
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
