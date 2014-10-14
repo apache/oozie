@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.oozie.BulkResponseInfo;
 import org.apache.oozie.BundleEngine;
@@ -168,7 +168,7 @@ public class TestZKUUIDService extends ZKXTestCase {
         Services service = Services.get();
         service.setService(ZKLocksService.class);
 
-        final List<Integer> result = new ArrayList<Integer>(5000);
+        final AtomicInteger result[] = new AtomicInteger[5000];
         final ZKUUIDService uuid1 = new ZKUUIDService();
         final ZKUUIDService uuid2 = new ZKUUIDService();
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
@@ -178,7 +178,7 @@ public class TestZKUUIDService extends ZKXTestCase {
         uuid2.setMaxSequence(5000);
 
         for (int i = 0; i < 5000; i++) {
-            result.add(i, i);
+            result[i]=new AtomicInteger(0);
         }
 
         try {
@@ -187,7 +187,7 @@ public class TestZKUUIDService extends ZKXTestCase {
                     for (int i = 0; i < 5000; i++) {
                         String id = uuid1.generateId(ApplicationType.WORKFLOW);
                         int index = Integer.parseInt(id.substring(0, 7));
-                        result.add(index, result.get(index) + 1);
+                        result[index].incrementAndGet();
                     }
                 }
             };
@@ -196,7 +196,7 @@ public class TestZKUUIDService extends ZKXTestCase {
                     for (int i = 0; i < 5000; i++) {
                         String id = uuid2.generateId(ApplicationType.WORKFLOW);
                         int index = Integer.parseInt(id.substring(0, 7));
-                        result.add(index, result.get(index) + 1);
+                        result[index].incrementAndGet();
                     }
                 }
             };
@@ -205,7 +205,7 @@ public class TestZKUUIDService extends ZKXTestCase {
             t1.join();
             t2.join();
             for (int i = 0; i < 5000; i++) {
-                assertEquals(result.get(i), Integer.valueOf(2));
+                assertEquals(result[i].get(), 2);
             }
         }
         finally {
@@ -221,7 +221,7 @@ public class TestZKUUIDService extends ZKXTestCase {
             setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
             uuid.init(service);
             String bundleId = uuid.generateId(ApplicationType.BUNDLE);
-            BundleJobBean bundle=createBundleJob(bundleId, Job.Status.SUCCEEDED, false);
+            BundleJobBean bundle = createBundleJob(bundleId, Job.Status.SUCCEEDED, false);
             JPAService jpaService = Services.get().get(JPAService.class);
             BundleJobInsertJPAExecutor bundleInsertjpa = new BundleJobInsertJPAExecutor(bundle);
             jpaService.execute(bundleInsertjpa);
@@ -239,6 +239,80 @@ public class TestZKUUIDService extends ZKXTestCase {
         finally {
             uuid.destroy();
         }
+    }
+
+    public void testFallback() throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddHHmmssSSS");
+
+        Services service = Services.get();
+        ZKUUIDServiceWithException uuid = new ZKUUIDServiceWithException();
+        try {
+            setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
+            uuid.init(service);
+            String id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000000-"));
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000001-"));
+
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000002-"));
+
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000003-"));
+
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000004-"));
+            uuid.setThrowException();
+
+            Date beforeDate=new Date();
+            Thread.sleep(2000);
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000000-"));
+            assertTrue(dateFormat.parse(id.split("-")[1]).after(beforeDate));
+
+            beforeDate=new Date();
+            Thread.sleep(2000);
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000001-"));
+            assertTrue(dateFormat.parse(id.split("-")[1]).after(beforeDate));
+
+            uuid.resetThrowException();
+            beforeDate=new Date();
+            Thread.sleep(2000);
+            id = uuid.generateId(ApplicationType.BUNDLE);
+            assertTrue(id.startsWith("0000005-"));
+            assertTrue(dateFormat.parse(id.split("-")[1]).before(beforeDate));
+
+
+        }
+        finally {
+            uuid.destroy();
+        }
+    }
+
+}
+
+class ZKUUIDServiceWithException extends ZKUUIDService {
+    boolean throwEx = false;
+
+    public ZKUUIDServiceWithException() {
+
+    }
+
+    public void setThrowException() {
+        throwEx = true;
+    }
+
+    public void resetThrowException() {
+        throwEx = false;
+    }
+
+    @Override
+    protected long getZKSequence() throws Exception {
+        if (throwEx) {
+            throw new Exception("Can't generate UUID");
+        }
+        return super.getZKSequence();
     }
 
 }

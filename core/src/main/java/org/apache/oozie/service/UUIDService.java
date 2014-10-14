@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import java.text.SimpleDateFormat;
@@ -42,7 +41,7 @@ public class UUIDService implements Service {
 
     public static final String CONF_GENERATOR = CONF_PREFIX + "generator";
 
-    private String startTime;
+    protected String startTime;
     private AtomicLong counter;
     private String systemId;
 
@@ -94,7 +93,7 @@ public class UUIDService implements Service {
         return UUIDService.class;
     }
 
-    private String longPadding(long number) {
+    protected String longPadding(long number) {
         StringBuilder sb = new StringBuilder();
         sb.append(number);
         if (sb.length() <= 7) {
@@ -122,10 +121,10 @@ public class UUIDService implements Service {
         return sb.toString();
     }
 
-    public String getSequence() {
+    private String getSequence() {
         StringBuilder sb = new StringBuilder();
         if (counter != null) {
-            sb.append(longPadding(getID())).append('-').append(startTime);
+            sb.append(createSequence());
         }
         else {
             sb.append(UUID.randomUUID().toString());
@@ -136,8 +135,18 @@ public class UUIDService implements Service {
         return sb.toString();
     }
 
-    public long getID() {
+    protected String createSequence() {
+        return appendTimeToSequence(getCounter(), startTime);
+    }
+
+    protected long getCounter() {
         return counter.getAndIncrement();
+    }
+
+    protected String appendTimeToSequence(long id, String localStartTime) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(longPadding(id)).append('-').append(localStartTime);
+        return sb.toString();
     }
 
     /**

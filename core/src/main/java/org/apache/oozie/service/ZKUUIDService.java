@@ -16,11 +16,17 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
+import org.apache.curator.framework.recipes.atomic.PromotedToLock;
+import org.apache.curator.retry.RetryNTimes;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
@@ -29,9 +35,9 @@ import org.apache.oozie.util.ZKUtils;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
- * Service that provides distributed job id sequence via ZooKeeper.  Requires that a ZooKeeper ensemble is available.
- * The sequence path will be located under a ZNode named "job_id_sequence" under the namespace (see {@link ZKUtils}).
- * The sequence will be reset to 0, once max is reached.
+ * Service that provides distributed job id sequence via ZooKeeper. Requires that a ZooKeeper ensemble is available. The
+ * sequence path will be located under a ZNode named "job_id_sequence" under the namespace (see {@link ZKUtils}). The
+ * sequence will be reset to 0, once max is reached.
  */
 
 public class ZKUUIDService extends UUIDService {
@@ -39,18 +45,27 @@ public class ZKUUIDService extends UUIDService {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "ZKUUIDService.";
 
     public static final String CONF_SEQUENCE_MAX = CONF_PREFIX + "jobid.sequence.max";
+    public static final String LOCKS_NODE = "/SEQUENCE_LOCK";
 
     public static final String ZK_SEQUENCE_PATH = "job_id_sequence";
 
-    public static final long RESET_VALUE = 0l;
+    public static final long RESET_VALUE = 0L;
     public static final int RETRY_COUNT = 3;
 
     private final static XLog LOG = XLog.getLog(ZKUUIDService.class);
 
     private ZKUtils zk;
-    private static Long maxSequence =  9999990l;
+    private static Long maxSequence = 9999990L;
 
     DistributedAtomicLong atomicIdGenerator;
+
+    public static final ThreadLocal<SimpleDateFormat> dt = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat("yyMMddHHmmssSSS");
+        }
+    };
+
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -58,7 +73,11 @@ public class ZKUUIDService extends UUIDService {
         super.init(services);
         try {
             zk = ZKUtils.register(this);
-            atomicIdGenerator = new DistributedAtomicLong(zk.getClient(), ZK_SEQUENCE_PATH, ZKUtils.getRetryPloicy());
+            PromotedToLock.Builder lockBuilder = PromotedToLock.builder().lockPath(getPromotedLock())
+                    .retryPolicy(getRetryPolicy()).timeout(Service.lockTimeout, TimeUnit.MILLISECONDS);
+            atomicIdGenerator = new DistributedAtomicLong(zk.getClient(), ZK_SEQUENCE_PATH, getRetryPolicy(),
+                    lockBuilder.build());
+
         }
         catch (Exception ex) {
             throw new ServiceException(ErrorCode.E1700, ex.getMessage(), ex);
@@ -72,88 +91,106 @@ public class ZKUUIDService extends UUIDService {
      * @return the id
      * @throws Exception the exception
      */
-    public long getID() {
-        return getZKId(0);
+    @Override
+    protected String createSequence() {
+        String localStartTime = super.startTime;
+        long id = 0L;
+        try {
+            id = getZKSequence();
+        }
+        catch (Exception e) {
+            LOG.error("Error getting jobId, switching to old UUIDService", e);
+            id = super.getCounter();
+            localStartTime = dt.get().format(new Date());
+        }
+        return appendTimeToSequence(id, localStartTime);
+    }
+
+    protected synchronized long getZKSequence() throws Exception {
+        long id = getDistributedSequence();
+
+        if (id >= maxSequence) {
+            resetSequence();
+            id = getDistributedSequence();
+        }
+        return id;
     }
 
     @SuppressWarnings("finally")
-    private long getZKId(int retryCount) {
+    private long getDistributedSequence() throws Exception {
         if (atomicIdGenerator == null) {
-            throw new RuntimeException("Sequence generator can't be null. Path : " + ZK_SEQUENCE_PATH);
+            throw new Exception("Sequence generator can't be null. Path : " + ZK_SEQUENCE_PATH);
         }
         AtomicValue<Long> value = null;
         try {
             value = atomicIdGenerator.increment();
         }
         catch (Exception e) {
-            throw new RuntimeException("Exception incrementing UID for session ", e);
+            throw new Exception("Exception incrementing UID for session ", e);
         }
         finally {
             if (value != null && value.succeeded()) {
-                if (value.preValue() >= maxSequence) {
-                    if (retryCount >= RETRY_COUNT) {
-                        throw new RuntimeException("Can't reset sequence. Tried " + retryCount + " times");
-                    }
-                    resetSequence();
-                    return getZKId(retryCount + 1);
-                }
                 return value.preValue();
             }
             else {
-                throw new RuntimeException("Exception incrementing UID for session ");
+                throw new Exception("Exception incrementing UID for session ");
             }
         }
-
     }
 
     /**
      * Once sequence is reached limit, reset to 0.
+     *
+     * @throws Exception
      */
-    private void resetSequence() {
-        synchronized (ZKUUIDService.class) {
+    private  void resetSequence() throws Exception {
+        for (int i = 0; i < RETRY_COUNT; i++) {
+            AtomicValue<Long> value = atomicIdGenerator.get();
+            if (value.succeeded()) {
+                if (value.postValue() < maxSequence) {
+                    return;
+                }
+            }
+            // Acquire ZK lock, so that other host doesn't reset sequence.
+            LockToken lock = null;
             try {
-                // Double check if sequence is already reset.
-                AtomicValue<Long> value = atomicIdGenerator.get();
-                if (value.succeeded()) {
-                    if (value.postValue() < maxSequence) {
-                        return;
-                    }
+                lock = Services.get().get(MemoryLocksService.class)
+                        .getWriteLock(ZKUUIDService.class.getName(), lockTimeout);
+            }
+            catch (InterruptedException e1) {
+                //ignore
+            }
+            try {
+                if (lock == null) {
+                    LOG.info("Lock is held by other system, will sleep and try again");
+                    Thread.sleep(1000);
+                    continue;
                 }
                 else {
-                    throw new RuntimeException("Can't reset sequence");
-                }
-                // Acquire ZK lock, so that other host doesn't reset sequence.
-                LockToken lock = Services.get().get(MemoryLocksService.class)
-                        .getWriteLock(ZKUUIDService.class.getName(), lockTimeout);
-                try {
-                    if (lock == null) {
-                        LOG.info("Lock is held by other system, returning");
-                        return;
+                    value = atomicIdGenerator.get();
+                    if (value.succeeded()) {
+                        if (value.postValue() < maxSequence) {
+                            return;
+                        }
                     }
-                    else {
-                        value = atomicIdGenerator.get();
-                        if (value.succeeded()) {
-                            if (value.postValue() < maxSequence) {
-                                return;
-                            }
-                        }
-                        else {
-                            throw new RuntimeException("Can't reset sequence");
-                        }
+                    try {
                         atomicIdGenerator.forceSet(RESET_VALUE);
-                        resetStartTime();
                     }
-                }
-                finally {
-                    if (lock != null) {
-                        lock.release();
+                    catch (Exception e) {
+                        LOG.info("Exception while resetting sequence, will try again");
+                        continue;
                     }
+                    resetStartTime();
+                    return;
                 }
             }
-            catch (Exception e) {
-                throw new RuntimeException("Can't reset sequence", e);
+            finally {
+                if (lock != null) {
+                    lock.release();
+                }
             }
         }
+        throw new Exception("Can't reset ID sequence in ZK. Retried " + RETRY_COUNT + " times");
     }
 
     @Override
@@ -165,8 +202,28 @@ public class ZKUUIDService extends UUIDService {
         super.destroy();
     }
 
+    public String getPromotedLock() {
+        if (ZKUtils.getZKNameSpace().startsWith("/")) {
+            return ZKUtils.getZKNameSpace() + LOCKS_NODE;
+
+        }
+        else {
+            return "/" + ZKUtils.getZKNameSpace() + LOCKS_NODE;
+        }
+    }
+
     @VisibleForTesting
     public void setMaxSequence(long sequence) {
         maxSequence = sequence;
     }
+
+    /**
+     * Retries 25 times with delay of 200ms
+     *
+     * @return RetryNTimes
+     */
+    private static RetryPolicy getRetryPolicy() {
+        return new RetryNTimes(25, 200);
+    }
+
 }

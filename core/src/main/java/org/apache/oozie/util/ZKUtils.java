@@ -172,7 +172,7 @@ public class ZKUtils {
 
     private void createClient() throws Exception {
         // Connect to the ZooKeeper server
-        RetryPolicy retryPolicy = ZKUtils.getRetryPloicy();
+        RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
         String zkNamespace = getZKNameSpace();
         zkConnectionTimeout = Services.get().getConf().getInt(ZK_CONNECTION_TIMEOUT, 180);
@@ -404,7 +404,7 @@ public class ZKUtils {
      *
      * @return RetryPolicy
      */
-    public static RetryPolicy getRetryPloicy() {
+    public static RetryPolicy getRetryPolicy() {
         return new ExponentialBackoffRetry(1000, 3);
     }
 
