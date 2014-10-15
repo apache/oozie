@@ -49,7 +49,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
     @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         DistcpActionExecutor ae = new DistcpActionExecutor();
-        assertEquals(Arrays.asList(JavaMain.class), ae.getLauncherClasses());
+        assertEquals(Arrays.asList(DistcpMain.class), ae.getLauncherClasses());
     }
 
     public void testDistCpFile() throws Exception {
@@ -129,7 +129,6 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
 
         return new Context(wf, action);
     }
-
 
     protected RunningJob submitAction(Context context) throws Exception {
         DistcpActionExecutor ae = new DistcpActionExecutor();

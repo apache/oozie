@@ -1,7 +1,7 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1728 When an ApplicationMaster restarts, it restarts the launcher job: DistCp followup (ryota)
 OOZIE-2009 Requeue CoordActionInputCheck in case of permission error (ryota)
-OOZIE-2005 Coordinator rerun fails to initialize error code and message (ryota)
 OOZIE-1896 ZKUUIDService - Too many job submission fails (puru)
 OOZIE-2019 SLA miss processed on server2 not send email (puru)
 OOZIE-1391 Sub wf suspend doesn't update parent wf (jaydeepvishwakarma via shwethags)
@@ -35,6 +35,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2005 Coordinator rerun fails to initialize error code and message (ryota)
 OOZIE-2026 fix synchronization in SLACalculatorMemory.addJobStatus to avoid duplicated SLA message (ryota)
 OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
 OOZIE-1932 Services should load CallableQueueService after MemoryLocksService (mona)

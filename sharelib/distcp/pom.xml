@@ -45,17 +45,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-core</artifactId>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop</artifactId>
             <scope>provided</scope>
         </dependency>
