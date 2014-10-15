@@ -202,6 +202,8 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         coordAction.setExternalStatus(null);
         coordAction.setRerunTime(new Date());
         coordAction.setLastModifiedTime(new Date());
+        coordAction.setErrorCode("");
+        coordAction.setErrorMessage("");
         updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, coordAction));
         writeActionRegistration(coordAction.getActionXml(), coordAction, coordJob.getUser(), coordJob.getGroup());
     }

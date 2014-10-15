@@ -149,6 +149,8 @@ public class CoordActionQueryExecutor extends
                 query.setParameter("runConf", actionBean.getRunConfBlob());
                 query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
                 query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependenciesBlob());
+                query.setParameter("errorCode", actionBean.getErrorCode());
+                query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("id", actionBean.getId());
                 break;
 

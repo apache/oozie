@@ -857,6 +857,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
         CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
         assertEquals(action2.getStatus(), CoordinatorAction.Status.WAITING);
+        assertEquals(action2.getErrorCode(), "");
+        assertEquals(action2.getErrorMessage(), "");
     }
 
     /**
@@ -1104,6 +1106,11 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         String createdConf = XmlUtils.writePropToString(conf);
 
         action.setCreatedConf(createdConf);
+
+        if (status.equals(CoordinatorAction.Status.FAILED)) {
+            action.setErrorCode("E1000");
+            action.setErrorMessage("Error");
+        }
 
         try {
             store.insertCoordinatorAction(action);

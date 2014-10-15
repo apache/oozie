@@ -685,8 +685,8 @@ public class CoordinatorStore extends Store {
             action.setActionXmlBlob(a.getActionXmlBlob());
             action.setConsoleUrl(a.getConsoleUrl());
             action.setCreatedConfBlob(a.getCreatedConfBlob());
-            // action.setErrorCode(a.getErrorCode());
-            // action.setErrorMessage(a.getErrorMessage());
+            action.setErrorCode(a.getErrorCode());
+            action.setErrorMessage(a.getErrorMessage());
             action.setExternalStatus(a.getExternalStatus());
             action.setMissingDependenciesBlob(a.getMissingDependenciesBlob());
             action.setRunConfBlob(a.getRunConfBlob());
