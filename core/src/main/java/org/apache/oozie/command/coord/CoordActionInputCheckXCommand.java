@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -252,6 +253,22 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 }
                 updateCoordAction(coordAction, isChangeInDependency);
             }
+        }
+        catch (AccessControlException e) {
+            LOG.error("Permission error in ActionInputCheck", e);
+            if (isTimeout(currentTime)) {
+                LOG.debug("Queueing timeout command");
+                Services.get().get(CallableQueueService.class)
+                        .queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
+            }
+            else {
+                // Requeue InputCheckCommand for permission denied error with longer interval
+                Services.get()
+                        .get(CallableQueueService.class)
+                        .queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
+                                2 * getCoordInputCheckRequeueInterval());
+            }
+            updateCoordAction(coordAction, isChangeInDependency);
         }
         catch (Exception e) {
             if (isTimeout(currentTime)) {
@@ -567,8 +584,14 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         catch (URIHandlerException e) {
             coordAction.setErrorCode(e.getErrorCode().toString());
             coordAction.setErrorMessage(e.getMessage());
-            throw new IOException(e);
-        } catch (URISyntaxException e) {
+            if (e.getCause() != null && e.getCause() instanceof AccessControlException) {
+                throw (AccessControlException) e.getCause();
+            }
+            else {
+                throw new IOException(e);
+            }
+        }
+        catch (URISyntaxException e) {
             coordAction.setErrorCode(ErrorCode.E0906.toString());
             coordAction.setErrorMessage(e.getMessage());
             throw new IOException(e);

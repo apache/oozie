@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2009 Requeue CoordActionInputCheck in case of permission error (ryota)
 OOZIE-2005 Coordinator rerun fails to initialize error code and message (ryota)
 OOZIE-1896 ZKUUIDService - Too many job submission fails (puru)
 OOZIE-2019 SLA miss processed on server2 not send email (puru)
