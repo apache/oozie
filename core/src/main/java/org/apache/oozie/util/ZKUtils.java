@@ -156,9 +156,9 @@ public class ZKUtils {
 
     private void createClient() throws Exception {
         // Connect to the ZooKeeper server
-        RetryPolicy retryPolicy = ZKUtils.getRetryPloicy();
+        RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
         String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
-        String zkNamespace = Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+        String zkNamespace = getZKNameSpace();
         ACLProvider aclProvider;
         if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
             log.info("Connecting to ZooKeeper with SASL/Kerberos and using 'sasl' ACLs");
@@ -378,13 +378,21 @@ public class ZKUtils {
             return saslACL;
         }
     }
+    
+    /**
+     * Returns configured zk namesapces
+     * @return oozie.zookeeper.namespace
+     */
+    public static String getZKNameSpace() {
+        return Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+    }
 
     /**
      * Returns retry policy
      *
      * @return RetryPolicy
      */
-    public static RetryPolicy getRetryPloicy() {
+    public static RetryPolicy getRetryPolicy() {
         return new ExponentialBackoffRetry(1000, 3);
     }
 }
