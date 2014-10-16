@@ -546,6 +546,35 @@ public class TestShareLibService extends XFsTestCase {
         }
     }
 
+    @Test
+    public void testMultipleLauncherCall() throws Exception {
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
+        try {
+            services.init();
+            FileSystem fs = getFileSystem();
+            Date time = new Date(System.currentTimeMillis());
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+            Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX
+                    + ShareLibService.dateFormat.format(time));
+            fs.mkdirs(libpath);
+            Path ooziePath = new Path(libpath.toString() + Path.SEPARATOR + "oozie");
+            fs.mkdirs(ooziePath);
+            createFile(libpath.toString() + Path.SEPARATOR + "oozie" + Path.SEPARATOR + "oozie_luncher.jar");
+            shareLibService.init(services);
+            List<Path> launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertEquals(launcherPath.size(), 2);
+            launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertEquals(launcherPath.size(), 2);
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
     public void createFile(String filename) throws IOException {
         Path path = new Path(filename);
         FSDataOutputStream out = getFileSystem().create(path);
