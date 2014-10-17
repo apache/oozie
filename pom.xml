@@ -60,6 +60,7 @@
         <oozie.test.forkMode>once</oozie.test.forkMode>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+        <maven.test.java.opts>-Xmx1024m -da -XX:MaxPermSize=512m</maven.test.java.opts>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
         <oozie.test.db.host>localhost</oozie.test.db.host>
@@ -1033,7 +1034,7 @@
                 <configuration>
                     <forkMode>${oozie.test.forkMode}</forkMode>
                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
-                    <argLine>-Xmx1024m -da -XX:MaxPermSize=512m</argLine>
+                    <argLine>${maven.test.java.opts}</argLine>
                     <systemPropertyVariables>
                         <oozie.test.db.host>${oozie.test.db.host}</oozie.test.db.host>
                         <oozie.test.config.file>${oozie.test.config.file}</oozie.test.config.file>
