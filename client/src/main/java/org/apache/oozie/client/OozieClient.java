@@ -22,6 +22,7 @@ import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonToBean;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.client.retry.ConnectionRetriableClient;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -189,6 +190,9 @@ public class OozieClient {
      */
     public int debugMode = 0;
 
+    private int retryCount = 4;
+
+
     private String baseUrl;
     private String protocolUrl;
     private boolean validatedVersion = false;
@@ -276,6 +280,15 @@ public class OozieClient {
         this.debugMode = debugMode;
     }
 
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
     private String getBaseURLForVersion(long protocolVersion) throws OozieClientException {
         try {
             if (supportedVersions == null) {
@@ -343,8 +356,10 @@ public class OozieClient {
 
     private JSONArray getSupportedProtocolVersions() throws IOException, OozieClientException {
         JSONArray versions = null;
-        URL url = new URL(baseUrl + RestConstants.VERSIONS);
-        HttpURLConnection conn = createConnection(url, "GET");
+        final URL url = new URL(baseUrl + RestConstants.VERSIONS);
+
+        HttpURLConnection conn = createRetryableConnection(url, "GET");
+
         if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
             versions = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
         }
@@ -453,6 +468,24 @@ public class OozieClient {
         }
         return true;
     }
+    /**
+     * Create retryable http connection to oozie server.
+     *
+     * @param url
+     * @param method
+     * @return connection
+     * @throws IOException
+     * @throws OozieClientException
+     */
+    protected HttpURLConnection createRetryableConnection(final URL url, final String method) throws IOException{
+        return (HttpURLConnection) new ConnectionRetriableClient(getRetryCount()) {
+            @Override
+            public Object doExecute(URL url, String method) throws IOException, OozieClientException {
+                HttpURLConnection conn = createConnection(url, method);
+                return conn;
+            }
+        }.execute(url, method);
+    }
 
     /**
      * Create http connection to oozie server.
@@ -501,8 +534,7 @@ public class OozieClient {
                     if (getDebugMode() > 0) {
                         System.out.println(method + " " + url);
                     }
-                    HttpURLConnection conn = createConnection(url, method);
-                    return call(conn);
+                    return call(createRetryableConnection(url, method));
                 }
                 else {
                     System.out.println("Option not supported in target server. Supported only on Oozie-2.0 or greater."
@@ -513,7 +545,6 @@ public class OozieClient {
             catch (IOException ex) {
                 throw new OozieClientException(OozieClientException.IO_ERROR, ex);
             }
-
         }
 
         protected abstract T call(HttpURLConnection conn) throws IOException, OozieClientException;

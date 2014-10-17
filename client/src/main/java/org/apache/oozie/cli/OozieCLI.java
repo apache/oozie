@@ -80,6 +80,7 @@ public class OozieCLI {
     public static final String ENV_OOZIE_DEBUG = "OOZIE_DEBUG";
     public static final String ENV_OOZIE_TIME_ZONE = "OOZIE_TIMEZONE";
     public static final String ENV_OOZIE_AUTH = "OOZIE_AUTH";
+    public static final String OOZIE_RETRY_COUNT = "oozie.connection.retry.count";
     public static final String WS_HEADER_PREFIX = "header:";
 
     public static final String HELP_CMD = "help";
@@ -168,6 +169,8 @@ public class OozieCLI {
 
     private static final String RULER;
     private static final int LINE_WIDTH = 132;
+
+    private static final int RETRY_COUNT = 4;
 
     private boolean used;
 
@@ -547,24 +550,7 @@ public class OozieCLI {
             throw new IllegalStateException("CLI instance already used");
         }
         used = true;
-
-        final CLIParser parser = new CLIParser(OOZIE_OPTION, getCLIHelp());
-        parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
-        parser.addCommand(VERSION_CMD, "", "show client version", new Options(), false);
-        parser.addCommand(JOB_CMD, "", "job operations", createJobOptions(), false);
-        parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
-        parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
-        parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
-        parser.addCommand(SLA_CMD, "", "sla operations (Deprecated with Oozie 4.0)", createSlaOptions(), false);
-        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
-                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
-        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
-                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(HIVE_CMD), true);
-        parser.addCommand(SQOOP_CMD, "-X ", "submit a sqoop job, everything after '-X' are pass-through parameters " +
-                "to sqoop, any '-D' arguments after '-X' are put in <configuration>", createSqoopCLIOptions(), true);
-        parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
-        parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
-
+        final CLIParser parser = getCLIParser();
         try {
             final CLIParser.Command command = parser.parse(args);
 
@@ -582,7 +568,6 @@ public class OozieCLI {
             else {
                 processCommand(parser, command);
             }
-
             return 0;
         }
         catch (OozieCLIException ex) {
@@ -602,7 +587,28 @@ public class OozieCLI {
         }
     }
 
-    private void processCommand(CLIParser parser, CLIParser.Command command) throws Exception {
+    @VisibleForTesting
+    public CLIParser getCLIParser(){
+        CLIParser parser = new CLIParser(OOZIE_OPTION, getCLIHelp());
+        parser.addCommand(HELP_CMD, "", "display usage for all commands or specified command", new Options(), false);
+        parser.addCommand(VERSION_CMD, "", "show client version", new Options(), false);
+        parser.addCommand(JOB_CMD, "", "job operations", createJobOptions(), false);
+        parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
+        parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
+        parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
+        parser.addCommand(SLA_CMD, "", "sla operations (Deprecated with Oozie 4.0)", createSlaOptions(), false);
+        parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
+        parser.addCommand(HIVE_CMD, "-X ", "submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' "
+                + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(HIVE_CMD), true);
+        parser.addCommand(SQOOP_CMD, "-X ", "submit a sqoop job, everything after '-X' are pass-through parameters " +
+                "to sqoop, any '-D' arguments after '-X' are put in <configuration>", createSqoopCLIOptions(), true);
+        parser.addCommand(INFO_CMD, "", "get more detailed info about specific topics", createInfoOptions(), false);
+        parser.addCommand(MR_CMD, "", "submit a mapreduce job", createMROptions(), false);
+        return parser;
+    }
+
+    public void processCommand(CLIParser parser, CLIParser.Command command) throws Exception {
         if (command.getName().equals(HELP_CMD)) {
             parser.showHelp(command.getCommandLine());
         }
@@ -848,6 +854,7 @@ public class OozieCLI {
         XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine));
         addHeader(wc);
         setDebugMode(wc,commandLine.hasOption(DEBUG_OPTION));
+        setRetryCount(wc);
         return wc;
     }
 
@@ -867,6 +874,20 @@ public class OozieCLI {
         }
         else if(debugOpt){  // CLI argument "-debug" used
             wc.setDebugMode(1);
+        }
+    }
+
+    protected void setRetryCount(OozieClient wc) {
+        String retryCount = System.getProperty(OOZIE_RETRY_COUNT);
+        if (retryCount != null && !retryCount.isEmpty()) {
+            try {
+                int retry = Integer.parseInt(retryCount.trim());
+                wc.setRetryCount(retry);
+            }
+            catch (Exception ex) {
+                System.err.println("Unable to parse the retry settings. May be not an integer [" + retryCount + "]");
+                ex.printStackTrace();
+            }
         }
     }
 

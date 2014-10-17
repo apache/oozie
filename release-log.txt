@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1914 CLI should retry on timeout (puru)
 OOZIE-1973 ConcurrentModificationException in Sharelib service (puru)
 OOZIE-1728 When an ApplicationMaster restarts, it restarts the launcher job: DistCp followup (ryota)
 OOZIE-2009 Requeue CoordActionInputCheck in case of permission error (ryota)
