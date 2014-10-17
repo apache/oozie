@@ -28,6 +28,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.servlet.DagServletTestCase;
@@ -1223,7 +1224,81 @@ public class TestOozieCLI extends DagServletTestCase {
                 return null;
             }
         });
-
     }
+
+    public void testRetryForTimeout() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = "http://localhost:11/oozie";
+                String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
+                OozieCLI cli = new OozieCLI();
+                CLIParser parser = cli.getCLIParser();
+                try {
+                    final CLIParser.Command command = parser.parse(args);
+                    cli.processCommand(parser, command);
+                }
+                catch (Exception e) {
+                    assertTrue(e.getMessage().contains(
+                            "Error while connecting Oozie server. No of retries = 4. Exception = Connection refused"));
+                }
+                return null;
+            }
+        });
+    }
+
+    public void testNoRetryForError() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-info", "aaa", "-oozie", oozieUrl, "-debug" };
+                OozieCLI cli = new OozieCLI();
+                CLIParser parser = cli.getCLIParser();
+                try {
+                    final CLIParser.Command command = parser.parse(args);
+                    cli.processCommand(parser, command);
+                }
+                catch (Exception e) {
+                    //Create connection will be successful, no retry
+                    assertFalse(e.getMessage().contains("Error while connecting Oozie server"));
+                    assertTrue(e.getMessage().contains("invalid job id [aaa]"));
+                }
+                return null;
+            }
+        });
+    }
+
+    public void testRetryWithRetryCount() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = "http://localhost:11/oozie";
+                String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
+                OozieCLI cli = new OozieCLI() {
+                    protected void setRetryCount(OozieClient wc) {
+                        wc.setRetryCount(2);
+                    }
+                    public CLIParser getCLIParser(){
+                        return super.getCLIParser();
+                    }
+
+                };
+                CLIParser parser = cli.getCLIParser();
+                try {
+                    final CLIParser.Command command = parser.parse(args);
+                    cli.processCommand(parser, command);
+                }
+                catch (Exception e) {
+                    assertTrue(e.getMessage().contains(
+                            "Error while connecting Oozie server. No of retries = 2. Exception = Connection refused"));
+                }
+                return null;
+            }
+        });
+   }
 
 }

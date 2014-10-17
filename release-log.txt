@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1914 CLI should retry on timeout (puru)
 OOZIE-1973 ConcurrentModificationException in Sharelib service (puru)
 OOZIE-1896 ZKUUIDService - Too many job submission fails (puru)
 OOZIE-2005 Coordinator rerun fails to initialize error code and message (ryota)
