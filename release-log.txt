@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1808 Change DG_QuickStart.twiki to reflect changes in sharelib installation (ryota)
 OOZIE-1891 Parametrize surefire argLine to bump up heap memory for testing (ryota)
 OOZIE-1914 CLI should retry on timeout (puru)
 OOZIE-1973 ConcurrentModificationException in Sharelib service (puru)

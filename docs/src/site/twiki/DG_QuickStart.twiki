@@ -213,18 +213,9 @@ only.
 #OozieShareLib
 ---++ Oozie Share Lib Installation
 
-Expand the =oozie-sharelib= TAR.GZ file bundled with the distribution.
+Oozie share lib has been installed by oozie-setup.sh create command explained in the earlier section.
 
-The =share/= directory must be copied to the Oozie HOME directory in HDFS:
-
-<verbatim>
-$ hadoop fs -put share share
-</verbatim>
-
-*IMPORTANT:* This must be done using the Oozie Hadoop (HDFS) user. If a =share= directory already exists in HDFS,
-it must be deleted before copying it again.
-
-See the [[WorkflowFunctionalSpec#ShareLib][Workflow Functional Specification]] for more information about the Oozie ShareLib.
+See the [[WorkflowFunctionalSpec#ShareLib][Workflow Functional Specification]] and [[AG_Install#Oozie_Share_Lib][Installation]] for more information about the Oozie ShareLib.
 
 [[index][::Go back to Oozie Documentation Index::]]
 
