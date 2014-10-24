@@ -39,6 +39,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2034 Disable SSLv3 (POODLEbleed vulnerability) (rkanter)
 OOZIE-2005 Coordinator rerun fails to initialize error code and message (ryota)
 OOZIE-2026 fix synchronization in SLACalculatorMemory.addJobStatus to avoid duplicated SLA message (ryota)
 OOZIE-2017 On startup, StatusTransitService can transition Coordinators that were in PREPSUSPENDED to RUNNING (rkanter)
