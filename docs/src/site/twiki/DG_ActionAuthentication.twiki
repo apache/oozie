@@ -35,7 +35,7 @@ equals sign is the type for the credential type, while the righthand side is the
       <name>oozie.credentials.credentialclasses</name>
       <value>
          hcat=org.apache.oozie.action.hadoop.HCatCredentials,
-         hive=org.apache.oozie.action.hadoop.HbaseCredentials,
+         hbase=org.apache.oozie.action.hadoop.HbaseCredentials,
          hive2=org.apache.oozie.action.hadoop.Hive2Credentials
       </value>
    </property>
