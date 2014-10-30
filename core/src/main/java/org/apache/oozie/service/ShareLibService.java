@@ -115,8 +115,7 @@ public class ShareLibService implements Service, Instrumentable {
         } catch(Throwable e) {
             if (failOnfailure) {
                 LOG.error("Sharelib initialization fails", e);
-                throw new ServiceException(ErrorCode.E0104, getClass().getName(), "Sharelib initialization fails. "
-                        + e.getMessage());
+                throw new ServiceException(ErrorCode.E0104, getClass().getName(), "Sharelib initialization fails. ", e);
             }
             else {
                 // We don't want to actually fail init by throwing an Exception, so only create the ServiceException and
@@ -604,6 +603,10 @@ public class ShareLibService implements Service, Instrumentable {
                 path = file.getPath();
                 max = d;
             }
+        }
+        //If there are no timestamped directories, fall back to root directory
+        if (path == null) {
+            path = rootDir;
         }
         return path;
     }
