@@ -395,13 +395,34 @@ public class TestShareLibService extends XFsTestCase {
     }
 
     @Test
+    public void testGetShareLibCompatible() throws Exception {
+        services = new Services();
+        setSystemProps();
+        FileSystem fs = getFileSystem();
+        Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+
+        //Use basepath if there is no timestamped directory
+        fs.mkdirs(basePath);
+        Path pigPath = new Path(basePath.toString() + Path.SEPARATOR + "pig");
+        fs.mkdirs(pigPath);
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertNotNull(shareLibService.getShareLibJars("pig"));
+        } finally {
+            services.destroy();
+        }
+    }
+
+    @Test
     public void testGetShareLibPath() throws Exception {
         services = new Services();
         setSystemProps();
         FileSystem fs = getFileSystem();
-        Date time = new Date(System.currentTimeMillis());
-
         Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+
+        //Use timedstamped directory if available
+        Date time = new Date(System.currentTimeMillis());
         Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + ShareLibService.dateFormat.format(time));
         fs.mkdirs(libpath);
 
