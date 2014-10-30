@@ -142,7 +142,7 @@ public abstract class ZKXTestCase extends XDataTestCase {
     }
 
     private void createClient() throws Exception {
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
         String zkConnectionString = Services.get().getConf().get("oozie.zookeeper.connection.string", zkServer.getConnectString());
         String zkNamespace = Services.get().getConf().get("oozie.zookeeper.namespace", "oozie");
         client = CuratorFrameworkFactory.builder()

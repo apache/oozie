@@ -88,7 +88,8 @@ public abstract class ZKXTestCaseWithSecurity extends ZKXTestCase {
      * automatically connect using the same authentication; trying to stop this is futile and either results in an error or has no
      * effect.  This means that there's no way to do any tests with an unauthenticated client.  Also, if any tests using secure
      * ZooKeeper get run before tests not using secure ZooKeeper, they will likely fail because it will try to use authentication:
-     * so they should be run separately.
+     * so they should be run separately.  For this reason, the secure tests should be run in a separate module where they will get
+     * their own JVM.
      *
      * @return the embedded ZooKeeper server
      * @throws Exception
@@ -104,7 +105,7 @@ public abstract class ZKXTestCaseWithSecurity extends ZKXTestCase {
         kdc = new MiniKdc(MiniKdc.createConf(), new File(getTestCaseDir()));
         kdc.start();
         keytabFile = new File(getTestCaseDir(), "test.keytab");
-        String serverPrincipal = "zookeeper/" + kdc.getHost();
+        String serverPrincipal = "zookeeper/127.0.0.1";
         kdc.createPrincipal(keytabFile, getPrincipal(), serverPrincipal);
 
         setSystemProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
