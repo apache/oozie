@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2047 Oozie does not support Hive tables that use datatypes introduced since Hive 0.8 (venkatnrangan via bzhang)
 OOZIE-2034 Disable SSLv3 (POODLEbleed vulnerability) (rkanter)
 OOZIE-1914 CLI should retry on timeout (puru)
 OOZIE-1973 ConcurrentModificationException in Sharelib service (puru)
