@@ -623,39 +623,55 @@ about the various jobs.
 ---+++ Setting Up Oozie with HTTPS (SSL)
 
 *IMPORTANT*:
-The default HTTPS configuration will cause all Oozie URLs to use HTTPS except for the JobTracker callback URLs. This is to simply
+The default HTTPS configuration will cause all Oozie URLs to use HTTPS except for the JobTracker callback URLs. This is to simplify
 configuration (no changes needed outside of Oozie), but this is okay because Oozie doesn't inherently trust the callbacks anyway;
 they are used as hints.
 
 The related environment variables are explained at [[AG_Install#Environment_Setup][Environment Setup]].
 
 You can use either a certificate from a Certificate Authority or a Self-Signed Certificate.  Using a self-signed certificate
-requires some additional configuration on each Oozie client machine.
+requires some additional configuration on each Oozie client machine.  If possible, a certificate from a Certificate Authority is
+recommended because it's simpler to configure.
+
+There's also some additional considerations when using Oozie HA with HTTPS.
 
 ---++++To use a Self-Signed Certificate
-There are many ways to create a Self-Signed Certificate, this is just one way.  We will be using the keytool program, which is
-included with your JRE. If its not on your path, you should be able to find it in $JAVA_HOME/bin.
+There are many ways to create a Self-Signed Certificate, this is just one way.  We will be using
+the [[http://docs.oracle.com/javase/6/docs/technotes/tools/solaris/keytool.html][keytool]] program, which is
+included with your JRE. If it's not on your path, you should be able to find it in $JAVA_HOME/bin.
 
-1. Run the following command (as the Oozie user); you will be asked a series of questions in an interactive prompt.  It will create
-the keystore file, which will be named =.keystore= and located in the Oozie user's home directory.
+1. Run the following command (as the Oozie user) to create the keystore file, which will be named =.keystore= and located in the
+Oozie user's home directory.
 <verbatim>
-keytool -genkey -alias tomcat -keyalg RSA
+keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=hostname" -storepass password -keypass password
 </verbatim>
-The password you enter for "keystore password" and "key password for <tomcat>" must be the same; Oozie is configued to use
-"password" by default. If you want to use a password other than "password", you will need to change the =OOZIE_HTTPS_KEYSTORE_PASS=
-environment variable.
-The answer to "What is your first and last name?" (i.e. "CN") must be the hostname of the machine where the Oozie Server will be
-running.
+The =hostname= should be the host name of the Oozie Server or a wildcard on the subdomain it belongs to.  Make sure to include
+the "CN=" part.  You can change =storepass= and =keypass= values, but they should be the same.  If you do want to use something
+other than password, you'll also need to change the =OOZIE_HTTPS_KEYSTORE_PASS= environment variable in oozie-env.sh to
+match; =password= is the default.
+
+For example, if your Oozie server was at oozie.int.example.com, then you would do this:
+<verbatim>
+keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=oozie.int.example.com" -storepass password -keypass password
+</verbatim>
+If you're going to be using Oozie HA, it's simplest if you have a single certificate that all Oozie servers in the HA group can use.
+To do that, you'll need to use a wild on the subdomain it belongs to:
+<verbatim>
+keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=*.int.example.com" -storepass password -keypass password
+</verbatim>
+The above would work on any server in the int.example.com domain.
 
 2. Run the following command (as the Oozie user) to export a certificate file from the keystore file:
 <verbatim>
 keytool -exportcert -alias tomcat -file path/to/where/I/want/my/certificate.cert
 </verbatim>
+You'll need this later if you're using the Oozie client (or other Java-based client); otherwise, you can skip this step.
 
 ---++++To use a Certificate from a Certificate Authority
 
 1. You will need to make a request to a Certificate Authority in order to obtain a proper Certificate; please consult a Certificate
-Authority on this procedure.
+Authority on this procedure.  If you're going to be using Oozie HA, it's simplest if you have a single certificate that all Oozie
+servers in the HA group can use.  To do that, you'll need to use a wild on the subdomain it belongs to (e.g. "*.int.example.com").
 
 2. Once you have your .cert file, run the following command (as the Oozie user) to create a keystore file from your certificate:
 <verbatim>
@@ -674,6 +690,8 @@ oozie-setup.sh prepare-war -secure
 This will configure Oozie to use HTTPS instead of HTTP.  To revert back to HTTP, simply rerun the command without =-secure=.
 
 3. Start the Oozie server
+
+*Note:* If using Oozie HA, make sure that each Oozie server has a copy of the .keystore file.
 
 ---++++Configure the Oozie Client to connect using SSL (HTTPS)
 
@@ -701,6 +719,27 @@ though most browsers should automatically redirect you if you use http://oozie.s
 
 *IMPORTANT*: If using a Self-Signed Certificate, your browser will warn you that it can't verify the certificate or something
 similar. You will probably have to add your certificate as an exception.
+
+---++++Additional considerations for Oozie HA with SSL
+
+You'll need to configure the load balancer to do SSL pass-through.  This will allow the clients talking to Oozie to use the
+SSL certificate provided by the Oozie servers (so the load balancer does not need one).  Please consult your load balancer's
+documentation on how to configure this.  Make sure to point the load balancer at the https://HOST:HTTPS_PORT addresses for your
+Oozie servers.  Clients can then connect to the load balancer at https://LOAD_BALANCER_HOST:PORT.
+
+*Important:* Callbacks from the JobTracker/ResourceManager are done via http or https depending on what you enter for the
+=OOZIE_BASE_URL= property.  If you are using a Certificate from a Certificate Authority, you can simply put the https address here.
+If you are using a self-signed certificate, you have to do one of the following options (Option 1 is recommended):
+
+Option 1) You'll need to follow the steps in
+the [[AG_Install#Configure_the_Oozie_Client_to_connect_using_SSL_HTTPS][Configure the Oozie Client to connect using SSL (HTTPS)]]
+section, but on the host of the JobTracker/ResourceManager.  You can then set =OOZIE_BASE_URL= to the load balancer https address.
+This will allow the JobTracker/ResourceManager to contact the Oozie server with https (like the Oozie client, they are also Java
+programs).
+
+Option 2) You'll need setup another load balancer, or another "pool" on the existing load balancer, with the http addresses of the
+Oozie servers.  You can then set =OOZIE_BASE_URL= to the load balancer http address.  Clients should use the https load balancer
+address.  This will allow clients to use https while the JobTracker/ResourceManager uses http for callbacks.
 
 ---+++ Fine Tuning an Oozie Server
 
@@ -752,10 +791,10 @@ configuration for consistency's sake.
 
 4. A Loadbalancer, Virtual IP, or Round-Robin DNS.
 
-This is used to provide a single entry-point for users and for callbacks from the JobTracker.  The load balancer should be
-configured for round-robin between the Oozie servers to distribute the requests.  Users (using either the Oozie client, a web
-browser, or the REST API) should connect through the load balancer.  In order to have full HA, the load balancer should also have
-HA support, or it becomes a single point of failure.
+This is used to provide a single entry-point for users and for callbacks from the JobTracker/ResourceManager.  The load balancer
+should be configured for round-robin between the Oozie servers to distribute the requests.  Users (using either the Oozie client, a
+web browser, or the REST API) should connect through the load balancer.  In order to have full HA, the load balancer should also
+have HA support, or it becomes a single point of failure.
 
 ---++++ Installation/Configuration Steps
 
@@ -888,6 +927,8 @@ For earlier versions of Hadoop, each server will have a different random secret.
 additional calls to the KDC to authenticate users to the Oozie server (because the auth tokens will not be accepted by other
 servers, which will cause a fallback to Kerberos).
 
+4. If you'd like to use HTTPS (SSL) with Oozie HA, there's some additional considerations that need to be made.
+See the [[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Seeting Up Oozie with HTTPS (SSL)]] section for more information.
 
 ---++++ JobId sequence
 Oozie in HA mode, uses ZK to generate job id sequence. Job Ids are of following format.
