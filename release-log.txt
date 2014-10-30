@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2033 HA and misc improvements to SSL docs (rkanter)
 OOZIE-1789 Support backward compatibility of oozie share lib (shwethags)
 OOZIE-2047 Oozie does not support Hive tables that use datatypes introduced since Hive 0.8 (venkatnrangan via bzhang)
 OOZIE-2034 Disable SSLv3 (POODLEbleed vulnerability) (rkanter)
