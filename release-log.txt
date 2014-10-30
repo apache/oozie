@@ -40,6 +40,7 @@ OOZIE-1943 Bump up trunk to 4.2.0-SNAPSHOT (bzhang)
 
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-1959 TestZKUtilsWithSecurity fails (rkanter)
 OOZIE-2033 HA and misc improvements to SSL docs (rkanter)
 OOZIE-1789 Support backward compatibility of oozie share lib (shwethags)
 OOZIE-2034 Disable SSLv3 (POODLEbleed vulnerability) (rkanter)

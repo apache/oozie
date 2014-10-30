@@ -43,12 +43,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minikdc</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop</artifactId>
             <scope>provided</scope>
@@ -478,12 +472,6 @@
                         <version>${xerces.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <inherited>true</inherited>
-                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>
