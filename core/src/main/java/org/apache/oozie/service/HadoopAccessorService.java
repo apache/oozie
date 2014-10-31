@@ -186,7 +186,7 @@ public class HadoopAccessorService implements Service {
     }
 
     private static final String[] HADOOP_CONF_FILES =
-        {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml", "hadoop-site.xml"};
+        {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml", "hadoop-site.xml", "ssl-client.xml"};
 
 
     private Configuration loadHadoopConf(File dir) throws IOException {

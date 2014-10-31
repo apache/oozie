@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2048 HadoopAccessorService should also process ssl_client.xml (venkatnrangan via bzhang)
 OOZIE-2047 Oozie does not support Hive tables that use datatypes introduced since Hive 0.8 (venkatnrangan via bzhang)
 OOZIE-1808 Change DG_QuickStart.twiki to reflect changes in sharelib installation (ryota)
 OOZIE-1891 Parametrize surefire argLine to bump up heap memory for testing (ryota)
