@@ -98,7 +98,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 coordAction.setStatus(CoordinatorAction.Status.SUSPENDED);
                 coordAction.decrementAndGetPending();
             }
-            else if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
+            else if (workflow.getStatus() == WorkflowJob.Status.RUNNING ||
+                    workflow.getStatus() == WorkflowJob.Status.PREP) {
                 // resume workflow job and update coord action accordingly
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.decrementAndGetPending();

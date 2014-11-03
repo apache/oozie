@@ -18,13 +18,6 @@
 
 package org.apache.oozie.executor.jpa;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
@@ -32,6 +25,12 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Query Executor that provides API to run query for Workflow Job
@@ -266,6 +265,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setRun((Integer) arr[5]);
                 bean.setLogToken((String) arr[6]);
                 bean.setWfInstanceBlob((BinaryBlob) (arr[7]));
+                bean.setParentId((String)arr[8]);
                 break;
             case GET_WORKFLOW_DEFINITION:
                 bean = new WorkflowJobBean();

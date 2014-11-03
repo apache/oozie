@@ -253,6 +253,9 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
+        finally {
+            updateParentIfNecessary(wfBean);
+        }
 
     }
 
