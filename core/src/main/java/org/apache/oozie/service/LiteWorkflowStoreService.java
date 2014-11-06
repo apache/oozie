@@ -138,8 +138,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     private static int getUserRetryInterval(NodeHandler.Context context) throws WorkflowException {
-        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
-        int ret = conf.getInt(CONF_USER_RETRY_INTEVAL, 5);
+        int ret = ConfigurationService.getInt(CONF_USER_RETRY_INTEVAL);
         String userRetryInterval = context.getNodeDef().getUserRetryInterval();
 
         if (!userRetryInterval.equals("null")) {
@@ -155,8 +154,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
     private static int getUserRetryMax(NodeHandler.Context context) throws WorkflowException {
         XLog log = XLog.getLog(LiteWorkflowStoreService.class);
-        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
-        int ret = conf.getInt(CONF_USER_RETRY_MAX, 0);
+        int ret = ConfigurationService.getInt(CONF_USER_RETRY_MAX);
         int max = ret;
         String userRetryMax = context.getNodeDef().getUserRetryMax();
 
@@ -184,11 +182,10 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
      * @return set of error code user-retry is allowed for
      */
     public static Set<String> getUserRetryErrorCode() {
-        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
         // eliminating whitespaces in the error codes value specification
-        String errorCodeString = conf.get(CONF_USER_RETRY_ERROR_CODE).replaceAll("\\s+", "");
+        String errorCodeString = ConfigurationService.get(CONF_USER_RETRY_ERROR_CODE).replaceAll("\\s+", "");
         Collection<String> strings = StringUtils.getStringCollection(errorCodeString);
-        String errorCodeExtString = conf.get(CONF_USER_RETRY_ERROR_CODE_EXT).replaceAll("\\s+", "");
+        String errorCodeExtString = ConfigurationService.get(CONF_USER_RETRY_ERROR_CODE_EXT).replaceAll("\\s+", "");
         Collection<String> extra = StringUtils.getStringCollection(errorCodeExtString);
         Set<String> set = new HashSet<String>();
         set.addAll(strings);
@@ -203,8 +200,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
      * @throws WorkflowException thrown if there was an error parsing the action configuration.
     */
     public static String getNodeDefDefaultVersion() throws WorkflowException {
-        Configuration conf = Services.get().get(ConfigurationService.class).getConf();
-        String ret = conf.get(CONF_NODE_DEF_VERSION);
+        String ret = ConfigurationService.get(CONF_NODE_DEF_VERSION);
         if (ret == null) {
             ret = NODE_DEF_VERSION_1;
         }

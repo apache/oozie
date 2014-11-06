@@ -82,7 +82,7 @@ public class SchemaService implements Service {
         for (String baseSchema : baseSchemas) {
             sources.add(new StreamSource(IOUtils.getResourceAsStream(baseSchema, -1)));
         }
-        String[] schemas = conf.getStrings(extSchema);
+        String[] schemas = ConfigurationService.getStrings(conf, extSchema);
         if (schemas != null) {
             for (String schema : schemas) {
                 schema = schema.trim();
@@ -107,7 +107,6 @@ public class SchemaService implements Service {
             coordSchema = loadSchema(services.getConf(), OOZIE_COORDINATOR_XSD, COORD_CONF_EXT_SCHEMAS);
             bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
             slaSchema = loadSchema(services.getConf(), OOZIE_SLA_SEMANTIC_XSD, SLA_CONF_EXT_SCHEMAS);
-            bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
         }
         catch (SAXException ex) {
             throw new ServiceException(ErrorCode.E0130, ex.getMessage(), ex);

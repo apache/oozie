@@ -32,6 +32,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.IOUtils;
@@ -56,7 +57,7 @@ public class CallbackServlet extends JsonRestServlet {
 
     @Override
     public void init() {
-        maxDataLen = Services.get().getConf().getInt(CONF_MAX_DATA_LEN, 2 * 1024);
+        maxDataLen = ConfigurationService.getInt(CONF_MAX_DATA_LEN);
     }
 
     /**

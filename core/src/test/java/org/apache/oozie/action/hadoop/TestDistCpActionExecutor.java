@@ -40,12 +40,6 @@ import org.apache.oozie.util.XConfiguration;
 
 public class TestDistCpActionExecutor extends ActionExecutorTestCase{
 
-    @Override
-    protected void setSystemProps() throws Exception {
-        super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", DistcpActionExecutor.class.getName());
-    }
-
     @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         DistcpActionExecutor ae = new DistcpActionExecutor();

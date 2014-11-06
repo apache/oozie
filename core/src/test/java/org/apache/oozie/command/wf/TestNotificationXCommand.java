@@ -73,6 +73,6 @@ public class TestNotificationXCommand extends XTestCase {
         command.call();
         long end = System.currentTimeMillis();
         Assert.assertTrue(end - start >= 50);
-        Assert.assertTrue(end - start < NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
+        Assert.assertTrue(end - start < 10000);
     }
 }

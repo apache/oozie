@@ -33,6 +33,7 @@ import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.BundleEngineService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -824,7 +825,7 @@ public class V1JobServlet extends BaseJobServlet {
         int offset = (startStr != null) ? Integer.parseInt(startStr) : 1;
         offset = (offset < 1) ? 1 : offset;
         // Get default number of coordinator actions to be retrieved
-        int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
+        int defaultLen = ConfigurationService.getInt(COORD_ACTIONS_DEFAULT_LENGTH);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = getCoordinatorJobLength(defaultLen, len);
         try {

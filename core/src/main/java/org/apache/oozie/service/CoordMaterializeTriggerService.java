@@ -22,14 +22,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XCallable;
@@ -64,9 +62,6 @@ public class CoordMaterializeTriggerService implements Service {
 
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
-    public static final int CONF_LOOKUP_INTERVAL_DEFAULT = 300;
-    public static final int CONF_MATERIALIZATION_WINDOW_DEFAULT = 3600;
-    private static final int CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT = 50;
 
     /**
      * This runnable class will run in every "interval" to queue CoordMaterializeTransitionXCommand.
@@ -149,8 +144,7 @@ public class CoordMaterializeTriggerService implements Service {
                 // get current date
                 Date currDate = new Date(new Date().getTime() + lookupInterval * 1000);
                 // get list of all jobs that have actions that should be materialized.
-                int materializationLimit = Services.get().getConf()
-                        .getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT, CONF_MATERIALIZATION_SYSTEM_LIMIT_DEFAULT);
+                int materializationLimit = ConfigurationService.getInt(CONF_MATERIALIZATION_SYSTEM_LIMIT);
                 materializeCoordJobs(currDate, materializationLimit, LOG, updateList);
             }
 
@@ -195,7 +189,7 @@ public class CoordMaterializeTriggerService implements Service {
                 callables = new ArrayList<XCallable<Void>>();
             }
             callables.add(callable);
-            if (callables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
+            if (callables.size() == ConfigurationService.getInt(CONF_CALLABLE_BATCH_SIZE)) {
                 boolean ret = Services.get().get(CallableQueueService.class).queueSerial(callables);
                 if (ret == false) {
                     XLog.getLog(getClass()).warn(
@@ -211,11 +205,10 @@ public class CoordMaterializeTriggerService implements Service {
 
     @Override
     public void init(Services services) throws ServiceException {
-        Configuration conf = services.getConf();
         // default is 3600sec (1hr)
-        int materializationWindow = conf.getInt(CONF_MATERIALIZATION_WINDOW, CONF_MATERIALIZATION_WINDOW_DEFAULT);
+        int materializationWindow = ConfigurationService.getInt(services.getConf(), CONF_MATERIALIZATION_WINDOW);
         // default is 300sec (5min)
-        int lookupInterval = Services.get().getConf().getInt(CONF_LOOKUP_INTERVAL, CONF_LOOKUP_INTERVAL_DEFAULT);
+        int lookupInterval = ConfigurationService.getInt(services.getConf(), CONF_LOOKUP_INTERVAL);
         // default is 300sec (5min)
         int schedulingInterval = Services.get().getConf().getInt(CONF_SCHEDULING_INTERVAL, lookupInterval);
 

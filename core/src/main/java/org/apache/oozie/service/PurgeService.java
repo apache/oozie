@@ -85,11 +85,13 @@ public class PurgeService implements Service {
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable purgeJobsRunnable = new PurgeRunnable(conf.getInt(
-                CONF_OLDER_THAN, 30), conf.getInt(COORD_CONF_OLDER_THAN, 7), conf.getInt(BUNDLE_CONF_OLDER_THAN, 7),
-                                      conf.getInt(PURGE_LIMIT, 100), conf.getBoolean(PURGE_OLD_COORD_ACTION, false));
-        services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10, conf.getInt(CONF_PURGE_INTERVAL, 3600),
-                                                      SchedulerService.Unit.SEC);
+        Runnable purgeJobsRunnable = new PurgeRunnable(ConfigurationService.getInt(conf, CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, COORD_CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, BUNDLE_CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, PURGE_LIMIT),
+                ConfigurationService.getBoolean(conf, PURGE_OLD_COORD_ACTION));
+        services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10,
+                ConfigurationService.getInt(conf, CONF_PURGE_INTERVAL), SchedulerService.Unit.SEC);
     }
 
     /**

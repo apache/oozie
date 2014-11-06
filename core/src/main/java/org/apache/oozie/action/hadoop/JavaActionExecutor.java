@@ -59,6 +59,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -89,7 +90,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String HADOOP_NAME_NODE = "fs.default.name";
     private static final String HADOOP_JOB_NAME = "mapred.job.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
-    public static final int MAX_EXTERNAL_STATS_SIZE_DEFAULT = Integer.MAX_VALUE;
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
@@ -114,6 +114,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED_KILLED = "FAILED/KILLED";
     protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
+    public static final String CONF_HADOOP_YARN_UBER_MODE = "oozie.action.launcher." + HADOOP_YARN_UBER_MODE;
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
@@ -155,19 +156,12 @@ public class JavaActionExecutor extends ActionExecutor {
     @Override
     public void initActionType() {
         super.initActionType();
-        maxActionOutputLen = getOozieConf()
-          .getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
-          // TODO: Remove the below config get in a subsequent release..
-          // This other irrelevant property is only used to
-          // preserve backwards compatibility cause of a typo.
-                  // See OOZIE-4.
-          getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN,
-            2 * 1024));
+        maxActionOutputLen = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA);
         //Get the limit for the maximum allowed size of action stats
-        maxExternalStatsSize = getOozieConf().getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE, MAX_EXTERNAL_STATS_SIZE_DEFAULT);
+        maxExternalStatsSize = ConfigurationService.getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
         //Get the limit for the maximum number of globbed files/dirs for FS operation
-        maxFSGlobMax = getOozieConf().getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, LauncherMapper.GLOB_MAX_DEFAULT);
+        maxFSGlobMax = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
 
         registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
         registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
@@ -267,7 +261,7 @@ public class JavaActionExecutor extends ActionExecutor {
     void injectLauncherUseUberMode(Configuration launcherConf) {
         // Set Uber Mode for the launcher (YARN only, ignored by MR1) if not set by action conf and not disabled in oozie-site
         if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
-            if (getOozieConf().getBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false)) {
+            if (ConfigurationService.getBoolean(getOozieConf(), CONF_HADOOP_YARN_UBER_MODE)) {
                 launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
             }
         }
@@ -798,9 +792,7 @@ public class JavaActionExecutor extends ActionExecutor {
             LauncherMapperHelper.setupLauncherURIHandlerConf(launcherJobConf);
             LauncherMapperHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
             LauncherMapperHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
-            if (getOozieConf().get(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX) != null) {
-                LauncherMapperHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
-            }
+            LauncherMapperHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
 
             List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];

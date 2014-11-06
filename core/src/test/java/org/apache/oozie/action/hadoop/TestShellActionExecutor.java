@@ -58,16 +58,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             : "ls -ltr\necho $1 $2\nexit 1";
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
 
-    @Override
-    protected void setSystemProps() throws Exception {
-        super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", ShellActionExecutor.class.getName());
-    }
-
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
      *
-     * @param launcherJarShouldExist
      * @throws Exception
      */
     public void testSetupMethods() throws Exception {

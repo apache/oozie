@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -228,12 +229,11 @@ public abstract class ActionExecutor {
      * Create an action executor.
      *
      * @param type action executor type.
-     * @param retryAttempts retry attempts.
      * @param retryInterval retry interval, in seconds.
      */
     protected ActionExecutor(String type, long retryInterval) {
         this.type = ParamChecker.notEmpty(type, "type");
-        this.maxRetries = getOozieConf().getInt(MAX_RETRIES, 3);
+        this.maxRetries = ConfigurationService.getInt(MAX_RETRIES);
         this.retryInterval = retryInterval;
     }
 

@@ -48,6 +48,7 @@ import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_KEYTAB;
 import static org.apache.oozie.service.HadoopAccessorService.KERBEROS_PRINCIPAL;
 
 import org.apache.oozie.event.listener.ZKConnectionListener;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.zookeeper.ZooDefs.Perms;
@@ -132,7 +133,10 @@ public class ZKUtils {
      */
     private ZKUtils() throws Exception {
         log = XLog.getLog(getClass());
-        zkId = Services.get().getConf().get(OOZIE_INSTANCE_ID, Services.get().getConf().get("oozie.http.hostname"));
+        zkId = ConfigurationService.get(OOZIE_INSTANCE_ID);
+        if (zkId.isEmpty()) {
+            zkId = ConfigurationService.get("oozie.http.hostname");
+        }
         createClient();
         advertiseService();
         checkAndSetACLs();
@@ -173,9 +177,9 @@ public class ZKUtils {
     private void createClient() throws Exception {
         // Connect to the ZooKeeper server
         RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
-        String zkConnectionString = Services.get().getConf().get(ZK_CONNECTION_STRING, "localhost:2181");
+        String zkConnectionString = ConfigurationService.get(ZK_CONNECTION_STRING);
         String zkNamespace = getZKNameSpace();
-        zkConnectionTimeout = Services.get().getConf().getInt(ZK_CONNECTION_TIMEOUT, 180);
+        zkConnectionTimeout = ConfigurationService.getInt(ZK_CONNECTION_TIMEOUT);
 
         ACLProvider aclProvider;
         if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
@@ -413,7 +417,7 @@ public class ZKUtils {
      * @return oozie.zookeeper.namespace
      */
     public static String getZKNameSpace() {
-        return Services.get().getConf().get(ZK_NAMESPACE, "oozie");
+        return ConfigurationService.get(ZK_NAMESPACE);
     }
     /**
      * Return ZK connection timeout

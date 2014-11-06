@@ -238,7 +238,7 @@ public class RecoveryService implements Service {
         private void runCoordActionRecovery() {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
-            long pushMissingDepInterval = Services.get().getConf().getLong(CONF_PUSH_DEPENDENCY_INTERVAL, 200);
+            long pushMissingDepInterval = ConfigurationService.getLong(CONF_PUSH_DEPENDENCY_INTERVAL);
             long pushMissingDepDelay = pushMissingDepInterval;
             List<CoordinatorActionBean> cactions = null;
             try {
@@ -424,7 +424,7 @@ public class RecoveryService implements Service {
             }
             this.delay = Math.max(this.delay, delay);
             delayedCallables.add(callable);
-            if (delayedCallables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
+            if (delayedCallables.size() == ConfigurationService.getInt(CONF_CALLABLE_BATCH_SIZE)){
                 boolean ret = Services.get().get(CallableQueueService.class).queueSerial(delayedCallables, this.delay);
                 if (ret == false) {
                     XLog.getLog(getClass()).warn("Unable to queue the delayedCallables commands for RecoveryService. "
@@ -445,14 +445,16 @@ public class RecoveryService implements Service {
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable recoveryRunnable = new RecoveryRunnable(conf.getInt(CONF_WF_ACTIONS_OLDER_THAN, 120), conf.getInt(
-                CONF_COORD_OLDER_THAN, 600),conf.getInt(CONF_BUNDLE_OLDER_THAN, 600));
+        Runnable recoveryRunnable = new RecoveryRunnable(
+                ConfigurationService.getInt(conf, CONF_WF_ACTIONS_OLDER_THAN),
+                ConfigurationService.getInt(conf, CONF_COORD_OLDER_THAN),
+                ConfigurationService.getInt(conf, CONF_BUNDLE_OLDER_THAN));
         services.get(SchedulerService.class).schedule(recoveryRunnable, 10, getRecoveryServiceInterval(conf),
                                                       SchedulerService.Unit.SEC);
     }
 
     public int getRecoveryServiceInterval(Configuration conf){
-        return conf.getInt(CONF_SERVICE_INTERVAL, 60);
+        return ConfigurationService.getInt(conf, CONF_SERVICE_INTERVAL);
     }
 
     /**

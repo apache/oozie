@@ -119,12 +119,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             "<arg>{3}</arg>" +
             "</sqoop>";
 
-    @Override
-    protected void setSystemProps() throws Exception {
-        super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", SqoopActionExecutor.class.getName());
-    }
-
     public void testSetupMethods() throws Exception {
         SqoopActionExecutor ae = new SqoopActionExecutor();
         assertEquals(SqoopMain.class, ae.getLauncherClasses().get(0));

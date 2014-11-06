@@ -98,7 +98,7 @@ public class SchedulerService implements Service {
      * @return int num threads
      */
     public int getSchedulableThreads(Configuration conf) {
-        return conf.getInt(SCHEDULER_THREADS, 10);
+        return ConfigurationService.getInt(conf, SCHEDULER_THREADS);
     }
 
     public enum Unit {

@@ -80,12 +80,7 @@ public class DagEngine extends BaseEngine {
      * Create a system Dag engine, with no user and no group.
      */
     public DagEngine() {
-        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
-            LOG.debug("Oozie DagEngine is not using XCommands.");
-        }
-        else {
-            LOG.debug("Oozie DagEngine is using XCommands.");
-        }
+
     }
 
     /**

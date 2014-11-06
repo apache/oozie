@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
@@ -71,17 +72,14 @@ public class DistcpActionExecutor extends JavaActionExecutor{
      * @return Name of the class from the configuration
      */
     public static String getClassNamebyType(String type){
-        Configuration conf = Services.get().getConf();
         String classname = null;
-        if (conf.get(CLASS_NAMES, "").trim().length() > 0) {
-            for (String function : conf.getStrings(CLASS_NAMES)) {
-                function = DistcpActionExecutor.Trim(function);
-                LOG.debug("class for Distcp Action: " + function);
-                String[] str = function.split("=");
-                if (str.length > 0) {
-                    if(type.equalsIgnoreCase(str[0])){
-                        classname = new String(str[1]);
-                    }
+        for (String function : ConfigurationService.getStrings(CLASS_NAMES)) {
+            function = DistcpActionExecutor.Trim(function);
+            LOG.debug("class for Distcp Action: " + function);
+            String[] str = function.split("=");
+            if (str.length > 0) {
+                if(type.equalsIgnoreCase(str[0])){
+                    classname = new String(str[1]);
                 }
             }
         }

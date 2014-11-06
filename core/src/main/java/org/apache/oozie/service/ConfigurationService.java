@@ -19,6 +19,7 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
@@ -30,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +67,8 @@ public class ConfigurationService implements Service, Instrumentable {
 
     public static final String CONF_IGNORE_SYS_PROPS = CONF_PREFIX + "ignore.system.properties";
 
+    public static final String CONF_VERIFY_AVAILABLE_PROPS = CONF_PREFIX + "verify.available.properties";
+
     /**
      * System property that indicates the configuration directory.
      */
@@ -86,6 +90,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
     private static final Set<String> MASK_PROPS = new HashSet<String>();
+    private static Map<String,String> defaultConfigs = new HashMap<String,String>();
 
     static {
 
@@ -139,6 +144,9 @@ public class ConfigurationService implements Service, Instrumentable {
         log.info("Oozie conf file [{0}]", configFile);
         configFile = new File(configDir, configFile).toString();
         configuration = loadConf();
+        if (configuration.getBoolean(CONF_VERIFY_AVAILABLE_PROPS, false)) {
+            verifyConfigurationName();
+        }
     }
 
     public static String getConfigurationDirectory() throws ServiceException {
@@ -203,14 +211,14 @@ public class ConfigurationService implements Service, Instrumentable {
         XConfiguration configuration;
         try {
             InputStream inputStream = getDefaultConfiguration();
-            configuration = new XConfiguration(inputStream);
+            configuration = loadConfig(inputStream, true);
             File file = new File(configFile);
             if (!file.exists()) {
                 log.info("Missing site configuration file [{0}]", configFile);
             }
             else {
                 inputStream = new FileInputStream(configFile);
-                XConfiguration siteConfiguration = new XConfiguration(inputStream);
+                XConfiguration siteConfiguration = loadConfig(inputStream, false);
                 XConfiguration.injectDefaults(configuration, siteConfiguration);
                 configuration = siteConfiguration;
             }
@@ -269,6 +277,20 @@ public class ConfigurationService implements Service, Instrumentable {
         return new LogChangesConfiguration(configuration);
     }
 
+    private XConfiguration loadConfig(InputStream inputStream, boolean defaultConfig) throws IOException, ServiceException {
+        XConfiguration configuration;
+        configuration = new XConfiguration(inputStream);
+        for(Map.Entry<String,String> entry: configuration) {
+            if (defaultConfig) {
+                defaultConfigs.put(entry.getKey(), entry.getValue());
+            }
+            else {
+                log.debug("Overriding configuration with oozie-site, [{0}]", entry.getKey());
+            }
+        }
+        return configuration;
+    }
+
     private class LogChangesConfiguration extends XConfiguration {
 
         public LogChangesConfiguration(Configuration conf) {
@@ -284,13 +306,22 @@ public class ConfigurationService implements Service, Instrumentable {
             return (s != null && s.trim().length() > 0) ? super.getStrings(name) : new String[0];
         }
 
+        public String[] getStrings(String name, String[] defaultValue) {
+            String s = get(name);
+            if (s == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name,
+                        Arrays.asList(defaultValue).toString());
+            }
+            return (s != null && s.trim().length() > 0) ? super.getStrings(name) : defaultValue;
+        }
+
         public String get(String name, String defaultValue) {
             String value = get(name);
             if (value == null) {
                 boolean maskValue = MASK_PROPS.contains(name);
                 value = defaultValue;
                 String logValue = (maskValue) ? "**MASKED**" : defaultValue;
-                log.warn(XLog.OPS, "Configuration property [{0}] not found, using default [{1}]", name, logValue);
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, logValue);
             }
             return value;
         }
@@ -300,6 +331,59 @@ public class ConfigurationService implements Service, Instrumentable {
             boolean maskValue = MASK_PROPS.contains(name);
             value = (maskValue) ? "**MASKED**" : value;
             log.info(XLog.OPS, "Programmatic configuration change, property[{0}]=[{1}]", name, value);
+        }
+
+        public boolean getBoolean(String name, boolean defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+            }
+            return super.getBoolean(name, defaultValue);
+        }
+
+        public int getInt(String name, int defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+            }
+            return super.getInt(name, defaultValue);
+        }
+
+        public long getLong(String name, long defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+            }
+            return super.getLong(name, defaultValue);
+        }
+
+        public float getFloat(String name, float defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+            }
+            return super.getFloat(name, defaultValue);
+        }
+
+        public Class<?>[] getClasses(String name, Class<?> ... defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+            }
+            return super.getClasses(name, defaultValue);
+        }
+
+        public Class<?> getClass(String name, Class<?> defaultValue) {
+            String value = get(name);
+            if (value == null) {
+                log.debug(XLog.OPS, "Configuration property [{0}] not found, use given value [{1}]", name, defaultValue);
+                return defaultValue;
+            }
+            try {
+                return getClassByName(value);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private void setValue(String name, String value) {
@@ -353,4 +437,89 @@ public class ConfigurationService implements Service, Instrumentable {
         }
         return value;
     }
+
+
+    /**
+     * Gets the oozie configuration value in oozie-default.
+     * @param name
+     * @return the configuration value of the <code>name</code> otherwise null
+     */
+    private String getDefaultOozieConfig(String name) {
+        return defaultConfigs.get(name);
+    }
+
+    /**
+     * Verify the configuration is in oozie-default
+     */
+    public void verifyConfigurationName() {
+        for (Map.Entry<String, String> entry: configuration) {
+            if (getDefaultOozieConfig(entry.getKey()) == null) {
+                log.warn("Invalid configuration defined, [{0}] ", entry.getKey());
+            }
+        }
+    }
+
+    public static String get(String name) {
+        Configuration conf = Services.get().getConf();
+        return get(conf, name);
+    }
+
+    public static String get(Configuration conf, String name) {
+        return conf.get(name, ConfigUtils.STRING_DEFAULT);
+    }
+
+    public static String[] getStrings(String name) {
+        Configuration conf = Services.get().getConf();
+        return getStrings(conf, name);
+    }
+
+    public static String[] getStrings(Configuration conf, String name) {
+        return conf.getStrings(name, new String[0]);
+    }
+
+    public static boolean getBoolean(String name) {
+        Configuration conf = Services.get().getConf();
+        return getBoolean(conf, name);
+    }
+
+    public static boolean getBoolean(Configuration conf, String name) {
+        return conf.getBoolean(name, ConfigUtils.BOOLEAN_DEFAULT);
+    }
+
+    public static int getInt(String name) {
+        Configuration conf = Services.get().getConf();
+        return getInt(conf, name);
+    }
+
+    public static int getInt(Configuration conf, String name) {
+        return conf.getInt(name, ConfigUtils.INT_DEFAULT);
+    }
+
+    public static float getFloat(String name) {
+        Configuration conf = Services.get().getConf();
+        return conf.getFloat(name, ConfigUtils.FLOAT_DEFAULT);
+    }
+
+    public static long getLong(String name) {
+        Configuration conf = Services.get().getConf();
+        return getLong(conf, name);
+    }
+
+    public static long getLong(Configuration conf, String name) {
+        return conf.getLong(name, ConfigUtils.LONG_DEFAULT);
+    }
+
+    public static Class<?>[] getClasses(String name) {
+        Configuration conf = Services.get().getConf();
+        return getClasses(conf, name);
+    }
+
+    public static Class<?>[] getClasses(Configuration conf, String name) {
+        return conf.getClasses(name);
+    }
+
+    public static Class<?> getClass(Configuration conf, String name) {
+        return conf.getClass(name, Object.class);
+    }
+
 }

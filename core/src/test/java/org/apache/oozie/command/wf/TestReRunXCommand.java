@@ -126,7 +126,6 @@ public class TestReRunXCommand extends XDataTestCase {
      */
     public void testRerunFork() throws Exception {
         // We need the shell schema and action for this test
-        Services.get().getConf().set(ActionService.CONF_ACTION_EXECUTOR_EXT_CLASSES, ShellActionExecutor.class.getName());
         Services.get().setService(ActionService.class);
         Services.get().getConf().set(SchemaService.WF_CONF_EXT_SCHEMAS, "shell-action-0.3.xsd");
         Services.get().setService(SchemaService.class);

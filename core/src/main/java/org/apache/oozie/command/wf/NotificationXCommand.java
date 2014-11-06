@@ -23,6 +23,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -35,7 +36,6 @@ import java.net.URL;
 public class NotificationXCommand extends WorkflowXCommand<Void> {
 
     public static final String NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY = "oozie.notification.url.connection.timeout";
-    public static final int NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT = 10 * 1000; // 10 seconds
 
     private static final String STATUS_PATTERN = "\\$status";
     private static final String JOB_ID_PATTERN = "\\$jobId";
@@ -102,8 +102,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         if (url != null) {
-            int timeout = Services.get().getConf().getInt(NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY,
-                                                          NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
+            int timeout = ConfigurationService.getInt(NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY);
             try {
                 URL url = new URL(this.url);
                 HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();

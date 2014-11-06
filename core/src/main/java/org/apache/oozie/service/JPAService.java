@@ -137,18 +137,18 @@ public class JPAService implements Service, Instrumentable {
     public void init(Services services) throws ServiceException {
         LOG = XLog.getLog(JPAService.class);
         Configuration conf = services.getConf();
-        String dbSchema = conf.get(CONF_DB_SCHEMA, "oozie");
-        String url = conf.get(CONF_URL, "jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true");
-        String driver = conf.get(CONF_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
-        String user = conf.get(CONF_USERNAME, "sa");
-        String password = conf.get(CONF_PASSWORD, "").trim();
-        String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();
-        String dataSource = conf.get(CONF_CONN_DATA_SOURCE, "org.apache.commons.dbcp.BasicDataSource");
-        String connPropsConfig = conf.get(CONF_CONN_PROPERTIES);
-        boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, false);
-        boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, true);
-        String evictionInterval = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL, "300000").trim();
-        String evictionNum = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_NUM, "10").trim();
+        String dbSchema = ConfigurationService.get(conf, CONF_DB_SCHEMA);
+        String url = ConfigurationService.get(conf, CONF_URL);
+        String driver = ConfigurationService.get(conf, CONF_DRIVER);
+        String user = ConfigurationService.get(conf, CONF_USERNAME);
+        String password = ConfigurationService.get(conf, CONF_PASSWORD).trim();
+        String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
+        String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
+        String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
+        boolean autoSchemaCreation = ConfigurationService.getBoolean(conf, CONF_CREATE_DB_SCHEMA);
+        boolean validateDbConn = ConfigurationService.getBoolean(conf, CONF_VALIDATE_DB_CONN);
+        String evictionInterval = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim();
+        String evictionNum = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim();
 
         if (!url.startsWith("jdbc:")) {
             throw new ServiceException(ErrorCode.E0608, url, "invalid JDBC URL, must start with 'jdbc:'");

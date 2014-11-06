@@ -44,7 +44,7 @@ public class XLogStreamingService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log streaming service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        bufferLen = services.getConf().getInt(STREAM_BUFFER_LEN, 4096);
+        bufferLen = ConfigurationService.getInt(services.getConf(), STREAM_BUFFER_LEN);
     }
 
     /**

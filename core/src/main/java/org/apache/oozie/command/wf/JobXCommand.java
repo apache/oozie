@@ -24,6 +24,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowInfoWithActionsSubsetGetJPAExecutor;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
@@ -36,6 +37,8 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
     private int start = 1;
     private int len = Integer.MAX_VALUE;
     private WorkflowJobBean workflow;
+
+    public static final String CONF_CONSOLE_URL = "oozie.JobCommand.job.console.url";
 
     public JobXCommand(String id) {
         this(id, 1, Integer.MAX_VALUE);
@@ -85,7 +88,7 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
      * @return console URL
      */
     public static String getJobConsoleUrl(String jobId) {
-        String consoleUrl = Services.get().getConf().get("oozie.JobCommand.job.console.url", null);
+        String consoleUrl = ConfigurationService.get(CONF_CONSOLE_URL);
         return (consoleUrl != null) ? consoleUrl + jobId : null;
     }
 

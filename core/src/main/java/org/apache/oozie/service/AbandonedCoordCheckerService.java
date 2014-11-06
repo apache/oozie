@@ -45,21 +45,15 @@ import com.google.common.annotations.VisibleForTesting;
 public class AbandonedCoordCheckerService implements Service {
 
     private static final String CONF_PREFIX = Service.CONF_PREFIX + "AbandonedCoordCheckerService.";
-    private static final String TO_ADDRESS = CONF_PREFIX + "email.address";
+    public static final String TO_ADDRESS = CONF_PREFIX + "email.address";
     private static final String CONTENT_TYPE = "text/html";
     private static final String SUBJECT = "Abandoned Coordinators report";
-    private static final String CONF_CHECK_INTERVAL = CONF_PREFIX + "check.interval";
-    private static final String CONF_CHECK_DELAY = CONF_PREFIX + "check.delay";
-    private static final String CONF_FAILURE_LEN = CONF_PREFIX + "failure.limit";
-    private static final String CONF_JOB_OLDER_THAN = CONF_PREFIX + "job.older.than";
+    public static final String CONF_CHECK_INTERVAL = CONF_PREFIX + "check.interval";
+    public static final String CONF_CHECK_DELAY = CONF_PREFIX + "check.delay";
+    public static final String CONF_FAILURE_LEN = CONF_PREFIX + "failure.limit";
+    public static final String CONF_JOB_OLDER_THAN = CONF_PREFIX + "job.older.than";
 
-    private static final int DEFAULT_FAILURE_LEN = 20;
-    private static final int DEFAULT_CHECK_INTERVAL = 24 * 60; // Once a day
-    private static final int DEFAULT_CHECK_DELAY = 1 * 60; // One hour.
-    private static final int DEFAULT_CONF_JOB_OLDER_THAN = 2880; // One days
-
-    private static final String CONF_JOB_KILL = CONF_PREFIX + "kill.jobs";
-    private static final boolean DEFAULT_JOB_KILL = false;
+    public static final String CONF_JOB_KILL = CONF_PREFIX + "kill.jobs";
     public static final String OOZIE_BASE_URL = "oozie.base.url";
     private static String[] to;
     private static String serverURL;
@@ -68,7 +62,7 @@ public class AbandonedCoordCheckerService implements Service {
         private  StringBuilder msg;
         final int failureLimit;
         XLog LOG = XLog.getLog(getClass());
-        private boolean shouldKill = DEFAULT_JOB_KILL;
+        private boolean shouldKill = false;
 
         public AbandonedCoordCheckerRunnable(int failureLimit) {
             this(failureLimit, false);
@@ -110,8 +104,7 @@ public class AbandonedCoordCheckerService implements Service {
             try {
                 Timestamp createdTS = new Timestamp(
                         System.currentTimeMillis()
-                                - (Services.get().getConf()
-                                        .getInt(CONF_JOB_OLDER_THAN, DEFAULT_CONF_JOB_OLDER_THAN) * 60 * 1000));
+                                - (ConfigurationService.getInt(CONF_JOB_OLDER_THAN) * 60 * 1000));
 
                 jobs = CoordJobQueryExecutor.getInstance().getList(CoordJobQuery.GET_COORD_FOR_ABANDONEDCHECK,
                         failureLimit, createdTS);
@@ -177,17 +170,16 @@ public class AbandonedCoordCheckerService implements Service {
 
     @Override
     public void init(Services services) {
-        Configuration conf = services.getConf();
-        to = conf.getStrings(TO_ADDRESS);
-        int failureLen = conf.getInt(CONF_FAILURE_LEN, DEFAULT_FAILURE_LEN);
-        boolean shouldKill = conf.getBoolean(CONF_JOB_KILL, DEFAULT_JOB_KILL);
-        serverURL = conf.get(OOZIE_BASE_URL);
+        to = ConfigurationService.getStrings(TO_ADDRESS);
+        int failureLen = ConfigurationService.getInt(CONF_FAILURE_LEN);
+        boolean shouldKill = ConfigurationService.getBoolean(CONF_JOB_KILL);
+        serverURL = ConfigurationService.get(OOZIE_BASE_URL);
 
-        int delay = conf.getInt(CONF_CHECK_DELAY, DEFAULT_CHECK_DELAY);
+        int delay = ConfigurationService.getInt(CONF_CHECK_DELAY);
 
         Runnable actionCheckRunnable = new AbandonedCoordCheckerRunnable(failureLen, shouldKill);
         services.get(SchedulerService.class).schedule(actionCheckRunnable, delay,
-                conf.getInt(CONF_CHECK_INTERVAL, DEFAULT_CHECK_INTERVAL), SchedulerService.Unit.MIN);
+                ConfigurationService.getInt(CONF_CHECK_INTERVAL), SchedulerService.Unit.MIN);
 
     }
 

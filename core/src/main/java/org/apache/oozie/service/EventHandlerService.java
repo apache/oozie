@@ -73,7 +73,8 @@ public class EventHandlerService implements Service {
         try {
             Configuration conf = services.getConf();
             LOG = XLog.getLog(getClass());
-            Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) conf.getClass(CONF_EVENT_QUEUE, null);
+            Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) ConfigurationService.getClass
+                    (conf, CONF_EVENT_QUEUE);
             eventQueue = queueImpl == null ? new MemoryEventQueue() : (EventQueue) queueImpl.newInstance();
             eventQueue.init(conf);
             // initialize app-types to switch on events for
@@ -94,7 +95,7 @@ public class EventHandlerService implements Service {
 
     private void initApptypes(Configuration conf) {
         apptypes = new HashSet<String>();
-        for (String jobtype : conf.getStringCollection(CONF_FILTER_APP_TYPES)) {
+        for (String jobtype : ConfigurationService.getStrings(conf, CONF_FILTER_APP_TYPES)) {
             String tmp = jobtype.trim().toLowerCase();
             if (tmp.length() == 0) {
                 continue;
@@ -104,9 +105,7 @@ public class EventHandlerService implements Service {
     }
 
     private void initEventListeners(Configuration conf) throws Exception {
-        Class<?>[] listenerClass = conf.getClasses(CONF_LISTENERS,
-                org.apache.oozie.jms.JMSJobEventListener.class,
-                org.apache.oozie.sla.listener.SLAJobEventListener.class);
+        Class<?>[] listenerClass = ConfigurationService.getClasses(conf, CONF_LISTENERS);
         for (int i = 0; i < listenerClass.length; i++) {
             Object listener = null;
             try {
@@ -152,8 +151,8 @@ public class EventHandlerService implements Service {
     }
 
     private void initWorkerThreads(Configuration conf, Services services) throws ServiceException {
-        numWorkers = conf.getInt(CONF_WORKER_THREADS, 3);
-        int interval = conf.getInt(CONF_WORKER_INTERVAL, 30);
+        numWorkers = ConfigurationService.getInt(conf, CONF_WORKER_THREADS);
+        int interval = ConfigurationService.getInt(conf, CONF_WORKER_INTERVAL);
         SchedulerService ss = services.get(SchedulerService.class);
         int available = ss.getSchedulableThreads(conf);
         if (numWorkers + 3 > available) {

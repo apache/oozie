@@ -39,6 +39,7 @@ import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -78,11 +79,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private int lastActionNumber = 1; // over-ride by DB value
     private CoordinatorJob.Status prevStatus = null;
 
-    static final private int lookAheadWindow = Services
-            .get()
-            .getConf()
-            .getInt(CoordMaterializeTriggerService.CONF_LOOKUP_INTERVAL,
-                    CoordMaterializeTriggerService.CONF_LOOKUP_INTERVAL_DEFAULT);
+    static final private int lookAheadWindow = ConfigurationService.getInt(CoordMaterializeTriggerService
+            .CONF_LOOKUP_INTERVAL);
 
     /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
@@ -94,7 +92,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      *
      * @param jobId coordinator job id
      * @param materializationWindow materialization window to calculate end time
-     * @param lookahead window
      */
     public CoordMaterializeTransitionXCommand(String jobId, int materializationWindow) {
         super("coord_mater", "coord_mater", 1);

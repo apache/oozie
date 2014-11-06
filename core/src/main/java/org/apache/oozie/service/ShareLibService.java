@@ -98,14 +98,14 @@ public class ShareLibService implements Service, Instrumentable {
 
     FileSystem fs;
 
-    final long retentionTime = 1000 * 60 * 60 * 24 * Services.get().getConf().getInt(LAUNCHERJAR_LIB_RETENTION, 7);
+    final long retentionTime = 1000 * 60 * 60 * 24 * ConfigurationService.getInt(LAUNCHERJAR_LIB_RETENTION);
 
     @Override
     public void init(Services services) throws ServiceException {
         this.services = services;
-        sharelibMappingFile = services.getConf().get(SHARELIB_MAPPING_FILE, "");
-        isShipLauncherEnabled = services.getConf().getBoolean(SHIP_LAUNCHER_JAR, false);
-        boolean failOnfailure = services.getConf().getBoolean(FAIL_FAST_ON_STARTUP, false);
+        sharelibMappingFile = ConfigurationService.get(services.getConf(), SHARELIB_MAPPING_FILE);
+        isShipLauncherEnabled = ConfigurationService.getBoolean(services.getConf(), SHIP_LAUNCHER_JAR);
+        boolean failOnfailure = ConfigurationService.getBoolean(services.getConf(), FAIL_FAST_ON_STARTUP);
         Path launcherlibPath = getLauncherlibPath();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
@@ -145,7 +145,8 @@ public class ShareLibService implements Service, Instrumentable {
             }
         };
         services.get(SchedulerService.class).schedule(purgeLibsRunnable, 10,
-                services.getConf().getInt(PURGE_INTERVAL, 1) * 60 * 60 * 24, SchedulerService.Unit.SEC);
+                ConfigurationService.getInt(services.getConf(), PURGE_INTERVAL) * 60 * 60 * 24,
+                SchedulerService.Unit.SEC);
     }
 
     /**
@@ -460,7 +461,7 @@ public class ShareLibService implements Service, Instrumentable {
 
         Map<String, List<Path>> tempShareLibMap = new HashMap<String, List<Path>>();
 
-        if (!StringUtils.isEmpty(sharelibMappingFile)) {
+        if (!StringUtils.isEmpty(sharelibMappingFile.trim())) {
             String sharelibMetaFileNewTimeStamp = JsonUtils.formatDateRfc822(new Date(fs.getFileStatus(
                     new Path(sharelibMappingFile)).getModificationTime()),"GMT");
             loadShareLibMetaFile(tempShareLibMap, sharelibMappingFile);
@@ -624,7 +625,7 @@ public class ShareLibService implements Service, Instrumentable {
         instr.addVariable("libs", "sharelib.source", new Instrumentation.Variable<String>() {
             @Override
             public String getValue() {
-                if (!StringUtils.isEmpty(sharelibMappingFile)) {
+                if (!StringUtils.isEmpty(sharelibMappingFile.trim())) {
                     return SHARELIB_MAPPING_FILE;
                 }
                 return WorkflowAppService.SYSTEM_LIB_PATH;
@@ -633,7 +634,7 @@ public class ShareLibService implements Service, Instrumentable {
         instr.addVariable("libs", "sharelib.mapping.file", new Instrumentation.Variable<String>() {
             @Override
             public String getValue() {
-                if (!StringUtils.isEmpty(sharelibMappingFile)) {
+                if (!StringUtils.isEmpty(sharelibMappingFile.trim())) {
                     return sharelibMappingFile;
                 }
                 return "(none)";

@@ -77,7 +77,7 @@ public abstract class WorkflowAppService implements Service {
     public void init(Services services) {
         Configuration conf = services.getConf();
 
-        String path = conf.get(SYSTEM_LIB_PATH, " ");
+        String path = ConfigurationService.get(conf, SYSTEM_LIB_PATH);
         if (path.trim().length() > 0) {
             systemLibPath = new Path(path.trim());
         }

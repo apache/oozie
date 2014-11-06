@@ -64,6 +64,7 @@ import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecuto
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.JobsConcurrencyService;
@@ -97,8 +98,8 @@ public class SLACalculatorMemory implements SLACalculator {
 
     @Override
     public void init(Configuration conf) throws ServiceException {
-        capacity = conf.getInt(SLAService.CONF_CAPACITY, 5000);
-        jobEventLatency = conf.getInt(SLAService.CONF_JOB_EVENT_LATENCY, 90 * 1000);
+        capacity = ConfigurationService.getInt(conf, SLAService.CONF_CAPACITY);
+        jobEventLatency = ConfigurationService.getInt(conf, SLAService.CONF_JOB_EVENT_LATENCY);
         slaMap = new ConcurrentHashMap<String, SLACalcStatus>();
         historySet = Collections.synchronizedSet(new HashSet<String>());
         jpaService = Services.get().get(JPAService.class);

@@ -40,7 +40,7 @@ import org.apache.oozie.util.ZKUtils;
  * the configuration loading.
  */
 public class AuthFilter extends AuthenticationFilter {
-    private static final String OOZIE_PREFIX = "oozie.authentication.";
+    public static final String OOZIE_PREFIX = "oozie.authentication.";
 
     private HttpServlet optionsServlet;
     private ZKUtils zkUtils = null;

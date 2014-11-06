@@ -99,12 +99,6 @@ public class CoordinatorEngine extends BaseEngine {
      * Create a system Coordinator engine, with no user and no group.
      */
     public CoordinatorEngine() {
-        if (!Services.get().getConf().getBoolean(USE_XCOMMAND, true)) {
-            LOG.debug("Oozie CoordinatorEngine is not using XCommands.");
-        }
-        else {
-            LOG.debug("Oozie CoordinatorEngine is using XCommands.");
-        }
         maxNumActionsForLog = Services.get().getConf()
                 .getInt(COORD_ACTIONS_LOG_MAX_COUNT, COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT);
     }

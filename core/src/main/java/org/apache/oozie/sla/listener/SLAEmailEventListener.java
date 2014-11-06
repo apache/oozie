@@ -43,6 +43,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.email.EmailActionExecutor;
 import org.apache.oozie.action.email.EmailActionExecutor.JavaMailAuthenticator;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.XLog;
@@ -100,7 +101,7 @@ public class SLAEmailEventListener extends SLAEventListener {
     @Override
     public void init(Configuration conf) throws Exception {
 
-        oozieBaseUrl = conf.get(OOZIE_BASE_URL);
+        oozieBaseUrl = ConfigurationService.get(conf, OOZIE_BASE_URL);
         // Get SMTP properties from the configuration used in Email Action
         String smtpHost = conf.get(EmailActionExecutor.EMAIL_SMTP_HOST, SMTP_HOST_DEFAULT);
         String smtpPort = conf.get(EmailActionExecutor.EMAIL_SMTP_PORT, SMTP_PORT_DEFAULT);
@@ -146,7 +147,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         }
 
         alertEvents = new HashSet<SLAEvent.EventStatus>();
-        String alertEventsStr = conf.get(SLAService.CONF_ALERT_EVENTS);
+        String alertEventsStr = ConfigurationService.get(conf, SLAService.CONF_ALERT_EVENTS);
         if (alertEventsStr != null) {
             String[] alertEvt = alertEventsStr.split(",", -1);
             for (String evt : alertEvt) {

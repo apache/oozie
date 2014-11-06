@@ -21,6 +21,7 @@ package org.apache.oozie.event.listener;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
@@ -57,7 +58,7 @@ public class ZKConnectionListener implements ConnectionStateListener {
 
         if (newState == ConnectionState.LOST) {
             LOG.fatal("ZK is not reconnected in " + ZKUtils.getZKConnectionTimeout());
-            if (Services.get().getConf().getBoolean(CONF_SHUTDOWN_ON_TIMEOUT, true)) {
+            if (ConfigurationService.getBoolean(CONF_SHUTDOWN_ON_TIMEOUT)) {
                 LOG.fatal("Shutting down Oozie server");
                 Services.get().destroy();
                 System.exit(1);

@@ -54,7 +54,6 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
     final private HashMap<String, InterProcessReadWriteLock> zkLocks = new HashMap<String, InterProcessReadWriteLock>();
 
     private static final String REAPING_LEADER_PATH = ZKUtils.ZK_BASE_SERVICES_PATH + "/locksChildReaperLeaderPath";
-    public static final int DEFAULT_REAPING_THRESHOLD = 300; // In sec
     public static final String REAPING_THRESHOLD = CONF_PREFIX + "ZKLocksService.locks.reaper.threshold";
     public static final String REAPING_THREADS = CONF_PREFIX + "ZKLocksService.locks.reaper.threads";
     private ChildReaper reaper = null;
@@ -70,7 +69,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         try {
             zk = ZKUtils.register(this);
             reaper = new ChildReaper(zk.getClient(), LOCKS_NODE, Reaper.Mode.REAP_INDEFINITELY, getExecutorService(),
-                    services.getConf().getInt(REAPING_THRESHOLD, DEFAULT_REAPING_THRESHOLD) * 1000, REAPING_LEADER_PATH);
+                    ConfigurationService.getInt(services.getConf(), REAPING_THRESHOLD) * 1000, REAPING_LEADER_PATH);
             reaper.start();
         }
         catch (Exception ex) {
@@ -221,7 +220,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
     }
 
     private static ScheduledExecutorService getExecutorService() {
-        return ThreadUtils.newFixedThreadScheduledPool(Services.get().getConf().getInt(REAPING_THREADS, 2),
+        return ThreadUtils.newFixedThreadScheduledPool(ConfigurationService.getInt(REAPING_THREADS),
                 "ZKLocksChildReaper");
     }
 

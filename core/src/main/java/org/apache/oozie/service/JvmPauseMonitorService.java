@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Daemon;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
@@ -56,15 +57,13 @@ public class JvmPauseMonitorService implements Service {
      * log WARN if we detect a pause longer than this threshold
      */
     private long warnThresholdMs;
-    private static final String WARN_THRESHOLD_KEY = CONF_PREFIX + "warn-threshold.ms";
-    private static final long WARN_THRESHOLD_DEFAULT = 10000;
+    public static final String WARN_THRESHOLD_KEY = CONF_PREFIX + "warn-threshold.ms";
 
     /**
      * log INFO if we detect a pause longer than this threshold
      */
     private long infoThresholdMs;
-    private static final String INFO_THRESHOLD_KEY = CONF_PREFIX + "info-threshold.ms";
-    private static final long INFO_THRESHOLD_DEFAULT = 1000;
+    public static final String INFO_THRESHOLD_KEY = CONF_PREFIX + "info-threshold.ms";
 
     private Thread monitorThread;
     private volatile boolean shouldRun = true;
@@ -72,9 +71,8 @@ public class JvmPauseMonitorService implements Service {
 
     @Override
     public void init(Services services) throws ServiceException {
-        Configuration conf = services.getConf();
-        warnThresholdMs = conf.getLong(WARN_THRESHOLD_KEY, WARN_THRESHOLD_DEFAULT);
-        infoThresholdMs = conf.getLong(INFO_THRESHOLD_KEY, INFO_THRESHOLD_DEFAULT);
+        warnThresholdMs = ConfigurationService.getLong(services.getConf(), WARN_THRESHOLD_KEY);
+        infoThresholdMs = ConfigurationService.getLong(services.getConf(), INFO_THRESHOLD_KEY);
 
         instrumentation = services.get(InstrumentationService.class).get();
 

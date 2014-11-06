@@ -96,7 +96,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     @Test
     public void testLoadOnRestart() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
         String jobId1 = slaRegBean1.getId();
         SLARegistrationBean slaRegBean2 = _createSLARegistration("job-2", AppType.WORKFLOW_JOB);
@@ -156,7 +156,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         assertEquals(2, slaCalcMemory.size());
 
@@ -201,7 +201,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testWorkflowJobSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -228,7 +228,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -257,7 +257,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         assertEquals(0, slaCalcMemory.size());
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
@@ -281,7 +281,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         assertEquals(1, slaCalcMemory.size());
         SLACalcStatus calc = slaCalcMemory.get(jobId1);
@@ -297,7 +297,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testWorkflowActionSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.WORKFLOW_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -322,7 +322,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         jpaService.execute(wfInsertCmd);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -343,7 +343,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testCoordinatorActionSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.COORDINATOR_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -373,7 +373,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -394,7 +394,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAEvents1() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         slaRegBean.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1 hour
@@ -445,7 +445,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAEvents2() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
 
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
@@ -505,7 +505,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         // test start-miss
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1 hour back
@@ -534,7 +534,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testDuplicateEndMiss() throws Exception {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000); // 1 hour ahead
@@ -577,7 +577,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAHistorySet() throws Exception {
             EventHandlerService ehs = Services.get().get(EventHandlerService.class);
             SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-            slaCalcMemory.init(new Configuration(false));
+            slaCalcMemory.init(Services.get().getConf());
             WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
             SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
             Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
@@ -614,7 +614,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testHistoryPurge() throws Exception{
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(new Configuration(false));
+        slaCalcMemory.init(Services.get().getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);

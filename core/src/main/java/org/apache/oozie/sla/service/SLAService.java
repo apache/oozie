@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
@@ -58,8 +59,8 @@ public class SLAService implements Service {
     public void init(Services services) throws ServiceException {
         try {
             Configuration conf = services.getConf();
-            Class<? extends SLACalculator> calcClazz = (Class<? extends SLACalculator>) conf.getClass(
-                    CONF_CALCULATOR_IMPL, null);
+            Class<? extends SLACalculator> calcClazz = (Class<? extends SLACalculator>) ConfigurationService.getClass(
+                    conf, CONF_CALCULATOR_IMPL);
             calcImpl = calcClazz == null ? new SLACalculatorMemory() : (SLACalculator) calcClazz.newInstance();
             calcImpl.init(conf);
             eventHandler = Services.get().get(EventHandlerService.class);
@@ -74,8 +75,8 @@ public class SLAService implements Service {
 
             Runnable slaThread = new SLAWorker(calcImpl);
             // schedule runnable by default every 30 sec
-            int slaCheckInterval = services.getConf().getInt(CONF_SLA_CHECK_INTERVAL, 30);
-            int slaCheckInitialDelay = services.getConf().getInt(CONF_SLA_CHECK_INITIAL_DELAY, 10);
+            int slaCheckInterval = ConfigurationService.getInt(conf, CONF_SLA_CHECK_INTERVAL);
+            int slaCheckInitialDelay = ConfigurationService.getInt(conf, CONF_SLA_CHECK_INITIAL_DELAY);
             services.get(SchedulerService.class).schedule(slaThread, slaCheckInitialDelay, slaCheckInterval,
                     SchedulerService.Unit.SEC);
             slaEnabled = true;

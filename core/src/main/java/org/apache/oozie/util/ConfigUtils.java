@@ -19,7 +19,8 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.servlet.ServicesLoader;
 
 /**
@@ -27,6 +28,12 @@ import org.apache.oozie.servlet.ServicesLoader;
  */
 public class ConfigUtils {
     private final static XLog LOG = XLog.getLog(ConfigUtils.class);
+
+    public static boolean BOOLEAN_DEFAULT = false;
+    public static String STRING_DEFAULT = "";
+    public static int INT_DEFAULT = 0;
+    public static float FLOAT_DEFAULT = 0f;
+    public static long LONG_DEFAULT = 0l;
 
     /**
      * Fetches a property using both a deprecated name and the new name. The deprecated property
@@ -85,13 +92,13 @@ public class ConfigUtils {
         else {
             sb.append("http://");
         }
-        sb.append(Services.get().getConf().get("oozie.http.hostname"));
+        sb.append(ConfigurationService.get("oozie.http.hostname"));
         sb.append(":");
         if (secure) {
-            sb.append(Services.get().getConf().get("oozie.https.port"));
+            sb.append(ConfigurationService.get("oozie.https.port"));
         }
         else {
-            sb.append(Services.get().getConf().get("oozie.http.port"));
+            sb.append(ConfigurationService.get("oozie.http.port"));
         }
         sb.append("/oozie");
         return sb.toString();
@@ -104,5 +111,9 @@ public class ConfigUtils {
      */
     public static String getOozieEffectiveUrl() {
         return getOozieURL(ServicesLoader.isSSLEnabled());
+    }
+
+    public static boolean isBackwardSupportForCoordStatus() {
+        return ConfigurationService.getBoolean(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS);
     }
 }

@@ -24,6 +24,7 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.OozieClient;
@@ -124,7 +125,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
 
     protected void verifyAndInjectSubworkflowDepth(Configuration parentConf, Configuration conf) throws ActionExecutorException {
         int depth = conf.getInt(SUBWORKFLOW_DEPTH, 0);
-        int maxDepth = Services.get().getConf().getInt(SUBWORKFLOW_MAX_DEPTH, 50);
+        int maxDepth = ConfigurationService.getInt(SUBWORKFLOW_MAX_DEPTH);
         if (depth >= maxDepth) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "SUBWF001",
                     "Depth [{0}] cannot exceed maximum subworkflow depth [{1}]", (depth + 1), maxDepth);

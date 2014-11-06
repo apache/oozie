@@ -30,6 +30,7 @@ import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.TestLiteWorkflowAppService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
@@ -48,8 +49,6 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         super.setUp();
         setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd");
         new Services().init();
-        Services.get().get(ActionService.class).register(HiveActionExecutor.class);
-        Services.get().get(ActionService.class).register(DistcpActionExecutor.class);
     }
 
     @Override
@@ -298,17 +297,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid.xml", -1), new Configuration());
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop1-invalid.xml", -1), new Configuration());
-            fail();
-        }
-        catch (WorkflowException ex) {
-            assertEquals(ErrorCode.E0707, ex.getErrorCode());
-        }
-        catch (Exception ex) {
-            fail();
-        }
-
-        try {
+            // Check TestLiteWorkflowAppService.TestActionExecutor is registered.
             parser.validateAndParse(IOUtils.getResourceAsReader("wf-unsupported-action.xml", -1), new Configuration());
             fail();
         }

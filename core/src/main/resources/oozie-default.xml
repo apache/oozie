@@ -222,6 +222,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.ConfigurationService.verify.available.properties</name>
+        <value>true</value>
+        <description>
+            Specifies whether the available configurations check is enabled or not.
+        </description>
+    </property>
+
     <!-- SchedulerService -->
 
     <property>
@@ -464,11 +472,11 @@
     </property>
 
     <property>
-		<name>oozie.service.coord.normal.default.timeout
-		</name>
-		<value>10080</value>
-		<description>Default timeout for a coordinator action input check (in minutes) for normal job.
-            </description>
+        <name>oozie.service.coord.normal.default.timeout
+        </name>
+        <value>120</value>
+        <description>Default timeout for a coordinator action input check (in minutes) for normal job.
+            -1 means infinite timeout</description>
 	</property>
 
 	<property>
@@ -552,6 +560,24 @@
         </value>
         <description>
           EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.job-submit</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions without having to include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.job-submit</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions without having to include all the built in ones.
         </description>
     </property>
 
@@ -730,6 +756,34 @@
     </property>
 
     <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-submit-freq</name>
+        <value>
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions to the built in executors without having to
+            include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-wait-timeout</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-wait-timeout</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions without having to include all the built in ones.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.ELService.functions.coord-job-wait-timeout</name>
         <value>
             coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
@@ -744,13 +798,11 @@
     </property>
 
     <property>
-        <name>oozie.service.ELService.ext.functions.coord-job-submit-freq</name>
-        <value>
-        </value>
+        <name>oozie.service.ELService.ext.functions.coord-job-wait-timeout</name>
+        <value> </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
-            This property is a convenience property to add extensions to the built in executors without having to
-            include all the built in ones.
+            This property is a convenience property to add extensions without having to include all the built in ones.
         </description>
     </property>
 
@@ -1308,7 +1360,15 @@
             DataSource to be used for connection pooling.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.service.JPAService.connection.properties</name>
+        <value> </value>
+        <description>
+            DataSource connection properties.
+        </description>
+    </property>
+
     <property>
         <name>oozie.service.JPAService.jdbc.driver</name>
         <value>org.apache.derby.jdbc.EmbeddedDriver</value>
@@ -1359,7 +1419,12 @@
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
+        <value>
+            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,email-action-0.1.xsd,email-action-0.2.xsd,
+            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,sqoop-action-0.2.xsd,
+            sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,ssh-action-0.1.xsd,ssh-action-0.2.xsd,distcp-action-0.1.xsd,
+            distcp-action-0.2.xsd,oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,hive2-action-0.1.xsd
+        </value>
         <description>
             Schemas for additional actions types.
 
@@ -1367,7 +1432,7 @@
                        if empty Configuration assumes it is NULL.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.SchemaService.coord.ext.schemas</name>
         <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
@@ -1440,8 +1505,14 @@
             org.apache.oozie.action.hadoop.FsActionExecutor,
             org.apache.oozie.action.hadoop.MapReduceActionExecutor,
             org.apache.oozie.action.hadoop.PigActionExecutor,
+            org.apache.oozie.action.hadoop.HiveActionExecutor,
+            org.apache.oozie.action.hadoop.ShellActionExecutor,
+            org.apache.oozie.action.hadoop.SqoopActionExecutor,
+            org.apache.oozie.action.hadoop.DistcpActionExecutor,
+            org.apache.oozie.action.hadoop.Hive2ActionExecutor,
             org.apache.oozie.action.ssh.SshActionExecutor,
-            org.apache.oozie.action.oozie.SubWorkflowActionExecutor
+            org.apache.oozie.action.oozie.SubWorkflowActionExecutor,
+            org.apache.oozie.action.email.EmailActionExecutor
         </value>
         <description>
             List of ActionExecutors classes (separated by commas).
@@ -1529,6 +1600,23 @@
         </description>
     </property>
 
+    <!-- LauncherMapper -->
+    <property>
+        <name>oozie.action.max.output.data</name>
+        <value>2048</value>
+        <description>
+            Max size in characters for output data.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.fs.glob.max</name>
+        <value>1000</value>
+        <description>
+            Maximum number of globbed files.
+        </description>
+    </property>
+
     <!-- JavaActionExecutor -->
     <!-- This is common to the subclasses of action executors for Java (e.g. map-reduce, pig, hive, java, etc) -->
 
@@ -1541,7 +1629,7 @@
             action.
         </description>
     </property>
-    
+
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 
@@ -1550,24 +1638,6 @@
         <value>3</value>
         <description>
            The number of retries for executing an action in case of failure
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.hadoop.delete.hdfs.tmp.dir</name>
-        <value>false</value>
-        <description>
-            If set to true, it will delete temporary directory at the end of execution of map reduce action.
-        </description>
-    </property>
-
-    <!-- PigActionExecutor -->
-
-    <property>
-        <name>oozie.action.pig.delete.hdfs.tmp.dir</name>
-        <value>false</value>
-        <description>
-            If set to true, it will delete temporary directory at the end of execution of pig action.
         </description>
     </property>
 
@@ -1718,22 +1788,11 @@
 
     <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>
-        <value>hdfs:///user/${user.name}/share/lib</value>
+        <value>/user/${user.name}/share/lib</value>
         <description>
             System library path to use for workflow applications.
             This path is added to workflow application if their job properties sets
             the property 'oozie.use.system.libpath' to true.
-        </description>
-    </property>
-
-    <property>
-        <name>use.system.libpath.for.mapreduce.and.pig.jobs</name>
-        <value>false</value>
-        <description>
-            If set to true, submissions of MapReduce and Pig jobs will include
-            automatically the system library path, thus not requiring users to
-            specify where the Pig JAR files are. Instead, the ones from the system
-            library path are used.
         </description>
     </property>
 
@@ -1825,7 +1884,7 @@
 
     <property>
       <name>oozie.authentication.cookie.domain</name>
-      <value></value>
+      <value> </value>
       <description>
         The domain to use for the HTTP cookie that stores the authentication token.
         In order to authentiation to work correctly across multiple hosts
@@ -1914,13 +1973,13 @@
 		</description>
 	</property>
 
-        <property>
-                <name>oozie.service.URIHandlerService.uri.handlers</name>
-                <value>org.apache.oozie.dependency.FSURIHandler</value>
-                <description>
-                        Enlist the different uri handlers supported for data availability checks.
-                </description>
-        </property>
+    <property>
+        <name>oozie.service.URIHandlerService.uri.handlers</name>
+        <value>org.apache.oozie.dependency.FSURIHandler</value>
+        <description>
+                Enlist the different uri handlers supported for data availability checks.
+        </description>
+    </property>
     <!-- Oozie HTTP Notifications -->
 
     <property>
@@ -2082,22 +2141,35 @@
         </description>
     </property>
 
-<!--
     <property>
-        <name>oozie.instance.id</name>
-        <value>${OOZIE_HTTP_HOSTNAME}</value>
+        <name>oozie.http.hostname</name>
+        <value>localhost</value>
         <description>
-        Each Oozie server should have its own unique instance id. The default is system property
-        =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+            Oozie server host name.
         </description>
     </property>
--->
 
+    <property>
+        <name>oozie.http.port</name>
+        <value>11000</value>
+        <description>
+            Oozie server port.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.instance.id</name>
+        <value>${oozie.http.hostname}</value>
+        <description>
+            Each Oozie server should have its own unique instance id. The default is system property
+            =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+        </description>
+    </property>
 
     <!-- Sharelib Configuration -->
     <property>
         <name>oozie.service.ShareLibService.mapping.file</name>
-        <value></value>
+        <value> </value>
         <description>
             Sharelib mapping files contains list of key=value,
             where key will be the sharelib name for the action and value is a comma separated list of
@@ -2126,6 +2198,22 @@
     </property>
 
     <property>
+        <name>oozie.service.ShareLibService.temp.sharelib.retention.days</name>
+        <value>7</value>
+        <description>
+            ShareLib retention time in days.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.ship.launcher.jar</name>
+        <value>false</value>
+        <description>
+            Specifies whether launcher jar is shipped or not.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.jobinfo.enable</name>
         <value>false</value>
         <description>
@@ -2150,7 +2238,7 @@
     </property>
 
     <property>
-        <name>oozie.service.XLogStreamingService.max.actionlist.log.scan.duration</name>
+        <name>oozie.service.XLogStreamingService.actionlist.max.log.scan.duration</name>
         <value>-1</value>
         <description>
         Max log scan duration in hours for coordinator job when list of actions are specified.
@@ -2207,6 +2295,15 @@
         <value>1440</value>
         <description>
             Interval, in minutes, at which AbandonedCoordCheckerService should run.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.check.delay
+        </name>
+        <value>60</value>
+        <description>
+            Delay, in minutes, at which AbandonedCoordCheckerService should run.
         </description>
     </property>
 

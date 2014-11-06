@@ -140,7 +140,7 @@ public class HCatAccessorService implements Service {
     }
 
     private void initializeMappingRules() {
-        String[] connections = conf.getStrings(JMS_CONNECTIONS_PROPERTIES);
+        String[] connections = ConfigurationService.getStrings(conf, JMS_CONNECTIONS_PROPERTIES);
         if (connections != null) {
             mappingRules = new ArrayList<MappingRule>(connections.length);
             for (String connection : connections) {

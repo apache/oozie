@@ -43,12 +43,6 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         server.start();
     }
 
-    @Override
-    protected void setSystemProps() throws Exception {
-        super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", EmailActionExecutor.class.getName());
-    }
-
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
 

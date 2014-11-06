@@ -105,8 +105,8 @@ public class DBLiteWorkflowStoreService extends LiteWorkflowStoreService impleme
 
     public void init(Services services) throws ServiceException {
         Configuration conf = services.getConf();
-        statusWindow = conf.getInt(CONF_METRICS_INTERVAL_WINDOW, 3600);
-        int statusMetricsCollectionInterval = conf.getInt(CONF_METRICS_INTERVAL_MINS, 5);
+        statusWindow = ConfigurationService.getInt(conf, CONF_METRICS_INTERVAL_WINDOW);
+        int statusMetricsCollectionInterval = ConfigurationService.getInt(conf, CONF_METRICS_INTERVAL_MINS);
         log = XLog.getLog(getClass());
         selectForUpdate = false;
 

@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -307,7 +308,7 @@ public class XLogFilter {
         }
         long diffHours = (endDate.getTime() - startDate.getTime()) / (60 * 60 * 1000);
         if (isActionList) {
-            int actionLogDuration = Services.get().getConf().getInt(MAX_ACTIONLIST_SCAN_DURATION, -1);
+            int actionLogDuration = ConfigurationService.getInt(MAX_ACTIONLIST_SCAN_DURATION);
             if (actionLogDuration == -1) {
                 return;
             }
@@ -319,7 +320,7 @@ public class XLogFilter {
             }
         }
         else {
-            int logDuration = Services.get().getConf().getInt(MAX_SCAN_DURATION, -1);
+            int logDuration = ConfigurationService.getInt(MAX_SCAN_DURATION);
             if (logDuration == -1) {
                 return;
             }

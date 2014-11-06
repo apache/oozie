@@ -77,7 +77,7 @@ public class CallbackService implements Service {
         ParamChecker.notEmpty(actionId, "actionId");
         ParamChecker.notEmpty(externalStatusVar, "externalStatusVar");
         //TODO: figure out why double encoding is happening in case of hadoop callbacks.
-        String baseCallbackUrl = oozieConf.get(CONF_BASE_URL, "http://localhost:8080/oozie/v0/callback");
+        String baseCallbackUrl = ConfigurationService.get(oozieConf, CONF_BASE_URL);
         return MessageFormat.format(CALL_BACK_QUERY_STRING, baseCallbackUrl, actionId, externalStatusVar);
     }
 

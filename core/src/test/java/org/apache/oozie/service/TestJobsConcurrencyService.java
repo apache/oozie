@@ -119,7 +119,7 @@ public class TestJobsConcurrencyService extends XTestCase {
         try {
             jcs.init(Services.get());
             jcs.instrument(instr);
-            String servers = System.getProperty("oozie.instance.id") + "=" + ConfigUtils.getOozieEffectiveUrl();
+            String servers = ConfigurationService.get("oozie.instance.id") + "=" + ConfigUtils.getOozieEffectiveUrl();
             assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
         } finally {
             jcs.destroy();

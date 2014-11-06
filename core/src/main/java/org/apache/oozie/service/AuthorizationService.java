@@ -108,7 +108,7 @@ public class AuthorizationService implements Service {
                                                CONF_SECURITY_ENABLED, false);
         if (authorizationEnabled) {
             log.info("Oozie running with authorization enabled");
-            useDefaultGroupAsAcl = Services.get().getConf().getBoolean(CONF_DEFAULT_GROUP_AS_ACL, false);
+            useDefaultGroupAsAcl = ConfigurationService.getBoolean(CONF_DEFAULT_GROUP_AS_ACL);
             String[] str = getTrimmedStrings(Services.get().getConf().get(CONF_ADMIN_GROUPS));
             if (str.length > 0) {
                 log.info("Admin users will be checked against the defined admin groups");

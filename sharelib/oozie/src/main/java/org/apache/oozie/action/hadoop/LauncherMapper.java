@@ -54,13 +54,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
 
     static final String ACTION_PREFIX = "oozie.action.";
-    static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = ACTION_PREFIX + "max.output.data";
+    public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = ACTION_PREFIX + "max.output.data";
     static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = ACTION_PREFIX + "main.arg.count";
     static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
     static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
     static final String OOZIE_ACTION_CONFIG_CLASS = ACTION_PREFIX + "config.class";
-    static final String CONF_OOZIE_ACTION_FS_GLOB_MAX = "oozie.action.fs.glob.max";
-    static final int GLOB_MAX_DEFAULT = 1000;
+    static final String CONF_OOZIE_ACTION_FS_GLOB_MAX = ACTION_PREFIX + "fs.glob.max";
 
     static final String COUNTER_GROUP = "oozie.launcher";
     static final String COUNTER_LAUNCHER_ERROR = "oozie.launcher.error";
@@ -78,6 +77,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     static final String ACTION_DATA_STATS = "stats.properties";
     static final String ACTION_DATA_NEW_ID = "newId";
     static final String ACTION_DATA_ERROR_PROPS = "error.properties";
+    public static final String HADOOP2_WORKAROUND_DISTRIBUTED_CACHE = "oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache";
 
     private void setRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId) throws LauncherException {
         try {

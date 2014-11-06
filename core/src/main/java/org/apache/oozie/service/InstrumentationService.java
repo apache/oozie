@@ -51,7 +51,7 @@ public class InstrumentationService implements Service {
     @Override
     public void init(Services services) throws ServiceException {
         final Instrumentation instr = new Instrumentation();
-        int interval = services.getConf().getInt(CONF_LOGGING_INTERVAL, 60);
+        int interval = ConfigurationService.getInt(services.getConf(), CONF_LOGGING_INTERVAL);
         initLogging(services, instr, interval);
         instr.addVariable(JVM_INSTRUMENTATION_GROUP, "free.memory", new Instrumentation.Variable<Long>() {
             @Override

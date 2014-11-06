@@ -217,7 +217,7 @@ public class StatusTransitService implements Service {
         final Configuration conf = services.getConf();
         Runnable stateTransitRunnable = new StatusTransitRunnable();
         services.get(SchedulerService.class).schedule(stateTransitRunnable, 10,
-                conf.getInt(CONF_STATUSTRANSIT_INTERVAL, 60), SchedulerService.Unit.SEC);
+                ConfigurationService.getInt(conf, CONF_STATUSTRANSIT_INTERVAL), SchedulerService.Unit.SEC);
     }
 
     /**

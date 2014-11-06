@@ -22,6 +22,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.MemoryLocksService;
@@ -512,7 +513,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @return delay time when requeue itself
      */
     protected long getRequeueDelay() {
-        return Services.get().getConf().getLong(DEFAULT_REQUEUE_DELAY, 10 * 1000L);
+        return ConfigurationService.getLong(DEFAULT_REQUEUE_DELAY);
     }
 
     /**

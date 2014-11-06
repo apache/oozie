@@ -116,13 +116,13 @@ public class Services {
             XLog.getLog(getClass()).warn("Oozie configured to work in a timezone other than UTC: {0}",
                                          DateUtils.getOozieProcessingTimeZone().getID());
         }
-        systemId = conf.get(CONF_SYSTEM_ID, ("oozie-" + System.getProperty("user.name")));
+        systemId = ConfigurationService.get(conf, CONF_SYSTEM_ID);
         if (systemId.length() > MAX_SYSTEM_ID_LEN) {
             systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
             XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming", systemId,
                                          MAX_SYSTEM_ID_LEN);
         }
-        setSystemMode(SYSTEM_MODE.valueOf(conf.get(CONF_SYSTEM_MODE, SYSTEM_MODE.NORMAL.toString())));
+        setSystemMode(SYSTEM_MODE.valueOf(ConfigurationService.get(conf, CONF_SYSTEM_MODE)));
         runtimeDir = createRuntimeDir();
     }
 
@@ -191,8 +191,10 @@ public class Services {
     /**
      * Return the services configuration.
      *
-     * @return services configuraiton.
+     * @return services configuration.
+     * @deprecated Use {@link ConfigurationService#get(String)} to retrieve property from oozie configurations.
      */
+    @Deprecated
     public Configuration getConf() {
         return conf;
     }
@@ -283,9 +285,9 @@ public class Services {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         try {
             Map<Class, Service> map = new LinkedHashMap<Class, Service>();
-            Class[] classes = conf.getClasses(CONF_SERVICE_CLASSES);
+            Class[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_CLASSES + "'");
-            Class[] classesExt = conf.getClasses(CONF_SERVICE_EXT_CLASSES);
+            Class[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_EXT_CLASSES + "'");
             List<Service> list = new ArrayList<Service>();
             loadServices(classes, list);

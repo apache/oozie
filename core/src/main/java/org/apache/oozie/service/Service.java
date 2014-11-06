@@ -30,11 +30,6 @@ public interface Service {
     public static final String CONF_PREFIX = "oozie.service.";
 
     /**
-     * Constant for XCommand
-     */
-    public static final String USE_XCOMMAND = "oozie.useXCommand";
-
-    /**
      * Initialize the service. <p/> Invoked by the {@link Service} singleton at start up time.
      *
      * @param services services singleton initializing the service.
@@ -58,6 +53,6 @@ public interface Service {
     /**
      * Lock timeout value if service is only allowed to have one single running instance.
      */
-    public static long lockTimeout = Services.get().getConf().getLong(DEFAULT_LOCK_TIMEOUT, 5 * 1000);
+    public static long lockTimeout = ConfigurationService.getLong(DEFAULT_LOCK_TIMEOUT);
 
 }

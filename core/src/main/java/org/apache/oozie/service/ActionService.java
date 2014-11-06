@@ -57,10 +57,12 @@ public class ActionService implements Service {
             EndActionExecutor.class, KillActionExecutor.class,  ForkActionExecutor.class, JoinActionExecutor.class };
         registerExecutors(classes);
 
-        classes = (Class<? extends ActionExecutor>[]) services.getConf().getClasses(CONF_ACTION_EXECUTOR_CLASSES);
+        classes = (Class<? extends ActionExecutor>[]) ConfigurationService.getClasses
+                (services.getConf(), CONF_ACTION_EXECUTOR_CLASSES);
         registerExecutors(classes);
 
-        classes = (Class<? extends ActionExecutor>[]) services.getConf().getClasses(CONF_ACTION_EXECUTOR_EXT_CLASSES);
+        classes = (Class<? extends ActionExecutor>[]) ConfigurationService.getClasses
+                (services.getConf(), CONF_ACTION_EXECUTOR_EXT_CLASSES);
         registerExecutors(classes);
     }
 

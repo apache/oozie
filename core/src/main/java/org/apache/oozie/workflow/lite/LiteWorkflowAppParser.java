@@ -18,6 +18,7 @@
 
 package org.apache.oozie.workflow.lite;
 
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
@@ -160,7 +161,8 @@ public class LiteWorkflowAppParser {
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
             validate(app, app.getNode(StartNodeDef.START), traversed);
             //Validate whether fork/join are in pair or not
-            if (jobConf.getBoolean(WF_VALIDATE_FORK_JOIN, true) && Services.get().getConf().getBoolean(VALIDATE_FORK_JOIN, true)) {
+            if (jobConf.getBoolean(WF_VALIDATE_FORK_JOIN, true)
+                    && ConfigurationService.getBoolean(VALIDATE_FORK_JOIN)) {
                 validateForkJoin(app);
             }
             return app;
