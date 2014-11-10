@@ -326,7 +326,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testShellMainPathInUber() throws Exception {
-        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+        Services.get().getConf().setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
 
         Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"
