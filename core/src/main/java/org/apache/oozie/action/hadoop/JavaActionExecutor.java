@@ -66,7 +66,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
@@ -80,6 +79,7 @@ import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.oozie.hadoop.utils.HadoopShims;
 
 public class JavaActionExecutor extends ActionExecutor {
 
@@ -138,6 +138,7 @@ public class JavaActionExecutor extends ActionExecutor {
         classes.add(LauncherMapper.class);
         classes.add(OozieLauncherInputFormat.class);
         classes.add(LauncherMainHadoopUtils.class);
+        classes.add(HadoopShims.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         return classes;
     }
