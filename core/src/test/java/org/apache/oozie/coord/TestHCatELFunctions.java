@@ -453,13 +453,13 @@ public class TestHCatELFunctions extends XHCatTestCase {
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20120230;region=us");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         String res = CoordELFunctions.evalAndWrap(eval, expr);
-        assertTrue(res.equals("'datastamp=20120230,region=us'") || res.equals("'region=us,datastamp=20120230'"));
+        assertTrue(res.equals("'datastamp=20120230,region=us'"));
 
         init("coord-sla-create");
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=20130230;region=euro");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         res = CoordELFunctions.evalAndWrap(eval, expr);
-        assertTrue(res.equals("'datastamp=20130230,region=us'") || res.equals("'region=euro,datastamp=20130230'"));
+        assertTrue(res.equals("'datastamp=20130230,region=us'") || res.equals("'datastamp=20130230,region=euro'"));
     }
 
     /**

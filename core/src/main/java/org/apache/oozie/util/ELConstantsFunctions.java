@@ -146,6 +146,10 @@ public class ELConstantsFunctions {
                     result.append(delimeter);
                 }
             }
+            // Java 8 skips a leading match if it's empty; to remain consistent with Java6,7, we check this case
+            if (src.startsWith(delimeter) && ret.length > 0 && !ret[0].equals("")) {
+                result.insert(0, append);
+            }
             return result.toString();
         }
         return src;

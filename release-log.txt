@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2043 Misc test failures against JDK8 (rkanter)
 OOZIE-2045 Symlink support for sharelib (puru)
 OOZIE-1385 Make Uber Mode the default (rkanter)
 OOZIE-1890 Make oozie-site empty and reconcile defaults between oozie-default and the code (seoeun25 via rkanter)

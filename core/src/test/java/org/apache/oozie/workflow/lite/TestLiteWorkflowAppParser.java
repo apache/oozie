@@ -1067,8 +1067,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0732, we.getErrorCode());
             assertTrue(we.getMessage().contains("Fork [f]"));
-            assertTrue(we.getMessage().contains("Join [j1]"));
-            assertTrue(we.getMessage().contains("been [j2]"));
+            assertTrue(we.getMessage().contains("Join [j1]") && we.getMessage().contains("been [j2]")
+                    || we.getMessage().contains("Join [j2]") && we.getMessage().contains("been [j1]"));
         }
     }
 
