@@ -58,9 +58,12 @@ public class TestWorkflowJobsBasicInfoFromCoordParentIdJPAExecutor extends XData
         HashMap<String,WorkflowJobBean> wflist = new HashMap<String, WorkflowJobBean>();
         CoordinatorJobBean coordJobA = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorJobBean coordJobB = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        WorkflowJobBean wfJobA1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJobA2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJobB = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowJobBean wfJobA1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJobA.getId() + "@1");
+        WorkflowJobBean wfJobA2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJobA.getId() + "@2");
+        WorkflowJobBean wfJobB = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                coordJobB.getId() + "@1");
 
         List<WorkflowJobBean> children = new ArrayList<WorkflowJobBean>();
         children.addAll(jpaService.execute(new WorkflowJobsBasicInfoFromCoordParentIdJPAExecutor(coordJobA.getId(), 10)));
