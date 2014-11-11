@@ -18,13 +18,12 @@
 
 package org.apache.oozie.executor.jpa;
 
-import java.util.Collection;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
-import org.apache.oozie.util.ParamChecker;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.util.Collection;
 /**
  * Delete Coord actions of long running coordinators, return the number of actions that were deleted.
  */
@@ -73,16 +72,11 @@ public class CoordActionsDeleteJPAExecutor implements JPAExecutor<Integer> {
         try {
             // Only used by test cases to check for rollback of transaction
             FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
-            if (deleteList != null) {
-                for (String id : deleteList) {
-                    ParamChecker.notNull(id, "Coordinator Action Id");
-
-                    // Delete coordAction
-                    Query g = em.createNamedQuery("DELETE_ACTIONS_FOR_LONG_RUNNING_COORDINATOR");
-                    g.setParameter("actionId", id);
-                    g.executeUpdate();
-                    actionsDeleted++;
-                }
+            if (deleteList != null && !deleteList.isEmpty()) {
+                // Delete coordActions
+                Query g = em.createNamedQuery("DELETE_ACTIONS_FOR_LONG_RUNNING_COORDINATOR");
+                g.setParameter("actionId", deleteList);
+                actionsDeleted = g.executeUpdate();
             }
         }
         catch (Exception e) {

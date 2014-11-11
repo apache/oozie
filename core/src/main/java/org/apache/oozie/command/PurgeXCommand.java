@@ -18,33 +18,33 @@
 
 package org.apache.oozie.command;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
-import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.executor.jpa.BundleJobsDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionsDeleteJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.executor.jpa.CoordActionsGetFromCoordJobIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsCountNotForPurgeFromParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsDeleteJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetForPurgeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetFromParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.WorkflowJobsCountNotForPurgeFromCoordParentIdJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.executor.jpa.WorkflowJobsBasicInfoFromCoordParentIdJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsDeleteJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobsGetFromWorkflowParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsGetForPurgeJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobsGetFromCoordParentIdJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.eclipse.jgit.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 /**
  * This class is used to purge workflows, coordinators, and bundles.  It takes into account the relationships between workflows and
  * coordinators, and coordinators and bundles.  It also only acts on 'limit' number of items at a time to not overtax the DB and in
@@ -65,6 +65,7 @@ public class PurgeXCommand extends XCommand<Void> {
     private int coordDel;
     private int coordActionDel;
     private int bundleDel;
+    private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
 
     public PurgeXCommand(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
         this(wfOlderThan, coordOlderThan, bundleOlderThan, limit, false);
@@ -196,9 +197,6 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     private void processWorkflows(List<String> wfs) throws JPAExecutorException {
         List<String> wfsToPurge = processWorkflowsHelper(wfs);
-        for (String id: wfsToPurge) {
-            LOG.debug("Purging workflow " + id);
-        }
         purgeWorkflows(wfsToPurge);
     }
 
@@ -217,25 +215,42 @@ public class PurgeXCommand extends XCommand<Void> {
         List<String> subwfs = new ArrayList<String>();
         List<String> wfsToPurge = new ArrayList<String>();
         for (String wfId : wfs) {
-            // We only purge the workflow and its children if they are all ready to be purged
-            long numChildrenNotReady = jpaService.execute(
-                    new WorkflowJobsCountNotForPurgeFromWorkflowParentIdJPAExecutor(wfOlderThan, wfId));
-            if (numChildrenNotReady == 0) {
-                wfsToPurge.add(wfId);
-                // Get all of the direct children for this workflow
-                List<String> children = new ArrayList<String>();
-                int size;
-                do {
-                    size = children.size();
-                    children.addAll(jpaService.execute(
-                            new WorkflowJobsGetFromWorkflowParentIdJPAExecutor(wfId, children.size(), limit)));
-                } while (size != children.size());
+            int size;
+            List<WorkflowJobBean> swfBeanList = new ArrayList<WorkflowJobBean>();
+            do {
+                size = swfBeanList.size();
+                swfBeanList.addAll(jpaService.execute(
+                        new WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor(wfId, swfBeanList.size(), limit)));
+            } while (size != swfBeanList.size());
+
+            // Checking if sub workflow is ready to purge
+            List<String> children = fetchTerminatedWorkflow(swfBeanList);
+
+            // if all sub workflow ready to purge add them all and add current workflow
+            if(children.size() == swfBeanList.size()) {
                 subwfs.addAll(children);
+                wfsToPurge.add(wfId);
             }
         }
         // Recurse on the children we just found to process their children
         wfsToPurge.addAll(processWorkflowsHelper(subwfs));
         return wfsToPurge;
+    }
+
+    /**
+     * This method will return all terminate workflow ids from wfBeanlist for purge.
+     * @param wfBeanList
+     * @return workflows to purge
+     */
+    private List<String> fetchTerminatedWorkflow(List<WorkflowJobBean> wfBeanList) {
+        List<String> children = new ArrayList<String>();
+        long wfOlderThanMS = System.currentTimeMillis() - (wfOlderThan * DAY_IN_MS);
+        for (WorkflowJobBean wfjBean : wfBeanList) {
+            if (wfjBean.inTerminalState() && wfjBean.getEndTime().getTime() < wfOlderThanMS) {
+                children.add(wfjBean.getId());
+            }
+        }
+        return children;
     }
 
     /**
@@ -246,27 +261,40 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     private void processCoordinators(List<String> coords) throws JPAExecutorException {
         List<String> wfsToPurge = new ArrayList<String>();
+        List<String> actionsToPurge = new ArrayList<String>();
         List<String> coordsToPurge = new ArrayList<String>();
         for (String coordId : coords) {
-            // We only purge the coord and its children if they are all ready to be purged
-            long numChildrenNotReady = jpaService.execute(
-                    new WorkflowJobsCountNotForPurgeFromCoordParentIdJPAExecutor(wfOlderThan, coordId));
-            if (numChildrenNotReady == 0) {
-                coordsToPurge.add(coordId);
+            // Get all of the direct workflowChildren for this coord
+            List<WorkflowJobBean> wfjBeanList = new ArrayList<WorkflowJobBean>();
+            int size;
+            do {
+                size = wfjBeanList.size();
+                wfjBeanList.addAll(jpaService.execute(
+                        new WorkflowJobsBasicInfoFromCoordParentIdJPAExecutor(coordId, wfjBeanList.size(), limit)));
+            } while (size != wfjBeanList.size());
+
+            // Checking if workflow is ready to purge
+            List<String> workflowChildren = fetchTerminatedWorkflow(wfjBeanList);
+
+            // if all workflow are ready to purge add them and add the coordinator and their actions
+            if(workflowChildren.size() == wfjBeanList.size()) {
                 LOG.debug("Purging coordinator " + coordId);
-                // Get all of the direct children for this coord
-                List<String> children = new ArrayList<String>();
-                int size;
+                wfsToPurge.addAll(workflowChildren);
+                coordsToPurge.add(coordId);
+                // Get all of the direct actionChildren for this coord
+                List<String> actionChildren = new ArrayList<String>();
                 do {
-                    size = children.size();
-                    children.addAll(jpaService.execute(
-                            new WorkflowJobsGetFromCoordParentIdJPAExecutor(coordId, children.size(), limit)));
-                } while (size != children.size());
-                wfsToPurge.addAll(children);
+                    size = actionChildren.size();
+                    actionChildren.addAll(jpaService.execute(
+                            new CoordActionsGetFromCoordJobIdJPAExecutor(coordId, actionChildren.size(), limit)));
+                } while (size != actionChildren.size());
+                actionsToPurge.addAll(actionChildren);
             }
         }
-        // Process the children
+        // Process the children workflow
         processWorkflows(wfsToPurge);
+        // Process the children action
+        purgeCoordActions(actionsToPurge);
         // Now that all children have been purged, we can purge the coordinators
         purgeCoordinators(coordsToPurge);
     }
@@ -313,10 +341,13 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     private void purgeWorkflows(List<String> wfs) throws JPAExecutorException {
         wfDel += wfs.size();
+        //To delete sub-workflows before deleting parent workflows
         Collections.reverse(wfs);
         for (int startIndex = 0; startIndex < wfs.size(); ) {
             int endIndex = (startIndex + limit < wfs.size()) ? (startIndex + limit) : wfs.size();
-            jpaService.execute(new WorkflowJobsDeleteJPAExecutor(wfs.subList(startIndex, endIndex)));
+            List<String> wfsForDelete = wfs.subList(startIndex, endIndex);
+            LOG.debug("Deleting workflows: " + StringUtils.join(wfsForDelete, ","));
+            jpaService.execute(new WorkflowJobsDeleteJPAExecutor(wfsForDelete));
             startIndex = endIndex;
         }
     }
@@ -331,7 +362,9 @@ public class PurgeXCommand extends XCommand<Void> {
         coordActionDel = coordActions.size();
         for (int startIndex = 0; startIndex < coordActions.size(); ) {
             int endIndex = (startIndex + limit < coordActions.size()) ? (startIndex + limit) : coordActions.size();
-            jpaService.execute(new CoordActionsDeleteJPAExecutor(coordActions.subList(startIndex, endIndex)));
+            List<String> coordActionsForDelete = coordActions.subList(startIndex, endIndex);
+            LOG.debug("Deleting coordinator actions: " + StringUtils.join(coordActionsForDelete, ","));
+            jpaService.execute(new CoordActionsDeleteJPAExecutor(coordActionsForDelete));
             startIndex = endIndex;
         }
     }
@@ -345,7 +378,9 @@ public class PurgeXCommand extends XCommand<Void> {
         coordDel += coords.size();
         for (int startIndex = 0; startIndex < coords.size(); ) {
             int endIndex = (startIndex + limit < coords.size()) ? (startIndex + limit) : coords.size();
-            jpaService.execute(new CoordJobsDeleteJPAExecutor(coords.subList(startIndex, endIndex)));
+            List<String> coordsForDelete = coords.subList(startIndex, endIndex);
+            LOG.debug("Deleting coordinators: " + StringUtils.join(coordsForDelete, ","));
+            jpaService.execute(new CoordJobsDeleteJPAExecutor(coordsForDelete));
             startIndex = endIndex;
         }
     }
@@ -360,7 +395,9 @@ public class PurgeXCommand extends XCommand<Void> {
         bundleDel += bundles.size();
         for (int startIndex = 0; startIndex < bundles.size(); ) {
             int endIndex = (startIndex + limit < bundles.size()) ? (startIndex + limit) : bundles.size();
-            jpaService.execute(new BundleJobsDeleteJPAExecutor(bundles.subList(startIndex, endIndex)));
+            Collection<String> bundlesForDelete = bundles.subList(startIndex, endIndex);
+            LOG.debug("Deleting bundles: " + StringUtils.join(bundlesForDelete, ","));
+            jpaService.execute(new BundleJobsDeleteJPAExecutor(bundlesForDelete));
             startIndex = endIndex;
         }
     }
