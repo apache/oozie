@@ -27,7 +27,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hcatalog</artifactId>
-    <version>0.13.1.oozie-4.1.0-SNAPSHOT</version>
+    <version>0.13.1.oozie-4.1.0</version>
     <description>Apache Oozie HCatalog ${project.version}</description>
     <name>Apache Oozie HCatalog ${project.version}</name>
     <packaging>jar</packaging>
