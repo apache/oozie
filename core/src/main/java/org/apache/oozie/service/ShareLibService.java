@@ -379,7 +379,9 @@ public class ShareLibService implements Service, Instrumentable {
                     }
                 }
             }
-            returnList.addAll(launcherLibMap.get(shareLibKey));
+            if (launcherLibMap.get(shareLibKey) != null) {
+                returnList.addAll(launcherLibMap.get(shareLibKey));
+            }
         }
         if (shareLibKey.equals(JavaActionExecutor.OOZIE_COMMON_LIBDIR)) {
             List<Path> sharelibList = getShareLibJars(shareLibKey);
