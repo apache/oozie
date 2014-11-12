@@ -1,5 +1,6 @@
 -- Oozie 4.1.0 release (4.1 - unreleased)
 
+OOZIE-2063 Cron syntax creates duplicate actions (bzhang)
 OOZIE-2032 If using SSL, the port reported by Oozie is incorrect for HA tasks (rkanter)
 OOZIE-1959 TestZKUtilsWithSecurity fails (rkanter)
 OOZIE-2033 HA and misc improvements to SSL docs (rkanter)
