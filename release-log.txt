@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2063 Cron syntax creates duplicate actions (bzhang)
 OOZIE-1803 Improvement in Purge service (jaydeepvishwakarma via shwethags)
 OOZIE-2043 Misc test failures against JDK8 (rkanter)
 OOZIE-2045 Symlink support for sharelib (puru)

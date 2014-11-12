@@ -500,6 +500,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             }
         }
 
+        if (isCronFrequency) {
+            if (start.compareTo(end) < 0 && !(ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+                //Since we exceed the throttle, we need to move the nextMadtime forward
+                //to avoid creating duplicate actions
+                if (!firstMater) {
+                    start.setTime(CoordCommandUtils.getNextValidActionTimeForCronFrequency(start.getTime(), coordJob));
+                }
+            }
+        }
+
         endMatdTime = start.getTime();
 
         if (!dryrun) {
