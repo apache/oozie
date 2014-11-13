@@ -18,9 +18,12 @@
 package org.apache.oozie.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -1636,6 +1639,22 @@ public abstract class XDataTestCase extends XHCatTestCase {
         String coordXml = coord.getJobXml();
         coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coord);
+    }
+
+    protected void writeToFile(String appXml, File appPathFile) throws Exception {
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new FileWriter(appPathFile));
+            out.println(appXml);
+        }
+        catch (IOException iex) {
+            throw iex;
+        }
+        finally {
+            if (out != null) {
+                out.close();
+            }
+        }
     }
 
 }

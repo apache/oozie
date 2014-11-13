@@ -17,19 +17,25 @@
  */
 package org.apache.oozie.command.coord;
 
+import java.io.File;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
@@ -46,6 +52,9 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 
 @SuppressWarnings("deprecation")
 public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
@@ -550,7 +559,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY ), job.getNextMaterializedTime());
+        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY * 3), job.getNextMaterializedTime());
 
         // test with hours, time should not pass the current time.
         startTime = new Date(new Date().getTime());
@@ -626,6 +635,64 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, int timeout, String freq) throws Exception {
         return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, CoordinatorJob.Execution.FIFO);
+    }
+    public void testMaterizationEndOfMonths() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"test\" frequency=\"${coord:endOfMonths(1)}\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>"
+                + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  "
+                + "</dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>"
+                + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template> "
+                + " </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> "
+                + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+
+        Date currentTime = new Date();
+        Date startTime = org.apache.commons.lang.time.DateUtils.addMonths(currentTime, -3);
+        Date endTime = org.apache.commons.lang.time.DateUtils.addMonths(currentTime, 3);
+        CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, jobId);
+        assertEquals(job.getLastActionNumber(), 0);
+
+        job.setStartTime(startTime);
+        job.setEndTime(endTime);
+        job.setMatThrottling(10);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertEquals(job.getLastActionNumber(), 3);
+
+        String jobXml = job.getJobXml();
+        Element eJob = XmlUtils.parseXml(jobXml);
+        TimeZone appTz = DateUtils.getTimeZone(job.getTimeZone());
+        TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
+        TimeUnit freqTU = TimeUnit.valueOf(job.getTimeUnitStr());
+        Calendar origStart = Calendar.getInstance(appTz);
+        origStart.setTime(job.getStartTimestamp());
+        // Move to the End of duration, if needed.
+        DateUtils.moveToEnd(origStart, endOfFlag);
+        origStart.add(freqTU.getCalendarUnit(), 3 * Integer.parseInt(job.getFrequency()));
+        assertEquals(job.getNextMaterializedTime(), origStart.getTime());
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
