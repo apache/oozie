@@ -261,7 +261,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             endMatInstance = (Calendar) startInstance.clone();
             endMatInstance.add(freqTU.getCalendarUnit(), i * frequency);
             if (endMatInstance.getTime().compareTo(new Date()) >= 0) {
-                if (previousInstance.after(currentMatTime)) {
+                if (previousInstance.getTime().after(currentMatTime)) {
                     return previousInstance.getTime();
                 }
                 else {
@@ -441,41 +441,45 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         boolean isCronFrequency = false;
 
+        Calendar effStart = (Calendar) start.clone();
         try {
-            Integer.parseInt(coordJob.getFrequency());
-        } catch (NumberFormatException e) {
+            int intFrequency = Integer.parseInt(coordJob.getFrequency());
+            effStart = (Calendar) origStart.clone();
+            effStart.add(freqTU.getCalendarUnit(), lastActionNumber * intFrequency);
+        }
+        catch (NumberFormatException e) {
             isCronFrequency = true;
         }
 
         boolean firstMater = true;
-        while (start.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
-            if (pause != null && start.compareTo(pause) >= 0) {
+        while (effStart.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+            if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
             }
 
-            Date nextTime = start.getTime();
+            Date nextTime = effStart.getTime();
 
             if (isCronFrequency) {
-                if (start.getTime().compareTo(startMatdTime) == 0 && firstMater) {
-                    start.add(Calendar.MINUTE, -1);
+                if (effStart.getTime().compareTo(startMatdTime) == 0 && firstMater) {
+                    effStart.add(Calendar.MINUTE, -1);
                     firstMater = false;
                 }
 
-                nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(start.getTime(), coordJob);
-                start.setTime(nextTime);
+                nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob);
+                effStart.setTime(nextTime);
             }
 
-            if (start.compareTo(end) < 0) {
+            if (effStart.compareTo(end) < 0) {
 
-                if (pause != null && start.compareTo(pause) >= 0) {
+                if (pause != null && effStart.compareTo(pause) >= 0) {
                     break;
                 }
                 CoordinatorActionBean actionBean = new CoordinatorActionBean();
                 lastActionNumber++;
 
                 int timeout = coordJob.getTimeout();
-                LOG.debug("Materializing action for time=" + DateUtils.formatDateOozieTZ(start.getTime()) + ", lastactionnumber=" + lastActionNumber
-                        + " timeout=" + timeout + " minutes");
+                LOG.debug("Materializing action for time=" + DateUtils.formatDateOozieTZ(effStart.getTime())
+                        + ", lastactionnumber=" + lastActionNumber + " timeout=" + timeout + " minutes");
                 Date actualTime = new Date();
                 action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                         nextTime, actualTime, lastActionNumber, jobConf, actionBean);
@@ -495,22 +499,22 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             }
 
             if (!isCronFrequency) {
-                start = (Calendar) origStart.clone();
-                start.add(freqTU.getCalendarUnit(), lastActionNumber * Integer.parseInt(coordJob.getFrequency()));
+                effStart = (Calendar) origStart.clone();
+                effStart.add(freqTU.getCalendarUnit(), lastActionNumber * Integer.parseInt(coordJob.getFrequency()));
             }
         }
 
         if (isCronFrequency) {
-            if (start.compareTo(end) < 0 && !(ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+            if (effStart.compareTo(end) < 0 && !(ignoreMaxActions || maxActionToBeCreated-- > 0)) {
                 //Since we exceed the throttle, we need to move the nextMadtime forward
                 //to avoid creating duplicate actions
                 if (!firstMater) {
-                    start.setTime(CoordCommandUtils.getNextValidActionTimeForCronFrequency(start.getTime(), coordJob));
+                    effStart.setTime(CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob));
                 }
             }
         }
 
-        endMatdTime = start.getTime();
+        endMatdTime = effStart.getTime();
 
         if (!dryrun) {
             return action;

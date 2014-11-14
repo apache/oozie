@@ -20,8 +20,6 @@ package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
@@ -1218,22 +1216,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             fail("Job ID " + jobId + " was not stored properly in db");
         }
         return null;
-    }
-
-    private void writeToFile(String appXml, File appPathFile) throws Exception {
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new FileWriter(appPathFile));
-            out.println(appXml);
-        }
-        catch (IOException iex) {
-            throw iex;
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
     }
 
     /**
