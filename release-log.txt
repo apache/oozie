@@ -1,4 +1,4 @@
--- Oozie 4.1.0 release (4.1 - unreleased)
+-- Oozie 4.1.0 release
 
 OOZIE-2064 coord job with frequency coord:endOfMonths doesn't materialize (puru)
 OOZIE-2063 Cron syntax creates duplicate actions (bzhang)
@@ -270,7 +270,7 @@ OOZIE-1453 Change "frequency" to string in SyncCoordAction.java (bowenzhangusa v
 OOZIE-1447 Sqoop actions that don't launch a map reduce job fail with an IllegalArgumentException (jarcec via rkanter)
 OOZIE-1440 Build fails in certain environments due to xerces OpenJPA issue (mackrorysd via rkanter)
 
--- Oozie 4.0.1 release (unreleased)
+-- Oozie 4.0.1 release
 
 OOZIE-1756 hadoop-auth version is wrong if profile isn't selected (rkanter)
 OOZIE-1736 Switch to Hadoop 2.3.0 for the hadoop-2 profile (rkanter)
