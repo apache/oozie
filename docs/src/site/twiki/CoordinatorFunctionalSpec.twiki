@@ -2701,24 +2701,24 @@ any workflow action.
 *Example usage in Pig:*
 
 <blockquote>
-A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
+A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY $PARTITION_FILTER;
 C = foreach B generate foo, bar;
-store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
+store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hive.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
 </blockquote>
 
 For the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look
 like:
 
 <blockquote>
-A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
+A = load 'myInputDatabase.myInputTable' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY ((datestamp==2009010101 AND region==USA) OR
     (datestamp==2009010102 AND region==USA) OR
     ...
     (datestamp==2009010123 AND region==USA) OR
     (datestamp==2009010200 AND region==USA));
 C = foreach B generate foo, bar;
-store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
+store C into 'myOutputDatabase.myOutputTable' using org.apache.hive.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
 </blockquote>
 
 ---++++ 6.8.5 coord:dataInPartitionMin(String name, String partition) EL function
@@ -2860,20 +2860,20 @@ This illustrates another pig script which filters partitions based on range, wit
 EL funtions
 
 <blockquote>
-A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
+A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '$PARTITION_DATE_MIN' AND datestamp < '$PARTITION_DATE_MAX' AND region=='$REGION';
 C = foreach B generate foo, bar;
-store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('region=$OUT_PARTITION_VAL_REGION,datestamp=$OUT_PARTITION_VAL_DATE');
+store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hive.hcatalog.pig.HCatStorer('region=$OUT_PARTITION_VAL_REGION,datestamp=$OUT_PARTITION_VAL_DATE');
 </blockquote>
 
 For example,
 for the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look like:
 
 <blockquote>
-A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
+A = load 'myInputDatabase.myInputTable' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '2009010101' AND datestamp < '2009010200' AND region='APAC';
 C = foreach B generate foo, bar;
-store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
+store C into 'myOutputDatabase.myOutputTable' using org.apache.hive.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
 </blockquote>
 
 ---++++ 6.8.8 coord:dataInPartitions(String name, String type) EL function
