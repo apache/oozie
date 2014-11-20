@@ -175,8 +175,8 @@ public enum ErrorCode {
     E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{0}]."),
     E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
 
-    E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
-    E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
+    E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
+    E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
     E0902(XLog.OPS, "Exception occured: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),

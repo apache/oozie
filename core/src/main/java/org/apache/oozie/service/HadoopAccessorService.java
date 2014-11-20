@@ -454,7 +454,7 @@ public class HadoopAccessorService implements Service {
         if (uri != null) {
             uri = uri.toLowerCase().trim();
             if (whitelist.size() > 0 && !whitelist.contains(uri)) {
-                throw new HadoopAccessorException(error, uri);
+                throw new HadoopAccessorException(error, uri, whitelist);
             }
         }
     }
