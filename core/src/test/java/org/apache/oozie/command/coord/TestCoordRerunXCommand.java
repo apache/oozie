@@ -18,6 +18,19 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.URI;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+import java.util.regex.Matcher;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
@@ -29,10 +42,25 @@ import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.executor.jpa.*;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.service.*;
+import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService;
+import org.apache.oozie.service.StoreService;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
@@ -42,12 +70,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-
-import java.io.*;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import java.util.regex.Matcher;
 
 public class TestCoordRerunXCommand extends XDataTestCase {
     private Services services;
@@ -620,6 +642,69 @@ public class TestCoordRerunXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : rerun with refresh option when input dependency is hcat partition
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunCleanupForHCat() throws Exception {
+
+        services = super.setupServicesForHCatalog();
+        services.init();
+
+        final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
+        final int actionNum = 1;
+        final String actionId = jobId + "@" + actionNum;
+        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store.beginTrx();
+        try {
+            addRecordToJobTable(jobId, store, CoordinatorJob.Status.SUCCEEDED);
+            addRecordToActionTable(jobId, actionNum, actionId, store, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-rerun-action1.xml", true);
+            store.commitTrx();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not update db.");
+        }
+        finally {
+            store.closeTrx();
+        }
+
+        String db = "mydb";
+        String table = "mytable";
+        String server = getHCatalogServer().getMetastoreAuthority();
+        String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/ds=2009121411;region=usa";
+
+        dropTable(db, table, true);
+        dropDatabase(db, true);
+        createDatabase(db);
+        createTable(db, table, "ds,region");
+        addPartition(db, table, "ds=2009121411;region=usa");
+
+        // before cleanup
+        Configuration conf = new Configuration();
+        URIHandler handler = services.get(URIHandlerService.class).getURIHandler(newHCatDependency);
+        assertTrue(handler.exists(new URI(newHCatDependency), conf, getTestUser()));
+
+        final OozieClient coordClient = LocalOozie.getCoordClient();
+        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), false, false);
+
+        CoordinatorActionBean action2 = CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION, actionId);
+        assertNotSame(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
+                return (bean.getStatus() == CoordinatorAction.Status.WAITING || bean.getStatus() == CoordinatorAction.Status.READY);
+            }
+        });
+
+        // after cleanup
+        assertFalse(handler.exists(new URI(newHCatDependency), conf, getTestUser()));
+    }
+
+    /**
      * Test : rerun <jobId> -action 1 with no output-event
      *
      * @throws Exception
@@ -1066,8 +1151,19 @@ public class TestCoordRerunXCommand extends XDataTestCase {
 
     private void addRecordToActionTable(String jobId, int actionNum, String actionId, CoordinatorStore store,
             CoordinatorAction.Status status, String resourceXmlName) throws StoreException, IOException {
+        addRecordToActionTable(jobId, actionNum, actionId, store, status, resourceXmlName, false);
+    }
+
+    private void addRecordToActionTable(String jobId, int actionNum, String actionId, CoordinatorStore store,
+            CoordinatorAction.Status status, String resourceXmlName, boolean isHCatDep) throws StoreException,
+            IOException {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
-        String actionXml = getCoordActionXml(appPath, resourceXmlName);
+        String actionXml = null;
+        if(isHCatDep != true) {
+            actionXml = getCoordActionXml(appPath, resourceXmlName);
+        } else {
+            actionXml = getCoordActionXmlForHCat(appPath, resourceXmlName);
+        }
         String actionNomialTime = getActionNomialTime(actionXml);
 
         CoordinatorActionBean action = new CoordinatorActionBean();
@@ -1170,6 +1266,30 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         String inputDir = appPath + "/coord-input/2010/07/05/01/00";
         inputDir = Matcher.quoteReplacement(inputDir);
         String outputDir = appPath + "/coord-input/2009/12/14/11/00";
+        outputDir = Matcher.quoteReplacement(outputDir);
+        try {
+            Reader reader = IOUtils.getResourceAsReader(resourceXmlName, -1);
+            String appXml = IOUtils.getReaderAsString(reader, -1);
+            appXml = appXml.replaceAll("#inputTemplate", inputTemplate);
+            appXml = appXml.replaceAll("#outputTemplate", outputTemplate);
+            appXml = appXml.replaceAll("#inputDir", inputDir);
+            appXml = appXml.replaceAll("#outputDir", outputDir);
+            return appXml;
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(XLog.format("Could not get " + resourceXmlName, ioe));
+        }
+    }
+
+    protected String getCoordActionXmlForHCat(Path appPath, String resourceXmlName) {
+        String hcatServer = getHCatalogServer().getMetastoreAuthority();
+        String inputTemplate = "hcat://" + hcatServer + "/mydb/mytable/ds=${YEAR}${MONTH}${DAY}${HOUR};region=usa";
+        inputTemplate = Matcher.quoteReplacement(inputTemplate);
+        String outputTemplate = "hcat://" + hcatServer + "/mydb/mytable/ds=${YEAR}${MONTH}${DAY}${HOUR};region=usa";
+        outputTemplate = Matcher.quoteReplacement(outputTemplate);
+        String inputDir = "hcat://" + hcatServer + "/mydb/mytable/ds=2010070501;region=usa";
+        inputDir = Matcher.quoteReplacement(inputDir);
+        String outputDir = "hcat://" + hcatServer + "/mydb/mytable/ds=2009121411;region=usa";
         outputDir = Matcher.quoteReplacement(outputDir);
         try {
             Reader reader = IOUtils.getResourceAsReader(resourceXmlName, -1);

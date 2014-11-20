@@ -317,7 +317,7 @@ public class CoordELFunctions {
                     if (uriHandler == null) {
                         URI uri = new URI(uriPath);
                         uriHandler = uriService.getURIHandler(uri);
-                        uriContext = uriHandler.getContext(uri, conf, user);
+                        uriContext = uriHandler.getContext(uri, conf, user, true);
                     }
                     String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
                     if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {
@@ -1075,7 +1075,7 @@ public class CoordELFunctions {
                     if (uriHandler == null) {
                         URI uri = new URI(uriPath);
                         uriHandler = uriService.getURIHandler(uri);
-                        uriContext = uriHandler.getContext(uri, conf, user);
+                        uriContext = uriHandler.getContext(uri, conf, user, true);
                     }
                     String uriWithDoneFlag = uriHandler.getURIWithDoneFlag(uriPath, doneFlag);
                     if (uriHandler.exists(new URI(uriWithDoneFlag), uriContext)) {

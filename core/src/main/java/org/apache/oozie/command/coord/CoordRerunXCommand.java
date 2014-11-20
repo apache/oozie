@@ -20,18 +20,21 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.XException;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.hadoop.FsActionExecutor;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
@@ -43,6 +46,9 @@ import org.apache.oozie.command.RerunTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.coord.CoordUtils;
+import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.dependency.URIHandler.Context;
+import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
@@ -50,6 +56,8 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.InstrumentUtils;
@@ -128,7 +136,8 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * @param group group name
      */
     @SuppressWarnings("unchecked")
-    private void cleanupOutputEvents(Element eAction, String user, String group) {
+    private void cleanupOutputEvents(Element eAction, String user, String group, CoordinatorAction action)
+            throws CommandException {
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element data : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
@@ -136,15 +145,40 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                     String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
                     if (uris != null) {
                         String[] uriArr = uris.split(CoordELFunctions.INSTANCE_SEPARATOR);
-                        FsActionExecutor fsAe = new FsActionExecutor();
-                        for (String uri : uriArr) {
-                            Path path = new Path(uri);
-                            try {
-                                fsAe.delete(user, group, path);
-                                LOG.debug("Cleanup the output dir " + path);
+                        Configuration actionConf = null;
+                        try {
+                            actionConf = new XConfiguration(new StringReader(coordJob.getConf()));
+                        }
+                        catch (IOException e) {
+                            throw new CommandException(ErrorCode.E0907,
+                                    "failed to read coord job conf to clean up output data");
+                        }
+                        HashMap<String, Context> contextMap = new HashMap<String, Context>();
+                        try {
+                            for (String uriStr : uriArr) {
+                                URI uri = new URI(uriStr);
+                                URIHandler handler = Services.get().get(URIHandlerService.class).getURIHandler(uri);
+                                String schemeWithAuthority = uri.getScheme() + "://" + uri.getAuthority();
+                                if (!contextMap.containsKey(schemeWithAuthority)) {
+                                    Context context = handler.getContext(uri, actionConf, user, false);
+                                    contextMap.put(schemeWithAuthority, context);
+                                }
+                                handler.delete(uri, contextMap.get(schemeWithAuthority));
+                                LOG.info("Cleanup the output data " + uri.toString());
                             }
-                            catch (ActionExecutorException ae) {
-                                LOG.warn("Failed to cleanup the output dir " + uri, ae);
+                        }
+                        catch (URISyntaxException e) {
+                            throw new CommandException(ErrorCode.E0907, e.getMessage());
+                        }
+                        catch (URIHandlerException e) {
+                            throw new CommandException(ErrorCode.E0907, e.getMessage());
+                        }
+                        finally {
+                            Iterator<Entry<String, Context>> itr = contextMap.entrySet().iterator();
+                            while (itr.hasNext()) {
+                                Entry<String, Context> entry = itr.next();
+                                entry.getValue().destroy();
+                                itr.remove();
                             }
                         }
                     }
@@ -312,7 +346,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                     String actionXml = coordAction.getActionXml();
                     if (!noCleanup) {
                         Element eAction = XmlUtils.parseXml(actionXml);
-                        cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup());
+                        cleanupOutputEvents(eAction, coordJob.getUser(), coordJob.getGroup(), coordAction);
                     }
                     if (refresh) {
                         refreshAction(coordJob, coordAction);
