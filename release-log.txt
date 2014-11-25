@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2069 RecoveryService reads incorrect configuration (puru)
 OOZIE-2074 Compatibility issue with Yarn and Hadoop 0.23/2.x (jaydeepvishwakarma via shwethags)
 OOZIE-1983 Add spark action executor (pavan kumar via rkanter)
 OOZIE-1985 support dropping hcat dataset in coord rerun with cleanup option (ryota)

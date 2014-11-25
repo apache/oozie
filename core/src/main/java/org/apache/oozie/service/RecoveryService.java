@@ -74,23 +74,23 @@ import org.jdom.Element;
  */
 public class RecoveryService implements Service {
 
-    public static final String CONF_PREFIX = Service.CONF_PREFIX + "RecoveryService.";
-    public static final String CONF_PREFIX_WF_ACTIONS = Service.CONF_PREFIX + "wf.actions.";
-    public static final String CONF_PREFIX_COORD = Service.CONF_PREFIX + "coord.";
-    public static final String CONF_PREFIX_BUNDLE = Service.CONF_PREFIX + "bundle.";
+    public static final String RECOVERY_SERVICE_CONF_PREFIX = Service.CONF_PREFIX + "RecoveryService.";
+    public static final String CONF_PREFIX_WF_ACTIONS = RECOVERY_SERVICE_CONF_PREFIX + "wf.actions.";
+    public static final String CONF_PREFIX_COORD = RECOVERY_SERVICE_CONF_PREFIX + "coord.";
+    public static final String CONF_PREFIX_BUNDLE = RECOVERY_SERVICE_CONF_PREFIX + "bundle.";
     /**
      * Time interval, in seconds, at which the recovery service will be scheduled to run.
      */
-    public static final String CONF_SERVICE_INTERVAL = CONF_PREFIX + "interval";
+    public static final String CONF_SERVICE_INTERVAL = RECOVERY_SERVICE_CONF_PREFIX + "interval";
     /**
      * The number of callables to be queued in a batch.
      */
-    public static final String CONF_CALLABLE_BATCH_SIZE = CONF_PREFIX + "callable.batch.size";
+    public static final String CONF_CALLABLE_BATCH_SIZE = RECOVERY_SERVICE_CONF_PREFIX + "callable.batch.size";
 
     /**
      * Delay for the push missing dependencies in milliseconds.
      */
-    public static final String CONF_PUSH_DEPENDENCY_INTERVAL = CONF_PREFIX + "push.dependency.interval";
+    public static final String CONF_PUSH_DEPENDENCY_INTERVAL = RECOVERY_SERVICE_CONF_PREFIX + "push.dependency.interval";
 
     /**
      * Age of actions to queue, in seconds.
