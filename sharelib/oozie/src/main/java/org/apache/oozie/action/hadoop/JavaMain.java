@@ -61,26 +61,5 @@ public class JavaMain extends LauncherMain {
         }
     }
 
-   /**
-    * Read action configuration passes through action xml file.
-    *
-    * @return action  Configuration
-    * @throws IOException
-    */
-    protected Configuration loadActionConf() throws IOException {
-        // loading action conf prepared by Oozie
-        Configuration actionConf = new Configuration(false);
 
-        String actionXml = System.getProperty("oozie.action.conf.xml");
-
-        if (actionXml == null) {
-            throw new RuntimeException("Missing Java System Property [oozie.action.conf.xml]");
-        }
-        if (!new File(actionXml).exists()) {
-            throw new RuntimeException("Action Configuration XML file [" + actionXml + "] does not exist");
-        }
-
-        actionConf.addResource(new Path("file:///", actionXml));
-        return actionConf;
-    }
 }

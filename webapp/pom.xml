@@ -129,6 +129,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-spark</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <version>4.3</version>
@@ -195,7 +201,8 @@
                         <configuration>
                             <includeArtifactIds>
                                 oozie-sharelib-pig,oozie-sharelib-hive,oozie-sharelib-sqoop,oozie-sharelib-streaming,
-                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp,oozie-sharelib-hive2
+                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp,oozie-sharelib-hive2,
+                                oozie-sharelib-spark
                             </includeArtifactIds>
                             <excludeTransitive>true</excludeTransitive>
                             <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>

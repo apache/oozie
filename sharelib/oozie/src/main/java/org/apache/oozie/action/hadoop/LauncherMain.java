@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapred.JobConf;
@@ -145,6 +148,29 @@ public abstract class LauncherMain {
                 throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
             }
         }
+    }
+
+    /**
+     * Read action configuration passes through action xml file.
+     *
+     * @return action  Configuration
+     * @throws IOException
+     */
+    protected Configuration loadActionConf() throws IOException {
+        // loading action conf prepared by Oozie
+        Configuration actionConf = new Configuration(false);
+
+        String actionXml = System.getProperty("oozie.action.conf.xml");
+
+        if (actionXml == null) {
+            throw new RuntimeException("Missing Java System Property [oozie.action.conf.xml]");
+        }
+        if (!new File(actionXml).exists()) {
+            throw new RuntimeException("Action Configuration XML file [" + actionXml + "] does not exist");
+        }
+
+        actionConf.addResource(new Path("file:///", actionXml));
+        return actionConf;
     }
 }
 

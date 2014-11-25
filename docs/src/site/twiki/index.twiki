@@ -60,6 +60,7 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[DG_SqoopActionExtension][Sqoop Action]]
    * [[DG_SshActionExtension][Ssh Action]]
    * [[DG_DistCpActionExtension][DistCp Action]]
+   * [[DG_SparkActionExtension][Spark Action]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
 
 ---+++ Job Status and SLA Monitoring
