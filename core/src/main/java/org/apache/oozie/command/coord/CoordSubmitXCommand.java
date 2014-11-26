@@ -292,8 +292,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @throws Exception the exception
      */
     protected String getDryRun(CoordinatorJobBean coordJob) throws Exception{
-        int materializationWindow = ConfigurationService.getInt(conf, CoordMaterializeTriggerService
-                .CONF_MATERIALIZATION_WINDOW);
+        int materializationWindow = ConfigurationService
+                .getInt(CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW);
         Date startTime = coordJob.getStartTime();
         long startTimeMilli = startTime.getTime();
         long endTimeMilli = startTimeMilli + (materializationWindow * 1000);
@@ -324,8 +324,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * Queue MaterializeTransitionXCommand
      */
     protected void queueMaterializeTransitionXCommand(String jobId) {
-        int materializationWindow = ConfigurationService.getInt(conf, CoordMaterializeTriggerService
-                .CONF_MATERIALIZATION_WINDOW);
+        int materializationWindow = ConfigurationService
+                .getInt(CoordMaterializeTriggerService.CONF_MATERIALIZATION_WINDOW);
         queue(new CoordMaterializeTransitionXCommand(jobId, materializationWindow), 100);
     }
 
