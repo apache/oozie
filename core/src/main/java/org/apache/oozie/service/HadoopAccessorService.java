@@ -286,7 +286,9 @@ public class HadoopAccessorService implements Service {
     public JobConf createJobConf(String hostPort) {
         JobConf jobConf = new JobConf();
         XConfiguration.copy(getConfiguration(hostPort), jobConf);
+        LOG.error("oooooo"+jobConf);
         jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
+        LOG.error("ssssssss"+jobConf);
         return jobConf;
     }
 
@@ -339,10 +341,13 @@ public class HadoopAccessorService implements Service {
     private Configuration getConfiguration(String hostPort) {
         hostPort = (hostPort != null) ? hostPort.toLowerCase() : null;
         Configuration conf = hadoopConfigs.get(hostPort);
+        LOG.error("zzzzzzzzzzzz"+conf);
         if (conf == null) {
             conf = hadoopConfigs.get("*");
+            LOG.error("vvvvvvvvv"+conf);
             if (conf == null) {
                 conf = new XConfiguration();
+                LOG.error("rrrrrrrr"+conf);
             }
         }
         //modify by kim for use the hfds fs

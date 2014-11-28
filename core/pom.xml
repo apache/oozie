@@ -26,7 +26,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-core</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.0.0-cdh5.1.2</version>
     <description>Apache Oozie Core</description>
     <name>Apache Oozie Core</name>
     <packaging>jar</packaging>

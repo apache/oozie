@@ -69,13 +69,13 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>0.20.2-cdh3u6</hadoop.version>
-        <hbase.version>0.94.2</hbase.version>
-        <hcatalog.version>0.5.0</hcatalog.version>
+        <hadoop.version>2.3.0-cdh5.1.2</hadoop.version>
+        <hbase.version>0.98.1-cdh5.1.2</hbase.version>
+        <hcatalog.version>0.12.0-cdh5.1.2.oozie-4.0.0-cdh5.1.2</hcatalog.version>
 
         <hadooplib.version>${hadoop.version}.oozie-${project.version}</hadooplib.version>
         <hbaselib.version>${hbase.version}.oozie-${project.version}</hbaselib.version>
-        <hcataloglib.version>${hcatalog.version}.oozie-${project.version}</hcataloglib.version>
+        <hcataloglib.version>${hcatalog.version}</hcataloglib.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
         <!--

@@ -27,7 +27,7 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-oozie</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.0.0-cdh5.1.2</version>
     <description>Apache Oozie Share Lib Oozie</description>
     <name>Apache Oozie Share Lib Oozie</name>
     <packaging>jar</packaging>
