@@ -1203,8 +1203,8 @@ public class JavaActionExecutor extends ActionExecutor {
             if (runningJob == null) {
                 context.setExecutionData(FAILED, null);
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                        "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", action
-                                .getExternalId(), action.getId());
+                        "Could not lookup launched hadoop Job ID [{0}] which was associated with " +
+                        " action [{1}].  Failing this action!", action.getExternalId(), action.getId());
             }
             if (runningJob.isComplete()) {
                 Path actionDir = context.getActionDir();
