@@ -70,7 +70,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
             updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED,
                     this.wfJobBean));
             BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
-            queue(new NotificationXCommand(this.wfJobBean));
+            queue(new WorkflowNotificationXCommand(this.wfJobBean));
             //Calling suspend recursively to handle parent workflow
             suspendParentWorkFlow();
         }

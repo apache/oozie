@@ -183,7 +183,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             if (EventHandlerService.isEnabled()) {
                 generateEvent(wfJob);
             }
-            queue(new NotificationXCommand(wfJob));
+            queue(new WorkflowNotificationXCommand(wfJob));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

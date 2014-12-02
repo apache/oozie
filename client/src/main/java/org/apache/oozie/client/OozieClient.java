@@ -103,9 +103,13 @@ public class OozieClient {
 
     public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";
 
+    public static final String WORKFLOW_NOTIFICATION_PROXY = "oozie.wf.workflow.notification.proxy";
+
     public static final String ACTION_NOTIFICATION_URL = "oozie.wf.action.notification.url";
 
     public static final String COORD_ACTION_NOTIFICATION_URL = "oozie.coord.action.notification.url";
+
+    public static final String COORD_ACTION_NOTIFICATION_PROXY = "oozie.coord.action.notification.proxy";
 
     public static final String RERUN_SKIP_NODES = "oozie.wf.rerun.skip.nodes";
 

@@ -155,7 +155,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
-                    queue(new NotificationXCommand(wfJob, wfAction));
+                    queue(new WorkflowNotificationXCommand(wfJob, wfAction));
                 }
                 catch (ActionExecutorException ex) {
                     wfAction.resetPending();

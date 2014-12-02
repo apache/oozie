@@ -195,7 +195,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
                 workflow.setStatus(WorkflowJob.Status.FAILED);
                 action.setStatus(WorkflowAction.Status.FAILED);
                 action.resetPending();
-                queue(new NotificationXCommand(workflow, action));
+                queue(new WorkflowNotificationXCommand(workflow, action));
                 queue(new KillXCommand(workflow.getId()));
                 InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }

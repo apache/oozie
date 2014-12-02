@@ -2350,4 +2350,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.notification.proxy</name>
+        <value></value>
+        <description>
+         System level proxy setting for job notifications.
+        </description>
+    </property>
+
 </configuration>

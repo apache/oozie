@@ -142,7 +142,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 if (EventHandlerService.isEnabled()) {
                     generateEvent(workflow);
                 }
-                queue(new NotificationXCommand(workflow));
+                queue(new WorkflowNotificationXCommand(workflow));
             }
             return null;
         }

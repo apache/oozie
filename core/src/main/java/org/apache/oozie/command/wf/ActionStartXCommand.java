@@ -261,7 +261,7 @@ public class ActionStartXCommand extends ActionXCommand<Void> {
                         wfAction.setErrorInfo(START_DATA_MISSING, "Execution Started, but Start Data Missing from Action");
                         failJob(context);
                     } else {
-                        queue(new NotificationXCommand(wfJob, wfAction));
+                        queue(new WorkflowNotificationXCommand(wfJob, wfAction));
                     }
                 }
 

@@ -21,6 +21,7 @@ package org.apache.oozie.command.wf;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XTestCase;
@@ -29,7 +30,7 @@ import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.Assert;
 import org.mockito.Mockito;
 
-public class TestNotificationXCommand extends XTestCase {
+public class TestWorkflowNotificationXCommand extends XTestCase {
     private EmbeddedServletContainer container;
 
     @Override
@@ -67,7 +68,7 @@ public class TestNotificationXCommand extends XTestCase {
         Mockito.when(workflow.getId()).thenReturn("1");
         Mockito.when(workflow.getStatus()).thenReturn(WorkflowJob.Status.SUCCEEDED);
         Mockito.when(workflow.getWorkflowInstance()).thenReturn(wfi);
-        NotificationXCommand command = new NotificationXCommand(workflow);
+        WorkflowNotificationXCommand command = new WorkflowNotificationXCommand(workflow);
         command.retries = 3;
         long start = System.currentTimeMillis();
         command.call();

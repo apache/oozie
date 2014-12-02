@@ -184,7 +184,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 // 2. Add SLA registration events for all WF_ACTIONS
                 createSLARegistrationForAllActions(workflowInstance.getApp().getDefinition(), wfJob.getUser(),
                         wfJob.getGroup(), wfJob.getConf());
-                queue(new NotificationXCommand(wfJob));
+                queue(new WorkflowNotificationXCommand(wfJob));
             }
             else {
                 throw new CommandException(ErrorCode.E0801, wfJob.getId());
@@ -209,7 +209,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             wfAction.resetPending();
             if (!skipAction) {
                 wfAction.setTransition(workflowInstance.getTransition(wfAction.getName()));
-                queue(new NotificationXCommand(wfJob, wfAction));
+                queue(new WorkflowNotificationXCommand(wfJob, wfAction));
             }
             updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS,
                     wfAction));
@@ -243,7 +243,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         wfJobErrorCode = actionToFail.getErrorCode();
                         wfJobErrorMsg = actionToFail.getErrorMessage();
                     }
-                    queue(new NotificationXCommand(wfJob, actionToFail));
+                    queue(new WorkflowNotificationXCommand(wfJob, actionToFail));
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
                             Status.FAILED, SlaAppType.WORKFLOW_ACTION);
                     if (slaEvent != null) {
@@ -279,7 +279,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (slaEvent != null) {
                 insertList.add(slaEvent);
             }
-            queue(new NotificationXCommand(wfJob));
+            queue(new WorkflowNotificationXCommand(wfJob));
             if (wfJob.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 InstrumentUtils.incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }

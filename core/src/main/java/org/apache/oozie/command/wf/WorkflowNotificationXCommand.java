@@ -24,7 +24,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -33,7 +32,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class NotificationXCommand extends WorkflowXCommand<Void> {
+public class WorkflowNotificationXCommand extends WorkflowXCommand<Void> {
 
     public static final String NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY = "oozie.notification.url.connection.timeout";
 
@@ -47,7 +46,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
     //this variable is package private only for test purposes
     int retries = 0;
 
-    public NotificationXCommand(WorkflowJobBean workflow) {
+    public WorkflowNotificationXCommand(WorkflowJobBean workflow) {
         super("job.notification", "job.notification", 0);
         ParamChecker.notNull(workflow, "workflow");
         id = workflow.getId();
@@ -58,7 +57,7 @@ public class NotificationXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    public NotificationXCommand(WorkflowJobBean workflow, WorkflowActionBean action) {
+    public WorkflowNotificationXCommand(WorkflowJobBean workflow, WorkflowActionBean action) {
         super("action.notification", "job.notification", 0);
         ParamChecker.notNull(workflow, "workflow");
         ParamChecker.notNull(action, "action");
