@@ -39,7 +39,7 @@
     </organization>
 
     <properties>
-        <javaVersion>1.6</javaVersion>
+        <javaVersion>1.7</javaVersion>
         <targetJavaVersion>1.6</targetJavaVersion>
 
         <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
@@ -788,7 +788,7 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-utils</artifactId>
-                <version>2.3.0-cdh5.0.0-SNAPSHOT.oozie-4.0.0-cdh5.0.0-SNAPSHOT</version>
+                <version>${hadooplib.version}</version>
             </dependency>
 
         </dependencies>
