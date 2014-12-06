@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -27,6 +28,7 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -59,7 +61,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
     @SuppressWarnings("unchecked")
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
         // Maintain backward compatibility for action info cmd
-        if (!(Services.get().getConf().getBoolean(COORD_GET_ALL_COLS_FOR_ACTION, false))) {
+        if (!ConfigurationService.getBoolean(COORD_GET_ALL_COLS_FOR_ACTION)) {
             List<Object[]> actionObjects;
             try {
                 Query q = em.createNamedQuery("GET_COORD_ACTION_FOR_INFO");

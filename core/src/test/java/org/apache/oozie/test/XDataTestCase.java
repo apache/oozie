@@ -15,12 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -209,6 +213,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @param status coord job status
      * @param start start time
      * @param end end time
+     * @param created Time
      * @param pending true if pending is true
      * @param doneMatd true if doneMaterialization is true
      * @param lastActionNum last action number
@@ -217,8 +222,25 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
             boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
-        CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
+        return addRecordToCoordJobTable(status, start, end, new Date(), pending, doneMatd, lastActionNum);
+    }
 
+    /**
+     * Insert coord job for testing.
+     *
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param created Time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws Exception
+     */
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date start, Date end,
+            Date createdTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, start, end, createdTime, pending, doneMatd, lastActionNum);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -382,6 +404,26 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         return createCoordBean(appPath, appXml, status, start, end, pending, doneMatd, lastActionNum);
     }
+    /**
+     * Create coord job bean
+     *
+     * @param status coord job status
+     * @param start start time
+     * @param end end time
+     * @param created Time
+     * @param pending true if pending is true
+     * @param doneMatd true if doneMaterialization is true
+     * @param lastActionNum last action number
+     * @return coord job bean
+     * @throws IOException
+     */
+    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, Date createTime, boolean pending,
+            boolean doneMatd, int lastActionNum) throws Exception {
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String appXml = writeCoordXml(appPath, start, end);
+
+        return createCoordBean(appPath, appXml, status, start, end, createTime, pending, doneMatd, lastActionNum);
+    }
 
     /**
      * Create coord job bean
@@ -406,13 +448,18 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     private CoordinatorJobBean createCoordBean(Path appPath, String appXml, CoordinatorJob.Status status, Date start,
             Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        return createCoordBean(appPath, appXml, status, start, end, new Date(), pending, doneMatd, lastActionNum);
+    }
+
+    private CoordinatorJobBean createCoordBean(Path appPath, String appXml, CoordinatorJob.Status status, Date start,
+            Date end, Date createdTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.COORDINATOR));
         coordJob.setAppName("COORD-TEST");
         coordJob.setAppPath(appPath.toString());
         coordJob.setStatus(status);
         coordJob.setTimeZone("America/Los_Angeles");
-        coordJob.setCreatedTime(new Date());
+        coordJob.setCreatedTime(createdTime);
         coordJob.setLastModifiedTime(new Date());
         coordJob.setUser(getTestUser());
         coordJob.setGroup(getTestGroup());
@@ -512,7 +559,26 @@ public abstract class XDataTestCase extends XHCatTestCase {
      */
     protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName, int pending) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending);
+        return addRecordToCoordActionTable(jobId, actionNum, status, resourceXmlName, pending, null);
+    }
+
+    /**
+     * Insert coord action for testing.
+     *
+     * @param jobId coord job id
+     * @param actionNum action number
+     * @param status coord action status
+     * @param resourceXmlName xml file name
+     * @param pending pending counter
+     * @param actionNominalTime
+     * @return coord action bean
+     * @throws Exception thrown if unable to create coord action bean
+     */
+    protected CoordinatorActionBean addRecordToCoordActionTable(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, int pending, Date actionNominalTime)
+            throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, pending,
+                actionNominalTime);
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -569,8 +635,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
             String resourceXmlName, int pending) throws Exception {
-        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z");
+        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z", null);
     }
+
+    protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
+            String resourceXmlName, int pending, Date actionNominalTime) throws Exception {
+        return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z", actionNominalTime);
+    }
+
 
     /**
      * Create coord action bean
@@ -584,12 +656,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @throws Exception thrown if unable to create coord action bean
      */
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
-            String resourceXmlName, int pending, String oozieTimeZoneMask) throws Exception {
+            String resourceXmlName, int pending, String oozieTimeZoneMask, Date actionNominalTime) throws Exception {
         String actionId = Services.get().get(UUIDService.class).generateChildId(jobId, actionNum + "");
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, resourceXmlName);
         actionXml = actionXml.replace("${TZ}", oozieTimeZoneMask);
-        String actionNominalTime = getActionNominalTime(actionXml);
 
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(actionId);
@@ -598,7 +669,14 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setActionNumber(actionNum);
         action.setPending(pending);
         try {
-            action.setNominalTime(DateUtils.parseDateOozieTZ(actionNominalTime));
+            if (actionNominalTime == null) {
+                String nominalTime = getActionNominalTime(actionXml);
+
+                action.setNominalTime(DateUtils.parseDateOozieTZ(nominalTime));
+            }
+            else {
+                action.setNominalTime(actionNominalTime);
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -1259,7 +1337,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return bundle job bean
      * @throws Exception
      */
-    protected BundleJobBean createBundleJob(Job.Status jobStatus, boolean pending) throws Exception {
+    protected BundleJobBean createBundleJob(String jobID, Job.Status jobStatus, boolean pending) throws Exception {
         Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
         Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
         writeCoordXml(coordPath1, "coord-job-bundle.xml");
@@ -1283,9 +1361,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         conf.set("appName", "bundle-app-name");
+        conf.set("coordName1", "coord1");
+        conf.set("coordName2", "coord2");
 
         BundleJobBean bundle = new BundleJobBean();
-        bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
+        bundle.setId(jobID);
         bundle.setAppName("BUNDLE-TEST");
         bundle.setAppPath(bundleAppPath.toString());
         bundle.setConf(XmlUtils.prettyPrint(conf).toString());
@@ -1309,6 +1389,18 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         return bundle;
     }
+
+    /**
+     * Create bundle job bean
+     * @param jobStatus
+     * @param pending
+     * @return
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJob(Job.Status jobStatus, boolean pending) throws Exception {
+        return createBundleJob(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE), jobStatus, pending);
+    }
+
 
     /**
      * Create bundle job that contains bad coordinator jobs
@@ -1337,6 +1429,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
+        conf.set("coordName1", "coord1");
+        conf.set("coordName2", "coord2");
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));
@@ -1356,7 +1450,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         return bundle;
     }
 
-    private String getBundleXml(String resourceXmlName) {
+    protected String getBundleXml(String resourceXmlName) {
         try {
             Reader reader = IOUtils.getResourceAsReader(resourceXmlName, -1);
             String appXml = IOUtils.getReaderAsString(reader, -1);
@@ -1423,7 +1517,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
         BundleJobBean bundle = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
         bundleId = bundle.getId();
         bundleName = bundle.getAppName();
+        addCoordForBulkMonitor(bundleId);
+    }
 
+    protected void addCoordForBulkMonitor(String bundleId) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
         // adding coordinator job(s) for this bundle
         addRecordToCoordJobTableWithBundle(bundleId, "Coord1", CoordinatorJob.Status.RUNNING, true, true, 2);
         addRecordToCoordJobTableWithBundle(bundleId, "Coord2", CoordinatorJob.Status.RUNNING, true, true, 1);
@@ -1494,7 +1593,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, false, true);
 
-        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+        return addInitRecords(missingDependencies, pushMissingDependencies, oozieTimeZoneMask, job, 1);
+    }
+
+    protected String addInitRecords(String missingDependencies, String pushMissingDependencies, String oozieTimeZoneMask,
+            CoordinatorJobBean job, int actionNum) throws Exception {
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), actionNum,
                 CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", missingDependencies,
                 pushMissingDependencies, oozieTimeZoneMask);
         return action.getId();
@@ -1504,7 +1608,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
             CoordinatorAction.Status status, String resourceXmlName, String missingDependencies,
             String pushMissingDependencies, String oozieTimeZoneMask) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0,
-                oozieTimeZoneMask);
+                oozieTimeZoneMask, null);
         action.setMissingDependencies(missingDependencies);
         action.setPushMissingDependencies(pushMissingDependencies);
         try {
@@ -1563,6 +1667,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
     }
 
+    protected void setCoordActionNominalTime(String actionId, long actionNominalTime) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        action.setNominalTime(new Date(actionNominalTime));
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
+    }
+
     protected void setMissingDependencies(String actionId, String missingDependencies) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
@@ -1576,6 +1687,22 @@ public abstract class XDataTestCase extends XHCatTestCase {
         String coordXml = coord.getJobXml();
         coord.setJobXml(coordXml.replace("hdfs:///tmp/workflows/", getFsTestCaseDir() + "/workflow.xml"));
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coord);
+    }
+
+    protected void writeToFile(String appXml, File appPathFile) throws Exception {
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new FileWriter(appPathFile));
+            out.println(appXml);
+        }
+        catch (IOException iex) {
+            throw iex;
+        }
+        finally {
+            if (out != null) {
+                out.close();
+            }
+        }
     }
 
 }

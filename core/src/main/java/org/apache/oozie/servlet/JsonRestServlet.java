@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
@@ -26,6 +27,7 @@ import org.apache.oozie.service.ProxyUserService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
@@ -48,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class JsonRestServlet extends HttpServlet {
 
-    private static final String JSTON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
 
     protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\"UTF-8\"";
 
@@ -367,7 +369,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             throws IOException {
         response.setStatus(statusCode);
         JSONObject json = bean.toJSONObject(timeZoneId);
-        response.setContentType(JSTON_UTF8);
+        response.setContentType(JSON_UTF8);
         json.writeJSONString(response.getWriter());
     }
 
@@ -396,7 +398,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             response.sendError(statusCode);
         }
         response.setStatus(statusCode);
-        response.setContentType(JSTON_UTF8);
+        response.setContentType(JSON_UTF8);
         json.writeJSONString(response.getWriter());
     }
 
@@ -566,15 +568,11 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
-     * Set the log info with the given information.
+     * Set the thread local log info with the given information.
      *
-     * @param jobid job ID.
      * @param actionid action ID.
      */
-    protected void setLogInfo(String jobid, String actionid) {
-        logInfo.setParameter(DagXLogInfoService.JOB, jobid);
-        logInfo.setParameter(DagXLogInfoService.ACTION, actionid);
-
-        XLog.Info.get().setParameters(logInfo);
+    protected void setLogInfo(String actionid) {
+        LogUtils.setLogInfo(actionid);
     }
 }

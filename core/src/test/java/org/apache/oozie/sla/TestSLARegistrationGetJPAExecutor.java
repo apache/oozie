@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.util.ArrayList;
@@ -25,7 +26,8 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -55,8 +57,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        SLARegistrationGetJPAExecutor readCmd = new SLARegistrationGetJPAExecutor(jobId);
-        SLARegistrationBean bean = jpaService.execute(readCmd);
+        SLARegistrationBean bean = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, jobId);
         assertEquals(jobId, bean.getId());
         assertEquals(AppType.WORKFLOW_JOB, bean.getAppType());
         assertEquals(current, bean.getExpectedStart());
@@ -85,6 +86,15 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
             fail("Unable to insert the test sla registration record to table");
             throw je;
         }
+    }
+
+    public void testSlaConfigStringToMap() {
+        String slaConfig = "{alert_contact=hadoopqa@oozie.com},{alert_events=START_MISS,DURATION_MISS,END_MISS},";
+        SLARegistrationBean bean = new SLARegistrationBean();
+        bean.setSlaConfig(slaConfig);
+        assertEquals(bean.getSlaConfigMap().size(), 2);
+        assertEquals(bean.getAlertEvents(), "START_MISS,DURATION_MISS,END_MISS");
+        assertEquals(bean.getAlertContact(), "hadoopqa@oozie.com");
     }
 
 }

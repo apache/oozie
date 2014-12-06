@@ -6,23 +6,27 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.cli;
 
+import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.UnrecognizedOptionException;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.text.MessageFormat;
@@ -114,14 +118,40 @@ public class CLIParser {
         }
         else {
             if (commands.containsKey(args[0])) {
-                GnuParser parser = new GnuParser();
+                GnuParser parser ;
                 String[] minusCommand = new String[args.length - 1];
                 System.arraycopy(args, 1, minusCommand, 0, minusCommand.length);
+
+                if (args[0].equals(OozieCLI.JOB_CMD)) {
+                    validdateArgs(args, minusCommand);
+                    parser = new OozieGnuParser(true);
+                }
+                else {
+                    parser = new OozieGnuParser(false);
+                }
+
                 return new Command(args[0], parser.parse(commands.get(args[0]), minusCommand,
                                                          commandWithArgs.get(args[0])));
             }
             else {
                 throw new ParseException(MessageFormat.format("invalid sub-command [{0}]", args[0]));
+            }
+        }
+    }
+
+    public void validdateArgs(final String[] args, String[] minusCommand) throws ParseException {
+        try {
+            GnuParser parser = new OozieGnuParser(false);
+            parser.parse(commands.get(args[0]), minusCommand, commandWithArgs.get(args[0]));
+        }
+        catch (MissingOptionException e) {
+            if (Arrays.toString(args).contains("-dryrun")) {
+                // ignore this, else throw exception
+                //Dryrun is also part of update sub-command. CLI parses dryrun as sub-command and throws
+                //Missing Option Exception, if -dryrun is used as command. It's ok to skip exception only for dryrun.
+            }
+            else {
+                throw e;
             }
         }
     }
@@ -164,5 +194,24 @@ public class CLIParser {
         pw.flush();
     }
 
+    static class OozieGnuParser extends GnuParser {
+        private boolean ignoreMissingOption;
+
+        public OozieGnuParser(final boolean ignoreMissingOption) {
+            this.ignoreMissingOption = ignoreMissingOption;
+        }
+
+        @Override
+        protected void checkRequiredOptions() throws MissingOptionException {
+            if (ignoreMissingOption) {
+                return;
+            }
+            else {
+                super.checkRequiredOptions();
+            }
+        }
+    }
+
 }
+
 

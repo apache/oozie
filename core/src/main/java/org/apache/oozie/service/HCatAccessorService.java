@@ -15,8 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -27,16 +32,22 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.dependency.hcat.HCatMessageHandler;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.MappingRule;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 
 public class HCatAccessorService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "HCatAccessorService.";
     public static final String JMS_CONNECTIONS_PROPERTIES = CONF_PREFIX + "jmsconnections";
+    public static final String HCAT_CONFIGURATION = CONF_PREFIX + "hcat.configuration";
 
     private static XLog LOG;
     private static String DELIMITER = "#";
@@ -44,6 +55,7 @@ public class HCatAccessorService implements Service {
     private JMSAccessorService jmsService;
     private List<MappingRule> mappingRules;
     private JMSConnectionInfo defaultJMSConnInfo;
+    private Configuration hcatConf;
     /**
      * Map of publisher(host:port) to JMS connection info
      */
@@ -66,10 +78,69 @@ public class HCatAccessorService implements Service {
         this.nonJMSPublishers = new HashSet<String>();
         this.publisherJMSConnInfoMap = new HashMap<String, JMSConnectionInfo>();
         this.registeredTopicsMap = new HashMap<String, String>();
+        try {
+            loadHCatConf(services);
+        } catch(IOException ioe) {
+            throw new ServiceException(ErrorCode.E0100, HCatAccessorService.class.getName(), "An exception occured while attempting"
+                    + "to load the HCat Configuration", ioe);
+        }
+    }
+
+    private void loadHCatConf(Services services) throws IOException {
+        String path = conf.get(HCAT_CONFIGURATION);
+        if (path != null) {
+            if (path.startsWith("hdfs")) {
+                Path p = new Path(path);
+                HadoopAccessorService has = services.get(HadoopAccessorService.class);
+                try {
+                    FileSystem fs = has.createFileSystem(
+                            System.getProperty("user.name"), p.toUri(), has.createJobConf(p.toUri().getAuthority()));
+                    if (fs.exists(p)) {
+                        FSDataInputStream is = null;
+                        try {
+                            is = fs.open(p);
+                            hcatConf = new XConfiguration(is);
+                        } finally {
+                            if (is != null) {
+                                is.close();
+                            }
+                        }
+                        LOG.info("Loaded HCat Configuration: " + path);
+                    } else {
+                        LOG.warn("HCat Configuration could not be found at [" + path + "]");
+                    }
+                } catch (HadoopAccessorException hae) {
+                    throw new IOException(hae);
+                }
+            } else {
+                File f = new File(path);
+                if (f.exists()) {
+                    InputStream is = null;
+                    try {
+                        is = new FileInputStream(f);
+                        hcatConf = new XConfiguration(is);
+                    } finally {
+                        if (is != null) {
+                            is.close();
+                        }
+                    }
+                    LOG.info("Loaded HCat Configuration: " + path);
+                } else {
+                    LOG.warn("HCat Configuration could not be found at [" + path + "]");
+                }
+            }
+        }
+        else {
+            LOG.info("HCat Configuration not specified");
+        }
+    }
+
+    public Configuration getHCatConf() {
+        return hcatConf;
     }
 
     private void initializeMappingRules() {
-        String[] connections = conf.getStrings(JMS_CONNECTIONS_PROPERTIES);
+        String[] connections = ConfigurationService.getStrings(conf, JMS_CONNECTIONS_PROPERTIES);
         if (connections != null) {
             mappingRules = new ArrayList<MappingRule>(connections.length);
             for (String connection : connections) {

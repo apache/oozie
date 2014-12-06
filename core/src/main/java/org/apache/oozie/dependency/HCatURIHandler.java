@@ -15,11 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,11 +31,12 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hcatalog.api.ConnectionFailureException;
-import org.apache.hcatalog.api.HCatClient;
-import org.apache.hcatalog.api.HCatPartition;
-import org.apache.hcatalog.common.HCatException;
+import org.apache.hive.hcatalog.api.ConnectionFailureException;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.hadoop.HCatLauncherURIHandler;
 import org.apache.oozie.action.hadoop.LauncherURIHandler;
@@ -105,7 +108,7 @@ public class HCatURIHandler implements URIHandler {
         }
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
         if (!hcatService.isRegisteredForNotification(hcatURI)) {
-            HCatClient client = getHCatClient(uri, conf, user);
+            HCatClient client = getHCatClient(uri, conf);
             try {
                 String topic = client.getMessageBusTopicName(hcatURI.getDb(), hcatURI.getTable());
                 if (topic == null) {
@@ -117,7 +120,7 @@ public class HCatURIHandler implements URIHandler {
                 throw new HCatAccessorException(ErrorCode.E1501, e);
             }
             finally {
-                closeQuietly(client, true);
+                closeQuietly(client, null, true);
             }
         }
         PartitionDependencyManagerService pdmService = Services.get().get(PartitionDependencyManagerService.class);
@@ -138,9 +141,20 @@ public class HCatURIHandler implements URIHandler {
     }
 
     @Override
-    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException {
-        HCatClient client = getHCatClient(uri, conf, user);
-        return new HCatContext(conf, user, client);
+    public Context getContext(URI uri, Configuration conf, String user, boolean readOnly)
+            throws URIHandlerException {
+        HCatContext context = null;
+        //read operations are allowed for any user in HCat and so accessing as Oozie server itself
+        //For write operations, perform doAs as user
+        if (readOnly) {
+            HCatClient client = getHCatClient(uri, conf);
+            context = new HCatContext(conf, user, client);
+        }
+        else {
+            HCatClientWithToken client = getHCatClient(uri, conf, user);
+            context = new HCatContext(conf, user, client);
+        }
+        return context;
     }
 
     @Override
@@ -151,8 +165,42 @@ public class HCatURIHandler implements URIHandler {
 
     @Override
     public boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException {
-        HCatClient client = getHCatClient(uri, conf, user);
+        HCatClient client = getHCatClient(uri, conf);
         return exists(uri, client, true);
+    }
+
+    @Override
+    public void delete(URI uri, Context context) throws URIHandlerException {
+        HCatClient client = ((HCatContext) context).getHCatClient();
+        try {
+            HCatURI hcatUri  = new HCatURI(uri);
+            client.dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+        }
+        catch (URISyntaxException e) {
+            throw new HCatAccessorException(ErrorCode.E1501, e);
+        }
+        catch (HCatException e) {
+            throw new HCatAccessorException(ErrorCode.E1501, e);
+        }
+    }
+
+    @Override
+    public void delete(URI uri, Configuration conf, String user) throws URIHandlerException {
+        HCatClientWithToken client = null;
+        try {
+            HCatURI hcatUri = new HCatURI(uri);
+            client = getHCatClient(uri, conf, user);
+            client.getHCatClient().dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+        }
+        catch (URISyntaxException e){
+            throw new HCatAccessorException(ErrorCode.E1501, e);
+        }
+        catch (HCatException e) {
+            throw new HCatAccessorException(ErrorCode.E1501, e);
+        }
+        finally {
+            closeQuietly(client.getHCatClient(), client.getDelegationToken(),true);
+        }
     }
 
     @Override
@@ -176,30 +224,25 @@ public class HCatURIHandler implements URIHandler {
 
     }
 
-    private HCatClient getHCatClient(URI uri, Configuration conf, String user) throws HCatAccessorException {
-        final HiveConf hiveConf = new HiveConf(conf, this.getClass());
+    private HiveConf getHiveConf(URI uri, Configuration conf){
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        if (hcatService.getHCatConf() != null) {
+            conf = hcatService.getHCatConf();
+        }
+        HiveConf hiveConf = new HiveConf(conf, this.getClass());
         String serverURI = getMetastoreConnectURI(uri);
         if (!serverURI.equals("")) {
             hiveConf.set("hive.metastore.local", "false");
         }
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, serverURI);
+        return hiveConf;
+    }
+
+    private HCatClient getHCatClient(URI uri, Configuration conf) throws HCatAccessorException {
+        HiveConf hiveConf = getHiveConf(uri, conf);
         try {
-            XLog.getLog(HCatURIHandler.class).info(
-                    "Creating HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
-                    UserGroupInformation.getLoginUser(), serverURI);
-
-            // HiveMetastoreClient (hive 0.9) currently does not work if UGI has doAs
-            // We are good to connect as the oozie user since listPartitions does not require
-            // authorization
-            /*
-            UserGroupInformation ugi = ugiService.getProxyUser(user);
-            return ugi.doAs(new PrivilegedExceptionAction<HCatClient>() {
-                public HCatClient run() throws Exception {
-                    return HCatClient.create(hiveConf);
-                }
-            });
-            */
-
+            XLog.getLog(HCatURIHandler.class).info("Creating HCatClient for login_user [{0}] and server [{1}] ",
+                    UserGroupInformation.getLoginUser(), hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
             return HCatClient.create(hiveConf);
         }
         catch (HCatException e) {
@@ -208,7 +251,52 @@ public class HCatURIHandler implements URIHandler {
         catch (IOException e) {
             throw new HCatAccessorException(ErrorCode.E1501, e);
         }
+    }
 
+    private HCatClientWithToken getHCatClient(URI uri, Configuration conf, String user)
+            throws HCatAccessorException {
+        final HiveConf hiveConf = getHiveConf(uri, conf);
+        String delegationToken = null;
+        try {
+            // Get UGI to doAs() as the specified user
+            UserGroupInformation ugi = UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
+            // Define the label for the Delegation Token for the HCat instance.
+            hiveConf.set("hive.metastore.token.signature", "HCatTokenSignature");
+            if (hiveConf.getBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, false)) {
+                HCatClient tokenClient = null;
+                try {
+                    // Retrieve Delegation token for HCatalog
+                    tokenClient = HCatClient.create(hiveConf);
+                    delegationToken = tokenClient.getDelegationToken(user, UserGroupInformation.getLoginUser()
+                            .getUserName());
+                    // Store Delegation token in the UGI
+                    ShimLoader.getHadoopShims().setTokenStr(ugi, delegationToken,
+                            hiveConf.get("hive.metastore.token.signature"));
+                }
+                finally {
+                    if (tokenClient != null)
+                        tokenClient.close();
+                }
+            }
+            XLog.getLog(HCatURIHandler.class).info(
+                    "Creating HCatClient for user [{0}] login_user [{1}] and server [{2}] ", user,
+                    UserGroupInformation.getLoginUser(), hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
+            HCatClient hcatClient = ugi.doAs(new PrivilegedExceptionAction<HCatClient>() {
+                @Override
+                public HCatClient run() throws Exception {
+                    HCatClient client = HCatClient.create(hiveConf);
+                    return client;
+                }
+            });
+            HCatClientWithToken clientWithToken = new HCatClientWithToken(hcatClient, delegationToken);
+            return clientWithToken;
+        }
+        catch (IOException e) {
+            throw new HCatAccessorException(ErrorCode.E1501, e.getMessage());
+        }
+        catch (Exception e) {
+            throw new HCatAccessorException(ErrorCode.E1501, e.getMessage());
+        }
     }
 
     private String getMetastoreConnectURI(URI uri) {
@@ -242,13 +330,16 @@ public class HCatURIHandler implements URIHandler {
             throw new HCatAccessorException(ErrorCode.E0902, e);
         }
         finally {
-            closeQuietly(client, closeClient);
+            closeQuietly(client, null, closeClient);
         }
     }
 
-    private void closeQuietly(HCatClient client, boolean close) {
+    private void closeQuietly(HCatClient client, String delegationToken, boolean close) {
         if (close && client != null) {
             try {
+                if(delegationToken != null && !delegationToken.isEmpty()) {
+                    client.cancelDelegationToken(delegationToken);
+                }
                 client.close();
             }
             catch (Exception ignore) {
@@ -257,9 +348,28 @@ public class HCatURIHandler implements URIHandler {
         }
     }
 
+    class HCatClientWithToken {
+        private HCatClient hcatClient;
+        private String token;
+
+        public HCatClientWithToken(HCatClient client, String delegationToken) {
+            this.hcatClient = client;
+            this.token = delegationToken;
+        }
+
+        public HCatClient getHCatClient() {
+            return this.hcatClient;
+        }
+
+        public String getDelegationToken() {
+            return this.token;
+        }
+    }
+
     static class HCatContext extends Context {
 
         private HCatClient hcatClient;
+        private String delegationToken;
 
         /**
          * Create a HCatContext that can be used to access a hcat URI
@@ -273,6 +383,12 @@ public class HCatURIHandler implements URIHandler {
             this.hcatClient = hcatClient;
         }
 
+        public HCatContext(Configuration conf, String user, HCatClientWithToken hcatClient) {
+            super(conf, user);
+            this.hcatClient = hcatClient.getHCatClient();
+            this.delegationToken = hcatClient.getDelegationToken();
+        }
+
         /**
          * Get the HCatClient to talk to hcatalog server
          *
@@ -282,10 +398,20 @@ public class HCatURIHandler implements URIHandler {
             return hcatClient;
         }
 
+        /**
+         * Get the Delegation token to access HCat
+         *
+         * @return delegationToken
+         */
+        public String getDelegationToken() {
+            return delegationToken;
+        }
+
         @Override
         public void destroy() {
             try {
                 hcatClient.close();
+                delegationToken = null;
             }
             catch (Exception ignore) {
                 XLog.getLog(HCatContext.class).warn("Error closing hcat client", ignore);

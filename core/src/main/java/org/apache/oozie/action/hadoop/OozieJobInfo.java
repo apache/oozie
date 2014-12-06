@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XConfiguration;
 
@@ -51,12 +53,11 @@ public class OozieJobInfo {
     XConfiguration contextConf;
     private WorkflowAction action;
     private Configuration actionConf;
-    private static boolean jobInfo = Services.get().getConf().getBoolean(OozieJobInfo.CONF_JOB_INFO, false);
+    private static boolean jobInfo = ConfigurationService.getBoolean(OozieJobInfo.CONF_JOB_INFO);
 
     /**
      * Instantiates a new oozie job info.
      *
-     * @param jobconf the jobconf
      * @param actionConf the action conf
      * @param context the context
      * @param action the action

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 
@@ -33,6 +34,7 @@ import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 import java.util.ArrayList;
@@ -71,7 +73,8 @@ public class EventHandlerService implements Service {
         try {
             Configuration conf = services.getConf();
             LOG = XLog.getLog(getClass());
-            Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) conf.getClass(CONF_EVENT_QUEUE, null);
+            Class<? extends EventQueue> queueImpl = (Class<? extends EventQueue>) ConfigurationService.getClass
+                    (conf, CONF_EVENT_QUEUE);
             eventQueue = queueImpl == null ? new MemoryEventQueue() : (EventQueue) queueImpl.newInstance();
             eventQueue.init(conf);
             // initialize app-types to switch on events for
@@ -92,7 +95,7 @@ public class EventHandlerService implements Service {
 
     private void initApptypes(Configuration conf) {
         apptypes = new HashSet<String>();
-        for (String jobtype : conf.getStringCollection(CONF_FILTER_APP_TYPES)) {
+        for (String jobtype : ConfigurationService.getStrings(conf, CONF_FILTER_APP_TYPES)) {
             String tmp = jobtype.trim().toLowerCase();
             if (tmp.length() == 0) {
                 continue;
@@ -102,9 +105,7 @@ public class EventHandlerService implements Service {
     }
 
     private void initEventListeners(Configuration conf) throws Exception {
-        Class<?>[] listenerClass = conf.getClasses(CONF_LISTENERS,
-                org.apache.oozie.jms.JMSJobEventListener.class,
-                org.apache.oozie.sla.listener.SLAJobEventListener.class);
+        Class<?>[] listenerClass = ConfigurationService.getClasses(conf, CONF_LISTENERS);
         for (int i = 0; i < listenerClass.length; i++) {
             Object listener = null;
             try {
@@ -150,8 +151,8 @@ public class EventHandlerService implements Service {
     }
 
     private void initWorkerThreads(Configuration conf, Services services) throws ServiceException {
-        numWorkers = conf.getInt(CONF_WORKER_THREADS, 3);
-        int interval = conf.getInt(CONF_WORKER_INTERVAL, 30);
+        numWorkers = ConfigurationService.getInt(conf, CONF_WORKER_THREADS);
+        int interval = ConfigurationService.getInt(conf, CONF_WORKER_INTERVAL);
         SchedulerService ss = services.get(SchedulerService.class);
         int available = ss.getSchedulableThreads(conf);
         if (numWorkers + 3 > available) {
@@ -207,9 +208,11 @@ public class EventHandlerService implements Service {
     }
 
     public void queueEvent(Event event) {
+        LOG = LogUtils.setLogPrefix(LOG, event);
         LOG.debug("Queueing event : {0}", event);
         LOG.trace("Stack trace while queueing event : {0}", event, new Throwable());
         eventQueue.add(event);
+        LogUtils.clearLogPrefix();
     }
 
     public EventQueue getEventQueue() {
@@ -227,6 +230,7 @@ public class EventHandlerService implements Service {
                 if (!eventQueue.isEmpty()) {
                     List<Event> work = eventQueue.pollBatch();
                     for (Event event : work) {
+                        LOG = LogUtils.setLogPrefix(LOG, event);
                         LOG.debug("Processing event : {0}", event);
                         MessageType msgType = event.getMsgType();
                         List<?> listeners = listenerMap.get(msgType);

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.util.Properties;
@@ -49,6 +50,11 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         this(actionId, externalStatus, actionData, 1);
     }
 
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -63,7 +69,7 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0603, ex.getMessage(), ex);
         }
-        LogUtils.setLogInfo(this.wfactionBean, logInfo);
+        LogUtils.setLogInfo(this.wfactionBean);
     }
 
     /*

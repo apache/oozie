@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -30,9 +31,12 @@ import org.apache.oozie.client.rest.JMSConnectionInfoBean;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.jms.JMSJobEventListener;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.MetricsInstrumentation;
 
 /**
  * V2 admin servlet
@@ -42,9 +46,19 @@ public class V2AdminServlet extends V1AdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v2admin";
+    private static MetricsInstrumentation metricsInstrumentation = null;
 
     public V2AdminServlet() {
         super(INSTRUMENTATION_NAME);
+
+        // If MetricsInstrumentationService is used, we will enable the metrics endpoint and disable the instrumentation endpoint
+        Services services = Services.get();
+        if (services != null) {
+            Instrumentation instrumentation = services.get(InstrumentationService.class).get();
+            if (instrumentation instanceof MetricsInstrumentation) {
+                metricsInstrumentation = (MetricsInstrumentation) instrumentation;
+            }
+        }
     }
 
     @Override
@@ -85,5 +99,32 @@ public class V2AdminServlet extends V1AdminServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, ex.getMessage(), ex);
         }
         return serverUrls;
+    }
+
+    @Override
+    protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
+        if (metricsInstrumentation != null) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType(JSON_UTF8);
+            try {
+                metricsInstrumentation.writeJSONResponse(response.getOutputStream());
+            } finally {
+                response.getOutputStream().close();
+            }
+        } else {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "MetricsInstrumentationService is not running");
+        }
+    }
+
+    @Override
+    protected void sendInstrumentationResponse(HttpServletResponse response, Instrumentation instr)
+            throws IOException, XServletException {
+        if (metricsInstrumentation == null) {
+            super.sendInstrumentationResponse(response, instr);
+        } else {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "InstrumentationService is not running");
+        }
     }
 }

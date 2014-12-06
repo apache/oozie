@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import java.io.IOException;
@@ -217,4 +218,12 @@ public abstract class BaseEngine {
         }
     }
 
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws BaseEngineException thrown if the job's status could not be obtained
+     */
+    public abstract String getJobStatus(String jobId) throws BaseEngineException;
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -25,14 +26,13 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Coordinator Job
@@ -60,26 +60,20 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         GET_COORD_JOB_ACTION_KILL,
         GET_COORD_JOB_MATERIALIZE,
         GET_COORD_JOB_SUSPEND_KILL,
+        GET_COORD_JOB_STATUS,
         GET_COORD_JOB_STATUS_PARENTID,
-        GET_COORD_JOBS_CHANGED
+        GET_COORD_JOBS_CHANGED,
+        GET_COORD_JOBS_OLDER_FOR_MATERILZATION,
+        GET_COORD_FOR_ABANDONEDCHECK,
+        GET_COORD_IDS_FOR_STATUS_TRANSIT
     };
 
     private static CoordJobQueryExecutor instance = new CoordJobQueryExecutor();
-    private static JPAService jpaService;
 
     private CoordJobQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static CoordJobQueryExecutor getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new CoordJobQueryExecutor();
-        }
         return CoordJobQueryExecutor.instance;
     }
 
@@ -112,6 +106,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 query.setParameter("timeUnit", cjBean.getTimeUnitStr());
                 query.setParameter("appNamespace", cjBean.getAppNamespace());
                 query.setParameter("bundleId", cjBean.getBundleId());
+                query.setParameter("matThrottling", cjBean.getMatThrottling());
                 query.setParameter("id", cjBean.getId());
                 break;
             case UPDATE_COORD_JOB_STATUS:
@@ -201,12 +196,29 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
             case GET_COORD_JOB_ACTION_KILL:
             case GET_COORD_JOB_MATERIALIZE:
             case GET_COORD_JOB_SUSPEND_KILL:
+            case GET_COORD_JOB_STATUS:
             case GET_COORD_JOB_STATUS_PARENTID:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_COORD_JOBS_CHANGED:
                 query.setParameter("lastModifiedTime", new Timestamp(((Date)parameters[0]).getTime()));
                 break;
+            case GET_COORD_JOBS_OLDER_FOR_MATERILZATION:
+                query.setParameter("matTime", new Timestamp(((Date)parameters[0]).getTime()));
+                int limit = (Integer) parameters[1];
+                if (limit > 0) {
+                    query.setMaxResults(limit);
+                }
+                break;
+            case GET_COORD_FOR_ABANDONEDCHECK:
+                query.setParameter(1, (Integer) parameters[0]);
+                query.setParameter(2, (Timestamp) parameters[1]);
+                break;
+
+            case GET_COORD_IDS_FOR_STATUS_TRANSIT:
+                query.setParameter("lastModifiedTime", new Timestamp(((Date) parameters[0]).getTime()));
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -216,6 +228,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
 
     @Override
     public int executeUpdate(CoordJobQuery namedQuery, CoordinatorJobBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -243,6 +256,11 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setAppName((String) arr[1]);
                 bean.setStatusStr((String) arr[2]);
                 bean.setAppNamespace((String) arr[3]);
+                bean.setExecution((String) arr[4]);
+                bean.setFrequency((String) arr[5]);
+                bean.setTimeUnitStr((String) arr[6]);
+                bean.setTimeZone((String) arr[7]);
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[8]));
                 break;
             case GET_COORD_JOB_ACTION_READY:
                 bean = new CoordinatorJobBean();
@@ -287,6 +305,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setConfBlob((StringBlob) arr[17]);
                 bean.setJobXmlBlob((StringBlob) arr[18]);
                 bean.setAppNamespace((String) arr[19]);
+                bean.setTimeUnitStr((String) arr[20]);
+                bean.setExecution((String) arr[21]);
                 break;
             case GET_COORD_JOB_SUSPEND_KILL:
                 bean = new CoordinatorJobBean();
@@ -300,6 +320,11 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setAppNamespace((String) arr[6]);
                 bean.setDoneMaterialization((Integer) arr[7]);
                 break;
+            case GET_COORD_JOB_STATUS:
+                bean = new CoordinatorJobBean();
+                bean.setId((String) parameters[0]);
+                bean.setStatusStr((String) ret);
+                break;
             case GET_COORD_JOB_STATUS_PARENTID:
                 bean = new CoordinatorJobBean();
                 arr = (Object[]) ret;
@@ -310,6 +335,24 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
             case GET_COORD_JOBS_CHANGED:
                 bean = (CoordinatorJobBean) ret;
                 break;
+            case GET_COORD_JOBS_OLDER_FOR_MATERILZATION:
+                bean = new CoordinatorJobBean();
+                bean.setId((String) ret);
+                break;
+            case GET_COORD_FOR_ABANDONEDCHECK:
+                bean = new CoordinatorJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setUser((String) arr[1]);
+                bean.setGroup((String) arr[2]);
+                bean.setAppName((String) arr[3]);
+                break;
+
+            case GET_COORD_IDS_FOR_STATUS_TRANSIT:
+                bean = new CoordinatorJobBean();
+                bean.setId((String) ret);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -319,6 +362,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
 
     @Override
     public CoordinatorJobBean get(CoordJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -331,6 +375,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
 
     @Override
     public List<CoordinatorJobBean> getList(CoordJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -343,12 +388,8 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
         return beanList;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
+    @Override
+    public Object getSingleValue(CoordJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
-
 }

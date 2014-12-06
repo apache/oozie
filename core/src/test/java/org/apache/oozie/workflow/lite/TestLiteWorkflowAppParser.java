@@ -15,20 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.workflow.lite;
 
 
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.TestLiteWorkflowAppService;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
@@ -47,8 +49,6 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         super.setUp();
         setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd");
         new Services().init();
-        Services.get().get(ActionService.class).register(HiveActionExecutor.class);
-        Services.get().get(ActionService.class).register(DistcpActionExecutor.class);
     }
 
     @Override
@@ -94,6 +94,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        System.out.println("\n" + d +"\n");
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -138,6 +140,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</map-reduce>";
         d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
 
     }
@@ -177,6 +180,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "</pig>";
         e = e.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         e = e.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        e = e.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
 
     }
@@ -219,6 +223,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</hive>";
         a = a.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         a = a.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        a = a.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
@@ -255,6 +260,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "</distcp>";
         b = b.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         b = b.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        b = b.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
     }
 
@@ -291,17 +297,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid.xml", -1), new Configuration());
 
         try {
-            parser.validateAndParse(IOUtils.getResourceAsReader("wf-loop1-invalid.xml", -1), new Configuration());
-            fail();
-        }
-        catch (WorkflowException ex) {
-            assertEquals(ErrorCode.E0707, ex.getErrorCode());
-        }
-        catch (Exception ex) {
-            fail();
-        }
-
-        try {
+            // Check TestLiteWorkflowAppService.TestActionExecutor is registered.
             parser.validateAndParse(IOUtils.getResourceAsReader("wf-unsupported-action.xml", -1), new Configuration());
             fail();
         }
@@ -1071,8 +1067,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             WorkflowException we = (WorkflowException) ex.getCause();
             assertEquals(ErrorCode.E0732, we.getErrorCode());
             assertTrue(we.getMessage().contains("Fork [f]"));
-            assertTrue(we.getMessage().contains("Join [j1]"));
-            assertTrue(we.getMessage().contains("been [j2]"));
+            assertTrue(we.getMessage().contains("Join [j1]") && we.getMessage().contains("been [j2]")
+                    || we.getMessage().contains("Join [j2]") && we.getMessage().contains("been [j1]"));
         }
     }
 
@@ -1252,4 +1248,24 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             assertEquals("E0730: Fork/Join not in pair", wfe.getMessage());
         }
     }
+
+    // Test parameterization of retry-max and retry-interval
+    public void testParameterizationRetry() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
+
+        String wf = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"test\" > "
+                + "<global> <job-tracker>localhost</job-tracker><name-node>localhost</name-node></global>"
+                + "<start to=\"retry\"/><action name=\"retry\" retry-max=\"${retryMax}\" retry-interval=\"${retryInterval}\">"
+                + "<java> <main-class>com.retry</main-class>" + "</java>" + "<ok to=\"end\"/>" + "<error to=\"end\"/>"
+                + "</action> <end name=\"end\"/></workflow-app>";
+        Configuration conf = new Configuration();
+        conf.set("retryMax", "3");
+        conf.set("retryInterval", "10");
+        LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
+        assertEquals(app.getNode("retry").getUserRetryMax(), "3");
+        assertEquals(app.getNode("retry").getUserRetryInterval(), "10");
+    }
+
 }

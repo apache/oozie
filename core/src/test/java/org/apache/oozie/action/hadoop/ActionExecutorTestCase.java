@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
@@ -61,12 +62,16 @@ public abstract class ActionExecutorTestCase extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        beforeSetUp();
         super.setUp();
         setSystemProps();
         new Services().init();
     }
 
     protected void setSystemProps() throws Exception {
+    }
+
+    protected void beforeSetUp() throws Exception {
     }
 
     @Override

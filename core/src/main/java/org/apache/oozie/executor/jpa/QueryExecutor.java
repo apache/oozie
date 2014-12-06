@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
@@ -70,6 +71,9 @@ public abstract class QueryExecutor<T, E extends Enum<E>> {
     public abstract Query getUpdateQuery(E namedQuery, T wfBean, EntityManager em) throws JPAExecutorException;
 
     public abstract Query getSelectQuery(E namedQuery, EntityManager em, Object... parameters)
+            throws JPAExecutorException;
+
+    public abstract Object getSingleValue(E namedQuery, Object... parameters)
             throws JPAExecutorException;
 
 }

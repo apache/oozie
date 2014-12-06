@@ -15,15 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency.hcat;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -470,6 +474,57 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
         public void decrement() {
             value--;
         }
+    }
+
+    @Override
+    public void removeNonWaitingCoordActions(Set<String> staleActions) {
+        Iterator<String> serverItr = missingDepsByServer.keySet().iterator();
+        while (serverItr.hasNext()) {
+            String server = serverItr.next();
+            Cache missingCache = missingDepsByServer.get(server);
+            if (missingCache == null) {
+                continue;
+            }
+            synchronized (missingCache) {
+                for (Object key : missingCache.getKeys()) {
+                    Element element = missingCache.get(key);
+                    if (element == null) {
+                        continue;
+                    }
+                    Collection<WaitingAction> waitingActions = ((WaitingActions) element.getObjectValue())
+                            .getWaitingActions();
+                    Iterator<WaitingAction> wactionItr = waitingActions.iterator();
+                    HCatURI hcatURI = null;
+                    while(wactionItr.hasNext()) {
+                        WaitingAction waction = wactionItr.next();
+                        if(staleActions.contains(waction.getActionID())) {
+                            try {
+                                hcatURI = new HCatURI(waction.getDependencyURI());
+                                wactionItr.remove();
+                            }
+                            catch (URISyntaxException e) {
+                                continue;
+                            }
+                        }
+                    }
+                    if (waitingActions.isEmpty() && hcatURI != null) {
+                        missingCache.remove(key);
+                        // Decrement partition key pattern count if the cache entry is removed
+                        SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
+                        String partKeys = sortedPKV.getPartKeys();
+                        String tableKey = hcatURI.getServer() + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
+                                + hcatURI.getTable();
+                        String hcatURIStr = hcatURI.toURIString();
+                        decrementPartKeyPatternCount(tableKey, partKeys, hcatURIStr);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void removeCoordActionWithDependenciesAvailable(String coordAction) {
+        // to be implemented when reverse-lookup data structure for purging is added
     }
 
 }

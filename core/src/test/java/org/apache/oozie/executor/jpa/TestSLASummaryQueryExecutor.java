@@ -15,13 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.Date;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -47,6 +50,19 @@ public class TestSLASummaryQueryExecutor extends XDataTestCase {
     }
 
     public void testGetQuery() throws Exception {
+        EntityManager em = jpaService.getEntityManager();
+        SLASummaryBean bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
+        // GET_SLA_SUMMARY
+        Query query = SLASummaryQueryExecutor.getInstance().getSelectQuery(SLASummaryQuery.GET_SLA_SUMMARY, em,
+                bean.getId());
+        assertEquals(query.getParameterValue("id"), bean.getId());
+        // GET_SLA_SUMMARY_EVENTPROCESSED
+        query = SLASummaryQueryExecutor.getInstance().getSelectQuery(SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED,
+                em, bean.getId());
+        assertEquals(query.getParameterValue("id"), bean.getId());
+    }
+
+    public void testUpdateQuery() throws Exception {
         EntityManager em = jpaService.getEntityManager();
         SLASummaryBean bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
 
@@ -107,12 +123,38 @@ public class TestSLASummaryQueryExecutor extends XDataTestCase {
         assertEquals(bean.getActualEndTimestamp(), retBean.getActualEndTimestamp());
         assertEquals(SLAStatus.MET, retBean.getSLAStatus());
         assertEquals(createdTime, retBean.getCreatedTime()); // Created time should not be updated
+
+        //test UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES
+        bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
+        bean.setActualStart(startTime);
+        bean.setActualStart(endTime);
+        bean.setActualDuration(endTime.getTime() - startTime.getTime());
+        bean.setLastModifiedTime(new Date());
+        bean.setEventProcessed(8);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES, bean);
+        retBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, bean.getId());
+        assertEquals(bean.getActualStartTimestamp(), retBean.getActualStartTimestamp());
+        assertEquals(bean.getActualEndTimestamp(), retBean.getActualEndTimestamp());
+        assertEquals(bean.getActualDuration(), retBean.getActualDuration());
+        assertEquals(bean.getLastModifiedTimestamp(), retBean.getLastModifiedTimestamp());
+        assertEquals(bean.getEventProcessed(), retBean.getEventProcessed());
     }
 
     public void testGet() throws Exception {
-        // TODO
+        SLASummaryBean bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
+        //GET_SLA_REG_ON_RESTART
+        SLASummaryBean sBean = SLASummaryQueryExecutor.getInstance().get(
+                SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, bean.getId());
+        assertEquals(bean.getEventProcessed(), sBean.getEventProcessed());
     }
 
+    public void testGetValue() throws Exception {
+        SLASummaryBean bean = addRecordToSLASummaryTable("test-sla-summary", SLAStatus.IN_PROCESS);
+        //GET_SLA_REG_ON_RESTART
+        Object ret  = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance()).getSingleValue(
+                SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED, bean.getId());
+        assertEquals(bean.getEventProcessed(), ((Byte)ret).byteValue());
+    }
     public void testGetList() throws Exception {
         // TODO
     }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.util.Date;
@@ -31,9 +32,9 @@ import org.apache.oozie.event.CoordinatorJobEvent;
 import org.apache.oozie.event.WorkflowActionEvent;
 import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.service.EventHandlerService;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.listener.SLAJobEventListener;
 import org.apache.oozie.sla.service.SLAService;
@@ -94,14 +95,14 @@ public class TestSLAJobEventListener extends XTestCase {
         assertEquals(1, serviceObj.getEventProcessed()); //Job switching to running is only partially
                                                        //sla processed. so state = 1
 
-        job = _createSLARegBean("wa1", AppType.WORKFLOW_ACTION);
+        job = _createSLARegBean("wfId1@wa1", AppType.WORKFLOW_ACTION);
         slas.addRegistrationEvent(job);
         assertEquals(2, slas.getSLACalculator().size());
         job.setExpectedStart(DateUtils.parseDateUTC("2012-07-22T00:00Z"));
-        WorkflowActionEvent wae = new WorkflowActionEvent("wa1", "wfId1", WorkflowAction.Status.RUNNING, "user1",
+        WorkflowActionEvent wae = new WorkflowActionEvent("wfId1@wa1", "wfId1", WorkflowAction.Status.RUNNING, "user1",
                 "wf-app-name1", actualStart, null);
         listener.onWorkflowActionEvent(wae);
-        serviceObj = slas.getSLACalculator().get("wa1");
+        serviceObj = slas.getSLACalculator().get("wfId1@wa1");
         // check that start sla has been calculated
         assertEquals(EventStatus.START_MISS, serviceObj.getEventStatus());
 
@@ -114,23 +115,23 @@ public class TestSLAJobEventListener extends XTestCase {
                 "coord-app-name1", actualStart, actualEnd);
         listener.onCoordinatorJobEvent(cje);
 
-        SLASummaryBean summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("cj1"));
+        SLASummaryBean summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "cj1");
         // check that end and duration sla has been calculated
         assertEquals(6, summary.getEventProcessed());
 
         assertEquals(EventStatus.END_MET, summary.getEventStatus());
 
-        job = _createSLARegBean("ca1", AppType.COORDINATOR_ACTION);
+        job = _createSLARegBean("cj1@ca1", AppType.COORDINATOR_ACTION);
         actualEnd = DateUtils.parseDateUTC("2012-07-22T02:00Z");
         slas.addRegistrationEvent(job);
         assertEquals(4, slas.getSLACalculator().size());
-        CoordinatorActionEvent cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.RUNNING, "user1",
+        CoordinatorActionEvent cae = new CoordinatorActionEvent("cj1@ca1", "cj1", CoordinatorAction.Status.RUNNING, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        cae = new CoordinatorActionEvent("ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
+        cae = new CoordinatorActionEvent("cj1@ca1", "cj1", CoordinatorAction.Status.KILLED, "user1",
                 "coord-app-name1", null, actualEnd, null);
         listener.onCoordinatorActionEvent(cae);
-        summary = Services.get().get(JPAService.class).execute(new SLASummaryGetJPAExecutor("ca1"));
+        summary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, "cj1@ca1");
         // check that all events are processed
         assertEquals(8, summary.getEventProcessed());
         assertEquals(EventStatus.END_MISS, summary.getEventStatus());

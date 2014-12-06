@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import org.apache.oozie.action.control.ControlNodeActionExecutor;
@@ -73,6 +74,11 @@ public class KillXCommand extends WorkflowXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(wfId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -94,7 +100,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_KILL, wfId);
                 this.actionList = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
-                LogUtils.setLogInfo(wfJob, logInfo);
+                LogUtils.setLogInfo(wfJob);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -177,7 +183,7 @@ public class KillXCommand extends WorkflowXCommand<Void> {
             if (EventHandlerService.isEnabled()) {
                 generateEvent(wfJob);
             }
-            queue(new NotificationXCommand(wfJob));
+            queue(new WorkflowNotificationXCommand(wfJob));
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

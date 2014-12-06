@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.jms;
 
 import java.io.ByteArrayOutputStream;
@@ -31,9 +32,9 @@ import javax.jms.Session;
 import javax.jms.Topic;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.messaging.HCatEventMessage;
-import org.apache.hcatalog.messaging.json.JSONAddPartitionMessage;
+import org.apache.hive.hcatalog.common.HCatConstants;
+import org.apache.hive.hcatalog.messaging.HCatEventMessage;
+import org.apache.hive.hcatalog.messaging.json.JSONAddPartitionMessage;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;

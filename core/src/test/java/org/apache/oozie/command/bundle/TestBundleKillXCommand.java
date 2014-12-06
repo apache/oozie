@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.io.IOException;
@@ -119,7 +120,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         sleep(2000);
 
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertNotNull(actions.get(0).getCoordId());
@@ -130,7 +131,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.KILLED, job.getStatus());
 
-        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
                 job.getId());
 
         assertEquals(true, actions.get(0).isPending());
@@ -168,7 +169,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         assertEquals(Job.Status.KILLED, job.getStatus());
 
         actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         for (BundleActionBean action : actions) {
             assertEquals(0, action.getPending());
             assertEquals(CoordinatorJobBean.Status.KILLED, action.getStatus());
@@ -194,7 +195,7 @@ public class TestBundleKillXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.KILLED, job.getStatus());
         actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         for (BundleActionBean action : actions) {
             assertEquals(0, action.getPending());
             assertEquals(CoordinatorJobBean.Status.KILLED, action.getStatus());

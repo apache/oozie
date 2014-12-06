@@ -15,23 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Bundle Action
@@ -44,28 +42,17 @@ public class BundleActionQueryExecutor extends
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME,
         UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID,
         GET_BUNDLE_ACTION,
-        GET_BUNDLE_ACTIONS_FOR_BUNDLE,
-        GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME,
+        GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
         GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN,
-        GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE
+        GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE
     };
 
     private static BundleActionQueryExecutor instance = new BundleActionQueryExecutor();
-    private static JPAService jpaService;
 
     private BundleActionQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<BundleActionBean, BundleActionQueryExecutor.BundleActionQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new BundleActionQueryExecutor();
-        }
         return BundleActionQueryExecutor.instance;
     }
 
@@ -108,17 +95,14 @@ public class BundleActionQueryExecutor extends
             case GET_BUNDLE_ACTION:
                 query.setParameter("bundleActionId", parameters[0]);
                 break;
-            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+            case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
-                break;
-            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
-                query.setParameter("lastModifiedTime", new Timestamp(((Date)parameters[0]).getTime()));
                 break;
             case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
                 Timestamp ts = new Timestamp(System.currentTimeMillis() - (Long)parameters[0] * 1000);
                 query.setParameter("lastModifiedTime", ts);
                 break;
-            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+            case GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE:
                 query.setParameter("bundleId", parameters[0]);
                 break;
             default:
@@ -130,6 +114,7 @@ public class BundleActionQueryExecutor extends
 
     @Override
     public int executeUpdate(BundleActionQuery namedQuery, BundleActionBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -138,6 +123,7 @@ public class BundleActionQueryExecutor extends
 
     @Override
     public BundleActionBean get(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -153,12 +139,8 @@ public class BundleActionQueryExecutor extends
         Object[] arr;
         switch (namedQuery) {
             case GET_BUNDLE_ACTION:
-            case GET_BUNDLE_ACTIONS_FOR_BUNDLE:
+            case GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE:
                 bean = (BundleActionBean) ret;
-                break;
-            case GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME:
-                bean = new BundleActionBean();
-                bean.setBundleId((String) ret);
                 break;
             case GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN:
                 bean = new BundleActionBean();
@@ -169,7 +151,7 @@ public class BundleActionQueryExecutor extends
                 bean.setCoordId((String) arr[3]);
                 bean.setCoordName((String) arr[4]);
                 break;
-            case GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE:
+            case GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE:
                 bean = new BundleActionBean();
                 arr = (Object[]) ret;
                 bean.setCoordId((String) arr[0]);
@@ -186,6 +168,7 @@ public class BundleActionQueryExecutor extends
     @Override
     public List<BundleActionBean> getList(BundleActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -198,12 +181,9 @@ public class BundleActionQueryExecutor extends
         return beanList;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
+    @Override
+    public Object getSingleValue(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 
 }

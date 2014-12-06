@@ -96,16 +96,12 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("bundleActionId"), bean.getBundleId());
 
         query = BundleActionQueryExecutor.getInstance().getSelectQuery(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, em, bean.getLastModifiedTime());
-        assertEquals(query.getParameterValue("lastModifiedTime"), bean.getLastModifiedTimestamp());
-
-        query = BundleActionQueryExecutor.getInstance().getSelectQuery(
                 BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, em, (long) 100);
         Date date = DateUtils.toDate((Timestamp) (query.getParameterValue("lastModifiedTime")));
         assertTrue(date.before(Calendar.getInstance().getTime()));
 
         query = BundleActionQueryExecutor.getInstance().getSelectQuery(
-                BundleActionQuery.GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE, em, bean.getBundleId());
+                BundleActionQuery.GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE, em, bean.getBundleId());
         assertEquals(query.getParameterValue("bundleId"), bean.getBundleId());
     }
 
@@ -123,9 +119,9 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
     public void testGet() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         BundleActionBean bundleAction = this.addRecordToBundleActionTable(job.getId(), "action1", 1, Job.Status.PREP);
-        // GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE
+        // GET_UNIGNORED_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE
         BundleActionBean retBean = BundleActionQueryExecutor.getInstance().get(
-                BundleActionQuery.GET_BUNDLE_ACTION_STATUS_PENDING_FOR_BUNDLE, bundleAction.getBundleId());
+                BundleActionQuery.GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE, bundleAction.getBundleId());
         assertEquals(bundleAction.getCoordId(), retBean.getCoordId());
         assertEquals(bundleAction.getStatusStr(), retBean.getStatusStr());
         assertEquals(bundleAction.getPending(), retBean.getPending());
@@ -137,28 +133,18 @@ public class TestBundleActionQueryExecutor extends XDataTestCase {
 
     public void testGetList() throws Exception {
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
-        BundleActionBean bean1 = this.addRecordToBundleActionTable(job.getId(), "coord1", 0, Job.Status.PREP);
-        BundleActionBean bean2 = this.addRecordToBundleActionTable(job.getId(), "coord2", 1, Job.Status.RUNNING);
-        BundleActionBean bean3 = this.addRecordToBundleActionTable(job.getId(), "coord3", 1, Job.Status.RUNNING);
-        // GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME
-        Date timeBefore = new Date(bean1.getLastModifiedTime().getTime() - 1000 * 60);
+        this.addRecordToBundleActionTable(job.getId(), "coord1", 0, Job.Status.PREP);
+        this.addRecordToBundleActionTable(job.getId(), "coord2", 1, Job.Status.RUNNING);
+        this.addRecordToBundleActionTable(job.getId(), "coord3", 1, Job.Status.RUNNING);
         List<BundleActionBean> bActions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, timeBefore);
-        assertEquals(3, bActions.size());
-        Date timeAfter = new Date(bean3.getLastModifiedTime().getTime() + 100 * 60);
-        bActions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME, timeAfter);
-        assertEquals(0, bActions.size());
-        // GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN
-        bActions = BundleActionQueryExecutor.getInstance().getList(
                 BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, (long) (1000 * 60));
         assertEquals(0, bActions.size());
         bActions = BundleActionQueryExecutor.getInstance().getList(
                 BundleActionQuery.GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN, (long) (-1000 * 60));
         assertEquals(2, bActions.size());
-        // GET_BUNDLE_ACTIONS_FOR_BUNDLE
+        // GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE
         List<BundleActionBean> retList = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         assertEquals(3, retList.size());
         for (BundleActionBean bean : retList) {
             assertTrue(bean.getCoordName().equals("coord1") || bean.getCoordName().equals("coord2")

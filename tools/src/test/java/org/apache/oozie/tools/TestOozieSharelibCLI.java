@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.tools;
 
 import java.io.ByteArrayOutputStream;
@@ -65,6 +66,9 @@ public class TestOozieSharelibCLI extends XTestCase {
     @AfterClass
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
+        if (services != null) {
+            services.destroy();
+        }
         super.tearDown();
 
     }
@@ -160,7 +164,9 @@ public class TestOozieSharelibCLI extends XTestCase {
             services = new Services();
             services.getConf()
                     .set(Services.CONF_SERVICE_CLASSES,"org.apache.oozie.service.LiteWorkflowAppService,"
-                            + "org.apache.oozie.service.HadoopAccessorService,org.apache.oozie.service.ShareLibService");
+                            + "org.apache.oozie.service.SchedulerService,"
+                            + "org.apache.oozie.service.HadoopAccessorService,"
+                            + "org.apache.oozie.service.ShareLibService");
             services.init();
         }
         return services;

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency;
 
 import java.net.URI;
@@ -103,12 +104,12 @@ public interface URIHandler {
      * @param uri URI which identifies the scheme and host
      * @param conf Configuration to access the URI
      * @param user name of the user the URI should be accessed as
-     *
+     * @param readOnly indicate if operation is read-only
      * @return Context to access URIs with same scheme and host
      *
      * @throws URIHandlerException
      */
-    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException;
+    public Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -137,6 +138,25 @@ public interface URIHandler {
      * @throws URIHandlerException
      */
     public boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
+
+    /**
+     * Delete a URI
+     *
+     * @param uri URI
+     * @param context Context to access the URI
+     * @throws URIHandlerException
+     */
+    public void delete(URI uri, Context context) throws URIHandlerException;
+
+    /**
+     * Delete a URI
+     *
+     * @param uri URI
+     * @param conf Configuration to access the URI
+     * @param user name of the user the URI should be accessed as
+     * @throws URIHandlerException
+     */
+    public void delete(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Get the URI based on the done flag

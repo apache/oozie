@@ -15,16 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.test.XHCatTestCase;
 import org.junit.Test;
 
-public class TestHCatAccessorService extends XTestCase {
+public class TestHCatAccessorService extends XHCatTestCase {
     private Services services;
 
     @Override
@@ -36,7 +41,9 @@ public class TestHCatAccessorService extends XTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        services.destroy();
+        if (services != null) {
+            services.destroy();
+        }
         super.tearDown();
     }
 
@@ -100,4 +107,43 @@ public class TestHCatAccessorService extends XTestCase {
                 connInfo.getJNDIPropertiesString());
     }
 
+    @Test
+    public void testGetHCatConfLocal() throws Exception {
+        File hcatConfFile = new File(getTestCaseConfDir(), "hive-site.xml");
+        assertFalse(hcatConfFile.exists());
+        assertNull(services.get(HCatAccessorService.class).getHCatConf());
+
+        Configuration hcatConf = new Configuration(false);
+        hcatConf.set("A", "a");
+        hcatConf.writeXml(new FileOutputStream(hcatConfFile));
+        assertTrue(hcatConfFile.exists());
+        services.destroy();
+        services = super.setupServicesForHCatalog();
+        Configuration conf = services.getConf();
+        conf.set("oozie.service.HCatAccessorService.hcat.configuration", hcatConfFile.getAbsolutePath());
+        services.init();
+        Configuration hcatConfLoaded = services.get(HCatAccessorService.class).getHCatConf();
+        assertEquals("a", hcatConfLoaded.get("A"));
+    }
+
+    @Test
+    public void testGetHCatConfHDFS() throws Exception {
+        Path hcatConfPath = new Path(getFsTestCaseDir(), "hive-site.xml");
+        assertFalse(getFileSystem().exists(hcatConfPath));
+        assertNull(services.get(HCatAccessorService.class).getHCatConf());
+
+        Configuration hcatConf = new Configuration(false);
+        hcatConf.set("A", "a");
+        FSDataOutputStream out = getFileSystem().create(hcatConfPath);
+        hcatConf.writeXml(out);
+        out.close();
+        assertTrue(getFileSystem().exists(hcatConfPath));
+        services.destroy();
+        services = super.setupServicesForHCatalog();
+        Configuration conf = services.getConf();
+        conf.set("oozie.service.HCatAccessorService.hcat.configuration", hcatConfPath.toUri().toString());
+        services.init();
+        Configuration hcatConfLoaded = services.get(HCatAccessorService.class).getHCatConf();
+        assertEquals("a", hcatConfLoaded.get("A"));
+    }
 }

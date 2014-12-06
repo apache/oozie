@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.tools;
 
 import org.apache.oozie.test.XTestCase;

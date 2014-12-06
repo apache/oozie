@@ -15,12 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
@@ -102,6 +101,40 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
     }
 
+    public void testBasicSubmitWithDryRun() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>"
+                + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>"
+                + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  </dataset> "
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> "
+                + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>"
+                + "hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(true, conf);
+        String dryrunStr = sc.call();
+        String[] actions = dryrunStr.split("action for new instance");
+        assertEquals(actions.length, 2);
+    }
+
     public void testBasicSubmitWithStartTimeAfterEndTime() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
@@ -134,6 +167,26 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             assertEquals(e.getErrorCode(), ErrorCode.E1003);
             assertTrue(e.getMessage().contains("Coordinator Start Time must be earlier than End Time."));
         }
+    }
+
+    public void testBasicSubmitWithCronFrequency() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"0 10 * * *\" start=\"2009-02-01T01:00Z\" "
+                + "end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls>  <action> "
+                + "<workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "</workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+
+        String jobId = sc.call();
+        assertEquals(jobId.substring(jobId.length() - 2), "-C");
+        CoordinatorJobBean job = (CoordinatorJobBean) sc.getJob();
+        assertEquals(job.getTimeUnitStr(), "CRON");
     }
 
     public void testBasicSubmitWithIdenticalStartAndEndTime() throws Exception {
@@ -1197,22 +1250,6 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             fail("Job ID " + jobId + " was not stored properly in db");
         }
         return null;
-    }
-
-    private void writeToFile(String appXml, File appPathFile) throws Exception {
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new FileWriter(appPathFile));
-            out.println(appXml);
-        }
-        catch (IOException iex) {
-            throw iex;
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
     }
 
     /**

@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
@@ -132,5 +134,37 @@ public class JobUtils {
         }
 
         return map;
+    }
+
+    /**
+     * This method provides a wrapper around hadoop 0.20/1.x and 0.23/2.x implementations.
+     * TODO: Remove the workaround when we drop the support for hadoop 0.20.
+     * @param file Path of the file to be added
+     * @param conf Configuration that contains the classpath setting
+     * @param fs FileSystem with respect to which path should be interpreted (may be null)
+     * @throws IOException
+     */
+    public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
+      Configuration defaultConf = new Configuration();
+      XConfiguration.copy(conf, defaultConf);
+      if (fs == null) {
+        // it fails with conf, therefore we pass defaultConf instead
+        fs = file.getFileSystem(defaultConf);
+      }
+      // Hadoop 0.20/1.x.
+      if (defaultConf.get("yarn.resourcemanager.webapp.address") == null) {
+          // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
+          // Refer OOZIE-1806.
+          String filepath = file.toUri().getPath();
+          String classpath = conf.get("mapred.job.classpath.files");
+          conf.set("mapred.job.classpath.files", classpath == null
+              ? filepath
+              : classpath + System.getProperty("path.separator") + filepath);
+          URI uri = fs.makeQualified(file).toUri();
+          DistributedCache.addCacheFile(uri, conf);
+      }
+      else { // Hadoop 0.23/2.x
+          DistributedCache.addFileToClassPath(file, conf, fs);
+      }
     }
 }

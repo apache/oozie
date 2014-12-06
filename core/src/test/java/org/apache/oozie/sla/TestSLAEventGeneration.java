@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.util.Arrays;
@@ -53,11 +54,12 @@ import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -77,6 +79,8 @@ public class TestSLAEventGeneration extends XDataTestCase {
     JPAService jpa;
     Calendar cal;
     String alert_events = "START_MISS,END_MET,END_MISS";
+    private String[] excludeServices = { "org.apache.oozie.service.StatusTransitService",
+            "org.apache.oozie.service.ActionCheckerService" };
 
     private static final String SLA_XML_1 = "<workflow-app xmlns=\"uri:oozie:workflow:0.2\" "
             + "xmlns:sla=\"uri:oozie:sla:0.1\" name=\"test-wf-job-sla\">" + "<start to=\"myjava\"/>"
@@ -101,7 +105,6 @@ public class TestSLAEventGeneration extends XDataTestCase {
         super.setUp();
         services = new Services();
         Configuration conf = services.getConf();
-        String excludeServices[] = { "org.apache.oozie.service.StatusTransitService" };
         setClassesToBeExcluded(conf, excludeServices);
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 EventHandlerService.class.getName() + "," + SLAService.class.getName());
@@ -242,7 +245,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
 
         // assert for values in summary bean to be reset
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(jobId));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId);
         assertEquals( 0, slaSummary.getEventProcessed());
         assertEquals(-1, slaSummary.getActualDuration());
         assertNull(slaSummary.getActualStart());
@@ -254,7 +257,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         ehs.getEventQueue().clear();
         slas.runSLAWorker();
         slaEvent = (SLACalcStatus) ehs.getEventQueue().poll();
-        assertEquals(SLAStatus.NOT_STARTED, slaEvent.getSLAStatus());
+        assertEquals(SLAStatus.IN_PROCESS, slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
     }
@@ -430,18 +433,22 @@ public class TestSLAEventGeneration extends XDataTestCase {
         assertEquals(expectedEnd, DateUtils.formatDateOozieTZ(slaEvent.getExpectedEnd()));
         assertEquals(30 * 60 * 1000, slaEvent.getExpectedDuration());
         assertEquals(alert_events, slaEvent.getAlertEvents());
-        waitForEventGeneration(200);
         slas.runSLAWorker();
         slaEvent = skipToSLAEvent();
-        assertTrue(SLAStatus.IN_PROCESS == slaEvent.getSLAStatus() || SLAStatus.NOT_STARTED == slaEvent.getSLAStatus());
+        assertTrue(SLAStatus.NOT_STARTED == slaEvent.getSLAStatus());
         assertEquals(EventStatus.START_MISS, slaEvent.getEventStatus());
 
         // test that sla processes the Job Event from Start command
+        ehs.getEventQueue().clear();
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, action);
         new CoordActionStartXCommand(actionId, getTestUser(), appName, jobId).call();
         slaEvent = slas.getSLACalculator().get(actionId);
         slaEvent.setEventProcessed(0); //resetting for testing sla event
+        SLASummaryBean suBean = new SLASummaryBean();
+        suBean.setId(actionId);
+        suBean.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED, suBean);
         ehs.new EventWorker().run();
         slaEvent = skipToSLAEvent();
         assertEquals(actionId, slaEvent.getId());
@@ -575,6 +582,10 @@ public class TestSLAEventGeneration extends XDataTestCase {
         new StartXCommand(jobId).call();
         slaEvent = slas.getSLACalculator().get(jobId);
         slaEvent.setEventProcessed(0); //resetting to receive sla events
+        SLASummaryBean suBean = new SLASummaryBean();
+        suBean.setId(jobId);
+        suBean.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED, suBean);
         waitForEventGeneration(200);
         ehs.new EventWorker().run();
         waitForEventGeneration(300);

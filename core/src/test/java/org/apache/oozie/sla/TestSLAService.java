@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.util.Date;
@@ -29,12 +30,14 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -148,7 +151,7 @@ public class TestSLAService extends XDataTestCase {
         // As expected duration is not set, duration shall be processed and job removed from map
         assertEquals(2, slas.getSLACalculator().size());
         // test same job multiple events (start-met, end-met) through job status event
-        sla1 = _createSLARegistration("action-1", AppType.COORDINATOR_ACTION);
+        sla1 = _createSLARegistration("action@1", AppType.COORDINATOR_ACTION);
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
@@ -244,7 +247,7 @@ public class TestSLAService extends XDataTestCase {
         assertEventNoDuplicates(output.toString(), action3.getId() + " Sla END - MET!!!");
 
         // negative on MISS after DB check, updated with actual times
-        SLASummaryBean slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(job2.getId()));
+        SLASummaryBean slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, job2.getId());
         assertEquals(job2.getStartTime(), slaSummary.getActualStart());
         assertEquals(job2.getEndTime(), slaSummary.getActualEnd());
         assertEquals(job2.getEndTime().getTime() - job2.getStartTime().getTime(), slaSummary.getActualDuration());
@@ -255,7 +258,7 @@ public class TestSLAService extends XDataTestCase {
         assertNull(slas.getSLACalculator().get(job2.getId())); //removed from memory
 
         // positives but also updated with actual times immediately after DB check
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(action2.getId()));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, action2.getId());
         extWf = jpaService.execute(new WorkflowJobGetJPAExecutor(action2.getExternalId()));
         assertEquals(extWf.getStartTime(), slaSummary.getActualStart());
         assertEquals(extWf.getEndTime(), slaSummary.getActualEnd());
@@ -266,7 +269,7 @@ public class TestSLAService extends XDataTestCase {
         assertEquals(8, slaSummary.getEventProcessed());
         assertNull(slas.getSLACalculator().get(action2.getId())); //removed from memory
 
-        slaSummary = jpaService.execute(new SLASummaryGetJPAExecutor(action1.getId()));
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, action1.getId());
         extWf = jpaService.execute(new WorkflowJobGetJPAExecutor(action1.getExternalId()));
         assertEquals(extWf.getStartTime(), slaSummary.getActualStart());
         assertEquals(extWf.getEndTime(), slaSummary.getActualEnd());
@@ -292,19 +295,18 @@ public class TestSLAService extends XDataTestCase {
         Element eSla = XmlUtils.parseXml(slaXml);
         SLAOperations.createSlaRegistrationEvent(eSla, "job-id1", "parent-id1", AppType.WORKFLOW_JOB, getTestUser(),
                 "test-appname", log, false);
-        SLARegistrationBean reg = Services.get().get(JPAService.class)
-                .execute(new SLARegistrationGetJPAExecutor("job-id1"));
+        SLARegistrationBean reg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, "job-id1");
         assertEquals("END_MISS", reg.getAlertEvents());
     }
 
-    static SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {
+    public static SLARegistrationBean _createSLARegistration(String jobId, AppType appType) {
         SLARegistrationBean bean = new SLARegistrationBean();
         bean.setId(jobId);
         bean.setAppType(appType);
         return bean;
     }
 
-    private void assertEventNoDuplicates(String outputStr, String eventMsg) {
+    public static void assertEventNoDuplicates(String outputStr, String eventMsg) {
         int index = outputStr.indexOf(eventMsg);
         assertTrue(index != -1);
         //No duplicates

@@ -23,7 +23,7 @@ The goal of this document is to define a coordinator engine system specialized i
    * #6.5 Updated to mention about =parameters= element as of schema 0.4
 ---+++!! 23/NOV/2011:
 
-   * Update execution order typo 
+   * Update execution order typo
 ---+++!! 05/MAY/2011:
 
    * Update coordinator schema 0.2
@@ -63,7 +63,7 @@ The goal of this document is to define a coordinator engine system specialized i
 ---+++!! 03/SEP/2009:
 
    * Change #2. Definitions. Some rewording in the definitions
-   * Change #6.6.4. Replaced =${coord:next(int n)}= with =${coord:version(int n)}= EL Fuction
+   * Change #6.6.4. Replaced =${coord:next(int n)}= with =${coord:version(int n)}= EL Function
    * Added #6.6.5. Dataset Instance Resolution for Instances Before the Initial Instance
 
 ---++ 1. Coordinator Overview
@@ -156,7 +156,8 @@ For example =2009-08-10T13:10+0530= is August 10th 2009 at 13:10 GMT+0530, India
 
 It is valid to express the end of day as a '24:00' hour (i.e. =2009-08-10T24:00Z=).
 
-However, for all calculations and display, Oozie resolves such dates as the zero hour of the following day (i.e. =2009-08-11T00:00Z=). 
+However, for all calculations and display, Oozie resolves such dates as the zero hour of the following day
+(i.e. =2009-08-11T00:00Z=).
 
 ---+++ 4.2. Timezone Representation
 
@@ -208,15 +209,20 @@ Coordinator Frequencies can also be expressed using cron syntax.
 | =${coord:months(int n)}= | _variable_ | =${coord:months(1)}= --> minutes in a 1 full month from the current date |
 | =${cron syntax}= | _variable_ | =${0,10 15 * * 2-6}= --> a job that runs every weekday at 3:00pm and 3:10pm UTC time|
 
-Note that, though =${coord:days(int n)}= and =${coord:months(int n)}= EL functions are used to calculate minutes precisely including variations due to daylight saving time for Frequency representation, when specified for coordinator timeout interval, one day is calculated as 24 hours and one month is calculated as 30 days for simplicity.
+Note that, though =${coord:days(int n)}= and =${coord:months(int n)}= EL functions are used to calculate minutes precisely including
+variations due to daylight saving time for Frequency representation, when specified for coordinator timeout interval, one day is
+calculated as 24 hours and one month is calculated as 30 days for simplicity.
 
 ---++++ 4.4.1. The coord:days(int n) and coord:endOfDays(int n) EL functions
 
 The =${coord:days(int n)}= and =${coord:endOfDays(int n)}= EL functions should be used to handle day based frequencies.
 
-Constant values should not be used to indicate a day based frequency (every 1 day, every 1 week, etc) because the number of hours in every day is not always the same for timezones that observe daylight-saving time.
+Constant values should not be used to indicate a day based frequency (every 1 day, every 1 week, etc) because the number of hours in
+every day is not always the same for timezones that observe daylight-saving time.
 
-It is a good practice to use always these EL functions instead of using a constant expression (i.e. =24 * 60=) even if the timezone for which the application is being written for does not support daylight saving time. This makes application foolproof to country legislations changes and also makes applications portable across timezones.
+It is a good practice to use always these EL functions instead of using a constant expression (i.e. =24 * 60=) even if the timezone
+for which the application is being written for does not support daylight saving time. This makes application foolproof to country
+legislation changes and also makes applications portable across timezones.
 
 ---+++++ 4.4.1.1. The coord:days(int n) EL function
 
@@ -567,7 +573,10 @@ A synchronous dataset definition contains the following information:
    * *%BLUE% uri-template:%ENDCOLOR%* The URI template that identifies the dataset and can be resolved into concrete URIs to identify a particular dataset instance. The URI template is constructed using:
       * *%BLUE% constants %ENDCOLOR%* See the allowable EL Time Constants below. Ex: ${YEAR}/${MONTH}.
       * *%BLUE% variables %ENDCOLOR%* Variables must be resolved at the time a coordinator job is submitted to the coordinator engine. They are normally provided a job parameters (configuration properties). Ex: ${market}/${language}
-   * *%BLUE% done-flag:%ENDCOLOR%* The done file for the data set. If done-flag is not specified, then Oozie configures Hadoop to create a _SUCCESS file in the output directory. If the done flag is set to empty, then Coordinator looks for the existence of the directory itself.
+   * *%BLUE% done-flag:%ENDCOLOR%* This flag denotes when a dataset instance is ready to be consumed.
+      * If the done-flag is omitted the coordinator will wait for the presence of a _SUCCESS file in the directory (Note: MapReduce jobs create this on successful completion automatically).
+      * If the done-flag is present but empty, then the existence of the directory itself indicates that the dataset is ready.
+      * If the done-flag is present but non-empty, Oozie will check for the presence of the named file within the directory, and will be considered ready (done) when the file exists.
 
 The following EL constants can be used within synchronous dataset URI templates:
 
@@ -576,12 +585,12 @@ The following EL constants can be used within synchronous dataset URI templates:
 | =MONTH= | _DD_ | 2 digits representing the month of the year, January = 1 |
 | =DAY= | _DD_ | 2 digits representing the day of the month |
 | =HOUR= | _HH_ | 2 digits representing the hour of the day, in 24 hour format, 0 - 23 |
-| =MINUTE= | _mm_ | 2 digits reprensenting the minute of the hour, 0 - 59 |
+| =MINUTE= | _mm_ | 2 digits representing the minute of the hour, 0 - 59 |
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 
 <verbatim>
-  <dataset name="[NAME]" frequency="[FREQUENCY]" 
+  <dataset name="[NAME]" frequency="[FREQUENCY]"
            initial-instance="[DATETIME]" timezone="[TIMEZONE]">
     <uri-template>[URI TEMPLATE]</uri-template>
     <done-flag>[FILE NAME]</done-flag>
@@ -609,7 +618,7 @@ The dataset would resolve to the following URIs and Coordinator looks for the ex
 
 <verbatim>
   [market] will be replaced with user given property.
-  
+
   hdfs://foo:8020/usr/app/[market]/2009/02/15/data
   hdfs://foo:8020/usr/app/[market]/2009/02/16/data
   hdfs://foo:8020/usr/app/[market]/2009/02/17/data
@@ -635,7 +644,7 @@ The dataset would resolve to the following URIs:
   ...
 </verbatim>
 
-The dataset are ready until '_SUCCESS' exists in each path:
+The dataset instances are not ready until '_SUCCESS' exists in each path:
 
 <verbatim>
   hdfs://foo:8020/usr/app/stats/2009/01/data/_SUCCESS
@@ -666,7 +675,7 @@ The dataset would resolve to the following URIs:
   ...
 </verbatim>
 
-The dataset are ready until 'trigger.dat' exists in each path:
+The dataset instances are not ready until 'trigger.dat' exists in each path:
 
 <verbatim>
   hdfs://foo:8020/usr/app/stats/2009/01/data/trigger.dat
@@ -814,6 +823,8 @@ Valid coordinator job status transitions are:
    * *PREPPAUSED --> PREP | KILLED*
    * *PAUSED --> SUSPENDED | RUNNING | KILLED*
    * *PAUSEDWITHERROR --> SUSPENDEDWITHERROR | RUNNINGWITHERROR | KILLED*
+   * *FAILED | KILLED --> IGNORED*
+   * *IGNORED --> RUNNING*
 
 When a coordinator job is submitted, oozie parses the coordinator job XML. Oozie then creates a record for the coordinator with status *PREP* and returns a unique ID. The coordinator is also started immediately if pause time is not set.
 
@@ -833,8 +844,15 @@ Conversely, when a user requests to resume a *SUSPENDED* coordinator job, oozie 
 
 A coordinator job creates workflow jobs (commonly coordinator actions) only for the duration of the coordinator job and only if the coordinator job is in *RUNNING* status. If the coordinator job has been suspended, when resumed it will create all the coordinator actions that should have been created during the time it was suspended, actions will not be lost, they will delayed.
 
-When the coordinator job materialization finishs and all workflow jobs finish, oozie updates the coordinator status accordingly. For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status. If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or *TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the coordinator job into *DONEWITHERROR*.
+When the coordinator job materialization finishes and all workflow jobs finish, oozie updates the coordinator status accordingly.
+For example, if all workflows are *SUCCEEDED*, oozie puts the coordinator job into *SUCCEEDED* status.
+If all workflows are *FAILED*, oozie puts the coordinator job into *FAILED* status. If all workflows are *KILLED*, the coordinator
+job status changes to KILLED. However, if any workflow job finishes with not *SUCCEEDED* and combination of *KILLED*, *FAILED* or
+*TIMEOUT*, oozie puts the coordinator job into *DONEWITHERROR*. If all coordinator actions are *TIMEDOUT*, oozie puts the
+coordinator job into *DONEWITHERROR*.
 
+A coordinator job in *FAILED* or *KILLED* status can be changed to *IGNORED* status. A coordinator job in *IGNORED* status can be changed to
+ *RUNNING* status.
 
 ---++++ 6.1.3. Coordinator Action
 
@@ -860,6 +878,12 @@ A coordinator action in *WAITING* status may timeout before it becomes ready for
 
 A coordinator action may remain in *READY* status for a while, without starting execution, due to the concurrency execution policies of the coordinator job.
 
+A coordinator action in *READY* or *WAITING* status changes to *SKIPPED* status if the execution strategy is LAST_ONLY and the
+current time is past the next action's nominal time.  See section 6.3 for more details.
+
+A coordinator action in *READY* or *WAITING* status changes to *SKIPPED* status if the execution strategy is NONE and the
+current time is past the action's nominal time + 1 minute.  See section 6.3 for more details.
+
 A coordinator action in *READY* status changes to *SUBMITTED* status if total current *RUNNING* and *SUBMITTED* actions are less than concurrency execution limit.
 
 A coordinator action in *SUBMITTED* status changes to *RUNNING* status when the workflow engine start execution of the coordinator action.
@@ -870,12 +894,17 @@ A coordinator action in *WAITING*, *READY*, *SUBMITTED* or *RUNNING* status can 
 
 A coordinator action in *SUBMITTED* or *RUNNING* status can also fail, changing to *FAILED* status.
 
+A coordinator action in *FAILED*, *KILLED*, or *TIMEDOUT* status can be changed to *IGNORED* status. A coordinator action in *IGNORED* status can be
+ rerun, changing to *WAITING* status.
+
 Valid coordinator action status transitions are:
 
-   * *WAITING --> READY | TIMEDOUT | KILLED*
-   * *READY --> SUBMITTED | KILLED*
+   * *WAITING --> READY | TIMEDOUT | SKIPPED | KILLED*
+   * *READY --> SUBMITTED | SKIPPED | KILLED*
    * *SUBMITTED --> RUNNING | KILLED | FAILED*
    * *RUNNING --> SUCCEEDED | KILLED | FAILED*
+   * *FAILED | KILLED | TIMEDOUT --> IGNORED*
+   * *IGNORED --> WAITING*
 
 ---++++ 6.1.4. Input Events
 
@@ -905,7 +934,7 @@ The execution policies for the actions of a coordinator job can be defined in th
 
    * Timeout: A coordinator job can specify the timeout for its coordinator actions, this is, how long the coordinator action will be in *WAITING* or *READY* status before giving up on its execution.
    * Concurrency: A coordinator job can specify the concurrency for its coordinator actions, this is, how many coordinator actions are allowed to run concurrently ( *RUNNING* status) before the coordinator engine starts throttling them.
-   * Execution strategy: A coordinator job can specify the execution strategy of its coordinator actions when there is backlog of coordinator actions in the coordinator engine. The different execution strategies are 'oldest first', 'newest first' and 'last one only'. A backlog normally happens because of delayed input data, concurrency control or because manual re-runs of coordinator jobs.
+   * Execution strategy: A coordinator job can specify the execution strategy of its coordinator actions when there is backlog of coordinator actions in the coordinator engine. The different execution strategies are 'oldest first', 'newest first', 'none' and 'last one only'. A backlog normally happens because of delayed input data, concurrency control or because manual re-runs of coordinator jobs.
    * Throttle: A coordinator job can specify the materialization or creation throttle value for its coordinator actions, this is, how many maximum coordinator actions are allowed to be in WAITING state concurrently.
 
 ---++++ 6.1.7. Data Pipeline Application
@@ -946,38 +975,60 @@ A synchronous coordinator definition is a is defined by a name, start time and e
    * *%BLUE% end: %ENDCOLOR%* The end datetime for the job. When actions will stop being materialized. Refer to section #3 'Datetime Representation' for syntax details.
    * *%BLUE% timezone:%ENDCOLOR%* The timezone of the coordinator application.
    * *%BLUE% frequency: %ENDCOLOR%* The frequency, in minutes, to materialize actions. Refer to section #4 'Time Interval Representation' for syntax details.
-   * Control information: 
-      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materizlization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=.
+   * Control information:
+      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materialization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=.
       * *%BLUE% concurrency: %ENDCOLOR%* The maximum number of actions for this job that can be running at the same time. This value allows to materialize and submit multiple instances of the coordinator app, and allows operations to catchup on delayed processing. The default value is =1=.
-      * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are: 
+      * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are:
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
-         * =LAST_ONLY= (discards all older materializations).
+         * =LAST_ONLY= (see explanation below).
+         * =NONE= (discards all older materialization, see explanation below).
       * *%BLUE% throttle: %ENDCOLOR%* The maximum coordinator actions are allowed to be in WAITING state concurrently. The default value is =12=.
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
-   * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events. 
-      * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset. 
+   * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events.
+      * *%BLUE% data-in: %ENDCOLOR%* It defines one job input condition that resolves to one or more instances of a dataset.
          * *%BLUE% name: %ENDCOLOR%* input condition name.
          * *%BLUE% dataset: %ENDCOLOR%* dataset name.
          * *%BLUE% instance: %ENDCOLOR%* refers to a single dataset instance (the time for a synchronous dataset).
          * *%BLUE% start-instance: %ENDCOLOR%* refers to the beginning of an instance range (the time for a synchronous dataset).
          * *%BLUE% end-instance: %ENDCOLOR%* refers to the end of an instance range (the time for a synchronous dataset).
-   * *%BLUE% output-events: %ENDCOLOR%* The coordinator job output events. 
-      * *%BLUE% data-out: %ENDCOLOR%* It defines one job output that resolves to a dataset instance. 
+   * *%BLUE% output-events: %ENDCOLOR%* The coordinator job output events.
+      * *%BLUE% data-out: %ENDCOLOR%* It defines one job output that resolves to a dataset instance.
          * *%BLUE% name: %ENDCOLOR%* output name.
          * *%BLUE% dataset: %ENDCOLOR%* dataset name.
          * *%BLUE% instance: %ENDCOLOR%* dataset instance that will be generated by coordinator action.
-   * *%BLUE% action: %ENDCOLOR%* The coordinator action to execute. 
+   * *%BLUE% action: %ENDCOLOR%* The coordinator action to execute.
       * *%BLUE% workflow: %ENDCOLOR%* The workflow job invocation. Workflow job properties can refer to the defined data-in and data-out elements.
+
+*LAST_ONLY:* While =FIFO= and =LIFO= simply specify the order in which READY actions should be executed, =LAST_ONLY= can actually
+cause some actions to be SKIPPED and is a little harder to understand.  When =LAST_ONLY= is set, an action that is =WAITING=
+or =READY= will be =SKIPPED= when the current time is past the next action's nominal time.  For example, suppose action 1 and 2
+are both =WAITING=, the current time is 5:00pm, and action 2's nominal time is 5:10pm.  In 10 minutes from now, at 5:10pm, action 1
+will become SKIPPED, assuming it doesn't transition to =SUBMITTED= (or a terminal state) before then.  Another way of thinking about
+this is to view it as similar to setting the =timeout= equal to the =frequency=, except that the =SKIPPED= status doesn't cause the
+coordinator job to eventually become =DONEWITHERROR= and can actually become =SUCCEEDED= (i.e. it's a "good" version
+of =TIMEDOUT=).  =LAST_ONLY= is useful if you want a recurring job, but do not actually care about the individual instances and just
+always want the latest action.  For example, if you have a coordinator running every 10 minutes and take Oozie down for 1 hour, when
+Oozie comes back, there would normally be 6 actions =READY= to run.  However, with =LAST_ONLY=, only the current one will go
+to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
+
+*NONE:* Similar to LAST_ONLY except all older materializations are skipped. When =NONE= is set, an action that is =WAITING=
+or =READY= will be =SKIPPED= when the current time is more than a certain configured number of minutes (tolerance) past the action's
+nominal time. By default, the threshold is 1 minute. For example, suppose action 1 and 2
+are both =WAITING=, the current time is 5:20pm, and both actions' nominal times are before 5:19pm. Both actions
+will become SKIPPED, assuming they don't transition to =SUBMITTED= (or a terminal state) before then.  Another way of thinking about
+this is to view it as similar to setting the =timeout= equal to 1 minute which is the smallest time unit, except that the =SKIPPED= status doesn't cause the
+coordinator job to eventually become =DONEWITHERROR= and can actually become =SUCCEEDED= (i.e. it's a "good" version
+of =TIMEDOUT=).
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 
 <verbatim>
-   <coordinator-app name="[NAME]" frequency="[FREQUENCY]" 
-                    start="[DATETIME]" end="[DATETIME]" timezone="[TIMEZONE]" 
+   <coordinator-app name="[NAME]" frequency="[FREQUENCY]"
+                    start="[DATETIME]" end="[DATETIME]" timezone="[TIMEZONE]"
                     xmlns="uri:oozie:coordinator:0.1">
       <controls>
-        <timeout>[TIME_PERIOD]</timeout> 
+        <timeout>[TIME_PERIOD]</timeout>
         <concurrency>[CONCURRENCY]</concurrency>
         <execution>[EXECUTION_STRATEGY]</execution>
       </controls>
@@ -987,7 +1038,7 @@ A synchronous coordinator definition is a is defined by a name, start time and e
         ...
 .
         <!-- Synchronous datasets -->
-	    <dataset name="[NAME]" frequency="[FREQUENCY]" 
+	    <dataset name="[NAME]" frequency="[FREQUENCY]"
 	             initial-instance="[DATETIME]" timezone="[TIMEZONE]">
 	      <uri-template>[URI_TEMPLATE]</uri-template>
         </dataset>
@@ -1024,7 +1075,7 @@ A synchronous coordinator definition is a is defined by a name, start time and e
             ...
          </configuration>
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1310,7 +1361,7 @@ For the second coordinator action it would resolve to:
 
 And so on.
 
----+++ 6.4. Asynchronous Coordinator Application Definition 
+---+++ 6.4. Asynchronous Coordinator Application Definition
    * TBD
 
 ---+++ 6.5. Parameterization of Coordinator Applications
@@ -1353,7 +1404,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1368,10 +1419,10 @@ In the above example there are 6 configuration parameters (variables) that have 
 
 IMPORTANT: Note that this example is not completely correct as it always consumes the last 24 instances of the 'logs' dataset. It is assumed that all days have 24 hours. For timezones that observe daylight saving this application will not work as expected as it will consume the wrong number of dataset instances in DST switch days. To be able to handle these scenarios, the =${coord:hoursInDays(int n)}= and =${coord:daysInMonths(int n)}= EL functions must be used (refer to section #6.6.2 and #6.6.3).
 
-If the above 6 properties are not specified, the job will fail. 
+If the above 6 properties are not specified, the job will fail.
 
-As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said 
-properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided. 
+As of schema 0.4, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided.
 
 *Example:*
 
@@ -1408,7 +1459,7 @@ The previous parameterized coordinator application definition with formal parame
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1511,7 +1562,7 @@ a. Coordinator application definition that creates a coordinator action once a d
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1538,7 +1589,7 @@ b. Coordinator application definition that creates a coordinator action once an 
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1592,7 +1643,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1679,7 +1730,7 @@ Coordinator application definitions. A data-pipeline with two coordinator-applic
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -1999,7 +2050,7 @@ Coordinator application definition:
         <workflow>
         ...
        </workflow>
-      </action>      
+      </action>
    </coordinator-app>
 </verbatim>
 
@@ -2446,25 +2497,43 @@ Coordinator applications that use HCatalog data dependencies.
 
 ---++++ 6.8.1 coord:databaseIn(String name), coord:databaseOut(String name) EL function
 
-The functions =${coord:databaseIn(String name}= and =${coord:databaseOut(String name}= are used to pass the database
+The functions =${coord:databaseIn(String name)}= and =${coord:databaseOut(String name)}= are used to pass the database
 name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
 by a coordinator action.
 
-These functions take as argument - name of the dataset and give as string the 'database' name of that dataset.
-If dataset belongs to 'input-events', use =${coord:databaseIn(String name}=, else if it belongs to 'output-events',
-use =${coord:databaseOut(String name}=.
+For input database, you should pass the "data-in" name attribute of your 'input-events' configured in the coordinator.
+Similarly for output database, pass the "data-out" name attribute of your 'output-events'.
+
+To illustrate it better:
+If data belongs to 'input-events' and the name attribute of your =<data-in>= is "raw-logs",
+use =${coord:databaseIn('raw-logs')}=.
+Else if it belongs to 'output-events', and the name attribute of your =<data-out>= is "processed-logs",
+use =${coord:databaseOut('processed-logs')}=.
+Taking this passed argument as input, the EL functions give as string the 'database' name corresponding to your input or output data events.
+
+Pitfall: Please note NOT to pass the =<dataset>= name itself (as defined under combined set =<datasets>=),
+as this function works on the 'data-in' and 'data-out' names.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
 ---++++ 6.8.2 coord:tableIn(String name), coord:tableOut(String name) EL function
 
-The functions =${coord:tableIn(String name}= and =${coord:tableOut(String name}= are used to pass the table
+The functions =${coord:tableIn(String name)}= and =${coord:tableOut(String name)}= are used to pass the table
 name of HCat dataset instances, input and output respectively, that will be consumed by a workflow job triggered
 by a coordinator action.
 
-These functions take as argument - name of the dataset and give as string the 'table' name of that dataset.
-If dataset belongs to 'input-events', use =${coord:tableIn(String name}=, else if it belongs to 'output-events',
-use =${coord:tableOut(String name}=.
+For input table, you should pass the "data-in" name attribute of your 'input-events' configured in the coordinator.
+Similarly for output table, pass the "data-out" name attribute of your 'output-events'.
+
+To illustrate it better:
+If data belongs to 'input-events' and the name attribute of your =<data-in>= is "raw-logs",
+use =${coord:tableIn('raw-logs')}=.
+Similarly, if it belongs to 'output-events', and the name attribute of your =<data-out>= is "processed-logs",
+use =${coord:tableOut('processed-logs')}=.
+Taking this passed argument as input, the EL functions give as string the 'table' name corresponding to your input or output data events.
+
+Pitfall: Please note NOT to pass the =<dataset>= name itself (as defined under combined set =<datasets>=),
+as this function works on the 'data-in' and 'data-out' names.
 
 Refer to the [[CoordinatorFunctionalSpec#HCatPigExampleOne][Example]] below for usage.
 
@@ -2537,7 +2606,7 @@ aggregated daily output.
           <configuration>
             <property>
               <name>IN_DB</name>
-              <value>${coord:databaseIn('Click-data')}</value>
+              <value>${coord:databaseIn('raw-logs')}</value>
             </property>
             <property>
               <name>IN_TABLE</name>
@@ -2626,27 +2695,30 @@ coordinator action.
 hcatalog installation. Refer [[DG_HCatalogIntegration#HCatalogLibraries][HCatalog Libraries]] for the different ways
 to place them in the hadoop job classpath.
 
+*Important*: See [[DG_ActionAuthentication][Action Authentication]] for more information about how to access a secure HCatalog from
+any workflow action.
+
 *Example usage in Pig:*
 
 <blockquote>
-A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
+A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY $PARTITION_FILTER;
 C = foreach B generate foo, bar;
-store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
+store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hive.hcatalog.pig.HCatStorer('$OUTPUT_PARTITIONS');
 </blockquote>
 
 For the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look
 like:
 
 <blockquote>
-A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
+A = load 'myInputDatabase.myInputTable' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY ((datestamp==2009010101 AND region==USA) OR
     (datestamp==2009010102 AND region==USA) OR
     ...
     (datestamp==2009010123 AND region==USA) OR
     (datestamp==2009010200 AND region==USA));
 C = foreach B generate foo, bar;
-store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
+store C into 'myOutputDatabase.myOutputTable' using org.apache.hive.hcatalog.pig.HCatStorer('datestamp=20090102,region=EUR');
 </blockquote>
 
 ---++++ 6.8.5 coord:dataInPartitionMin(String name, String partition) EL function
@@ -2788,20 +2860,206 @@ This illustrates another pig script which filters partitions based on range, wit
 EL funtions
 
 <blockquote>
-A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hcatalog.pig.HCatLoader();
+A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '$PARTITION_DATE_MIN' AND datestamp < '$PARTITION_DATE_MAX' AND region=='$REGION';
 C = foreach B generate foo, bar;
-store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hcatalog.pig.HCatStorer('region=$OUT_PARTITION_VAL_REGION,datestamp=$OUT_PARTITION_VAL_DATE');
+store C into '$HCAT_OUT_DB.$HCAT_OUT_TABLE' using org.apache.hive.hcatalog.pig.HCatStorer('region=$OUT_PARTITION_VAL_REGION,datestamp=$OUT_PARTITION_VAL_DATE');
 </blockquote>
 
 For example,
 for the =2009-01-02T00:00Z= run with the given dataset instances, the above Pig script with resolved values would look like:
 
 <blockquote>
-A = load 'myInputDatabase.myInputTable' using org.apache.hcatalog.pig.HCatLoader();
+A = load 'myInputDatabase.myInputTable' using org.apache.hive.hcatalog.pig.HCatLoader();
 B = FILTER A BY datestamp >= '2009010101' AND datestamp < '2009010200' AND region='APAC';
 C = foreach B generate foo, bar;
-store C into 'myOutputDatabase.myOutputTable' using org.apache.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
+store C into 'myOutputDatabase.myOutputTable' using org.apache.hive.hcatalog.pig.HCatStorer('region=APAC,datestamp=20090102');
+</blockquote>
+
+---++++ 6.8.8 coord:dataInPartitions(String name, String type) EL function
+
+The =${coord:dataInPartitions(String name, String type)}= EL function resolves to a list of partition key-value
+pairs for the input-event dataset. Currently the only type supported is 'hive-export'. The 'hive-export' type
+supports only one partition instance and it can be used to create the complete partition value string that can
+be used in a hive query for partition export/import.
+
+The example below illustrates a hive export-import job triggered by a coordinator, using the EL functions for HCat database,
+table, input partitions. The example replicates the hourly processed data across hive tables.
+
+*%GREEN% Example: %ENDCOLOR%*
+
+#HCatHiveExampleOne
+
+*Coordinator application definition:*
+
+<blockquote>
+    <coordinator-app xmlns="uri:oozie:coordinator:0.3" name="app-coord"
+    frequency="${coord:hours(1)}" start="2014-03-28T08:00Z"
+    end="2030-01-01T00:00Z" timezone="UTC">
+
+    <datasets>
+        <dataset name="Stats-1" frequency="${coord:hours(1)}"
+            initial-instance="2014-03-28T08:00Z" timezone="UTC">
+            <uri-template>hcat://foo:11002/myInputDatabase1/myInputTable1/year=${YEAR};month=${MONTH};day=${DAY};hour=${HOUR}
+            </uri-template>
+        </dataset>
+        <dataset name="Stats-2" frequency="${coord:hours(1)}"
+            initial-instance="2014-03-28T08:00Z" timezone="UTC">
+            <uri-template>hcat://foo:11002/myInputDatabase2/myInputTable2/year=${YEAR};month=${MONTH};day=${DAY};hour=${HOUR}
+            </uri-template>
+        </dataset>
+    </datasets>
+    <input-events>
+        <data-in name="processed-logs-1" dataset="Stats-1">
+            <instance>${coord:current(0)}</instance>
+        </data-in>
+    </input-events>
+    <output-events>
+        <data-out name="processed-logs-2" dataset="Stats-2">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+    <action>
+      <workflow>
+        <app-path>hdfs://bar:8020/usr/joe/logsreplicator-wf</app-path>
+        <configuration>
+          <property>
+            <name>EXPORT_DB</name>
+            <value>${coord:databaseIn('processed-logs-1')}</value>
+          </property>
+          <property>
+            <name>EXPORT_TABLE</name>
+            <value>${coord:tableIn('processed-logs-1')}</value>
+          </property>
+          <property>
+            <name>IMPORT_DB</name>
+            <value>${coord:databaseOut('processed-logs-2')}</value>
+          </property>
+          <property>
+            <name>IMPORT_TABLE</name>
+            <value>${coord:tableOut('processed-logs-2')}</value>
+          </property>
+          <property>
+            <name>EXPORT_PARTITION</name>
+            <value>${coord:dataInPartitions('processed-logs-1', 'hive-export')}</value>
+          </property>
+          <property>
+            <name>EXPORT_PATH</name>
+            <value>hdfs://bar:8020/staging/${coord:formatTime(coord:nominalTime(), 'yyyy-MM-dd-HH')}/data</value>
+          </property>
+        </configuration>
+      </workflow>
+    </action>
+</coordinator-app>
+</blockquote>
+
+Parameterizing the input/output databases and tables using the corresponding EL function as shown will make them
+available in the hive action of the workflow 'logsreplicator-wf'.
+
+Each coordinator action will use as input events the hourly instances of the 'processed-logs-1' dataset. The
+=${coord:dataInPartitions(String name, String type)}= function enables the coordinator application to pass the
+partition corresponding to hourly dataset instances to the workflow job triggered by the coordinator action.
+The workflow passes this partition value to the hive export script that exports the hourly partition from source
+database to the staging location referred as =EXPORT_PATH=. The hive import script imports the hourly partition from
+=EXPORT_PATH= staging location into the target database.
+
+#HCatWorkflow
+
+*Workflow definition:*
+
+<blockquote>
+<workflow-app xmlns="uri:oozie:workflow:0.3" name="logsreplicator-wf">
+    <start to="table-export"/>
+    <action name="table-export">
+        <hive:hive xmlns:hive="uri:oozie:hive-action:0.2" xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <job-xml>${wf:appPath()}/conf/hive-site.xml</job-xml>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>oozie.launcher.mapred.job.priority</name>
+                    <value>${jobPriority}</value>
+                </property>
+            </configuration>
+            <script>${wf:appPath()}/scripts/table-export.hql</script>
+            <param>sourceDatabase=${EXPORT_DB}</param>
+            <param>sourceTable=${EXPORT_TABLE}</param>
+            <param>sourcePartition=${EXPORT_PARTITION}</param>
+            <param>sourceStagingDir=${EXPORT_PATH}</param>
+        </hive:hive>
+        <ok to="table-import"/>
+        <error to="fail"/>
+    </action>
+    <action name="table-import">
+        <hive:hive xmlns:hive="uri:oozie:hive-action:0.2" xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <job-xml>${wf:appPath()}/conf/hive-site.xml</job-xml>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>oozie.launcher.mapred.job.priority</name>
+                    <value>${jobPriority}</value>
+                </property>
+            </configuration>
+            <script>${wf:appPath()}/scripts/table-import.hql</script>
+            <param>targetDatabase=${IMPORT_DB}</param>
+            <param>targetTable=${IMPORT_TABLE}</param>
+            <param>targetPartition=${EXPORT_PARTITION}</param>
+            <param>sourceStagingDir=${EXPORT_PATH}</param>
+        </hive:hive>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>
+            Workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]
+        </message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</blockquote>
+
+Ensure that the following jars are in classpath, with versions corresponding to hcatalog installation:
+hcatalog-core.jar, webhcat-java-client.jar, hive-common.jar, hive-exec.jar, hive-metastore.jar, hive-serde.jar,
+ libfb303.jar. The hive-site.xml needs to be present in classpath as well.
+
+*Example Hive Export script:*
+The following script exports a particular Hive table partition into staging location, where the partition value
+ is computed through =${coord:dataInPartitions(String name, String type)}= EL function.
+<blockquote>
+export table ${sourceDatabase}.${sourceTable} partition (${sourcePartition}) to '${sourceStagingDir}';
+</blockquote>
+
+For example, for the 2014-03-28T08:00Z run with the given dataset instances and ${coord:dataInPartitions(
+'processed-logs-1', 'hive-export'), the above Hive script with resolved values would look like:
+<blockquote>
+export table myInputDatabase1/myInputTable1 partition (year='2014',month='03',day='28',hour='08') to 'hdfs://bar:8020/staging/2014-03-28-08';
+</blockquote>
+
+*Example Hive Import script:*
+The following script imports a particular Hive table partition from staging location, where the partition value is computed
+ through =${coord:dataInPartitions(String name, String type)}= EL function.
+<blockquote>
+use ${targetDatabase};
+alter table ${targetTable} drop if exists partition ${targetPartition};
+import table ${targetTable} partition (${targetPartition}) from '${sourceStagingDir}';
+</blockquote>
+
+For example, for the 2014-03-28T08:00Z run with the given dataset instances and ${coord:dataInPartitions(
+'processed-logs-2', 'hive-export'), the above Hive script with resolved values would look like:
+
+<blockquote>
+use myInputDatabase2;
+alter table myInputTable2 drop if exists partition (year='2014',month='03',day='28',hour='08');
+import table myInputTable2 partition (year='2014',month='03',day='28',hour='08') from 'hdfs://bar:8020/staging/2014-03-28-08';
 </blockquote>
 
 
@@ -3267,6 +3525,9 @@ See also [[WorkflowFunctionalSpec#WorkflowNotifications][Workflow Notifications]
 
 If the =oozie.coord.workflow.notification.url= property is present in the coordinator job properties when submitting the job,
 Oozie will make a notification to the provided URL when any of the coordinator's actions changes its status.
+=oozie.coord.action.notification.proxy= property can be used to configure either a http or socks proxy.
+The format is proxyHostname:port or proxyType@proxyHostname:port. If proxy type is not specified, it defaults to http.
+For eg: myhttpproxyhost.mydomain.com:80 or socks@mysockshost.mydomain.com:1080.
 
 If the URL contains any of the following tokens, they will be replaced with the actual values by Oozie before making
 the notification:
@@ -3669,7 +3930,7 @@ the notification:
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:sla="uri:oozie:sla:0.1" elementFormDefault="qualified"
 	targetNamespace="uri:oozie:sla:0.1">
-	
+
         <xs:element name="info" type="sla:SLA-INFO" />
 
 	<xs:complexType name="SLA-INFO">

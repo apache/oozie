@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -179,6 +180,13 @@ public class MockDagEngineService extends DagEngineService {
         @Override
         public WorkflowJob getJob(String jobId, int start, int length) throws DagEngineException {
             return getJob(jobId);
+        }
+
+        @Override
+        public String getJobStatus(String jobId) throws DagEngineException {
+            did = RestConstants.JOB_SHOW_STATUS;
+            int idx = validateWorkflowIdx(jobId);
+            return workflows.get(idx).getStatus().toString();
         }
 
         @Override

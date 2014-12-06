@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -122,6 +123,11 @@ public class V0AdminServlet extends BaseAdminServlet {
 
     @Override
     protected Map<String, String> getOozieURLs() throws XServletException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
     }
 }

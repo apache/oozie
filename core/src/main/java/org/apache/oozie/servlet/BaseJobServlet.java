@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -109,6 +110,17 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             response.setStatus(HttpServletResponse.SC_OK);
         }
+        else if (action.equals(RestConstants.JOB_ACTION_IGNORE)) {
+            stopCron();
+            JSONObject json = ignoreJob(request, response);
+            startCron();
+            if (json != null) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            }
+            else {
+            response.setStatus(HttpServletResponse.SC_OK);
+            }
+        }
         else if (action.equals(RestConstants.JOB_ACTION_RERUN)) {
             validateContentType(request, RestConstants.XML_CONTENT_TYPE);
             Configuration conf = new XConfiguration(request.getInputStream());
@@ -117,8 +129,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             if (!requestUser.equals(UNDEF)) {
                 conf.set(OozieClient.USER_NAME, requestUser);
             }
-            BaseJobServlet.checkAuthorizationForApp(conf);
-            JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            if (conf.get(OozieClient.APP_PATH) != null) {
+                BaseJobServlet.checkAuthorizationForApp(conf);
+                JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            }
             reRunJob(request, response, conf);
             startCron();
             response.setStatus(HttpServletResponse.SC_OK);
@@ -147,11 +161,30 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                 response.setStatus(HttpServletResponse.SC_OK);
             }
         }
+        else if (action.equals(RestConstants.JOB_COORD_UPDATE)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            Configuration conf = new XConfiguration(request.getInputStream());
+            stopCron();
+            String requestUser = getUser(request);
+            if (!requestUser.equals(UNDEF)) {
+                conf.set(OozieClient.USER_NAME, requestUser);
+            }
+            if (conf.get(OozieClient.COORDINATOR_APP_PATH) != null) {
+                BaseJobServlet.checkAuthorizationForApp(conf);
+                JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
+            }
+            JSONObject json = updateJob(request, response, conf);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.ACTION_PARAM, action);
         }
     }
+
+    abstract JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
 
     /**
      * Validate the configuration user/group. <p/>
@@ -213,6 +246,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      * Return information about jobs.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jobId = getResourceName(request);
         String show = request.getParameter(RestConstants.JOB_SHOW_PARAM);
@@ -273,6 +307,13 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             stopCron();
             streamJobGraph(request, response);
             startCron(); // -- should happen before you stream anything in response?
+        } else if (show.equals(RestConstants.JOB_SHOW_STATUS)) {
+            stopCron();
+            String status = getJobStatus(request, response);
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.STATUS, status);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
@@ -416,4 +457,30 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      */
     abstract JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
+
+    /**
+     * Abstract method to Update coord job.
+     *
+     * @param request the request
+     * @param response the response
+     * @param Configuration conf
+     * @return the JSON object
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
+            throws XServletException, IOException;
+
+    /**
+     * Abstract method to get status for a job
+     *
+     * @param request the request
+     * @param response the response
+     * @return the JSON object
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract String getJobStatus(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
 }
+

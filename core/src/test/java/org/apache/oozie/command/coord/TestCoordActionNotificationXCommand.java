@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.command.wf.HangServlet;
-import org.apache.oozie.command.wf.NotificationXCommand;
+import org.apache.oozie.command.wf.WorkflowNotificationXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XTestCase;
@@ -72,6 +74,6 @@ public class TestCoordActionNotificationXCommand extends XTestCase {
         command.call();
         long end = System.currentTimeMillis();
         Assert.assertTrue(end - start >= 50);
-        Assert.assertTrue(end - start <= NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_DEFAULT);
+        Assert.assertTrue(end - start <= 10000);
     }
 }

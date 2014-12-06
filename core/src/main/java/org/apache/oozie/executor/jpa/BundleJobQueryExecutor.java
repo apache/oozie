@@ -15,11 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -29,8 +32,6 @@ import org.apache.oozie.StringBlob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Bundle Job
@@ -48,25 +49,16 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         GET_BUNDLE_JOB,
         GET_BUNDLE_JOB_STATUS,
         GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME,
-        GET_BUNDLE_JOB_ID_JOBXML_CONF
+        GET_BUNDLE_JOB_ID_JOBXML_CONF,
+        GET_BUNDLE_IDS_FOR_STATUS_TRANSIT
     };
 
     private static BundleJobQueryExecutor instance = new BundleJobQueryExecutor();
-    private static JPAService jpaService;
 
     private BundleJobQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<BundleJobBean, BundleJobQueryExecutor.BundleJobQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new BundleJobQueryExecutor();
-        }
         return BundleJobQueryExecutor.instance;
     }
 
@@ -144,6 +136,9 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
             case GET_BUNDLE_JOB_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
+            case GET_BUNDLE_IDS_FOR_STATUS_TRANSIT:
+                query.setParameter("lastModifiedTime", DateUtils.convertDateToTimestamp((Date)parameters[0]));
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -153,6 +148,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
 
     @Override
     public int executeUpdate(BundleJobQuery namedQuery, BundleJobBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -161,6 +157,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
 
     @Override
     public BundleJobBean get(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -173,6 +170,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
 
     @Override
     public List<BundleJobBean> getList(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -213,6 +211,12 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 bean.setJobXmlBlob((StringBlob) arr[1]);
                 bean.setConfBlob((StringBlob) arr[2]);
                 break;
+
+            case GET_BUNDLE_IDS_FOR_STATUS_TRANSIT:
+                bean = new BundleJobBean();
+                bean.setId((String) ret);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -220,11 +224,8 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         return bean;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
+    @Override
+    public Object getSingleValue(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 }

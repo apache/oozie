@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.File;
@@ -112,18 +113,18 @@ public class TestOozieJobInfo extends XDataTestCase {
         new BundleStartXCommand(job.getId()).call();
         sleep(2000);
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
         assertEquals(1, actions.size());
         final String bundleID = job.getId();
         waitFor(200000, new Predicate() {
             public boolean evaluate() throws Exception {
                 List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                        BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleID);
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleID);
                 return actions.get(0).getStatus().equals(Job.Status.RUNNING);
             }
         });
 
-        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
                 job.getId());
         final String cordID = actions.get(0).getCoordId();
         waitFor(200000, new Predicate() {

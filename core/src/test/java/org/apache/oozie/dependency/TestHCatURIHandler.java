@@ -15,11 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency;
 
 import java.net.URI;
 
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XHCatTestCase;
@@ -39,6 +41,7 @@ public class TestHCatURIHandler extends XHCatTestCase {
         services = new Services();
         services.getConf().set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.setService(HCatAccessorService.class);
         services.init();
         conf = createJobConf();
         uriService = Services.get().get(URIHandlerService.class);
@@ -90,6 +93,13 @@ public class TestHCatURIHandler extends XHCatTestCase {
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
 
         hcatURI = getHCatURI(db, table, "month=02;dt=02");
+        assertFalse(handler.exists(hcatURI, conf, getTestUser()));
+
+        addPartition(db, table, "year=2012;month=12;dt=04;country=us");
+
+        hcatURI = getHCatURI(db, table, "country=us;year=2012;month=12;dt=04");
+        assertTrue(handler.exists(hcatURI, conf, getTestUser()));
+        ((HCatURIHandler)handler).delete(hcatURI, conf, getTestUser());
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
 
         dropTestTable();

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[12];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[13];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
@@ -73,6 +74,8 @@ public class V1AdminServlet extends BaseAdminServlet {
         RESOURCES_INFO[10] = new ResourceInfo(RestConstants.ADMIN_UPDATE_SHARELIB, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[11] = new ResourceInfo(RestConstants.ADMIN_LIST_SHARELIB, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
+        RESOURCES_INFO[12] = new ResourceInfo(RestConstants.ADMIN_METRICS_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
 
     }
@@ -161,6 +164,11 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     @Override
     protected Map<String, String> getOozieURLs() throws XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
+    @Override
+    protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
 }

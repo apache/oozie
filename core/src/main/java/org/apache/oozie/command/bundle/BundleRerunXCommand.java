@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.util.Date;
@@ -88,8 +89,8 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, jobId);
             this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, jobId);
-            LogUtils.setLogInfo(bundleJob, logInfo);
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+            LogUtils.setLogInfo(bundleJob);
             super.setJob(bundleJob);
             prevPending = bundleJob.isPending();
         }

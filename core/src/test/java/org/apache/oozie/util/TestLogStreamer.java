@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import java.io.File;
@@ -22,11 +23,15 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.ServiceException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
 public class TestLogStreamer extends XTestCase {
@@ -36,16 +41,18 @@ public class TestLogStreamer extends XTestCase {
 
     private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
 
-    public void testStreamLog() throws IOException {
+    public void testStreamLog() throws IOException, CommandException, ServiceException, ParseException {
+        new Services().init();
+
         long currTime = System.currentTimeMillis();
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
 
@@ -138,8 +145,11 @@ public class TestLogStreamer extends XTestCase {
         // Test for the log retrieval of the job that began 10 hours before and ended 5 hours before current time
         // respectively
         StringWriter sw = new StringWriter();
+        xf = new XLogFilter();
+        xf.setLogLevel("DEBUG|INFO");
+        xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 10 * 3600000), new Date(currTime - 5 * 3600000), 4096);
+        str.streamLog(sw, DateUtils.parseDateOozieTZ("2009-06-24T02:43Z"), new Date(currTime - 5 * 3600000), 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -156,6 +166,9 @@ public class TestLogStreamer extends XTestCase {
         // Test to check if the null values for startTime and endTime are translated to 0 and current time respectively
         // and corresponding log content is retrieved properly
         StringWriter sw1 = new StringWriter();
+        xf = new XLogFilter();
+        xf.setLogLevel("DEBUG|INFO");
+        xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str1 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         str1.streamLog(sw1, null, null, 4096);
         out = sw1.toString().split("\n");
@@ -173,19 +186,20 @@ public class TestLogStreamer extends XTestCase {
         assertEquals(true, out[7].contains("_L7_"));
     }
 
-    public void testStreamLogMultipleHours() throws IOException {
-
+    public void testStreamLogMultipleHours() throws IOException, CommandException, ServiceException {
+        new Services().init();
         long currTime = System.currentTimeMillis();
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
+
 
         // Test to check if all gz log files in the range jobStartTime-currentTime are retrieved
         String outFilename = "oozie.log-2012-04-24-19.gz";
@@ -220,6 +234,9 @@ public class TestLogStreamer extends XTestCase {
 
         // Test for the log retrieval of the job spanning multiple hours
         StringWriter sw2 = new StringWriter();
+        xf = new XLogFilter();
+        xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
+        xf.setLogLevel("DEBUG|INFO");
         XLogStreamer str2 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         Calendar calendarEntry = Calendar.getInstance();
         // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January), and end time is current time
@@ -239,16 +256,17 @@ public class TestLogStreamer extends XTestCase {
         assertEquals(true, out[4].contains("_L23_"));
     }
 
-    public void testStreamLogNoDash() throws IOException {
+    public void testStreamLogNoDash() throws IOException, CommandException, ServiceException {
+        new Services().init();
         long currTime = System.currentTimeMillis();
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|INFO");
 
@@ -272,8 +290,12 @@ public class TestLogStreamer extends XTestCase {
         f1.setLastModified(currTime);
 
         StringWriter sw = new StringWriter();
+        xf = new XLogFilter();
+        xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
+        xf.setLogLevel("DEBUG|INFO");
+
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, new Date(currTime - 5000), new Date(currTime + 5000), 4096);
+        str.streamLog(sw, null, null, 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
         // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering

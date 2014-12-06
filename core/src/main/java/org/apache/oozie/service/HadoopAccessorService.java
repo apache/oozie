@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.hadoop.io.Text;
@@ -34,6 +35,7 @@ import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.JobUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -89,7 +91,6 @@ public class HadoopAccessorService implements Service {
      * Supported filesystem schemes for namespace federation
      */
     public static final String SUPPORTED_FILESYSTEMS = CONF_PREFIX + "supported.filesystems";
-    public static final String[] DEFAULT_SUPPORTED_SCHEMES = new String[]{"hdfs","hftp","webhdfs"};
     private Set<String> supportedSchemes;
     private boolean allSchemesSupported;
 
@@ -100,7 +101,7 @@ public class HadoopAccessorService implements Service {
 
     //for testing purposes, see XFsTestCase
     public void init(Configuration conf) throws ServiceException {
-        for (String name : conf.getStringCollection(JOB_TRACKER_WHITELIST)) {
+        for (String name : ConfigurationService.getStrings(conf, JOB_TRACKER_WHITELIST)) {
             String tmp = name.toLowerCase().trim();
             if (tmp.length() == 0) {
                 continue;
@@ -108,9 +109,9 @@ public class HadoopAccessorService implements Service {
             jobTrackerWhitelist.add(tmp);
         }
         XLog.getLog(getClass()).info(
-                "JOB_TRACKER_WHITELIST :" + conf.getStringCollection(JOB_TRACKER_WHITELIST)
+                "JOB_TRACKER_WHITELIST :" + jobTrackerWhitelist.toString()
                         + ", Total entries :" + jobTrackerWhitelist.size());
-        for (String name : conf.getStringCollection(NAME_NODE_WHITELIST)) {
+        for (String name : ConfigurationService.getStrings(conf, NAME_NODE_WHITELIST)) {
             String tmp = name.toLowerCase().trim();
             if (tmp.length() == 0) {
                 continue;
@@ -118,10 +119,10 @@ public class HadoopAccessorService implements Service {
             nameNodeWhitelist.add(tmp);
         }
         XLog.getLog(getClass()).info(
-                "NAME_NODE_WHITELIST :" + conf.getStringCollection(NAME_NODE_WHITELIST)
+                "NAME_NODE_WHITELIST :" + nameNodeWhitelist.toString()
                         + ", Total entries :" + nameNodeWhitelist.size());
 
-        boolean kerberosAuthOn = conf.getBoolean(KERBEROS_AUTH_ENABLED, true);
+        boolean kerberosAuthOn = ConfigurationService.getBoolean(conf, KERBEROS_AUTH_ENABLED);
         XLog.getLog(getClass()).info("Oozie Kerberos Authentication [{0}]", (kerberosAuthOn) ? "enabled" : "disabled");
         if (kerberosAuthOn) {
             kerberosInit(conf);
@@ -140,7 +141,7 @@ public class HadoopAccessorService implements Service {
         preLoadActionConfigs(conf);
 
         supportedSchemes = new HashSet<String>();
-        String[] schemesFromConf = conf.getStrings(SUPPORTED_FILESYSTEMS, DEFAULT_SUPPORTED_SCHEMES);
+        String[] schemesFromConf = ConfigurationService.getStrings(conf, SUPPORTED_FILESYSTEMS);
         if(schemesFromConf != null) {
             for (String scheme: schemesFromConf) {
                 scheme = scheme.trim();
@@ -159,12 +160,11 @@ public class HadoopAccessorService implements Service {
 
     private void kerberosInit(Configuration serviceConf) throws ServiceException {
             try {
-                String keytabFile = serviceConf.get(KERBEROS_KEYTAB,
-                                                    System.getProperty("user.home") + "/oozie.keytab").trim();
+                String keytabFile = ConfigurationService.get(serviceConf, KERBEROS_KEYTAB).trim();
                 if (keytabFile.length() == 0) {
                     throw new ServiceException(ErrorCode.E0026, KERBEROS_KEYTAB);
                 }
-                String principal = serviceConf.get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+                String principal = ConfigurationService.get(serviceConf, KERBEROS_PRINCIPAL);
                 if (principal.length() == 0) {
                     throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
                 }
@@ -184,7 +184,7 @@ public class HadoopAccessorService implements Service {
     }
 
     private static final String[] HADOOP_CONF_FILES =
-        {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml", "hadoop-site.xml"};
+        {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml", "hadoop-site.xml", "ssl-client.xml"};
 
 
     private Configuration loadHadoopConf(File dir) throws IOException {
@@ -234,7 +234,8 @@ public class HadoopAccessorService implements Service {
 
     private void loadHadoopConfigs(Configuration serviceConf) throws ServiceException {
         try {
-            Map<String, File> map = parseConfigDirs(serviceConf.getStrings(HADOOP_CONFS, "*=hadoop-conf"), "hadoop");
+            Map<String, File> map = parseConfigDirs(ConfigurationService.getStrings(serviceConf, HADOOP_CONFS),
+                    "hadoop");
             for (Map.Entry<String, File> entry : map.entrySet()) {
                 hadoopConfigs.put(entry.getKey(), loadHadoopConf(entry.getValue()));
             }
@@ -249,7 +250,7 @@ public class HadoopAccessorService implements Service {
 
     private void preLoadActionConfigs(Configuration serviceConf) throws ServiceException {
         try {
-            actionConfigDirs = parseConfigDirs(serviceConf.getStrings(ACTION_CONFS, "*=hadoop-conf"), "action");
+            actionConfigDirs = parseConfigDirs(ConfigurationService.getStrings(serviceConf, ACTION_CONFS), "action");
             for (String hostport : actionConfigDirs.keySet()) {
                 actionConfigs.put(hostport, new ConcurrentHashMap<String, XConfiguration>());
             }
@@ -460,7 +461,7 @@ public class HadoopAccessorService implements Service {
         if (uri != null) {
             uri = uri.toLowerCase().trim();
             if (whitelist.size() > 0 && !whitelist.contains(uri)) {
-                throw new HadoopAccessorException(error, uri);
+                throw new HadoopAccessorException(error, uri, whitelist);
             }
         }
     }
@@ -513,13 +514,9 @@ public class HadoopAccessorService implements Service {
         try {
             UserGroupInformation ugi = getUGI(user);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
                 public Void run() throws Exception {
-                    Configuration defaultConf = new Configuration();
-                    XConfiguration.copy(conf, defaultConf);
-                    //Doing this NOP add first to have the FS created and cached
-                    DistributedCache.addFileToClassPath(file, defaultConf);
-
-                    DistributedCache.addFileToClassPath(file, conf);
+                    JobUtils.addFileToClassPath(file, conf, null);
                     return null;
                 }
             });

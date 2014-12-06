@@ -15,14 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.command.coord;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+package org.apache.oozie.command.coord;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
@@ -39,33 +33,43 @@ import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Materialize actions for specified start and end time for coordinator job.
  */
 @SuppressWarnings("deprecation")
 public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCommand {
-    private static final int LOOKAHEAD_WINDOW = 300; // We look ahead 5 minutes for materialization;
+
     private JPAService jpaService = null;
     private CoordinatorJobBean coordJob = null;
     private String jobId = null;
@@ -74,6 +78,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     private final int materializationWindow;
     private int lastActionNumber = 1; // over-ride by DB value
     private CoordinatorJob.Status prevStatus = null;
+
+    static final private int lookAheadWindow = ConfigurationService.getInt(CoordMaterializeTriggerService
+            .CONF_LOOKUP_INTERVAL);
+
     /**
      * Default MAX timeout in minutes, after which coordinator input check will timeout
      */
@@ -89,6 +97,16 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         super("coord_mater", "coord_mater", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
         this.materializationWindow = materializationWindow;
+    }
+
+    public CoordMaterializeTransitionXCommand(CoordinatorJobBean coordJob, int materializationWindow, Date startTime,
+                                              Date endTime) {
+        super("coord_mater", "coord_mater", 1);
+        this.jobId = ParamChecker.notEmpty(coordJob.getId(), "jobId");
+        this.materializationWindow = materializationWindow;
+        this.coordJob = coordJob;
+        this.startMatdTime = startTime;
+        this.endMatdTime = endTime;
     }
 
     /* (non-Javadoc)
@@ -120,6 +138,15 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     if (EventHandlerService.isEnabled()) {
                         CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
                     }
+
+                    // TODO: time 100s should be configurable
+                    queue(new CoordActionNotificationXCommand(coordAction), 100);
+
+                    //Delay for input check = (nominal time - now)
+                    long checkDelay = coordAction.getNominalTime().getTime() - new Date().getTime();
+                    queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
+                        Math.max(checkDelay, 0));
+
                     if (coordAction.getPushMissingDependencies() != null) {
                         // TODO: Delay in catchup mode?
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
@@ -166,7 +193,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // calculate start materialize and end materialize time
         calcMatdTime();
 
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     /**
@@ -186,6 +213,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         startMatdTime = DateUtils.toDate(new Timestamp(startTimeMilli));
         endMatdTime = DateUtils.toDate(new Timestamp(endTimeMilli));
+        endMatdTime = getMaterializationTimeForCatchUp(endMatdTime);
         // if MaterializationWindow end time is greater than endTime
         // for job, then set it to endTime of job
         Date jobEndTime = coordJob.getEndTime();
@@ -195,6 +223,59 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end=" + DateUtils.formatDateOozieTZ(endMatdTime)
                 + ", window=" + materializationWindow);
+    }
+
+    /**
+     * Get materialization for window for catch-up jobs. for current jobs,it reruns currentMatdate, For catch-up, end
+     * Mataterilized Time = startMatdTime + MatThrottling * frequency; unless LAST_ONLY execution order is set, in which
+     * case it returns now (to materialize all actions in the past)
+     *
+     * @param currentMatTime
+     * @return
+     * @throws CommandException
+     * @throws JDOMException
+     */
+    private Date getMaterializationTimeForCatchUp(Date currentMatTime) throws CommandException {
+        if (currentMatTime.after(new Date())) {
+            return currentMatTime;
+        }
+        if (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) ||
+                coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE)) {
+            return new Date();
+        }
+        int frequency = 0;
+        try {
+            frequency = Integer.parseInt(coordJob.getFrequency());
+        }
+        catch (NumberFormatException e) {
+            return currentMatTime;
+        }
+
+        TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
+        TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+        Calendar startInstance = Calendar.getInstance(appTz);
+        startInstance.setTime(startMatdTime);
+        Calendar endMatInstance = null;
+        Calendar previousInstance = startInstance;
+        for (int i = 1; i <= coordJob.getMatThrottling(); i++) {
+            endMatInstance = (Calendar) startInstance.clone();
+            endMatInstance.add(freqTU.getCalendarUnit(), i * frequency);
+            if (endMatInstance.getTime().compareTo(new Date()) >= 0) {
+                if (previousInstance.getTime().after(currentMatTime)) {
+                    return previousInstance.getTime();
+                }
+                else {
+                    return currentMatTime;
+                }
+            }
+            previousInstance = endMatInstance;
+        }
+        if (endMatInstance == null) {
+            return currentMatTime;
+        }
+        else {
+            return endMatInstance.getTime();
+        }
     }
 
     /* (non-Javadoc)
@@ -223,10 +304,19 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         if (startTime == null) {
             startTime = coordJob.getStartTimestamp();
 
-            if (startTime.after(new Timestamp(System.currentTimeMillis() + LOOKAHEAD_WINDOW * 1000))) {
+            if (startTime.after(new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000))) {
                 throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId="
                         + jobId + " job's start time is not reached yet - nothing to materialize");
             }
+        }
+
+        if (coordJob.getNextMaterializedTimestamp() != null
+                && coordJob.getNextMaterializedTimestamp().after(
+                        new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000))) {
+            throw new PreconditionException(ErrorCode.E1100, "CoordMaterializeTransitionXCommand for jobId=" + jobId
+                    + " Request is for future time. Lookup time is  "
+                    + new Timestamp(System.currentTimeMillis() + lookAheadWindow * 1000) + " mat time is "
+                    + coordJob.getNextMaterializedTimestamp());
         }
 
         if (coordJob.getLastActionTime() != null && coordJob.getLastActionTime().compareTo(coordJob.getEndTime()) >= 0) {
@@ -284,9 +374,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 throw new CommandException(ErrorCode.E1011, jex);
             }
             throw new CommandException(ErrorCode.E1012, e.getMessage(), e);
+        } finally {
+            cron.stop();
+            instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".materialize", cron);
         }
-        cron.stop();
-
     }
 
     /**
@@ -311,7 +402,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
 
         String frequency = coordJob.getFrequency();
-        TimeUnit freqTU = TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit"));
+        TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
         TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
         Calendar start = Calendar.getInstance(appTz);
         start.setTime(startMatdTime);
@@ -329,7 +420,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // Move to the End of duration, if needed.
         DateUtils.moveToEnd(origStart, endOfFlag);
 
-        Date effStart = (Date) startMatdTime.clone();
         StringBuilder actionStrings = new StringBuilder();
         Date jobPauseTime = coordJob.getPauseTime();
         Calendar pause = null;
@@ -339,49 +429,57 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         String action = null;
-        JPAService jpaService = Services.get().get(JPAService.class);
-        int numWaitingActions = jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
+        int numWaitingActions = dryrun ? 0 : jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
         int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
+        // If LAST_ONLY and all materialization is in the past, ignore maxActionsToBeCreated
+        boolean ignoreMaxActions =
+                (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) ||
+                        coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE))
+                        && endMatdTime.before(new Date());
         LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
                 + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
 
         boolean isCronFrequency = false;
 
+        Calendar effStart = (Calendar) start.clone();
         try {
-            Integer.parseInt(coordJob.getFrequency());
-        } catch (NumberFormatException e) {
+            int intFrequency = Integer.parseInt(coordJob.getFrequency());
+            effStart = (Calendar) origStart.clone();
+            effStart.add(freqTU.getCalendarUnit(), lastActionNumber * intFrequency);
+        }
+        catch (NumberFormatException e) {
             isCronFrequency = true;
         }
 
         boolean firstMater = true;
-        while (start.compareTo(end) < 0 && maxActionToBeCreated-- > 0) {
-            if (pause != null && start.compareTo(pause) >= 0) {
+        while (effStart.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+            if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
             }
 
-            Date nextTime = start.getTime();
+            Date nextTime = effStart.getTime();
 
             if (isCronFrequency) {
-                if (start.getTime().compareTo(startMatdTime) == 0 && firstMater) {
-                    start.add(Calendar.MINUTE, -1);
+                if (effStart.getTime().compareTo(startMatdTime) == 0 && firstMater) {
+                    effStart.add(Calendar.MINUTE, -1);
                     firstMater = false;
                 }
 
-                nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(start.getTime(), coordJob);
-                start.setTime(nextTime);
+                nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob);
+                effStart.setTime(nextTime);
             }
 
-            if (start.compareTo(end) < 0) {
+            if (effStart.compareTo(end) < 0) {
 
-                if (pause != null && start.compareTo(pause) >= 0) {
+                if (pause != null && effStart.compareTo(pause) >= 0) {
                     break;
                 }
                 CoordinatorActionBean actionBean = new CoordinatorActionBean();
                 lastActionNumber++;
 
                 int timeout = coordJob.getTimeout();
-                LOG.debug("Materializing action for time=" + DateUtils.formatDateOozieTZ(start.getTime()) + ", lastactionnumber=" + lastActionNumber
-                        + " timeout=" + timeout + " minutes");
+                LOG.debug("Materializing action for time=" + DateUtils.formatDateOozieTZ(effStart.getTime())
+                        + ", lastactionnumber=" + lastActionNumber + " timeout=" + timeout + " minutes");
                 Date actualTime = new Date();
                 action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                         nextTime, actualTime, lastActionNumber, jobConf, actionBean);
@@ -401,12 +499,22 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             }
 
             if (!isCronFrequency) {
-                start = (Calendar) origStart.clone();
-                start.add(freqTU.getCalendarUnit(), lastActionNumber * Integer.parseInt(coordJob.getFrequency()));
+                effStart = (Calendar) origStart.clone();
+                effStart.add(freqTU.getCalendarUnit(), lastActionNumber * Integer.parseInt(coordJob.getFrequency()));
             }
         }
 
-        endMatdTime = start.getTime();
+        if (isCronFrequency) {
+            if (effStart.compareTo(end) < 0 && !(ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+                //Since we exceed the throttle, we need to move the nextMadtime forward
+                //to avoid creating duplicate actions
+                if (!firstMater) {
+                    effStart.setTime(CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob));
+                }
+            }
+        }
+
+        endMatdTime = effStart.getTime();
 
         if (!dryrun) {
             return action;
@@ -423,10 +531,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         insertList.add(actionBean);
         writeActionSlaRegistration(actionXml, actionBean);
-
-        // TODO: time 100s should be configurable
-        queue(new CoordActionNotificationXCommand(actionBean), 100);
-        queue(new CoordActionInputCheckXCommand(actionBean.getId(), actionBean.getJobId()), 100);
     }
 
     private void writeActionSlaRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {

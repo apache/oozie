@@ -15,12 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.executor.jpa;
 
-import java.util.ArrayList;
-import java.util.List;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
+package org.apache.oozie.executor.jpa;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -32,6 +28,9 @@ import org.apache.oozie.command.SkipCommitFaultInjection;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestCoordJobsDeleteJPAExecutor extends XDataTestCase {
     Services services;
@@ -75,11 +74,20 @@ public class TestCoordJobsDeleteJPAExecutor extends XDataTestCase {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
-        List<String> deleteList = new ArrayList<String>();
-        deleteList.add(jobA.getId());
-        deleteList.add(jobB.getId());
-        deleteList.add(jobC.getId());
-        jpaService.execute(new CoordJobsDeleteJPAExecutor(deleteList));
+        List<String> deleteCoordlist = new ArrayList<String>();
+        deleteCoordlist.add(jobA.getId());
+        deleteCoordlist.add(jobB.getId());
+        deleteCoordlist.add(jobC.getId());
+        jpaService.execute(new CoordJobsDeleteJPAExecutor(deleteCoordlist));
+
+        List<String> deleteActionList = new ArrayList<String>();
+        deleteActionList.add(actionA1.getId());
+        deleteActionList.add(actionB1.getId());
+        deleteActionList.add(actionC1.getId());
+        deleteActionList.add(actionA2.getId());
+        deleteActionList.add(actionB2.getId());
+        deleteActionList.add(actionC2.getId());
+        jpaService.execute(new CoordActionsDeleteJPAExecutor(deleteActionList));
 
         try {
             jpaService.execute(new CoordJobGetJPAExecutor(jobA.getId()));
@@ -181,13 +189,22 @@ public class TestCoordJobsDeleteJPAExecutor extends XDataTestCase {
             setSystemProperty(FaultInjection.FAULT_INJECTION, "true");
             setSystemProperty(SkipCommitFaultInjection.ACTION_FAILOVER_FAULT_INJECTION, "true");
 
-            List<String> deleteList = new ArrayList<String>();
-            deleteList.add(jobA.getId());
-            deleteList.add(jobB.getId());
-            deleteList.add(jobC.getId());
+            List<String> deleteCoordlist = new ArrayList<String>();
+            deleteCoordlist.add(jobA.getId());
+            deleteCoordlist.add(jobB.getId());
+            deleteCoordlist.add(jobC.getId());
+
+            List<String> deleteActionList = new ArrayList<String>();
+            deleteActionList.add(actionA1.getId());
+            deleteActionList.add(actionB1.getId());
+            deleteActionList.add(actionC1.getId());
+            deleteActionList.add(actionA2.getId());
+            deleteActionList.add(actionB2.getId());
+            deleteActionList.add(actionC2.getId());
 
             try {
-                jpaService.execute(new CoordJobsDeleteJPAExecutor(deleteList));
+                jpaService.execute(new CoordJobsDeleteJPAExecutor(deleteCoordlist));
+                jpaService.execute(new CoordActionsDeleteJPAExecutor(deleteActionList));
                 fail("Should have skipped commit for failover testing");
             }
             catch (RuntimeException re) {

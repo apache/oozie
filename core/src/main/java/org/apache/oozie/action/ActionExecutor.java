@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -22,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -227,12 +229,11 @@ public abstract class ActionExecutor {
      * Create an action executor.
      *
      * @param type action executor type.
-     * @param retryAttempts retry attempts.
      * @param retryInterval retry interval, in seconds.
      */
     protected ActionExecutor(String type, long retryInterval) {
         this.type = ParamChecker.notEmpty(type, "type");
-        this.maxRetries = getOozieConf().getInt(MAX_RETRIES, 3);
+        this.maxRetries = ConfigurationService.getInt(MAX_RETRIES);
         this.retryInterval = retryInterval;
     }
 

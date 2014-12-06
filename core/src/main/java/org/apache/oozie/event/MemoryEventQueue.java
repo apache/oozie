@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.event;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.event.Event;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.util.XLog;
 
@@ -43,9 +45,9 @@ public class MemoryEventQueue implements EventQueue {
     @Override
     public void init(Configuration conf) {
         eventQueue = new ConcurrentLinkedQueue<EventQueueElement>();
-        maxSize = conf.getInt(EventHandlerService.CONF_QUEUE_SIZE, 10000);
+        maxSize = ConfigurationService.getInt(conf, EventHandlerService.CONF_QUEUE_SIZE);
         currentSize = new AtomicInteger();
-        batchSize = conf.getInt(EventHandlerService.CONF_BATCH_SIZE, 10);
+        batchSize = ConfigurationService.getInt(conf, EventHandlerService.CONF_BATCH_SIZE);
         LOG = XLog.getLog(getClass());
         LOG.info("Memory Event Queue initialized with Max size = [{0}], Batch drain size = [{1}]", maxSize, batchSize);
     }

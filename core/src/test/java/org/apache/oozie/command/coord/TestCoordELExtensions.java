@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
  package org.apache.oozie.command.coord;
 
 import java.io.File;
@@ -55,10 +56,10 @@ public class TestCoordELExtensions extends XDataTestCase {
         Date startTime = DateUtils.parseDateUTC("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateUTC("2009-03-07T12:00Z");
         CoordinatorJobBean job = createCoordJob("coord-job-for-elext.xml",
-                CoordinatorJob.Status.PREMATER, startTime, endTime, false, false, 0);
+                CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
         addRecordToCoordJobTable(job);
 
-        new CoordActionMaterializeCommand(job.getId(), startTime, endTime).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         checkCoordAction(job.getId() + "@1");
     }
 

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.io.IOException;
@@ -154,7 +155,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
         sleep(2000);
 
         List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
-                BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, job.getId());
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
 
         assertEquals(2, actions.size());
         assertNotNull(actions.get(0).getCoordId());
@@ -165,7 +166,7 @@ public class TestBundleJobSuspendXCommand extends XDataTestCase {
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(Job.Status.SUSPENDED, job.getStatus());
 
-        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE,
+        actions = BundleActionQueryExecutor.getInstance().getList(BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE,
                 job.getId());
 
         assertEquals(true, actions.get(0).isPending());

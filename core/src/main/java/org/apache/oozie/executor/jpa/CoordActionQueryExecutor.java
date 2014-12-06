@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -29,8 +30,6 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor that provides API to run query for Coordinator Action
@@ -48,26 +47,19 @@ public class CoordActionQueryExecutor extends
         UPDATE_COORD_ACTION_FOR_MODIFIED_DATE,
         UPDATE_COORD_ACTION_RERUN,
         GET_COORD_ACTION,
+        GET_COORD_ACTION_STATUS,
         GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID,
-        GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME
+        GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME,
+        GET_COORD_ACTIONS_STATUS_UNIGNORED,
+        GET_COORD_ACTIONS_PENDING_COUNT
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
-    private static JPAService jpaService;
 
     private CoordActionQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<CoordinatorActionBean, CoordActionQueryExecutor.CoordActionQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for testcase as
-            // they reinstantiate JPAService everytime
-            instance = new CoordActionQueryExecutor();
-        }
         return CoordActionQueryExecutor.instance;
     }
 
@@ -157,6 +149,8 @@ public class CoordActionQueryExecutor extends
                 query.setParameter("runConf", actionBean.getRunConfBlob());
                 query.setParameter("missingDependencies", actionBean.getMissingDependenciesBlob());
                 query.setParameter("pushMissingDependencies", actionBean.getPushMissingDependenciesBlob());
+                query.setParameter("errorCode", actionBean.getErrorCode());
+                query.setParameter("errorMessage", actionBean.getErrorMessage());
                 query.setParameter("id", actionBean.getId());
                 break;
 
@@ -174,11 +168,19 @@ public class CoordActionQueryExecutor extends
         CoordActionQuery caQuery = (CoordActionQuery) namedQuery;
         switch (caQuery) {
             case GET_COORD_ACTION:
+            case GET_COORD_ACTION_STATUS:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
                 query.setParameter("lastModifiedTime", new Timestamp(((Date) parameters[0]).getTime()));
                 break;
+            case GET_COORD_ACTIONS_STATUS_UNIGNORED:
+                query.setParameter("jobId", parameters[0]);
+                break;
+            case GET_COORD_ACTIONS_PENDING_COUNT:
+                query.setParameter("jobId", parameters[0]);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + caQuery.name());
@@ -188,6 +190,7 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public int executeUpdate(CoordActionQuery namedQuery, CoordinatorActionBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -196,18 +199,21 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public CoordinatorActionBean get(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        CoordinatorActionBean bean = (CoordinatorActionBean) jpaService.executeGet(namedQuery.name(), query, em);
-        if (bean == null) {
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
             throw new JPAExecutorException(ErrorCode.E0605, query.toString());
         }
+        CoordinatorActionBean bean = constructBean(namedQuery, ret);
         return bean;
     }
 
     @Override
     public List<CoordinatorActionBean> getList(CoordActionQuery namedQuery, Object... parameters)
             throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -222,11 +228,26 @@ public class CoordActionQueryExecutor extends
 
     private CoordinatorActionBean constructBean(CoordActionQuery namedQuery, Object ret) throws JPAExecutorException {
         CoordinatorActionBean bean;
+        Object[] arr;
         switch (namedQuery) {
+            case GET_COORD_ACTION:
+                bean = (CoordinatorActionBean) ret;
+                break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
                 bean = new CoordinatorActionBean();
                 bean.setJobId((String) ret);
                 break;
+            case GET_COORD_ACTION_STATUS:
+                bean = new CoordinatorActionBean();
+                bean.setStatusStr((String)ret);
+                break;
+            case GET_COORD_ACTIONS_STATUS_UNIGNORED:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setStatusStr((String)arr[0]);
+                bean.setPending((Integer)arr[1]);
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
                         + namedQuery.name());
@@ -234,11 +255,15 @@ public class CoordActionQueryExecutor extends
         return bean;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
+    @Override
+    public Object getSingleValue(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
+            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
+        return ret;
     }
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import java.io.File;
@@ -67,12 +68,12 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
         assertEquals("localoozie", client.getOozieUrl());
     }
 
-    public void testGetProtocolUrl() throws OozieClientException {
+    public void testGetProtocolUrl() throws IOException, OozieClientException {
         OozieClient client = LocalOozie.getCoordClient();
         assertEquals("localoozie", client.getProtocolUrl());
     }
 
-    public void testValidateWSVersion() throws OozieClientException {
+    public void testValidateWSVersion() throws IOException, OozieClientException {
         OozieClient client = LocalOozie.getCoordClient();
         client.validateWSVersion();
     }

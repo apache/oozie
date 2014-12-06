@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import javax.persistence.EntityManager;
@@ -44,7 +45,7 @@ public class TestSLARegistrationQueryExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testGetQuery() throws Exception {
+    public void testGetUpdateQuery() throws Exception {
         EntityManager em = jpaService.getEntityManager();
         SLARegistrationBean bean = addRecordToSLARegistrationTable("test-application", SLAStatus.MET);
 
@@ -69,11 +70,56 @@ public class TestSLARegistrationQueryExecutor extends XDataTestCase {
         em.close();
     }
 
-    public void testExecuteUpdate() throws Exception {
-        // TODO
+    public void testGetSelectQuery() throws Exception {
+        EntityManager em = jpaService.getEntityManager();
+        SLARegistrationBean bean = addRecordToSLARegistrationTable("test-application", SLAStatus.MET);
+        // GET_SLA_REG_ALL
+        Query query = SLARegistrationQueryExecutor.getInstance().getSelectQuery(SLARegQuery.GET_SLA_REG_ALL, em,
+                bean.getId());
+        assertEquals(query.getParameterValue("id"), bean.getId());
+
+        // GET_WORKFLOW_SUSPEND
+        query = SLARegistrationQueryExecutor.getInstance().getSelectQuery(SLARegQuery.GET_SLA_REG_ON_RESTART, em,
+                bean.getId());
+        assertEquals(query.getParameterValue("id"), bean.getId());
     }
 
     public void testGet() throws Exception {
+
+        SLARegistrationBean bean = addRecordToSLARegistrationTable("test-application", SLAStatus.MET);
+        //GET_SLA_REG_ON_RESTART
+        SLARegistrationBean retBean = SLARegistrationQueryExecutor.getInstance().get(
+                SLARegQuery.GET_SLA_REG_ON_RESTART, bean.getId());
+        assertEquals(bean.getJobData(), retBean.getJobData());
+        assertEquals(bean.getSlaConfig(), retBean.getSlaConfig());
+        assertEquals(bean.getUpstreamApps(), retBean.getUpstreamApps());
+        assertEquals(bean.getNotificationMsg(), retBean.getNotificationMsg());
+        assertNull(retBean.getAppName());
+        assertNull(retBean.getExpectedEnd());
+        assertNull(retBean.getExpectedStart());
+        assertNull(retBean.getCreatedTime());
+        assertNull(retBean.getNominalTime());
+        assertNull(retBean.getUser());
+        assertNull(retBean.getParentId());
+        //GET_SLA_REG_ALL
+        retBean = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, bean.getId());
+        assertEquals(bean.getId(), retBean.getId());
+        assertEquals(bean.getAppName(), retBean.getAppName());
+        assertEquals(bean.getAppType(), retBean.getAppType());
+        assertEquals(bean.getExpectedDuration(), retBean.getExpectedDuration());
+        assertEquals(bean.getExpectedStart().getTime(), retBean.getExpectedStart().getTime());
+        assertEquals(bean.getExpectedEnd().getTime(), retBean.getExpectedEnd().getTime());
+        assertEquals(bean.getCreatedTime().getTime(), retBean.getCreatedTime().getTime());
+        assertEquals(bean.getNominalTime().getTime(), retBean.getNominalTime().getTime());
+        assertEquals(bean.getNotificationMsg(), retBean.getNotificationMsg());
+        assertEquals(bean.getJobData(), retBean.getJobData());
+        assertEquals(bean.getParentId(), retBean.getParentId());
+        assertEquals(bean.getSlaConfig(), retBean.getSlaConfig());
+        assertEquals(bean.getUpstreamApps(), retBean.getUpstreamApps());
+        assertEquals(bean.getUser(), retBean.getUser());
+}
+
+    public void testExecuteUpdate() throws Exception {
         // TODO
     }
 

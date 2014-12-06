@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLogStreamer;
@@ -32,6 +34,7 @@ import java.util.Date;
 public class XLogStreamingService implements Service, Instrumentable {
     private static final String CONF_PREFIX = Service.CONF_PREFIX + "XLogStreamingService.";
     public static final String STREAM_BUFFER_LEN = CONF_PREFIX + "buffer.len";
+
     protected int bufferLen;
 
     /**
@@ -41,7 +44,7 @@ public class XLogStreamingService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log streaming service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        bufferLen = services.getConf().getInt(STREAM_BUFFER_LEN, 4096);
+        bufferLen = ConfigurationService.getInt(services.getConf(), STREAM_BUFFER_LEN);
     }
 
     /**
@@ -78,7 +81,7 @@ public class XLogStreamingService implements Service, Instrumentable {
      * @param params additional parameters from the request
      * @throws IOException thrown if the log cannot be streamed.
      */
-    public void streamLog(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+    public void streamLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
             throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         if (xLogService.getLogOverWS()) {
@@ -88,7 +91,6 @@ public class XLogStreamingService implements Service, Instrumentable {
         else {
             writer.write("Log streaming disabled!!");
         }
-
     }
 
     public int getBufferLen() {

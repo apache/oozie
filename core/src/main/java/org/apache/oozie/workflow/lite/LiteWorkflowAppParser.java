@@ -15,9 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.workflow.lite;
 
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -28,6 +31,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -152,12 +156,13 @@ public class LiteWorkflowAppParser {
 
             Element wfDefElement = XmlUtils.parseXml(strDef);
             ParameterVerifier.verifyParameters(jobConf, wfDefElement);
-            LiteWorkflowApp app = parse(strDef, wfDefElement, configDefault);
+            LiteWorkflowApp app = parse(strDef, wfDefElement, configDefault, jobConf);
             Map<String, VisitStatus> traversed = new HashMap<String, VisitStatus>();
             traversed.put(app.getNode(StartNodeDef.START).getName(), VisitStatus.VISITING);
             validate(app, app.getNode(StartNodeDef.START), traversed);
             //Validate whether fork/join are in pair or not
-            if (jobConf.getBoolean(WF_VALIDATE_FORK_JOIN, true) && Services.get().getConf().getBoolean(VALIDATE_FORK_JOIN, true)) {
+            if (jobConf.getBoolean(WF_VALIDATE_FORK_JOIN, true)
+                    && ConfigurationService.getBoolean(VALIDATE_FORK_JOIN)) {
                 validateForkJoin(app);
             }
             return app;
@@ -376,11 +381,14 @@ public class LiteWorkflowAppParser {
      *
      * @param strDef
      * @param root
+     * @param configDefault
+     * @param jobConf
      * @return LiteWorkflowApp
      * @throws WorkflowException
      */
     @SuppressWarnings({"unchecked"})
-    private LiteWorkflowApp parse(String strDef, Element root, Configuration configDefault) throws WorkflowException {
+    private LiteWorkflowApp parse(String strDef, Element root, Configuration configDefault, Configuration jobConf)
+            throws WorkflowException {
         Namespace ns = root.getNamespace();
         LiteWorkflowApp def = null;
         Element global = null;
@@ -451,6 +459,18 @@ public class LiteWorkflowAppParser {
                                         String credStr = eNode.getAttributeValue(CRED_A);
                                         String userRetryMaxStr = eNode.getAttributeValue(USER_RETRY_MAX_A);
                                         String userRetryIntervalStr = eNode.getAttributeValue(USER_RETRY_INTERVAL_A);
+                                        try {
+                                            if (!StringUtils.isEmpty(userRetryMaxStr)) {
+                                                userRetryMaxStr = ELUtils.resolveAppName(userRetryMaxStr, jobConf);
+                                            }
+                                            if (!StringUtils.isEmpty(userRetryIntervalStr)) {
+                                                userRetryIntervalStr = ELUtils.resolveAppName(userRetryIntervalStr,
+                                                        jobConf);
+                                            }
+                                        }
+                                        catch (Exception e) {
+                                            throw new WorkflowException(ErrorCode.E0703, e.getMessage());
+                                        }
 
                                         String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                                         def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,
@@ -610,21 +630,20 @@ public class LiteWorkflowAppParser {
                 }
             }
             try {
-                XConfiguration actionConf;
-                Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
-                if (actionConfiguration == null) {
-                    actionConf = new XConfiguration();
-                }
-                else {
-                    actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(actionConfiguration)
-                            .toString()));
-                }
+                XConfiguration actionConf = new XConfiguration();
+                if (configDefault != null)
+                    XConfiguration.copy(configDefault, actionConf);
                 if (globalConfiguration != null) {
                     Configuration globalConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(
                             globalConfiguration).toString()));
-                    XConfiguration.injectDefaults(globalConf, actionConf);
+                    XConfiguration.copy(globalConf, actionConf);
                 }
-                XConfiguration.injectDefaults(configDefault, actionConf);
+                Element actionConfiguration = eActionConf.getChild("configuration", actionNs);
+                if (actionConfiguration != null) {
+                    //copy and override
+                    XConfiguration.copy(new XConfiguration(new StringReader(XmlUtils.prettyPrint(
+                            actionConfiguration).toString())), actionConf);
+                }
                 int position = eActionConf.indexOf(actionConfiguration);
                 eActionConf.removeContent(actionConfiguration); //replace with enhanced one
                 Element eConfXml = XmlUtils.parseXml(actionConf.toXmlString(false));

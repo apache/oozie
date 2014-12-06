@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
 import javax.persistence.Basic;
@@ -288,10 +287,9 @@ public class SLARegistrationBean implements JsonBean {
 
     private void slaConfigStringToMap() {
         if (slaConfig != null) {
-            StringTokenizer st = new StringTokenizer(slaConfig, "},");
-            while (st.hasMoreTokens()) {
-                String token = st.nextToken();
-                String[] pair = token.split("=");
+            String[] splitString = slaConfig.split("},");
+            for (String config : splitString) {
+                String[] pair = config.split("=");
                 if (pair.length == 2) {
                     slaConfigMap.put(pair[0].substring(1), pair[1]);
                 }

@@ -22,11 +22,15 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-webapp</artifactId>
+<<<<<<< HEAD
     <version>4.0.0-cdh5.1.2</version>
+=======
+    <version>4.2.0-SNAPSHOT</version>
+>>>>>>> origin/master
     <description>Apache Oozie WebApp</description>
     <name>Apache Oozie WebApp</name>
     <packaging>war</packaging>
@@ -114,10 +118,12 @@
             <scope>provided</scope>
          </dependency>
 
+        <!-- All oozie sharelib has to be part of webapp, so that ShareLibService can copy all systemlib
+        jars when "oozie.action.ship.launcher.jar" is set to true -->
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-oozie</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -128,7 +134,31 @@
 
         <dependency>
             <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-spark</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-distcp</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-sharelib-hive2</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -175,7 +205,8 @@
                         <configuration>
                             <includeArtifactIds>
                                 oozie-sharelib-pig,oozie-sharelib-hive,oozie-sharelib-sqoop,oozie-sharelib-streaming,
-                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp
+                                oozie-sharelib-oozie,oozie-sharelib-hcatalog,oozie-sharelib-distcp,oozie-sharelib-hive2,
+                                oozie-sharelib-spark
                             </includeArtifactIds>
                             <excludeTransitive>true</excludeTransitive>
                             <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>

@@ -26,7 +26,7 @@
 
     <property>
         <name>oozie.output.compression.codec</name>
-        <value>NONE</value>
+        <value>gz</value>
         <description>
             The name of the compression codec to use.
             The implementation class for the codec needs to be specified through another property oozie.compression.codecs.
@@ -98,14 +98,14 @@
         <value>
             org.apache.oozie.service.SchedulerService,
             org.apache.oozie.service.InstrumentationService,
-            org.apache.oozie.service.CallableQueueService,
+            org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
             org.apache.oozie.service.AuthorizationService,
             org.apache.oozie.service.UserGroupInformationService,
             org.apache.oozie.service.HadoopAccessorService,
+            org.apache.oozie.service.JobsConcurrencyService,
             org.apache.oozie.service.URIHandlerService,
-            org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.DagXLogInfoService,
             org.apache.oozie.service.SchemaService,
             org.apache.oozie.service.LiteWorkflowAppService,
@@ -117,6 +117,7 @@
             org.apache.oozie.service.CallbackService,
             org.apache.oozie.service.ActionService,
             org.apache.oozie.service.ShareLibService,
+            org.apache.oozie.service.CallableQueueService,
             org.apache.oozie.service.ActionCheckerService,
             org.apache.oozie.service.RecoveryService,
             org.apache.oozie.service.PurgeService,
@@ -129,7 +130,7 @@
             org.apache.oozie.service.GroupsService,
             org.apache.oozie.service.ProxyUserService,
             org.apache.oozie.service.XLogStreamingService,
-            org.apache.oozie.service.JobsConcurrencyService
+            org.apache.oozie.service.JvmPauseMonitorService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -221,6 +222,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.ConfigurationService.verify.available.properties</name>
+        <value>true</value>
+        <description>
+            Specifies whether the available configurations check is enabled or not.
+        </description>
+    </property>
+
     <!-- SchedulerService -->
 
     <property>
@@ -284,6 +293,16 @@
         <value>7</value>
         <description>
             Completed bundle jobs older than this value, in days, will be purged by the PurgeService.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.PurgeService.purge.old.coord.action</name>
+        <value>false</value>
+        <description>
+            Whether to purge completed workflows and their corresponding coordinator actions
+            of long running coordinator jobs if the completed workflow jobs are older than the value
+            specified in oozie.service.PurgeService.older.than.
         </description>
     </property>
     
@@ -408,21 +427,32 @@
 
     <!--  CoordMaterializeTriggerService -->
 
-	<property>
-		<name>oozie.service.CoordMaterializeTriggerService.lookup.interval
-		</name>
-		<value>300</value>
-		<description> Coordinator Job Lookup trigger command is scheduled at
-			this "interval" (in seconds).</description>
-	</property>
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.lookup.interval
+        </name>
+        <value>300</value>
+        <description> Coordinator Job Lookup interval.(in seconds).
+        </description>
+    </property>
 
-	<property>
-		<name>oozie.service.CoordMaterializeTriggerService.materialization.window
-		</name>
-		<value>3600</value>
-		<description> Coordinator Job Lookup command materialized each job for
-			this next "window" duration</description>
-	</property>
+    <!-- Enable this if you want different scheduling interval for CoordMaterializeTriggerService.
+    By default it will use lookup interval as scheduling interval
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.scheduling.interval
+        </name>
+        <value>300</value>
+        <description> The frequency at which the CoordMaterializeTriggerService will run.</description>
+    </property>
+    -->
+
+    <property>
+        <name>oozie.service.CoordMaterializeTriggerService.materialization.window
+        </name>
+        <value>3600</value>
+        <description> Coordinator Job Lookup command materialized each
+            job for this next "window" duration
+        </description>
+    </property>
 
     <property>
         <name>oozie.service.CoordMaterializeTriggerService.callable.batch.size</name>
@@ -442,11 +472,11 @@
     </property>
 
     <property>
-		<name>oozie.service.coord.normal.default.timeout
-		</name>
-		<value>10080</value>
-		<description>Default timeout for a coordinator action input check (in minutes) for normal job.
-            </description>
+        <name>oozie.service.coord.normal.default.timeout
+        </name>
+        <value>120</value>
+        <description>Default timeout for a coordinator action input check (in minutes) for normal job.
+            -1 means infinite timeout</description>
 	</property>
 
 	<property>
@@ -533,6 +563,24 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.ELService.ext.constants.job-submit</name>
+        <value> </value>
+        <description>
+            EL constant declarations, separated by commas, format is [PREFIX:]NAME=CLASS#CONSTANT.
+            This property is a convenience property to add extensions without having to include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.job-submit</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions without having to include all the built in ones.
+        </description>
+    </property>
+
 <!-- Workflow specifics -->
     <property>
         <name>oozie.service.ELService.constants.workflow</name>
@@ -594,6 +642,7 @@
             wf:actionTrackerUri=org.apache.oozie.DagELFunctions#wf_actionTrackerUri,
             wf:actionExternalStatus=org.apache.oozie.DagELFunctions#wf_actionExternalStatus,
             hadoop:counters=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_counters,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
             fs:exists=org.apache.oozie.action.hadoop.FsELFunctions#fs_exists,
             fs:isDir=org.apache.oozie.action.hadoop.FsELFunctions#fs_isDir,
             fs:dirSize=org.apache.oozie.action.hadoop.FsELFunctions#fs_dirSize,
@@ -698,20 +747,8 @@
             coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfDays,
             coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
-        </value>
-        <description>
-            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.ELService.functions.coord-job-wait-timeout</name>
-        <value>
-            coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
-            coord:months=org.apache.oozie.coord.CoordELFunctions#ph1_coord_months,
-            coord:hours=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hours,
-            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -726,6 +763,46 @@
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
             This property is a convenience property to add extensions to the built in executors without having to
             include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.constants.coord-job-wait-timeout</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.constants.coord-job-wait-timeout</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions without having to include all the built in ones.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.coord-job-wait-timeout</name>
+        <value>
+            coord:days=org.apache.oozie.coord.CoordELFunctions#ph1_coord_days,
+            coord:months=org.apache.oozie.coord.CoordELFunctions#ph1_coord_months,
+            coord:hours=org.apache.oozie.coord.CoordELFunctions#ph1_coord_hours,
+            coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
+        </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.ext.functions.coord-job-wait-timeout</name>
+        <value> </value>
+        <description>
+            EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+            This property is a convenience property to add extensions without having to include all the built in ones.
         </description>
     </property>
 
@@ -758,7 +835,8 @@
         <name>oozie.service.ELService.functions.coord-job-submit-nofuncs</name>
         <value>
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
-            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user
+            coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -811,7 +889,8 @@
             coord:formatTime=org.apache.oozie.coord.CoordELFunctions#ph1_coord_formatTime_echo,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
-            coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo
+            coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -870,8 +949,10 @@
             coord:dataInPartitionFilter=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionFilter_echo,
             coord:dataInPartitionMin=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionMin_echo,
             coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitionMax_echo,
+            coord:dataInPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataInPartitions_echo,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -927,7 +1008,8 @@
             coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_databaseOut_echo,
             coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph1_coord_tableOut_echo,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitions_echo,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph1_coord_dataOutPartitionValue_echo,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -983,7 +1065,8 @@
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
-            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range
+            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1039,7 +1122,8 @@
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
-            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range
+            coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1094,7 +1178,8 @@
             coord:databaseOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_databaseOut,
             coord:tableOut=org.apache.oozie.coord.HCatELFunctions#ph3_coord_tableOut,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1158,8 +1243,10 @@
             coord:dataInPartitionFilter=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionFilter,
             coord:dataInPartitionMin=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionMin,
             coord:dataInPartitionMax=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitionMax,
+            coord:dataInPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataInPartitions,
             coord:dataOutPartitions=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitions,
-            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue
+            coord:dataOutPartitionValue=org.apache.oozie.coord.HCatELFunctions#ph3_coord_dataOutPartitionValue,
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1273,7 +1360,15 @@
             DataSource to be used for connection pooling.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.service.JPAService.connection.properties</name>
+        <value> </value>
+        <description>
+            DataSource connection properties.
+        </description>
+    </property>
+
     <property>
         <name>oozie.service.JPAService.jdbc.driver</name>
         <value>org.apache.derby.jdbc.EmbeddedDriver</value>
@@ -1324,7 +1419,12 @@
 
     <property>
         <name>oozie.service.SchemaService.wf.ext.schemas</name>
-        <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
+        <value>
+            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,email-action-0.1.xsd,email-action-0.2.xsd,
+            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,sqoop-action-0.2.xsd,
+            sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,ssh-action-0.1.xsd,ssh-action-0.2.xsd,distcp-action-0.1.xsd,
+            distcp-action-0.2.xsd,oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,hive2-action-0.1.xsd,spark-action-0.1.xsd
+        </value>
         <description>
             Schemas for additional actions types.
 
@@ -1332,7 +1432,7 @@
                        if empty Configuration assumes it is NULL.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.SchemaService.coord.ext.schemas</name>
         <value>oozie-sla-0.1.xsd,oozie-sla-0.2.xsd</value>
@@ -1405,8 +1505,15 @@
             org.apache.oozie.action.hadoop.FsActionExecutor,
             org.apache.oozie.action.hadoop.MapReduceActionExecutor,
             org.apache.oozie.action.hadoop.PigActionExecutor,
+            org.apache.oozie.action.hadoop.HiveActionExecutor,
+            org.apache.oozie.action.hadoop.ShellActionExecutor,
+            org.apache.oozie.action.hadoop.SqoopActionExecutor,
+            org.apache.oozie.action.hadoop.DistcpActionExecutor,
+            org.apache.oozie.action.hadoop.Hive2ActionExecutor,
             org.apache.oozie.action.ssh.SshActionExecutor,
-            org.apache.oozie.action.oozie.SubWorkflowActionExecutor
+            org.apache.oozie.action.oozie.SubWorkflowActionExecutor,
+            org.apache.oozie.action.email.EmailActionExecutor,
+            org.apache.oozie.action.hadoop.SparkActionExecutor
         </value>
         <description>
             List of ActionExecutors classes (separated by commas).
@@ -1494,19 +1601,51 @@
         </description>
     </property>
 
+    <!-- LauncherMapper -->
+    <property>
+        <name>oozie.action.max.output.data</name>
+        <value>2048</value>
+        <description>
+            Max size in characters for output data.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.fs.glob.max</name>
+        <value>1000</value>
+        <description>
+            Maximum number of globbed files.
+        </description>
+    </property>
+
     <!-- JavaActionExecutor -->
     <!-- This is common to the subclasses of action executors for Java (e.g. map-reduce, pig, hive, java, etc) -->
 
     <property>
         <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
-        <value>false</value>
+        <value>true</value>
         <description>
-            Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1).
-            Setting oozie.launcher.mapreduce.job.ubertask.enable in a an action's configuration section overrides this for that
-            action.
+            Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1) for all action types by default.
+            This can be overridden on a per-action-type basis by setting
+            oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site.xml (where #action-type# is the action
+            type; for example, "pig").  And that can be overridden on a per-action basis by setting
+            oozie.launcher.mapreduce.job.ubertask.enable in an action's configuration section in a workflow.  In summary, the
+            priority is this:
+            1. action's configuration section in a workflow
+            2. oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site
+            3. oozie.action.launcher.mapreduce.job.ubertask.enable in oozie-site
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.action.shell.launcher.mapreduce.job.ubertask.enable</name>
+        <value>false</value>
+        <description>
+            The Shell action may have issues with the $PATH environment when using Uber Mode, and so Uber Mode is disabled by
+            default for it.  See oozie.action.launcher.mapreduce.job.ubertask.enable
+        </description>
+    </property>
+
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 
@@ -1515,24 +1654,6 @@
         <value>3</value>
         <description>
            The number of retries for executing an action in case of failure
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.hadoop.delete.hdfs.tmp.dir</name>
-        <value>false</value>
-        <description>
-            If set to true, it will delete temporary directory at the end of execution of map reduce action.
-        </description>
-    </property>
-
-    <!-- PigActionExecutor -->
-
-    <property>
-        <name>oozie.action.pig.delete.hdfs.tmp.dir</name>
-        <value>false</value>
-        <description>
-            If set to true, it will delete temporary directory at the end of execution of pig action.
         </description>
     </property>
 
@@ -1673,7 +1794,7 @@
         </description>
     </property>
 
-	<property>
+    <property>
         <name>oozie.actions.main.classnames</name>
         <value>distcp=org.apache.hadoop.tools.DistCp</value>
         <description>
@@ -1683,7 +1804,7 @@
 
     <property>
         <name>oozie.service.WorkflowAppService.system.libpath</name>
-        <value>hdfs:///user/${user.name}/share/lib</value>
+        <value>/user/${user.name}/share/lib</value>
         <description>
             System library path to use for workflow applications.
             This path is added to workflow application if their job properties sets
@@ -1692,24 +1813,21 @@
     </property>
 
     <property>
-        <name>use.system.libpath.for.mapreduce.and.pig.jobs</name>
-        <value>false</value>
-        <description>
-            If set to true, submissions of MapReduce and Pig jobs will include
-            automatically the system library path, thus not requiring users to
-            specify where the Pig JAR files are. Instead, the ones from the system
-            library path are used.
-        </description>
-    </property>
-    
-    <property>
         <name>oozie.command.default.lock.timeout</name>
         <value>5000</value>
         <description>
             Default timeout (in milliseconds) for commands for acquiring an exclusive lock on an entity.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.command.default.requeue.delay</name>
+        <value>10000</value>
+        <description>
+            Default time (in milliseconds) for commands that are requeued for delayed execution.
+        </description>
+    </property>
+
    <!-- LiteWorkflowStoreService, Workflow Action Automatic Retry -->
 
     <property>
@@ -1719,7 +1837,7 @@
             Automatic retry max count for workflow action is 3 in default.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
         <value>10</value>
@@ -1739,6 +1857,7 @@
             JA017 is job not exists error in action executor.
             JA008 is FileNotFoundException in action executor.
             JA009 is IOException in action executor.
+            ALL is the any kind of error in action executor.
         </description>
     </property>
     
@@ -1746,7 +1865,8 @@
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext</name>
         <value> </value>
         <description>
-            Automatic retry interval for workflow action is handled for these specified extra error code.
+            Automatic retry interval for workflow action is handled for these specified extra error code:
+            ALL is the any kind of error in action executor.
         </description>
     </property>
     
@@ -1779,19 +1899,8 @@
     </property>
 
     <property>
-        <name>oozie.authentication.signature.secret</name>
-        <value>oozie</value>
-        <description>
-            The signature secret for signing the authentication tokens.
-            If not set a random secret is generated at startup time.
-            In order to authentiation to work correctly across multiple hosts
-            the secret must be the same across al the hosts.
-        </description>
-    </property>
-
-    <property>
       <name>oozie.authentication.cookie.domain</name>
-      <value></value>
+      <value> </value>
       <description>
         The domain to use for the HTTP cookie that stores the authentication token.
         In order to authentiation to work correctly across multiple hosts
@@ -1834,7 +1943,17 @@
         </description>
     </property>
 
-	<!-- Coordinator Actions default length -->
+    <!-- Coordinator "NONE" execution order default time tolerance -->
+    <property>
+        <name>oozie.coord.execution.none.tolerance</name>
+        <value>1</value>
+        <description>
+            Default time tolerance in minutes after action nominal time for an action to be skipped
+            when execution order is "NONE"
+        </description>
+    </property>
+
+    <!-- Coordinator Actions default length -->
 	<property>
 		<name>oozie.coord.actions.default.length</name>
 		<value>1000</value>
@@ -1870,13 +1989,13 @@
 		</description>
 	</property>
 
-        <property>
-                <name>oozie.service.URIHandlerService.uri.handlers</name>
-                <value>org.apache.oozie.dependency.FSURIHandler</value>
-                <description>
-                        Enlist the different uri handlers supported for data availability checks.
-                </description>
-        </property>
+    <property>
+        <name>oozie.service.URIHandlerService.uri.handlers</name>
+        <value>org.apache.oozie.dependency.FSURIHandler</value>
+        <description>
+                Enlist the different uri handlers supported for data availability checks.
+        </description>
+    </property>
     <!-- Oozie HTTP Notifications -->
 
     <property>
@@ -1994,6 +2113,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.sla.service.SLAService.check.interval</name>
+        <value>30</value>
+        <description>
+             Time interval, in seconds, at which SLA Worker will be scheduled to run
+        </description>
+    </property>
+
     <!-- ZooKeeper configuration -->
     <property>
         <name>oozie.zookeeper.connection.string</name>
@@ -2012,13 +2139,53 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.zookeeper.connection.timeout</name>
+        <value>180</value>
+        <description>
+        Default ZK connection timeout (in sec). If connection is lost for more than timeout, then Oozie server will shutdown
+        itself if oozie.zookeeper.server.shutdown.ontimeout is true.
+        </description>
+    </property>
 
+    <property>
+        <name>oozie.zookeeper.server.shutdown.ontimeout</name>
+        <value>true</value>
+        <description>
+            If true, Oozie server will shutdown itself on ZK
+            connection timeout.
+        </description>
+    </property>
 
+    <property>
+        <name>oozie.http.hostname</name>
+        <value>localhost</value>
+        <description>
+            Oozie server host name.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.http.port</name>
+        <value>11000</value>
+        <description>
+            Oozie server port.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.instance.id</name>
+        <value>${oozie.http.hostname}</value>
+        <description>
+            Each Oozie server should have its own unique instance id. The default is system property
+            =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+        </description>
+    </property>
 
     <!-- Sharelib Configuration -->
     <property>
         <name>oozie.service.ShareLibService.mapping.file</name>
-        <value></value>
+        <value> </value>
         <description>
             Sharelib mapping files contains list of key=value,
             where key will be the sharelib name for the action and value is a comma separated list of
@@ -2027,6 +2194,38 @@
             oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
             oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
             oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
+        </description>
+
+    </property>
+        <property>
+        <name>oozie.service.ShareLibService.fail.fast.on.startup</name>
+        <value>false</value>
+        <description>
+            Fails server starup if sharelib initilzation fails.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ShareLibService.purge.interval</name>
+        <value>1</value>
+        <description>
+            How often, in days, Oozie should check for old ShareLibs and LauncherLibs to purge from HDFS.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ShareLibService.temp.sharelib.retention.days</name>
+        <value>7</value>
+        <description>
+            ShareLib retention time in days.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.ship.launcher.jar</name>
+        <value>false</value>
+        <description>
+            Specifies whether launcher jar is shipped or not.
         </description>
     </property>
 
@@ -2044,4 +2243,119 @@
         wf.name=,action.name=,action.type=,launcher=true"
         </description>
     </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.max.log.scan.duration</name>
+        <value>-1</value>
+        <description>
+        Max log scan duration in hours. If log scan request end_date - start_date > value,
+        then exception is thrown to reduce the scan duration. -1 indicate no limit.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.actionlist.max.log.scan.duration</name>
+        <value>-1</value>
+        <description>
+        Max log scan duration in hours for coordinator job when list of actions are specified.
+        If log streaming request end_date - start_date > value, then exception is thrown to reduce the scan duration.
+        -1 indicate no limit.
+        This setting is separate from max.log.scan.duration as we want to allow higher durations when actions are specified.
+        </description>
+    </property>
+
+    <!-- JvmPauseMonitorService Configuration -->
+    <property>
+        <name>oozie.service.JvmPauseMonitorService.warn-threshold.ms</name>
+        <value>10000</value>
+        <description>
+            The JvmPauseMonitorService runs a thread that repeatedly tries to detect when the JVM pauses, which could indicate
+            that the JVM or host machine is overloaded or other problems.  This thread sleeps for 500ms; if it sleeps for
+            significantly longer, then there is likely a problem.  This property specifies the threadshold for when Oozie should log
+            a WARN level message; there is also a counter named "jvm.pause.warn-threshold".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.JvmPauseMonitorService.info-threshold.ms</name>
+        <value>1000</value>
+        <description>
+            The JvmPauseMonitorService runs a thread that repeatedly tries to detect when the JVM pauses, which could indicate
+            that the JVM or host machine is overloaded or other problems.  This thread sleeps for 500ms; if it sleeps for
+            significantly longer, then there is likely a problem.  This property specifies the threadshold for when Oozie should log
+            an INFO level message; there is also a counter named "jvm.pause.info-threshold".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ZKLocksService.locks.reaper.threshold</name>
+        <value>300</value>
+        <description>
+            The frequency at which the ChildReaper will run.
+            Duration should be in sec. Default is 5 min.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ZKLocksService.locks.reaper.threads</name>
+        <value>2</value>
+        <description>
+            Number of fixed threads used by ChildReaper to
+            delete empty locks.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.check.interval
+        </name>
+        <value>1440</value>
+        <description>
+            Interval, in minutes, at which AbandonedCoordCheckerService should run.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.check.delay
+        </name>
+        <value>60</value>
+        <description>
+            Delay, in minutes, at which AbandonedCoordCheckerService should run.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.failure.limit
+        </name>
+        <value>25</value>
+        <description>
+            Failure limit. A job is considered to be abandoned/faulty if total number of actions in
+            failed/timedout/suspended >= "Failure limit" and there are no succeeded action.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.kill.jobs
+        </name>
+        <value>false</value>
+        <description>
+            If true, AbandonedCoordCheckerService will kill abandoned coords.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AbandonedCoordCheckerService.job.older.than</name>
+        <value>2880</value>
+        <description>
+         In minutes, job will be considered as abandoned/faulty if job is older than this value.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.notification.proxy</name>
+        <value></value>
+        <description>
+         System level proxy setting for job notifications.
+        </description>
+    </property>
+
 </configuration>

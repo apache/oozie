@@ -22,18 +22,22 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hcataloglibs</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
     <description>Apache Oozie HCatalog Libs</description>
     <name>Apache Oozie HCatalog Libs</name>
     <packaging>pom</packaging>
 
     <modules>
+<<<<<<< HEAD
         <module>hcatalog-0.5</module>
       <!--  <module>hcatalog-0.6</module>-->
+=======
+        <module>hive-hcatalog-0.13.1</module>
+>>>>>>> origin/master
     </modules>
 
     <build>

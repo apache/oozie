@@ -15,11 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.CoordinatorAction;
@@ -107,7 +112,7 @@ public class TestEventHandlerService extends XDataTestCase {
         /*
          * Coordinator Action events
          */
-        CoordinatorActionEvent event2 = new CoordinatorActionEvent("jobid", "parentid",
+        CoordinatorActionEvent event2 = new CoordinatorActionEvent("parentid@1", "parentid",
                 CoordinatorAction.Status.WAITING, getTestUser(), "myapp", null, null, null);
         ehs.queueEvent(event2);
         ehs.new EventWorker().run();
@@ -147,7 +152,7 @@ public class TestEventHandlerService extends XDataTestCase {
         /*
          * Workflow Action events
          */
-        WorkflowActionEvent event3 = new WorkflowActionEvent("waction-1", "parentid",
+        WorkflowActionEvent event3 = new WorkflowActionEvent("parentid@wfaction", "parentid",
                 WorkflowAction.Status.RUNNING, getTestUser(), "myapp", null, null);
         ehs.queueEvent(event3);
         ehs.new EventWorker().run();
@@ -184,6 +189,58 @@ public class TestEventHandlerService extends XDataTestCase {
         assertTrue(output.toString().contains("Workflow Action event FAILURE"));
         output.setLength(0);
 
+    }
+
+    @Test
+    public void testEventLogging() throws Exception {
+        EventHandlerService ehs = _testEventHandlerService();
+        // job event
+        WorkflowJobEvent event = new WorkflowJobEvent("jobid", "parentid", WorkflowJob.Status.RUNNING, getTestUser(),
+                "myapp", null, null);
+
+        TestLogAppender appender = null;
+        Logger logger = null;
+        try {
+            appender = getTestLogAppender();
+            logger = Logger.getLogger(EventHandlerService.class);
+            logger.addAppender(appender);
+            logger.setLevel(Level.DEBUG);
+            ehs.queueEvent(event);
+
+            List<LoggingEvent> log = appender.getLog();
+            LoggingEvent logEntry = log.get(0);
+            assertEquals(Level.DEBUG, logEntry.getLevel());
+            assertTrue(logEntry.getMessage().toString().contains("APP[myapp] JOB[jobid] ACTION[-] Queueing event : ID: jobid"));
+            assertEquals("org.apache.oozie.service.EventHandlerService", logEntry.getLoggerName());
+
+            ehs.new EventWorker().run();
+
+            log = appender.getLog();
+            logEntry = log.get(1);
+            assertEquals(Level.DEBUG, logEntry.getLevel());
+            assertTrue(logEntry.getMessage().toString().contains("APP[myapp] JOB[jobid] ACTION[-] Processing event : ID: jobid"));
+
+            // action event
+            CoordinatorActionEvent event2 = new CoordinatorActionEvent("jobid2@1", "parentid",
+                    CoordinatorAction.Status.WAITING, getTestUser(), "myapp", null, null, null);
+            ehs.queueEvent(event2);
+
+            log = appender.getLog();
+            logEntry = log.get(2);
+            assertTrue(logEntry.getMessage().toString().contains("APP[myapp] JOB[jobid2] ACTION[jobid2@1] Queueing event : ID: jobid2@1"));
+
+            WorkflowJobEvent event3 = new WorkflowJobEvent("jobid-other", "parentid", WorkflowJob.Status.RUNNING, getTestUser(),
+                    "myapp-other", null, null);
+            ehs.queueEvent(event3);
+
+            log = appender.getLog();
+            logEntry = log.get(3);
+            assertTrue(logEntry.getMessage().toString()
+                    .contains("APP[myapp-other] JOB[jobid-other] ACTION[-] Queueing event : ID: jobid-other"));
+        }
+        finally {
+            logger.removeAppender(appender);
+        }
     }
 
     private EventHandlerService _testEventHandlerService() throws Exception {

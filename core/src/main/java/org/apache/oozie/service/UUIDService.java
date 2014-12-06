@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class UUIDService implements Service {
 
     public static final String CONF_GENERATOR = CONF_PREFIX + "generator";
 
-    private String startTime;
+    protected String startTime;
     private AtomicLong counter;
     private String systemId;
 
@@ -53,10 +53,10 @@ public class UUIDService implements Service {
      */
     @Override
     public void init(Services services) throws ServiceException {
-        String genType = services.getConf().get(CONF_GENERATOR, "counter").trim();
+        String genType = ConfigurationService.get(services.getConf(), CONF_GENERATOR).trim();
         if (genType.equals("counter")) {
             counter = new AtomicLong();
-            startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
+            resetStartTime();
         }
         else {
             if (!genType.equals("random")) {
@@ -76,6 +76,14 @@ public class UUIDService implements Service {
     }
 
     /**
+     * reset start time
+     * @return
+     */
+    protected void resetStartTime() {
+        startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
+    }
+
+    /**
      * Return the public interface for UUID service.
      *
      * @return {@link UUIDService}.
@@ -85,7 +93,7 @@ public class UUIDService implements Service {
         return UUIDService.class;
     }
 
-    private String longPadding(long number) {
+    protected String longPadding(long number) {
         StringBuilder sb = new StringBuilder();
         sb.append(number);
         if (sb.length() <= 7) {
@@ -103,8 +111,20 @@ public class UUIDService implements Service {
     public String generateId(ApplicationType type) {
         StringBuilder sb = new StringBuilder();
 
+        sb.append(getSequence());
+        sb.append('-').append(systemId);
+        sb.append('-').append(type.getType());
+        // limitation due to current DB schema for action ID length (100)
+        if (sb.length() > 40) {
+            throw new RuntimeException(XLog.format("ID exceeds limit of 40 characters, [{0}]", sb));
+        }
+        return sb.toString();
+    }
+
+    private String getSequence() {
+        StringBuilder sb = new StringBuilder();
         if (counter != null) {
-            sb.append(longPadding(counter.getAndIncrement())).append('-').append(startTime);
+            sb.append(createSequence());
         }
         else {
             sb.append(UUID.randomUUID().toString());
@@ -112,12 +132,20 @@ public class UUIDService implements Service {
                 sb.setLength(37 - systemId.length());
             }
         }
-        sb.append('-').append(systemId);
-        sb.append('-').append(type.getType());
-        // limitation due to current DB schema for action ID length (100)
-        if (sb.length() > 40) {
-            throw new RuntimeException(XLog.format("ID exceeds limit of 40 characters, [{0}]", sb));
-        }
+        return sb.toString();
+    }
+
+    protected String createSequence() {
+        return appendTimeToSequence(getCounter(), startTime);
+    }
+
+    protected long getCounter() {
+        return counter.getAndIncrement();
+    }
+
+    protected String appendTimeToSequence(long id, String localStartTime) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(longPadding(id)).append('-').append(localStartTime);
         return sb.toString();
     }
 

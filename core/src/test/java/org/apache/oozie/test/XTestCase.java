@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.test;
 
 import java.io.File;
@@ -26,6 +27,8 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.ArrayList;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import junit.framework.TestCase;
+import org.apache.commons.io.FilenameUtils;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -46,10 +50,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.Shell;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -59,15 +66,6 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
-import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -83,6 +81,7 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
+import org.apache.oozie.test.hive.MiniHS2;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -193,6 +192,12 @@ public abstract class XTestCase extends TestCase {
      * value is 'locahost:9000'.
      */
     public static final String OOZIE_TEST_NAME_NODE = "oozie.test.name.node";
+
+    /**
+     * System property to specify the second Hadoop Name Node to use for testing. </p> If this property is not set, the assumed
+     * value is 'locahost:9100'.
+     */
+    public static final String OOZIE_TEST_NAME_NODE2 = "oozie.test.name.node2";
 
     /**
      * System property to specify the Hadoop Version to use for testing. </p> If this property is not set, the assumed
@@ -374,6 +379,10 @@ public abstract class XTestCase extends TestCase {
         }
         if (System.getProperty("oozie.test.hadoop.minicluster", "true").equals("true")) {
             setUpEmbeddedHadoop(getTestCaseDir());
+            // Second cluster is not necessary without the first one
+            if (System.getProperty("oozie.test.hadoop.minicluster2", "false").equals("true")) {
+                setUpEmbeddedHadoop2();
+            }
         }
 
         if (System.getProperty("oozie.test.db.host") == null) {
@@ -405,25 +414,16 @@ public abstract class XTestCase extends TestCase {
      */
     @Override
     protected void tearDown() throws Exception {
+        if (hiveserver2 != null && hiveserver2.isStarted()) {
+            hiveserver2.stop();
+            hiveserver2 = null;
+        }
         resetSystemProperties();
         sysProps = null;
         testCaseDir = null;
         super.tearDown();
         RUNNING_TESTCASES.decrementAndGet();
         LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
-        resetQueryExecutor();
-    }
-
-    private void resetQueryExecutor(){
-        BatchQueryExecutor.destroy();
-        WorkflowJobQueryExecutor.destroy();
-        WorkflowActionQueryExecutor.destroy();
-        CoordJobQueryExecutor.destroy();
-        CoordActionQueryExecutor.destroy();
-        BundleJobQueryExecutor.destroy();
-        BundleActionQueryExecutor.destroy();
-        SLARegistrationQueryExecutor.destroy();
-        SLASummaryQueryExecutor.destroy();
     }
 
     /**
@@ -735,6 +735,16 @@ public abstract class XTestCase extends TestCase {
         return System.getProperty(OOZIE_TEST_NAME_NODE, "hdfs://localhost:9000");
     }
 
+    /**
+     * Return the second Hadoop Name Node to use for testing. </p> The value is taken from the Java sytem property {@link
+     * #OOZIE_TEST_NAME_NODE2}, if this property is not set, the assumed value is 'locahost:9100'.
+     *
+     * @return the second name node URI.
+     */
+    protected String getNameNode2Uri() {
+        return System.getProperty(OOZIE_TEST_NAME_NODE2, "hdfs://localhost:9100");
+    }
+
     public String getKeytabFile() {
         String defaultFile = new File(System.getProperty("user.home"), "oozie.keytab").getAbsolutePath();
         return System.getProperty("oozie.test.kerberos.keytab.file", defaultFile);
@@ -866,8 +876,10 @@ public abstract class XTestCase extends TestCase {
     }
 
     private static MiniDFSCluster dfsCluster = null;
+    private static MiniDFSCluster dfsCluster2 = null;
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
+    private static MiniHS2 hiveserver2 = null;
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
@@ -877,37 +889,12 @@ public abstract class XTestCase extends TestCase {
             int taskTrackers = 2;
             int dataNodes = 2;
             String oozieUser = getOozieUser();
-            JobConf conf = new JobConf();
-            conf.set("dfs.block.access.token.enable", "false");
-            conf.set("dfs.permissions", "true");
-            conf.set("hadoop.security.authentication", "simple");
-
-            //Doing this because Hadoop 1.x does not support '*' and
-            //Hadoop 0.23.x does not process wildcard if the value is
-            // '*,127.0.0.1'
-            StringBuilder sb = new StringBuilder();
-            sb.append("127.0.0.1,localhost");
-            for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
-                sb.append(",").append(i.getCanonicalHostName());
-            }
-            conf.set("hadoop.proxyuser." + oozieUser + ".hosts", sb.toString());
-
-            conf.set("hadoop.proxyuser." + oozieUser + ".groups", getTestGroup());
-            conf.set("mapred.tasktracker.map.tasks.maximum", "4");
-            conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
-
+            JobConf conf = createDFSConfig();
             String[] userGroups = new String[] { getTestGroup(), getTestGroup2() };
             UserGroupInformation.createUserForTesting(oozieUser, userGroups);
             UserGroupInformation.createUserForTesting(getTestUser(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser2(), userGroups);
             UserGroupInformation.createUserForTesting(getTestUser3(), new String[] { "users" } );
-            conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
-
-            // Scheduler properties required for YARN CapacityScheduler to work
-            conf.set("yarn.scheduler.capacity.root.queues", "default");
-            conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
-            // Required to prevent deadlocks with YARN CapacityScheduler
-            conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
 
             try {
                 dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
@@ -945,12 +932,92 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    private void setUpEmbeddedHadoop2() throws Exception {
+        if (dfsCluster != null && dfsCluster2 == null) {
+            // Trick dfs location for MiniDFSCluster since it doesn't accept location as input)
+            String testBuildDataSaved = System.getProperty("test.build.data", "build/test/data");
+            try {
+                System.setProperty("test.build.data", FilenameUtils.concat(testBuildDataSaved, "2"));
+                // Only DFS cluster is created based upon current need
+                dfsCluster2 = new MiniDFSCluster(createDFSConfig(), 2, true, null);
+                FileSystem fileSystem = dfsCluster2.getFileSystem();
+                fileSystem.mkdirs(new Path("target/test-data"));
+                fileSystem.mkdirs(new Path("/user"));
+                fileSystem.mkdirs(new Path("/tmp"));
+                fileSystem.setPermission(new Path("target/test-data"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("/user"), FsPermission.valueOf("-rwxrwxrwx"));
+                fileSystem.setPermission(new Path("/tmp"), FsPermission.valueOf("-rwxrwxrwx"));
+                System.setProperty(OOZIE_TEST_NAME_NODE2, fileSystem.getConf().get("fs.default.name"));
+            }
+            catch (Exception ex) {
+                shutdownMiniCluster2();
+                throw ex;
+            }
+            finally {
+                // Restore previus value
+                System.setProperty("test.build.data", testBuildDataSaved);
+            }
+        }
+    }
+
+    private JobConf createDFSConfig() throws UnknownHostException {
+      JobConf conf = new JobConf();
+      conf.set("dfs.block.access.token.enable", "false");
+      conf.set("dfs.permissions", "true");
+      conf.set("hadoop.security.authentication", "simple");
+
+      //Doing this because Hadoop 1.x does not support '*' and
+      //Hadoop 0.23.x does not process wildcard if the value is
+      // '*,127.0.0.1'
+      StringBuilder sb = new StringBuilder();
+      sb.append("127.0.0.1,localhost");
+      for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
+          sb.append(",").append(i.getCanonicalHostName());
+      }
+      conf.set("hadoop.proxyuser." + getOozieUser() + ".hosts", sb.toString());
+
+      conf.set("hadoop.proxyuser." + getOozieUser() + ".groups", getTestGroup());
+      conf.set("mapred.tasktracker.map.tasks.maximum", "4");
+      conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
+
+      conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
+
+      // Scheduler properties required for YARN CapacityScheduler to work
+      conf.set("yarn.scheduler.capacity.root.queues", "default");
+      conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
+      // Required to prevent deadlocks with YARN CapacityScheduler
+      conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
+      return conf;
+    }
+
     private void setupHCatalogServer() throws Exception {
         if (hcatServer == null) {
             hcatServer = new MiniHCatServer(RUNMODE.SERVER, createJobConf());
             hcatServer.start();
             log.info("Metastore server started at " + hcatServer.getMetastoreURI());
         }
+    }
+
+    protected void setupHiveServer2() throws Exception {
+        if (hiveserver2 == null) {
+            setSystemProperty("test.tmp.dir", getTestCaseDir());
+            // Make HS2 use our Mini cluster by copying all configs to HiveConf; also had to hack MiniHS2
+            HiveConf hconf = new HiveConf();
+            Configuration jobConf = createJobConf();
+            for (Map.Entry<String, String> pair: jobConf) {
+                hconf.set(pair.getKey(), pair.getValue());
+            }
+            hiveserver2 = new MiniHS2(hconf, dfsCluster.getFileSystem());
+            hiveserver2.start(new HashMap<String, String>());
+        }
+    }
+
+    protected String getHiveServer2JdbcURL() {
+        return hiveserver2.getJdbcURL();
+    }
+
+    protected String getHiveServer2JdbcURL(String dbName) {
+        return hiveserver2.getJdbcURL(dbName);
     }
 
     private static void shutdownMiniCluster() {
@@ -972,6 +1039,16 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    private static void shutdownMiniCluster2() {
+        try {
+            if (dfsCluster2 != null) {
+                dfsCluster2.shutdown();
+            }
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+    }
     private static final AtomicLong LAST_TESTCASE_FINISHED = new AtomicLong();
     private static final AtomicInteger RUNNING_TESTCASES = new AtomicInteger();
 
@@ -998,6 +1075,7 @@ public abstract class XTestCase extends TestCase {
                 }
             }
             shutdownMiniCluster();
+            shutdownMiniCluster2();
         }
     }
 
@@ -1019,7 +1097,7 @@ public abstract class XTestCase extends TestCase {
      * Returns a jobconf preconfigured to talk with the test cluster/minicluster.
      * @return a jobconf preconfigured to talk with the test cluster/minicluster.
      */
-    protected JobConf createJobConf() {
+    protected JobConf createJobConf() throws IOException {
         JobConf jobConf;
         if (mrCluster != null) {
             jobConf = createJobConfFromMRCluster();
@@ -1068,6 +1146,11 @@ public abstract class XTestCase extends TestCase {
 
     protected Services setupServicesForHCatalog() throws ServiceException {
         Services services = new Services();
+        setupServicesForHCataLogImpl(services);
+        return services;
+    }
+
+    private void setupServicesForHCataLogImpl(Services services) {
         Configuration conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," +
@@ -1081,7 +1164,37 @@ public abstract class XTestCase extends TestCase {
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         setSystemProperty("java.naming.factory.initial", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
         setSystemProperty("java.naming.provider.url", "vm://localhost?broker.persistent=false");
+    }
+
+    protected Services setupServicesForHCatalog(Services services) throws ServiceException {
+        setupServicesForHCataLogImpl(services);
         return services;
+    }
+
+    protected class TestLogAppender extends AppenderSkeleton {
+        private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
+
+        @Override
+        public boolean requiresLayout() {
+            return false;
+        }
+
+        @Override
+        protected void append(final LoggingEvent loggingEvent) {
+            log.add(loggingEvent);
+        }
+
+        @Override
+        public void close() {
+        }
+
+        public List<LoggingEvent> getLog() {
+            return new ArrayList<LoggingEvent>(log);
+        }
+    }
+
+    public TestLogAppender getTestLogAppender() {
+        return new TestLogAppender();
     }
 
 }

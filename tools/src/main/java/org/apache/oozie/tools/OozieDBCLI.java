@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.tools;
 
 import org.apache.commons.cli.CommandLine;
@@ -194,7 +195,6 @@ public class OozieDBCLI {
     private void upgradeDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
         validateDBSchema(true);
-        verifyDBState();
         String version = BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
 
         if (!verifyOozieSysTable(false, false)) { // If OOZIE_SYS table doesn't
@@ -231,7 +231,7 @@ public class OozieDBCLI {
 
     private void upgradeDBTo40(String sqlFile, boolean run) throws Exception {
         upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_4_0);
-        postUpgradeTasks(sqlFile, run, false);
+        postUpgradeTasksFor40(sqlFile, run);
         ddlTweaks(sqlFile, run);
     }
 
@@ -405,6 +405,41 @@ public class OozieDBCLI {
         }
     }
 
+    private void postUpgradeTasksFor40(String sqlFile, boolean run) throws Exception {
+        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        writer.println();
+        Connection conn = (run) ? createConnection() : null;
+        try {
+            if (!getDBVendor().equals("derby")) {
+                String  updateMissingDependenciesQuery;
+                if (getDBVendor().equals("sqlserver")){
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO_MSSQL;
+                } else {
+                    updateMissingDependenciesQuery = UPDATE_DELIMITER_VER_TWO;
+                }
+
+                writer.println(updateMissingDependenciesQuery + ";");
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column");
+                if (run) {
+                    Statement st = conn.createStatement();
+                    st.executeUpdate(updateMissingDependenciesQuery);
+                    st.close();
+                }
+            }
+            else {
+                System.out.println("Post-upgrade MISSING_DEPENDENCIES column in Derby");
+                replaceForDerby(";", "!!");
+            }
+            System.out.println("DONE");
+            writer.close();
+        }
+        finally {
+            if (run) {
+                conn.close();
+            }
+      }
+    }
+
     private static final String COORD_ACTION_ID_DEPS = "SELECT ID, MISSING_DEPENDENCIES FROM COORD_ACTIONS";
 
     private void replaceForDerby(String oldStr, String newStr) throws Exception {
@@ -536,7 +571,7 @@ public class OozieDBCLI {
                         && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
                     // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're going to convert it to
                     // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                    // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0 push_missing_depdencies will already be a
+                    // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
                     // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
                     continue;
                 }
@@ -564,7 +599,7 @@ public class OozieDBCLI {
         System.out.println("DONE");
     }
 
-    private void convertClobToBlobinDerby(Connection conn) throws Exception {
+    private void convertClobToBlobinDerby(Connection conn, String startingVersion) throws Exception {
         if (conn == null) {
             return;
         }
@@ -578,13 +613,21 @@ public class OozieDBCLI {
             }
             ResultSet rs = statement.executeQuery(getSelectQuery(tableName, columnNames));
             while (rs.next()) {
-                for (int i = 0; i < columnNames.size(); i++) {
-                    Clob confClob = rs.getClob(columnNames.get(i));
+                for (String column : columnNames) {
+                    if (startingVersion.equals(DB_VERSION_PRE_4_0)
+                            && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
+                        // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as a CLOB and we're going to convert
+                        // it to BLOB in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // BLOB because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
+                        continue;
+                    }
+                    Clob confClob = rs.getClob(column);
                     if (confClob == null) {
                         continue;
                     }
                     PreparedStatement ps = conn.prepareStatement("update " + tableName + " set " + TEMP_COLUMN_PREFIX
-                            + columnNames.get(i) + "=? where id = ?");
+                            + column + "=? where id = ?");
                     byte[] data = IOUtils.toByteArray(confClob.getCharacterStream(), "UTF-8");
                     ps.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
                     ps.setString(2, rs.getString(1));
@@ -642,7 +685,7 @@ public class OozieDBCLI {
             convertClobToBlobInPostgres(sqlFile, conn, startingVersion);
         }
         else if (dbVendor.equals("derby")) {
-            convertClobToBlobinDerby(conn);
+            convertClobToBlobinDerby(conn, startingVersion);
         }
         System.out.println("Dropping discriminator column");
         PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));

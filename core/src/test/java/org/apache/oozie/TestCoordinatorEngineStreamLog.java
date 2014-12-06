@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import java.io.File;
@@ -43,9 +44,10 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLogStreamer.Filter;
 
 public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     private Services services;
@@ -81,12 +83,12 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     }
 
     static class DummyXLogStreamingService extends XLogStreamingService {
-        Filter filter;
+        XLogFilter filter;
         Date startTime;
         Date endTime;
 
         @Override
-        public void streamLog(Filter filter1, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+        public void streamLog(XLogFilter filter1, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
                 throws IOException {
             filter = filter1;
             this.startTime = startTime;
@@ -120,7 +122,7 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         // Test 1.to test if fields are injected
         ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
         DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
-        Filter filter = service.filter;
+        XLogFilter filter = service.filter;
         assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
         assertTrue(endDate.before(service.endTime));
 

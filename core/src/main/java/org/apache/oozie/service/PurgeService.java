@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +33,7 @@ public class PurgeService implements Service {
     public static final String CONF_OLDER_THAN = CONF_PREFIX + "older.than";
     public static final String COORD_CONF_OLDER_THAN = CONF_PREFIX + "coord.older.than";
     public static final String BUNDLE_CONF_OLDER_THAN = CONF_PREFIX + "bundle.older.than";
+    public static final String PURGE_OLD_COORD_ACTION = CONF_PREFIX + "purge.old.coord.action";
     /**
      * Time interval, in seconds, at which the purge jobs service will be scheduled to run.
      */
@@ -47,6 +49,7 @@ public class PurgeService implements Service {
         private int coordOlderThan;
         private int bundleOlderThan;
         private int limit;
+        private boolean purgeOldCoordAction = false;
 
         public PurgeRunnable(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
             this.wfOlderThan = wfOlderThan;
@@ -55,11 +58,20 @@ public class PurgeService implements Service {
             this.limit = limit;
         }
 
+        public PurgeRunnable(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit,
+                             boolean purgeOldCoordAction) {
+            this.wfOlderThan = wfOlderThan;
+            this.coordOlderThan = coordOlderThan;
+            this.bundleOlderThan = bundleOlderThan;
+            this.limit = limit;
+            this.purgeOldCoordAction = purgeOldCoordAction;
+        }
+
         public void run() {
-            // Only queue the purge command if this is the first server
-            if (Services.get().get(JobsConcurrencyService.class).isFirstServer()) {
+            // Only queue the purge command if this is the leader
+            if (Services.get().get(JobsConcurrencyService.class).isLeader()) {
                 Services.get().get(CallableQueueService.class).queue(
-                        new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit));
+                        new PurgeXCommand(wfOlderThan, coordOlderThan, bundleOlderThan, limit, purgeOldCoordAction));
             }
         }
 
@@ -73,11 +85,13 @@ public class PurgeService implements Service {
     @Override
     public void init(Services services) {
         Configuration conf = services.getConf();
-        Runnable purgeJobsRunnable = new PurgeRunnable(conf.getInt(
-                CONF_OLDER_THAN, 30), conf.getInt(COORD_CONF_OLDER_THAN, 7), conf.getInt(BUNDLE_CONF_OLDER_THAN, 7),
-                                      conf.getInt(PURGE_LIMIT, 100));
-        services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10, conf.getInt(CONF_PURGE_INTERVAL, 3600),
-                                                      SchedulerService.Unit.SEC);
+        Runnable purgeJobsRunnable = new PurgeRunnable(ConfigurationService.getInt(conf, CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, COORD_CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, BUNDLE_CONF_OLDER_THAN),
+                ConfigurationService.getInt(conf, PURGE_LIMIT),
+                ConfigurationService.getBoolean(conf, PURGE_OLD_COORD_ACTION));
+        services.get(SchedulerService.class).schedule(purgeJobsRunnable, 10,
+                ConfigurationService.getInt(conf, CONF_PURGE_INTERVAL), SchedulerService.Unit.SEC);
     }
 
     /**

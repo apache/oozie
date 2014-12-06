@@ -15,11 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
@@ -36,9 +38,7 @@ public class StatusUtils {
         Job.Status newStatus = null;
         if (coordJob != null) {
             newStatus = coordJob.getStatus();
-            Configuration conf = Services.get().getConf();
-            boolean backwardSupportForCoordStatus = conf.getBoolean(
-                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
             if (backwardSupportForCoordStatus) {
                 if (coordJob.getAppNamespace() != null
                         && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
@@ -78,9 +78,7 @@ public class StatusUtils {
         Job.Status newStatus = null;
         if (coordJob != null) {
             newStatus = coordJob.getStatus();
-            Configuration conf = Services.get().getConf();
-            boolean backwardSupportForCoordStatus = conf.getBoolean(
-                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
             if (backwardSupportForCoordStatus) {
                 if (coordJob.getAppNamespace() != null
                         && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
@@ -107,9 +105,7 @@ public class StatusUtils {
     public static boolean getStatusForCoordActionInputCheck(CoordinatorJobBean coordJob) {
         boolean ret = false;
         if (coordJob != null) {
-            Configuration conf = Services.get().getConf();
-            boolean backwardSupportForCoordStatus = conf.getBoolean(
-                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
             if (backwardSupportForCoordStatus) {
                 if (coordJob.getAppNamespace() != null
                         && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
@@ -136,8 +132,7 @@ public class StatusUtils {
         boolean ret = false;
         if (coordJob != null) {
             Configuration conf = Services.get().getConf();
-            boolean backwardSupportForCoordStatus = conf.getBoolean(
-                    StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
             if (backwardSupportForCoordStatus) {
                 if (coordJob.getAppNamespace() != null
                         && coordJob.getAppNamespace().equals(SchemaService.COORDINATOR_NAMESPACE_URI_1)) {
@@ -153,14 +148,13 @@ public class StatusUtils {
     /**
      * Get the status of coordinator job for Oozie versions (3.2 and before) when RUNNINGWITHERROR,
      * SUSPENDEDWITHERROR and PAUSEDWITHERROR are not supported
-     * @param coordJob
+     * @param currentJobStatus
      * @return
      */
     public static Job.Status getStatusIfBackwardSupportTrue(Job.Status currentJobStatus) {
         Job.Status newStatus = currentJobStatus;
-        Configuration conf = Services.get().getConf();
-        boolean backwardSupportForStatesWithoutError = conf.getBoolean(
-                StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, true);
+        boolean backwardSupportForStatesWithoutError = ConfigurationService.getBoolean(StatusTransitService
+                .CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR);
         if (backwardSupportForStatesWithoutError) {
             if (currentJobStatus == Job.Status.PAUSEDWITHERROR) {
                 newStatus = Job.Status.PAUSED;

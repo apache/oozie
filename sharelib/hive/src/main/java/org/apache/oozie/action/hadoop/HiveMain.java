@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
@@ -87,10 +88,15 @@ public class HiveMain extends LauncherMain {
         String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
         if (delegationToken != null) {
             hiveConf.set("mapreduce.job.credentials.binary", delegationToken);
+            hiveConf.set("tez.credentials.path", delegationToken);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to: " + delegationToken);
             System.out.println("------------------------");
             System.setProperty("mapreduce.job.credentials.binary", delegationToken);
+            System.out.println("------------------------");
+            System.out.println("Setting env property for tez.credentials.path to: " + delegationToken);
+            System.out.println("------------------------");
+            System.setProperty("tez.credentials.path", delegationToken);
         } else {
             System.out.println("Non-Kerberos execution");
         }

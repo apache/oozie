@@ -15,11 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Date;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorJobBean;
@@ -27,9 +30,12 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.CoordMaterializeTriggerService.CoordMaterializeTriggerRunnable;
 import org.apache.oozie.service.UUIDService.ApplicationType;
@@ -132,6 +138,84 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         // third job not picked up because limit iteration only twice
         job3 = jpaService.execute(new CoordJobGetJPAExecutor(job3.getId()));
         assertEquals(CoordinatorJob.Status.PREP, job3.getStatus());
+    }
+
+    public void testMaxMatThrottleNotPicked() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(CoordMaterializeTriggerService.CONF_MATERIALIZATION_SYSTEM_LIMIT, "10");
+        services = new Services();
+        services.init();
+
+        Date start = new Date();
+        Date end = new Date(start.getTime() + 3600 * 5 * 1000);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        job.setMatThrottling(3);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        JPAService jpaService = Services.get().get(JPAService.class);
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        Date lastModifiedDate = job.getLastModifiedTime();
+        Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
+        runnable.run();
+        sleep(1000);
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertNotSame(lastModifiedDate, job.getLastModifiedTime());
+
+        job.setMatThrottling(2);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        lastModifiedDate = job.getLastModifiedTime();
+        runnable.run();
+        sleep(1000);
+        job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+        assertEquals(lastModifiedDate, job.getLastModifiedTime());
+    }
+
+    public void testMaxMatThrottleNotPickedMultipleJobs() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(CoordMaterializeTriggerService.CONF_MATERIALIZATION_SYSTEM_LIMIT, "3");
+        services = new Services();
+        services.init();
+        Date start = new Date();
+        Date end = new Date(start.getTime() + 3600 * 5 * 1000);
+        CoordinatorJobBean job1 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        addRecordToCoordActionTable(job1.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job1.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        job1.setMatThrottling(3);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job1);
+
+        CoordinatorJobBean job2 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        addRecordToCoordActionTable(job2.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job2.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        job2.setMatThrottling(3);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job2);
+
+        CoordinatorJobBean job3 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+        addRecordToCoordActionTable(job3.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(job3.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        job3.setMatThrottling(2);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job3);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        job1 = jpaService.execute(new CoordJobGetJPAExecutor(job1.getId()));
+        Date lastModifiedDate1 = job1.getLastModifiedTime();
+        job2 = jpaService.execute(new CoordJobGetJPAExecutor(job2.getId()));
+        Date lastModifiedDate2 = job2.getLastModifiedTime();
+        job3 = jpaService.execute(new CoordJobGetJPAExecutor(job3.getId()));
+        Date lastModifiedDate3 = job3.getLastModifiedTime();
+
+
+        Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
+        runnable.run();
+        sleep(1000);
+
+        job1 = jpaService.execute(new CoordJobGetJPAExecutor(job1.getId()));
+        assertNotSame(lastModifiedDate1, job1.getLastModifiedTime());
+        job2 = jpaService.execute(new CoordJobGetJPAExecutor(job2.getId()));
+        assertNotSame(lastModifiedDate2, job2.getLastModifiedTime());
+        job3 = jpaService.execute(new CoordJobGetJPAExecutor(job3.getId()));
+        assertEquals(lastModifiedDate3, job3.getLastModifiedTime());
     }
 
     @Override

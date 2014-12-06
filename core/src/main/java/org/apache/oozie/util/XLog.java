@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 
@@ -34,6 +35,8 @@ import java.util.Map;
  */
 public class XLog implements Log {
 
+    public static final String INSTRUMENTATION_LOG_NAME = "oozieinstrumentation";
+
     /**
      * <code>LogInfo</code> stores contextual information to create log prefixes. <p/> <code>LogInfo</code> uses a
      * <code>ThreadLocal</code> to propagate the context. <p/> <code>LogInfo</code> context parameters are configurable
@@ -41,6 +44,7 @@ public class XLog implements Log {
      */
     public static class Info {
         private static String template = "";
+        private String prefix = "";
         private static List<String> parameterNames = new ArrayList<String>();
 
         private static ThreadLocal<Info> tlLogInfo = new ThreadLocal<Info>() {
@@ -114,6 +118,7 @@ public class XLog implements Log {
          */
         public void clear() {
             parameters.clear();
+            resetPrefix();
         }
 
         /**
@@ -177,48 +182,35 @@ public class XLog implements Log {
             return MessageFormat.format(template, (Object[]) params);
         }
 
+        public String resetPrefix() {
+            return prefix = createPrefix();
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+
     }
 
     /**
-     * Return the named logger configured with the {@link org.apache.oozie.util.XLog.Info} prefix.
+     * Return the named logger.
      *
      * @param name logger name.
-     * @return the named logger configured with the {@link org.apache.oozie.util.XLog.Info} prefix.
+     * @return the named logger.
      */
     public static XLog getLog(String name) {
-        return getLog(name, true);
+        return new XLog(LogFactory.getLog(name));
     }
 
     /**
-     * Return the named logger configured with the {@link org.apache.oozie.util.XLog.Info} prefix.
+     * Return the named logger.
      *
      * @param clazz from which the logger name will be derived.
-     * @return the named logger configured with the {@link org.apache.oozie.util.XLog.Info} prefix.
+     * @return the named logger.
      */
     public static XLog getLog(Class clazz) {
-        return getLog(clazz, true);
-    }
-
-    /**
-     * Return the named logger.
-     *
-     * @param name logger name.
-     * @param prefix indicates if the {@link org.apache.oozie.util.XLog.Info} prefix has to be used or not.
-     * @return the named logger.
-     */
-    public static XLog getLog(String name, boolean prefix) {
-        return new XLog(LogFactory.getLog(name), (prefix) ? Info.get().createPrefix() : "");
-    }
-
-    /**
-     * Return the named logger.
-     *
-     * @param clazz from which the logger name will be derived.
-     * @param prefix indicates if the {@link org.apache.oozie.util.XLog.Info} prefix has to be used or not.
-     * @return the named logger.
-     */
-    public static XLog getLog(Class clazz, boolean prefix) {
-        return new XLog(LogFactory.getLog(clazz), (prefix) ? Info.get().createPrefix() : "");
+        return new XLog(LogFactory.getLog(clazz));
     }
 
     /**
@@ -249,7 +241,7 @@ public class XLog implements Log {
     //package private for testing purposes.
     Log[] loggers;
 
-    private String prefix = "";
+    private String prefix = null;
 
     /**
      * Create a <code>XLog</code> with no prefix.
@@ -257,17 +249,6 @@ public class XLog implements Log {
      * @param log Log instance to use for logging.
      */
     public XLog(Log log) {
-        this(log, "");
-    }
-
-    /**
-     * Create a <code>XLog</code> with a common prefix. <p/> The prefix will be prepended to all log messages.
-     *
-     * @param log Log instance to use for logging.
-     * @param prefix common prefix to use for all log messages.
-     */
-    public XLog(Log log, String prefix) {
-        this.prefix = prefix;
         loggers = new Log[2];
         loggers[0] = log;
         loggers[1] = LogFactory.getLog("oozieops");
@@ -288,7 +269,7 @@ public class XLog implements Log {
      * @param prefix the common prefix to set.
      */
     public void setMsgPrefix(String prefix) {
-        this.prefix = (prefix != null) ? prefix : "";
+        this.prefix = prefix;
     }
 
     //All the methods from the commonsLogging Log interface will log to the default logger only.
@@ -519,7 +500,7 @@ public class XLog implements Log {
     private void log(Level level, int loggerMask, String msgTemplate, Object... params) {
         loggerMask |= STD;
         if (isEnabled(level, loggerMask)) {
-            String prefix = getMsgPrefix();
+            String prefix = getMsgPrefix() != null ? getMsgPrefix() : Info.get().getPrefix();
             prefix = (prefix != null && prefix.length() > 0) ? prefix + " " : "";
 
             String msg = prefix + format(msgTemplate, params);

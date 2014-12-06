@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ import javax.persistence.Persistence;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
+import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
@@ -51,6 +53,7 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
+import org.apache.openjpa.lib.jdbc.DecoratingDataSource;
 import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 
 /**
@@ -69,7 +72,6 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_PASSWORD = CONF_PREFIX + "jdbc.password";
     public static final String CONF_CONN_DATA_SOURCE = CONF_PREFIX + "connection.data.source";
     public static final String CONF_CONN_PROPERTIES = CONF_PREFIX + "connection.properties";
-
     public static final String CONF_MAX_ACTIVE_CONN = CONF_PREFIX + "pool.max.active.conn";
     public static final String CONF_CREATE_DB_SCHEMA = CONF_PREFIX + "create.db.schema";
     public static final String CONF_VALIDATE_DB_CONN = CONF_PREFIX + "validate.db.connection";
@@ -94,6 +96,37 @@ public class JPAService implements Service, Instrumentable {
     @Override
     public void instrument(Instrumentation instr) {
         this.instr = instr;
+
+        final BasicDataSource dataSource = getBasicDataSource();
+        if (dataSource != null) {
+            instr.addSampler("jdbc", "connections.active", 60, 1, new Instrumentation.Variable<Long>() {
+                @Override
+                public Long getValue() {
+                    return (long) dataSource.getNumActive();
+                }
+            });
+            instr.addSampler("jdbc", "connections.idle", 60, 1, new Instrumentation.Variable<Long>() {
+                @Override
+                public Long getValue() {
+                    return (long) dataSource.getNumIdle();
+                }
+            });
+        }
+    }
+
+    private BasicDataSource getBasicDataSource() {
+        // Get the BasicDataSource object; it could be wrapped in a DecoratingDataSource
+        // It might also not be a BasicDataSource if the user configured something different
+        BasicDataSource basicDataSource = null;
+        OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
+        Object connectionFactory = spi.getConfiguration().getConnectionFactory();
+        if (connectionFactory instanceof DecoratingDataSource) {
+            DecoratingDataSource decoratingDataSource = (DecoratingDataSource) connectionFactory;
+            basicDataSource = (BasicDataSource) decoratingDataSource.getInnermostDelegate();
+        } else if (connectionFactory instanceof BasicDataSource) {
+            basicDataSource = (BasicDataSource) connectionFactory;
+        }
+        return basicDataSource;
     }
 
     /**
@@ -104,18 +137,18 @@ public class JPAService implements Service, Instrumentable {
     public void init(Services services) throws ServiceException {
         LOG = XLog.getLog(JPAService.class);
         Configuration conf = services.getConf();
-        String dbSchema = conf.get(CONF_DB_SCHEMA, "oozie");
-        String url = conf.get(CONF_URL, "jdbc:derby:${oozie.home.dir}/${oozie.db.schema.name}-db;create=true");
-        String driver = conf.get(CONF_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
-        String user = conf.get(CONF_USERNAME, "sa");
-        String password = conf.get(CONF_PASSWORD, "").trim();
-        String maxConn = conf.get(CONF_MAX_ACTIVE_CONN, "10").trim();
-        String dataSource = conf.get(CONF_CONN_DATA_SOURCE, "org.apache.commons.dbcp.BasicDataSource");
-        String connPropsConfig = conf.get(CONF_CONN_PROPERTIES);
-        boolean autoSchemaCreation = conf.getBoolean(CONF_CREATE_DB_SCHEMA, false);
-        boolean validateDbConn = conf.getBoolean(CONF_VALIDATE_DB_CONN, true);
-        String evictionInterval = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL, "300000").trim();
-        String evictionNum = conf.get(CONF_VALIDATE_DB_CONN_EVICTION_NUM, "10").trim();
+        String dbSchema = ConfigurationService.get(conf, CONF_DB_SCHEMA);
+        String url = ConfigurationService.get(conf, CONF_URL);
+        String driver = ConfigurationService.get(conf, CONF_DRIVER);
+        String user = ConfigurationService.get(conf, CONF_USERNAME);
+        String password = ConfigurationService.get(conf, CONF_PASSWORD).trim();
+        String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
+        String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
+        String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
+        boolean autoSchemaCreation = ConfigurationService.getBoolean(conf, CONF_CREATE_DB_SCHEMA);
+        boolean validateDbConn = ConfigurationService.getBoolean(conf, CONF_VALIDATE_DB_CONN);
+        String evictionInterval = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim();
+        String evictionNum = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim();
 
         if (!url.startsWith("jdbc:")) {
             throw new ServiceException(ErrorCode.E0608, url, "invalid JDBC URL, must start with 'jdbc:'");

@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
@@ -46,6 +47,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -57,8 +59,6 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
  */
 public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
-
-    protected static final String INSTR_FAILED_JOBS_COUNTER = "failed";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
 
@@ -195,9 +195,9 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
                 workflow.setStatus(WorkflowJob.Status.FAILED);
                 action.setStatus(WorkflowAction.Status.FAILED);
                 action.resetPending();
-                queue(new NotificationXCommand(workflow, action));
+                queue(new WorkflowNotificationXCommand(workflow, action));
                 queue(new KillXCommand(workflow.getId()));
-                InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER, 1, getInstrumentation());
+                InstrumentUtils.incrJobCounter(INSTR_FAILED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }
             catch (WorkflowException ex) {
                 throw new CommandException(ex);
@@ -216,7 +216,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         String errorCode = action.getErrorCode();
         Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
 
-        if (allowedRetryCode.contains(errorCode) && action.getUserRetryCount() < action.getUserRetryMax()) {
+        if ((allowedRetryCode.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL) || allowedRetryCode.contains(errorCode))
+                && action.getUserRetryCount() < action.getUserRetryMax()) {
             LOG.info("Preparing retry this action [{0}], errorCode [{1}], userRetryCount [{2}], "
                     + "userRetryMax [{3}], userRetryInterval [{4}]", action.getId(), errorCode, action
                     .getUserRetryCount(), action.getUserRetryMax(), action.getUserRetryInterval());

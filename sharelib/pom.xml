@@ -22,11 +22,15 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib</artifactId>
+<<<<<<< HEAD
     <version>4.0.0-cdh5.1.2</version>
+=======
+    <version>4.2.0-SNAPSHOT</version>
+>>>>>>> origin/master
     <description>Apache Oozie Share Lib</description>
     <name>Apache Oozie Share Lib</name>
     <packaging>pom</packaging>
@@ -36,9 +40,11 @@
         <module>hcatalog</module>
         <module>pig</module>
         <module>hive</module>
+        <module>hive2</module>
         <module>sqoop</module>
         <module>oozie</module>
         <module>distcp</module>
+        <module>spark</module>
     </modules>
 
     <build>

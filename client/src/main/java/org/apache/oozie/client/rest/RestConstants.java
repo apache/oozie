@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.client.rest;
 
 /**
@@ -56,6 +57,8 @@ public interface RestConstants {
 
     public static final String JOB_ACTION_DRYRUN = "dryrun";
 
+    public static final String JOB_ACTION_SHOWDIFF = "diff";
+
     public static final String JOB_ACTION_SUSPEND = "suspend";
 
     public static final String JOB_ACTION_RESUME = "resume";
@@ -68,7 +71,11 @@ public interface RestConstants {
 
     public static final String JOB_ACTION_RERUN = "rerun";
 
+    public static final String JOB_ACTION_IGNORE = "ignore";
+
     public static final String JOB_COORD_ACTION_RERUN = "coord-rerun";
+
+    public static final String JOB_COORD_UPDATE = "update";
 
     public static final String JOB_BUNDLE_ACTION_RERUN = "bundle-rerun";
 
@@ -85,6 +92,8 @@ public interface RestConstants {
     public static final String JOB_SHOW_GRAPH = "graph";
 
     public static final String JOB_SHOW_KILL_PARAM = "show-kill";
+
+    public static final String JOB_SHOW_STATUS = "status";
 
     public static final String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 
@@ -136,6 +145,8 @@ public interface RestConstants {
 
     public static final String ADMIN_QUEUE_DUMP_RESOURCE = "queue-dump";
 
+    public static final String ADMIN_METRICS_RESOURCE = "metrics";
+
     public static final String OOZIE_ERROR_CODE = "oozie-error-code";
 
     public static final String OOZIE_ERROR_MESSAGE = "oozie-error-message";
@@ -169,5 +180,7 @@ public interface RestConstants {
     public static final String ALL_SERVER_REQUEST = "allservers";
 
     public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+
+    public static final String LOG_FILTER_OPTION = "logfilter";
 
 }

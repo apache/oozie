@@ -15,9 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -26,8 +28,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Query Executor for SLA Event
  *
@@ -35,23 +35,17 @@ import com.google.common.annotations.VisibleForTesting;
 public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationBean, SLARegistrationQueryExecutor.SLARegQuery> {
 
     public enum SLARegQuery {
-        UPDATE_SLA_REG_ALL
+        UPDATE_SLA_REG_ALL,
+        GET_SLA_REG_ALL,
+        GET_SLA_REG_ON_RESTART
     };
 
     private static SLARegistrationQueryExecutor instance = new SLARegistrationQueryExecutor();
-    private static JPAService jpaService;
 
     private SLARegistrationQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = Services.get().get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<SLARegistrationBean, SLARegistrationQueryExecutor.SLARegQuery> getInstance() {
-        if (instance == null) {
-            instance = new SLARegistrationQueryExecutor();
-        }
         return SLARegistrationQueryExecutor.instance;
     }
 
@@ -86,12 +80,22 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
     @Override
     public Query getSelectQuery(SLARegQuery namedQuery, EntityManager em, Object... parameters)
             throws JPAExecutorException {
-        // TODO
-        return null;
+        Query query = em.createNamedQuery(namedQuery.name());
+        switch (namedQuery) {
+            case GET_SLA_REG_ALL:
+            case GET_SLA_REG_ON_RESTART:
+                query.setParameter("id", parameters[0]);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
+                        + namedQuery.name());
+        }
+        return query;
     }
 
     @Override
     public int executeUpdate(SLARegQuery namedQuery, SLARegistrationBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -100,15 +104,20 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
 
     @Override
     public SLARegistrationBean get(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        @SuppressWarnings("unchecked")
-        SLARegistrationBean bean = (SLARegistrationBean) jpaService.executeGet(namedQuery.name(), query, em);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null && !namedQuery.equals(SLARegQuery.GET_SLA_REG_ALL)) {
+            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        }
+        SLARegistrationBean bean = constructBean(namedQuery, ret, parameters);
         return bean;
     }
 
     @Override
     public List<SLARegistrationBean> getList(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         @SuppressWarnings("unchecked")
@@ -117,12 +126,34 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
         return beanList;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
+    private SLARegistrationBean constructBean(SLARegQuery namedQuery, Object ret, Object... parameters)
+            throws JPAExecutorException {
+        SLARegistrationBean bean;
+        Object[] arr;
+        switch (namedQuery) {
+            case GET_SLA_REG_ALL:
+                bean = (SLARegistrationBean) ret;
+                if(bean != null) {
+                    bean.setSlaConfig(bean.getSlaConfig());
+                }
+                break;
+            case GET_SLA_REG_ON_RESTART:
+                bean = new SLARegistrationBean();
+                arr = (Object[]) ret;
+                bean.setNotificationMsg((String) arr[0]);
+                bean.setUpstreamApps((String) arr[1]);
+                bean.setSlaConfig((String) arr[2]);
+                bean.setJobData((String) arr[3]);
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
+                        + namedQuery.name());
         }
+        return bean;
     }
 
+    @Override
+    public Object getSingleValue(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
+    }
 }

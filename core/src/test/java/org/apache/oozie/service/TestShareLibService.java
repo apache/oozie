@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.PigActionExecutor;
 import org.apache.oozie.action.hadoop.TestJavaActionExecutor;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.hadoop.utils.HadoopShims;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -101,21 +103,43 @@ public class TestShareLibService extends XFsTestCase {
     }
 
     @Test
+    public void testfailFast() throws Exception {
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.FAIL_FAST_ON_STARTUP, "true");
+        // Set dummyfile as metafile which doesn't exist.
+        conf.set(ShareLibService.SHARELIB_MAPPING_FILE, String.valueOf(new Date().getTime()));
+        try {
+            services.init();
+            fail("Should throw exception");
+        }
+        catch (Throwable e) {
+            assertTrue(e.getMessage().contains("E0104: Could not fully initialize service"));
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
+    @Test
     public void testCreateLauncherLibPath() throws Exception {
         services = new Services();
         setSystemProps();
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        List<Path> launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
-        assertNotNull(launcherPath);
-        assertTrue(getFileSystem().exists(launcherPath.get(0)));
-        List<Path> pigLauncherPath = shareLibService.getSystemLibJars("pig");
-        assertTrue(getFileSystem().exists(pigLauncherPath.get(0)));
-
-        services.destroy();
-
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            List<Path> launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertNotNull(launcherPath);
+            assertTrue(getFileSystem().exists(launcherPath.get(0)));
+            List<Path> pigLauncherPath = shareLibService.getSystemLibJars("pig");
+            assertTrue(getFileSystem().exists(pigLauncherPath.get(0)));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
@@ -125,33 +149,37 @@ public class TestShareLibService extends XFsTestCase {
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
 
-        services.init();
-        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "</java>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        WorkflowJobBean wfj = new WorkflowJobBean();
-        wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
-        wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
-        Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
-        PigActionExecutor ae = new PigActionExecutor();
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+        try {
+            services.init();
+            String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                    + getNameNodeUri() + "</name-node>" + "</java>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            XConfiguration protoConf = new XConfiguration();
+            protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+            WorkflowJobBean wfj = new WorkflowJobBean();
+            wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+            wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
+            Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
+            PigActionExecutor ae = new PigActionExecutor();
+            Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains(MyPig.class.getName() + ".jar"));
-        assertTrue(cacheFilesStr.contains(MyOozie.class.getName() + ".jar"));
-        // Hadoop 2 has two extra jars
-        if (cacheFiles.length == 4) {
-            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
-            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+            String cacheFilesStr = Arrays.toString(cacheFiles);
+            assertTrue(cacheFilesStr.contains(MyPig.class.getName() + ".jar"));
+            assertTrue(cacheFilesStr.contains(MyOozie.class.getName() + ".jar"));
+            // Hadoop 2 has two extra jars
+            if (cacheFiles.length == 4) {
+                assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+                assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            }
+            else {
+                assertEquals(2, cacheFiles.length);
+            }
         }
-        else {
-            assertEquals(2, cacheFiles.length);
+        finally {
+            services.destroy();
         }
-        services.destroy();
     }
 
     @Test
@@ -160,34 +188,37 @@ public class TestShareLibService extends XFsTestCase {
         setSystemProps();
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
-        services.init();
-        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>" + "</pig>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        WorkflowJobBean wfj = new WorkflowJobBean();
-        wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
-        wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
-        Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
-        PigActionExecutor ae = new PigActionExecutor();
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+        try {
+            services.init();
+            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                    + getNameNodeUri() + "</name-node>" + "</pig>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            XConfiguration protoConf = new XConfiguration();
+            protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+            WorkflowJobBean wfj = new WorkflowJobBean();
+            wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+            wfj.setConf(XmlUtils.prettyPrint(new XConfiguration()).toString());
+            Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
+            PigActionExecutor ae = new PigActionExecutor();
+            Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains("MyPig.jar"));
-        assertTrue(cacheFilesStr.contains("MyOozie.jar"));
-        // Hadoop 2 has two extra jars
-        if (cacheFiles.length == 4) {
-            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
-            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+            String cacheFilesStr = Arrays.toString(cacheFiles);
+            assertTrue(cacheFilesStr.contains("MyPig.jar"));
+            assertTrue(cacheFilesStr.contains("MyOozie.jar"));
+            // Hadoop 2 has two extra jars
+            if (cacheFiles.length == 4) {
+                assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+                assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            }
+            else {
+                assertEquals(2, cacheFiles.length);
+            }
         }
-        else {
-            assertEquals(2, cacheFiles.length);
+        finally {
+            services.destroy();
         }
-        services.destroy();
-
     }
 
     @Test
@@ -213,39 +244,42 @@ public class TestShareLibService extends XFsTestCase {
 
         createFile(libpath.toString() + Path.SEPARATOR + "pig_10" + Path.SEPARATOR + "pig-10.jar");
 
-        services.init();
-        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>"
-                + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        WorkflowJobBean wfj = new WorkflowJobBean();
-        protoConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
-        wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
-        wfj.setConf(XmlUtils.prettyPrint(protoConf).toString());
+        try {
+            services.init();
+            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                    + getNameNodeUri() + "</name-node>"
+                    + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            XConfiguration protoConf = new XConfiguration();
+            protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+            WorkflowJobBean wfj = new WorkflowJobBean();
+            protoConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+            wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+            wfj.setConf(XmlUtils.prettyPrint(protoConf).toString());
 
-        Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
-        PigActionExecutor ae = new PigActionExecutor();
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        jobConf.set("oozie.action.sharelib.for.pig", "pig_10");
-        ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+            Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
+            PigActionExecutor ae = new PigActionExecutor();
+            Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            jobConf.set("oozie.action.sharelib.for.pig", "pig_10");
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
 
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains("MyPig.jar"));
-        assertTrue(cacheFilesStr.contains("MyOozie.jar"));
-        assertTrue(cacheFilesStr.contains("pig-10.jar"));
-        // Hadoop 2 has two extra jars
-        if (cacheFiles.length == 5) {
-            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
-            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+            String cacheFilesStr = Arrays.toString(cacheFiles);
+            assertTrue(cacheFilesStr.contains("MyPig.jar"));
+            assertTrue(cacheFilesStr.contains("MyOozie.jar"));
+            assertTrue(cacheFilesStr.contains("pig-10.jar"));
+            // Hadoop 2 has two extra jars
+            if (cacheFiles.length == 5) {
+                assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+                assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            }
+            else {
+                assertEquals(3, cacheFiles.length);
+            }
         }
-        else {
-            assertEquals(3, cacheFiles.length);
+        finally {
+            services.destroy();
         }
-        services.destroy();
-
     }
 
     @Test
@@ -310,12 +344,16 @@ public class TestShareLibService extends XFsTestCase {
         Path noexpirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs1);
         createDirs(fs, expirePath, noexpirePath, noexpirePath1);
 
-        services.init();
-        assertEquals(4, fs.listStatus(basePath).length);
-        assertTrue(fs.exists(noexpirePath));
-        assertTrue(fs.exists(noexpirePath1));
-        assertTrue(fs.exists(expirePath));
-        services.destroy();
+        try {
+            services.init();
+            assertEquals(4, fs.listStatus(basePath).length);
+            assertTrue(fs.exists(noexpirePath));
+            assertTrue(fs.exists(noexpirePath1));
+            assertTrue(fs.exists(expirePath));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     // Logic is to keep all share-lib between current timestamp and 7days old + 1 latest sharelib older than 7 days.
@@ -326,7 +364,7 @@ public class TestShareLibService extends XFsTestCase {
         setSystemProps();
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
-        FileSystem fs = getFileSystem();
+        final FileSystem fs = getFileSystem();
         // for directory created 8 days back to be deleted
         long expiryTime = System.currentTimeMillis()
                 - TimeUnit.MILLISECONDS.convert(
@@ -336,7 +374,7 @@ public class TestShareLibService extends XFsTestCase {
         String expireTs1 = dt.format(new Date(expiryTime - TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
         String noexpireTs = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
         String noexpireTs1 = dt.format(new Date(expiryTime + TimeUnit.MILLISECONDS.convert(2, TimeUnit.DAYS)));
-        Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+        final Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
 
         Path expirePath = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + expireTs);
         Path expirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + expireTs1);
@@ -344,14 +382,45 @@ public class TestShareLibService extends XFsTestCase {
         Path noexpirePath1 = new Path(basePath, ShareLibService.LAUNCHER_PREFIX + noexpireTs1);
 
         createDirs(fs, expirePath, expirePath1, noexpirePath, noexpirePath1);
-        services.init();
-        assertEquals(4, fs.listStatus(basePath).length);
-        assertTrue(fs.exists(noexpirePath));
-        assertTrue(fs.exists(noexpirePath1));
-        assertTrue(fs.exists(expirePath));
-        assertTrue(!fs.exists(expirePath1));
+        try {
+            services.init();
+            // Wait for the scheduled purge runnable to complete
+            waitFor(20 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    return (fs.listStatus(basePath).length == 4);
+                }
+            });
+            assertEquals(4, fs.listStatus(basePath).length);
+            assertTrue(fs.exists(noexpirePath));
+            assertTrue(fs.exists(noexpirePath1));
+            assertTrue(fs.exists(expirePath));
+            assertFalse(fs.exists(expirePath1));
+        }
+        finally {
+            services.destroy();
+        }
+    }
 
-        services.destroy();
+    @Test
+    public void testGetShareLibCompatible() throws Exception {
+        services = new Services();
+        setSystemProps();
+        FileSystem fs = getFileSystem();
+        Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+
+        // Use basepath if there is no timestamped directory
+        fs.mkdirs(basePath);
+        Path pigPath = new Path(basePath.toString() + Path.SEPARATOR + "pig");
+        fs.mkdirs(pigPath);
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertNotNull(shareLibService.getShareLibJars("pig"));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
@@ -359,9 +428,10 @@ public class TestShareLibService extends XFsTestCase {
         services = new Services();
         setSystemProps();
         FileSystem fs = getFileSystem();
-        Date time = new Date(System.currentTimeMillis());
-
         Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+
+        // Use timedstamped directory if available
+        Date time = new Date(System.currentTimeMillis());
         Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + ShareLibService.dateFormat.format(time));
         fs.mkdirs(libpath);
 
@@ -371,13 +441,17 @@ public class TestShareLibService extends XFsTestCase {
         fs.mkdirs(pigPath);
         fs.mkdirs(pigPath1);
         fs.mkdirs(pigPath2);
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        assertNotNull(shareLibService.getShareLibJars("pig"));
-        assertNotNull(shareLibService.getShareLibJars("pig_9"));
-        assertNotNull(shareLibService.getShareLibJars("pig_10"));
-        assertNull(shareLibService.getShareLibJars("pig_11"));
-        services.destroy();
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertNotNull(shareLibService.getShareLibJars("pig"));
+            assertNotNull(shareLibService.getShareLibJars("pig_9"));
+            assertNotNull(shareLibService.getShareLibJars("pig_10"));
+            assertNull(shareLibService.getShareLibJars("pig_11"));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
@@ -396,110 +470,211 @@ public class TestShareLibService extends XFsTestCase {
         Path path3 = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + dir3);
         createDirs(fs, path1, path2, path3);
         createFile(path1.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
-        services.destroy();
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
     public void testShareLibLoadFile() throws Exception {
-
         services = new Services();
         FileSystem fs = getFileSystem();
         setSystemProps();
-        creatTempshareLibKeymap(fs);
+        createTestShareLibMetaFile(fs);
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHARELIB_MAPPING_FILE, fs.getUri() + "/user/test/config.properties");
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        assertTrue(shareLibService.getShareLibJars("something_new").get(0).getName().endsWith("somethingNew.jar"));
-        assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
-        fs.delete(new Path("shareLibPath/"), true);
-        services.destroy();
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertTrue(shareLibService.getShareLibJars("something_new").get(0).getName().endsWith("somethingNew.jar"));
+            assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
+            fs.delete(new Path("shareLibPath/"), true);
+        }
+        finally {
+            services.destroy();
+        }
     }
 
     @Test
     public void testLoadfromDFS() throws Exception {
         services = new Services();
         setSystemProps();
-        services.init();
-        FileSystem fs = getFileSystem();
-        Date time = new Date(System.currentTimeMillis());
+        try {
+            services.init();
+            FileSystem fs = getFileSystem();
+            Date time = new Date(System.currentTimeMillis());
 
-        Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
-        Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX + ShareLibService.dateFormat.format(time));
-        fs.mkdirs(libpath);
+            Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+            Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX
+                    + ShareLibService.dateFormat.format(time));
+            fs.mkdirs(libpath);
 
-        Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
-        Path ooziePath = new Path(libpath.toString() + Path.SEPARATOR + "oozie");
-        Path pigPath1 = new Path(libpath.toString() + Path.SEPARATOR + "pig_9");
-        Path pigPath2 = new Path(libpath.toString() + Path.SEPARATOR + "pig_10");
-        fs.mkdirs(pigPath);
-        fs.mkdirs(ooziePath);
-        fs.mkdirs(pigPath1);
-        fs.mkdirs(pigPath2);
+            Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
+            Path ooziePath = new Path(libpath.toString() + Path.SEPARATOR + "oozie");
+            Path pigPath1 = new Path(libpath.toString() + Path.SEPARATOR + "pig_9");
+            Path pigPath2 = new Path(libpath.toString() + Path.SEPARATOR + "pig_10");
+            fs.mkdirs(pigPath);
+            fs.mkdirs(ooziePath);
+            fs.mkdirs(pigPath1);
+            fs.mkdirs(pigPath2);
 
-        createFile(libpath.toString() + Path.SEPARATOR + "pig_10" + Path.SEPARATOR + "pig-10.jar");
-        createFile(libpath.toString() + Path.SEPARATOR + "oozie" + Path.SEPARATOR + "oozie_luncher.jar");
+            createFile(libpath.toString() + Path.SEPARATOR + "pig_10" + Path.SEPARATOR + "pig-10.jar");
+            createFile(libpath.toString() + Path.SEPARATOR + "oozie" + Path.SEPARATOR + "oozie_luncher.jar");
 
-        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>"
-                + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        WorkflowJobBean wfj = new WorkflowJobBean();
-        protoConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
-        wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
-        wfj.setConf(XmlUtils.prettyPrint(protoConf).toString());
+            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                    + getNameNodeUri() + "</name-node>"
+                    + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
+            Element eActionXml = XmlUtils.parseXml(actionXml);
+            XConfiguration protoConf = new XConfiguration();
+            protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+            WorkflowJobBean wfj = new WorkflowJobBean();
+            protoConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
+            wfj.setProtoActionConf(XmlUtils.prettyPrint(protoConf).toString());
+            wfj.setConf(XmlUtils.prettyPrint(protoConf).toString());
 
-        Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
-        PigActionExecutor ae = new PigActionExecutor();
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        jobConf.set("oozie.action.sharelib.for.pig", "pig_10");
-        ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains("pig-10.jar"));
-        assertTrue(cacheFilesStr.contains("oozie_luncher.jar"));
-        // Hadoop 2 has two extra jars
-        if (cacheFiles.length == 4) {
-            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
-            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            Context context = new TestJavaActionExecutor().new Context(wfj, new WorkflowActionBean());
+            PigActionExecutor ae = new PigActionExecutor();
+            Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            jobConf.set("oozie.action.sharelib.for.pig", "pig_10");
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+            URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
+            String cacheFilesStr = Arrays.toString(cacheFiles);
+            assertTrue(cacheFilesStr.contains("pig-10.jar"));
+            assertTrue(cacheFilesStr.contains("oozie_luncher.jar"));
+            // Hadoop 2 has two extra jars
+            if (cacheFiles.length == 4) {
+                assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+                assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+            }
+            else {
+                assertEquals(2, cacheFiles.length);
+            }
         }
-        else {
-            assertEquals(2, cacheFiles.length);
+        finally {
+            services.destroy();
         }
-        services.destroy();
-
     }
 
     @Test
     public void testShareLibLoadFileMultipleFile() throws Exception {
         FileSystem fs = getFileSystem();
         services = new Services();
-        creatTempshareLibKeymap_multipleFile(fs);
+        createTestShareLibMetaFile_multipleFile(fs);
         setSystemProps();
         Configuration conf = services.getConf();
         conf.set(ShareLibService.SHARELIB_MAPPING_FILE, fs.getUri() + "/user/test/config.properties");
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
-        services.init();
-        ShareLibService shareLibService = Services.get().get(ShareLibService.class);
-        assertNull(shareLibService.getShareLibJars("something_new"));
-        assertEquals(shareLibService.getShareLibJars("pig").size(), 2);
-        fs.delete(new Path("shareLibPath/"), true);
-        services.destroy();
+        try {
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            assertNull(shareLibService.getShareLibJars("something_new"));
+            assertEquals(shareLibService.getShareLibJars("pig").size(), 2);
+            fs.delete(new Path("shareLibPath/"), true);
+        }
+        finally {
+            services.destroy();
+        }
     }
 
-    public void createFile(String filename) throws IOException {
+    @Test
+    public void testMultipleLauncherCall() throws Exception {
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
+        try {
+            FileSystem fs = getFileSystem();
+            Date time = new Date(System.currentTimeMillis());
+            Path basePath = new Path(services.getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
+            Path libpath = new Path(basePath, ShareLibService.SHARED_LIB_PREFIX
+                    + ShareLibService.dateFormat.format(time));
+            fs.mkdirs(libpath);
+            Path ooziePath = new Path(libpath.toString() + Path.SEPARATOR + "oozie");
+            fs.mkdirs(ooziePath);
+            createFile(libpath.toString() + Path.SEPARATOR + "oozie" + Path.SEPARATOR + "oozie_luncher.jar");
+            services.init();
+            ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+            shareLibService.init(services);
+            List<Path> launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertEquals(launcherPath.size(), 2);
+            launcherPath = shareLibService.getSystemLibJars(JavaActionExecutor.OOZIE_COMMON_LIBDIR);
+            assertEquals(launcherPath.size(), 2);
+        }
+        finally {
+            services.destroy();
+        }
+    }
+
+    @Test
+    public void testMetafileSymlink() throws ServiceException, IOException {
+        // Assume.assumeTrue("Skipping for hadoop - 1.x",HadoopFileSystem.isSymlinkSupported());
+        if (!HadoopShims.isSymlinkSupported()) {
+            return;
+        }
+
+        services = new Services();
+        setSystemProps();
+        Configuration conf = services.getConf();
+        conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
+        services.init();
+        FileSystem fs = getFileSystem();
+        Properties prop = new Properties();
+        try {
+
+            String testPath = "shareLibPath/";
+
+            Path basePath = new Path(testPath + Path.SEPARATOR + "testPath");
+            Path basePath1 = new Path(testPath + Path.SEPARATOR + "testPath1");
+            Path symlink = new Path("symlink/");
+            fs.mkdirs(basePath);
+
+            createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
+            createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig_1.jar");
+
+            createFile(basePath1.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig_2.jar");
+            createFile(basePath1.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig_3.jar");
+            createFile(basePath1.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig_4.jar");
+
+            HadoopShims fileSystem = new HadoopShims(fs);
+            fileSystem.createSymlink(basePath, symlink, true);
+
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + symlink.toString());
+            createTestShareLibMetaFile(fs, prop);
+            assertEquals(fileSystem.isSymlink(symlink), true);
+
+            conf.set(ShareLibService.SHARELIB_MAPPING_FILE, fs.getUri() + "/user/test/config.properties");
+            conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
+            try {
+                ShareLibService shareLibService = Services.get().get(ShareLibService.class);
+                shareLibService.init(services);
+                assertEquals(shareLibService.getShareLibJars("pig").size(), 2);
+                new HadoopShims(fs).createSymlink(basePath1, symlink, true);
+                assertEquals(shareLibService.getShareLibJars("pig").size(), 3);
+            }
+            finally {
+                fs.delete(new Path("shareLibPath/"), true);
+                fs.delete(symlink, true);
+                services.destroy();
+            }
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void createFile(String filename) throws IOException {
         Path path = new Path(filename);
         FSDataOutputStream out = getFileSystem().create(path);
         out.close();
     }
 
-    public void creatTempshareLibKeymap(FileSystem fs) {
+    private void createTestShareLibMetaFile(FileSystem fs) {
         Properties prop = new Properties();
 
         try {
@@ -517,9 +692,17 @@ public class TestShareLibService extends XFsTestCase {
 
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
+            createTestShareLibMetaFile(fs, prop);
 
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void createTestShareLibMetaFile(FileSystem fs, Properties prop) {
+        try {
             FSDataOutputStream out = fs.create(new Path("/user/test/config.properties"));
-
             prop.store(out, null);
             out.close();
 
@@ -529,7 +712,7 @@ public class TestShareLibService extends XFsTestCase {
         }
     }
 
-    public void creatTempshareLibKeymap_multipleFile(FileSystem fs) {
+    public void createTestShareLibMetaFile_multipleFile(FileSystem fs) {
 
         Properties prop = new Properties();
         try {

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.net.URI;
@@ -62,7 +63,7 @@ public class URIHandlerService implements Service {
     private void init(Configuration conf) throws ClassNotFoundException {
         cache = new HashMap<String, URIHandler>();
 
-        String[] classes = conf.getStrings(URI_HANDLERS, FSURIHandler.class.getName());
+        String[] classes = ConfigurationService.getStrings(conf, URI_HANDLERS);
         for (String classname : classes) {
             Class<?> clazz = Class.forName(classname.trim());
             URIHandler uriHandler = (URIHandler) ReflectionUtils.newInstance(clazz, null);

@@ -15,13 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 
@@ -40,10 +44,11 @@ public class TimestampedMessageParser {
     protected BufferedReader reader;
     private String nextLine = null;
     private String lastTimestamp = null;
-    private XLogStreamer.Filter filter;
+    private XLogFilter filter;
     private boolean empty = false;
     private String lastMessage = null;
     private boolean patternMatched = false;
+    public int count = 0;
 
     /**
      * Creates a TimestampedMessageParser with the given BufferedReader and filter.
@@ -51,11 +56,11 @@ public class TimestampedMessageParser {
      * @param reader The BufferedReader to get the log messages from
      * @param filter The filter
      */
-    public TimestampedMessageParser(BufferedReader reader, XLogStreamer.Filter filter) {
+    public TimestampedMessageParser(BufferedReader reader, XLogFilter filter) {
         this.reader = reader;
         this.filter = filter;
         if (filter == null) {
-            filter = new XLogStreamer.Filter();
+            filter = new XLogFilter();
         }
         filter.constructPattern();
     }
@@ -140,6 +145,21 @@ public class TimestampedMessageParser {
                 patternMatched = filter.matches(logParts);
             }
             if (patternMatched) {
+                if (filter.getLogLimit() != -1) {
+                    if (logParts != null) {
+                        if (count >= filter.getLogLimit()) {
+                            return null;
+                        }
+                        count++;
+                    }
+                }
+                if (logParts != null) {
+                    if (filter.getEndDate() != null) {
+                        //Ignore the milli second part
+                        if (logParts.get(0).substring(0, 19).compareTo(filter.getFormattedEndDate()) > 0)
+                            return null;
+                    }
+                }
                 return line;
             }
         }

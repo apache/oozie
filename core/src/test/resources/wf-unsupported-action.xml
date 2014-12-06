@@ -19,13 +19,16 @@
     <start to="a"/>
 
     <action name="a">
-        <email>
-            <to>to</to>
-            <subject>subject</subject>
-            <message/>
-        </email>
-        <ok to="b"/>
-        <error to="b"/>
+        <test xmlns="uri:test">
+            <signal-value>${wf:conf('signal-value')}</signal-value>
+            <external-status>${wf:conf('external-status')}</external-status>
+            <error>${wf:conf('error')}</error>
+            <avoid-set-execution-data>${wf:conf('avoid-set-execution-data')}</avoid-set-execution-data>
+            <avoid-set-end-data>${wf:conf('avoid-set-end-data')}</avoid-set-end-data>
+            <running-mode>${wf:conf('running-mode')}</running-mode>
+        </test>
+        <ok to="end"/>
+        <error to="kill"/>
     </action>
 
     <end name="b"/>

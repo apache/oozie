@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
@@ -55,6 +56,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
@@ -62,6 +64,7 @@ import java.util.zip.ZipEntry;
 
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.util.PropertiesUtils;
 
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
@@ -80,6 +83,15 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testConfigDefaultPropsToAction() throws Exception {
+        String actionXml = "<map-reduce>"
+                + "        <prepare>"
+                + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                + "        </prepare>"
+                + "        <configuration>"
+                + "          <property><name>bb</name><value>BB</value></property>"
+                + "          <property><name>cc</name><value>from_action</value></property>"
+                + "        </configuration>"
+                + "      </map-reduce>";
         String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"map-reduce-wf\">"
         + "<global>"
         + "<job-tracker>${jobTracker}</job-tracker>"
@@ -88,15 +100,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         + "</global>"
         + "    <start to=\"mr-node\"/>"
         + "    <action name=\"mr-node\">"
-        + "      <map-reduce>"
-        + "        <prepare>"
-        + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
-        + "        </prepare>"
-        + "        <configuration>"
-        + "          <property><name>bb</name><value>BB</value></property>"
-        + "          <property><name>cc</name><value>from_action</value></property>"
-        + "        </configuration>"
-        + "      </map-reduce>"
+        + actionXml
         + "    <ok to=\"end\"/>"
         + "    <error to=\"fail\"/>"
         + "</action>"
@@ -118,7 +122,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         OutputStream os = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
         XConfiguration defaultConf = new XConfiguration();
-        defaultConf.set("outputDir", "output-data-dir");
+        defaultConf.set("outputDir", "default-output-dir");
         defaultConf.set("mapred.mapper.class", "MM");
         defaultConf.set("mapred.reducer.class", "RR");
         defaultConf.set("cc", "from_default");
@@ -133,18 +137,16 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 wfId + "@mr-node");
 
         // check NN and JT settings
-        Element eConf = XmlUtils.parseXml(mrAction.getConf());
-        eConf = eConf.getChild("name-node", eConf.getNamespace());
+        Element eAction = XmlUtils.parseXml(mrAction.getConf());
+        Element eConf = eAction.getChild("name-node", eAction.getNamespace());
         assertEquals(getNameNodeUri(), eConf.getText());
-        eConf = XmlUtils.parseXml(mrAction.getConf());
-        eConf = eConf.getChild("job-tracker", eConf.getNamespace());
+        eConf = eAction.getChild("job-tracker", eAction.getNamespace());
         assertEquals(getJobTrackerUri(), eConf.getText());
 
         // check other m-r settings
-        eConf = XmlUtils.parseXml(mrAction.getConf());
-        eConf = eConf.getChild("configuration", eConf.getNamespace());
+        eConf = eAction.getChild("configuration", eAction.getNamespace());
         Configuration actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(eConf).toString()));
-        assertEquals("output-data-dir", actionConf.get("outputDir"));
+        assertEquals("default-output-dir", actionConf.get("outputDir"));
         assertEquals("MM", actionConf.get("mapred.mapper.class"));
         assertEquals("RR", actionConf.get("mapred.reducer.class"));
         // check that default did not overwrite same property explicit in action conf
@@ -153,6 +155,54 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals("AA", actionConf.get("aa"));
         assertEquals("BB", actionConf.get("bb"));
 
+        //test no infinite recursion by param referring to itself e.g. path = ${path}/sub-path
+        actionXml = "<map-reduce>"
+                + "        <prepare>"
+                + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                + "        </prepare>"
+                + "        <configuration>"
+                + "          <property><name>cc</name><value>${cc}/action_cc</value></property>"
+                + "        </configuration>"
+                + "      </map-reduce>";
+
+        wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"map-reduce-wf\">"
+                + "<global>"
+                + "<job-tracker>${jobTracker}</job-tracker>"
+                + "<name-node>${nameNode}</name-node>"
+                + "<configuration><property><name>outputDir</name><value>global-output-dir</value></property></configuration>"
+                + "</global>"
+                + "    <start to=\"mr-node\"/>"
+                + "    <action name=\"mr-node\">"
+                + actionXml
+                + "    <ok to=\"end\"/>"
+                + "    <error to=\"fail\"/>"
+                + "</action>"
+                + "<kill name=\"fail\">"
+                + "    <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>"
+                + "</kill>"
+                + "<end name=\"end\"/>"
+                + "</workflow-app>";
+
+         writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+         IOUtils.copyCharStream(new StringReader(wfXml), writer);
+
+         wfId = new SubmitXCommand(conf).call();
+         new StartXCommand(wfId).call();
+         sleep(3000);
+
+         mrAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION,
+                 wfId + "@mr-node");
+
+         // check param
+         eAction = XmlUtils.parseXml(mrAction.getConf());
+         eConf = eAction.getChild("configuration", eAction.getNamespace());
+         actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(eConf).toString()));
+         // action param referring to same param name given in defaults cc = ${cc}/action_cc
+         assertEquals("from_default/action_cc", actionConf.get("cc"));
+         // check global is retained and has precedence over config-default
+         eConf = eAction.getChild("name-node", eAction.getNamespace());
+         assertEquals(getNameNodeUri(), eConf.getText());
+         assertEquals("global-output-dir", actionConf.get("outputDir"));
     }
 
     @SuppressWarnings("unchecked")
@@ -498,6 +548,104 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         _testSubmit("map-reduce", actionXml);
     }
 
+    public void testMapReduceWithConfigClass() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        Path jobXml = new Path(getFsTestCaseDir(), "job.xml");
+        XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
+        conf.set(MapperReducerForTest.JOB_XML_OUTPUT_LOCATION, jobXml.toUri().toString());
+        conf.set("B", "b");
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + conf.toXmlString(false)
+                + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
+
+        _testSubmit("map-reduce", actionXml);
+        Configuration conf2 = new Configuration(false);
+        conf2.addResource(fs.open(jobXml));
+        assertEquals("a", conf2.get("A"));
+        assertEquals("c", conf2.get("B"));
+    }
+
+    public void testMapReduceWithConfigClassNotFound() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false)
+                + "<config-class>org.apache.oozie.does.not.exist</config-class>" + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        waitFor(120 * 2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertFalse(LauncherMapperHelper.isMainSuccessful(launcherJob));
+
+        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+                context.getProtoActionConf());
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        assertEquals("An Exception occured while instantiating the action config class",
+                errorProps.getProperty("exception.message"));
+        assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
+    }
+
+    public void testMapReduceWithConfigClassThrowException() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
+        conf.setBoolean("oozie.test.throw.exception", true);        // causes OozieActionConfiguratorForTest to throw an exception
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + conf.toXmlString(false)
+                + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
+
+        Context context = createContext("map-reduce", actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        waitFor(120 * 2000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        assertFalse(LauncherMapperHelper.isMainSuccessful(launcherJob));
+
+        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+                context.getProtoActionConf());
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        assertEquals("doh", errorProps.getProperty("exception.message"));
+        assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
+    }
+
     public void testMapReduceWithCredentials() throws Exception {
         FileSystem fs = getFileSystem();
 
@@ -610,9 +758,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     // With the oozie.action.mapreduce.uber.jar.enable property set to false, a workflow with an uber jar should fail
-    // (this happens before we get to Hadoop, so not having the correct version of Hadoop doesn't matter here; the
-    // TestMapReduceActionExecutorUberJar.testMapReduceWithUberJarEnabled() test actually tests the uber jar functionality, but
-    // this test is excluded by default)
     public void testMapReduceWithUberJarDisabled() throws Exception {
         Services serv = Services.get();
         boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
@@ -624,6 +769,19 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             assertEquals(ActionExecutorException.ErrorType.ERROR, aee.getErrorType());
             assertTrue(aee.getMessage().contains("oozie.action.mapreduce.uber.jar.enable"));
             assertTrue(aee.getMessage().contains("oozie.mapreduce.uber.jar"));
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+        }
+    }
+
+    public void testMapReduceWithUberJarEnabled() throws Exception {
+        Services serv = Services.get();
+        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        try {
+            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
+            _testMapReduceWithUberJar();
         } catch (Exception e) {
             throw e;
         } finally {

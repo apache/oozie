@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 
@@ -25,6 +26,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.test.XTestCase;
 
 public class TestTimestampedMessageParser extends XTestCase {
@@ -113,16 +116,16 @@ public class TestTimestampedMessageParser extends XTestCase {
         return file;
     }
 
-    public void testNofindLogs() {
+    public void testNofindLogs() throws CommandException {
         // Test of OOZIE-1691
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--no-found-C");
         xf.setLogLevel("DEBUG|WARN");
         try {
@@ -136,18 +139,18 @@ public class TestTimestampedMessageParser extends XTestCase {
         }
     }
 
-    public void testProcessRemainingLog() throws IOException {
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+    public void testProcessRemainingLog() throws IOException, CommandException {
+
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         xf.setLogLevel("DEBUG|WARN");
-
         File file = prepareFile1(getTestCaseDir());
         StringWriter sw = new StringWriter();
         new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
@@ -169,15 +172,15 @@ public class TestTimestampedMessageParser extends XTestCase {
         assertTrue(out[13].contains("_L17_"));
     }
 
-    public void testProcessRemainingCoordinatorLogForActions() throws IOException {
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+    public void testProcessRemainingCoordinatorLogForActions() throws IOException, CommandException {
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "14-200904160239--example-C");
         xf.setParameter("ACTION", "14-200904160239--example-C@1");
 
@@ -191,8 +194,8 @@ public class TestTimestampedMessageParser extends XTestCase {
     }
 
     public void testLifecycle() throws Exception {
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter xf = new XLogFilter();
         String str1 = "2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change\n";
         String str2 = "2009-06-24 02:43:13,961  INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "

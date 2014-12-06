@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.email;
 
 import java.util.ArrayList;
@@ -124,10 +125,10 @@ public class EmailActionExecutor extends ActionExecutor {
 
 
         // All good - lets try to mail!
-        email(context, tos, ccs, subject, body, contentType);
+        email(tos, ccs, subject, body, contentType);
     }
 
-    protected void email(Context context, String[] to, String[] cc, String subject, String body, String contentType)
+    public void email(String[] to, String[] cc, String subject, String body, String contentType)
             throws ActionExecutorException {
         // Get mailing server details.
         String smtpHost = getOozieConf().get(EMAIL_SMTP_HOST, "localhost");

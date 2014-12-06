@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ import org.apache.oozie.client.rest.*;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.BundleEngineService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -177,6 +179,10 @@ public class V1JobServlet extends BaseJobServlet {
             changeCoordinatorJob(request, response);
         }
     }
+    @Override
+    protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 
     /*
      * protected method to reRun a job
@@ -267,15 +273,20 @@ public class V1JobServlet extends BaseJobServlet {
     @Override
     protected void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        String jobId = getResourceName(request);
-        if (jobId.endsWith("-W")) {
-            streamWorkflowJobLog(request, response);
+        try {
+            String jobId = getResourceName(request);
+            if (jobId.endsWith("-W")) {
+                streamWorkflowJobLog(request, response);
+            }
+            else if (jobId.endsWith("-B")) {
+                streamBundleJobLog(request, response);
+            }
+            else {
+                streamCoordinatorJobLog(request, response);
+            }
         }
-        else if (jobId.endsWith("-B")) {
-            streamBundleJob(request, response);
-        }
-        else {
-            streamCoordinatorJobLog(request, response);
+        catch (Exception e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, e.getMessage());
         }
     }
 
@@ -811,14 +822,14 @@ public class V1JobServlet extends BaseJobServlet {
         String filter = request.getParameter(RestConstants.JOB_FILTER_PARAM);
         String orderStr = request.getParameter(RestConstants.ORDER_PARAM);
         boolean order = (orderStr != null && orderStr.equals("desc")) ? true : false;
-        int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
-        start = (start < 1) ? 1 : start;
+        int offset = (startStr != null) ? Integer.parseInt(startStr) : 1;
+        offset = (offset < 1) ? 1 : offset;
         // Get default number of coordinator actions to be retrieved
-        int defaultLen = Services.get().getConf().getInt(COORD_ACTIONS_DEFAULT_LENGTH, 1000);
+        int defaultLen = ConfigurationService.getInt(COORD_ACTIONS_DEFAULT_LENGTH);
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
         len = getCoordinatorJobLength(defaultLen, len);
         try {
-            CoordinatorJobBean coordJob = coordEngine.getCoordJob(jobId, filter, start, len, order);
+            CoordinatorJobBean coordJob = coordEngine.getCoordJob(jobId, filter, offset, len, order);
             jobBean = coordJob;
         }
         catch (CoordinatorEngineException ex) {
@@ -987,7 +998,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param response servlet response
      * @throws XServletException
      */
-    private void streamBundleJob(HttpServletRequest request, HttpServletResponse response)
+    private void streamBundleJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
@@ -1071,5 +1082,18 @@ public class V1JobServlet extends BaseJobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
+    /**
+     * not supported for v1
+     */
+    @Override
+    protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 
+    @Override
+    protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 }

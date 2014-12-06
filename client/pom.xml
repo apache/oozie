@@ -22,11 +22,15 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-client</artifactId>
+<<<<<<< HEAD
     <version>4.0.0-cdh5.1.2</version>
+=======
+    <version>4.2.0-SNAPSHOT</version>
+>>>>>>> origin/master
     <description>Apache Oozie Client</description>
     <name>Apache Oozie Client</name>
     <packaging>jar</packaging>
@@ -73,21 +77,9 @@
             <artifactId>activemq-client</artifactId>
             <scope>compile</scope>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-auth</artifactId>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-hadoop-auth</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -49,16 +49,18 @@ Enough reading already? Follow the steps in [[DG_QuickStart][Oozie Quick Start]]
    * [[./client/apidocs/index.html][Oozie Client Javadocs]]
    * [[./core/apidocs/index.html][Oozie Core Javadocs]]
    * [[WebServicesAPI][Oozie Web Services API]]
-   * [[DG_UnifiedCredentialsModule][Unified Credentials Module]]
+   * [[DG_ActionAuthentication][Action Authentication]]
 
 ---+++ Action Extensions
 
    * [[DG_EmailActionExtension][Email Action]]
    * [[DG_ShellActionExtension][Shell Action]]
    * [[DG_HiveActionExtension][Hive Action]]
+   * [[DG_Hive2ActionExtension][Hive 2 Action]]
    * [[DG_SqoopActionExtension][Sqoop Action]]
    * [[DG_SshActionExtension][Ssh Action]]
    * [[DG_DistCpActionExtension][DistCp Action]]
+   * [[DG_SparkActionExtension][Spark Action]]
    * [[DG_CustomActionExecutor][Writing a Custom Action Executor]]
 
 ---+++ Job Status and SLA Monitoring

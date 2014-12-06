@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.coord;
 
 import java.text.ParseException;
@@ -152,7 +153,7 @@ public class CoordUtils {
      * @return the list of all Coordinator actions for action range
      * @throws CommandException thrown if failed to get coordinator actions by given id range
      */
-     static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
+     public static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");

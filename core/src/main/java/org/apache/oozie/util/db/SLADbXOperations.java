@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util.db;
 
 import java.util.Date;
@@ -61,17 +62,18 @@ public class SLADbXOperations {
         Date nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
         // Setting expected start time
         String strRelExpectedStart = getTagElement(eSla, "should-start");
-        if (strRelExpectedStart == null || strRelExpectedStart.length() == 0) {
-            throw new CommandException(ErrorCode.E1101);
-        }
-        int relExpectedStart = Integer.parseInt(strRelExpectedStart);
-        if (relExpectedStart < 0) {
+        if (strRelExpectedStart != null && strRelExpectedStart.length() > 0) {
+            int relExpectedStart = Integer.parseInt(strRelExpectedStart);
+            if (relExpectedStart < 0) {
+                sla.setExpectedStart(null);
+            }
+            else {
+                Date expectedStart = new Date(nominalTime.getTime()
+                        + relExpectedStart * 60 * 1000);
+                sla.setExpectedStart(expectedStart);
+            }
+        } else {
             sla.setExpectedStart(null);
-        }
-        else {
-            Date expectedStart = new Date(nominalTime.getTime()
-                    + relExpectedStart * 60 * 1000);
-            sla.setExpectedStart(expectedStart);
         }
 
         // Setting expected end time

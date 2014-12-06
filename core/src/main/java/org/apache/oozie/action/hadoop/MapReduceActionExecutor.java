@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
@@ -32,7 +33,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -135,7 +136,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             // Resolve uber jar path (has to be done after super because oozie.mapreduce.uber.jar is under <configuration>)
             String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
             if (uberJar != null) {
-                if (!Services.get().getConf().getBoolean(OOZIE_MAPREDUCE_UBER_JAR_ENABLE, false)) {
+                if (!ConfigurationService.getBoolean(OOZIE_MAPREDUCE_UBER_JAR_ENABLE)){
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "MR003",
                             "{0} property is not allowed.  Set {1} to true in oozie-site to enable.",
                             MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR, OOZIE_MAPREDUCE_UBER_JAR_ENABLE);

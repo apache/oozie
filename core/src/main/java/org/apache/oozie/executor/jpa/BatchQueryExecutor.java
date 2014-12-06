@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
@@ -45,8 +46,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Query Executor that provides API to run multiple update/insert queries in one
  * transaction. This guarantees entire change to be rolled back when one of
@@ -55,7 +54,6 @@ import com.google.common.annotations.VisibleForTesting;
 public class BatchQueryExecutor {
 
     private static BatchQueryExecutor instance = new BatchQueryExecutor();
-    private static JPAService jpaService;
 
     public static class UpdateEntry<E extends Enum<E>> {
         E namedQuery;
@@ -76,16 +74,9 @@ public class BatchQueryExecutor {
     }
 
     private BatchQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static BatchQueryExecutor getInstance() {
-        if (instance == null) {
-            instance = new BatchQueryExecutor();
-        }
         return BatchQueryExecutor.instance;
     }
 
@@ -93,6 +84,7 @@ public class BatchQueryExecutor {
     public void executeBatchInsertUpdateDelete(Collection<JsonBean> insertList, Collection<UpdateEntry> updateList,
             Collection<JsonBean> deleteList) throws JPAExecutorException {
         List<QueryEntry> queryList = new ArrayList<QueryEntry>();
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
 
         if (updateList != null) {
@@ -140,11 +132,4 @@ public class BatchQueryExecutor {
         jpaService.executeBatchInsertUpdateDelete(insertList, queryList, deleteList, em);
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
-    }
 }

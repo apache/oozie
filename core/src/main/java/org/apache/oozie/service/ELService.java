@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.oozie.util.XLog;
@@ -86,7 +87,7 @@ public class ELService implements Service {
     private List<ELService.ELConstant> extractConstants(Configuration conf, String key) throws ServiceException {
         List<ELService.ELConstant> list = new ArrayList<ELService.ELConstant>();
         if (conf.get(key, "").trim().length() > 0) {
-            for (String function : conf.getStrings(key)) {
+            for (String function : ConfigurationService.getStrings(conf, key)) {
                 String[] parts = parseDefinition(function);
                 list.add(new ELConstant(parts[0], parts[1], findConstant(parts[2], parts[3])));
                 log.trace("Registered prefix:constant[{0}:{1}] for class#field[{2}#{3}]", (Object[]) parts);
@@ -98,7 +99,7 @@ public class ELService implements Service {
     private List<ELService.ELFunction> extractFunctions(Configuration conf, String key) throws ServiceException {
         List<ELService.ELFunction> list = new ArrayList<ELService.ELFunction>();
         if (conf.get(key, "").trim().length() > 0) {
-            for (String function : conf.getStrings(key)) {
+            for (String function : ConfigurationService.getStrings(conf, key)) {
                 String[] parts = parseDefinition(function);
                 list.add(new ELFunction(parts[0], parts[1], findMethod(parts[2], parts[3])));
                 log.trace("Registered prefix:constant[{0}:{1}] for class#field[{2}#{3}]", (Object[]) parts);
@@ -121,7 +122,7 @@ public class ELService implements Service {
         //Get the list of group names from configuration file
         // defined in the property tag: oozie.service.ELSerice.groups
         //String []groupList = services.getConf().get(CONF_GROUPS, "").trim().split(",");
-        String[] groupList = services.getConf().getStrings(CONF_GROUPS, "");
+        String[] groupList = ConfigurationService.getStrings(services.getConf(), CONF_GROUPS);
         //For each group, collect the required functions and constants
         // and store it into HashMap
         for (String group : groupList) {

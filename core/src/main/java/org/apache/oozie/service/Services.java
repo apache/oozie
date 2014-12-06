@@ -15,16 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.VersionInfo;
+import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.ErrorCode;
 
@@ -113,13 +116,13 @@ public class Services {
             XLog.getLog(getClass()).warn("Oozie configured to work in a timezone other than UTC: {0}",
                                          DateUtils.getOozieProcessingTimeZone().getID());
         }
-        systemId = conf.get(CONF_SYSTEM_ID, ("oozie-" + System.getProperty("user.name")));
+        systemId = ConfigurationService.get(conf, CONF_SYSTEM_ID);
         if (systemId.length() > MAX_SYSTEM_ID_LEN) {
             systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
             XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming", systemId,
                                          MAX_SYSTEM_ID_LEN);
         }
-        setSystemMode(SYSTEM_MODE.valueOf(conf.get(CONF_SYSTEM_MODE, SYSTEM_MODE.NORMAL.toString())));
+        setSystemMode(SYSTEM_MODE.valueOf(ConfigurationService.get(conf, CONF_SYSTEM_MODE)));
         runtimeDir = createRuntimeDir();
     }
 
@@ -188,8 +191,10 @@ public class Services {
     /**
      * Return the services configuration.
      *
-     * @return services configuraiton.
+     * @return services configuration.
+     * @deprecated Use {@link ConfigurationService#get(String)} to retrieve property from oozie configurations.
      */
+    @Deprecated
     public Configuration getConf() {
         return conf;
     }
@@ -218,11 +223,24 @@ public class Services {
         }
         InstrumentationService instrService = get(InstrumentationService.class);
         if (instrService != null) {
+            Instrumentation instr = instrService.get();
             for (Service service : services.values()) {
                 if (service instanceof Instrumentable) {
-                    ((Instrumentable) service).instrument(instrService.get());
+                    ((Instrumentable) service).instrument(instr);
                 }
             }
+            instr.addVariable("oozie", "version", new Instrumentation.Variable<String>() {
+                @Override
+                public String getValue() {
+                    return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
+                }
+            });
+            instr.addVariable("oozie", "mode", new Instrumentation.Variable<String>() {
+                @Override
+                public String getValue() {
+                    return getSystemMode().toString();
+                }
+            });
         }
         log.info("Initialized");
         log.info("Running with JARs for Hadoop version [{0}]", VersionInfo.getVersion());
@@ -267,9 +285,9 @@ public class Services {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         try {
             Map<Class, Service> map = new LinkedHashMap<Class, Service>();
-            Class[] classes = conf.getClasses(CONF_SERVICE_CLASSES);
+            Class[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_CLASSES + "'");
-            Class[] classesExt = conf.getClasses(CONF_SERVICE_EXT_CLASSES);
+            Class[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_EXT_CLASSES + "'");
             List<Service> list = new ArrayList<Service>();
             loadServices(classes, list);

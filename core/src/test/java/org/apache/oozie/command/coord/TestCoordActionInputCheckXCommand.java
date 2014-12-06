@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -240,6 +242,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         action = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(job.getId() + "@1"));
         assertTrue(action.getActionXml().contains("action-actual-time=\"2009-02-15T01:00")) ;
 
+        Thread.sleep(1000);
         // providing some of the dataset dirs required as per coordinator specification with holes
         // before and after action creation time
         createTestCaseSubDir("2009/03/05/_SUCCESS".split("/"));
@@ -267,8 +270,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestActionCreationTimeWithPushDependency() throws Exception {
+        setupServicesForHCatalog(services);
         Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
-
+        services.init();
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
@@ -399,7 +403,9 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestCurrentTimeWithPushDependency() throws Exception {
+        setupServicesForHCatalog(services);
         Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
+        services.init();
 
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
@@ -772,6 +778,101 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         checkCoordAction(actionId, missingDeps, CoordinatorAction.Status.TIMEDOUT);
     }
 
+    @Test
+    public void testLastOnly() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        job.setExecutionOrder(CoordinatorJobBean.Execution.LAST_ONLY);
+        job.setFrequency("10");
+        job.setTimeUnit(Timeunit.MINUTE);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String missingDeps = "hdfs:///dirx/filex";
+
+        // 1 hour in the past means next nominal time is 50 mins ago so should become SKIPPED
+        String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
+        Date nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);     // 1 hour ago
+        setCoordActionNominalTime(actionId1, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId1, job.getId()).call();
+        checkCoordActionStatus(actionId1, CoordinatorAction.Status.SKIPPED);
+
+        // 1 hour in the future means next nominal time is 70 mins from now, so nothing should happen
+        String actionId2 = addInitRecords(missingDeps, null, TZ, job, 2);
+        nomTime = new Date(new Date().getTime() + 60 * 60 * 1000);          // 1 hour from now
+        setCoordActionNominalTime(actionId2, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId2, job.getId()).call();
+        checkCoordActionStatus(actionId2, CoordinatorAction.Status.WAITING);
+
+        // 5 mins in the past means next nominal time is 5 mins from now, so nothing should happen
+        String actionId3 = addInitRecords(missingDeps, null, TZ, job, 3);
+        nomTime = new Date(new Date().getTime() - 5 * 60 * 1000);           // 5 minutes ago
+        setCoordActionNominalTime(actionId3, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId3, job.getId()).call();
+        checkCoordActionStatus(actionId3, CoordinatorAction.Status.WAITING);
+
+        // 3 mins in the past means the next nominal time is 7 mins from now, but the end time is only 3 mins from now (which means
+        // that the next nominal time would be after the end time), so nothing should happen
+        Date endTime = new Date(new Date().getTime() + 3 * 60 * 1000);      // 3 minutes from now
+        job.setEndTime(endTime);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String actionId4 = addInitRecords(missingDeps, null, TZ, job, 4);
+        nomTime = new Date(new Date().getTime() - 5 * 60 * 1000);           // 5 minutes ago
+        setCoordActionNominalTime(actionId4, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId4, job.getId()).call();
+        checkCoordActionStatus(actionId4, CoordinatorAction.Status.WAITING);
+
+        // 1 hour in the past means the next nominal time is 50 mins ago, but the end time is 55 mins ago (which means that the next
+        // nominal time would be after the end time but still in the past), so nothing should happen even though the action and the
+        // next nominal time are both in the past
+        endTime = new Date(new Date().getTime() - 55 * 60 * 1000);          // 55 mins ago
+        job.setEndTime(endTime);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String actionId5 = addInitRecords(missingDeps, null, TZ, job, 5);
+        nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);           // 1 hour ago
+        setCoordActionNominalTime(actionId5, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId5, job.getId()).call();
+        checkCoordActionStatus(actionId5, CoordinatorAction.Status.WAITING);
+    }
+
+    @Test
+    public void testNone() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        job.setExecutionOrder(CoordinatorJobBean.Execution.NONE);
+        job.setFrequency("10");
+        job.setTimeUnit(Timeunit.MINUTE);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String missingDeps = "hdfs:///dirx/filex";
+
+        // nominal time is one hour past. So aciton will be skipped
+        String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
+        Date nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);     // 1 hour ago
+        setCoordActionNominalTime(actionId1, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId1, job.getId()).call();
+        checkCoordActionStatus(actionId1, CoordinatorAction.Status.SKIPPED);
+
+        // Nominal time is 60 minutes from now, action should be in WAITING stage
+        String actionId2 = addInitRecords(missingDeps, null, TZ, job, 2);
+        nomTime = new Date(new Date().getTime() + 60 * 60 * 1000);          // 1 hour from now
+        setCoordActionNominalTime(actionId2, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId2, job.getId()).call();
+        checkCoordActionStatus(actionId2, CoordinatorAction.Status.WAITING);
+
+        // Nominal times of both actions are more than one minute past, so both will be skipped
+        String actionId3 = addInitRecords(missingDeps, null, TZ, job, 3);
+        nomTime = new Date(new Date().getTime() - 5 * 60 * 1000);           // 5 minutes ago
+        setCoordActionNominalTime(actionId3, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId3, job.getId()).call();
+        checkCoordActionStatus(actionId3, CoordinatorAction.Status.SKIPPED);
+
+        String actionId4 = addInitRecords(missingDeps, null, TZ, job, 4);
+        nomTime = new Date(new Date().getTime() - 2 * 60 * 1000);           // 2 minutes ago
+        setCoordActionNominalTime(actionId4, nomTime.getTime());
+        new CoordActionInputCheckXCommand(actionId4, job.getId()).call();
+        checkCoordActionStatus(actionId4, CoordinatorAction.Status.SKIPPED);
+
+
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
             Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
 
@@ -809,7 +910,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ);
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
         String missDeps = getTestCaseFileUri("2009/01/29/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/22/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/15/_SUCCESS") + "#"
@@ -950,5 +1051,25 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         catch (JPAExecutorException se) {
             throw new Exception("Action ID " + actionId + " was not stored properly in db");
         }
+    }
+
+    private CoordinatorActionBean checkCoordActionStatus(final String actionId, final CoordinatorAction.Status stat)
+            throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        waitFor(5 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                try {
+                    CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+                    return stat.equals(action.getStatus());
+                }
+                catch (JPAExecutorException se) {
+                    throw new Exception("Action ID " + actionId + " was not stored properly in db");
+                }
+            }
+        });
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        assertEquals(stat, action.getStatus());
+        return action;
     }
 }

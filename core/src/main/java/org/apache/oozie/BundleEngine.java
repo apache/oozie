@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -47,13 +49,16 @@ import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleRerunXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
+import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogStreamer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -241,20 +246,26 @@ public class BundleEngine extends BaseEngine {
      * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String, java.io.Writer)
      */
     @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, BundleEngineException {
-        XLogStreamer.Filter filter = new XLogStreamer.Filter();
-        filter.setParameter(DagXLogInfoService.JOB, jobId);
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            BundleEngineException {
 
         BundleJobBean job;
         try {
+            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            filter.setParameter(DagXLogInfoService.JOB, jobId);
             job = new BundleJobXCommand(jobId).call();
+            Date lastTime = null;
+            if (job.isTerminalStatus()) {
+                lastTime = job.getLastModifiedTime();
+            }
+            if (lastTime == null) {
+                lastTime = new Date();
+            }
+            Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
         }
-        catch (CommandException ex) {
-            throw new BundleEngineException(ex);
+        catch (Exception ex) {
+            throw new IOException(ex);
         }
-
-        Services.get().get(XLogStreamingService.class)
-                .streamLog(filter, job.getCreatedTime(), new Date(), writer, params);
     }
 
     /* (non-Javadoc)
@@ -460,5 +471,24 @@ public class BundleEngine extends BaseEngine {
             }
         }
         return bulkFilter;
+    }
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws BundleEngineException thrown if the job's status could not be obtained
+     */
+    @Override
+    public String getJobStatus(String jobId) throws BundleEngineException {
+        try {
+            BundleJobBean bundleJob = BundleJobQueryExecutor.getInstance().get(
+                    BundleJobQueryExecutor.BundleJobQuery.GET_BUNDLE_JOB_STATUS, jobId);
+            return bundleJob.getStatusStr();
+        }
+        catch (JPAExecutorException e) {
+            throw new BundleEngineException(e);
+        }
     }
 }

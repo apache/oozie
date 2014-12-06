@@ -16,6 +16,11 @@
    * If secured hadoop version is used, the following two properties needs to be specified as well
       * mapreduce.jobtracker.kerberos.principal
       * dfs.namenode.kerberos.principal.
+   * Configurations can be passed as -D param.
+<verbatim>
+$ oozie job -oozie http://localhost:11000/oozie -rerun 14-20090525161321-oozie-joe -Doozie.wf.rerun.skip.nodes=<>
+</verbatim>
+
 ---++ Pre-Conditions
 
    * Workflow with id wfId should exist.
@@ -25,6 +30,8 @@
 ---++ ReRun
 
    * Reloads the configs.
+   * If no configuration is passed, existing coordinator/workflow configuration will be used. If configuration is passed then, it will be merged with existing workflow configuration. Input configuration will take the precedence.
+   * Currently there is no way to remove an existing configuration but only override by passing a different value in the input configuration.
    * Creates a new Workflow Instance with the same wfId.
    * Deletes the actions that are not skipped from the DB and copies data from old Workflow Instance to new one for skipped actions.
    * Action handler will skip the nodes given in the config with the same exit transition as before.

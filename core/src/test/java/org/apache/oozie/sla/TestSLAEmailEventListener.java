@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.sla;
 
 import java.util.Date;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.action.email.EmailActionExecutor;
@@ -32,10 +34,13 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.junit.After;
 import org.junit.Before;
+
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetup;
+
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.MimeMessage;
+
 import org.apache.oozie.sla.listener.SLAEmailEventListener;
 import org.apache.oozie.sla.listener.SLAEmailEventListener.EmailField;
 import org.apache.oozie.sla.service.SLAService;
@@ -83,13 +88,14 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testOnStartMiss() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualstartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         event.setEventStatus(EventStatus.START_MISS);
         event.setJobStatus(JobEvent.EventStatus.STARTED.toString());
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
@@ -140,13 +146,14 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testOnEndMiss() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         Date expectedStartDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualStartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         Date expectedEndDate = DateUtils.parseDateUTC("2013-01-01T12:00Z");
         Date actualEndDate = DateUtils.parseDateUTC("2013-01-01T13:00Z");
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         event.setEventStatus(EventStatus.END_MISS);
         event.setJobStatus(JobEvent.EventStatus.SUCCESS.toString());
@@ -207,7 +214,8 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testOnDurationMiss() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         Date expectedStartDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualStartDate = DateUtils.parseDateUTC("2013-01-01T00:10Z");
@@ -217,7 +225,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         long actualDuration = actualEndDate.getTime() - actualStartDate.getTime();
         long expectedDurationInMins = expectedDuration / 60000;
         long actualDurationInMins = actualDuration / 60000;
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
         eventBean.setParentId("0000000-000000000000001-oozie-wrkf-C");
         event.setEventStatus(EventStatus.DURATION_MISS);
         event.setJobStatus(JobEvent.EventStatus.SUCCESS.toString());
@@ -282,7 +290,8 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testUserAlertEventSetting() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         // user choose only END MISS, thus, START_MISS email should not be sent
         eventBean.setAlertEvents(EventStatus.END_MISS.name());
@@ -290,7 +299,7 @@ public class TestSLAEmailEventListener extends XTestCase {
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         Date actualstartDate = DateUtils.parseDateUTC("2013-01-01T01:00Z");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
         eventBean.setNominalTime(startDate);
@@ -319,13 +328,37 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testInvalidDestAddress() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         // set invalid address as alert contact
         eventBean.setAlertContact("invalidAddress");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
+        eventBean.setAppType(AppType.COORDINATOR_ACTION);
+        eventBean.setAppName("Test-SLA-Start-Miss");
+        eventBean.setUser("dummyuser");
+        eventBean.setExpectedStart(startDate);
+        eventBean.setNotificationMsg("notification of start miss");
+        eventBean.setAppType(AppType.COORDINATOR_ACTION);
+        event.setActualStart(DateUtils.parseDateUTC("2013-01-01T01:00Z"));
+
+        slaEmailListener.onStartMiss(event);
+
+        MimeMessage[] msgs = greenMail.getReceivedMessages();
+        assertEquals(msgs.length, 0);
+    }
+
+    public void testNoDestAddress() throws Exception {
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
+        SLARegistrationBean eventBean = event.getSLARegistrationBean();
+        Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
+        // set empty address as alert contact
+        eventBean.setAlertContact("");
+        event.setEventStatus(EventStatus.START_MISS);
+        event.setId(id);
         eventBean.setAppType(AppType.COORDINATOR_ACTION);
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
@@ -341,13 +374,14 @@ public class TestSLAEmailEventListener extends XTestCase {
     }
 
     public void testMultipleDestAddress() throws Exception {
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         Date startDate = DateUtils.parseDateUTC("2013-01-01T00:00Z");
         // set multiple addresses as alert contact
         eventBean.setAlertContact("alert-receiver1@oozie.com, alert-receiver2@oozie.com");
         event.setEventStatus(EventStatus.START_MISS);
-        event.setId("0000000-000000000000001-oozie-wrkf-C@1");
+        event.setId(id);
         eventBean.setAppType(AppType.COORDINATOR_ACTION);
         eventBean.setAppName("Test-SLA-Start-Miss");
         eventBean.setUser("dummyuser");
@@ -369,7 +403,8 @@ public class TestSLAEmailEventListener extends XTestCase {
         String blackListedEmail = "alert-receiver@oozie.com";
         // add email to blacklist
         slaEmailListener.addBlackList(blackListedEmail);
-        SLACalcStatus event = new SLACalcStatus(new SLARegistrationBean());
+        String id = "0000000-000000000000001-oozie-wrkf-C@1";
+        SLACalcStatus event = _createSLACalcStatus(id);
         SLARegistrationBean eventBean = event.getSLARegistrationBean();
         event.setEventStatus(EventStatus.START_MISS);
         eventBean.setAlertContact(blackListedEmail);
@@ -391,5 +426,12 @@ public class TestSLAEmailEventListener extends XTestCase {
         slaEmailListener.onStartMiss(event);
         msgs = greenMail.getReceivedMessages();
         assertEquals(msgs.length, 1);
+    }
+
+    private SLACalcStatus _createSLACalcStatus(String actionId) {
+        SLARegistrationBean reg = new SLARegistrationBean();
+        reg.setId(actionId);
+        reg.setAppType(AppType.COORDINATOR_ACTION);
+        return new SLACalcStatus(reg);
     }
 }

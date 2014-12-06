@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.coord;
 
 import org.apache.hadoop.conf.Configuration;
@@ -184,7 +185,6 @@ public class TestCoordELFunctions extends XTestCase {
 
         SyncCoordAction appInst = new SyncCoordAction();
         SyncCoordDataset ds = new SyncCoordDataset();
-        ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
         ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
@@ -260,7 +260,6 @@ public class TestCoordELFunctions extends XTestCase {
 
         SyncCoordAction appInst = new SyncCoordAction();
         SyncCoordDataset ds = new SyncCoordDataset();
-        ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.MONTH);
         ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
@@ -371,6 +370,16 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals("2010-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
+    public void testCurrentRange() throws Exception {
+        init("coord-action-create");
+        String expr = "${coord:currentRange(-1, 0)}";
+        assertEquals("2009-09-09T23:59Z#2009-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        //test out of range instances, EL should return partial instances
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-09-01T23:59Z"));
+        assertEquals("2009-09-01T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
     public void testCurrent() throws Exception {
         init("coord-action-create");
         String expr = "${coord:current(-1)}";
@@ -395,7 +404,6 @@ public class TestCoordELFunctions extends XTestCase {
 
         SyncCoordAction appInst = new SyncCoordAction();
         SyncCoordDataset ds = new SyncCoordDataset();
-        ;
         ds.setFrequency(1);
         ds.setTimeUnit(TimeUnit.DAY);
         ds.setInitInstance(DateUtils.parseDateOozieTZ("2009-01-02T00:00Z"));
@@ -1026,7 +1034,7 @@ public class TestCoordELFunctions extends XTestCase {
      * public void testDetach() throws Exception { Services.get().destroy(); }
      */
 
-    private void init(String tag) throws Exception {
+    void init(String tag) throws Exception {
         init(tag, "hdfs://localhost:9000/user/" + getTestUser() + "/US/${YEAR}/${MONTH}/${DAY}");
     }
 

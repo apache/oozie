@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import org.apache.oozie.test.XTestCase;
@@ -237,46 +238,49 @@ public class TestInstrumentation extends XTestCase {
     public void testSamplers() throws Exception {
         Instrumentation inst = new Instrumentation();
         ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
-        inst.setScheduler(scheduledExecutorService);
+        try {
+            inst.setScheduler(scheduledExecutorService);
 
-        inst.addSampler("a", "1", 10, 1, new Instrumentation.Variable<Long>() {
-            public Long getValue() {
-                return 1L;
-            }
-        });
-        assertEquals(1, inst.getSamplers().size());
-        assertEquals(1, inst.getSamplers().get("a").size());
+            inst.addSampler("a", "1", 10, 1, new Instrumentation.Variable<Long>() {
+                public Long getValue() {
+                    return 1L;
+                }
+            });
+            assertEquals(1, inst.getSamplers().size());
+            assertEquals(1, inst.getSamplers().get("a").size());
 
-        inst.addSampler("a", "2", 10, 1, new Instrumentation.Variable<Long>() {
-            public Long getValue() {
-                return 2L;
-            }
-        });
-        assertEquals(1, inst.getSamplers().size());
-        assertEquals(2, inst.getSamplers().get("a").size());
+            inst.addSampler("a", "2", 10, 1, new Instrumentation.Variable<Long>() {
+                public Long getValue() {
+                    return 2L;
+                }
+            });
+            assertEquals(1, inst.getSamplers().size());
+            assertEquals(2, inst.getSamplers().get("a").size());
 
-        inst.addSampler("b", "1", 10, 1, new Instrumentation.Variable<Long>() {
-            private long counter = 0;
+            inst.addSampler("b", "1", 10, 1, new Instrumentation.Variable<Long>() {
+                private long counter = 0;
 
-            public Long getValue() {
-                return counter++ % 10;
-            }
-        });
-        assertEquals(2, inst.getSamplers().size());
-        assertEquals(2, inst.getSamplers().get("a").size());
-        assertEquals(1, inst.getSamplers().get("b").size());
+                public Long getValue() {
+                    return counter++ % 10;
+                }
+            });
+            assertEquals(2, inst.getSamplers().size());
+            assertEquals(2, inst.getSamplers().get("a").size());
+            assertEquals(1, inst.getSamplers().get("b").size());
 
-        waitFor(20 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return false;
-            }
-        });
+            waitFor(20 * 1000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return false;
+                }
+            });
 
-        assertEquals("", 1D, inst.getSamplers().get("a").get("1").getValue(), 0.01D);
-        assertEquals("", 2D, inst.getSamplers().get("a").get("2").getValue(), 0.02D);
-        assertEquals("", 5D, inst.getSamplers().get("b").get("1").getValue(), 0.5D);
+            assertEquals("", 1D, inst.getSamplers().get("a").get("1").getValue(), 0.01D);
+            assertEquals("", 2D, inst.getSamplers().get("a").get("2").getValue(), 0.02D);
+            assertEquals("", 4D, inst.getSamplers().get("b").get("1").getValue(), 0.5D);
 
-        scheduledExecutorService.shutdownNow();
+        } finally {
+            scheduledExecutorService.shutdownNow();
+        }
     }
 
     public void testAll() throws Exception {

@@ -53,9 +53,14 @@
            <a href="./docs/index.html" target="bottom">Documentation</a>
         </div>
         <%@ page
-            import="org.apache.oozie.sla.service.SLAService"%>
+            import="org.apache.oozie.sla.service.SLAService"
+            import="org.apache.oozie.service.InstrumentationService"
+            import="org.apache.oozie.service.MetricsInstrumentationService"
+        %>
         <%
             boolean isSLAServiceEnabled = SLAService.isEnabled();
+            boolean isInstrumentationServiceEnabled = InstrumentationService.isEnabled();
+            boolean isMetricsInstrumentationServiceEnabled = MetricsInstrumentationService.isEnabled();
         %>
         <div id="oozie-body" style="padding:2">
             <div class="x-tab-panel-header x-unselectable x-tab-strip-top" style="width:1048">
@@ -63,6 +68,8 @@
                  <script type="text/javascript">
                     var msg = "Oozie Web Console";
                     var isSLAServiceEnabled = "<%=isSLAServiceEnabled%>";
+                    var isInstrumentationServiceEnabled = "<%=isInstrumentationServiceEnabled%>";
+                    var isMetricsInstrumentationServiceEnabled = "<%=isMetricsInstrumentationServiceEnabled%>";
                     document.title = msg;
                     document.write(msg);
                  </script>

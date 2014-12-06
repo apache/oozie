@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
@@ -102,7 +103,7 @@ public class JMSTopicService implements Service {
     }
 
     private void parseTopicConfiguration() throws ServiceException {
-        String topicName = conf.get(TOPIC_NAME, "default=" + TopicType.USER.value);
+        String topicName = ConfigurationService.get(conf, TOPIC_NAME);
         if (topicName == null) {
             throw new ServiceException(ErrorCode.E0100, getClass().getName(), "JMS topic cannot be null ");
         }

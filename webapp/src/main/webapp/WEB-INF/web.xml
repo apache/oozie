@@ -22,7 +22,235 @@
 
 <web-app>
 
-    <!-- The servlets are defined in web-common.xml -->
-    &web-common;
+    <!--
+      ========================================================================
+      IMPORTANT: ANY CHANGES TO THE SERVLETS, SERVLET MAPPINGS, LISTENERS, ETC
+                 MUST BE REFLECTED IN distro/src/main/tomcat/ssl-web.xml
+                 AS WELL.
+      ========================================================================
+    -->
+
+    <display-name>OOZIE</display-name>
+
+    <!-- Listeners -->
+    <listener>
+        <listener-class>org.apache.oozie.servlet.ServicesLoader</listener-class>
+    </listener>
+
+    <!-- Servlets -->
+    <servlet>
+        <servlet-name>versions</servlet-name>
+        <display-name>WS API for Workflow Instances</display-name>
+        <servlet-class>org.apache.oozie.servlet.VersionServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v2admin</servlet-name>
+        <display-name>Oozie admin</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2AdminServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>callback</servlet-name>
+        <display-name>Callback Notification</display-name>
+        <servlet-class>org.apache.oozie.servlet.CallbackServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1jobs</servlet-name>
+        <display-name>WS API for Workflow Jobs</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v0job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V0JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v1job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V1JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v2job</servlet-name>
+        <display-name>WS API for a specific Workflow Job</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2JobServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>sla-event</servlet-name>
+        <display-name>WS API for specific SLA Events</display-name>
+        <servlet-class>org.apache.oozie.servlet.SLAServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>v2sla</servlet-name>
+        <display-name>WS API for specific SLA Events</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2SLAServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- servlet-mapping -->
+    <servlet-mapping>
+        <servlet-name>versions</servlet-name>
+        <url-pattern>/versions</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0admin</servlet-name>
+        <url-pattern>/v0/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1admin</servlet-name>
+        <url-pattern>/v1/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v2admin</servlet-name>
+        <url-pattern>/v2/admin/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>callback</servlet-name>
+        <url-pattern>/callback/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0jobs</servlet-name>
+        <url-pattern>/v0/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1jobs</servlet-name>
+        <url-pattern>/v1/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1jobs</servlet-name>
+        <url-pattern>/v2/jobs</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v0job</servlet-name>
+        <url-pattern>/v0/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v1job</servlet-name>
+        <url-pattern>/v1/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v2job</servlet-name>
+        <url-pattern>/v2/job/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>sla-event</servlet-name>
+        <url-pattern>/v1/sla/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>v2sla</servlet-name>
+        <url-pattern>/v2/sla/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- welcome-file -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <filter>
+        <filter-name>hostnameFilter</filter-name>
+        <filter-class>org.apache.oozie.servlet.HostnameFilter</filter-class>
+    </filter>
+
+    <filter>
+        <filter-name>authenticationfilter</filter-name>
+        <filter-class>org.apache.oozie.servlet.AuthFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>hostnameFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/versions/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/v0/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/v1/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/v2/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/index.jsp</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>*.js</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/ext-2.2/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>authenticationfilter</filter-name>
+        <url-pattern>/docs/*</url-pattern>
+    </filter-mapping>
 
 </web-app>

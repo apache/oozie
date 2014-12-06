@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.workflow.lite;
 
 import org.apache.oozie.service.XLogService;
@@ -37,6 +38,10 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +49,8 @@ import java.util.Map;
 //TODO javadoc
 public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private static final String TRANSITION_TO = "transition.to";
+
+    private final Date FAR_INTO_THE_FUTURE = new Date(Long.MAX_VALUE);
 
     private XLog log;
 
@@ -154,6 +161,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private Map<String, NodeInstance> executionPaths = new HashMap<String, NodeInstance>();
     private Map<String, String> persistentVars = new HashMap<String, String>();
     private Map<String, Object> transientVars = new HashMap<String, Object>();
+    private ActionEndTimesComparator actionEndTimesComparator = null;
 
     protected LiteWorkflowInstance() {
         log = XLog.getLog(getClass());
@@ -166,6 +174,11 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         this.conf = ParamChecker.notNull(conf, "conf");
         refreshLog();
         status = Status.PREP;
+    }
+
+    public LiteWorkflowInstance(LiteWorkflowApp def, Configuration conf, String instanceId, Map<String, Date> actionEndTimes) {
+        this(def, conf, instanceId);
+        actionEndTimesComparator = new ActionEndTimesComparator(actionEndTimes);
     }
 
     public synchronized boolean start() throws WorkflowException {
@@ -294,6 +307,16 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
                                 }
 
                             }
+
+                            // If we're doing a rerun, then we need to make sure to put the actions in pathToStart into the order
+                            // that they ended in.  Otherwise, it could result in an error later on in some edge cases.
+                            // e.g. You have a fork with two nodes, A and B, that both succeeded, followed by a join and some more
+                            // nodes, some of which failed.  If you do the rerun, it will always signal A and then B, even if in the
+                            // original run B signaled first and then A.  By sorting this, we maintain the proper signal ordering.
+                            if (actionEndTimesComparator != null && pathsToStart.size() > 1) {
+                                Collections.sort(pathsToStart, actionEndTimesComparator);
+                            }
+
                             // signal all new synch transitions
                             for (String pathToStart : pathsToStart) {
                                 signal(pathToStart, "::synch::");
@@ -585,6 +608,14 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
             dOut.writeUTF(entry.getKey());
             writeStringAsBytes(entry.getValue(), dOut);
         }
+        if (actionEndTimesComparator != null) {
+            Map<String, Date> actionEndTimes = actionEndTimesComparator.getActionEndTimes();
+            dOut.writeInt(actionEndTimes.size());
+            for (Map.Entry<String, Date> entry : actionEndTimes.entrySet()) {
+                dOut.writeUTF(entry.getKey());
+                dOut.writeLong(entry.getValue().getTime());
+            }
+        }
     }
 
     @Override
@@ -615,6 +646,21 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
             String vName = dIn.readUTF();
             String vVal = readBytesAsString(dIn);
             persistentVars.put(vName, vVal);
+        }
+        int numActionEndTimes = -1;
+        try {
+            numActionEndTimes = dIn.readInt();
+        } catch (IOException ioe) {
+            // This means that there isn't an actionEndTimes, so just ignore
+        }
+        if (numActionEndTimes > 0) {
+            Map<String, Date> actionEndTimes = new HashMap<String, Date>(numActionEndTimes);
+            for (int x = 0; x < numActionEndTimes; x++) {
+                String name = dIn.readUTF();
+                long endTime = dIn.readLong();
+                actionEndTimes.put(name, new Date(endTime));
+            }
+            actionEndTimesComparator = new ActionEndTimesComparator(actionEndTimes);
         }
         refreshLog();
     }
@@ -671,4 +717,33 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         return instanceId.hashCode();
     }
 
+    private class ActionEndTimesComparator implements Comparator<String> {
+
+        private final Map<String, Date> actionEndTimes;
+
+        public ActionEndTimesComparator(Map<String, Date> actionEndTimes) {
+            this.actionEndTimes = actionEndTimes;
+        }
+
+        @Override
+        public int compare(String node1, String node2) {
+            Date date1 = null;
+            Date date2 = null;
+            NodeInstance node1Instance = executionPaths.get(node1);
+            if (node1Instance != null) {
+                date1 = this.actionEndTimes.get(node1Instance.nodeName);
+            }
+            NodeInstance node2Instance = executionPaths.get(node2);
+            if (node2Instance != null) {
+                date2 = this.actionEndTimes.get(node2Instance.nodeName);
+            }
+            date1 = (date1 == null) ? FAR_INTO_THE_FUTURE : date1;
+            date2 = (date2 == null) ? FAR_INTO_THE_FUTURE : date2;
+            return date1.compareTo(date2);
+        }
+
+        public Map<String, Date> getActionEndTimes() {
+            return actionEndTimes;
+        }
+    }
 }

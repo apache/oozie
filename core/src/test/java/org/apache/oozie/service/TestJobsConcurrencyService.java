@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
@@ -25,12 +26,14 @@ import java.util.Map;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
+import org.apache.oozie.util.Instrumentation;
 
 public class TestJobsConcurrencyService extends XTestCase {
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        new Services().init();
     }
 
     @Override
@@ -38,11 +41,11 @@ public class TestJobsConcurrencyService extends XTestCase {
         super.tearDown();
     }
 
-    public void testIsFirstServer() throws Exception {
+    public void testIsLeader() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
-            jcs.init(null);
-            assertTrue(jcs.isFirstServer());
+            jcs.init(Services.get());
+            assertTrue(jcs.isLeader());
         }
         finally {
             jcs.destroy();
@@ -52,7 +55,7 @@ public class TestJobsConcurrencyService extends XTestCase {
     public void testIsJobIdForThisServer() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
-            jcs.init(null);
+            jcs.init(Services.get());
             assertTrue(jcs.isJobIdForThisServer("blah"));
         }
         finally {
@@ -63,7 +66,7 @@ public class TestJobsConcurrencyService extends XTestCase {
     public void testGetJobIdsForThisServer() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
-            jcs.init(null);
+            jcs.init(Services.get());
             List<String> ids = new ArrayList<String>();
             ids.add("blah");
             ids.add("0000002-130521183438837-oozie-rkan-W");
@@ -80,11 +83,11 @@ public class TestJobsConcurrencyService extends XTestCase {
     public void testGetServerUrls() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
-            jcs.init(null);
+            jcs.init(Services.get());
             Map<String, String> map = jcs.getServerUrls();
             assertEquals(1, map.size());
-            assertEquals(System.getProperty("oozie.instance.id"), map.keySet().iterator().next());
-            assertEquals(ConfigUtils.getOozieURL(false), map.get(System.getProperty("oozie.instance.id")));
+            assertEquals(Services.get().getConf().get("oozie.instance.id"), map.keySet().iterator().next());
+            assertEquals(ConfigUtils.getOozieURL(false), map.get(Services.get().getConf().get("oozie.instance.id")));
         }
         finally {
             jcs.destroy();
@@ -94,7 +97,7 @@ public class TestJobsConcurrencyService extends XTestCase {
     public void testsAllServerRequest() throws Exception {
         JobsConcurrencyService jcs = new JobsConcurrencyService();
         try {
-            jcs.init(null);
+            jcs.init(Services.get());
             assertFalse(jcs.isAllServerRequest(null));
             Map<String, String[]> param = new HashMap<String, String[]>();
             assertFalse(jcs.isAllServerRequest(param));
@@ -110,4 +113,16 @@ public class TestJobsConcurrencyService extends XTestCase {
         }
     }
 
+    public void testInstrumentation() throws Exception {
+        JobsConcurrencyService jcs = new JobsConcurrencyService();
+        Instrumentation instr = new Instrumentation();
+        try {
+            jcs.init(Services.get());
+            jcs.instrument(instr);
+            String servers = ConfigurationService.get("oozie.instance.id") + "=" + ConfigUtils.getOozieEffectiveUrl();
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+        } finally {
+            jcs.destroy();
+        }
+    }
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.io.File;
@@ -27,11 +28,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Shell.ShellCommandExecutor;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -42,6 +46,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
@@ -51,6 +56,7 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
@@ -160,9 +166,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 				shellFlag = true;
 				shellStatus = checkShell(actionXml, nominalTime);
 			}
-			LOG.error("sssssssssssssss" + shellStatus + "llllllll" + shellFlag);
 			if (shellStatus == true) {
-				LOG.error("aaaaaaaaaaaaaaaaaaaa");
 				String newActionXml = resolveCoordConfiguration(actionXml,
 						actionConf, actionId);
 				actionXml.replace(0, actionXml.length(), newActionXml);
@@ -176,40 +180,27 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 			// Resolve latest/future only when all current missingDependencies
 			// and
 			// pushMissingDependencies are met
-			LOG.error("fffffffffff" + status + "hhhhhhhhhhhhh"
-					+ nonResolvedList + "ggggggggg" + nonResolvedList.length());
 			if (status && nonResolvedList.length() > 0) {
 				status = (pushDeps == null || pushDeps.length() == 0) ? checkUnResolvedInput(
 						actionXml, actionConf) : false;
 			}
-			LOG.error("wwwwwwwww" + status + "eeeeeeeeeeeeee" + nonResolvedList
-					+ "mmmmmmmmm" + shellFlag);
 			coordAction.setLastModifiedTime(currentTime);
-			LOG.error("ddddddddddddddd");
 			coordAction.setActionXml(actionXml.toString());
-			LOG.error("kkkkkkkkkkkkkk" + status + "tttttttttttttt" + shellFlag);
 			if (shellFlag == true) {
 				return null;
 			}
-			LOG.error("ccccccccccccccc" + status + "xxxxxxxxx"
-					+ nonResolvedList);
 			if (nonResolvedList.length() > 0 && status == false) {
 				nonExistList.append(
 						CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR)
 						.append(nonResolvedList);
 			}
-			LOG.error("sssssssssss" + status + "nnnnnnnnnnn" + nonResolvedList);
 			String nonExistListStr = nonExistList.toString();
-			LOG.error("ccccccccccccccc" + nonExistListStr + "xxxxxxxxx"
-					+ missingDeps);
 			if (!nonExistListStr.equals(missingDeps) || missingDeps.isEmpty()) {
 				// missingDeps null or empty means action should become READY
 				isChangeInDependency = true;
 				coordAction.setMissingDependencies(nonExistListStr);
 			}
-			LOG.error("vvvvvvvvvvvvvv" + status + "yyyyyyyyyyyy" + pushDeps);
 			if (status && (pushDeps == null || pushDeps.length() == 0)) {
-				LOG.error("bbbbbbbbbbbbbb");
 				String newActionXml = resolveCoordConfiguration(actionXml,
 						actionConf, actionId);
 				actionXml.replace(0, actionXml.length(), newActionXml);
@@ -368,7 +359,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-		LOG.error("pppppppppppppppppppp" + generatedPassword);
 		return generatedPassword;
 	}
 
@@ -390,8 +380,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 		// if (shellNominalTime != null){
 		// doneNominalTime = shellNominalTime.getTextNormalize();
 		// }
-		LOG.error("jjjjjjjjjjjjjjjjjjj" + shellPath + "llllll"
-				+ shellPath.getText() + "uuuuuuu" + doneNominalTime);
 		if (shellPath != null && nominalTime != null) {
 			String executeshell = shellPath.getText();
 
@@ -400,34 +388,27 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 			shellLocation.execute();
 			String location = shellLocation.getOutput();
 			location = location.trim();
-			LOG.error("location" + location);
 			String filePath = location + "/shell/done-shell"
 					+ SimpleMD5(coordJob.getUser() + executeshell) + ".sh";
 
-			LOG.error("filePath" + filePath);
 			File file = new File(filePath);
 			if (!file.exists()) {
 				try {
-					LOG.error("jinlai");
 					FileOutputStream fos = new FileOutputStream(filePath);
 					fos.write(executeshell.getBytes());
 					fos.close();
 					file.setExecutable(true);
-					LOG.error("rrrrrrrrrrr");
 					String[] command = {"bash","-c","sudo chown " + coordJob.getUser() + ":"
 							+ coordJob.getUser() + " " + filePath};
 					ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(
 							command);
 					shellCommandExecutor.execute();
 					String outPut = shellCommandExecutor.getOutput();
-					LOG.error("command" + command + "output" + outPut);
-					LOG.error("eeeeeeeee");
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}else{
-				LOG.error("mei");
 			}
 
 			// String[] command =
@@ -445,16 +426,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 					command);
 			shellCommandExecutor.execute();
 			String outPut = shellCommandExecutor.getOutput();
-			LOG.error("ccccccccccccccc" + command[0] + "oooooooooooo" + outPut
-					+ "yyyyyyyyyy" + outPut.indexOf("true") + "tttttttt"
-					+ outPut.indexOf("false"));
-			if (size > 2) {
-				LOG.error("ccccccccccccccc" + command[0] + "oooooooooooo"
-						+ "wwwwwwww" + command[1] + "uuuuuuuuuuuu" + command[2]
-						+ "ppppppp" + outPut + "yyyyyyyyyy"
-						+ outPut.indexOf("true") + "tttttttt"
-						+ outPut.indexOf("false"));
-			}
 			if (outPut.indexOf("true") != -1) {
 				return true;
 			} else if (outPut.indexOf("false") != -1) {
@@ -861,7 +832,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 		} catch (JPAExecutorException je) {
 			throw new CommandException(je);
 		}
-		LogUtils.setLogInfo(coordAction, logInfo);
+		LogUtils.setLogInfo(coordAction);
 	}
 
 	@Override

@@ -15,16 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static junit.framework.Assert.assertEquals;
 
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.ConfigUtils;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ZKUtils;
 
 public class TestZKJobsConcurrencyService extends ZKXTestCase {
@@ -54,20 +57,56 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
         }
     }
 
-    public void testIsFirstServer() throws Exception {
+    public void testIsLeader() throws Exception {
         ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
-        // We'll use some DummyZKXOozies here to pretend to be other Oozie servers that will influence isFirstServer()
-        // once they are running in that it will only return true for the first Oozie "server"
+        // We'll use some DummyZKXOozies here to pretend to be other Oozie servers.  It chooses randomly so we can't check that a
+        // specific server gets chosen.
         DummyZKOozie dummyOozie = null;
         DummyZKOozie dummyOozie2 = null;
         try {
-            dummyOozie = new DummyZKOozie("a", "http://blah");
             zkjcs.init(Services.get());
-            assertFalse(zkjcs.isFirstServer());
-            dummyOozie2 = new DummyZKOozie("b", "http://blah");
-            assertFalse(zkjcs.isFirstServer());
-            dummyOozie.teardown();
-            assertTrue(zkjcs.isFirstServer());
+            dummyOozie = new DummyZKOozie("a", "http://blah", true);
+            dummyOozie2 = new DummyZKOozie("b", "http://blah", true);
+            sleep(3 * 1000);
+            if (zkjcs.isLeader()) {
+                assertFalse(dummyOozie.isLeader());
+                assertFalse(dummyOozie2.isLeader());
+                zkjcs.destroy();
+                sleep(3 * 1000);
+                if (dummyOozie.isLeader()) {
+                    assertFalse(dummyOozie2.isLeader());
+                } else if (dummyOozie2.isLeader()) {
+                    assertFalse(dummyOozie.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else if (dummyOozie.isLeader()) {
+                assertFalse(zkjcs.isLeader());
+                assertFalse(dummyOozie2.isLeader());
+                dummyOozie.teardown();
+                sleep(3 * 1000);
+                if (zkjcs.isLeader()) {
+                    assertFalse(dummyOozie2.isLeader());
+                } else if (dummyOozie2.isLeader()) {
+                    assertFalse(zkjcs.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else if (dummyOozie2.isLeader()) {
+                assertFalse(zkjcs.isLeader());
+                assertFalse(dummyOozie.isLeader());
+                dummyOozie2.teardown();
+                sleep(3 * 1000);
+                if (zkjcs.isLeader()) {
+                    assertFalse(dummyOozie.isLeader());
+                } else if (dummyOozie.isLeader()) {
+                    assertFalse(zkjcs.isLeader());
+                } else {
+                    fail("No leader");
+                }
+            } else {
+                fail("No leader");
+            }
         }
         finally {
             zkjcs.destroy();
@@ -264,6 +303,41 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
         }
         finally {
             zkjcs.destroy();
+        }
+    }
+
+    public void testInstrumentation() throws Exception {
+        ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
+        // We'll use some DummyZKXOozies here to pretend to be other Oozie servers that will influence the instrumentation
+        // once they are running in that the there will be other Oozie "servers"
+        DummyZKOozie dummyOozie = null;
+        DummyZKOozie dummyOozie2 = null;
+        Instrumentation instr = new Instrumentation();
+        try {
+            zkjcs.init(Services.get());
+            zkjcs.instrument(instr);
+            String servers = ZK_ID + "=" + ConfigUtils.getOozieURL(false);
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+            dummyOozie = new DummyZKOozie("0000", "http://blah1");
+            servers = ZK_ID + "=" + ConfigUtils.getOozieURL(false) + ",0000=http://blah1";
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+            dummyOozie2 = new DummyZKOozie("z", "http://blah2");
+            servers = ZK_ID + "=" + ConfigUtils.getOozieURL(false) + ",0000=http://blah1" + ",z=http://blah2";
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+            dummyOozie.teardown();
+            servers = ZK_ID + "=" + ConfigUtils.getOozieURL(false) + ",z=http://blah2";
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+            dummyOozie2.teardown();
+            servers = ZK_ID + "=" + ConfigUtils.getOozieURL(false);
+            assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
+        } finally {
+            zkjcs.destroy();
+            if (dummyOozie != null) {
+                dummyOozie.teardown();
+            }
+            if (dummyOozie2 != null) {
+                dummyOozie2.teardown();
+            }
         }
     }
 }

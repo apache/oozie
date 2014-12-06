@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.util;
 
 import java.io.BufferedReader;
@@ -25,6 +26,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.util.Map;
 
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
@@ -131,4 +133,22 @@ public class AuthUrlClient {
         }
         return reader;
     }
+
+    public static String getQueryParamString(Map<String, String[]> params) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (params == null || params.isEmpty()) {
+            return "";
+        }
+        for (String key : params.keySet()) {
+            if (!key.isEmpty() && params.get(key).length > 0) {
+                stringBuilder.append("&");
+                String value = params.get(key)[0]; // We don't support multi value.
+                stringBuilder.append(key);
+                stringBuilder.append("=");
+                stringBuilder.append(value);
+            }
+        }
+        return stringBuilder.toString();
+    }
+
 }

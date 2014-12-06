@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.File;
@@ -22,14 +23,18 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.ZKUtils;
 
 public class TestZKXLogStreamingService extends ZKXTestCase {
@@ -146,14 +151,14 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
     }
 
     public void testNoDashInConversionPattern() throws Exception{
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("USER", "oozie");
         xf.setLogLevel("DEBUG|INFO");
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
@@ -188,18 +193,22 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
 
     private boolean doStreamDisabledCheck() throws Exception {
         Services.get().get(XLogService.class).init(Services.get());
-        return doStreamLog(new XLogStreamer.Filter()).equals("Log streaming disabled!!");
+        return doStreamLog(new XLogFilter()).equals("Log streaming disabled!!");
     }
 
-    protected String doStreamLog(XLogStreamer.Filter xf) throws Exception {
+    protected String doStreamLog(XLogFilter xf) throws Exception {
+        return doStreamLog(xf, new HashMap<String, String[]>());
+    }
+
+    protected String doStreamLog(XLogFilter xf, Map<String, String[]> param) throws Exception {
         StringWriter w = new StringWriter();
         ZKXLogStreamingService zkxlss = new ZKXLogStreamingService();
         try {
-            Services services=Services.get();
+            Services services = Services.get();
             services.setService(ZKJobsConcurrencyService.class);
             zkxlss.init(services);
-            sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
-            zkxlss.streamLog(xf, null, null, w, new HashMap<String, String[]>());
+            sleep(1000); // Sleep to allow ZKUtils ServiceCache to update
+            zkxlss.streamLog(xf, null, null, w, param);
         }
         finally {
             zkxlss.destroy();
@@ -210,14 +219,14 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
     }
 
     public void testStreamingWithMultipleOozieServers() throws Exception {
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
         xf.setParameter("JOB", "0000003-130610102426873-oozie-rkan-W");
         xf.setLogLevel("WARN|INFO");
         File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
@@ -340,4 +349,118 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
             container.stop();
         }
     }
+    public void testStreamingWithMultipleOozieServers_coordActionList() throws Exception {
+        XLogFilter.reset();
+
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        Services.get().get(XLogService.class).init(Services.get());
+
+        File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(), Services.get()
+                .get(XLogService.class).getOozieLogName());
+        logFile.getParentFile().mkdirs();
+        FileWriter logWriter = new FileWriter(logFile);
+        // local logs
+        StringBuffer bf = new StringBuffer();
+        bf.append(
+                "2014-02-06 00:26:56,126 DEBUG CoordActionInputCheckXCommand:545 [pool-2-thread-26] - USER[-] GROUP[-] "
+                     + "TOKEN[-] APP[-] JOB[0000003-140205233038063-oozie-oozi-C] ACTION[0000003-140205233038063-oozie-oozi-C@1] "
+                     + "checking for the file ~:8020/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS\n")
+                .append("2014-02-06 00:26:56,150  INFO CoordActionInputCheckXCommand:539 [pool-2-thread-26] - USER[-] GROUP[-] "
+                     + "TOKEN[-] APP[-] JOB[0000003-140205233038063-oozie-oozi-C] ACTION[0000003-140205233038063-oozie-oozi-C@1] "
+                     + "[0000003-140205233038063-oozie-oozi-C@1]::ActionInputCheck:: File::8020/user/purushah/examples/input-data/"
+                     + "rawLogs/2010/01/01/01/00/_SUCCESS, Exists? :false" + "Action updated in DB! _L1_")
+                .append("\n")
+                .append("2014-02-06 00:27:56,126 DEBUG CoordActionInputCheckXCommand:545 [pool-2-thread-26] - USER[-] GROUP[-] "
+                     + "TOKEN[-] APP[-] JOB[0000003-140205233038063-oozie-oozi-C] ACTION[0000003-140205233038063-oozie-oozi-C@2] "
+                     + "checking for the file ~:8020/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS\n")
+                .append("2014-02-06 00:27:56,150  INFO CoordActionInputCheckXCommand:539 [pool-2-thread-26] - USER[-] GROUP[-] "
+                     + "TOKEN[-] APP[-] JOB[0000003-140205233038063-oozie-oozi-C] ACTION[0000003-140205233038063-oozie-oozi-C@2] "
+                     + "[0000003-140205233038063-oozie-oozi-C@2]::ActionInputCheck:: File::8020/user/purushah/examples/input-data/"
+                     + "rawLogs/2010/01/01/01/00/_SUCCESS, Exists? :false" + "Action updated in DB! _L2_")
+                .append("\n");
+        logWriter.append(bf);
+
+        logWriter.close();
+
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+
+        XLogFilter xf = new XLogFilter();
+
+        xf.setLogLevel("DEBUG|INFO");
+        xf.setParameter("USER", ".*");
+        xf.setParameter("GROUP", ".*");
+        xf.setParameter("TOKEN", ".*");
+        xf.setParameter("APP", ".*");
+        xf.setParameter("JOB", "0000003-140205233038063-oozie-oozi-C");
+        xf.setParameter(DagXLogInfoService.ACTION, "0000003-140205233038063-oozie-oozi-C@1");
+
+        String out = doStreamLog(xf);
+        String[] outArr = out.split("\n");
+        assertEquals(2, outArr.length);
+        assertTrue(out.contains("_L1_"));
+        assertFalse(out.contains("_L2_"));
+
+        // We'll use a DummyZKOozie to create an entry in ZK and then set its
+        // url to an (unrelated) servlet that will simply return
+        // some log messages
+        DummyZKOozie dummyOozie = null;
+        EmbeddedServletContainer container = new EmbeddedServletContainer("oozie");
+        container.addServletEndpoint("/other-oozie-server/*", DummyLogStreamingServlet.class);
+        try {
+            container.start();
+            dummyOozie = new DummyZKOozie("9876", container.getServletURL("/other-oozie-server/*"));
+            DummyLogStreamingServlet.logs = "";
+
+            DummyLogStreamingServlet.lastQueryString = null;
+            Map<String, String[]> param = new HashMap<String, String[]>();
+            param.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, new String[] { RestConstants.JOB_LOG_ACTION });
+            param.put(RestConstants.JOB_COORD_SCOPE_PARAM, new String[] { "1" });
+            out = doStreamLog(xf, param);
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("show=log&allservers=false" ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("type=" + RestConstants.JOB_LOG_ACTION ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains(RestConstants.JOB_COORD_SCOPE_PARAM + "=1" ));
+
+            param.clear();
+            param.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, new String[] { RestConstants.JOB_LOG_ACTION });
+            param.put(RestConstants.JOB_COORD_SCOPE_PARAM, new String[] { "1-4,5" });
+            out = doStreamLog(xf, param);
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("show=log&allservers=false" ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("type=" + RestConstants.JOB_LOG_ACTION ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains(RestConstants.JOB_COORD_SCOPE_PARAM + "=1-4,5" ));
+
+            param.clear();
+            Date endDate = new Date();
+            Date createdDate = new Date(endDate.getTime() / 2);
+            String date = DateUtils.formatDateOozieTZ(createdDate) + "::" + DateUtils.formatDateOozieTZ(endDate);
+            param.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, new String[] { RestConstants.JOB_LOG_DATE });
+            param.put(RestConstants.JOB_COORD_SCOPE_PARAM, new String[] { date });
+            out = doStreamLog(xf, param);
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("show=log&allservers=false" ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains("type=" + RestConstants.JOB_LOG_DATE ));
+            assertTrue(DummyLogStreamingServlet.lastQueryString.contains(RestConstants.JOB_COORD_SCOPE_PARAM + "=" + date ));
+
+            container.stop();
+        }
+        finally {
+            if (dummyOozie != null) {
+                dummyOozie.teardown();
+            }
+            container.stop();
+        }
+    }
+
 }

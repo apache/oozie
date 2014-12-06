@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -42,6 +43,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
@@ -85,7 +87,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
             String conditions = actionQuery(em, bundleBeans, actionTimes, responseList);
 
             // Query to get the count of records
-            long total = countQuery(conditions, em, bundleBeans);
+            long total = countQuery(conditions, em, bundleBeans, actionTimes);
 
             BulkResponseInfo bulk = new BulkResponseInfo(responseList, start, len, total);
             return bulk;
@@ -140,7 +142,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
      * @return PARAM_TYPE
      */
     private PARAM_TYPE getParamType(String id, char job) {
-        Pattern p = Pattern.compile("\\d{7}-\\d{15}-oozie-[a-z]{4}-" + job);
+        Pattern p = Pattern.compile("\\d{7}-\\d{15}-" + Services.get().getSystemId() + "-" + job);
         Matcher m = p.matcher(id);
         if (m.matches()) {
             return PARAM_TYPE.ID;
@@ -217,7 +219,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
      * @param bundles
      * @return total count of coord actions
      */
-    private long countQuery(String clause, EntityManager em, List<BundleJobBean> bundles) {
+    private long countQuery(String clause, EntityManager em, List<BundleJobBean> bundles, Map<String, Timestamp> times) {
         Query q = em.createNamedQuery("BULK_MONITOR_COUNT_QUERY");
         StringBuilder getTotal = new StringBuilder(q.toString() + " ");
         // Query: select COUNT(a) from CoordinatorActionBean a, CoordinatorJobBean c
@@ -233,6 +235,11 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
         // AND c.bundleId IN (... list of bundle ids) i.e. replace single :bundleId with list
         getTotal = getTotal.replace(offset - 6, offset + 20, inClause(bundleIds, "bundleId", 'c').toString());
         q = em.createQuery(getTotal.toString());
+        Iterator<Entry<String, Timestamp>> iter = times.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Timestamp> time = iter.next();
+            q.setParameter(time.getKey(), time.getValue());
+        }
         long total = ((Long) q.getSingleResult()).longValue();
         return total;
     }

@@ -15,21 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.client.CoordinatorAction.Status;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.dependency.hcat.HCatMessageHandler;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -40,14 +45,15 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
 
     private static XLog LOG = XLog.getLog(TestPartitionDependencyManagerService.class);
     protected Services services;
-    @Before
+
     protected void setUp() throws Exception {
         super.setUp();
         services = super.setupServicesForHCatalog();
+        // disable regular cache purge
+        services.getConf().setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
         services.init();
     }
 
-    @After
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
@@ -55,6 +61,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
 
     @Test
     public void testPartitionDependency() throws Exception {
+
         // Test all APIs related to dependency caching
         String actionId1 = "1234465451";
         String actionId2 = "1234465452";
@@ -72,15 +79,16 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         HCatURI dep3 = new HCatURI("hcat://hcat-server2.domain.com:5080/mydb/mytbl2/dt=20120102;country=us");
         HCatURI dep4 = new HCatURI("hcat://hcat-server2.domain.com:5080/mydb/mytbl2/dt=20120102;country=us;state=CA");
 
-        addMissingDependencyAndRegister(dep1, actionId1);
-        addMissingDependencyAndRegister(dep2, actionId1);
-        addMissingDependencyAndRegister(dep2, actionId2);
-        addMissingDependencyAndRegister(dep2, actionId3);
-        addMissingDependencyAndRegister(dep3, actionId3);
-        addMissingDependencyAndRegister(dep4, actionId4);
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        addMissingDependencyAndRegister(dep1, actionId1, pdms);
+        addMissingDependencyAndRegister(dep2, actionId1, pdms);
+        addMissingDependencyAndRegister(dep2, actionId2, pdms);
+        addMissingDependencyAndRegister(dep2, actionId3, pdms);
+        addMissingDependencyAndRegister(dep3, actionId3, pdms);
+        addMissingDependencyAndRegister(dep4, actionId4, pdms);
         // Add duplicates. RecoveryService will add duplicates
-        addMissingDependencyAndRegister(dep4, actionId4);
-        addMissingDependencyAndRegister(dep4, actionId4);
+        addMissingDependencyAndRegister(dep4, actionId4, pdms);
+        addMissingDependencyAndRegister(dep4, actionId4, pdms);
 
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
         JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);
@@ -90,7 +98,6 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertTrue(jmsService.isListeningToTopic(connInfo, dep1.getDb() + "." + dep1.getTable()));
         assertTrue(jmsService.isListeningToTopic(connInfo, dep3.getDb() + "." + dep3.getTable()));
 
-        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
         assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
         assertTrue(pdms.getWaitingActions(dep2).contains(actionId1));
         assertTrue(pdms.getWaitingActions(dep2).contains(actionId2));
@@ -130,8 +137,7 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertFalse(jmsService.isListeningToTopic(connInfo, dep3.getDb() + "." + dep3.getTable()));
     }
 
-    private void addMissingDependencyAndRegister(HCatURI hcatURI, String actionId) {
-        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+    protected void addMissingDependencyAndRegister(HCatURI hcatURI, String actionId, PartitionDependencyManagerService pdms) {
         pdms.addMissingDependency(hcatURI, actionId);
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
         if (!hcatService.isRegisteredForNotification(hcatURI)) {
@@ -191,5 +197,4 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
             assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
         }
     }
-
 }

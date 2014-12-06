@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
@@ -298,7 +299,7 @@ public class JMSAccessorService implements Service {
     }
 
     private ConnectionContext getConnectionContextImpl() {
-        Class<?> defaultClazz = conf.getClass(JMS_CONNECTION_CONTEXT_IMPL, DefaultConnectionContext.class);
+        Class<?> defaultClazz = ConfigurationService.getClass(conf, JMS_CONNECTION_CONTEXT_IMPL);
         ConnectionContext connCtx = null;
         if (defaultClazz == DefaultConnectionContext.class) {
             connCtx = new DefaultConnectionContext();

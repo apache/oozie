@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -23,9 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.rest.JsonBean;
@@ -38,6 +41,7 @@ import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.util.AuthUrlClient;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -120,7 +124,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE)) {
-            sendJsonResponse(response, HttpServletResponse.SC_OK, instrToJson(instr));
+            sendInstrumentationResponse(response, instr);
         }
         else if (resource.equals(RestConstants.ADMIN_BUILD_VERSION_RESOURCE)) {
             JSONObject json = new JSONObject();
@@ -155,6 +159,9 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         else if (resource.equals(RestConstants.ADMIN_LIST_SHARELIB)) {
             String sharelibKey = request.getParameter(RestConstants.SHARE_LIB_REQUEST_KEY);
             sendJsonResponse(response, HttpServletResponse.SC_OK, getShareLib(sharelibKey));
+        }
+        else if (resource.equals(RestConstants.ADMIN_METRICS_RESOURCE)) {
+            sendMetricsResponse(response);
         }
     }
 
@@ -258,7 +265,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     private JSONObject updateLocalShareLib(HttpServletRequest request) {
         ShareLibService shareLibService = Services.get().get(ShareLibService.class);
         JSONObject json = new JSONObject();
-        json.put(JsonTags.SHARELIB_UPDATE_HOST, request.getServerName() + ":" + request.getServerPort());
+        json.put(JsonTags.SHARELIB_UPDATE_HOST, ConfigUtils.getOozieEffectiveUrl());
         try {
             json.putAll(shareLibService.updateShareLib());
             json.put(JsonTags.SHARELIB_UPDATE_STATUS, "Successful");
@@ -384,5 +391,12 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         return array;
     }
 
+    protected void sendInstrumentationResponse(HttpServletResponse response, Instrumentation instr)
+            throws IOException, XServletException {
+        sendJsonResponse(response, HttpServletResponse.SC_OK, instrToJson(instr));
+    }
+
     protected abstract Map<String, String> getOozieURLs() throws XServletException;
+
+    protected abstract void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException;
 }

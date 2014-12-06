@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.net.URI;
@@ -24,6 +25,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XHCatTestCase;
@@ -43,6 +45,7 @@ public class TestLauncherHCatURIHandler extends XHCatTestCase {
         services = new Services();
         services.getConf().set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.setService(HCatAccessorService.class);
         services.init();
         conf = createJobConf();
         uriService = Services.get().get(URIHandlerService.class);

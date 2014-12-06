@@ -15,11 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -80,7 +81,7 @@ public class HCatURI {
             throw new URISyntaxException(uri.toString(), "Partition details are missing");
         }
 
-        partitions = new HashMap<String, String>();
+        partitions = new LinkedHashMap<String, String>();
         String[] parts = partRaw.split(PARTITION_SEPARATOR);
         for (String part : parts) {
             if (part == null || part.length() == 0) {
@@ -258,6 +259,35 @@ public class HCatURI {
         }
         filter.append("'");
         return filter.toString();
+    }
+
+    /**
+     * Get the entire partition value string from partition map.
+     * In case of type hive-export, it can be used to create entire partition value string
+     * that can be used in Hive query for partition export/import.
+     *
+     * type hive-export
+     * @return partition value string
+     */
+    public String toPartitionValueString(String type) {
+        StringBuilder value = new StringBuilder();
+        if (type.equals("hive-export")) {
+            String comparator = "=";
+            String separator = ",";
+            for (Map.Entry<String, String> entry : partitions.entrySet()) {
+                if (value.length() > 1) {
+                    value.append(separator);
+                }
+                value.append(entry.getKey());
+                value.append(comparator);
+                value.append(PARTITION_VALUE_QUOTE);
+                value.append(entry.getValue());
+                value.append(PARTITION_VALUE_QUOTE);
+            }
+        } else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+        return value.toString();
     }
 
     @Override

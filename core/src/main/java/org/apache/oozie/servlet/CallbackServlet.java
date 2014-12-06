@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.IOUtils;
@@ -55,7 +57,7 @@ public class CallbackServlet extends JsonRestServlet {
 
     @Override
     public void init() {
-        maxDataLen = Services.get().getConf().getInt(CONF_MAX_DATA_LEN, 2 * 1024);
+        maxDataLen = ConfigurationService.getInt(CONF_MAX_DATA_LEN);
     }
 
     /**
@@ -74,16 +76,8 @@ public class CallbackServlet extends JsonRestServlet {
         if (actionId == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
-        int idx = actionId.lastIndexOf('@', actionId.length());
-        String jobId;
-        if (idx == -1) {
-            jobId = actionId;
-        }
-        else {
-            jobId = actionId.substring(0, idx);
-        }
-        setLogInfo(jobId, actionId);
         log = XLog.getLog(getClass());
+        setLogInfo(actionId);
         log.debug("Received a CallbackServlet.doGet() with query string " + queryString);
 
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getSystemDagEngine();
@@ -113,16 +107,8 @@ public class CallbackServlet extends JsonRestServlet {
         if (actionId == null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0402, queryString);
         }
-        int idx = actionId.lastIndexOf('@', actionId.length());
-        String jobId;
-        if (idx == -1) {
-            jobId = actionId;
-        }
-        else {
-            jobId = actionId.substring(0, idx);
-        }
-        setLogInfo(jobId, actionId);
         log = XLog.getLog(getClass());
+        setLogInfo(actionId);
         log.debug("Received a CallbackServlet.doPost() with query string " + queryString);
 
         validateContentType(request, RestConstants.TEXT_CONTENT_TYPE);

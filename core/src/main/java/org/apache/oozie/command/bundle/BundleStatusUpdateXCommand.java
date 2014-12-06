@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.util.Date;
@@ -43,6 +44,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
     private JPAService jpaService = null;
     private BundleActionBean bundleaction;
     private final Job.Status prevStatus;
+    private final boolean ignorePending;
 
     /**
      * The constructor for class {@link BundleStatusUpdateXCommand}
@@ -51,9 +53,14 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
      * @param prevStatus coordinator job old status
      */
     public BundleStatusUpdateXCommand(CoordinatorJobBean coordjob, CoordinatorJob.Status prevStatus) {
+        this(coordjob, prevStatus, false);
+    }
+
+    public BundleStatusUpdateXCommand(CoordinatorJobBean coordjob, CoordinatorJob.Status prevStatus, boolean ignorePending) {
         super("BundleStatusUpdate", "BundleStatusUpdate", 1);
         this.coordjob = coordjob;
         this.prevStatus = prevStatus;
+        this.ignorePending = ignorePending;
     }
 
     @Override
@@ -71,7 +78,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
                             .isTerminalStatus())) {
                 bundleaction.setStatus(coordCurrentStatus);
             }
-            if (bundleaction.isPending()) {
+            if (bundleaction.isPending() && !ignorePending) {
                 bundleaction.decrementAndGetPending();
             }
             // TODO - Uncomment this when bottom up rerun can change terminal state
@@ -149,7 +156,7 @@ public class BundleStatusUpdateXCommand extends StatusUpdateXCommand {
                         coordjob.getStatus());
                 return;
             }
-            if (bundleaction.isPending() && coordjob.getStatus().equals(bundleaction.getStatus())) {
+            if (bundleaction.isPending() && coordjob.getStatus().equals(bundleaction.getStatus()) && !ignorePending) {
                 bundleaction.decrementAndGetPending();
             }
             bundleaction.setLastModifiedTime(new Date());

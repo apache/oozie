@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency.hcat;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.util.HCatURI;
@@ -89,4 +91,15 @@ public interface HCatDependencyCache {
      * Destroy the cache
      */
     public void destroy();
+
+    /**
+     * Purge stale actions
+     */
+    public void removeNonWaitingCoordActions(Set<String> coordActions);
+
+    /**
+     * Remove coordAction when all dependencies met
+     */
+    public void removeCoordActionWithDependenciesAvailable(String coordAction);
+
 }

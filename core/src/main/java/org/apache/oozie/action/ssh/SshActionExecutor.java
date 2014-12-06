@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.ssh;
 
 import java.io.BufferedReader;
@@ -33,6 +34,7 @@ import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.IOUtils;
@@ -95,7 +97,7 @@ public class SshActionExecutor extends ActionExecutor {
     public void initActionType() {
         super.initActionType();
         maxLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
-        allowSshUserAtHost = getOozieConf().getBoolean(CONF_SSH_ALLOW_USER_AT_HOST, true);
+        allowSshUserAtHost = ConfigurationService.getBoolean(CONF_SSH_ALLOW_USER_AT_HOST);
         registerError(InterruptedException.class.getName(), ActionExecutorException.ErrorType.ERROR, "SH001");
         registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "SH002");
         initSshScripts();
@@ -400,13 +402,13 @@ public class SshActionExecutor extends ActionExecutor {
                                throws IOException, InterruptedException {
         XLog log = XLog.getLog(getClass());
         Runtime runtime = Runtime.getRuntime();
-        String callbackPost = ignoreOutput ? "_" : getOozieConf().get(HTTP_COMMAND_OPTIONS).replace(" ", "%%%");
+        String callbackPost = ignoreOutput ? "_" : ConfigurationService.get(HTTP_COMMAND_OPTIONS).replace(" ", "%%%");
         String preserveArgsS = preserveArgs ? "PRESERVE_ARGS" : "FLATTEN_ARGS";
         // TODO check
         String callBackUrl = Services.get().get(CallbackService.class)
                 .createCallBackUrl(action.getId(), EXT_STATUS_VAR);
         String command = XLog.format("{0}{1} {2}ssh-base.sh {3} {4} \"{5}\" \"{6}\" {7} {8} ", SSH_COMMAND_BASE, host, dirLocation,
-                                      preserveArgsS, getOozieConf().get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd)
+                preserveArgsS, ConfigurationService.get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd)
                 .toString();
         String[] commandArray = command.split("\\s");
         String[] finalCommand;
@@ -451,7 +453,7 @@ public class SshActionExecutor extends ActionExecutor {
         else {
             context.setEndData(WorkflowAction.Status.ERROR, WorkflowAction.Status.ERROR.toString());
         }
-        boolean deleteTmpDir = getOozieConf().getBoolean(DELETE_TMP_DIR, true);
+        boolean deleteTmpDir = ConfigurationService.getBoolean(DELETE_TMP_DIR);
         if (deleteTmpDir) {
             String tmpDir = getRemoteFileName(context, action, null, true, false);
             String removeTmpDirCmd = SSH_COMMAND_BASE + action.getTrackerUri() + " rm -rf " + tmpDir;

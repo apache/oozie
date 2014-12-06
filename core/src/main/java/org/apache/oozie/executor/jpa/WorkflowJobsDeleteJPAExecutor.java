@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.executor.jpa;
 
-import java.util.Collection;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+package org.apache.oozie.executor.jpa;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
-import org.apache.oozie.util.ParamChecker;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.util.Collection;
 
 /**
  * Delete WF job, its list of actions and return the number of actions that were deleted.
@@ -74,18 +74,15 @@ public class WorkflowJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
         try {
             // Only used by test cases to check for rollback of transaction
             FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
-            if (deleteList != null) {
-                for (String id : deleteList) {
-                    ParamChecker.notNull(id, "Workflow Job Id");
-                    // Delete the WF job
-                    Query q = em.createNamedQuery("DELETE_WORKFLOW");
-                    q.setParameter("id", id);
-                    q.executeUpdate();
-                    // Delete the actions for this WF job
-                    Query g = em.createNamedQuery("DELETE_ACTIONS_FOR_WORKFLOW");
-                    g.setParameter("wfId", id);
-                    actionsDeleted = g.executeUpdate();
-                }
+            if (deleteList != null && !deleteList.isEmpty()) {
+                // Delete the WF job
+                Query q = em.createNamedQuery("DELETE_WORKFLOW");
+                q.setParameter("id", deleteList);
+                q.executeUpdate();
+                // Delete the actions for this WF job
+                Query g = em.createNamedQuery("DELETE_ACTIONS_FOR_WORKFLOW");
+                g.setParameter("wfId", deleteList);
+                actionsDeleted = g.executeUpdate();
             }
         }
         catch (Exception e) {

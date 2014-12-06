@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.BufferedReader;
@@ -36,6 +37,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.util.AuthUrlClient;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.SimpleTimestampedMessageParser;
 import org.apache.oozie.util.TimestampedMessageParser;
 import org.apache.oozie.util.XLog;
@@ -101,7 +103,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
      * @throws IOException thrown if the log cannot be streamed.
      */
     @Override
-    public void streamLog(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+    public void streamLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
             throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         if (xLogService.getLogOverWS()) {
@@ -112,7 +114,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             }
             // Otherwise, we have to go collate relevant logs from the other Oozie servers
             else {
-                collateLogs(filter, startTime, endTime, writer);
+                collateLogs(filter, startTime, endTime, writer, params);
             }
         }
         else {
@@ -132,7 +134,8 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
      * @param writer
      * @throws IOException
      */
-    private void collateLogs(XLogStreamer.Filter filter, Date startTime, Date endTime, Writer writer) throws IOException {
+    private void collateLogs(XLogFilter filter, Date startTime, Date endTime, Writer writer,
+            Map<String, String[]> params) throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         List<String> badOozies = new ArrayList<String>();
         List<ServiceInstance<Map>> oozies = null;
@@ -163,7 +166,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                      // Server from trying aggregate logs from the other Oozie servers (and creating an infinite recursion)
                         final String url = otherUrl + "/v" + OozieClient.WS_PROTOCOL_VERSION + "/" + RestConstants.JOB
                                 + "/" + jobId + "?" + RestConstants.JOB_SHOW_PARAM + "=" + RestConstants.JOB_SHOW_LOG
-                                + "&" + RestConstants.ALL_SERVER_REQUEST + "=false";
+                                + "&" + RestConstants.ALL_SERVER_REQUEST + "=false" + AuthUrlClient.getQueryParamString(params);
 
                         BufferedReader reader = AuthUrlClient.callServer(url);
                         parsers.add(new SimpleTimestampedMessageParser(reader, filter));
@@ -174,6 +177,11 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                         badOozies.add(otherId);
                     }
                 }
+            }
+
+            //If log param debug is set, we need to write start date and end date to outputstream.
+            if(filter.isDebugMode()){
+                writer.write(filter.getDebugMessage());
             }
 
             // Add a message about any servers we couldn't contact

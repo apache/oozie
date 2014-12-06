@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -88,9 +88,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         List<JsonBean> insertList = new ArrayList<JsonBean>();
         insertList.add(bean2);
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
-
-        SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
-        SLASummaryBean sBean = jpaService.execute(readCmd2);
+        SLASummaryBean sBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, wfId);
         assertEquals(wfId, sBean.getId());
         assertEquals("RUNNING", sBean.getJobStatus());
         assertEquals(EventStatus.START_MISS, sBean.getEventStatus());
@@ -136,8 +134,7 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, bean2);
 
-        SLASummaryGetJPAExecutor readCmd2 = new SLASummaryGetJPAExecutor(wfId);
-        SLASummaryBean sBean = jpaService.execute(readCmd2);
+        SLASummaryBean sBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, wfId);
         // check updated + original fields
         assertEquals(wfId, sBean.getId());
         assertEquals(EventStatus.DURATION_MISS, sBean.getEventStatus());
@@ -195,14 +192,13 @@ public class TestSLACalculationJPAExecutor extends XDataTestCase {
         FaultInjection.deactivate("org.apache.oozie.command.SkipCommitFaultInjection");
 
         // Check whether transactions are rolled back or not
-        SLASummaryGetJPAExecutor readCmd = new SLASummaryGetJPAExecutor(wfId1);
-        SLASummaryBean sBean = jpaService.execute(readCmd);
+        SLASummaryBean sBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, wfId1);
+
         // isSlaProcessed should NOT be changed to 1
         // actualEnd should be null as before
         assertNull(sBean.getActualEnd());
 
-        SLASummaryGetJPAExecutor readCmd1 = new SLASummaryGetJPAExecutor(wfId2);
-        sBean = jpaService.execute(readCmd1);
+        sBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, wfId2);
         assertNull(sBean); //new bean should not have been inserted due to rollback
 
     }

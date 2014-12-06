@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
@@ -211,8 +212,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 workflow.setParentId(parentId);
             }
 
-            LogUtils.setLogInfo(workflow, logInfo);
-            LOG = XLog.resetPrefix(LOG);
+            LogUtils.setLogInfo(workflow);
             LOG.debug("Workflow record created, Status [{0}]", workflow.getStatus());
             Element wfElem = XmlUtils.parseXml(app.getDefinition());
             ELEvaluator evalSla = createELEvaluatorForGroup(conf, "wf-sla-submit");

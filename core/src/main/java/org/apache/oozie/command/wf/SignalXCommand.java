@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
@@ -73,8 +74,6 @@ import org.apache.oozie.client.OozieClient;
 @SuppressWarnings("deprecation")
 public class SignalXCommand extends WorkflowXCommand<Void> {
 
-    protected static final String INSTR_SUCCEEDED_JOBS_COUNTER_NAME = "succeeded";
-
     private JPAService jpaService = null;
     private String jobId;
     private String actionId;
@@ -94,6 +93,16 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     public SignalXCommand(String jobId, String actionId) {
         this("signal", 1, jobId);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
+    }
+
+    @Override
+    protected void setLogInfo() {
+        if (jobId != null) {
+            LogUtils.setLogInfo(jobId);
+        }
+        else if (actionId !=null) {
+            LogUtils.setLogInfo(actionId);
+        }
     }
 
     @Override
@@ -117,10 +126,10 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             jpaService = Services.get().get(JPAService.class);
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
-                LogUtils.setLogInfo(wfJob, logInfo);
+                LogUtils.setLogInfo(wfJob);
                 if (actionId != null) {
                     this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_SIGNAL, actionId);
-                    LogUtils.setLogInfo(wfAction, logInfo);
+                    LogUtils.setLogInfo(wfAction);
                 }
             }
             else {
@@ -175,7 +184,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 // 2. Add SLA registration events for all WF_ACTIONS
                 createSLARegistrationForAllActions(workflowInstance.getApp().getDefinition(), wfJob.getUser(),
                         wfJob.getGroup(), wfJob.getConf());
-                queue(new NotificationXCommand(wfJob));
+                queue(new WorkflowNotificationXCommand(wfJob));
             }
             else {
                 throw new CommandException(ErrorCode.E0801, wfJob.getId());
@@ -192,6 +201,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 completed = workflowInstance.signal(wfAction.getExecutionPath(), wfAction.getSignalValue());
             }
             catch (WorkflowException e) {
+               LOG.error("Workflow action failed : " + e.getMessage(), e);
                 wfJob.setStatus(WorkflowJob.Status.valueOf(workflowInstance.getStatus().toString()));
                 completed = true;
             }
@@ -199,7 +209,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             wfAction.resetPending();
             if (!skipAction) {
                 wfAction.setTransition(workflowInstance.getTransition(wfAction.getName()));
-                queue(new NotificationXCommand(wfJob, wfAction));
+                queue(new WorkflowNotificationXCommand(wfJob, wfAction));
             }
             updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS,
                     wfAction));
@@ -233,7 +243,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         wfJobErrorCode = actionToFail.getErrorCode();
                         wfJobErrorMsg = actionToFail.getErrorMessage();
                     }
-                    queue(new NotificationXCommand(wfJob, actionToFail));
+                    queue(new WorkflowNotificationXCommand(wfJob, actionToFail));
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
                             Status.FAILED, SlaAppType.WORKFLOW_ACTION);
                     if (slaEvent != null) {
@@ -269,7 +279,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (slaEvent != null) {
                 insertList.add(slaEvent);
             }
-            queue(new NotificationXCommand(wfJob));
+            queue(new WorkflowNotificationXCommand(wfJob));
             if (wfJob.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 InstrumentUtils.incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }
@@ -282,6 +292,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     boolean isUserRetry = false;
                     ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry,
                             isUserRetry);
+                    InstrumentUtils.incrJobCounter(INSTR_KILLED_JOBS_COUNTER_NAME, 1, getInstrumentation());
                     try {
                         String tmpNodeConf = nodeDef.getConf();
                         String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);

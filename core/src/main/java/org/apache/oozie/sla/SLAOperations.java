@@ -15,16 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.sla;
 
 import java.text.ParseException;
 import java.util.Date;
+
 import org.apache.oozie.AppType;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -165,7 +168,7 @@ public class SLAOperations {
         JPAService jpaService = Services.get().get(JPAService.class);
         SLAService slaService = Services.get().get(SLAService.class);
         try {
-            SLARegistrationBean reg = jpaService.execute(new SLARegistrationGetJPAExecutor(jobId));
+            SLARegistrationBean reg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, jobId);
             if (reg != null) { //handle coord rerun with different config without sla
                 slaService.updateRegistrationEvent(reg);
             }

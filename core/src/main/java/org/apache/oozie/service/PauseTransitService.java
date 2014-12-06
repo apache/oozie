@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.Date;
@@ -37,6 +38,7 @@ import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -146,8 +148,7 @@ public class PauseTransitService implements Service {
         private void updateCoord() {
             Date d = new Date(); // records the start time of this service run;
             List<CoordinatorJobBean> jobList = null;
-            Configuration conf = Services.get().getConf();
-            boolean backwardSupportForCoordStatus = conf.getBoolean(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, false);
+            boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
 
             // pause coordinators as needed;
             try {
@@ -199,10 +200,10 @@ public class PauseTransitService implements Service {
      */
     @Override
     public void init(Services services) {
-        Configuration conf = services.getConf();
         Runnable bundlePauseStartRunnable = new PauseTransitRunnable();
         services.get(SchedulerService.class).schedule(bundlePauseStartRunnable, 10,
-                conf.getInt(CONF_BUNDLE_PAUSE_START_INTERVAL, 60), SchedulerService.Unit.SEC);
+                ConfigurationService.getInt(services.getConf(), CONF_BUNDLE_PAUSE_START_INTERVAL),
+                SchedulerService.Unit.SEC);
     }
 
     /**

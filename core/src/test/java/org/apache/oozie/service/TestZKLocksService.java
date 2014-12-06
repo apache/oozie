@@ -15,11 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
+import java.util.UUID;
+
 import org.apache.oozie.lock.LockToken;
-import org.apache.oozie.util.*;
+import org.apache.oozie.service.ZKLocksService.ZKLockToken;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.ZKUtils;
+import org.apache.zookeeper.data.Stat;
 
 public class TestZKLocksService extends ZKXTestCase {
     private XLog log = XLog.getLog(getClass());
@@ -414,5 +420,115 @@ public class TestZKLocksService extends ZKXTestCase {
         l2.finish();
         sleep(1000);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
+    }
+
+    public void testLockRelease() throws ServiceException, InterruptedException {
+        final String path = UUID.randomUUID().toString();
+        ZKLocksService zkls = new ZKLocksService();
+        try {
+            zkls.init(Services.get());
+            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            assertTrue(zkls.getLocks().containsKey(path));
+            lock.release();
+            assertFalse(zkls.getLocks().containsKey(path));
+        }
+        finally {
+            zkls.destroy();
+        }
+    }
+
+    public void testReentrantMultipleCall() throws ServiceException, InterruptedException {
+        final String path = UUID.randomUUID().toString();
+        ZKLocksService zkls = new ZKLocksService();
+        try {
+            zkls.init(Services.get());
+            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            assertTrue(zkls.getLocks().containsKey(path));
+            lock.release();
+            assertTrue(zkls.getLocks().containsKey(path));
+            lock.release();
+            assertTrue(zkls.getLocks().containsKey(path));
+            lock.release();
+            assertFalse(zkls.getLocks().containsKey(path));
+        }
+        catch (Exception e) {
+            fail("Reentrant property, it should have acquired lock");
+        }
+        finally {
+            zkls.destroy();
+        }
+    }
+
+    public void testReentrantMultipleThread() throws ServiceException, InterruptedException {
+        final String path = UUID.randomUUID().toString();
+        final ZKLocksService zkls = new ZKLocksService();
+        final LockToken[] locks = new LockToken[2];
+
+        try {
+            zkls.init(Services.get());
+            Thread t1 = new Thread() {
+                public void run() {
+                    try {
+                        locks[0] = zkls.getWriteLock(path, 5000);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            Thread t2 = new Thread() {
+                public void run() {
+                    try {
+                        locks[1] = zkls.getWriteLock(path, 5000);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+
+            if (locks[0] != null) {
+                assertNull(locks[1]);
+            }
+            if (locks[1] != null) {
+                assertNull(locks[0]);
+            }
+
+            if (locks[0] != null) {
+                locks[0].release();
+            }
+            if (locks[1] != null) {
+                locks[1].release();
+            }
+            assertTrue(zkls.getLocks().containsKey(path));
+        }
+        finally {
+            zkls.destroy();
+        }
+    }
+
+    public void testLockReaper() throws Exception {
+        Services.get().getConf().set(ZKLocksService.REAPING_THRESHOLD, "1");
+        ZKLocksService zkls = new ZKLocksService();
+        try {
+            zkls.init(Services.get());
+            for (int i = 0; i < 10; ++i) {
+                LockToken l = zkls.getReadLock(String.valueOf(i), 1);
+                l.release();
+
+            }
+            sleep(2000);
+            Stat stat = getClient().checkExists().forPath(ZKLocksService.LOCKS_NODE);
+            assertEquals(stat.getNumChildren(), 0);
+        }
+        finally {
+            zkls.destroy();
+        }
     }
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import org.apache.oozie.client.CoordinatorAction;
@@ -86,7 +87,7 @@ public class CoordKillXCommand extends KillTransitionXCommand {
                 //Get actions which are not succeeded, failed, timed out or killed
                 this.actionList = jpaService.execute(new CoordJobGetActionsNotCompletedJPAExecutor(jobId));
                 prevStatus = coordJob.getStatus();
-                LogUtils.setLogInfo(coordJob, logInfo);
+                LogUtils.setLogInfo(coordJob);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -106,9 +107,10 @@ public class CoordKillXCommand extends KillTransitionXCommand {
         if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED
                 || coordJob.getStatus() == CoordinatorJob.Status.FAILED
                 || coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                || coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
-            LOG.info("CoordKillXCommand not killed - job either finished SUCCEEDED, FAILED, KILLED or DONEWITHERROR, job id = "
-                    + jobId + ", status = " + coordJob.getStatus());
+                || coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
+            LOG.info("CoordKillXCommand not killed - job either finished SUCCEEDED, FAILED, KILLED, DONEWITHERROR"
+                    + " or IGNORED,job id = " + jobId + ", status = " + coordJob.getStatus());
             throw new PreconditionException(ErrorCode.E1020, jobId);
         }
     }

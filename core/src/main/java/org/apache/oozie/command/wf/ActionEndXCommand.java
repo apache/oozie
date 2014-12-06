@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.util.ArrayList;
@@ -78,6 +79,11 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -101,8 +107,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                         jobId);
                 this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_END,
                         actionId);
-                LogUtils.setLogInfo(wfJob, logInfo);
-                LogUtils.setLogInfo(wfAction, logInfo);
+                LogUtils.setLogInfo(wfJob);
+                LogUtils.setLogInfo(wfAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

@@ -151,6 +151,13 @@ Oozie work on a 1 minute interval.
       * version
       * version-GET
 
+---++ Oozie JVM Thread Dump
+     The =admin/jvminfo.jsp= servlet can be used to get some basic jvm stats and thread dump.
+For eg: http://localhost:11000/oozie/admin/jvminfo.jsp?cpuwatch=1000&threadsort=cpu. It takes the following optional
+query parameters:
+   * threadsort - The order in which the threads are sorted for display. Valid values are name, cpu, state. Default is state.
+   * cpuwatch - Time interval in milliseconds to monitor cpu usage of threads. Default value is 0.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

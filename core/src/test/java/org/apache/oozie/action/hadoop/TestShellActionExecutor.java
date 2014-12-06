@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.OutputStreamWriter;
@@ -32,6 +33,7 @@ import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
@@ -56,16 +58,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             : "ls -ltr\necho $1 $2\nexit 1";
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
 
-    @Override
-    protected void setSystemProps() throws Exception {
-        super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", ShellActionExecutor.class.getName());
-    }
-
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
      *
-     * @param launcherJarShouldExist
      * @throws Exception
      */
     public void testSetupMethods() throws Exception {
@@ -170,6 +165,10 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @throws Exception
      */
     public void testEnvVar() throws Exception {
+        Services.get().destroy();
+        Services services = new Services();
+        services.getConf().setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
+        services.init();
 
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
@@ -189,7 +188,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         // Submit the action
         final RunningJob launcherJob = submitAction(context);
-        waitFor(30 * 1000, new Predicate() { // Wait for the external job to
+        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
                     // finish
                     public boolean evaluate() throws Exception {
                         return launcherJob.isComplete();
@@ -327,7 +326,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testShellMainPathInUber() throws Exception {
-        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", true);
+        Services.get().getConf().setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
 
         Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"

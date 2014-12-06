@@ -15,46 +15,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.CoordinatorEngine.FILTER_COMPARATORS;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
- * Load coordinator actions by start and len (a subset) for a coordinator job.
+ * Load coordinator actions by offset and len (a subset) for a coordinator job.
  */
 public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
 
     private String coordJobId = null;
-    private int start = 1;
+    private int offset = 1;
     private int len = 50;
     private boolean desc = false;
-    private Map<String,List<String>> filterMap;
+    private Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap;
 
     public CoordJobGetActionsSubsetJPAExecutor(String coordJobId) {
         ParamChecker.notNull(coordJobId, "coordJobId");
         this.coordJobId = coordJobId;
     }
 
-    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, Map<String, List<String>> filterMap,
-            int start, int len, boolean desc) {
+    public CoordJobGetActionsSubsetJPAExecutor(String coordJobId, Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap,
+            int offset, int len, boolean desc) {
         this(coordJobId);
         this.filterMap = filterMap;
-        this.start = start;
+        this.offset = offset;
         this.len = len;
         this.desc = desc;
     }
@@ -92,6 +96,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     }
 
     private Query setQueryParameters(Query q, EntityManager em){
+        Map<String, Object> params = null;
         if (filterMap != null) {
             // Add the filter clause
             String query = q.toString();
@@ -99,8 +104,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
             int offset = query.lastIndexOf("order");
             // Get the 'where' clause for status filters
             StringBuilder statusClause = new StringBuilder();
-            getStatusClause(statusClause, filterMap.get(CoordinatorEngine.POSITIVE_FILTER), true);
-            getStatusClause(statusClause, filterMap.get(CoordinatorEngine.NEGATIVE_FILTER), false);
+            params = getWhereClause(statusClause, filterMap);
             // Insert 'where' before 'order by'
             sbTotal.insert(offset, statusClause);
             q = em.createQuery(sbTotal.toString());
@@ -108,36 +112,80 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
         if (desc) {
             q = em.createQuery(q.toString().concat(" desc"));
         }
+        if (params != null) {
+            for (String pname : params.keySet()) {
+                q.setParameter(pname, params.get(pname));
+            }
+        }
         q.setParameter("jobId", coordJobId);
-        q.setFirstResult(start - 1);
+        q.setFirstResult(offset - 1);
         q.setMaxResults(len);
         return q;
     }
 
     // Form the where clause to filter by status values
-    private StringBuilder getStatusClause(StringBuilder sb, List<String> filterList, boolean positive) {
-        if (sb == null) {
-            sb = new StringBuilder();
-        }
-        boolean isStatus = false;
-        if (filterList != null && filterList.size() > 0) {
-            for (String statusVal : filterList) {
-                if (!isStatus) {
-                    if (positive) {
-                        sb.append(" and a.statusStr IN (\'" + statusVal + "\'");
-                    }
-                    else {
-                        sb.append(" and a.statusStr NOT IN (\'" + statusVal + "\'");
-                    }
-                    isStatus = true;
-                }
-                else {
-                    sb.append(",\'" + statusVal + "\'");
-                }
+    private Map<String, Object> getWhereClause(StringBuilder sb, Map<Pair<String, FILTER_COMPARATORS>,
+        List<Object>> filterMap) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        int pcnt= 1;
+        for (Entry<Pair<String, FILTER_COMPARATORS>, List<Object>> filter : filterMap.entrySet()) {
+            String field = filter.getKey().getFist();
+            FILTER_COMPARATORS comp = filter.getKey().getSecond();
+            String sqlField;
+            if (field.equals(OozieClient.FILTER_STATUS)) {
+                sqlField = "a.statusStr";
+            } else if (field.equals(OozieClient.FILTER_NOMINAL_TIME)) {
+                sqlField = "a.nominalTimestamp";
+            } else {
+                throw new IllegalArgumentException("Invalid filter key " + field);
             }
-            sb.append(") ");
+
+            sb.append(" and ").append(sqlField).append(" ");
+            switch (comp) {
+            case EQUALS:
+                sb.append("IN (");
+                params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                sb.append(")");
+                break;
+
+            case NOT_EQUALS:
+                sb.append("NOT IN (");
+                params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                sb.append(")");
+                break;
+
+            case GREATER:
+            case GREATER_EQUAL:
+            case LESSTHAN:
+            case LESSTHAN_EQUAL:
+                if (filter.getValue().size() != 1) {
+                    throw new IllegalArgumentException(field + comp.getSign() + " can't have more than 1 values");
+                }
+
+                sb.append(comp.getSign()).append(" ");
+                params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                break;
+            }
+
+            pcnt += filter.getValue().size();
         }
-        return sb;
+        sb.append(" ");
+        return params;
+    }
+
+    private Map<String, Object> appendParams(StringBuilder sb, List<Object> value, int sindex) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        boolean first = true;
+        for (Object val : value) {
+            String pname = "p" + sindex++;
+            params.put(pname, val);
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(':').append(pname);
+            first = false;
+        }
+        return params;
     }
 
     private CoordinatorActionBean getBeanForRunningCoordAction(Object arr[]) {

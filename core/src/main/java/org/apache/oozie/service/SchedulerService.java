@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
@@ -97,7 +98,7 @@ public class SchedulerService implements Service {
      * @return int num threads
      */
     public int getSchedulableThreads(Configuration conf) {
-        return conf.getInt(SCHEDULER_THREADS, 10);
+        return ConfigurationService.getInt(conf, SCHEDULER_THREADS);
     }
 
     public enum Unit {

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
 import java.sql.Timestamp;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.service.ConfigurationService;
 
 /**
  * Date utility classes to parse and format datetimes in Oozie expected datetime formats.
@@ -64,7 +66,7 @@ public class DateUtils {
      * @param conf Oozie server configuration.
      */
     public static void setConf(Configuration conf) {
-        String tz = conf.get(OOZIE_PROCESSING_TIMEZONE_KEY, OOZIE_PROCESSING_TIMEZONE_DEFAULT);
+        String tz = ConfigurationService.get(conf, OOZIE_PROCESSING_TIMEZONE_KEY);
         if (!VALID_TIMEZONE_PATTERN.matcher(tz).matches()) {
             throw new RuntimeException("Invalid Oozie timezone, it must be 'UTC' or 'GMT(+/-)####");
         }

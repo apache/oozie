@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
@@ -56,11 +57,14 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
     public void testSingleRecord() throws Exception {
 
         String request = "bundle=" + bundleName + ";actionstatus=FAILED;"
-                + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z";
+                + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z;"
+                + "startscheduledtime=2012-07-20T23:00Z;endscheduledtime=2012-07-22T03:00Z";
 
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(1, brList.size()); // only 1 action satisfies the
                                         // conditions
+        assertEquals(1, response.getTotal());
         BulkResponseImpl br = brList.get(0);
         assertEquals(bundleName, br.getBundle().getAppName());
         assertEquals("Coord1", br.getCoordinator().getAppName());
@@ -71,10 +75,13 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
     public void testMultipleRecords() throws Exception {
 
         String request = "bundle=" + bundleName + ";actionstatus=FAILED,KILLED;"
-                + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z";
+                + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z;"
+                + "startscheduledtime=2012-07-20T23:00Z;endscheduledtime=2012-07-22T03:00Z";
 
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(3, brList.size()); // 3 actions satisfy the conditions
+        assertEquals(3,  response.getTotal());
         List<String> possibleStatus = new ArrayList<String>(Arrays.asList("KILLED", "FAILED"));
         List<String> resultStatus = new ArrayList<String>();
         resultStatus.add(brList.get(0).getAction().getStatus().toString());
@@ -100,8 +107,10 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
     public void testMultipleCoordinators() throws Exception {
         // there are 3 coordinators but giving range as only two of them
         String request = "bundle=" + bundleName + ";coordinators=Coord1,Coord2;actionstatus=KILLED";
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(2, brList.size()); // 2 actions satisfy the conditions
+        assertEquals(2, response.getTotal());
         assertEquals(brList.get(0).getAction().getId(), "Coord1@2");
         assertEquals(brList.get(1).getAction().getId(), "Coord2@1");
     }
@@ -111,8 +120,10 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         addRecordToCoordActionTable("Coord3", 1, CoordinatorAction.Status.FAILED, "coord-action-get.xml", 0);
 
         String request = "bundle=" + bundleName + ";";
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(4, brList.size()); // 4 actions satisfy the conditions
+        assertEquals(4, response.getTotal());
         List<String> possibleStatus = new ArrayList<String>(Arrays.asList("FAILED", "KILLED"));
         List<String> resultStatus = new ArrayList<String>();
         resultStatus.add(brList.get(0).getAction().getStatus().toString());
@@ -144,9 +155,11 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         String request = "bundle=" + bundleId + ";actionstatus=FAILED;"
                 + "startcreatedtime=2012-07-21T00:00Z;endcreatedtime=2012-07-22T02:00Z";
 
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(1, brList.size()); // only 1 action satisfies the
                                         // conditions
+        assertEquals(1, response.getTotal());
         BulkResponseImpl br = brList.get(0);
         assertEquals(bundleId, br.getBundle().getId());
         assertEquals("Coord1", br.getCoordinator().getAppName());
@@ -162,17 +175,19 @@ public class TestBulkMonitorJPAExecutor extends XDataTestCase {
         // there are 3 coordinators but giving range as only two of them
         String coordIdsStr = coordIds.get(0) + "," + coordIds.get(1);
         String request = "bundle=" + bundleId + ";coordinators=" + coordIdsStr + ";actionstatus=KILLED";
-        List<BulkResponseImpl> brList = _execQuery(request);
+        BulkResponseInfo response = _execQuery(request);
+        List<BulkResponseImpl> brList = response.getResponses();
         assertEquals(2, brList.size()); // 2 actions satisfy the conditions
+        assertEquals(2, response.getTotal());
         assertEquals(brList.get(0).getAction().getId(), "Coord1@2");
         assertEquals(brList.get(1).getAction().getId(), "Coord2@1");
     }
 
-    private List<BulkResponseImpl> _execQuery(String request) throws JPAExecutorException, BundleEngineException {
+    private BulkResponseInfo _execQuery(String request) throws JPAExecutorException, BundleEngineException {
         BulkJPAExecutor bulkjpa = new BulkJPAExecutor(BundleEngine.parseBulkFilter(request), 1, 10);
         BulkResponseInfo response = jpaService.execute(bulkjpa);
         assertNotNull(response);
-        return response.getResponses();
+        return response;
     }
 
 }

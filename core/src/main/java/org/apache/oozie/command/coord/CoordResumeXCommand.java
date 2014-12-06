@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.util.Date;
@@ -38,11 +39,13 @@ import org.apache.oozie.executor.jpa.CoordJobGetActionsSuspendedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 
 /**
  * Resume coordinator job and actions.
@@ -89,7 +92,7 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
         }
         setJob(coordJob);
         prevStatus = coordJob.getStatus();
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     @Override
@@ -164,6 +167,11 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
     public void performWrites() throws CommandException {
         try {
             BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            if (EventHandlerService.isEnabled()) {
+                // good enough to set event start time as coord's last modified time
+                // updated when set to running
+                generateEvents(coordJob, coordJob.getLastModifiedTime());
+            }
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);

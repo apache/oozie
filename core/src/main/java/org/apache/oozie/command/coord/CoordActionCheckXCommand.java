@@ -15,14 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -70,6 +69,11 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         super("coord_action_check", "coord_action_check", 0);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
         this.actionCheckDelay = actionCheckDelay;
+    }
+
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
     }
 
     /* (non-Javadoc)
@@ -174,7 +178,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                 coordJob = jpaService.execute(new CoordinatorJobGetForUserAppnameJPAExecutor(
                         coordAction.getJobId()));
                 workflowJob = jpaService.execute (new WorkflowJobGetForSLAJPAExecutor(coordAction.getExternalId()));
-                LogUtils.setLogInfo(coordAction, logInfo);
+                LogUtils.setLogInfo(coordAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);

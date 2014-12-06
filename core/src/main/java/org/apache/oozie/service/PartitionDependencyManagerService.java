@@ -15,18 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.dependency.hcat.HCatDependencyCache;
 import org.apache.oozie.dependency.hcat.SimpleHCatDependencyCache;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Module that functions like a caching service to maintain partition dependency mappings
@@ -35,10 +49,19 @@ public class PartitionDependencyManagerService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "PartitionDependencyManagerService.";
     public static final String CACHE_MANAGER_IMPL = CONF_PREFIX + "cache.manager.impl";
+    public static final String CACHE_PURGE_INTERVAL = CONF_PREFIX + "cache.purge.interval";
+    public static final String CACHE_PURGE_TTL = CONF_PREFIX + "cache.purge.ttl";
 
     private static XLog LOG = XLog.getLog(PartitionDependencyManagerService.class);
 
     private HCatDependencyCache dependencyCache;
+
+    /**
+     * Keep timestamp when missing dependencies of a coord action are registered
+     */
+    private ConcurrentMap<String, Long> registeredCoordActionMap;
+
+    private boolean purgeEnabled = false;
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -52,6 +75,60 @@ public class PartitionDependencyManagerService implements Service {
         dependencyCache.init(conf);
         LOG.info("PartitionDependencyManagerService initialized. Dependency cache is {0} ", dependencyCache.getClass()
                 .getName());
+        purgeEnabled = Services.get().get(JobsConcurrencyService.class).isHighlyAvailableMode();
+        if (purgeEnabled) {
+            Runnable purgeThread = new CachePurgeWorker(dependencyCache);
+            // schedule runnable by default every 10 min
+            Services.get()
+                    .get(SchedulerService.class)
+                    .schedule(purgeThread, 10, Services.get().getConf().getInt(CACHE_PURGE_INTERVAL, 600),
+                            SchedulerService.Unit.SEC);
+            registeredCoordActionMap = new ConcurrentHashMap<String, Long>();
+        }
+    }
+
+    private class CachePurgeWorker implements Runnable {
+        HCatDependencyCache cache;
+        public CachePurgeWorker(HCatDependencyCache cache) {
+            this.cache = cache;
+        }
+
+        @Override
+        public void run() {
+            if (Thread.currentThread().isInterrupted()) {
+                return;
+            }
+            try {
+                purgeMissingDependency(Services.get().getConf().getInt(CACHE_PURGE_TTL, 1800));
+            }
+            catch (Throwable error) {
+                XLog.getLog(PartitionDependencyManagerService.class).debug("Throwable in CachePurgeWorker thread run : ", error);
+            }
+        }
+
+        private void purgeMissingDependency(int timeToLive) {
+            long currentTime = new Date().getTime();
+            Set<String> staleActions = new HashSet<String>();
+            Iterator<String> actionItr = registeredCoordActionMap.keySet().iterator();
+            while(actionItr.hasNext()){
+                String actionId = actionItr.next();
+                Long regTime = registeredCoordActionMap.get(actionId);
+                if(regTime < (currentTime - timeToLive * 1000)){
+                    CoordinatorActionBean caBean = null;
+                    try {
+                        caBean = CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION_STATUS, actionId);
+                    }
+                    catch (JPAExecutorException e) {
+                        LOG.warn("Error in checking coord action:" + actionId + "to purge, skipping", e);
+                    }
+                    if(caBean != null && !caBean.getStatus().equals(CoordinatorAction.Status.WAITING)){
+                        staleActions.add(actionId);
+                        actionItr.remove();
+                    }
+                }
+            }
+            dependencyCache.removeNonWaitingCoordActions(staleActions);
+        }
     }
 
     @Override
@@ -71,6 +148,9 @@ public class PartitionDependencyManagerService implements Service {
      * @param actionID ID of action which is waiting for the dependency
      */
     public void addMissingDependency(HCatURI hcatURI, String actionID) {
+        if (purgeEnabled) {
+            registeredCoordActionMap.put(actionID, new Date().getTime());
+        }
         dependencyCache.addMissingDependency(hcatURI, actionID);
     }
 
@@ -142,4 +222,22 @@ public class PartitionDependencyManagerService implements Service {
         return dependencyCache.removeAvailableDependencyURIs(actionID, dependencyURIs);
     }
 
+    /**
+     * Remove a coord action from dependency cache when all push missing dependencies available
+     *
+     * @param actionID action id
+     * @param dependencyURIs set of dependency URIs
+     * @return true if successful, else false
+     */
+    public void removeCoordActionWithDependenciesAvailable(String actionID) {
+        if (purgeEnabled) {
+            registeredCoordActionMap.remove(actionID);
+        }
+        dependencyCache.removeCoordActionWithDependenciesAvailable(actionID);
+    }
+
+    @VisibleForTesting
+    public void runCachePurgeWorker() {
+        new CachePurgeWorker(dependencyCache).run();
+    }
 }

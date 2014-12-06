@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
@@ -55,24 +56,17 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
         List<CoordinatorActionBean> actionBeans = null;
         try {
             Query q;
-            // check if executionOrder is FIFO, LIFO, or LAST_ONLY
+            // check if executionOrder is FIFO, LIFO, LAST_ONLY, or NONE
             if (executionOrder.equalsIgnoreCase("FIFO")) {
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_FIFO");
             }
-            else {
+            else {      // LIFO, LAST_ONLY, or NONE
                 q = em.createNamedQuery("GET_COORD_ACTIONS_FOR_JOB_LIFO");
             }
             q.setParameter("jobId", coordJobId);
 
-            // if executionOrder is LAST_ONLY, only retrieve first record in LIFO,
-            // otherwise, use numResults if it is positive.
-            if (executionOrder.equalsIgnoreCase("LAST_ONLY")) {
-                q.setMaxResults(1);
-            }
-            else {
-                if (numResults > 0) {
-                    q.setMaxResults(numResults);
-                }
+            if (numResults > 0) {
+                q.setMaxResults(numResults);
             }
             List<Object[]> objectArrList = q.getResultList();
             actionBeans = new ArrayList<CoordinatorActionBean>();

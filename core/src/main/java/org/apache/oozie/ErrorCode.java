@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import org.apache.oozie.util.XLog;
@@ -42,6 +43,7 @@ public enum ErrorCode {
     E0101(XLog.OPS, "Service [{0}] does not implement declared interface [{1}]"),
     E0102(XLog.OPS, "Could not instantiate service class [{0}], {1}"),
     E0103(XLog.OPS, "Could not load service classes, {0}"),
+    E0104(XLog.OPS, "Could not fully initialize service [{0}], {1}"),
     E0110(XLog.OPS, "Could not parse or validate EL definition [{0}], {1}"),
     E0111(XLog.OPS, "class#method not found [{0}#{1}]"),
     E0112(XLog.OPS, "class#method does not have PUBLIC or STATIC modifier [{0}#{1}]"),
@@ -169,17 +171,18 @@ public enum ErrorCode {
     E0815(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionCheck Execution"),
     E0816(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionStart Execution"),
     E0817(XLog.STD, "The wf action [{0}] has been udated recently. Ignoring ActionCheck."),
-    E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING."),
+    E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING or SUSPENDED."),
     E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{0}]."),
     E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
 
-    E0900(XLog.OPS, "Jobtracker [{0}] not allowed, not in Oozie's whitelist"),
-    E0901(XLog.OPS, "Namenode [{0}] not allowed, not in Oozie's whitelist"),
+    E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
+    E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
     E0902(XLog.OPS, "Exception occured: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
     E0905(XLog.STD, "Scheme not present in uri [{0}]"),
     E0906(XLog.STD, "URI parsing error : {0}"),
+    E0907(XLog.STD, "Failed to delete uri : {0}"),
 
     E1001(XLog.STD, "Could not read the coordinator job definition, {0}"),
     E1002(XLog.STD, "Invalid coordinator application URI [{0}], {1}"),
@@ -203,6 +206,10 @@ public enum ErrorCode {
     E1020(XLog.STD, "Could not kill coord job, this job either finished successfully or does not exist , [{0}]"),
     E1021(XLog.STD, "Coord Action Input Check Error: {0}"),
     E1022(XLog.STD, "Cannot delete running/completed coordinator action: [{0}]"),
+    E1023(XLog.STD, "Coord Job update Error: [{0}]"),
+    E1024(XLog.STD, "Cannot run ignore command: [{0}]"),
+    E1025(XLog.STD, "Coord status transit error: [{0}]"),
+
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
@@ -229,6 +236,10 @@ public enum ErrorCode {
     E1317(XLog.STD, "Invalid bundle job change value {0}, {1}"),
     E1318(XLog.STD, "No coord jobs for the bundle=[{0}], fail the bundle"),
     E1319(XLog.STD, "Invalid bundle coord job namespace, [{0}]"),
+    E1320(XLog.STD, "Bundle Job change error, [{0}]"),
+    E1321(XLog.STD, "Error evaluating coord name, [{0}]"),
+    E1322(XLog.STD, "Bundle status transit error: [{0}]"),
+
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
 

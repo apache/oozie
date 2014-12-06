@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.servlet;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.PseudoAuthenticator;
@@ -65,10 +67,15 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         return new URL(sb.toString());
     }
 
-    protected void runTest(Callable<Void> assertions) throws Exception {
+    protected void runTest(Callable<Void> assertions, Configuration additionalConf) throws Exception {
         Services services = new Services();
         try {
             services.init();
+            if (additionalConf != null) {
+                for (Map.Entry<String, String> prop : additionalConf) {
+                    Services.get().getConf().set(prop.getKey(), prop.getValue());
+                }
+            }
             Services.get().setService(ForTestAuthorizationService.class);
             Services.get().setService(ForTestWorkflowStoreService.class);
             Services.get().setService(MockDagEngineService.class);
@@ -103,7 +110,9 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
     }
 
     public void testClientWithAnonymous() throws Exception {
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "true");
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.authentication.simple.anonymous.allowed", "true");
+
         runTest(new Callable<Void>() {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
@@ -111,11 +120,13 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
     }
 
     public void testClientWithoutAnonymous() throws Exception {
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.authentication.simple.anonymous.allowed", "false");
+
         runTest(new Callable<Void>() {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
@@ -123,12 +134,14 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
     }
 
     public void testClientWithCustomAuthenticator() throws Exception {
         setSystemProperty("authenticator.class", Authenticator4Test.class.getName());
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.authentication.simple.anonymous.allowed", "false");
+
         Authenticator4Test.USED = false;
         runTest(new Callable<Void>() {
             public Void call() throws Exception {
@@ -137,14 +150,17 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
         assertTrue(Authenticator4Test.USED);
     }
 
 
     public void testClientAuthTokenCache() throws Exception {
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.authentication.signature.secret", "secret");
+        conf.set("oozie.authentication.simple.anonymous.allowed", "false");
+
         //not using cache
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
         AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
         assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
         runTest(new Callable<Void>() {
@@ -154,13 +170,11 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
         assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
 
         //using cache
         setSystemProperty("oozie.auth.token.cache", "true");
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-        setSystemProperty("oozie.authentication.signature.secret", "secret");
         AuthOozieClient.AUTH_TOKEN_CACHE_FILE.delete();
         assertFalse(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
         runTest(new Callable<Void>() {
@@ -170,14 +184,12 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
         assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
         String currentCache = IOUtils.getReaderAsString(new FileReader(AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
 
         //re-using cache
         setSystemProperty("oozie.auth.token.cache", "true");
-        setSystemProperty("oozie.authentication.simple.anonymous.allowed", "false");
-        setSystemProperty("oozie.authentication.signature.secret", "secret");
         runTest(new Callable<Void>() {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
@@ -185,7 +197,7 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, conf);
         assertTrue(AuthOozieClient.AUTH_TOKEN_CACHE_FILE.exists());
         String newCache = IOUtils.getReaderAsString(new FileReader(AuthOozieClient.AUTH_TOKEN_CACHE_FILE), -1);
         assertEquals(currentCache, newCache);
@@ -204,7 +216,7 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 return null;
             }
-        });
+        }, null);
         // bad method
         runTest(new Callable<Void>() {
             public Void call() throws Exception {
@@ -214,7 +226,6 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
                 assertEquals(-1, new OozieCLI().run(args));
                 return null;
             }
-        });
-
+        }, null);
     }
 }

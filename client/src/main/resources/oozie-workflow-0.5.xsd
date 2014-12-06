@@ -173,6 +173,7 @@
             </xs:choice>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="config-class" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>

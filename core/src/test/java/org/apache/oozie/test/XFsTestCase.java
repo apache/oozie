@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.test;
 
 import org.apache.hadoop.conf.Configuration;
@@ -47,7 +48,9 @@ import java.net.URI;
 public abstract class XFsTestCase extends XTestCase {
     private static HadoopAccessorService has;
     private FileSystem fileSystem;
+    private FileSystem fileSystem2;
     private Path fsTestDir;
+    private Path fsTestDir2;
 
     /**
      * Set up the testcase.
@@ -72,18 +75,27 @@ public abstract class XFsTestCase extends XTestCase {
         JobConf jobConf = has.createJobConf(getNameNodeUri());
         XConfiguration.copy(conf, jobConf);
         fileSystem = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), jobConf);
-        Path path = new Path(fileSystem.getWorkingDirectory(), java.util.UUID.randomUUID().toString());
-        fsTestDir = fileSystem.makeQualified(path);
-        System.out.println(XLog.format("Setting FS testcase work dir[{0}]", fsTestDir));
-        if (fileSystem.exists(fsTestDir)) {
-            setAllPermissions(fileSystem, fsTestDir);
+        fsTestDir = initFileSystem(fileSystem);
+        if (System.getProperty("oozie.test.hadoop.minicluster2", "false").equals("true")) {
+            fileSystem2 = has.createFileSystem(getTestUser(), new URI(getNameNode2Uri()), jobConf);
+            fsTestDir2 = initFileSystem(fileSystem2);
         }
-        fileSystem.delete(fsTestDir, true);
-        if (!fileSystem.mkdirs(path)) {
-            throw new IOException(XLog.format("Could not create FS testcase dir [{0}]", fsTestDir));
+    }
+
+    private Path initFileSystem(FileSystem fs) throws Exception {
+        Path path = new Path(fs.getWorkingDirectory(), java.util.UUID.randomUUID().toString());
+        Path testDirInFs = fs.makeQualified(path);
+        System.out.println(XLog.format("Setting FS testcase work dir[{0}]", testDirInFs));
+        if (fs.exists(testDirInFs)) {
+            setAllPermissions(fs, testDirInFs);
         }
-        fileSystem.setOwner(fsTestDir, getTestUser(), getTestGroup());
-        fileSystem.setPermission(fsTestDir, FsPermission.valueOf("-rwxrwx--x"));
+        fs.delete(testDirInFs, true);
+        if (!fs.mkdirs(path)) {
+            throw new IOException(XLog.format("Could not create FS testcase dir [{0}]", testDirInFs));
+        }
+        fs.setOwner(testDirInFs, getTestUser(), getTestGroup());
+        fs.setPermission(testDirInFs, FsPermission.valueOf("-rwxrwx--x"));
+        return testDirInFs;
     }
 
     private void setAllPermissions(FileSystem fileSystem, Path path) throws IOException {
@@ -112,12 +124,21 @@ public abstract class XFsTestCase extends XTestCase {
     }
 
     /**
-     * Return the file system used by the tescase.
+     * Return the file system used by the test case.
      *
-     * @return the file system used by the tescase.
+     * @return the file system used by the test case.
      */
     protected FileSystem getFileSystem() {
         return fileSystem;
+    }
+
+    /**
+     * Return the file system of the second cluster.
+     *
+     * @return the second file system used by the test case.
+     */
+    protected FileSystem getFileSystem2() {
+        return fileSystem2;
     }
 
     /**
@@ -128,6 +149,16 @@ public abstract class XFsTestCase extends XTestCase {
      */
     protected Path getFsTestCaseDir() {
         return fsTestDir;
+    }
+
+    /**
+     * Return the FS test working directory of the second cluster. The directory name is
+     * the full class name of the test plus the test method name.
+     *
+     * @return the second FS test working directory path, it is always an full and absolute path.
+     */
+    protected Path getFs2TestCaseDir() {
+        return fsTestDir2;
     }
 
     /**

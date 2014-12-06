@@ -191,7 +191,10 @@ Content-Type: application/json;charset=UTF-8
 
 _Identical to the corresponding Oozie v0 WS API_
 
-A HTTP GET request returns the Oozie instrumentation information.
+A HTTP GET request returns the Oozie instrumentation information.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Instrumentation is enabled, then Metrics is unavailable.
 
 *Request:*
 
@@ -267,6 +270,90 @@ Content-Type: application/json;charset=UTF-8
     },
     ...
   ]
+}
+</verbatim>
+
+---++++ Oozie Metrics
+
+_Available in the Oozie v2 WS API and later_
+
+A HTTP GET request returns the Oozie metrics information.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Metrics is enabled, then Instrumentation is unavailable.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/admin/metrics
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+   "gauges" : {
+        "jvm.memory.non-heap.committed" : {
+          "value" : 62590976
+        },
+        "oozie.mode" : {
+          "value" : "NORMAL"
+        },
+        ...
+    },
+    "timers" : {
+        "commands.action.end.call.timer" : {
+          "mean" : 108.5,
+          "p50" : 111.5,
+          "p75" : 165.5,
+          "p999" : 169,
+          "count" : 4,
+          "p95" : 169,
+          "max" : 169,
+          "mean_rate" : 0,
+          "duration_units" : "milliseconds",
+          "p98" : 169,
+          "m1_rate" : 0,
+          "rate_units" : "calls/millisecond",
+          "m15_rate" : 0,
+          "stddev" : 62.9417720330995,
+          "m5_rate" : 0,
+          "p99" : 169,
+          "min" : 42
+        },
+        ...
+    },
+    "histograms" : {
+        "callablequeue.threads.active.histogram" : {
+          "p999" : 1,
+          "mean" : 0.0625,
+          "min" : 0,
+          "p75" : 0,
+          "p95" : 1,
+          "count" : 48,
+          "p98" : 1,
+          "stddev" : 0.24462302739504083,
+          "max" : 1,
+          "p99" : 1,
+          "p50" : 0
+        },
+        ...
+    },
+    "counters" : {
+        "commands.job.info.executions" : {
+          "count" : 9
+        },
+        "jpa.CoordJobsGetPendingJPAExecutor" : {
+          "count" : 1
+        },
+        "jpa.GET_WORKFLOW" : {
+          "count" : 10
+        },
+        ...
+    }
 }
 </verbatim>
 
@@ -876,7 +963,7 @@ Content-Type: application/json;charset=UTF-8
 
 ---++++ Managing a Job
 
-A HTTP PUT request starts, suspends, resumes, kills, or dryruns a job.
+A HTTP PUT request starts, suspends, resumes, kills, update or dryruns a job.
 
 *Request:*
 
@@ -1049,6 +1136,36 @@ PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z;concurrenc
 <verbatim>
 HTTP/1.1 200 OK
 </verbatim>
+
+---+++++ Updating coordinator definition and properties
+Existing coordinator definition and properties will be replaced by new definition and properties. Refer [[DG_CommandLineTool#Updating_coordinator_definition_and_properties][Updating coordinator definition and properties]]
+
+<verbatim>
+PUT oozie/v2/job/0000000-140414102048137-oozie-puru-C?action=update
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+{"update":
+     {"diff":"**********Job definition changes**********\n******************************************\n**********Job conf changes****************\n@@ -8,16 +8,12 @@\n
+          <value>hdfs:\/\/localhost:9000\/user\/purushah\/examples\/apps\/aggregator\/coordinator.xml<\/value>\r\n   <\/property>\r\n   <property>\r\n
+          -    <name>user.name<\/name>\r\n
+          -    <value>purushah<\/value>\r\n
+          -    <\/property>\r\n
+          -  <property>\r\n     <name>start<\/name>\r\n
+               <value>2010-01-01T01:00Z<\/value>\r\n   <\/property>\r\n   <property>\r\n
+          -    <name>newproperty<\/name>\r\n
+          -    <value>new<\/value>\r\n
+          +    <name>user.name<\/name>\r\n
+          +    <value>purushah<\/value>\r\n   <\/property>\r\n   <property>\r\n
+               <name>queueName<\/name>\r\n******************************************\n"
+      }
+}
+</verbatim>
+
 
 ---++++ Job Information
 
@@ -1314,6 +1431,17 @@ Content-Type: text/plain;charset=UTF-8
 ...
 </verbatim>
 
+---++++ Filtering the server logs with logfilter options
+User can provide multiple option to filter logs using -logfilter opt1=val1;opt2=val1;opt3=val1. This can be used to fetch only just logs of interest faster as fetching Oozie server logs is slow due to the overhead of pattern matching.
+
+<verbatim>
+GET /oozie/v1/job/0000003-140319184715726-oozie-puru-C?show=log&logfilter=limit=3;loglevel=WARN
+</verbatim>
+
+
+Refer to the [[DG_CommandLineTool#Filtering_the_server_logs_with_logfilter_options][Filtering the server logs with logfilter options]] for more details.
+
+
 ---++++ Job graph
 
 An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG image).
@@ -1344,6 +1472,30 @@ The optional =show-kill= parameter shows =kill= node in the graph. Valid values 
 The node labels are the node names provided in the workflow XML.
 
 This API returns =HTTP 400= when run on a resource other than a workflow, viz. bundle and coordinator.
+
+---++++ Job Status
+
+An =HTTP GET= request that returns the current status (e.g. =SUCCEEDED=, =KILLED=, etc) of a given job.  If you are only interested
+in the status, and don't want the rest of the information that the =info= query provides, it is recommended to use this call
+as it is more efficient.
+
+*Request*
+<verbatim>
+GET /oozie/v2/job/0000000-140908152307821-oozie-rkan-C?show=status
+</verbatim>
+
+*Response*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  "status" : "SUCCEEDED"
+}
+</verbatim>
+
+It accepts any valid Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID.
 
 ---++++ Jobs Information
 
@@ -1641,6 +1793,26 @@ Content-Type: application/json;charset=UTF-8
 }
 </verbatim>
 
+---++++ Managing a Job
+---+++++ Ignore a Coordinator Job or Action
+
+A ignore request is done with an HTTP PUT request with a =ignore=
+
+The =type= parameter supports =action= only.
+The =scope= parameter can contain coodinator action id(s) to be ignored.
+Multiple action ids can be passed to the =scope= parameter
+
+*Request:*
+
+Ignore a coordinator job
+<verbatim>
+PUT /oozie/v2/job/job-3?action=ignore
+</verbatim>
+
+Ignore coordinator actions
+<verbatim>
+PUT /oozie/v2/job/job-3?action=ignore&type=action&scope=3-4
+</verbatim>
 </noautolink>
 
 

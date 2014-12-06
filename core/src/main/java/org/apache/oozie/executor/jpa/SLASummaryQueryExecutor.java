@@ -15,9 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
@@ -25,8 +27,6 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLASummaryBean;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Query Executor for SLA Event
@@ -36,24 +36,19 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     public enum SLASummaryQuery {
         UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES,
+        UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES,
         UPDATE_SLA_SUMMARY_ALL,
-        GET_SLA_SUMMARY
+        UPDATE_SLA_SUMMARY_EVENTPROCESSED,
+        GET_SLA_SUMMARY,
+        GET_SLA_SUMMARY_EVENTPROCESSED
     };
 
     private static SLASummaryQueryExecutor instance = new SLASummaryQueryExecutor();
-    private static JPAService jpaService;
 
     private SLASummaryQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = Services.get().get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<SLASummaryBean, SLASummaryQueryExecutor.SLASummaryQuery> getInstance() {
-        if (instance == null) {
-            instance = new SLASummaryQueryExecutor();
-        }
         return SLASummaryQueryExecutor.instance;
     }
 
@@ -72,6 +67,14 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
                 query.setParameter("actualStartTS", bean.getActualStartTimestamp());
                 query.setParameter("actualEndTS", bean.getActualEndTimestamp());
                 query.setParameter("actualDuration", bean.getActualDuration());
+                break;
+            case UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES:
+                query.setParameter("jobId", bean.getId());
+                query.setParameter("eventProcessed", bean.getEventProcessed());
+                query.setParameter("actualStartTS", bean.getActualStartTimestamp());
+                query.setParameter("actualEndTS", bean.getActualEndTimestamp());
+                query.setParameter("actualDuration", bean.getActualDuration());
+                query.setParameter("lastModifiedTS", bean.getLastModifiedTimestamp());
                 break;
             case UPDATE_SLA_SUMMARY_ALL:
                 query.setParameter("appName", bean.getAppName());
@@ -92,6 +95,10 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
                 query.setParameter("actualStartTS", bean.getActualStartTimestamp());
                 query.setParameter("jobId", bean.getId());
                 break;
+            case UPDATE_SLA_SUMMARY_EVENTPROCESSED:
+                query.setParameter("eventProcessed", bean.getEventProcessed());
+                query.setParameter("jobId", bean.getId());
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -105,6 +112,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case GET_SLA_SUMMARY:
+            case GET_SLA_SUMMARY_EVENTPROCESSED:
                 query.setParameter("id", parameters[0]);
                 break;
         }
@@ -113,6 +121,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public int executeUpdate(SLASummaryQuery namedQuery, SLASummaryBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -121,15 +130,20 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     @Override
     public SLASummaryBean get(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
-        @SuppressWarnings("unchecked")
-        SLASummaryBean bean = (SLASummaryBean) jpaService.executeGet(namedQuery.name(), query, em);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null && !namedQuery.equals(SLASummaryQuery.GET_SLA_SUMMARY)) {
+            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        }
+        SLASummaryBean bean = constructBean(namedQuery, ret, parameters);
         return bean;
     }
 
     @Override
     public List<SLASummaryBean> getList(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         @SuppressWarnings("unchecked")
@@ -137,11 +151,34 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
         return beanList;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
+    @Override
+    public Object getSingleValue(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
+            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
         }
+        return ret;
     }
+
+    private SLASummaryBean constructBean(SLASummaryQuery namedQuery, Object ret, Object... parameters)
+            throws JPAExecutorException {
+        SLASummaryBean bean;
+        switch (namedQuery) {
+            case GET_SLA_SUMMARY:
+                bean = (SLASummaryBean) ret;
+                break;
+            case GET_SLA_SUMMARY_EVENTPROCESSED:
+                bean = new SLASummaryBean();
+                bean.setEventProcessed(((Byte)ret).intValue());
+                break;
+            default:
+                throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
+                        + namedQuery.name());
+        }
+        return bean;
+    }
+
 }

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command;
 
 import java.util.Date;
@@ -647,6 +648,133 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
 
         new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10).call();
+
+        try {
+            jpaService.execute(coordJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Coordinator Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(coordActionGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Coordinator Action should not have been purged");
+        }
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Workflow Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(wfActionGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Workflow Action should not have been purged");
+        }
+    }
+
+    /**
+     * Test : The workflow should get purged, but the coordinator parent shouldn't get purged -->
+     * the workflow and corresponding coord actions will get purged after we turn the purge.old.coord.action on
+     * Coordinator itself will not be purged
+     *
+     * @throws Exception
+     */
+    public void testPurgeLongRunningCoordWithWFChild() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
+
+        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
+
+        wfJob = jpaService.execute(wfJobGetCmd);
+        wfAction = jpaService.execute(wfActionGetCmd);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        coordAction = jpaService.execute(coordActionGetCmd);
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
+        assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+
+        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, true).call();
+
+        try {
+            jpaService.execute(coordJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Coordinator Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(coordActionGetCmd);
+            fail("Coordinator Action should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+            fail("Workflow Job should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(wfActionGetCmd);
+            fail("Workflow Action should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+    }
+
+    /**
+     * Test : The workflow should get purged, but the coordinator parent shouldn't get purged -->
+     * the workflow and corresponding coord actions will NOT get purged after we turn the purge.old.coord.action off
+     * Neither will be purged
+     *
+     * @throws Exception
+     */
+    public void testPurgeLongRunningCoordWithWFChildNegative() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
+
+        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
+        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
+
+        wfJob = jpaService.execute(wfJobGetCmd);
+        wfAction = jpaService.execute(wfActionGetCmd);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        coordAction = jpaService.execute(coordActionGetCmd);
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
+        assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+
+        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, false).call();
 
         try {
             jpaService.execute(coordJobGetCmd);

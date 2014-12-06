@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
 import java.io.DataInput;
@@ -66,7 +67,7 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "UPDATE_BUNDLE_JOB_PAUSE_KICKOFF", query = "update BundleJobBean w set w.kickoffTimestamp = :kickoffTime, w.pauseTimestamp = :pauseTime where w.id = :id"),
 
-        @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id = :id"),
+        @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id IN (:id)"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS", query = "select OBJECT(w) from BundleJobBean w"),
 
@@ -105,6 +106,9 @@ import org.json.simple.JSONObject;
                 "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
 
         @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c"),
+
+        @NamedQuery(name = "GET_BUNDLE_IDS_FOR_STATUS_TRANSIT", query = "select DISTINCT w.id from BundleActionBean a , BundleJobBean w where a.lastModifiedTimestamp >= :lastModifiedTime and w.id = a.bundleId and (w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.pending = 1)"),
+
 
         @NamedQuery(name = "GET_BUNDLE_JOB_FOR_USER", query = "select w.user from BundleJobBean w where w.id = :id") })
 @Table(name = "BUNDLE_JOBS")
@@ -798,4 +802,22 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
         return DateUtils.toDate(startTimestamp);
     }
 
+    /**
+     * @return true if in terminal status
+     */
+    public boolean isTerminalStatus() {
+        boolean isTerminal = false;
+        switch (getStatus()) {
+            case SUCCEEDED:
+            case FAILED:
+            case KILLED:
+            case DONEWITHERROR:
+                isTerminal = true;
+                break;
+            default:
+                isTerminal = false;
+                break;
+        }
+        return isTerminal;
+    }
 }

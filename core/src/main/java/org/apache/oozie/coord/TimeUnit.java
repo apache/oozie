@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.coord;
 
 import java.util.Calendar;
 
 public enum TimeUnit {
     MINUTE(Calendar.MINUTE), HOUR(Calendar.HOUR), DAY(Calendar.DATE), MONTH(Calendar.MONTH), YEAR(Calendar.YEAR), END_OF_DAY(Calendar.DATE), END_OF_MONTH(
-        Calendar.MONTH), NONE(-1);
+        Calendar.MONTH), CRON(0), NONE(-1);
 
     private int calendarUnit;
 

@@ -6,30 +6,35 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.net.URI;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.test.XDataTestCase;
@@ -235,6 +240,52 @@ public class TestSubmitXCommand extends XDataTestCase {
             assertTrue(ce.getMessage().contains("starting with element 'xstart'"));
             assertTrue(ce.getMessage().contains("'{\"uri:oozie:workflow:0.1\":start}' is expected"));
         }
+    }
+
+    // It should not store Hadoop properties
+    public void testProtoConfStorage() throws Exception {
+        final OozieClient wfClient = LocalOozie.getClient();
+
+        Configuration conf = new XConfiguration();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='${appName}-foo'> " + "<start to='end' /> "
+                + "<end name='end' /> " + "</workflow-app>";
+
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
+        SubmitXCommand sc = new SubmitXCommand(conf);
+        final String jobId = sc.call();
+
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
+        XConfiguration protoConf = new XConfiguration(new StringReader(wf.getProtoActionConf()));
+        //username, libpath, apppath
+        assertEquals(protoConf.size(), 2);
+        assertNull(protoConf.get(WorkflowAppService.APP_LIB_PATH_LIST));
+
+        new File(getTestCaseDir() + "/lib").mkdirs();
+        File.createTempFile("parentLibrary", ".jar", new File(getTestCaseDir() + "/lib"));
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("appName", "var-app-name");
+        sc = new SubmitXCommand(conf);
+        final String jobId1 = sc.call();
+
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId1);
+        protoConf = new XConfiguration(new StringReader(wf.getProtoActionConf()));
+        assertEquals(protoConf.size(), 3);
+        assertNotNull(protoConf.get(WorkflowAppService.APP_LIB_PATH_LIST));
     }
 
     private void writeToFile(String appXml, String appPath) throws IOException {

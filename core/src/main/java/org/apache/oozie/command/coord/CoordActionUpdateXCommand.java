@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.util.ArrayList;
@@ -69,6 +70,11 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(workflow.getId());
+    }
+
+    @Override
     protected Void execute() throws CommandException {
         try {
             LOG.debug("STARTED CoordActionUpdateXCommand for wfId=" + workflow.getId());
@@ -92,7 +98,8 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 coordAction.setStatus(CoordinatorAction.Status.SUSPENDED);
                 coordAction.decrementAndGetPending();
             }
-            else if (workflow.getStatus() == WorkflowJob.Status.RUNNING) {
+            else if (workflow.getStatus() == WorkflowJob.Status.RUNNING ||
+                    workflow.getStatus() == WorkflowJob.Status.PREP) {
                 // resume workflow job and update coord action accordingly
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
                 coordAction.decrementAndGetPending();
@@ -177,7 +184,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 if (coordAction != null) {
                     coordJob = jpaService
                             .execute(new CoordinatorJobGetForUserAppnameJPAExecutor(coordAction.getJobId()));
-                    LogUtils.setLogInfo(coordAction, logInfo);
+                    LogUtils.setLogInfo(coordAction);
                     break;
                 }
                 if (retries < maxRetries) {

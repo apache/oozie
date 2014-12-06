@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.util.Date;
@@ -94,8 +95,13 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         assertNotNull(jpaService);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_BUNDLEID, coordJob);
 
+        coordJob.setAppName("COORD-TEST1");
+        assertNotNull(jpaService);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+
+
         BundleActionBean bundleAction = new BundleActionBean();
-        bundleAction.setBundleActionId("11111");
+        bundleAction.setBundleActionId(bundleJob.getId() + "_COORD-TEST1");
         bundleAction.setCoordId(coordJob.getId());
         bundleAction.setBundleId(bundleJob.getId());
         bundleAction.setStatus(Job.Status.SUCCEEDED);
@@ -240,5 +246,161 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         assertEquals(DateUtils.formatDateOozieTZ(evenLater), DateUtils.formatDateOozieTZ(coord.getPauseTime()));
         assertTrue(coord.getLastModifiedTime().after(lastMod));
 
+    }
+
+    //check command report
+    public void testBundleChangeReport() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        coordJob1.setBundleId(bundleJob.getId());
+        coordJob1.setAppName("COORD-TEST1");
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob1);
+        BundleActionBean bundleAction1 = new BundleActionBean();
+        bundleAction1.setBundleActionId(bundleJob.getId() + "_COORD-TEST1");
+        bundleAction1.setCoordId(coordJob1.getId());
+        bundleAction1.setBundleId(bundleJob.getId());
+        bundleAction1.setStatus(Job.Status.SUCCEEDED);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction1));
+
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
+        coordJob2.setBundleId(bundleJob.getId());
+        coordJob2.setAppName("COORD-TEST2");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob2);
+        BundleActionBean bundleAction2 = new BundleActionBean();
+        bundleAction2.setBundleActionId(bundleJob.getId() + "_COORD-TEST2");
+        bundleAction2.setCoordId(coordJob2.getId());
+        bundleAction2.setBundleId(bundleJob.getId());
+        bundleAction2.setStatus(Job.Status.KILLED);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction2));
+
+        CoordinatorJobBean coordJob3 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordActionTable(coordJob3.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(coordJob3.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml",
+                0, DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
+        addRecordToCoordActionTable(coordJob3.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T03:00Z"));
+        addRecordToCoordActionTable(coordJob3.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
+
+        coordJob3.setBundleId(bundleJob.getId());
+        coordJob3.setAppName("COORD-TEST3");
+        coordJob3.setLastActionNumber(4);
+        coordJob3.setEndTime(DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
+        coordJob3.setStartTime(DateUtils.parseDateOozieTZ("2013-08-01T00:00Z"));
+
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob3);
+        BundleActionBean bundleAction3 = new BundleActionBean();
+        bundleAction3.setBundleActionId(bundleJob.getId() + "_COORD-TEST3");
+        bundleAction3.setCoordId(coordJob3.getId());
+        bundleAction3.setBundleId(bundleJob.getId());
+        bundleAction3.setStatus(Job.Status.RUNNING);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction3));
+        BundleJobGetJPAExecutor bundleJobGetCmd = new BundleJobGetJPAExecutor(bundleJob.getId());
+
+        String dateStr = "2099-01-01T01:00Z";
+        bundleJob = jpaService.execute(bundleJobGetCmd);
+        assertEquals(bundleJob.getPauseTime(), null);
+        String reports = null;
+        try {
+            new BundleJobChangeXCommand(bundleJob.getId(), "pausetime=" + dateStr).call();
+        }
+        catch (Exception e) {
+            reports = e.getMessage();
+        }
+        assertTrue(reports.contains(coordJob2.getId() + " : Coord is in killed state"));
+
+        bundleJobGetCmd = new BundleJobGetJPAExecutor(bundleJob.getId());
+        dateStr = "2013-08-01T03:00Z";
+
+        bundleJob = jpaService.execute(bundleJobGetCmd);
+        try {
+            new BundleJobChangeXCommand(bundleJob.getId(), "endtime=" + dateStr).call();
+        }
+        catch (Exception e) {
+            reports = e.getMessage();
+        }
+        assertTrue(reports.contains(coordJob2.getId() + " : Coord is in killed state"));
+        assertTrue(reports.contains(coordJob3.getId() + " : E1022: Cannot delete running/completed coordinator action"));
+    }
+
+    // Check partial update.
+    // 3 coord job with status SUCCEEDED, PREP, RUNNING.
+    // Changing endtime of running coord will fail because end time is before one of running action nominal time.
+    public void testCheckBundleActionStatus() throws Exception {
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        coordJob1.setBundleId(bundleJob.getId());
+        coordJob1.setAppName("COORD-TEST1");
+        coordJob1.setEndTime(DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
+        coordJob1.setStartTime(DateUtils.parseDateOozieTZ("2013-08-01T00:00Z"));
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob1);
+        BundleActionBean bundleAction1 = new BundleActionBean();
+        bundleAction1.setBundleActionId(bundleJob.getId() + "_COORD-TEST1");
+        bundleAction1.setCoordId(coordJob1.getId());
+        bundleAction1.setBundleId(bundleJob.getId());
+        bundleAction1.setStatus(Job.Status.SUCCEEDED);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction1));
+
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, false, false);
+        coordJob2.setBundleId(bundleJob.getId());
+        coordJob2.setAppName("COORD-TEST2");
+        coordJob2.setStartTime(DateUtils.parseDateOozieTZ("2099-08-01T02:00Z"));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob2);
+        BundleActionBean bundleAction2 = new BundleActionBean();
+        bundleAction2.setBundleActionId(bundleJob.getId() + "_COORD-TEST2");
+        bundleAction2.setCoordId(coordJob2.getId());
+        bundleAction2.setBundleId(bundleJob.getId());
+        bundleAction2.setStatus(Job.Status.PREP);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction2));
+
+        CoordinatorJobBean coordJob3 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordActionTable(coordJob3.getId(), 1, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
+        addRecordToCoordActionTable(coordJob3.getId(), 2, CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml",
+                0, DateUtils.parseDateOozieTZ("2013-08-01T02:00Z"));
+        addRecordToCoordActionTable(coordJob3.getId(), 3, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T03:00Z"));
+        addRecordToCoordActionTable(coordJob3.getId(), 4, CoordinatorAction.Status.RUNNING, "coord-action-get.xml", 0,
+                DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
+
+        coordJob3.setBundleId(bundleJob.getId());
+        coordJob3.setAppName("COORD-TEST3");
+        coordJob3.setLastActionNumber(4);
+        coordJob3.setEndTime(DateUtils.parseDateOozieTZ("2013-08-01T04:00Z"));
+        coordJob3.setStartTime(DateUtils.parseDateOozieTZ("2013-08-01T00:00Z"));
+
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob3);
+        BundleActionBean bundleAction3 = new BundleActionBean();
+        bundleAction3.setBundleActionId(bundleJob.getId() + "_COORD-TEST3");
+        bundleAction3.setPending(1);
+        bundleAction3.setCoordId(coordJob3.getId());
+        bundleAction3.setBundleId(bundleJob.getId());
+        bundleAction3.setStatus(Job.Status.RUNNING);
+        jpaService.execute(new BundleActionInsertJPAExecutor(bundleAction3));
+
+        String dateStr = "2013-08-01T03:00Z";
+        try {
+            new BundleJobChangeXCommand(bundleJob.getId(), "endtime=" + dateStr).call();
+            fail("should throw exception");
+        }
+        catch (Exception e) {
+            String reports = e.getMessage();
+            assertTrue(reports.contains(coordJob3.getId() + " : E1022: Cannot delete running/completed coordinator action"));
+        }
+        BundleActionBean action1 = BundleActionQueryExecutor.getInstance().get(BundleActionQuery.GET_BUNDLE_ACTION,
+                bundleJob.getId() + "_COORD-TEST1");
+        assertEquals(CoordinatorJob.Status.RUNNING, action1.getStatus());
+        BundleActionBean action2 = BundleActionQueryExecutor.getInstance().get(BundleActionQuery.GET_BUNDLE_ACTION,
+                bundleJob.getId() + "_COORD-TEST2");
+        assertEquals(CoordinatorJob.Status.SUCCEEDED, action2.getStatus());
+        BundleActionBean action3 = BundleActionQueryExecutor.getInstance().get(BundleActionQuery.GET_BUNDLE_ACTION,
+                bundleJob.getId() + "_COORD-TEST3");
+        //No change in running
+        assertEquals(CoordinatorJob.Status.RUNNING, action3.getStatus());
+        assertEquals(action3.getPending(), 1);
     }
 }

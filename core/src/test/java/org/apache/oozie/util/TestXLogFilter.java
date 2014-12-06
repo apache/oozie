@@ -6,31 +6,32 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.util;
 
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLogStreamer;
 
 import java.util.ArrayList;
 
 import org.apache.oozie.test.XTestCase;
 
 public class TestXLogFilter extends XTestCase {
-    public void testXLogFileter() throws ServiceException {
+    public void testXLogFilter() throws ServiceException, CommandException {
         Services services = new Services();
         services.init();
         try {
-            XLogStreamer.Filter xf2 = new XLogStreamer.Filter();
+            XLogFilter xf2 = new XLogFilter();
             xf2.constructPattern();
             ArrayList<String> a = new ArrayList<String>();
             a.add("2009-06-24 02:43:13,958");
@@ -42,14 +43,15 @@ public class TestXLogFilter extends XTestCase {
             services.destroy();
         }
 
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter();
+
 
         assertEquals(7, matches(xf));
         xf.setLogLevel(XLog.Level.WARN.toString());
@@ -63,7 +65,7 @@ public class TestXLogFilter extends XTestCase {
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         assertEquals(2, matches(xf));
 
-        XLogStreamer.Filter xf1 = new XLogStreamer.Filter();
+        XLogFilter xf1 = new XLogFilter();
         xf1.setParameter("USER", "oozie");
         assertEquals(3, matches(xf1));
 
@@ -74,7 +76,7 @@ public class TestXLogFilter extends XTestCase {
         assertEquals(1, matches(xf1));
     }
 
-    private int matches(XLogStreamer.Filter xf) {
+    private int matches(XLogFilter xf) {
         xf.constructPattern();
         ArrayList<String> a = new ArrayList<String>();
         a.add("2009-06-24 02:43:13,958 DEBUG WorkflowRunnerCallable:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.io.IOException;
@@ -140,7 +141,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             //verify the uniqueness of coord names
             verifyCoordNameUnique(resolvedJobXml);
             this.jobId = storeToDB(bundleBean, resolvedJobXml);
-            LogUtils.setLogInfo(bundleBean, logInfo);
+            LogUtils.setLogInfo(bundleBean);
 
             if (dryrun) {
                 Date startTime = bundleBean.getStartTime();
@@ -471,10 +472,17 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             for (Element elem : coordElems) {
                 Attribute name = elem.getAttribute("name");
                 if (name != null) {
-                    if (set.contains(name.getValue())) {
+                    String coordName = name.getValue();
+                    try {
+                        coordName = ELUtils.resolveAppName(name.getValue(), conf);
+                    }
+                    catch (Exception e) {
+                        throw new CommandException(ErrorCode.E1321, e.getMessage(), e);
+                    }
+                    if (set.contains(coordName)) {
                         throw new CommandException(ErrorCode.E1304, name);
                     }
-                    set.add(name.getValue());
+                    set.add(coordName);
                 }
                 else {
                     throw new CommandException(ErrorCode.E1305);

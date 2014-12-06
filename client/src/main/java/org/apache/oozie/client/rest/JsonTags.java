@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.client.rest;
 
 /**
@@ -228,5 +229,8 @@ public interface JsonTags {
     public static final String JMS_TOPIC_PREFIX = "jmsTopicPrefix";
 
     public static final String JMS_TOPIC_NAME = "jmsTopicName";
+    public static final String COORD_UPDATE = RestConstants.JOB_COORD_UPDATE;
+    public static final String COORD_UPDATE_DIFF = "diff";
 
+    public static final String STATUS = "status";
 }

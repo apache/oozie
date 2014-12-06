@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
@@ -153,8 +154,12 @@ public class LauncherMapperHelper {
         fs.mkdirs(actionDir);
 
         OutputStream os = fs.create(new Path(actionDir, LauncherMapper.ACTION_CONF_XML));
-        actionConf.writeXml(os);
-        os.close();
+        try {
+            actionConf.writeXml(os);
+        } finally {
+            IOUtils.closeSafely(os);
+        }
+
         launcherConf.setInputFormat(OozieLauncherInputFormat.class);
         launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
     }

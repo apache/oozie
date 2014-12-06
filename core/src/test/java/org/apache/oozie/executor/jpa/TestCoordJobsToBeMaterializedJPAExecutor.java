@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.io.IOException;
@@ -118,6 +119,8 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
         coordJob.setFrequency("1");
         coordJob.setExecutionOrder(Execution.FIFO);
         coordJob.setConcurrency(1);
+        coordJob.setMatThrottling(1);
+
         try {
             coordJob.setStartTime(DateUtils.parseDateOozieTZ("2009-12-15T01:00Z"));
             coordJob.setEndTime(DateUtils.parseDateOozieTZ("2009-12-17T01:00Z"));

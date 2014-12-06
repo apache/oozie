@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
@@ -63,6 +64,11 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
     public ResumeXCommand(String id) {
         super("resume", "resume", 1);
         this.id = ParamChecker.notEmpty(id, "id");
+    }
+
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(id);
     }
 
     @Override
@@ -136,7 +142,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
                 if (EventHandlerService.isEnabled()) {
                     generateEvent(workflow);
                 }
-                queue(new NotificationXCommand(workflow));
+                queue(new WorkflowNotificationXCommand(workflow));
             }
             return null;
         }
@@ -187,7 +193,7 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(workflow, logInfo);
+        LogUtils.setLogInfo(workflow);
     }
 
     @Override

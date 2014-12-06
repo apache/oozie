@@ -41,7 +41,7 @@ and its value must follow the pattern =[<AUTHORITY>=<HADOOP_CONF_DIR>,]*=. Where
 the Hadoop service (JobTracker, HDFS). The =<HADOO_CONF_DIR>= is a Hadoop configuration directory. If the specified
  directory is a relative path, it will be looked under the Oozie configuration directory. And absolute path can
  also be specified. Oozie will load the Hadoop =*-site.xml= files in the following order: core-site.xml, hdfs-site.xml,
- mapred-site.xml, yarn-site.xml, hadoop-site.xml.
+ mapred-site.xml, yarn-site.xml, hadoop-site.xml, ssl-client.xml.
 
 In addition to explicit authorities, a '*' wildcard is supported. The configuration file associated with the wildcard
 will be used as default if there is no configuration for the requested Hadoop service.

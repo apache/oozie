@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -42,7 +43,7 @@ import org.apache.openjpa.persistence.jdbc.ResultSetType;
 public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
 
     private static final String seletStr = "Select w.id, w.appName, w.statusStr, w.run, w.user, w.group, w.createdTimestamp, "
-        + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp, w.externalId from WorkflowJobBean w";
+            + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp, w.externalId, w.parentId from WorkflowJobBean w";
     private static final String countStr = "Select count(w) from WorkflowJobBean w";
 
     private final Map<String, List<String>> filter;
@@ -328,6 +329,9 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         }
         if (arr[10] != null) {
             wfBean.setExternalId((String) arr[10]);
+        }
+        if (arr[11] != null) {
+            wfBean.setParentId((String) arr[11]);
         }
         return wfBean;
     }

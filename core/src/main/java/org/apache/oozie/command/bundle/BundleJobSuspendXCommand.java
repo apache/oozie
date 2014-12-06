@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.util.Date;
@@ -114,13 +115,13 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
 
         try {
             bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleJob.getId());
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleJob.getId());
         }
         catch (Exception Ex) {
             throw new CommandException(ErrorCode.E1311, jobId);
         }
 
-        LogUtils.setLogInfo(bundleJob, logInfo);
+        LogUtils.setLogInfo(bundleJob);
     }
 
     /* (non-Javadoc)

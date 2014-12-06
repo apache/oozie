@@ -23,9 +23,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.event.listener.ZKConnectionListener;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.ZKUtils;
@@ -39,13 +44,21 @@ import org.apache.oozie.util.ZKUtils;
  * place additional stress on ZooKeeper and the Database.  By "assigning" different Oozie servers to process different jobs, we can
  * improve this situation.  This is particularly necessary for Services like the {@link RecoveryService}, which could duplicate jobs
  * otherwise.  We can assign jobs to servers by doing a mod of the jobs' id and the number of servers.
+ * <p>
+ * The leader server is elected by all of the Oozie servers, so there can only be one at a time.  This is useful for tasks that
+ * require (or are better off) being done by only one server (e.g. database purging).  Note that the leader server isn't a
+ * "traditional leader" in the sense that it doesn't command or have authority over the other servers.  This leader election uses
+ * a znode under /oozie.zookeeper.namespace/ZK_BASE_SERVICES_PATH/ZK_LEADER_PATH (default is /oozie/services/concurrencyleader).
  */
 public class ZKJobsConcurrencyService extends JobsConcurrencyService implements Service, Instrumentable {
 
     private ZKUtils zk;
 
     // This pattern gives us the id number without the extra stuff
-    private static Pattern ID_PATTERN = Pattern.compile("(\\d{7})-.*");
+    private static final Pattern ID_PATTERN = Pattern.compile("(\\d{7})-.*");
+
+    private static final String ZK_LEADER_PATH = "concurrencyleader";
+    private static LeaderLatch leaderLatch = null;
 
     /**
      * Initialize the zookeeper jobs concurrency service
@@ -57,6 +70,8 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
         super.init(services);
         try {
             zk = ZKUtils.register(this);
+            leaderLatch = new LeaderLatch(zk.getClient(), ZKUtils.ZK_BASE_SERVICES_PATH + "/" + ZK_LEADER_PATH, zk.getZKId());
+            leaderLatch.start();
         }
         catch (Exception ex) {
             throw new ServiceException(ErrorCode.E1700, ex.getMessage(), ex);
@@ -68,6 +83,9 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      */
     @Override
     public void destroy() {
+        if (leaderLatch != null && ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
+            IOUtils.closeSafely(leaderLatch);
+        }
         if (zk != null) {
             zk.unregister(this);
         }
@@ -76,7 +94,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     }
 
     /**
-     * Instruments the memory locks service.
+     * Instruments the zk jobs concurrency service.
      *
      * @param instr instance to instrument the zookeeper jobs concurrency service to.
      */
@@ -86,16 +104,14 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     }
 
     /**
-     * Check to see if this server is the first server.  This implementation only returns true if this server is the first server in
-     * ZooKeeper's list of Oozie servers (so only one Oozie Server will return true).
+     * Check to see if this server is the leader server.  This implementation only returns true if this server has been elected by
+     * all of the servers as the leader server.
      *
-     * @return true if this server is first; false if not
+     * @return true if this server is the leader; false if not
      */
     @Override
-    public boolean isFirstServer() {
-        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
-        int myIndex = zk.getZKIdIndex(oozies);
-        return (myIndex == 0);
+    public boolean isLeader() {
+        return leaderLatch.hasLeadership();
     }
 
     /**
@@ -206,5 +222,15 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     public boolean isAllServerRequest(Map<String, String[]> params) {
         return params == null || params.get(RestConstants.ALL_SERVER_REQUEST) == null || params.isEmpty()
                 || !params.get(RestConstants.ALL_SERVER_REQUEST)[0].equalsIgnoreCase("false");
+    }
+
+    /**
+     * Return if it is running in HA mode
+     *
+     * @return
+     */
+    @Override
+    public boolean isHighlyAvailableMode() {
+        return true;
     }
 }

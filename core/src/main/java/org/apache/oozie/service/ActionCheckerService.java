@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.command.CommandException;
@@ -193,7 +193,7 @@ public class ActionCheckerService implements Service {
                 callables = new ArrayList<XCallable<Void>>();
             }
             callables.add(callable);
-            if (callables.size() == Services.get().getConf().getInt(CONF_CALLABLE_BATCH_SIZE, 10)) {
+            if (callables.size() == ConfigurationService.getInt(CONF_CALLABLE_BATCH_SIZE)) {
                 boolean ret = Services.get().get(CallableQueueService.class).queueSerial(callables);
                 if (ret == false) {
                     XLog.getLog(getClass()).warn(
@@ -221,10 +221,11 @@ public class ActionCheckerService implements Service {
      */
     @Override
     public void init(Services services) {
-        Configuration conf = services.getConf();
-        Runnable actionCheckRunnable = new ActionCheckRunnable(conf.getInt(CONF_ACTION_CHECK_DELAY, 600));
+        Runnable actionCheckRunnable = new ActionCheckRunnable(ConfigurationService.getInt
+                (services.getConf(), CONF_ACTION_CHECK_DELAY));
         services.get(SchedulerService.class).schedule(actionCheckRunnable, 10,
-                conf.getInt(CONF_ACTION_CHECK_INTERVAL, 60), SchedulerService.Unit.SEC);
+                ConfigurationService.getInt(services.getConf(), CONF_ACTION_CHECK_INTERVAL),
+                SchedulerService.Unit.SEC);
     }
 
     /**

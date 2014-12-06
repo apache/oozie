@@ -15,16 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency.hcat;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -51,13 +55,16 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
      */
     private ConcurrentMap<String, Collection<String>> availableDeps;
 
-    // TODO:
-    // Gather and print stats on cache hits and misses.
+    /**
+     * Map of actionIDs and partitions for reverse-lookup in purging
+     */
+    private ConcurrentMap<String, ConcurrentMap<String, Collection<String>>> actionPartitionMap;
 
     @Override
     public void init(Configuration conf) {
         missingDeps = new ConcurrentHashMap<String, ConcurrentMap<String, Map<String, Collection<WaitingAction>>>>();
         availableDeps = new ConcurrentHashMap<String, Collection<String>>();
+        actionPartitionMap = new ConcurrentHashMap<String, ConcurrentMap<String, Collection<String>>>();
     }
 
     @Override
@@ -76,6 +83,23 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
             if (existingMap != null) {
                 partKeyPatterns = existingMap;
             }
+        }
+        ConcurrentMap<String, Collection<String>> partitionMap = actionPartitionMap.get(actionID);
+        if (partitionMap == null) {
+            partitionMap = new ConcurrentHashMap<String, Collection<String>>();
+            ConcurrentMap<String, Collection<String>> existingPartMap = actionPartitionMap.putIfAbsent(actionID,
+                    partitionMap);
+            if (existingPartMap != null) {
+                partitionMap = existingPartMap;
+            }
+        }
+        synchronized (partitionMap) {
+            Collection<String> partKeys = partitionMap.get(tableKey);
+            if (partKeys == null) {
+                partKeys = new ArrayList<String>();
+            }
+            partKeys.add(partKey);
+            partitionMap.put(tableKey, partKeys);
         }
         synchronized (partKeyPatterns) {
             missingDeps.put(tableKey, partKeyPatterns); // To handle race condition with removal of partKeyPatterns
@@ -105,6 +129,22 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
                     hcatURI.toURIString(), actionID);
             return false;
         }
+        ConcurrentMap<String, Collection<String>> partitionMap = actionPartitionMap.get(actionID);
+        if (partitionMap != null) {
+            synchronized (partitionMap) {
+                Collection<String> partKeys = partitionMap.get(tableKey);
+                if (partKeys != null) {
+                    partKeys.remove(partKey);
+                }
+                if (partKeys.size() == 0) {
+                    partitionMap.remove(tableKey);
+                }
+                if (partitionMap.size() == 0) {
+                    actionPartitionMap.remove(actionID);
+                }
+            }
+        }
+
         synchronized(partKeyPatterns) {
             Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
             if (partValues == null) {
@@ -292,7 +332,83 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         public String getPartVals() {
             return partVals.toString();
         }
-
     }
 
+    private HCatURI removePartitions(String coordActionId, Collection<String> partKeys,
+            Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns) {
+        HCatURI hcatUri = null;
+        for (String partKey : partKeys) {
+            Map<String, Collection<WaitingAction>> partValues = partKeyPatterns.get(partKey);
+            Iterator<String> partValItr = partValues.keySet().iterator();
+            while (partValItr.hasNext()) {
+                String partVal = partValItr.next();
+                Collection<WaitingAction> waitingActions = partValues.get(partVal);
+                if (waitingActions != null) {
+                    Iterator<WaitingAction> waitItr = waitingActions.iterator();
+                    while (waitItr.hasNext()) {
+                        WaitingAction waction = waitItr.next();
+                        if (coordActionId.contains(waction.getActionID())) {
+                            waitItr.remove();
+                            if (hcatUri == null) {
+                                try {
+                                    hcatUri = new HCatURI(waction.getDependencyURI());
+                                }
+                                catch (URISyntaxException e) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+                // delete partition value with no waiting actions
+                if (waitingActions.size() == 0) {
+                    partValItr.remove();
+                }
+            }
+            if (partValues.size() == 0) {
+                partKeyPatterns.remove(partKey);
+            }
+        }
+        return hcatUri;
+    }
+
+    @Override
+    public void removeNonWaitingCoordActions(Set<String> coordActions) {
+        HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
+        for (String coordActionId : coordActions) {
+            LOG.info("Removing non waiting coord action {0} from partition dependency map", coordActionId);
+            synchronized (actionPartitionMap) {
+                Map<String, Collection<String>> partitionMap = actionPartitionMap.get(coordActionId);
+                if (partitionMap != null) {
+                    Iterator<String> tableItr = partitionMap.keySet().iterator();
+                    while (tableItr.hasNext()) {
+                        String tableKey = tableItr.next();
+                        HCatURI hcatUri = null;
+                        Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
+                        if (partKeyPatterns != null) {
+                            synchronized (partKeyPatterns) {
+                                Collection<String> partKeys = partitionMap.get(tableKey);
+                                if (partKeys != null) {
+                                    hcatUri = removePartitions(coordActionId, partKeys, partKeyPatterns);
+                                }
+                            }
+                            if (partKeyPatterns.size() == 0) {
+                                tableItr.remove();
+                                if (hcatUri != null) {
+                                    // Close JMS session. Stop listening on topic
+                                    hcatService.unregisterFromNotification(hcatUri);
+                                }
+                            }
+                        }
+                    }
+                }
+                actionPartitionMap.remove(coordActionId);
+            }
+        }
+    }
+
+    @Override
+    public void removeCoordActionWithDependenciesAvailable(String coordAction) {
+        actionPartitionMap.remove(coordAction);
+    }
 }

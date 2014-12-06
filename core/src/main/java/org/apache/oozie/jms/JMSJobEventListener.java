@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.jms;
 
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.event.listener.JobEventListener;
 import org.apache.oozie.event.messaging.MessageFactory;
 import org.apache.oozie.event.messaging.MessageSerializer;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
@@ -64,7 +66,7 @@ public class JMSJobEventListener extends JobEventListener {
     @Override
     public void init(Configuration conf) {
         LOG = XLog.getLog(getClass());
-        String jmsProps = conf.get(JMS_CONNECTION_PROPERTIES);
+        String jmsProps = ConfigurationService.get(conf, JMS_CONNECTION_PROPERTIES);
         LOG.info("JMS producer connection properties [{0}]", jmsProps);
         connInfo = new JMSConnectionInfo(jmsProps);
         jmsSessionOpts = conf.getInt(JMS_SESSION_OPTS, Session.AUTO_ACKNOWLEDGE);

@@ -15,14 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
-import java.util.List;
-import java.util.Map;
-
+import org.apache.oozie.CoordinatorEngine.FILTER_COMPARATORS;
+import org.apache.oozie.client.CoordinatorAction.Status;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
-import org.junit.Test;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Pair;
+
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class TestCoordinatorEngineSimple extends XTestCase {
 
@@ -41,23 +48,107 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         super.tearDown();
     }
 
-    @Test
+    public void testParseJobFilter() throws CoordinatorEngineException {
+        final CoordinatorEngine ce = new CoordinatorEngine();
+
+        //valid status filter
+        Map<Pair<String, FILTER_COMPARATORS>, List<Object>> map = ce.parseJobFilter("staTus=succeeded; status=waiTing");
+        assertNotNull(map);
+        assertEquals(1, map.size());
+        Pair<String, FILTER_COMPARATORS> key = map.keySet().iterator().next();
+        assertNotNull(key);
+        assertEquals(OozieClient.FILTER_STATUS, key.getFist());
+        assertEquals(FILTER_COMPARATORS.EQUALS, key.getSecond());
+        List<Object> list = map.get(key);
+        assertNotNull(list);
+        assertEquals(2, list.size());
+        assertEquals(Status.SUCCEEDED.name(), (String) list.get(0));
+        assertEquals(Status.WAITING.name(), (String)list.get(1));
+
+        //valid nominal time filter
+        map = ce.parseJobFilter("nominaltime>=2013-05-01T10:00Z");
+        assertNotNull(map);
+        assertEquals(1, map.size());
+        key = map.keySet().iterator().next();
+        assertNotNull(key);
+        assertEquals(OozieClient.FILTER_NOMINAL_TIME, key.getFist());
+        assertEquals(FILTER_COMPARATORS.GREATER_EQUAL, key.getSecond());
+        list = map.get(key);
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertEquals("2013-05-01T10:00Z", DateUtils.formatDateOozieTZ(new Date(((Timestamp) list.get(0)).getTime())));
+
+        //invalid format
+        try {
+            ce.parseJobFilter("winniethepooh");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+
+        //invalid key
+        try {
+            ce.parseJobFilter("stat=some");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+
+        //invalid status value
+        try {
+            ce.parseJobFilter("status=some");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+
+        //invalid comparator for status
+        try {
+            ce.parseJobFilter("status>=some");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+
+        //invalid nominal time value
+        try {
+            ce.parseJobFilter("nominaltime=2013-13-01T00:00Z");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+
+        //invalid comparator
+        try {
+            ce.parseJobFilter("nominaltime*2013-13-01T00:00Z");
+            fail("CoordinatorEngineException expected.");
+        }
+        catch (CoordinatorEngineException bee) {
+            assertEquals(ErrorCode.E0421, bee.getErrorCode());
+        }
+    }
+
     public void testParseFilterNegative() throws CoordinatorEngineException {
         final CoordinatorEngine ce = new CoordinatorEngine();
 
         // null argument:
-        Map<String, List<String>> map = ce.parseFilter(null);
+        Map<String, List<String>> map = ce.parseJobsFilter(null);
         assertNotNull(map);
         assertEquals(0, map.size());
 
         // empty String:
-        map = ce.parseFilter("");
+        map = ce.parseJobsFilter("");
         assertNotNull(map);
         assertEquals(0, map.size());
 
         // no eq sign in token:
         try {
-            ce.parseFilter("winniethepooh");
+            ce.parseJobsFilter("winniethepooh");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -65,7 +156,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // incorrect k=v:
         try {
-            map = ce.parseFilter("kk=vv=zz");
+            ce.parseJobsFilter("kk=vv=zz");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException cee) {
@@ -73,7 +164,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // unknown key in key=value pair:
         try {
-            ce.parseFilter("foo=moo");
+            ce.parseJobsFilter("foo=moo");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -81,7 +172,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // incorrect "status" key value:
         try {
-            ce.parseFilter("status=foo");
+            ce.parseJobsFilter("status=foo");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -89,7 +180,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // unparseable "frequency" value:
         try {
-            ce.parseFilter("FreQuency=foo");
+            ce.parseJobsFilter("FreQuency=foo");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -97,7 +188,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // unparseable "unit" value:
         try {
-            ce.parseFilter("UniT=foo");
+            ce.parseJobsFilter("UniT=foo");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -105,7 +196,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
         // "unit" specified, but "frequency" is not:
         try {
-            ce.parseFilter("unit=minutes");
+            ce.parseJobsFilter("unit=minutes");
             fail("CoordinatorEngineException expected.");
         }
         catch (CoordinatorEngineException bee) {
@@ -113,11 +204,10 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         }
     }
 
-    @Test
     public void testParseFilterPositive() throws CoordinatorEngineException {
         final CoordinatorEngine ce = new CoordinatorEngine();
 
-        Map<String, List<String>> map = ce.parseFilter("frequency=5;unit=hours;user=foo;status=FAILED");
+        Map<String, List<String>> map = ce.parseJobsFilter("frequency=5;unit=hours;user=foo;status=FAILED");
         assertEquals(4, map.size());
         assertEquals("300", map.get("frequency").get(0));
         assertEquals("MINUTE", map.get("unit").get(0));

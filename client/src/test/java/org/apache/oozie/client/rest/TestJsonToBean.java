@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.client.rest;
 
 import java.util.List;
@@ -184,7 +185,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, CREATED_TIME);
         json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, NOMINAL_TIME);
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, "d");
-        json.put(JsonTags.COORDINATOR_ACTION_STATUS, CoordinatorAction.Status.DISCARDED.toString());
+        json.put(JsonTags.COORDINATOR_ACTION_STATUS, CoordinatorAction.Status.IGNORED.toString());
         json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, "e");
         json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME, LAST_MODIFIED);
         json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, "f");
@@ -221,7 +222,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals(JsonUtils.parseDateRfc822(CREATED_TIME), action.getCreatedTime());
         assertEquals(JsonUtils.parseDateRfc822(NOMINAL_TIME), action.getNominalTime());
         assertEquals("d", action.getExternalId());
-        assertEquals(CoordinatorAction.Status.DISCARDED, action.getStatus());
+        assertEquals(CoordinatorAction.Status.IGNORED, action.getStatus());
         assertEquals("e", action.getRunConf());
         assertEquals(JsonUtils.parseDateRfc822(LAST_MODIFIED), action.getLastModifiedTime());
         assertEquals("f", action.getMissingDependencies());

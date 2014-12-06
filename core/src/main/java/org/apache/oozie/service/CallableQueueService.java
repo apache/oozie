@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.PollablePriorityDelayQueue;
@@ -166,7 +168,6 @@ public class CallableQueueService implements Service, Instrumentable {
                 if (callableBegin(callable)) {
                     cron.stop();
                     addInQueueCron(cron);
-                    XLog.Info.get().clear();
                     XLog log = XLog.getLog(getClass());
                     log.trace("executing callable [{0}]", callable.getName());
 
@@ -178,9 +179,6 @@ public class CallableQueueService implements Service, Instrumentable {
                     catch (Exception ex) {
                         incrCounter(INSTR_FAILED_COUNTER, 1);
                         log.warn("exception callable [{0}], {1}", callable.getName(), ex.getMessage(), ex);
-                    }
-                    finally {
-                        XLog.Info.get().clear();
                     }
                 }
                 else {
@@ -439,11 +437,11 @@ public class CallableQueueService implements Service, Instrumentable {
     public void init(Services services) {
         Configuration conf = services.getConf();
 
-        queueSize = conf.getInt(CONF_QUEUE_SIZE, 10000);
-        int threads = conf.getInt(CONF_THREADS, 10);
-        boolean callableNextEligible = conf.getBoolean(CONF_CALLABLE_NEXT_ELIGIBLE, true);
+        queueSize = ConfigurationService.getInt(conf, CONF_QUEUE_SIZE);
+        int threads = ConfigurationService.getInt(conf, CONF_THREADS);
+        boolean callableNextEligible = ConfigurationService.getBoolean(conf, CONF_CALLABLE_NEXT_ELIGIBLE);
 
-        for (String type : conf.getStringCollection(CONF_CALLABLE_INTERRUPT_TYPES)) {
+        for (String type : ConfigurationService.getStrings(conf, CONF_CALLABLE_INTERRUPT_TYPES)) {
             log.debug("Adding interrupt type [{0}]", type);
             INTERRUPT_TYPES.add(type);
         }
@@ -482,7 +480,7 @@ public class CallableQueueService implements Service, Instrumentable {
             };
         }
 
-        interruptMapMaxSize = conf.getInt(CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE, 100);
+        interruptMapMaxSize = ConfigurationService.getInt(conf, CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE);
 
         // IMPORTANT: The ThreadPoolExecutor does not always the execute
         // commands out of the queue, there are
@@ -495,7 +493,12 @@ public class CallableQueueService implements Service, Instrumentable {
         // minimum size equals to the maximum size (thus threads are keep always
         // running) and we are warming up
         // all those threads (the for loop that runs dummy runnables).
-        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue);
+        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue){
+            protected void beforeExecute(Thread t, Runnable r) {
+                super.beforeExecute(t,r);
+                XLog.Info.get().clear();
+            }
+        };
 
         for (int i = 0; i < threads; i++) {
             executor.execute(new Runnable() {
@@ -510,7 +513,7 @@ public class CallableQueueService implements Service, Instrumentable {
             });
         }
 
-        maxCallableConcurrency = conf.getInt(CONF_CALLABLE_CONCURRENCY, 3);
+        maxCallableConcurrency = ConfigurationService.getInt(conf, CONF_CALLABLE_CONCURRENCY);
     }
 
     /**

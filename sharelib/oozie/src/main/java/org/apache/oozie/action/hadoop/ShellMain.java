@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.Shell;
 
 public class ShellMain extends LauncherMain {
     public static final String CONF_OOZIE_SHELL_ARGS = "oozie.shell.args";
@@ -197,6 +199,9 @@ public class ShellMain extends LauncherMain {
                         System.out.println("Stdoutput " + line);
                         // 2. Writing for capture output
                         if (os != null) {
+                            if (Shell.WINDOWS) {
+                                line = line.replace("\\u", "\\\\u");
+                            }
                             os.write(line);
                             os.newLine();
                         }

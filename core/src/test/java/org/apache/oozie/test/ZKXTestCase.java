@@ -17,12 +17,16 @@
  */
 package org.apache.oozie.test;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.EnsurePath;
@@ -30,9 +34,11 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
+import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.FixedJsonInstanceSerializer;
 import org.apache.oozie.util.ZKUtils;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Provides a version of XTestCase that also runs a ZooKeeper server and provides some utilities for interacting and simulating ZK
@@ -49,7 +55,7 @@ import org.apache.oozie.util.ZKUtils;
  * <p>
  * To use security, see {@link ZKXTestCaseWithSecurity}.
  */
-public abstract class ZKXTestCase extends XTestCase {
+public abstract class ZKXTestCase extends XDataTestCase {
     private TestingServer zkServer;
     private CuratorFramework client = null;
     private ServiceDiscovery<Map> sDiscovery = null;
@@ -63,9 +69,27 @@ public abstract class ZKXTestCase extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
+        setUpZK();
+    }
+
+    protected void setUp(Configuration conf) throws Exception {
+        super.setUp();
+        Services services = new Services();
+        if(conf != null && conf.size()>0){
+            for (Iterator<Entry<String, String>> itr = (Iterator<Entry<String, String>>) conf.iterator(); itr.hasNext();) {
+                Entry<String, String> entry = itr.next();
+                services.getConf().set(entry.getKey(), entry.getValue());
+            }
+        }
+        services.init();
+        setUpZK();
+    }
+
+    private void setUpZK() throws Exception {
         zkServer = setupZKServer();
         Services.get().getConf().set("oozie.zookeeper.connection.string", zkServer.getConnectString());
-        setSystemProperty("oozie.instance.id", ZK_ID);
+        Services.get().getConf().set("oozie.instance.id", ZK_ID);
+        Services.get().getConf().setBoolean(ZKConnectionListener.CONF_SHUTDOWN_ON_TIMEOUT, false);
         createClient();
         createServiceDiscovery();
     }
@@ -120,7 +144,7 @@ public abstract class ZKXTestCase extends XTestCase {
     }
 
     private void createClient() throws Exception {
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
         String zkConnectionString = Services.get().getConf().get("oozie.zookeeper.connection.string", zkServer.getConnectString());
         String zkNamespace = Services.get().getConf().get("oozie.zookeeper.namespace", "oozie");
         client = CuratorFrameworkFactory.builder()
@@ -145,26 +169,43 @@ public abstract class ZKXTestCase extends XTestCase {
     /**
      * Provides a class that can pretend to be another Oozie Server as far as ZooKeeper and anything using ZKUtils is concerned.
      * You can specify the ID and URL of the Oozie Server.  It will "start" when the constructor is called and can be "stopped"
-     * by calling {@link DummyZKOozie#teardown() }.  Make sure to tear down any DummyZKOozies that you create.
+     * by calling {@link DummyZKOozie#teardown()}.  It can also optionally join the ZKJobsConcurrencyService leader election.
+     * Make sure to tear down any DummyZKOozies that you create.
      */
     protected class DummyZKOozie {
         private CuratorFramework client = null;
         private String zkId;
         private ServiceDiscovery<Map> sDiscovery;
         private String metadataUrl;
+        private LeaderLatch leaderLatch = null;
 
         /**
-         * Creates a DummyZKOozie.
+         * Creates a DummyZKOozie.  Will not join the ZKJobsConcurrencyService leader election.
          *
          * @param zkId The ID of this new Oozie "server"
          * @param metadataUrl The URL to advertise for this "server"
          * @throws Exception
          */
         public DummyZKOozie(String zkId, String metadataUrl) throws Exception {
+            this(zkId, metadataUrl, false);
+        }
+
+        /**
+         * Creates a DummyZKOozie.
+         *
+         * @param zkId The ID of this new Oozie "server"
+         * @param metadataUrl The URL to advertise for this "server"
+         * @param joinConcurrencyLeaderElection true if should join ZKJobsConcurrencyService leader election; false if not
+         * @throws Exception
+         */
+        public DummyZKOozie(String zkId, String metadataUrl, boolean joinConcurrencyLeaderElection) throws Exception {
             this.zkId = zkId;
             this.metadataUrl = metadataUrl;
             createClient();
             advertiseService();
+            if (joinConcurrencyLeaderElection) {
+                joinConcurrencyLeaderElection();
+            }
         }
 
         private void createClient() throws Exception {
@@ -201,11 +242,29 @@ public abstract class ZKXTestCase extends XTestCase {
             sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
         }
 
+        private void joinConcurrencyLeaderElection() throws Exception {
+            leaderLatch = new LeaderLatch(client, "/services/concurrencyleader", zkId);
+            leaderLatch.start();
+        }
+
+        public boolean isLeader() {
+            if (leaderLatch != null) {
+                return leaderLatch.hasLeadership();
+            }
+            throw new RuntimeException("Must join concurrency leader election");
+        }
+
         public void teardown() {
+            if (leaderLatch != null) {
+                try {
+                    leaderLatch.close();
+                } catch (IOException ioe) {
+                    log.warn("Exception occured while leaving leader latch", ioe);
+                }
+            }
             try {
                 unadvertiseService();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 log.warn("Exception occurred while unadvertising: " + ex.getMessage(), ex);
             }
             client.close();

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.workflow.lite;
 
 
@@ -30,6 +31,8 @@ import org.apache.hadoop.conf.Configuration;
 
 import javax.xml.validation.Schema;
 import java.io.StringReader;
+import java.util.Date;
+import java.util.Map;
 
 //TODO javadoc
 public abstract class LiteWorkflowLib implements WorkflowLib {
@@ -63,9 +66,10 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     }
 
     @Override
-    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId) throws WorkflowException {
+    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId, Map<String, Date> actionEndTimes)
+            throws WorkflowException {
         ParamChecker.notNull(app, "app");
         ParamChecker.notNull(wfId, "wfId");
-        return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, wfId);
+        return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, wfId, actionEndTimes);
     }
 }

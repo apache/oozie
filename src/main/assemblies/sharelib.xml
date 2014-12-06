@@ -59,6 +59,14 @@
            <directory>${basedir}/hcatalog/target/partial-sharelib</directory>
            <outputDirectory>/</outputDirectory>
        </fileSet>
+       <fileSet>
+           <directory>${basedir}/hive2/target/partial-sharelib</directory>
+           <outputDirectory>/</outputDirectory>
+       </fileSet>
+        <fileSet>
+            <directory>${basedir}/spark/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>

@@ -14,6 +14,10 @@ Map/Reduce and Pig jobs.
 %TOC%
 
 ---++ Changelog
+
+---+++!! 2014MAY08
+
+   * #3.2.2.4 Added support for fully qualified job-xml path
 ---+++!! 2013JUL03
 
    * #Appendix A, Added new workflow schema 0.5 and SLA schema 0.2
@@ -564,10 +568,11 @@ Hadoop JobConf properties can be specified as part of
    * the =config-default.xml= or
    * JobConf XML file bundled with the workflow application or
    * <global> tag in workflow definition or
-   * Inline =map-reduce= action configuration. 
+   * Inline =map-reduce= action configuration or
+   * An implementation of OozieActionConfigurator specified by the <config-class> tag in workflow definition.
 
-The configuration properties are loaded in the following above order i.e. =streaming=, =job-xml= and =configuration=, and 
-the precedence order is later values override earlier values.
+The configuration properties are loaded in the following above order i.e. =streaming=, =job-xml=, =configuration=,
+and =config-class=, and the precedence order is later values override earlier values.
 
 Streaming and inline property values can be parameterized (templatized) using EL expressions.
 
@@ -575,7 +580,7 @@ The Hadoop =mapred.job.tracker= and =fs.default.name= properties must not be pre
 configuration.
 
 #FilesAchives
----++++ 3.2.2.1 Adding Files and Archives for the Job
+---+++++ 3.2.2.1 Adding Files and Archives for the Job
 
 The =file=, =archive= elements make available, to map-reduce jobs, files and archives. If the specified path is
 relative, it is assumed the file or archiver are within the application directory, in the corresponding sub-path.
@@ -591,8 +596,88 @@ To force a symlink for a file on the task running directory, use a '#' followed 
 
 Refer to Hadoop distributed cache documentation for details more details on files and archives.
 
+---+++++ 3.2.2.2 Configuring the MapReduce action with Java code
+
+Java code can be used to further configure the MapReduce action.  This can be useful if you already have "driver" code for your
+MapReduce action, if you're more familiar with MapReduce's Java API, if there's some configuration that requires logic, or some
+configuration that's difficult to do in straight XML (e.g. Avro).
+
+Create a class that implements the org.apache.oozie.action.hadoop.OozieActionConfigurator interface from the "oozie-sharelib-oozie"
+artifact.  It contains a single method that recieves a =JobConf= as an argument.  Any configuration properties set on this =JobConf=
+will be used by the MapReduce action.
+
+The OozieActionConfigurator has this signature:
+<verbatim>
+public interface OozieActionConfigurator {
+    public void configure(JobConf actionConf) throws OozieActionConfiguratorException;
+}
+</verbatim>
+where =actionConf= is the =JobConf= you can update.  If you need to throw an Exception, you can wrap it in
+an =OozieActionConfiguratorException=, also in the "oozie-sharelib-oozie" artifact.
+
+For example:
+<verbatim>
+package com.example;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.oozie.action.hadoop.OozieActionConfigurator;
+import org.apache.oozie.action.hadoop.OozieActionConfiguratorException;
+import org.apache.oozie.example.SampleMapper;
+import org.apache.oozie.example.SampleReducer;
+
+public class MyConfigClass implements OozieActionConfigurator {
+
+    @Override
+    public void configure(JobConf actionConf) throws OozieActionConfiguratorException {
+        if (actionConf.getUser() == null) {
+            throw new OozieActionConfiguratorException("No user set");
+        }
+        actionConf.setMapperClass(SampleMapper.class);
+        actionConf.setReducerClass(SampleReducer.class);
+        FileInputFormat.setInputPaths(actionConf, new Path("/user/" + actionConf.getUser() + "/input-data"));
+        FileOutputFormat.setOutputPath(actionConf, new Path("/user/" + actionConf.getUser() + "/output"));
+        ...
+    }
+}
+</verbatim>
+
+To use your config class in your MapReduce action, simply compile it into a jar, make the jar available to your action, and specify
+the class name in the =config-class= element (this requires at least schema 0.5):
+<verbatim>
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
+    ...
+    <action name="[NODE-NAME]">
+        <map-reduce>
+            ...
+            <job-xml>[JOB-XML-FILE]</job-xml>
+            <configuration>
+                <property>
+                    <name>[PROPERTY-NAME]</name>
+                    <value>[PROPERTY-VALUE]</value>
+                </property>
+                ...
+            </configuration>
+            <config-class>com.example.MyConfigClass</config-class>
+            ...
+        </map-reduce>
+        <ok to="[NODE-NAME]"/>
+        <error to="[NODE-NAME]"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+Another example of this can be found in the "map-reduce" example that comes with Oozie.
+
+A useful tip: The initial =JobConf= passed to the =configure= method includes all of the properties listed in the =configuration=
+section of the MR action in a workflow.  If you need to pass any information to your OozieActionConfigurator, you can simply put
+them here.
+
 #StreamingMapReduceAction
----+++++ 3.2.2.2 Streaming
+---+++++ 3.2.2.3 Streaming
 
 Streaming information can be specified in the =streaming= element.
 
@@ -609,7 +694,7 @@ The Mapper/Reducer can be overridden by a =mapred.mapper.class= or =mapred.reduc
 file or =configuration= elements.
 
 #PipesMapReduceAction
----+++++ 3.2.2.3 Pipes
+---+++++ 3.2.2.4 Pipes
 
 Pipes information can be specified in the =pipes= element.
 
@@ -625,10 +710,10 @@ the =file= and =archive= elements described in the previous section.
 
 Pipe properties can be overridden by specifying them in the =job-xml= file or =configuration= element.
 
----+++++ 3.2.2.4 Syntax
+---+++++ 3.2.2.5 Syntax
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.5">
     ...
     <action name="[NODE-NAME]">
         <map-reduce>
@@ -666,6 +751,7 @@ Pipe properties can be overridden by specifying them in the =job-xml= file or =c
                 </property>
                 ...
             </configuration>
+            <config-class>com.example.MyConfigClass</config-class>
             <file>[FILE-PATH]</file>
             ...
             <archive>[FILE-PATH]</archive>
@@ -687,12 +773,19 @@ In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= ta
 need to be placed in workflow lib directory or specified using =archive= tag.
 
 The =job-xml= element, if present, must refer to a Hadoop JobConf =job.xml= file bundled in the workflow application.
+By default the =job.xml= file is taken from the workflow application namenode, regardless the namenode specified for the action.
+To specify a =job.xml= on another namenode use a fully qualified file path.
 The =job-xml= element is optional and as of schema 0.4, multiple =job-xml= elements are allowed in order to specify multiple Hadoop JobConf =job.xml= files.
 
 The =configuration= element, if present, contains JobConf properties for the Hadoop job.
 
 Properties specified in the =configuration= element override properties specified in the file specified in the
  =job-xml= element.
+
+As of schema 0.5, the =config-class= element, if present, contains a class that implements OozieActionConfigurator that can be used
+to further configure the MapReduce job.
+
+Properties specified in the =config-class= class override properties specified in =configuration= element.
 
 External Stats can be turned on/off by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in the configuration element of workflow.xml. The default value for this property is _false_.
 
@@ -1344,10 +1437,20 @@ starting the Java application. This capability enables Oozie to retry a Java app
 or non-transient failure (This can be used to cleanup any temporary data which may have been created by the Java
 application in case of failure).
 
-A =java= action can create a Hadoop configuration. The Hadoop configuration is made available as a local file to the
-Java application in its running directory, the file name is =oozie-action.conf.xml=. Similar to =map-reduce= and
- =pig= actions it is possible to refer a =job.xml= file and using inline configuration properties. For repeated
-configuration properties later values override earlier ones.
+A =java= action can create a Hadoop configuration for interacting with a cluster (e.g. launching a map-reduce job).
+Oozie prepares a Hadoop configuration file which includes the environments site configuration files (e.g. hdfs-site.xml, 
+mapred-site.xml, etc) plus the properties added to the =<configuration>= section of the =java= action. The Hadoop configuration 
+file is made available as a local file to the Java application in its running directory. It can be added to the =java= actions 
+Hadoop configuration by referencing the system property: =oozie-action.conf.xml=. For example:
+
+<verbatim>
+// loading action conf prepared by Oozie
+Configuration actionConf = new Configuration(false);
+actionConf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
+</verbatim>
+
+If =oozie.action.conf.xml= is not added then the job will pick up the mapred-default properties and this may result
+in unexpected behaviour. For repeated configuration properties later values override earlier ones.
 
 Inline property values can be parameterized (templatized) using EL expressions.
 
@@ -1421,9 +1524,21 @@ hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value]
 In case of a hcatalog URI, the hive-site.xml needs to be shipped using =file= tag and the hcatalog and hive jars
 need to be placed in workflow lib directory or specified using =archive= tag.
 
-The =java-opts= element, if present, contains the command line parameters which are to be used to start the JVM that
-will execute the Java application. Using this element is equivalent to use the =mapred.child.java.opts= configuration
-property.
+The =java-opts= and =java-opt= elements, if present, contains the command line parameters which are to be used to start the JVM that
+will execute the Java application. Using this element is equivalent to using the =mapred.child.java.opts=
+or =mapreduce.map.java.opts= configuration properties, with the advantage that Oozie will append to these properties instead of
+simply setting them (e.g. if you have one of these properties specified in mapred-site.xml, setting it again in
+the =configuration= element will override it, but using =java-opts= or =java-opt= will instead append to it, preserving the original
+value).  You can have either one =java-opts=, multiple =java-opt=, or neither; you cannot use both at the same time.  In any case,
+Oozie will set both =mapred.child.java.opts= and =mapreduce.map.java.opts= to the same value based on combining them.  In other
+words, after Oozie is finished:
+<verbatim>
+mapred.child.java.opts  <-- "<mapred.child.java.opts> <mapreduce.map.java.opts> <java-opt...|java-opts>"
+mapreduce.map.java.opts <-- "<mapred.child.java.opts> <mapreduce.map.java.opts> <java-opt...|java-opts>"
+</verbatim>
+In the case that parameters are repeated, the latest instance of the parameter is used by Java.  This means that =java-opt=
+(or =java-opts=) has the highest priority, followed by =mapreduce.map.java.opts=, and finally =mapred.child.java.opts=.  When
+multiple =java-opt= are specified, they are included from top to bottom ordering, where the bottom has highest priority.
 
 The =arg= elements, if present, contains arguments for the main function. The value of each =arg= element is considered
 a single argument and they are passed to the =main= method in the same order.
@@ -1993,6 +2108,36 @@ Below is the workflow that describes how to access specific information using ha
 </workflow-app>
 </verbatim>
 
+#Hadoop Configuration EL Function
+*String hadoop:conf(String hadoopConfHostPort, String propName)*
+
+It returns the value of a property of Hadoop configuration.
+
+The hadoopConfHostPort is the 'host:port' of a Hadoop cluster, such as 'NameNodeHostAddress:Port' and
+'JobTrackerHostAddress:Port'. The propName is the name of target property. If hadoopConfHostPort could
+be connected, Hadoop Conf EL Function will return the value of propName from the specific host address
+and port. If hadoopConfHostPort could not be connected, Hadoop Conf EL Function will generate a default
+hadoop configuration object directly, and then return the value of target property.
+
+*Example of usage of Hadoop Configuration EL Function:*
+
+<verbatim>
+<action name="mr-node">
+    <map-reduce>
+        <job-tracker>${jobTracker}</job-tracker>
+        <name-node>${nameNode}</name-node>
+        <configuration>
+            <property>
+                <name>mapreduce.map.java.opts</name>
+                <value>${hadoop:conf("9.181.7.69:9001","mapreduce.map.java.opts")} -Xss512k </value>
+            </property>
+        </configuration>
+    </map-reduce>
+    <ok to="end"/>
+    <error to="fail"/>
+</action>
+</verbatim>
+
 ---++++ 4.2.6 Hadoop Jobs EL Function
 
 The function _wf:actionData()_ can be used to access Hadoop ID's for actions such as Pig, by specifying the key as _hadoopJobs_.
@@ -2100,6 +2245,10 @@ See also [[CoordinatorFunctionalSpec#CoordinatorNotifications][Coordinator Notif
 
 If the =oozie.wf.workflow.notification.url= property is present in the workflow job properties when submitting the job,
 Oozie will make a notification to the provided URL when the workflow job changes its status.
+=oozie.wf.workflow.notification.proxy= property can be used to configure either a http or socks proxy.
+The format is proxyHostname:port or proxyType@proxyHostname:port. If proxy type is not specified, it defaults to http.
+For eg: myhttpproxyhost.mydomain.com:80 or socks@mysockshost.mydomain.com:1080.
+
 
 If the URL contains any of the following tokens, they will be replaced with the actual values by Oozie before making
 the notification:
@@ -2112,6 +2261,7 @@ the notification:
 If the =oozie.wf.action.notification.url= property is present in the workflow job properties when submitting the job,
 Oozie will make a notification to the provided URL every time the workflow job enters and exits an action node. For
 decision nodes, Oozie will send a single notification with the name of the first evaluation that resolved to =true=.
+=oozie.wf.workflow.notification.proxy= property can be used to configure proxy, it should contain proxy host and port (xyz:4080).
 
 If the URL contains any of the following tokens, they will be replaced with the actual values by Oozie before making
 the notification:
@@ -2591,6 +2741,7 @@ to be executed.
             </xs:choice>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="config-class" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
@@ -2757,6 +2908,330 @@ to be executed.
 </xs:schema>
 </verbatim>
 
+---++++ Oozie Schema Version 0.4.5
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:workflow="uri:oozie:workflow:0.4.5"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:workflow:0.4.5">
+
+    <xs:element name="workflow-app" type="workflow:WORKFLOW-APP"/>
+
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z_]([\-_a-zA-Z0-9])*){1,39}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="WORKFLOW-APP">
+        <xs:sequence>
+            <xs:element name="parameters" type="workflow:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="global" type="workflow:GLOBAL" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="credentials" type="workflow:CREDENTIALS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="start" type="workflow:START" minOccurs="1" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="decision" type="workflow:DECISION" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="fork" type="workflow:FORK" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="join" type="workflow:JOIN" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="kill" type="workflow:KILL" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="action" type="workflow:ACTION" minOccurs="1" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="end" type="workflow:END" minOccurs="1" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="GLOBAL">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="START">
+        <xs:attribute name="to" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="END">
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="DECISION">
+        <xs:sequence>
+            <xs:element name="switch" type="workflow:SWITCH" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="switch" type="workflow:SWITCH"/>
+
+    <xs:complexType name="SWITCH">
+        <xs:sequence>
+            <xs:sequence>
+                <xs:element name="case" type="workflow:CASE" minOccurs="1" maxOccurs="unbounded"/>
+                <xs:element name="default" type="workflow:DEFAULT" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CASE">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="to" type="workflow:IDENTIFIER" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="DEFAULT">
+        <xs:attribute name="to" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="FORK_TRANSITION">
+        <xs:attribute name="start" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="FORK">
+        <xs:sequence>
+            <xs:element name="path" type="workflow:FORK_TRANSITION" minOccurs="2" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="JOIN">
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+        <xs:attribute name="to" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="kill" type="workflow:KILL"/>
+
+    <xs:complexType name="KILL">
+        <xs:sequence>
+            <xs:element name="message" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ACTION_TRANSITION">
+        <xs:attribute name="to" type="workflow:IDENTIFIER" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="map-reduce" type="workflow:MAP-REDUCE"/>
+    <xs:element name="pig" type="workflow:PIG"/>
+    <xs:element name="sub-workflow" type="workflow:SUB-WORKFLOW"/>
+    <xs:element name="fs" type="workflow:FS"/>
+    <xs:element name="java" type="workflow:JAVA"/>
+
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:choice minOccurs="1" maxOccurs="1">
+                <xs:element name="map-reduce" type="workflow:MAP-REDUCE" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="pig" type="workflow:PIG" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="sub-workflow" type="workflow:SUB-WORKFLOW" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="fs" type="workflow:FS" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="java" type="workflow:JAVA" minOccurs="1" maxOccurs="1"/>
+                <xs:any namespace="##other" minOccurs="1" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="ok" type="workflow:ACTION_TRANSITION" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="error" type="workflow:ACTION_TRANSITION" minOccurs="1" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="workflow:IDENTIFIER" use="required"/>
+        <xs:attribute name="cred" type="xs:string"/>
+        <xs:attribute name="retry-max" type="xs:string"/>
+        <xs:attribute name="retry-interval" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="MAP-REDUCE">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <xs:element name="streaming" type="workflow:STREAMING" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="pipes" type="workflow:PIPES" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PIG">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="argument" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SUB-WORKFLOW">
+        <xs:sequence>
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="propagate-configuration" type="workflow:FLAG" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FS">
+        <xs:sequence>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="delete" type="workflow:DELETE"/>
+                <xs:element name="mkdir" type="workflow:MKDIR"/>
+                <xs:element name="move" type="workflow:MOVE"/>
+                <xs:element name="chmod" type="workflow:CHMOD"/>
+                <xs:element name="touchz" type="workflow:TOUCHZ"/>
+                <xs:element name="chgrp" type="workflow:CHGRP"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="JAVA">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="workflow:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="workflow:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="main-class" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <xs:element name="java-opts" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="java-opt" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            </xs:choice>
+            <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="capture-output" type="workflow:FLAG" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FLAG"/>
+
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="STREAMING">
+        <xs:sequence>
+            <xs:element name="mapper" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="reducer" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="record-reader" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="record-reader-mapping" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="env" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PIPES">
+        <xs:sequence>
+            <xs:element name="map" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="reduce" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="inputformat" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="partitioner" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="writer" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="program" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="workflow:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="workflow:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="MOVE">
+        <xs:attribute name="source" type="xs:string" use="required"/>
+        <xs:attribute name="target" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="CHMOD">
+        <xs:sequence>
+            <xs:element name="recursive" type="workflow:FLAG" minOccurs="0" maxOccurs="1"></xs:element>
+        </xs:sequence>
+        <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="permissions" type="xs:string" use="required"/>
+        <xs:attribute name="dir-files" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="TOUCHZ">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="CHGRP">
+        <xs:sequence>
+            <xs:element name="recursive" type="workflow:FLAG" minOccurs="0" maxOccurs="1"></xs:element>
+        </xs:sequence>
+        <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="group" type="xs:string" use="required"/>
+        <xs:attribute name="dir-files" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="CREDENTIALS">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="credential" type="workflow:CREDENTIAL"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CREDENTIAL">
+        <xs:sequence  minOccurs="0" maxOccurs="unbounded" >
+                 <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                    <xs:complexType>
+                       <xs:sequence>
+                            <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                            <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                            <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                       </xs:sequence>
+                    </xs:complexType>
+                 </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="xs:string" use="required"/>
+    </xs:complexType>
+</xs:schema>
+</verbatim>
 
 ---++++ Oozie Schema Version 0.4
 <verbatim>

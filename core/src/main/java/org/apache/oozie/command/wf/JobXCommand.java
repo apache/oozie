@@ -6,15 +6,16 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import org.apache.oozie.ErrorCode;
@@ -23,6 +24,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowInfoWithActionsSubsetGetJPAExecutor;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
@@ -32,9 +34,11 @@ import org.apache.oozie.util.ParamChecker;
  */
 public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
     private final String id;
-    private final int start = 1;
-    private final int len = Integer.MAX_VALUE;
+    private int start = 1;
+    private int len = Integer.MAX_VALUE;
     private WorkflowJobBean workflow;
+
+    public static final String CONF_CONSOLE_URL = "oozie.JobCommand.job.console.url";
 
     public JobXCommand(String id) {
         this(id, 1, Integer.MAX_VALUE);
@@ -49,6 +53,8 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
     public JobXCommand(String id, int start, int length) {
         super("job.info", "job.info", 1, true);
         this.id = ParamChecker.notEmpty(id, "id");
+        this.start = start;
+        this.len = length;
     }
 
     /* (non-Javadoc)
@@ -81,8 +87,8 @@ public class JobXCommand extends WorkflowXCommand<WorkflowJobBean> {
      * @param jobId : Job ID to retrieve console URL
      * @return console URL
      */
-    static String getJobConsoleUrl(String jobId) {
-        String consoleUrl = Services.get().getConf().get("oozie.JobCommand.job.console.url", null);
+    public static String getJobConsoleUrl(String jobId) {
+        String consoleUrl = ConfigurationService.get(CONF_CONSOLE_URL);
         return (consoleUrl != null) ? consoleUrl + jobId : null;
     }
 

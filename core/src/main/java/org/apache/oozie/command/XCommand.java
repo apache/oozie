@@ -15,12 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
 import org.apache.oozie.XException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.MemoryLocksService;
@@ -60,7 +62,7 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     public static final String INSTRUMENTATION_GROUP = "commands";
 
-    public static final Long DEFAULT_REQUEUE_DELAY = 10L;
+    public static final String DEFAULT_REQUEUE_DELAY = "oozie.command.default.requeue.delay";
 
     public XLog LOG = XLog.getLog(getClass());
 
@@ -78,7 +80,6 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
 
-    protected XLog.Info logInfo;
     protected static EventHandlerService eventService;
 
     /**
@@ -94,7 +95,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.priority = priority;
         this.key = name + "_" + UUID.randomUUID();
         createdTime = System.currentTimeMillis();
-        logInfo = new XLog.Info();
         instrumentation = Services.get().get(InstrumentationService.class).get();
         eventService = Services.get().get(EventHandlerService.class);
     }
@@ -109,6 +109,12 @@ public abstract class XCommand<T> implements XCallable<T> {
     public XCommand(String name, String type, int priority, boolean dryrun) {
         this(name, type, priority);
         this.dryrun = dryrun;
+    }
+
+    /**
+     * Set the thread local logInfo with the context of this command and reset log prefix.
+     */
+    protected void setLogInfo() {
     }
 
     /**
@@ -204,7 +210,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
         lock = Services.get().get(MemoryLocksService.class).getWriteLock(getEntityKey(), getLockTimeOut());
         if (lock == null) {
-            Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".lockTimeOut", 1);
             if (isReQueueRequired()) {
                 //if not acquire the lock, re-queue itself with default delay
@@ -236,20 +241,19 @@ public abstract class XCommand<T> implements XCallable<T> {
      */
     @Override
     public final T call() throws CommandException {
+        setLogInfo();
         if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType()) && used.get()) {
             LOG.debug("Command [{0}] key [{1}]  already used for [{2}]", getName(), getEntityKey(), this.toString());
             return null;
         }
 
         commandQueue = null;
-        Instrumentation instrumentation = Services.get().get(InstrumentationService.class).get();
         instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".executions", 1);
         Instrumentation.Cron callCron = new Instrumentation.Cron();
         try {
             callCron.start();
             if (!isSynchronous) {
                 eagerLoadState();
-                LOG = XLog.resetPrefix(LOG);
                 eagerVerifyPrecondition();
             }
             try {
@@ -274,7 +278,6 @@ public abstract class XCommand<T> implements XCallable<T> {
                     }
                     LOG.trace("Load state for [{0}]", getEntityKey());
                     loadState();
-                    LOG = XLog.resetPrefix(LOG);
                     LOG.trace("Precondition check for command [{0}] key [{1}]", getName(), getEntityKey());
                     verifyPrecondition();
                     LOG.debug("Execute command [{0}] key [{1}]", getName(), getEntityKey());
@@ -324,6 +327,7 @@ public abstract class XCommand<T> implements XCallable<T> {
         }
         catch (Error er) {
             LOG.error("Error, ", er);
+            instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".errors", 1);
             throw er;
         }
         finally {
@@ -501,11 +505,15 @@ public abstract class XCommand<T> implements XCallable<T> {
 
     /**
      * Return the delay time for requeue
+     * <p/>
+     * The value is loaded from the Oozie configuration, the property {link #DEFAULT_REQUEUE_DELAY}.
+     * <p/>
+     * Subclasses should override this method if they want to use a different requeue delay time
      *
      * @return delay time when requeue itself
      */
-    protected Long getRequeueDelay() {
-        return DEFAULT_REQUEUE_DELAY;
+    protected long getRequeueDelay() {
+        return ConfigurationService.getLong(DEFAULT_REQUEUE_DELAY);
     }
 
     /**

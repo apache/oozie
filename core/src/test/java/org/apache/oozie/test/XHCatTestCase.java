@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.test;
 
 import java.net.URI;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Shell;
-import org.apache.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.api.HCatPartition;
 import org.apache.oozie.util.HCatURI;
 
 /**

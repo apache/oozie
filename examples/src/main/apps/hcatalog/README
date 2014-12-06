@@ -2,7 +2,7 @@ Running the coordinator example with HCatalog (End-to-end test)
 
 1. Setup services - Hive with JMS (e.g. ActiveMQ Server), HCatalog, database e.g. MySQL, and of course Hadoop
 2. This example points to hive.metastore.uris=thrift://localhost:11002. Change it in job.properties if required
-3. Create 2 tables 'invites' (input) and 'oozie' (output) with this structure: "create table invites (foo INT, bar INT) partitioned by (ds STRING, region STRING)"
+3. Create 2 tables 'invites' (input) and 'oozie' (output) with this structure: "create table invites (foo INT, bar INT, car VARCHAR(10)) partitioned by (ds STRING, region STRING)"
 4. Oozie distro should be built this way $> bin/mkdistro.sh -Dhcatalog.version=0.4.1 -DskipTests
 5. The 'libext' dir used by oozie-setup should contain the following list JARS
    hcatalog-core.jar
@@ -20,3 +20,13 @@ Running the coordinator example with HCatalog (End-to-end test)
 7. Run Oozie job using the job.properties. Coordinator actions will be in WAITING
 8. Make input dependencies available throught HCat client by "alter table invites add partition (ds='2010-01-01', region='usa')". This event will start the workflows with pig action
 9. First workflow will SUCCEED as expected, however second one will fail due to 'partition already exists' error. Disregard this. The example demonstrates working as expected.
+10. When running in a secure cluster
+   a. The files job.properties.security and workflow.xml.security can be
+      used and modified as needed.  Please refer to those two files and follow
+       the instructions.
+   b. Make sure oozie-site.xml under /etc/oozie/conf has the following property
+      specified.
+       <property>
+         <name>oozie.credentials.credentialclasses</name>
+         <value>hcat=org.apache.oozie.action.hadoop.HCatCredentials</value>
+       </property>

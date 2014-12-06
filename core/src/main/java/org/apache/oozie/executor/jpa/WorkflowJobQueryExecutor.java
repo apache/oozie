@@ -15,14 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
 
 import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
@@ -32,7 +26,11 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 
-import com.google.common.annotations.VisibleForTesting;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Query Executor that provides API to run query for Workflow Job
@@ -50,6 +48,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         UPDATE_WORKFLOW_RERUN,
         GET_WORKFLOW,
         GET_WORKFLOW_STARTTIME,
+        GET_WORKFLOW_START_END_TIME,
         GET_WORKFLOW_USER_GROUP,
         GET_WORKFLOW_SUSPEND,
         GET_WORKFLOW_ACTION_OP,
@@ -58,25 +57,16 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         GET_WORKFLOW_KILL,
         GET_WORKFLOW_RESUME,
         GET_WORKFLOW_STATUS,
-        GET_WORKFLOWS_PARENT_COORD_RERUN
+        GET_WORKFLOWS_PARENT_COORD_RERUN,
+        GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
-    private static JPAService jpaService;
 
     private WorkflowJobQueryExecutor() {
-        Services services = Services.get();
-        if (services != null) {
-            jpaService = services.get(JPAService.class);
-        }
     }
 
     public static QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> getInstance() {
-        if (instance == null) {
-            // It will not be null in normal execution. Required for test as
-            // they reinstantiate JPAService everytime
-            instance = new WorkflowJobQueryExecutor();
-        }
         return WorkflowJobQueryExecutor.instance;
     }
 
@@ -170,6 +160,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         switch (namedQuery) {
             case GET_WORKFLOW:
             case GET_WORKFLOW_STARTTIME:
+            case GET_WORKFLOW_START_END_TIME:
             case GET_WORKFLOW_USER_GROUP:
             case GET_WORKFLOW_SUSPEND:
             case GET_WORKFLOW_ACTION_OP:
@@ -183,6 +174,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             case GET_WORKFLOWS_PARENT_COORD_RERUN:
                 query.setParameter("parentId", parameters[0]);
                 break;
+            case GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN:
+                long dayInMs = 24 * 60 * 60 * 1000;
+                long olderThanDays = (Long) parameters[0];
+                Timestamp maxEndtime = new Timestamp(System.currentTimeMillis() - (olderThanDays * dayInMs));
+                query.setParameter("endTime", maxEndtime);
+                query.setFirstResult((Integer) parameters[1]);
+                query.setMaxResults((Integer) parameters[2]);
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -192,6 +191,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
 
     @Override
     public int executeUpdate(WorkflowJobQuery namedQuery, WorkflowJobBean jobBean) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getUpdateQuery(namedQuery, jobBean, em);
         int ret = jpaService.executeUpdate(namedQuery.name(), query, em);
@@ -211,6 +211,13 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 arr = (Object[]) ret;
                 bean.setId((String) arr[0]);
                 bean.setStartTime(DateUtils.toDate((Timestamp) arr[1]));
+                break;
+            case GET_WORKFLOW_START_END_TIME:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[1]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[2]));
                 break;
             case GET_WORKFLOW_USER_GROUP:
                 bean = new WorkflowJobBean();
@@ -241,10 +248,11 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setAppName((String) arr[3]);
                 bean.setAppPath((String) arr[4]);
                 bean.setStatusStr((String) arr[5]);
-                bean.setParentId((String) arr[6]);
-                bean.setLogToken((String) arr[7]);
-                bean.setWfInstanceBlob((BinaryBlob) (arr[8]));
-                bean.setProtoActionConfBlob((StringBlob) arr[9]);
+                bean.setRun((Integer) arr[6]);
+                bean.setParentId((String) arr[7]);
+                bean.setLogToken((String) arr[8]);
+                bean.setWfInstanceBlob((BinaryBlob) (arr[9]));
+                bean.setProtoActionConfBlob((StringBlob) arr[10]);
                 break;
             case GET_WORKFLOW_RERUN:
                 bean = new WorkflowJobBean();
@@ -257,6 +265,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setRun((Integer) arr[5]);
                 bean.setLogToken((String) arr[6]);
                 bean.setWfInstanceBlob((BinaryBlob) (arr[7]));
+                bean.setParentId((String)arr[8]);
                 break;
             case GET_WORKFLOW_DEFINITION:
                 bean = new WorkflowJobBean();
@@ -313,6 +322,12 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 bean.setStartTime(DateUtils.toDate((Timestamp) arr[2]));
                 bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
                 break;
+            case GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setParentId((String) arr[1]);
+                break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());
@@ -322,6 +337,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
 
     @Override
     public WorkflowJobBean get(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
@@ -334,6 +350,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
 
     @Override
     public List<WorkflowJobBean> getList(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         List<?> retList = (List<?>) jpaService.executeGetList(namedQuery.name(), query, em);
@@ -346,11 +363,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         return beanList;
     }
 
-    @VisibleForTesting
-    public static void destroy() {
-        if (instance != null) {
-            jpaService = null;
-            instance = null;
-        }
+    @Override
+    public Object getSingleValue(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        throw new UnsupportedOperationException();
     }
 }

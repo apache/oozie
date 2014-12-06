@@ -6,24 +6,25 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.ErrorCode;
@@ -174,9 +175,9 @@ public class XLogService implements Service, Instrumentable {
             XLog.Info.reset();
             XLog.Info.defineParameter(USER);
             XLog.Info.defineParameter(GROUP);
-            XLogStreamer.Filter.reset();
-            XLogStreamer.Filter.defineParameter(USER);
-            XLogStreamer.Filter.defineParameter(GROUP);
+            XLogFilter.reset();
+            XLogFilter.defineParameter(USER);
+            XLogFilter.defineParameter(GROUP);
 
             // Getting configuration for oozie log via WS
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -282,7 +283,7 @@ public class XLogService implements Service, Instrumentable {
     public void destroy() {
         LogManager.shutdown();
         XLog.Info.reset();
-        XLogStreamer.Filter.reset();
+        XLogFilter.reset();
     }
 
     /**
@@ -312,11 +313,6 @@ public class XLogService implements Service, Instrumentable {
      * @param instr instrumentation to use.
      */
     public void instrument(Instrumentation instr) {
-        instr.addVariable("oozie", "version", new Instrumentation.Variable<String>() {
-            public String getValue() {
-                return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
-            }
-        });
         instr.addVariable(INSTRUMENTATION_GROUP, "config.file", new Instrumentation.Variable<String>() {
             public String getValue() {
                 return log4jFileName;

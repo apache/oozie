@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.util.List;
@@ -50,10 +51,15 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
+    @Override
     /**
      * Check for READY actions and change state to SUBMITTED by a command to submit the job to WF engine.
      * This method checks all the actions associated with a jobId to figure out which actions
-     * to start (based on concurrency and execution order [FIFO, LIFO, LAST_ONLY])
+     * to start (based on concurrency and execution order [FIFO, LIFO, LAST_ONLY, NONE])
      *
      */
     protected Void execute() throws CommandException {
@@ -157,7 +163,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException e) {
             throw new CommandException(e);
         }
-        LogUtils.setLogInfo(coordJob, logInfo);
+        LogUtils.setLogInfo(coordJob);
     }
 
     @Override

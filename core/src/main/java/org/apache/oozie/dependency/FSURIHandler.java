@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.dependency;
 
 import java.io.IOException;
@@ -77,7 +78,7 @@ public class FSURIHandler implements URIHandler {
     }
 
     @Override
-    public Context getContext(URI uri, Configuration conf, String user) throws URIHandlerException {
+    public Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException {
         FileSystem fs = getFileSystem(uri, conf, user);
         return new FSContext(conf, user, fs);
     }
@@ -119,6 +120,37 @@ public class FSURIHandler implements URIHandler {
     @Override
     public void destroy() {
 
+    }
+
+    @Override
+    public void delete(URI uri, Context context) throws URIHandlerException {
+        FileSystem fs = ((FSContext) context).getFileSystem();
+        Path path = new Path(uri);
+        try {
+            if (fs.exists(path)) {
+                if (!fs.delete(path, true)) {
+                    throw new URIHandlerException(ErrorCode.E0907, path.toString());
+                }
+            }
+        }
+        catch (IOException e) {
+            throw new URIHandlerException(ErrorCode.E0907, path.toString());
+        }
+    }
+
+    @Override
+    public void delete(URI uri, Configuration conf, String user) throws URIHandlerException {
+        Path path = new Path(uri);
+        FileSystem fs = getFileSystem(uri, conf, user);
+        try{
+            if (fs.exists(path)) {
+                if (!fs.delete(path, true)) {
+                    throw new URIHandlerException(ErrorCode.E0907, path.toString());
+                }
+            }
+        } catch (IOException e){
+            throw new URIHandlerException(ErrorCode.E0907, path.toString());
+        }
     }
 
     private Path getNormalizedPath(URI uri) {

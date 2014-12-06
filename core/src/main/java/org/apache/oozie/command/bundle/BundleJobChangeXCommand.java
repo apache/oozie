@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.bundle;
 
 import java.util.ArrayList;
@@ -162,6 +163,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
      */
     @Override
     protected Void execute() throws CommandException {
+        StringBuffer changeReport = new StringBuffer();
         try {
             if (isChangePauseTime || isChangeEndTime) {
                 if (isChangePauseTime) {
@@ -179,17 +181,27 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
                 for (BundleActionBean action : this.bundleActions) {
                     // queue coord change commands;
                     if (action.getStatus() != Job.Status.KILLED && action.getCoordId() != null) {
-                        queue(new CoordChangeXCommand(action.getCoordId(), changeValue));
-                        LOG.info("Queuing CoordChangeXCommand coord job = " + action.getCoordId() + " to change "
-                                + changeValue);
-                        action.setPending(action.getPending() + 1);
-                        updateList.add(new UpdateEntry<BundleActionQuery>(
-                                BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, action));
+                        try {
+                            new CoordChangeXCommand(action.getCoordId(), changeValue).call();
+                        }
+                        catch (Exception e) {
+                            String errorMsg = action.getCoordId() + " : " + e.getMessage();
+                            LOG.info("Change command failed " + errorMsg);
+                            changeReport.append("[ ").append(errorMsg).append(" ]");
+                        }
+                    }
+                    else {
+                        String errorMsg = action.getCoordId() + " : Coord is in killed state";
+                        LOG.info("Change command failed " + errorMsg);
+                        changeReport.append("[ ").append(errorMsg).append(" ]");
                     }
                 }
                 updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME,
                         bundleJob));
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+            }
+            if(!changeReport.toString().isEmpty()){
+                throw new CommandException(ErrorCode.E1320, changeReport.toString());
             }
             return null;
         }
@@ -219,7 +231,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB, bundleJob.getId());
             this.bundleActions = BundleActionQueryExecutor.getInstance().getList(
-                    BundleActionQuery.GET_BUNDLE_ACTIONS_FOR_BUNDLE, bundleJob.getId());
+                    BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, bundleJob.getId());
         }
         catch (JPAExecutorException Ex) {
             throw new CommandException(ErrorCode.E1311, this.jobId);
@@ -234,7 +246,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
     protected void eagerLoadState() throws CommandException {
         try {
             this.bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, jobId);
-            LogUtils.setLogInfo(bundleJob, logInfo);
+            LogUtils.setLogInfo(bundleJob);
         }
         catch (JPAExecutorException ex) {
             throw new CommandException(ex);

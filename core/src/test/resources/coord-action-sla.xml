@@ -16,10 +16,21 @@
   limitations under the License.
 -->
 <coordinator-app name="test-coord-sla" frequency="${coord:days(1)}"
-                 start="2009-01-02T08:01Z" end="2010-01-01T08:01Z"
+                 start="2009-01-02T08:01Z" end="2009-01-03T08:00Z"
                  timezone="America/Los_Angeles"
                  xmlns="uri:oozie:coordinator:0.4"
                  xmlns:sla="uri:oozie:sla:0.2">
+
+    <datasets>
+     <dataset name="a" frequency="7" initial-instance="2009-01-01T01:00Z" timezone="UTC">
+        <uri-template>file://#testDir/${YEAR}/${DAY}</uri-template>
+     </dataset>
+    </datasets>
+    <input-events>
+     <data-in name="A" dataset="a">
+      <instance>${coord:current(0)}</instance>
+     </data-in>
+    </input-events>
     <action>
         <workflow>
             <app-path>${wfAppPath}</app-path>
@@ -34,4 +45,3 @@
         </sla:info>
     </action>
 </coordinator-app>
-

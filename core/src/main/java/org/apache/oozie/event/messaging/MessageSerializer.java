@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.event.messaging;
 
 import org.codehaus.jackson.map.ObjectMapper;

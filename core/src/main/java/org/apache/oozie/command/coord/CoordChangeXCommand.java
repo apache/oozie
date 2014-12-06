@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -34,20 +34,20 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
-import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
-import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.sla.SLARegistrationGetJPAExecutor;
-import org.apache.oozie.executor.jpa.sla.SLASummaryGetJPAExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
@@ -98,6 +98,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         ParamChecker.notEmpty(changeValue, "value");
 
         validateChangeValue(changeValue);
+    }
+
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
     }
 
     /**
@@ -170,21 +175,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     }
 
     /**
-     * Returns the actual last action time(one instance before coordJob.lastActionTime)
-     * @return Date - last action time if coordJob.getLastActionTime() is not null, null otherwise
-     */
-    private Date getLastActionTime() {
-        if(coordJob.getLastActionTime() == null)
-            return null;
-
-        Calendar d = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
-        d.setTime(coordJob.getLastActionTime());
-        TimeUnit timeUnit = TimeUnit.valueOf(coordJob.getTimeUnitStr());
-        d.add(timeUnit.getCalendarUnit(), -Integer.valueOf(coordJob.getFrequency()));
-        return d.getTime();
-    }
-
-    /**
      * Check if new end time is valid.
      *
      * @param coordJob coordinator job id.
@@ -192,21 +182,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      * @throws CommandException thrown if new end time is not valid.
      */
     private void checkEndTime(CoordinatorJobBean coordJob, Date newEndTime) throws CommandException {
-        // New endTime cannot be before coordinator job's start time.
-        Date startTime = coordJob.getStartTime();
-        if (newEndTime.before(startTime)) {
-            throw new CommandException(ErrorCode.E1015, newEndTime, "cannot be before coordinator job's start time ["
-                    + startTime + "]");
-        }
-
-        // New endTime cannot be before coordinator job's last action time.
-        Date lastActionTime = getLastActionTime();
-        if (lastActionTime != null) {
-            if (!newEndTime.after(lastActionTime)) {
-                throw new CommandException(ErrorCode.E1015, newEndTime,
-                        "must be after coordinator job's last action time [" + lastActionTime + "]");
-            }
-        }
+        //It's ok to set end date before start date.
     }
 
     /**
@@ -219,11 +195,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     private void checkPauseTime(CoordinatorJobBean coordJob, Date newPauseTime)
             throws CommandException {
-        // New pauseTime has to be a non-past time.
-        Date d = new Date();
-        if (newPauseTime.before(d)) {
-            throw new CommandException(ErrorCode.E1015, newPauseTime, "must be a non-past time");
-        }
+        //no check.
     }
 
     /**
@@ -235,15 +207,26 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      */
     private void checkStatusChange(CoordinatorJobBean coordJob, CoordinatorJob.Status jobStatus)
             throws CommandException {
-        if (!jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
-            throw new CommandException(ErrorCode.E1015, jobStatus, " must be RUNNING");
+        if (!jobStatus.equals(CoordinatorJob.Status.RUNNING) && !jobStatus.equals(CoordinatorJob.Status.IGNORED)) {
+            throw new CommandException(ErrorCode.E1015, jobStatus, " must be RUNNING or IGNORED");
         }
 
-        if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
-                CoordinatorJob.Status.KILLED))) {
-            throw new CommandException(ErrorCode.E1015, jobStatus,
-                    " Only FAILED or KILLED job can be changed to RUNNING. Current job status is "
-                            + coordJob.getStatus());
+        if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+            if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
+                    CoordinatorJob.Status.KILLED) || coordJob.getStatus().equals(CoordinatorJob.Status.IGNORED))) {
+                throw new CommandException(ErrorCode.E1015, jobStatus,
+                        " Only FAILED, KILLED, IGNORED job can be changed to RUNNING. Current job status is "
+                                + coordJob.getStatus());
+            }
+        }
+        else {
+            if (!(coordJob.getStatus().equals(CoordinatorJob.Status.FAILED) || coordJob.getStatus().equals(
+                    CoordinatorJob.Status.KILLED))
+                    || coordJob.isPending()) {
+                throw new CommandException(ErrorCode.E1015, jobStatus,
+                        " Only FAILED or KILLED non-pending job can be changed to IGNORED. Current job status is "
+                                + coordJob.getStatus() + " and pending status is " + coordJob.isPending());
+            }
         }
     }
 
@@ -253,39 +236,24 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      *
      * @param coordJob coordinator job
      * @param newPauseTime new pause time
+     * @throws JPAExecutorException, CommandException
      */
-    private void processLookaheadActions(CoordinatorJobBean coordJob, Date newPauseTime) throws CommandException {
-        Date lastActionTime = coordJob.getLastActionTime();
+    private void processLookaheadActions(CoordinatorJobBean coordJob, Date newTime) throws CommandException,
+            JPAExecutorException {
+        int lastActionNumber = coordJob.getLastActionNumber();
+        Date  lastActionTime = null;
+        Date  tempDate = null;
+
+        while ((tempDate = deleteAction(lastActionNumber, newTime)) != null) {
+            lastActionNumber--;
+            lastActionTime = tempDate;
+        }
         if (lastActionTime != null) {
-            // d is the real last action time.
-            Calendar d = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
-            d.setTime(getLastActionTime());
-            TimeUnit timeUnit = TimeUnit.valueOf(coordJob.getTimeUnitStr());
-
-            int lastActionNumber = coordJob.getLastActionNumber();
-
-            boolean hasChanged = false;
-            while (true) {
-                if (!newPauseTime.after(d.getTime())) {
-                    deleteAction(lastActionNumber);
-                    d.add(timeUnit.getCalendarUnit(), -Integer.valueOf(coordJob.getFrequency()));
-                    lastActionNumber = lastActionNumber - 1;
-
-                    hasChanged = true;
-                }
-                else {
-                    break;
-                }
-            }
-
-            if (hasChanged == true) {
-                coordJob.setLastActionNumber(lastActionNumber);
-                d.add(timeUnit.getCalendarUnit(), Integer.valueOf(coordJob.getFrequency()));
-                Date d1 = d.getTime();
-                coordJob.setLastActionTime(d1);
-                coordJob.setNextMaterializedTime(d1);
-                coordJob.resetDoneMaterialization();
-            }
+            LOG.debug("New pause/end date is : " + newTime + " and last action number is : " + lastActionNumber);
+            coordJob.setLastActionNumber(lastActionNumber);
+            coordJob.setLastActionTime(lastActionTime);
+            coordJob.setNextMaterializedTime(lastActionTime);
+            coordJob.resetDoneMaterialization();
         }
     }
 
@@ -294,31 +262,43 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
      *
      * @param actionNum coordinator action number
      */
-    private void deleteAction(int actionNum) throws CommandException {
+    private Date deleteAction(int actionNum, Date afterDate) throws CommandException {
         try {
+            if (actionNum <= 0) {
+                return null;
+            }
+
             String actionId = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(jobId, actionNum));
             CoordinatorActionBean bean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
-            // delete SLA registration entry (if any) for action
-            if (SLAService.isEnabled()) {
-                Services.get().get(SLAService.class).removeRegistration(actionId);
-            }
-            SLARegistrationBean slaReg = jpaService.execute(new SLARegistrationGetJPAExecutor(actionId));
-            if (slaReg != null) {
-                LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
-                deleteList.add(slaReg);
-            }
-            SLASummaryBean slaSummaryBean = jpaService.execute(new SLASummaryGetJPAExecutor(actionId));
-            if (slaSummaryBean != null) {
-                LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
-                deleteList.add(slaSummaryBean);
-            }
-            if (bean.getStatus() == CoordinatorAction.Status.WAITING
-                    || bean.getStatus() == CoordinatorAction.Status.READY) {
-                deleteList.add(bean);
+            if (afterDate.compareTo(bean.getNominalTime()) <= 0) {
+                // delete SLA registration entry (if any) for action
+                if (SLAService.isEnabled()) {
+                    Services.get().get(SLAService.class).removeRegistration(actionId);
+                }
+                SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
+                if (slaReg != null) {
+                    LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
+                    deleteList.add(slaReg);
+                }
+                SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
+                        SLASummaryQuery.GET_SLA_SUMMARY, actionId);
+                if (slaSummaryBean != null) {
+                    LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
+                    deleteList.add(slaSummaryBean);
+                }
+                if (bean.getStatus() == CoordinatorAction.Status.WAITING
+                        || bean.getStatus() == CoordinatorAction.Status.READY) {
+                    deleteList.add(bean);
+                }
+                else {
+                    throw new CommandException(ErrorCode.E1022, bean.getId());
+                }
+                return bean.getNominalTime();
             }
             else {
-                throw new CommandException(ErrorCode.E1022, bean.getId());
+                return null;
             }
+
         }
         catch (JPAExecutorException e) {
             throw new CommandException(e);
@@ -337,7 +317,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private void check(CoordinatorJobBean coordJob, Date newEndTime, Integer newConcurrency, Date newPauseTime,
             CoordinatorJob.Status jobStatus) throws CommandException {
 
-        if (coordJob.getStatus() == CoordinatorJob.Status.KILLED) {
+        if (coordJob.getStatus() == CoordinatorJob.Status.KILLED
+                || coordJob.getStatus() == CoordinatorJob.Status.IGNORED) {
             if (jobStatus == null || (newEndTime != null || newConcurrency != null || newPauseTime != null)) {
                 throw new CommandException(ErrorCode.E1016);
             }
@@ -374,19 +355,46 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                         && coordJob.getNextMaterializedTime().after(newEndTime);
                 if (!dontChange) {
                     coordJob.setEndTime(newEndTime);
-                    if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
-                        coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                    // OOZIE-1703, we should SUCCEEDED the coord, if it's in PREP and new endtime is before start time
+                    if (coordJob.getStartTime().compareTo(newEndTime) >= 0) {
+                        if (coordJob.getStatus() != CoordinatorJob.Status.PREP) {
+                            processLookaheadActions(coordJob, newEndTime);
+                        }
+                        if (coordJob.getStatus() == CoordinatorJob.Status.PREP
+                                || coordJob.getStatus() == CoordinatorJob.Status.RUNNING) {
+                            LOG.info("Changing coord status to SUCCEEDED, because it's in " + coordJob.getStatus()
+                                    + " and new end time is before start time. Startime is " + coordJob.getStartTime()
+                                    + " and new end time is " + newEndTime);
+
+                            coordJob.setStatus(CoordinatorJob.Status.SUCCEEDED);
+                            coordJob.resetPending();
+                        }
+                        coordJob.setDoneMaterialization();
                     }
-                    if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
-                            || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
-                        // Check for backward compatibility for Oozie versions (3.2 and before)
-                        // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
-                        // PAUSEDWITHERROR is not supported
-                        coordJob.setStatus(StatusUtils
-                                .getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+                    else {
+                        // move it to running iff new end time is after starttime.
+                        if (coordJob.getStatus() == CoordinatorJob.Status.SUCCEEDED) {
+                            coordJob.setStatus(CoordinatorJob.Status.RUNNING);
+                        }
+                        if (coordJob.getStatus() == CoordinatorJob.Status.DONEWITHERROR
+                                || coordJob.getStatus() == CoordinatorJob.Status.FAILED) {
+                            // Check for backward compatibility for Oozie versions (3.2 and before)
+                            // when RUNNINGWITHERROR, SUSPENDEDWITHERROR and
+                            // PAUSEDWITHERROR is not supported
+                            coordJob.setStatus(StatusUtils
+                                    .getStatusIfBackwardSupportTrue(CoordinatorJob.Status.RUNNINGWITHERROR));
+                        }
+                        coordJob.setPending();
+                        coordJob.resetDoneMaterialization();
+                        processLookaheadActions(coordJob, newEndTime);
                     }
-                    coordJob.setPending();
-                    coordJob.resetDoneMaterialization();
+                }
+
+                else {
+                    LOG.info("Didn't change endtime. Endtime is in between coord end time and next materialization time."
+                            + "Coord endTime = " + DateUtils.formatDateOozieTZ(newEndTime)
+                            + " next materialization time ="
+                            + DateUtils.formatDateOozieTZ(coordJob.getNextMaterializedTime()));
                 }
             }
 
@@ -420,13 +428,16 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             }
             if (jobStatus != null) {
                 coordJob.setStatus(jobStatus);
-                LOG.info("Coord status is changed to RUNNING from " + prevStatus);
-                coordJob.setPending();
+                LOG.info("Coord status is changed to " + jobStatus + " from " + prevStatus);
                 if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
+                    coordJob.setPending();
                     if (coordJob.getNextMaterializedTime() != null
                             && coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
                         coordJob.resetDoneMaterialization();
                     }
+                } else if (jobStatus.equals(CoordinatorJob.Status.IGNORED)) {
+                    coordJob.resetPending();
+                    coordJob.setDoneMaterialization();
                 }
             }
 
@@ -450,7 +461,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             LOG.info("ENDED CoordChangeXCommand for jobId=" + jobId);
             // update bundle action
             if (coordJob.getBundleId() != null) {
-                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
+                //ignore pending as it'sync command
+                BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus, true);
                 bundleStatusUpdate.call();
             }
         }
@@ -484,7 +496,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             throw new CommandException(e);
         }
 
-        LogUtils.setLogInfo(this.coordJob, logInfo);
+        LogUtils.setLogInfo(this.coordJob);
     }
 
     /* (non-Javadoc)

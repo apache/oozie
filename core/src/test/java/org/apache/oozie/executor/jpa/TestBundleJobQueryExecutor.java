@@ -17,9 +17,13 @@
  */
 package org.apache.oozie.executor.jpa;
 
+import java.util.Date;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
@@ -139,6 +143,24 @@ public class TestBundleJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getStatus(), retBean.getStatus());
         assertEquals(bean.getId(), retBean.getId());
     }
+
+    public void testBundleIDsForStatusTransit() throws Exception {
+            BundleJobBean job1 = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+            BundleJobBean job2 = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+            BundleJobBean job3 = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
+            BundleActionBean bean1 = this.addRecordToBundleActionTable(job1.getId(), "coord1", 0, Job.Status.PREP);
+            BundleActionBean bean2 = this.addRecordToBundleActionTable(job2.getId(), "coord2", 1, Job.Status.RUNNING);
+            BundleActionBean bean3 = this.addRecordToBundleActionTable(job3.getId(), "coord3", 1, Job.Status.RUNNING);
+            // GET_BUNDLE_ACTIONS_BY_LAST_MODIFIED_TIME
+            Date timeBefore = new Date(bean1.getLastModifiedTime().getTime() - 1000 * 60);
+            List<BundleJobBean> jobBean = BundleJobQueryExecutor.getInstance().getList(
+                    BundleJobQuery.GET_BUNDLE_IDS_FOR_STATUS_TRANSIT, timeBefore);
+            assertEquals(3, jobBean.size());
+            Date timeAfter = new Date(bean3.getLastModifiedTime().getTime() + 100 * 60);
+            jobBean = BundleJobQueryExecutor.getInstance().getList(BundleJobQuery.GET_BUNDLE_IDS_FOR_STATUS_TRANSIT,
+                    timeAfter);
+            assertEquals(0, jobBean.size());
+        }
 
     public void testGetList() throws Exception {
         // TODO

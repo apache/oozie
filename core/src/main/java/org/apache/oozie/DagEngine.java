@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie;
 
-import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.hadoop.conf.Configuration;
@@ -42,13 +42,20 @@ import org.apache.oozie.command.wf.SubmitSqoopXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.service.XLogStreamingService;
 
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.Date;
 import java.util.List;
@@ -73,12 +80,7 @@ public class DagEngine extends BaseEngine {
      * Create a system Dag engine, with no user and no group.
      */
     public DagEngine() {
-        if (Services.get().getConf().getBoolean(USE_XCOMMAND, true) == false) {
-            LOG.debug("Oozie DagEngine is not using XCommands.");
-        }
-        else {
-            LOG.debug("Oozie DagEngine is using XCommands.");
-        }
+
     }
 
     /**
@@ -279,12 +281,20 @@ public class DagEngine extends BaseEngine {
     @Override
     public void reRun(String jobId, Configuration conf) throws DagEngineException {
         try {
-            validateReRunConfiguration(conf);
-            new ReRunXCommand(jobId, conf).call();
-            start(jobId);
+            WorkflowJobBean wfBean = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
+            Configuration wfConf = new XConfiguration(new StringReader(wfBean.getConf()));
+            XConfiguration.copy(conf, wfConf);
+            validateReRunConfiguration(wfConf);
+            new ReRunXCommand(jobId, wfConf).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
+        }
+        catch (JPAExecutorException ex) {
+            throw new DagEngineException(ex);
+        }
+        catch (IOException ex) {
+            throw new DagEngineException(ErrorCode.E0803, ex.getMessage());
         }
     }
 
@@ -386,15 +396,21 @@ public class DagEngine extends BaseEngine {
      * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
      */
     @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
-        XLogStreamer.Filter filter = new XLogStreamer.Filter();
-        filter.setParameter(DagXLogInfoService.JOB, jobId);
-        WorkflowJob job = getJob(jobId);
-        Date lastTime = job.getEndTime();
-        if (lastTime == null) {
-            lastTime = job.getLastModifiedTime();
+    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            DagEngineException {
+        try {
+            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            filter.setParameter(DagXLogInfoService.JOB, jobId);
+            WorkflowJob job = getJob(jobId);
+            Date lastTime = job.getEndTime();
+            if (lastTime == null) {
+                lastTime = job.getLastModifiedTime();
+            }
+            Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
         }
-        Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+        catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();
@@ -519,6 +535,24 @@ public class DagEngine extends BaseEngine {
             SubmitXCommand submit = new SubmitXCommand(true, conf);
             return submit.call();
         } catch (CommandException ex) {
+            throw new DagEngineException(ex);
+        }
+    }
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws DagEngineException thrown if the job's status could not be obtained
+     */
+    @Override
+    public String getJobStatus(String jobId) throws DagEngineException {
+        try {
+            WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STATUS, jobId);
+            return wfJob.getStatusStr();
+        }
+        catch (JPAExecutorException ex) {
             throw new DagEngineException(ex);
         }
     }

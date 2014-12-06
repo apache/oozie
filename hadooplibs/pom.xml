@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadooplibs</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
     <description>Apache Oozie Hadoop Libs</description>
     <name>Apache Oozie Hadoop Libs</name>
     <packaging>pom</packaging>
@@ -37,17 +37,30 @@
         <module>hadoop-distcp-1</module>
         <module>hadoop-test-1</module>
         <module>hadoop-utils-1</module>
+<<<<<<< HEAD
  -->
+=======
+        <module>hadoop-auth-1</module>
+>>>>>>> origin/master
         <module>hadoop-2</module>
         <module>hadoop-test-2</module>
         <module>hadoop-distcp-2</module>
         <module>hadoop-utils-2</module>
+<<<<<<< HEAD
         <!-- 
 <module>hadoop-0.23</module>
         <module>hadoop-test-0.23</module>
         <module>hadoop-distcp-0.23</module>
         <module>hadoop-utils-0.23</module>
  -->
+=======
+        <module>hadoop-auth-2</module>
+        <module>hadoop-0.23</module>
+        <module>hadoop-test-0.23</module>
+        <module>hadoop-distcp-0.23</module>
+        <module>hadoop-utils-0.23</module>
+        <module>hadoop-auth-0.23</module>
+>>>>>>> origin/master
     </modules>
 
     <build>

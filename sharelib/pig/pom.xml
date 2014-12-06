@@ -22,12 +22,16 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-pig</artifactId>
+<<<<<<< HEAD
     <version>4.0.0-cdh5.1.2</version>
+=======
+    <version>4.2.0-SNAPSHOT</version>
+>>>>>>> origin/master
     <description>Apache Oozie Share Lib Pig</description>
     <name>Apache Oozie Share Lib Pig</name>
     <packaging>jar</packaging>
@@ -113,6 +117,16 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop-utils</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+           <groupId>dk.brics.automaton</groupId>
+            <artifactId>automaton</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

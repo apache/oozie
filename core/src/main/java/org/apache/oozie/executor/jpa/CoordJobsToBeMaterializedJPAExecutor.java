@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
@@ -55,7 +56,7 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
     public List<CoordinatorJobBean> execute(EntityManager em) throws JPAExecutorException {
         List<CoordinatorJobBean> cjBeans;
         try {
-            Query q = em.createNamedQuery("GET_COORD_JOBS_OLDER_THAN");
+            Query q = em.createNamedQuery("GET_COORD_JOBS_OLDER_FOR_MATERILZATION");
             q.setParameter("matTime", new Timestamp(this.dateInput.getTime()));
             if (limit > 0) {
                 q.setMaxResults(limit);

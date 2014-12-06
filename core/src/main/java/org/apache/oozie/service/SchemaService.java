@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import java.io.IOException;
@@ -68,6 +69,7 @@ public class SchemaService implements Service {
         "oozie-workflow-0.2.5.xsd",
         "oozie-workflow-0.3.xsd",
         "oozie-workflow-0.4.xsd",
+        "oozie-workflow-0.4.5.xsd",
         "oozie-workflow-0.5.xsd"};
     private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd", "oozie-coordinator-0.2.xsd",
         "oozie-coordinator-0.3.xsd", "oozie-coordinator-0.4.xsd"};
@@ -80,7 +82,7 @@ public class SchemaService implements Service {
         for (String baseSchema : baseSchemas) {
             sources.add(new StreamSource(IOUtils.getResourceAsStream(baseSchema, -1)));
         }
-        String[] schemas = conf.getStrings(extSchema);
+        String[] schemas = ConfigurationService.getStrings(conf, extSchema);
         if (schemas != null) {
             for (String schema : schemas) {
                 schema = schema.trim();
@@ -105,7 +107,6 @@ public class SchemaService implements Service {
             coordSchema = loadSchema(services.getConf(), OOZIE_COORDINATOR_XSD, COORD_CONF_EXT_SCHEMAS);
             bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
             slaSchema = loadSchema(services.getConf(), OOZIE_SLA_SEMANTIC_XSD, SLA_CONF_EXT_SCHEMAS);
-            bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
         }
         catch (SAXException ex) {
             throw new ServiceException(ErrorCode.E0130, ex.getMessage(), ex);

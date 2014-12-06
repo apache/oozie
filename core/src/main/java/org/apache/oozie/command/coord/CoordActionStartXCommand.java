@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.coord;
 
 import org.apache.hadoop.conf.Configuration;
@@ -56,9 +57,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings("deprecation")
 public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
@@ -86,6 +85,11 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         this.user = ParamChecker.notEmpty(user, "user");
         this.appName = ParamChecker.notEmpty(appName, "appName");
         this.jobId = jobId;
+    }
+
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
     }
 
     /**
@@ -292,7 +296,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
-        LogUtils.setLogInfo(coordAction, logInfo);
+        LogUtils.setLogInfo(coordAction);
     }
 
     @Override

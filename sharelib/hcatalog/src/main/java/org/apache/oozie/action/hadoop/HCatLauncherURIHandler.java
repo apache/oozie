@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
@@ -27,9 +28,9 @@ import java.util.Map.Entry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hcatalog.api.ConnectionFailureException;
-import org.apache.hcatalog.api.HCatClient;
-import org.apache.hcatalog.common.HCatException;
+import org.apache.hive.hcatalog.api.ConnectionFailureException;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.oozie.util.HCatURI;
 
 public class HCatLauncherURIHandler implements LauncherURIHandler {

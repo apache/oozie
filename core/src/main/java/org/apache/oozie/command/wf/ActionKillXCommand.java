@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.command.wf;
 
 import java.util.ArrayList;
@@ -75,6 +76,11 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(actionId);
+    }
+
+    @Override
     protected boolean isLockRequired() {
         return true;
     }
@@ -97,8 +103,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
             if (jpaService != null) {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_ACTION_OP, jobId);
                 this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, actionId);
-                LogUtils.setLogInfo(wfJob, logInfo);
-                LogUtils.setLogInfo(wfAction, logInfo);
+                LogUtils.setLogInfo(wfJob);
+                LogUtils.setLogInfo(wfAction);
             }
             else {
                 throw new CommandException(ErrorCode.E0610);
@@ -149,7 +155,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }
-                    queue(new NotificationXCommand(wfJob, wfAction));
+                    queue(new WorkflowNotificationXCommand(wfJob, wfAction));
                 }
                 catch (ActionExecutorException ex) {
                     wfAction.resetPending();

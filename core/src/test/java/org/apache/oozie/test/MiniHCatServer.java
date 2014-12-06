@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.test;
 
 import static org.junit.Assert.assertFalse;
@@ -39,15 +40,15 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.shims.ShimLoader;
-import org.apache.hcatalog.api.HCatAddPartitionDesc;
-import org.apache.hcatalog.api.HCatClient;
-import org.apache.hcatalog.api.HCatClient.DropDBMode;
-import org.apache.hcatalog.api.HCatCreateDBDesc;
-import org.apache.hcatalog.api.HCatCreateTableDesc;
-import org.apache.hcatalog.api.HCatPartition;
-import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.data.schema.HCatFieldSchema;
-import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
+import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.api.HCatClient.DropDBMode;
+import org.apache.hive.hcatalog.api.HCatCreateDBDesc;
+import org.apache.hive.hcatalog.api.HCatCreateTableDesc;
+import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.common.HCatConstants;
+import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
+import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Type;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
 import org.junit.Assert;

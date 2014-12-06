@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.oozie.executor.jpa;
 
-import java.util.Collection;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+package org.apache.oozie.executor.jpa;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
-import org.apache.oozie.util.ParamChecker;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import java.util.Collection;
 
 /**
  * Delete Coord job, its list of actions and return the number of actions that were deleted.
@@ -74,18 +74,11 @@ public class CoordJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
         try {
             // Only used by test cases to check for rollback of transaction
             FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
-            if (deleteList != null) {
-                for (String id : deleteList) {
-                    ParamChecker.notNull(id, "Coordinator Job Id");
-                    // Delete the coord job
-                    Query q = em.createNamedQuery("DELETE_COORD_JOB");
-                    q.setParameter("id", id);
-                    q.executeUpdate();
-                    // Delete the actions for this coord job
-                    Query g = em.createNamedQuery("DELETE_ACTIONS_FOR_COORDINATOR");
-                    g.setParameter("jobId", id);
-                    actionsDeleted = g.executeUpdate();
-                }
+            if (deleteList != null && !deleteList.isEmpty()) {
+                // Delete the coord job list
+                Query q = em.createNamedQuery("DELETE_COORD_JOB");
+                q.setParameter("id", deleteList);
+                actionsDeleted = q.executeUpdate();
             }
         }
         catch (Exception e) {

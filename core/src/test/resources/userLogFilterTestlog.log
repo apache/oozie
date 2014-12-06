@@ -1,0 +1,62 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+2014-02-27 02:06:47,499 DEBUG CoordActionStartXCommand:536 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Failing the action 0601839-140127221758655-oozie-wrkf-C@2. Because E0803 : E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+2014-02-27 02:06:47,499 ERROR CoordActionStartXCommand:536 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758656-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Failing the action 0601839-140127221758655-oozie-wrkf-C@2. Because E0803 : E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+2014-02-27 02:06:47,499 ERROR SubmitXCommand:536 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] XException,
+org.apache.oozie.command.CommandException: E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:252)
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:72)
+    at org.apache.oozie.command.XCommand.call(XCommand.java:280)
+    at org.apache.oozie.DagEngine.submitJobFromCoordinator(DagEngine.java:131)
+    at org.apache.oozie.command.coord.CoordActionStartXCommand.execute(CoordActionStartXCommand.java:182)
+    at org.apache.oozie.command.coord.CoordActionStartXCommand.execute(CoordActionStartXCommand.java:63)
+    at org.apache.oozie.command.XCommand.call(XCommand.java:280)
+    at org.apache.oozie.service.CallableQueueService$CallableWrapper.run(CallableQueueService.java:175)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
+    at java.lang.Thread.run(Thread.java:722)
+Caused by: java.lang.IllegalStateException: Variable substitution depth too large: 20 ${dniInputDir}
+    at org.apache.oozie.util.XConfiguration.substituteVars(XConfiguration.java:172)
+    at org.apache.oozie.util.XConfiguration.get(XConfiguration.java:120)
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:171)
+    ... 10 more
+2014-02-27 02:06:47,499  WARN CoordActionStartXCommand:542 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] can not create DagEngine for submitting jobs
+org.apache.oozie.DagEngineException: E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+    at org.apache.oozie.DagEngine.submitJobFromCoordinator(DagEngine.java:136)
+    at org.apache.oozie.command.coord.CoordActionStartXCommand.execute(CoordActionStartXCommand.java:182)
+    at org.apache.oozie.command.coord.CoordActionStartXCommand.execute(CoordActionStartXCommand.java:63)
+    at org.apache.oozie.command.XCommand.call(XCommand.java:280)
+    at org.apache.oozie.service.CallableQueueService$CallableWrapper.run(CallableQueueService.java:175)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
+    at java.lang.Thread.run(Thread.java:722)
+Caused by: org.apache.oozie.command.CommandException: E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:252)
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:72)
+    at org.apache.oozie.command.XCommand.call(XCommand.java:280)
+    at org.apache.oozie.DagEngine.submitJobFromCoordinator(DagEngine.java:131)
+    ... 7 more
+Caused by: java.lang.IllegalStateException: Variable substitution depth too large: 20 ${dniInputDir}
+    at org.apache.oozie.util.XConfiguration.substituteVars(XConfiguration.java:172)
+    at org.apache.oozie.util.XConfiguration.get(XConfiguration.java:120)
+    at org.apache.oozie.command.wf.SubmitXCommand.execute(SubmitXCommand.java:171)
+    ... 10 more
+2014-02-27 02:06:47,499 ERROR CoordActionStartXCommand:536 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Failing the action 0601839-140127221758655-oozie-wrkf-C@2. Because E0803 : E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}
+2014-02-27 02:06:49,215 DEBUG CoordActionStartXCommand:545 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Queuing [1] commands with delay [0]ms
+2014-02-27 02:06:49,215 DEBUG CoordActionStartXCommand:545 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Released lock for [0601839-140127221758655-oozie-wrkf-C] in [coord_action_start]
+2014-02-27 02:06:49,215 INFO CoordActionStartXCommand:545 [pool-2-thread-236] - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0601839-140127221758655-oozie-wrkf-C] ACTION[0601839-140127221758655-oozie-wrkf-C@2] Released lock for [0601839-140127221758655-oozie-wrkf-C] in [coord_action_start]

@@ -15,11 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.oozie.service;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XLogUserFilterParam;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,7 +30,6 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Properties;
-import org.apache.oozie.util.XLogStreamer;
 
 public class TestXLogStreamingService extends XTestCase {
 
@@ -128,14 +130,15 @@ public class TestXLogStreamingService extends XTestCase {
     }
 
     public void testNoDashInConversionPattern() throws Exception{
-        XLogStreamer.Filter.reset();
-        XLogStreamer.Filter.defineParameter("USER");
-        XLogStreamer.Filter.defineParameter("GROUP");
-        XLogStreamer.Filter.defineParameter("TOKEN");
-        XLogStreamer.Filter.defineParameter("APP");
-        XLogStreamer.Filter.defineParameter("JOB");
-        XLogStreamer.Filter.defineParameter("ACTION");
-        XLogStreamer.Filter xf = new XLogStreamer.Filter();
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+        XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
+
         xf.setParameter("USER", "oozie");
         xf.setLogLevel("DEBUG|INFO");
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
@@ -187,10 +190,12 @@ public class TestXLogStreamingService extends XTestCase {
     }
 
     private boolean doStreamDisabledCheck() throws Exception {
-        return doStreamLog(null).equals("Log streaming disabled!!");
+        XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
+
+        return doStreamLog(xf).equals("Log streaming disabled!!");
     }
 
-    private String doStreamLog(XLogStreamer.Filter xf) throws Exception {
+    private String doStreamLog(XLogFilter xf) throws Exception {
         StringWriter w = new StringWriter();
         Services.get().get(XLogStreamingService.class).streamLog(xf, null, null, w, new HashMap<String, String[]>());
         return w.toString();
