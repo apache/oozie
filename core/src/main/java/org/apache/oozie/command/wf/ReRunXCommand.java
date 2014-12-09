@@ -223,7 +223,11 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         }
 
         for (int i = 0; i < actions.size(); i++) {
-            if (!nodesToSkip.contains(actions.get(i).getName())) {
+            // Skipping to delete the sub workflow when rerun failed node option has been provided. As same
+            // action will be used to rerun the job.
+            if (!nodesToSkip.contains(actions.get(i).getName()) &&
+                    !(conf.getBoolean(OozieClient.RERUN_FAIL_NODES, false) &&
+                    SubWorkflowActionExecutor.ACTION_TYPE.equals(actions.get(i).getType()))) {
                 deleteList.add(actions.get(i));
                 LOG.info("Deleting Action[{0}] for re-run", actions.get(i).getId());
             }

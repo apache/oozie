@@ -124,7 +124,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     }
 
     protected void verifyAndInjectSubworkflowDepth(Configuration parentConf, Configuration conf) throws ActionExecutorException {
-        int depth = conf.getInt(SUBWORKFLOW_DEPTH, 0);
+        int depth = parentConf.getInt(SUBWORKFLOW_DEPTH, 0);
         int maxDepth = ConfigurationService.getInt(SUBWORKFLOW_MAX_DEPTH);
         if (depth >= maxDepth) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "SUBWF001",
@@ -180,8 +180,14 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 //TODO: this has to be refactored later to be done in a single place for REST calls and this
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),
                                           subWorkflowConf);
-
-                subWorkflowId = oozieClient.run(subWorkflowConf.toProperties());
+                // if the rerun failed node option is provided during the time of rerun command, old subworkflow will
+                // rerun again.
+                if(action.getExternalId() != null && parentConf.getBoolean(OozieClient.RERUN_FAIL_NODES, false)) {
+                    oozieClient.reRun(action.getExternalId(), subWorkflowConf.toProperties());
+                    subWorkflowId = action.getExternalId();
+                } else {
+                    subWorkflowId = oozieClient.run(subWorkflowConf.toProperties());
+                }
             }
             else {
                 subWorkflowId = runningJobId;

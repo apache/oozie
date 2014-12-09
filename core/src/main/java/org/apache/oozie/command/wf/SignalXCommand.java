@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.control.ForkActionExecutor;
 import org.apache.oozie.action.control.StartActionExecutor;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -318,6 +320,25 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         }
         else {
             for (WorkflowActionBean newAction : WorkflowStoreService.getActionsToStart(workflowInstance)) {
+                boolean isOldWFAction = false;
+
+                // In case of subworkflow rerun when failed option have been provided, rerun command do not delete
+                // old action. To avoid twice entry for same action, Checking in Db if the workflow action already exist.
+                if(SubWorkflowActionExecutor.ACTION_TYPE.equals(newAction.getType())) {
+                    try {
+                        WorkflowActionBean oldAction = WorkflowActionQueryExecutor.getInstance()
+                                .get(WorkflowActionQuery.GET_ACTION_CHECK,
+                                        newAction.getId());
+                        newAction.setExternalId(oldAction.getExternalId());
+                        newAction.setCreatedTime(oldAction.getCreatedTime());
+                        isOldWFAction = true;
+                    } catch (JPAExecutorException e) {
+                        if(e.getErrorCode() != ErrorCode.E0605) {
+                            throw new CommandException(e);
+                        }
+                    }
+                }
+
                 String skipVar = workflowInstance.getVar(newAction.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
                         + ReRunXCommand.TO_SKIP);
                 boolean skipNewAction = false, suspendNewAction = false;
@@ -334,23 +355,29 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     queue(new SignalXCommand(jobId, oldAction.getId()));
                 }
                 else {
-                    try {
-                        // Make sure that transition node for a forked action
-                        // is inserted only once
-                        WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
-                                newAction.getId());
+                    if(!skipAction) {
+                        try {
+                            // Make sure that transition node for a forked action
+                            // is inserted only once
+                            WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
+                                    newAction.getId());
 
-                        continue;
-                    }
-                    catch (JPAExecutorException jee) {
+                            continue;
+                        } catch (JPAExecutorException jee) {
+                        }
                     }
                     suspendNewAction = checkForSuspendNode(newAction);
                     newAction.setPending();
                     String actionSlaXml = getActionSLAXml(newAction.getName(), workflowInstance.getApp()
                             .getDefinition(), wfJob.getConf());
                     newAction.setSlaXml(actionSlaXml);
-                    newAction.setCreatedTime(new Date());
-                    insertList.add(newAction);
+                    if(!isOldWFAction) {
+                        newAction.setCreatedTime(new Date());
+                        insertList.add(newAction);
+                    } else {
+                        updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_START,
+                                newAction));
+                    }
                     LOG.debug("SignalXCommand: Name: " + newAction.getName() + ", Id: " + newAction.getId()
                             + ", Authcode:" + newAction.getCred());
                     if (wfAction != null) { // null during wf job submit

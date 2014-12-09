@@ -273,6 +273,7 @@ public class WorkflowActionQueryExecutor extends
                 bean.setExecutionPath((String) arr[11]);
                 bean.setSignalValue((String) arr[12]);
                 bean.setSlaXmlBlob((StringBlob) arr[13]);
+                bean.setExternalId((String) arr[14]);
                 break;
             case GET_ACTION_CHECK:
                 bean = new WorkflowActionBean();
@@ -356,6 +357,7 @@ public class WorkflowActionQueryExecutor extends
                 bean.setName((String) arr[1]);
                 bean.setStatusStr((String) arr[2]);
                 bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
+                bean.setType((String) arr[4]);
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
