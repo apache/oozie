@@ -260,11 +260,12 @@ public class CoordinatorEngine extends BaseEngine {
      * @param noCleanup
      * @throws BaseEngineException
      */
-    public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup)
+    public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup,
+                                       boolean failed)
             throws BaseEngineException {
         try {
             return new CoordRerunXCommand(jobId, rerunType, scope, refresh,
-                    noCleanup).call();
+                    noCleanup, failed).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

@@ -278,7 +278,8 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
                 .getChildren("instance", namespace).get(0)).getText();
         assertEquals(text, "${coord:future(0, 1)}");
         new CoordActionsKillXCommand(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum)).call();
-        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), true, true);
+        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), true,
+                true);
         bean = coordClient.getCoordActionInfo(actionId);
         sleep(1000);
         assertEquals(bean.getMissingDependencies(), "!!${coord:future(0, 1)}");

@@ -19,7 +19,7 @@
 ---++ Rerun Arguments
 
  <verbatim>
-$oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
+$oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh] [-failed]
 [-action 1, 3-4, 7-40] (-action or -date is required to rerun.)
 [-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
 (if neither -action nor -date is given, the exception will be thrown.)
@@ -34,6 +34,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh]
    * If -nocleanup is given, coordinator directories will not be removed; otherwise the 'output-event' will be deleted.
    * If -refresh is set, new dataset is re-evaluated for latest() and future().
    * If -refresh is set, all dependencies will be re-checked; otherwise only missed dependencies will be checked.
+   * If -failed is set, re-runs the failed workflow actions of the coordinator actions.
 
 ---++ Rerun coordinator actions
 

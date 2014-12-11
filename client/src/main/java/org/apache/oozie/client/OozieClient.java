@@ -1476,12 +1476,12 @@ public class OozieClient {
     }
     private class CoordRerun extends ClientCallable<List<CoordinatorAction>> {
 
-        CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup) {
+        CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup, boolean failed) {
             super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
                     RestConstants.JOB_COORD_ACTION_RERUN, RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rerunType,
                     RestConstants.JOB_COORD_SCOPE_PARAM, scope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
                     Boolean.toString(refresh), RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean
-                            .toString(noCleanup)));
+                            .toString(noCleanup), RestConstants.JOB_COORD_RERUN_FAILED_PARAM, Boolean.toString(failed)));
         }
 
         @Override
@@ -1535,7 +1535,23 @@ public class OozieClient {
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
-        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup).call();
+        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, false).call();
+    }
+
+    /**
+     * Rerun coordinator actions with failed option.
+     *
+     * @param jobId coordinator jobId
+     * @param rerunType rerun type 'date' if -date is used, 'action-id' if -action is used
+     * @param scope rerun scope for date or actionIds
+     * @param refresh true if -refresh is given in command option
+     * @param noCleanup true if -nocleanup is given in command option
+     * @param failed true if -failed is given in command option
+     * @throws OozieClientException
+     */
+    public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
+                                              boolean noCleanup, boolean failed) throws OozieClientException {
+        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, failed).call();
     }
 
     /**

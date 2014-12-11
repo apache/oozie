@@ -764,7 +764,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         assertEquals(Job.Status.FAILED, job.getStatus());
 
         try {
-            new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true)
+            new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true, false)
                     .call();
             fail("Coordinator job is FAILED, rerun should throw exception");
         }
@@ -792,7 +792,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         job = jpaService.execute(coordJobGetExecutor);
         assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
 
-        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true)
+        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true, false)
                 .call();
         job = jpaService.execute(coordJobGetExecutor);
         assertEquals(Job.Status.RUNNINGWITHERROR, job.getStatus());
@@ -815,7 +815,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         job = jpaService.execute(coordJobGetExecutor);
         assertEquals(Job.Status.PAUSED, job.getStatus());
 
-        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true)
+        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true, false)
                 .call();
 
         job = jpaService.execute(coordJobGetExecutor);
@@ -840,7 +840,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         job = jpaService.execute(coordJobGetExecutor);
         assertEquals(Job.Status.PAUSEDWITHERROR, job.getStatus());
 
-        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true)
+        new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false, true, false)
                 .call();
 
         job = jpaService.execute(coordJobGetExecutor);
@@ -1445,5 +1445,66 @@ public class TestCoordRerunXCommand extends XDataTestCase {
                 + "</kill>"
                 + "<end name='end' />"
                 + "</workflow-app>";
+    }
+
+    /**
+     * Tests -failed option of rerun. If failed option is provided it should rerun the old workflow of an action
+     * otherwise it should run the new workflow.
+     * @throws Exception
+     */
+    public void testCoordRerunWithFailedOption() throws Exception {
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-01T23:59Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false,
+                false, 1);
+
+        CoordinatorActionBean action = addRecordToWithLazyAction(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUBMITTED, "coord-rerun-action1.xml");
+        final String actionId = action.getId();
+        new CoordActionStartXCommand(actionId, getTestUser(), "myapp", "myjob").call();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
+                    + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
+        }
+
+        final OozieClient coordClient = LocalOozie.getCoordClient();
+        final OozieClient wclient = LocalOozie.getClient();
+        waitFor(15*1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (coordClient.getCoordActionInfo(actionId).getStatus() == CoordinatorAction.Status.RUNNING);
+            }
+        });
+
+        wclient.kill(coordClient.getCoordActionInfo(actionId).getExternalId());
+
+        waitFor(150*1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (coordClient.getCoordActionInfo(actionId).getStatus() == CoordinatorAction.Status.KILLED);
+            }
+        });
+
+        String externalId = coordClient.getCoordActionInfo(actionId).getExternalId();
+
+        coordClient.reRunCoord(coordJob.getId(), RestConstants.JOB_COORD_SCOPE_ACTION, "1", false, true, true);
+
+        waitFor(150*1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (coordClient.getCoordActionInfo(actionId).getStatus() == CoordinatorAction.Status.SUCCEEDED);
+            }
+        });
+        assertEquals(externalId,coordClient.getCoordActionInfo(actionId).getExternalId());
+
+        coordClient.reRunCoord(coordJob.getId(), RestConstants.JOB_COORD_SCOPE_ACTION, "1", false, true, false);
+
+        waitFor(150*1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return (coordClient.getCoordActionInfo(actionId).getStatus() == CoordinatorAction.Status.SUCCEEDED);
+            }
+        });
+        assertNotSame(externalId,coordClient.getCoordActionInfo(actionId).getExternalId());
     }
 }

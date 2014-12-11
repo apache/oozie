@@ -177,7 +177,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         }
         @Override
         public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh,
-                boolean noCleanup) throws BaseEngineException {
+                boolean noCleanup, boolean failed) throws BaseEngineException {
             did = RestConstants.JOB_COORD_ACTION_RERUN;
             int idx = validateCoordinatorIdx(jobId);
             started.set(idx, true);

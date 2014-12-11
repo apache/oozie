@@ -663,6 +663,7 @@ public class V1JobServlet extends BaseJobServlet {
         String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
         String refresh = request.getParameter(RestConstants.JOB_COORD_RERUN_REFRESH_PARAM);
         String noCleanup = request.getParameter(RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM);
+        String failed = request.getParameter(RestConstants.JOB_COORD_RERUN_FAILED_PARAM);
 
         XLog.getLog(getClass()).info(
                 "Rerun coordinator for jobId=" + jobId + ", rerunType=" + rerunType + ",scope=" + scope + ",refresh="
@@ -674,7 +675,7 @@ public class V1JobServlet extends BaseJobServlet {
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
-                    Boolean.valueOf(noCleanup));
+                    Boolean.valueOf(noCleanup), Boolean.valueOf(failed));
             List<CoordinatorActionBean> coordActions;
             if (coordInfo != null) {
                 coordActions = coordInfo.getCoordActions();

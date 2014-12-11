@@ -137,6 +137,7 @@ public class OozieCLI {
     public static final String DATE_OPTION = "date";
     public static final String RERUN_REFRESH_OPTION = "refresh";
     public static final String RERUN_NOCLEANUP_OPTION = "nocleanup";
+    public static final String RERUN_FAILED_OPTION = "failed";
     public static final String ORDER_OPTION = "order";
 
     public static final String UPDATE_SHARELIB_OPTION = "sharelibupdate";
@@ -328,6 +329,8 @@ public class OozieCLI {
                 "re-materialize the coordinator rerun actions (requires -rerun)");
         Option rerun_nocleanup = new Option(RERUN_NOCLEANUP_OPTION, false,
                 "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
+        Option rerun_failed = new Option(RERUN_FAILED_OPTION, false,
+                "runs the failed workflow actions of the coordinator actions (requires -rerun)");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
         Option getAllWorkflows = new Option(ALL_WORKFLOWS_FOR_COORD_ACTION, false,
@@ -380,6 +383,7 @@ public class OozieCLI {
         jobOptions.addOption(rerun_coord);
         jobOptions.addOption(rerun_refresh);
         jobOptions.addOption(rerun_nocleanup);
+        jobOptions.addOption(rerun_failed);
         jobOptions.addOption(getAllWorkflows);
         jobOptions.addOptionGroup(actions);
         jobOptions.addOption(logFilter);
@@ -1050,7 +1054,11 @@ public class OozieCLI {
                     if (options.contains(RERUN_NOCLEANUP_OPTION)) {
                         noCleanup = true;
                     }
-                    printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
+                    if (options.contains(RERUN_FAILED_OPTION)) {
+                        printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup, true));
+                    } else {
+                        printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
+                    }
                 }
             }
             else if (options.contains(INFO_OPTION)) {

@@ -99,6 +99,9 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
         if (arr[9] != null) {
             bean.setTimeOut((Integer) arr[9]);
         }
+        if (arr[10] != null) {
+            bean.setExternalId((String)arr[10]);
+        }
         return bean;
     }
 }

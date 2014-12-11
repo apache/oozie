@@ -139,7 +139,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                     LOG.debug("Queuing rerun range [" + rerunDateScope + "] for coord id " + coordId + " of bundle "
                             + bundleJob.getId());
                     queue(new CoordRerunXCommand(coordId, RestConstants.JOB_COORD_SCOPE_DATE, rerunDateScope, refresh,
-                            noCleanup));
+                            noCleanup, false));
                     updateBundleAction(coordNameToBAMapping.get(coordName));
                     isUpdateActionDone = true;
                 }
@@ -159,7 +159,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                     LOG.debug("Queuing rerun range [" + dateScope + "] for coord id " + action.getCoordId() + " of bundle "
                             + bundleJob.getId());
                     queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_SCOPE_DATE, dateScope,
-                            refresh, noCleanup));
+                            refresh, noCleanup, false));
                     updateBundleAction(action);
                     isUpdateActionDone = true;
                 }

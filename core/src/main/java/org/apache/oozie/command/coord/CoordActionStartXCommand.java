@@ -186,16 +186,21 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 }
                 // Normalize workflow appPath here;
                 JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
-                String wfId = dagEngine.submitJobFromCoordinator(conf, actionId);
+                if (coordAction.getExternalId() != null) {
+                    conf.setBoolean(OozieClient.RERUN_FAIL_NODES, true);
+                    dagEngine.reRun(coordAction.getExternalId(), conf);
+                } else {
+                    String wfId = dagEngine.submitJobFromCoordinator(conf, actionId);
+                    coordAction.setExternalId(wfId);
+                }
                 coordAction.setStatus(CoordinatorAction.Status.RUNNING);
-                coordAction.setExternalId(wfId);
                 coordAction.incrementAndGetPending();
 
                 //store.updateCoordinatorAction(coordAction);
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
-                    log.debug("Updating WF record for WFID :" + wfId + " with parent id: " + actionId);
-                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, wfId);
+                    log.debug("Updating WF record for WFID :" + coordAction.getExternalId() + " with parent id: " + actionId);
+                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, coordAction.getExternalId());
                     wfJob.setParentId(actionId);
                     wfJob.setLastModifiedTime(new Date());
                     BatchQueryExecutor executor = BatchQueryExecutor.getInstance();
