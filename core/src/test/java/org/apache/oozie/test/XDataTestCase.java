@@ -664,7 +664,9 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(actionId);
-        action.setExternalId(actionId + "_E");
+        if(status != CoordinatorAction.Status.SUBMITTED && status != CoordinatorAction.Status.READY) {
+            action.setExternalId(actionId + "_E");
+        }
         action.setJobId(jobId);
         action.setActionNumber(actionNum);
         action.setPending(pending);

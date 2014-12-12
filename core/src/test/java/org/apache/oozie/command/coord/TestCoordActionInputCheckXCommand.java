@@ -717,9 +717,10 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         action.setMissingDependencies("");
         action.setStatus(CoordinatorAction.Status.WAITING);
+        action.setExternalId(null);
         try {
             jpaService = Services.get().get(JPAService.class);
-            CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK, action);
+            CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
         }
         catch (JPAExecutorException se) {
             fail("Action ID " + coordJob.getId() + "@1" + " was not stored properly in db");
