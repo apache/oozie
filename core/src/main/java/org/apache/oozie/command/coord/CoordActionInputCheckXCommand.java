@@ -18,16 +18,22 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.Shell.ShellCommandExecutor;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -208,6 +214,26 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                     + nonResolvedList.toString());
             // Updating the list of data dependencies that are available and those that are yet not
             boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
+            // Chekckout done-shell
+            boolean shellFlag = false;
+            boolean shellStatus = false;
+            Element eAction = XmlUtils.parseXml(actionXml.toString());
+            Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+            if (shell != null) {
+                shellFlag = true;
+                shellStatus = checkShell(actionXml, nominalTime);
+            }
+            if (shellStatus == true) {
+                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
+                actionXml.replace(0, actionXml.length(), newActionXml);
+                coordAction.setActionXml(actionXml.toString());
+                coordAction.setStatus(CoordinatorAction.Status.READY);
+                updateCoordAction(coordAction, true);
+                new CoordActionReadyXCommand(coordAction.getJobId()).call(getEntityKey());
+            }
+            if (shellFlag == true || shellStatus == false) {
+                return null;
+            }
             String pushDeps = coordAction.getPushMissingDependencies();
             // Resolve latest/future only when all current missingDependencies and
             // pushMissingDependencies are met
@@ -351,6 +377,84 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return checkResolvedUris(eAction, existList, nonExistList, conf);
     }
 
+    protected String SimpleMD5(String executeshell) {
+        String generatedPassword = null;
+        try {
+            // Create MessageDigest instance for MD5
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            // Add password bytes to digest
+            md.update(executeshell.getBytes());
+            // Get the hash's bytes
+            byte[] bytes = md.digest();
+            // This bytes[] has bytes in decimal format;
+            // Convert it to hexadecimal format
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes.length; i++) {
+                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            // Get complete hashed password in hex format
+            generatedPassword = sb.toString();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return generatedPassword;
+    }
+
+    /**
+     *
+     * @param actionXml
+     * @param nominalTime
+     * @return true if the output return "true" of a shell script
+     * @throws Exception
+     */
+    protected boolean checkShell(StringBuilder actionXml, Date nominalTime) throws Exception {
+        Element eAction = XmlUtils.parseXml(actionXml.toString());
+        Element shell = eAction.getChild("done-shell", eAction.getNamespace());
+        Element shellPath = shell.getChild("shell", eAction.getNamespace());
+        if (shellPath != null && nominalTime != null) {
+            String executeshell = shellPath.getText();
+            String[] pwd = { "pwd" };
+            ShellCommandExecutor shellLocation = new ShellCommandExecutor(pwd);
+            shellLocation.execute();
+            String location = shellLocation.getOutput();
+            location = location.trim();
+            String filePath = location + "/shell/done-shell" + SimpleMD5(coordJob.getUser() + executeshell) + ".sh";
+            File file = new File(filePath);
+            if (!file.exists()) {
+                try {
+                    FileOutputStream fos = new FileOutputStream(filePath);
+                    fos.write(executeshell.getBytes());
+                    fos.close();
+                    file.setExecutable(true);
+                    String[] command = { "bash", "-c","sudo chown " + coordJob.getUser() + ":" + coordJob.getUser() + " " + filePath };
+                    ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
+                    shellCommandExecutor.execute();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            ArrayList<String> list = new ArrayList<String>();
+            list.add("bash");
+            list.add("-c");
+            list.add("sudo -u " + coordJob.getUser() + " bash -c " + filePath);
+            list.add(nominalTime.toString());
+            int size = list.size();
+            String[] command = (String[]) list.toArray(new String[size]);
+            ShellCommandExecutor shellCommandExecutor = new ShellCommandExecutor(command);
+            shellCommandExecutor.execute();
+            String outPut = shellCommandExecutor.getOutput();
+            if (outPut.indexOf("true") != -1) {
+                return true;
+            }
+            else if (outPut.indexOf("false") != -1) {
+                return false;
+            }
+        }
+        return false;
+    }
+    
     protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
