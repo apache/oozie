@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
@@ -377,28 +378,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return checkResolvedUris(eAction, existList, nonExistList, conf);
     }
 
-    protected String SimpleMD5(String executeshell) {
-        String generatedPassword = null;
-        try {
-            // Create MessageDigest instance for MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            // Add password bytes to digest
-            md.update(executeshell.getBytes());
-            // Get the hash's bytes
-            byte[] bytes = md.digest();
-            // This bytes[] has bytes in decimal format;
-            // Convert it to hexadecimal format
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < bytes.length; i++) {
-                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-            }
-            // Get complete hashed password in hex format
-            generatedPassword = sb.toString();
-        }
-        catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return generatedPassword;
+    protected String simpleMD5(String executeshell) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        digest.update(executeshell.getBytes(), 0, executeshell.length());
+        String md5 = new BigInteger(1, digest.digest()).toString(16);
+        return md5;
     }
 
     /**
@@ -419,7 +403,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             shellLocation.execute();
             String location = shellLocation.getOutput();
             location = location.trim();
-            String filePath = location + "/shell/done-shell" + SimpleMD5(coordJob.getUser() + executeshell) + ".sh";
+            String filePath = location + "/shell/done-shell" + simpleMD5(coordJob.getUser() + executeshell) + ".sh";
             File file = new File(filePath);
             if (!file.exists()) {
                 try {
