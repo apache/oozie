@@ -265,8 +265,12 @@ public class TestSubmitXCommand extends XDataTestCase {
         });
         WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
         XConfiguration protoConf = new XConfiguration(new StringReader(wf.getProtoActionConf()));
-        //username, libpath, apppath
-        assertEquals(protoConf.size(), 2);
+        // Hadoop 2 adds "mapreduce.job.user.name" in addition to "user.name"
+        if (protoConf.get("mapreduce.job.user.name") != null) {
+            assertEquals(3, protoConf.size());
+        } else {
+            assertEquals(2, protoConf.size());
+        }
         assertNull(protoConf.get(WorkflowAppService.APP_LIB_PATH_LIST));
 
         new File(getTestCaseDir() + "/lib").mkdirs();
@@ -284,7 +288,12 @@ public class TestSubmitXCommand extends XDataTestCase {
         });
         wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId1);
         protoConf = new XConfiguration(new StringReader(wf.getProtoActionConf()));
-        assertEquals(protoConf.size(), 3);
+        // Hadoop 2 adds "mapreduce.job.user.name" in addition to "user.name"
+        if (protoConf.get("mapreduce.job.user.name") != null) {
+            assertEquals(4, protoConf.size());
+        } else {
+            assertEquals(3, protoConf.size());
+        }
         assertNotNull(protoConf.get(WorkflowAppService.APP_LIB_PATH_LIST));
     }
 
