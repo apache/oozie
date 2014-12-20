@@ -203,7 +203,9 @@ public class JavaActionExecutor extends ActionExecutor {
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         JobConf conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
+        LOG.error("xxxxx"+conf+"vvvv"+conf.get("dfs.block.size"));
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
+        LOG.error("wwwwww"+conf+"uuuu"+context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER)+"iiiiiiiii"+conf.get("dfs.block.size"));
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
         conf.set(HADOOP_YARN_RM, jobTracker);
@@ -238,6 +240,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration launcherConf = new XConfiguration();
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
                 XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
+                LOG.error("nnnnnnnnnn"+getType()+"11111"+launcherConf.get("dfs.block.size")+"2222"+actionDefaultConf.get("dfs.block.size"));
                 injectLauncherProperties(actionDefaultConf, launcherConf);
                 injectLauncherProperties(inlineConf, launcherConf);
                 injectLauncherUseUberMode(launcherConf);
@@ -887,6 +890,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // action job configuration
             Configuration actionConf = createBaseHadoopConf(context, actionXml);
+            LOG.error("yyyyyyyy"+actionConf);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
@@ -928,13 +932,18 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
+            LOG.error("aaaaaaa"+launcherJobConf+"mmmm"+context+"ttttt"+action+"kkk"+actionXml+"pppp"+actionConf);
 
             injectJobInfo(launcherJobConf, actionConf, context, action);
+            LOG.error("bbbbbbbbb"+launcherJobConf);
             injectLauncherCallback(context, launcherJobConf);
+            LOG.error("ccccccc"+launcherJobConf);
             LOG.debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
+            LOG.error("ddddddd"+launcherJobConf);
             String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
                     .getRecoveryId());
+            LOG.error("eeeeeeee"+launcherJobConf);
             boolean alreadyRunning = launcherId != null;
             RunningJob runningJob;
 
@@ -957,6 +966,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(has
                         .getMRDelegationTokenRenewer(launcherJobConf));
                 launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
+                LOG.error("ffffffffff"+launcherJobConf);
 
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials()) {
@@ -964,12 +974,15 @@ public class JavaActionExecutor extends ActionExecutor {
                         Text fauxAlias = new Text(tk.getKind() + "_" + tk.getService());
                         LOG.debug("ADDING TOKEN: " + fauxAlias);
                         launcherJobConf.getCredentials().addToken(fauxAlias, tk);
+                        LOG.error("ggggggggggg"+launcherJobConf);
                     }
                 }
                 else {
                     LOG.info("No need to inject credentials.");
                 }
                 runningJob = jobClient.submitJob(launcherJobConf);
+                LOG.error("launcherJobConf"+launcherJobConf+"hhhhhhhhhhhhhhhhhhhh"+launcherJobConf.toString());
+                LOG.error("runningJob"+runningJob+"ffffffffff"+runningJob.getConfiguration()+"dddddd"+runningJob.getConfiguration().toString());
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
                             "Error submitting launcher for action [{0}]", action.getId());

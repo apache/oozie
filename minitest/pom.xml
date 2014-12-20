@@ -28,7 +28,11 @@
 
     <groupId>org.apache.oozie.test</groupId>
     <artifactId>oozie-mini</artifactId>
+<<<<<<< HEAD
+    <version>4.0.0-cdh5.1.2</version>
+=======
     <version>4.2.0-SNAPSHOT</version>
+>>>>>>> origin/master
     <description>Apache Oozie MiniOozie</description>
     <name>Apache Oozie MiniOozie</name>
 

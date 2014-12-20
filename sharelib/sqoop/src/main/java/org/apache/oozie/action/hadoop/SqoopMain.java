@@ -163,7 +163,7 @@ public class SqoopMain extends LauncherMain {
             System.out.println("             " + arg);
         }
 
-        LauncherMainHadoopUtils.killChildYarnJobs(sqoopConf);
+//        LauncherMainHadoopUtils.killChildYarnJobs(sqoopConf);
 
         System.out.println("=================================================================");
         System.out.println();

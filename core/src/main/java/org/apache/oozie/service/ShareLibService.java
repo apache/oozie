@@ -117,6 +117,7 @@ public class ShareLibService implements Service, Instrumentable {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
         try {
+
             fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             updateLauncherLib();
             updateShareLib();
@@ -168,11 +169,14 @@ public class ShareLibService implements Service, Instrumentable {
         if (isShipLauncherEnabled) {
             if (fs == null) {
                 Path launcherlibPath = getLauncherlibPath();
+                if(launcherlibPath!=null)
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
                 URI uri = launcherlibPath.toUri();
+                if(uri!=null)
                 fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
             }
             Path launcherlibPath = getLauncherlibPath();
+            if(launcherlibPath!=null)
             setupLauncherLibPath(fs, launcherlibPath);
             recursiveChangePermissions(fs, launcherlibPath, FsPermission.valueOf(PERMISSION_STRING));
         }
@@ -241,6 +245,8 @@ public class ShareLibService implements Service, Instrumentable {
      */
     private void copyJarContainingClasses(List<Class> classes, FileSystem fs, Path executorDir, String type)
             throws IOException {
+ //     if(executorDir!=null)
+ //       LOG.error("IIIIIIIII"+executorDir);
         fs.mkdirs(executorDir);
         Set<String> localJarSet = new HashSet<String>();
         for (Class c : classes) {
@@ -256,10 +262,14 @@ public class ShareLibService implements Service, Instrumentable {
         for (String localJarStr : localJarSet) {
             File localJar = new File(localJarStr);
             fs.copyFromLocalFile(new Path(localJar.getPath()), executorDir);
+     //       if(localJar!=null)
+    //          LOG.error("LLLLLLLLLLLL"+localJar.getName());
             Path path = new Path(executorDir, localJar.getName());
             listOfPaths.add(path);
             LOG.info(localJar.getName() + " uploaded to " + executorDir.toString());
         }
+  //      if(listOfPaths!=null)
+  //      LOG.error("QQQQQQ"+type+"wwwwwwwww"+listOfPaths.toString());
         launcherLibMap.put(type, listOfPaths);
 
     }
@@ -321,9 +331,12 @@ public class ShareLibService implements Service, Instrumentable {
     public List<Path> getShareLibJars(String shareLibKey) throws IOException {
         // Sharelib map is empty means that on previous or startup attempt of
         // caching sharelib has failed.Trying to reload
+      LOG.error("KAI SHI getShareLibJars");
         if (shareLibMap.isEmpty() && !shareLibLoadAttempted) {
+          LOG.error("KAI JIN RU LE");
             synchronized (ShareLibService.class) {
                 if (shareLibMap.isEmpty()) {
+                  LOG.error("YAO updateShareLib LE");
                     updateShareLib();
                     shareLibLoadAttempted = true;
                 }
@@ -371,10 +384,12 @@ public class ShareLibService implements Service, Instrumentable {
         List<Path> returnList = new ArrayList<Path>();
         // Sharelib map is empty means that on previous or startup attempt of
         // caching launcher jars has failed.Trying to reload
+  //      LOG.error("getSystemLibJars lalalalallalalallala");
         if (isShipLauncherEnabled) {
             if (launcherLibMap.isEmpty()) {
                 synchronized (ShareLibService.class) {
                     if (launcherLibMap.isEmpty()) {
+    //                    LOG.error("kai shi updateLauncherLib");
                         updateLauncherLib();
                     }
                 }
@@ -386,7 +401,10 @@ public class ShareLibService implements Service, Instrumentable {
         if (shareLibKey.equals(JavaActionExecutor.OOZIE_COMMON_LIBDIR)) {
             List<Path> sharelibList = getShareLibJars(shareLibKey);
             if (sharelibList != null) {
+         //     LOG.error("sharelibList != null");
                 returnList.addAll(sharelibList);
+  //              if(returnList!=null)
+   //               LOG.error("EEEEEEEEEEEE"+returnList.toString());
             }
         }
         return returnList;
@@ -502,12 +520,15 @@ public class ShareLibService implements Service, Instrumentable {
     public Map<String, String> updateShareLib() throws IOException {
         Map<String, String> status = new HashMap<String, String>();
 
-        if (fs == null) {
-            Path launcherlibPath = getLauncherlibPath();
-            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            URI uri = launcherlibPath.toUri();
-            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
-        }
+        LOG.error("JIN RU updateShareLib LA");
+//        if (fs == null) {
+//            Path launcherlibPath = getLauncherlibPath();
+//            LOG.error("launcherlibPath:::::::::::"+launcherlibPath+"uri:"+launcherlibPath.toUri()+"uri.getAuthority():"+launcherlibPath.toUri().getAuthority());
+//            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+//            URI uri = launcherlibPath.toUri();
+//            //fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+//            fs = launcherlibPath.getFileSystem(has.createJobConf(uri.getAuthority()));
+//        }
 
         Map<String, List<Path>> tempShareLibMap = new HashMap<String, List<Path>>();
         Map<String, Map<Path, Path>> tmpSymlinkMapping = new HashMap<String, Map<Path, Path>>();
@@ -524,8 +545,9 @@ public class ShareLibService implements Service, Instrumentable {
         else {
             Path shareLibpath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
                     SHARED_LIB_PREFIX);
+          //author by mengsun
             loadShareLibfromDFS(tempShareLibMap, shareLibpath);
-
+            if(shareLibpath!=null)
             if (shareLibpath != null) {
                 status.put("sharelibDirNew", shareLibpath.toString());
                 status.put("sharelibDirOld", sharelibDirOld);
@@ -533,6 +555,7 @@ public class ShareLibService implements Service, Instrumentable {
             }
 
         }
+        if(tempShareLibMap!=null)
         shareLibMap = tempShareLibMap;
         symlinkMapping = tmpSymlinkMapping;
         return status;
@@ -566,7 +589,6 @@ public class ShareLibService implements Service, Instrumentable {
             List<Path> listOfPaths = new ArrayList<Path>();
             getPathRecursively(fs, dir.getPath(), listOfPaths);
             shareLibMap.put(dir.getPath().getName(), listOfPaths);
-            LOG.info("Share lib for " + dir.getPath().getName() + ":" + listOfPaths);
 
         }
 
@@ -588,7 +610,8 @@ public class ShareLibService implements Service, Instrumentable {
 
         Path shareFileMappingPath = new Path(sharelibFileMapping);
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        FileSystem filesystem = FileSystem.get(has.createJobConf(shareFileMappingPath.toUri().getAuthority()));
+//        FileSystem filesystem = FileSystem.get(has.createJobConf(shareFileMappingPath.toUri().getAuthority()));
+        FileSystem filesystem = shareFileMappingPath.getFileSystem(new Configuration());
         Properties prop = new Properties();
         prop.load(filesystem.open(new Path(sharelibFileMapping)));
 
@@ -646,7 +669,9 @@ public class ShareLibService implements Service, Instrumentable {
      */
     public Path getLatestLibPath(Path rootDir, final String prefix) throws IOException {
         Date max = new Date(0L);
-        Path path = null;
+     //   Path path = null;
+        //@author by mengsun
+        Path path = rootDir;
         PathFilter directoryFilter = new PathFilter() {
             @Override
             public boolean accept(Path path) {
@@ -709,6 +734,7 @@ public class ShareLibService implements Service, Instrumentable {
             public String getValue() {
                 String sharelibPath = "(unavailable)";
                 try {
+
                     Path libPath = getLatestLibPath(services.get(WorkflowAppService.class).getSystemLibPath(),
                             SHARED_LIB_PREFIX);
                     if (libPath != null) {

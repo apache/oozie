@@ -81,7 +81,8 @@ public abstract class WorkflowAppService implements Service {
         if (path.trim().length() > 0) {
             systemLibPath = new Path(path.trim());
         }
-
+        
+        
         maxWFLength = conf.getInt(CONFG_MAX_WF_LENGTH, 100000);
 
         oozieSubWfCPInheritance = conf.getBoolean(OOZIE_SUBWORKFLOW_CLASSPATH_INHERITANCE, false);
@@ -330,6 +331,7 @@ public abstract class WorkflowAppService implements Service {
      * @return Oozie system libpath (sharelib) in HDFS if present, otherwise it returns <code>NULL</code>.
      */
     public Path getSystemLibPath() {
+      XLog.getLog(getClass()).error("systemLibPath is ****************************:"+systemLibPath);
         return systemLibPath;
     }
 }

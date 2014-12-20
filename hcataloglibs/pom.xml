@@ -32,7 +32,12 @@
     <packaging>pom</packaging>
 
     <modules>
+<<<<<<< HEAD
+        <module>hcatalog-0.5</module>
+      <!--  <module>hcatalog-0.6</module>-->
+=======
         <module>hive-hcatalog-0.13.1</module>
+>>>>>>> origin/master
     </modules>
 
     <build>
