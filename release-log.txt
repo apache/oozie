@@ -1,3 +1,5 @@
+-- Oozie 4.1.1 release (4.1 branch - unreleased)
+OOZIE-2098 Add Apache parent POM to oozie (sureshms via bzhang)
 -- Oozie 4.1.0 release
 
 OOZIE-2064 coord job with frequency coord:endOfMonths doesn't materialize (puru)
