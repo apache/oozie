@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2098 Add Apache parent POM to oozie (sureshms via bzhang)
 OOZIE-2093 TestSubmitXCommand.testProtoConfStorage fails against Hadoop 2 (rkanter)
 OOZIE-2028 Coord action rerun with -failed option should rerun existing workflow with RERUN_FAIL_NODES=true (jaydeepvishwakarma via shwethags)
 OOZIE-2029 Workflow re-run with RERUN_FAIL_NODES=true should re-run only the failed nodes of the sub-workflow (jaydeepvishwakarma via shwethags)
