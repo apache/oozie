@@ -2358,4 +2358,13 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.wf.rerun.disablechild</name>
+        <value>false</value>
+        <description>
+            By setting this option, workflow rerun will be disabled if parent workflow or coordinator exist and
+            it will only rerun through parent.
+        </description>
+    </property>
+
 </configuration>

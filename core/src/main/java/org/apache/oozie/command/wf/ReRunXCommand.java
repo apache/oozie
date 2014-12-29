@@ -51,6 +51,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -94,6 +95,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
+    public static final String DISABLE_CHILD_RERUN = "oozie.wf.rerun.disablechild";
 
     static {
         String[] badUserProps = { PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
@@ -339,6 +341,14 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
+        // Throwing error if parent exist and same workflow trying to rerun, when running child workflow disabled
+        // through conf.
+        if (wfBean.getParentId() != null && !conf.getBoolean(SubWorkflowActionExecutor.SUBWORKFLOW_RERUN, false)
+                && ConfigurationService.getBoolean(DISABLE_CHILD_RERUN)) {
+            throw new PreconditionException(ErrorCode.E0755, " Rerun is not allowed through child workflow, please" +
+                    " re-run through the parent " + wfBean.getParentId());
+        }
+
         if (!(wfBean.getStatus().equals(WorkflowJob.Status.FAILED)
                 || wfBean.getStatus().equals(WorkflowJob.Status.KILLED) || wfBean.getStatus().equals(
                         WorkflowJob.Status.SUCCEEDED))) {

@@ -152,6 +152,7 @@ public enum ErrorCode {
     E0742(XLog.STD, "No Fork for Join [{0}] to pair with"),
     E0743(XLog.STD, "Multiple \"ok to\" transitions to the same node, [{0}], are not allowed"),
     E0744(XLog.STD, "A fork, [{0}], is not allowed to have multiple transitions to the same node, [{1}]"),
+    E0755(XLog.STD, "Workflow Job Rerun Error: {0}"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),

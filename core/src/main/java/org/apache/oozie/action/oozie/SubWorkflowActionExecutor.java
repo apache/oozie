@@ -52,6 +52,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String PARENT_ID = "oozie.wf.parent.id";
     public static final String SUBWORKFLOW_MAX_DEPTH = "oozie.action.subworkflow.max.depth";
     private static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
+    public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
 
@@ -183,6 +184,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 // if the rerun failed node option is provided during the time of rerun command, old subworkflow will
                 // rerun again.
                 if(action.getExternalId() != null && parentConf.getBoolean(OozieClient.RERUN_FAIL_NODES, false)) {
+                    subWorkflowConf.setBoolean(SUBWORKFLOW_RERUN, true);
                     oozieClient.reRun(action.getExternalId(), subWorkflowConf.toProperties());
                     subWorkflowId = action.getExternalId();
                 } else {

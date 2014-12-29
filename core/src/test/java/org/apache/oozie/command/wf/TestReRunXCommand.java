@@ -28,7 +28,6 @@ import java.io.Writer;
 import java.util.List;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.action.hadoop.ShellActionExecutor;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
@@ -37,17 +36,17 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.SchemaService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogService;
 
 public class TestReRunXCommand extends XDataTestCase {
     @Override
@@ -388,4 +387,56 @@ public class TestReRunXCommand extends XDataTestCase {
 
     }
 
+    /**
+     * Rerun workflow should run by parent only if configuration has been set to
+     * true for oozie.wf.child.disable.rerun , Default it is disabled.
+     * @throws Exception
+     */
+    public void testRerunDisableForChild() throws Exception {
+        final OozieClient wfClient = LocalOozie.getClient();
+
+        Date start = DateUtils.parseDateOozieTZ("2009-12-15T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-12-16T01:00Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false,
+                1);
+
+        CoordinatorActionBean action = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
+
+        String actionId = action.getId();
+        new CoordActionStartXCommand(actionId, getTestUser(), "myapp", "myjob").call();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
+                    + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
+        }
+        final String wfId = action.getExternalId();
+        wfClient.kill(wfId);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(wfId).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        Properties newConf = wfClient.createConfiguration();
+        newConf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
+        Services.get().getConf().setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, true);
+        try {
+            wfClient.reRun(wfId, newConf);
+        } catch (OozieClientException ex){
+            assertEquals(ErrorCode.E0755.toString(), ex.getErrorCode());
+        }
+
+        Services.get().getConf().setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, false);
+        wfClient.reRun(wfId, newConf);
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(wfId).getStatus() == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfClient.getJobInfo(wfId).getStatus());
+
+    }
 }
