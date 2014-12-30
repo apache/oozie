@@ -180,7 +180,10 @@ public class OozieDBCLI {
 
     private void createDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
-        validateDBSchema(false);
+        if (checkDBExists()) {
+            return;
+        }
+
         verifyOozieSysTable(false);
         createUpgradeDB(sqlFile, run, true);
         createOozieSysTable(sqlFile, run, DB_VERSION_FOR_5_0);
@@ -194,7 +197,9 @@ public class OozieDBCLI {
 
     private void upgradeDB(String sqlFile, boolean run) throws Exception {
         validateConnection();
-        validateDBSchema(true);
+        if (!checkDBExists()) {
+            throw new Exception("Oozie DB doesn't exist");
+        }
         String version = BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
 
         if (!verifyOozieSysTable(false, false)) { // If OOZIE_SYS table doesn't
@@ -283,7 +288,9 @@ public class OozieDBCLI {
 
     private void postUpgradeDBTo40(String sqlFile, boolean run) throws Exception {
         validateConnection();
-        validateDBSchema(true);
+        if (!checkDBExists()) {
+            throw new Exception("Oozie DB doesn't exist");
+        }
         verifyOozieSysTable(true);
         verifyDBState();
         postUpgradeTasks(sqlFile, run, true);
@@ -862,8 +869,7 @@ public class OozieDBCLI {
     private static final String WORKFLOW_STATUS_QUERY =
         "select count(*) from WF_JOBS where status IN ('RUNNING', 'SUSPENDED')";
 
-    private void validateDBSchema(boolean exists) throws Exception {
-        System.out.println((exists) ? "Check DB schema exists" : "Check DB schema does not exist");
+    private boolean checkDBExists() throws Exception {
         boolean schemaExists;
         Connection conn = createConnection();
         try {
@@ -880,10 +886,8 @@ public class OozieDBCLI {
         finally {
             conn.close();
         }
-        if (schemaExists != exists) {
-            throw new Exception("DB schema " + ((exists) ? "does not exist" : "exists"));
-        }
-        System.out.println("DONE");
+        System.out.println("DB schema " + ((schemaExists) ? "exists" : "does not exist"));
+        return schemaExists;
     }
 
     private final static String OOZIE_SYS_EXISTS = "select count(*) from OOZIE_SYS";
@@ -1093,7 +1097,10 @@ public class OozieDBCLI {
                            + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
         System.out.println();
         validateConnection();
-        validateDBSchema(true);
+        if (!checkDBExists()) {
+            throw new Exception("Oozie DB doesn't exist");
+        }
+
         try {
             verifyOozieSysTable(true);
         }

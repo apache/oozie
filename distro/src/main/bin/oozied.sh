@@ -80,8 +80,8 @@ setup_catalina_opts() {
 
 setup_oozie() {
   if [ ! -e "${CATALINA_BASE}/webapps/oozie.war" ]; then
-    echo "WARN: Oozie WAR has not been set up at ''${CATALINA_BASE}/webapps'', doing default set up"
-    ${BASEDIR}/bin/oozie-setup.sh
+    echo "WARN: Oozie WAR has not been set up at '${CATALINA_BASE}/webapps', doing default set up"
+    ${BASEDIR}/bin/oozie-setup.sh prepare-war
     if [ "$?" != "0" ]; then
       exit -1
     fi
@@ -89,10 +89,21 @@ setup_oozie() {
   echo
 }
 
+setup_ooziedb() {
+  echo "Setting up oozie DB"
+  ${BASEDIR}/bin/ooziedb.sh create -run
+  if [ "$?" != "0" ]; then
+    exit -1
+  fi
+  echo
+}
+
 case $actionCmd in
   (start|run)
     setup_catalina_opts
-    setup_oozie 
+    setup_oozie
+    setup_ooziedb
+    #TODO setup default oozie sharelib
     ;;
   (stop)
     setup_catalina_opts

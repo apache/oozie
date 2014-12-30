@@ -31,24 +31,6 @@
     <name>Apache Oozie Hadoop Libs</name>
     <packaging>pom</packaging>
 
-    <modules>
-        <module>hadoop-1</module>
-        <module>hadoop-distcp-1</module>
-        <module>hadoop-test-1</module>
-        <module>hadoop-utils-1</module>
-        <module>hadoop-auth-1</module>
-        <module>hadoop-2</module>
-        <module>hadoop-test-2</module>
-        <module>hadoop-distcp-2</module>
-        <module>hadoop-utils-2</module>
-        <module>hadoop-auth-2</module>
-        <module>hadoop-0.23</module>
-        <module>hadoop-test-0.23</module>
-        <module>hadoop-distcp-0.23</module>
-        <module>hadoop-utils-0.23</module>
-        <module>hadoop-auth-0.23</module>
-    </modules>
-
     <build>
         <plugins>
             <plugin>
@@ -58,29 +40,51 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptors>
-                        <descriptor>../src/main/assemblies/hadooplibs.xml</descriptor>
-                    </descriptors>
-                    <finalName>oozie-${project.version}</finalName>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <profile>
+            <id>hadoop-1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-utils-1</module>
+                <module>hadoop-distcp-1</module>
+                <module>hadoop-auth-1</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>hadoop-0.23</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-utils-0.23</module>
+                <module>hadoop-distcp-0.23</module>
+                <module>hadoop-auth-0.23</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>hadoop-2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-utils-2</module>
+                <module>hadoop-distcp-2</module>
+                <module>hadoop-auth-2</module>
+            </modules>
+        </profile>
         <profile>
             <id>hadoop-3</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
-                <module>hadoop-3</module>
-                <module>hadoop-test-3</module>
                 <module>hadoop-distcp-3</module>
+                <module>hadoop-auth-3</module>
                 <module>hadoop-utils-3</module>
             </modules>
         </profile>

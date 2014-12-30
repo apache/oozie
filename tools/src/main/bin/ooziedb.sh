@@ -41,8 +41,20 @@ OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.log.dir=${OOZIE_LOG}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Doozie.data.dir=${OOZIE_DATA}";
 OOZIEDB_OPTS="${OOZIEDB_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
 
+#Create lib directory from war if lib doesn't exist
+if [ ! -d "${BASEDIR}/lib" ]; then
+  mkdir ${BASEDIR}/lib
+  unzip ${BASEDIR}/oozie.war WEB-INF/lib/*.jar -d ${BASEDIR}/lib > /dev/null
+  mv ${BASEDIR}/lib/WEB-INF/lib/*.jar ${BASEDIR}/lib/
+  rmdir ${BASEDIR}/lib/WEB-INF/lib
+  rmdir ${BASEDIR}/lib/WEB-INF
+fi
+
 OOZIECPPATH=""
 for i in "${BASEDIR}/libtools/"*.jar; do
+  OOZIECPPATH="${OOZIECPPATH}:$i"
+done
+for i in "${BASEDIR}/lib/"*.jar; do
   OOZIECPPATH="${OOZIECPPATH}:$i"
 done
 for i in "${BASEDIR}/libext/"*.jar; do

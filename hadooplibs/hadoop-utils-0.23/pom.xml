@@ -27,16 +27,15 @@
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop-utils</artifactId>
-    <version>0.23.5.oozie-4.2.0-SNAPSHOT</version>
-    <description>Apache Oozie Hadoop Utils ${project.version}</description>
-    <name>Apache Oozie Hadoop Utils ${project.version}</name>
+    <version>hadoop-0.23-4.2.0-SNAPSHOT</version>
+    <description>Apache Oozie Hadoop Utils</description>
+    <name>Apache Oozie Hadoop Utils</name>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-hadoop</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>

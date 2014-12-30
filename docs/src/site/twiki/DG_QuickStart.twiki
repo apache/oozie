@@ -31,18 +31,33 @@ Expand the source distribution =tar.gz= and change directories into it.
 
 The simplest way to build Oozie is to run the =mkdistro.sh= script:
 <verbatim>
-$ bin/mkdistro.sh
-</verbatim>
+$ bin/mkdistro.sh [-DskipTests]
 
-If you'd like to skip all of the tests, which can take some time:
-<verbatim>
-$ bin/mkdistro.sh -DskipTests
-</verbatim>
-Running =mkdistro.sh= will create the binary distribution of Oozie.
+Running =mkdistro.sh= will create the binary distribution of Oozie. By default, oozie war will not contain hadoop and
+hcatalog libraries, however they are required for oozie to work. There are 2 options to add these libraries:
 
-*IMPORTANT:* By default it builds against Hadoop 1.1.1. It's possible to build against Hadoop 2.x versions as well, but it is
-strongly recommend to use a [[http://bigtop.apache.org][Bigtop]] distribution if using Hadoop 2.x because the Oozie sharelibs built
-from the tarball distribution will not work with it.
+1. At install time, copy the hadoop and hcatalog libraries to libext and run oozie-setup.sh to setup oozie war. This is
+suitable when same oozie package needs to be used in multiple set-ups with different hadoop/hcatalog versions.
+
+2. Build with -Puber which will bundle the required libraries in the oozie war. Further, the following options are
+available to customise the versions of the dependencies:
+-P<profile> - default hadoop-1. Valid are hadoop-1, hadoop-0.23, hadoop-2 or hadoop-3. Choose the correct hadoop
+profile depending on the hadoop version used.
+-Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 0.23.5 for hadoop-0.23, 2.3.0 for hadoop-2 and 3.0.0-SNAPSHOT
+    for hadoop-3
+-Dhadoop.auth.version=<version> - defaults to hadoop version
+-Ddistcp.version=<version> - defaults to hadoop version
+-Dpig.version=<version> - default 0.12.1
+-Dpig.classifier=<classifier> - default none
+-Dsqoop.version=<version> - default 1.4.3
+-Dsqoop.classifier=<classifier> - default hadoop100
+-Dtomcat.version=<version> - default 6.0.41
+-Dopenjpa.version=<version> - default 2.2.2
+-Dxerces.version=<version> - default 2.10.0
+-Dcurator.version=<version> - default 2.5.0
+-Dhive.version=<version> - default 0.13.1
+-Dhbase.version=<version> - default 0.94.2
+</verbatim>
 
 More details on building Oozie can be found on the [[ENG_Building][Building Oozie]] page.
 
@@ -95,10 +110,6 @@ The following two properties are required in Hadoop core-site.xml:
 
 Replace the capital letter sections with specific values and then restart Hadoop.
 
-Expand the Oozie hadooplibs =tar.gz= in the same location Oozie distribution =tar.gz= was expanded. A
-*hadooplibs/* directory will be created containing the Hadoop JARs for the versions of Hadoop that
-the Oozie distribution supports.
-
 The ExtJS library is optional (only required for the Oozie web-console to work)
 
 *IMPORTANT:* all Oozie server scripts (=oozie-setup.sh=, =oozied.sh=, =oozie-start.sh=, =oozie-run.sh=
@@ -112,11 +123,8 @@ behaviors of =oozie-start.sh=, =oozie-run.sh=, and =oozie-stop.sh= respectively.
 
 Create a *libext/* directory in the directory where Oozie was expanded.
 
-If using a version of Hadoop bundled in Oozie *hadooplibs/*, copy the corresponding Hadoop JARs
-from *hadooplibs/* to the *libext/* directory. If using a different version of Hadoop, copy the
-required Hadoop JARs from such version in the *libext/* directory.
-
-If using the ExtJS library copy the ZIP file to the *libext/* directory.
+If using the ExtJS library copy the ZIP file to the *libext/* directory. If hadoop and hcatalog libraries are not
+already included in the war, add the corresponding libraries to *libext/* directory.
 
 A "sharelib create -fs fs_default_name [-locallib sharelib]" command is available when running oozie-setup.sh
 for uploading new sharelib into hdfs where the first argument is the default fs name

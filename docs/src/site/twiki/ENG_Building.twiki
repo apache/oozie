@@ -31,7 +31,7 @@ $ mvn install
 </verbatim>
 
 #SshSetup
----++ Passphare-less SSH Setup
+---++ Passphrase-less SSH Setup
 
 *NOTE: SSH actions are deprecated in Oozie 2.*
 
@@ -206,29 +206,29 @@ the 'SKIPPING TEST..." message would appear in the testcase log file of both tes
 An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache
 once (in the =distro/downloads/= directory) and uses it when creating the distro.
 
-The following Maven invocation builds an Oozie distribution:
-
+The simplest way to build Oozie is to run the =mkdistro.sh= script:
 <verbatim>
-$ mvn clean package assembly:single
+$ bin/mkdistro.sh [-DskipTests]
+Running =mkdistro.sh= will create the binary distribution of Oozie. The following options are available to customise
+the versions of the dependencies:
+-Puber - Bundle required hadoop and hcatalog libraries in oozie war
+-P<profile> - default hadoop-1. Valid are hadoop-1, hadoop-0.23, hadoop-2 or hadoop-3. Choose the correct hadoop
+profile depending on the hadoop version used.
+-Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 0.23.5 for hadoop-0.23, 2.3.0 for hadoop-2 and 3.0
+.0-SNAPSHOT for hadoop-3
+-Dhadoop.auth.version=<version> - defaults to hadoop version
+-Ddistcp.version=<version> - defaults to hadoop version
+-Dpig.version=<version> - default 0.12.1
+-Dpig.classifier=<classifier> - default none
+-Dsqoop.version=<version> - default 1.4.3
+-Dsqoop.classifier=<classifier> - default hadoop100
+-Dtomcat.version=<version> - default 6.0.41
+-Dopenjpa.version=<version> - default 2.2.2
+-Dxerces.version=<version> - default 2.10.0
+-Dcurator.version=<version> - default 2.5.0
+-Dhive.version=<version> - default 0.13.1
+-Dhbase.version=<version> - default 0.94.2
 </verbatim>
-
-*Build instructions with Hadoop Yarn (Hadoop-2.x)*
-
-Following values can be passed as maven properties
-   * -Dhadoop.version			: *2.0.0-alpha*
-   * -Dpig.version (optional)	: either *0.9.2* or *0.10.2*
-   
-For e.g.
-<verbatim>
-$ mvn clean package assembly:single -Dhadoop.version=2.0.0-alpha
-</verbatim>
-
-If none of these parameters are specified, the defaults are
-   * -Dhadoop.version			: *1.0.1*
-   * -Dpig.version				: *0.9.0*
-
-*IMPORTANT:* It is strongly recommend to use a [[http://bigtop.apache.org][Bigtop]] distribution if using Hadoop 2.x because the
-Oozie sharelibs built from the tarball distribution will not work with it.
 
 The following properties should be specified when building a release:
 
