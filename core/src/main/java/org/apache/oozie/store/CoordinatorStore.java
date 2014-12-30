@@ -875,7 +875,7 @@ public class CoordinatorStore extends Store {
                 try {
                     Query q = entityManager.createNamedQuery("GET_READY_ACTIONS_GROUP_BY_JOBID");
                     Timestamp ts = new Timestamp(System.currentTimeMillis() - checkAgeSecs * 1000);
-                    q.setParameter(1, ts);
+                    q.setParameter("lastModifiedTime", ts);
                     List<Object[]> list = q.getResultList();
 
                     for (Object[] arr : list) {
