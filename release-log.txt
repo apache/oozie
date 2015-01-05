@@ -1,4 +1,5 @@
 -- Oozie 4.1.1 release (4.1 branch - unreleased)
+OOZIE-2100 Publish oozie-webapp artifact (sureshms via bzhang)
 OOZIE-2098 Add Apache parent POM to oozie (sureshms via bzhang)
 -- Oozie 4.1.0 release
 
