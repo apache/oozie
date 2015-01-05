@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2100 Publish oozie-webapp artifact (sureshms via bzhang)
 OOZIE-1889 Convert NamedNativeQueries to JPQL (dvillegas via shwethags)
 OOZIE-1876 use pom properties rather than specific version numbers in the pom files of hbaselibs, hcataloglibs, sharelib, etc (shwethags)
 OOZIE-2027 Disable re-runs using the workflow directly if it has a parent (jaydeepvishwakarma via shwethags)
