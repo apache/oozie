@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -139,7 +140,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                     LOG.debug("Queuing rerun range [" + rerunDateScope + "] for coord id " + coordId + " of bundle "
                             + bundleJob.getId());
                     queue(new CoordRerunXCommand(coordId, RestConstants.JOB_COORD_SCOPE_DATE, rerunDateScope, refresh,
-                            noCleanup, false));
+                            noCleanup, false, null));
                     updateBundleAction(coordNameToBAMapping.get(coordName));
                     isUpdateActionDone = true;
                 }
@@ -159,7 +160,7 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
                     LOG.debug("Queuing rerun range [" + dateScope + "] for coord id " + action.getCoordId() + " of bundle "
                             + bundleJob.getId());
                     queue(new CoordRerunXCommand(action.getCoordId(), RestConstants.JOB_COORD_SCOPE_DATE, dateScope,
-                            refresh, noCleanup, false));
+                            refresh, noCleanup, false, null));
                     updateBundleAction(action);
                     isUpdateActionDone = true;
                 }

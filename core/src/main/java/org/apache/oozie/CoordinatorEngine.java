@@ -261,11 +261,11 @@ public class CoordinatorEngine extends BaseEngine {
      * @throws BaseEngineException
      */
     public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup,
-                                       boolean failed)
+                                       boolean failed, Configuration conf)
             throws BaseEngineException {
         try {
             return new CoordRerunXCommand(jobId, rerunType, scope, refresh,
-                    noCleanup, failed).call();
+                    noCleanup, failed, conf).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

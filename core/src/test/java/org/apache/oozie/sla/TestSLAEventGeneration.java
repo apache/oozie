@@ -333,7 +333,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
 
         try {
             new CoordRerunXCommand(job.getId(), RestConstants.JOB_COORD_SCOPE_DATE, "2009-12-15T01:00Z", false,
-                    true, false).call();
+                    true, false, null).call();
         }
         catch (CommandException ce) {
             if (ce.getErrorCode() == ErrorCode.E0604) {

@@ -1032,6 +1032,7 @@ public class OozieCLI {
                     String rerunType = null;
                     boolean refresh = false;
                     boolean noCleanup = false;
+                    boolean failed = false;
                     if (options.contains(DATE_OPTION) && options.contains(ACTION_OPTION)) {
                         throw new OozieCLIException("Invalid options provided for rerun: either" + DATE_OPTION + " or "
                                 + ACTION_OPTION + " expected. Don't use both at the same time.");
@@ -1054,11 +1055,17 @@ public class OozieCLI {
                     if (options.contains(RERUN_NOCLEANUP_OPTION)) {
                         noCleanup = true;
                     }
-                    if (options.contains(RERUN_FAILED_OPTION)) {
-                        printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup, true));
-                    } else {
-                        printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup));
+
+                    Properties props = null;
+                    if(isConfigurationSpecified(wc, commandLine)) {
+                        props = getConfiguration(wc, commandLine);
                     }
+
+                    if (options.contains(RERUN_FAILED_OPTION)) {
+                        failed = true;
+                    }
+
+                    printCoordActions(wc.reRunCoord(coordJobId, rerunType, scope, refresh, noCleanup, failed, props));
                 }
             }
             else if (options.contains(INFO_OPTION)) {

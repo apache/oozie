@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2092 Provide option to supply config to workflow during rerun of coordinator (jaydeepvishwakarma via shwethags)
 OOZIE-2100 Publish oozie-webapp artifact (sureshms via bzhang)
 OOZIE-1889 Convert NamedNativeQueries to JPQL (dvillegas via shwethags)
 OOZIE-1876 use pom properties rather than specific version numbers in the pom files of hbaselibs, hcataloglibs, sharelib, etc (shwethags)

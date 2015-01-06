@@ -1475,13 +1475,16 @@ public class OozieClient {
         }
     }
     private class CoordRerun extends ClientCallable<List<CoordinatorAction>> {
+        private final Properties conf;
 
-        CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup, boolean failed) {
+        CoordRerun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup, boolean failed,
+                   Properties conf) {
             super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
                     RestConstants.JOB_COORD_ACTION_RERUN, RestConstants.JOB_COORD_RANGE_TYPE_PARAM, rerunType,
                     RestConstants.JOB_COORD_SCOPE_PARAM, scope, RestConstants.JOB_COORD_RERUN_REFRESH_PARAM,
                     Boolean.toString(refresh), RestConstants.JOB_COORD_RERUN_NOCLEANUP_PARAM, Boolean
                             .toString(noCleanup), RestConstants.JOB_COORD_RERUN_FAILED_PARAM, Boolean.toString(failed)));
+            this.conf = conf;
         }
 
         @Override
@@ -1535,7 +1538,7 @@ public class OozieClient {
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
-        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, false).call();
+        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, false, null).call();
     }
 
     /**
@@ -1550,8 +1553,8 @@ public class OozieClient {
      * @throws OozieClientException
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
-                                              boolean noCleanup, boolean failed) throws OozieClientException {
-        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, failed).call();
+                                              boolean noCleanup, boolean failed, Properties props) throws OozieClientException {
+        return new CoordRerun(jobId, rerunType, scope, refresh, noCleanup, failed, props).call();
     }
 
     /**

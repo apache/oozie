@@ -120,6 +120,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         Configuration runConf = null;
         try {
             runConf = new XConfiguration(new StringReader(createdConf));
+
         }
         catch (IOException e1) {
             log.warn("Configuration parse error in:" + createdConf);
@@ -151,9 +152,25 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
         // new property called 'oozie.wf.application.path'
         // WF Engine requires the path to the workflow.xml to be saved under
         // this property name
-        String appPath = workflowProperties.getChild("action", workflowProperties.getNamespace()).getChild("workflow",
-                                                                                                           workflowProperties.getNamespace()).getChild("app-path", workflowProperties.getNamespace()).getValue();
+        String appPath = workflowProperties.getChild("action", workflowProperties.getNamespace())
+                .getChild("workflow", workflowProperties.getNamespace()).getChild("app-path",
+                        workflowProperties.getNamespace()).getValue();
+
+        // Copying application path in runconf.
         runConf.set("oozie.wf.application.path", appPath);
+
+        // Step 4: Extract the runconf and copy the rerun config to runconf.
+        if (runConf.get(CoordRerunXCommand.RERUN_CONF) != null) {
+            Configuration rerunConf = null;
+            try {
+                rerunConf = new XConfiguration(new StringReader(runConf.get(CoordRerunXCommand.RERUN_CONF)));
+                XConfiguration.copy(rerunConf, runConf);
+            } catch (IOException e) {
+                log.warn("Configuration parse error in:" + rerunConf);
+                throw new CommandException(ErrorCode.E1005, e.getMessage(), e);
+            }
+            runConf.unset(CoordRerunXCommand.RERUN_CONF);
+        }
         return runConf;
     }
 

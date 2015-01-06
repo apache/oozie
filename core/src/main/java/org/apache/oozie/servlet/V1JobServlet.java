@@ -675,7 +675,7 @@ public class V1JobServlet extends BaseJobServlet {
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
-                    Boolean.valueOf(noCleanup), Boolean.valueOf(failed));
+                    Boolean.valueOf(noCleanup), Boolean.valueOf(failed), conf);
             List<CoordinatorActionBean> coordActions;
             if (coordInfo != null) {
                 coordActions = coordInfo.getCoordActions();

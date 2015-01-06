@@ -253,7 +253,7 @@ public class LocalOozieClientCoord extends OozieClient {
     @Override
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
                                               boolean noCleanup) throws OozieClientException {
-        return getCoordinatorActions(jobId, rerunType, scope, refresh, noCleanup, false);
+        return getCoordinatorActions(jobId, rerunType, scope, refresh, noCleanup, false, null);
     }
 
     /**
@@ -266,23 +266,28 @@ public class LocalOozieClientCoord extends OozieClient {
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
      * @param failed true if -failed is given in command option
+     * @param conf configuration information for the rerun
      * @throws OozieClientException
      */
     @Override
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
-            boolean noCleanup, boolean failed) throws OozieClientException {
-        return getCoordinatorActions(jobId, rerunType, scope, refresh, noCleanup, failed);
+            boolean noCleanup, boolean failed, Properties conf ) throws OozieClientException {
+        return getCoordinatorActions(jobId, rerunType, scope, refresh, noCleanup, failed, conf);
     }
 
     private List<CoordinatorAction> getCoordinatorActions(String jobId, String rerunType, String scope, boolean refresh,
-            boolean noCleanup, boolean failed) throws OozieClientException {
+            boolean noCleanup, boolean failed, Properties prop) throws OozieClientException {
         try {
+            XConfiguration conf = null;
+            if (prop != null) {
+                conf = new XConfiguration(prop);
+            }
             if (!(rerunType.equals(RestConstants.JOB_COORD_SCOPE_DATE) || rerunType
                     .equals(RestConstants.JOB_COORD_SCOPE_ACTION))) {
                 throw new CommandException(ErrorCode.E1018, "date or action expected.");
             }
             CoordinatorActionInfo coordInfo = coordEngine.reRun(jobId, rerunType, scope, Boolean.valueOf(refresh),
-                    Boolean.valueOf(noCleanup), Boolean.valueOf(failed));
+                    Boolean.valueOf(noCleanup), Boolean.valueOf(failed), conf);
             List<CoordinatorActionBean> actionBeans;
             if (coordInfo != null) {
                 actionBeans = coordInfo.getCoordActions();
