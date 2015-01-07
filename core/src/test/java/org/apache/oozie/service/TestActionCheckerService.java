@@ -68,7 +68,7 @@ public class TestActionCheckerService extends XDataTestCase {
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
-        services.get(ActionService.class).register(ForTestingActionExecutor.class);
+        services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
     }
 
     @Override

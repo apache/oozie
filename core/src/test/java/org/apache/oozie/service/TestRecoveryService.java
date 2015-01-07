@@ -95,7 +95,7 @@ public class TestRecoveryService extends XDataTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
         services.init();
-        services.get(ActionService.class).register(ForTestingActionExecutor.class);
+        services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
 
     }
 

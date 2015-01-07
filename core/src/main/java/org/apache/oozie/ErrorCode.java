@@ -56,7 +56,6 @@ public enum ErrorCode {
     E0131(XLog.OPS, "Could not read workflow schemas file/s, {0}"),
     E0140(XLog.OPS, "Could not access database, {0}"),
     E0141(XLog.OPS, "Could not create DataSource connection pool, {0}"),
-    E0150(XLog.OPS, "Actionexecutor type already registered [{0}]"),
     E0160(XLog.OPS, "Could not read admin users file [{0}], {1}"),
 
     E0300(XLog.STD, "Invalid content-type [{0}]"),

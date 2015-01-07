@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.control.EndActionExecutor;
@@ -25,17 +26,15 @@ import org.apache.oozie.action.control.ForkActionExecutor;
 import org.apache.oozie.action.control.JoinActionExecutor;
 import org.apache.oozie.action.control.KillActionExecutor;
 import org.apache.oozie.action.control.StartActionExecutor;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.ErrorCode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 
-public class ActionService implements Service {
+public class ActionService implements Service, Instrumentable {
 
     public static final String CONF_ACTION_EXECUTOR_CLASSES = CONF_PREFIX + "ActionService.executor.classes";
 
@@ -45,7 +44,8 @@ public class ActionService implements Service {
     private Map<String, Class<? extends ActionExecutor>> executors;
     private static XLog LOG = XLog.getLog(ActionService.class);
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
+    @Override
     public void init(Services services) throws ServiceException {
         this.services = services;
         ActionExecutor.enableInit();
@@ -64,16 +64,28 @@ public class ActionService implements Service {
         classes = (Class<? extends ActionExecutor>[]) ConfigurationService.getClasses
                 (services.getConf(), CONF_ACTION_EXECUTOR_EXT_CLASSES);
         registerExecutors(classes);
+
+        initExecutors();
     }
 
-    private void registerExecutors(Class<? extends ActionExecutor>[] classes) throws ServiceException {
+    private void registerExecutors(Class<? extends ActionExecutor>[] classes) {
         if (classes != null) {
             for (Class<? extends ActionExecutor> executorClass : classes) {
-                register(executorClass);
+                @SuppressWarnings("deprecation")
+                ActionExecutor executor = (ActionExecutor) ReflectionUtils.newInstance(executorClass, services.getConf());
+                executors.put(executor.getType(), executorClass);
             }
         }
     }
 
+    private void initExecutors() {
+        for (Class<? extends ActionExecutor> executorClass : executors.values()) {
+            initExecutor(executorClass);
+        }
+        LOG.info("Initialized action types: " + getActionTypes());
+    }
+
+    @Override
     public void destroy() {
         ActionExecutor.enableInit();
         ActionExecutor.resetInitInfo();
@@ -81,21 +93,43 @@ public class ActionService implements Service {
         executors = null;
     }
 
+    @Override
     public Class<? extends Service> getInterface() {
         return ActionService.class;
     }
 
-    public void register(Class<? extends ActionExecutor> klass) throws ServiceException {
+    @Override
+    public void instrument(Instrumentation instr) {
+        instr.addVariable("configuration", "action.types", new Instrumentation.Variable<String>() {
+            @Override
+            public String getValue() {
+                Set<String> actionTypes = getActionTypes();
+                if (actionTypes != null) {
+                    return actionTypes.toString();
+                }
+                return "(unavailable)";
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @VisibleForTesting
+    public void registerAndInitExecutor(Class<? extends ActionExecutor> klass) {
+        ActionExecutor.enableInit();
+        ActionExecutor.resetInitInfo();
+        ActionExecutor.disableInit();
+        registerExecutors(new Class[]{klass});
+        initExecutors();
+    }
+
+    private void initExecutor(Class<? extends ActionExecutor> klass) {
+        @SuppressWarnings("deprecation")
         ActionExecutor executor = (ActionExecutor) ReflectionUtils.newInstance(klass, services.getConf());
-        LOG.trace("Registering action type [{0}] class [{1}]", executor.getType(), klass);
-        if (executors.containsKey(executor.getType())) {
-            throw new ServiceException(ErrorCode.E0150, executor.getType());
-        }
+        LOG.debug("Initializing action type [{0}] class [{1}]", executor.getType(), klass);
         ActionExecutor.enableInit();
         executor.initActionType();
         ActionExecutor.disableInit();
-        executors.put(executor.getType(), klass);
-        LOG.trace("Registered Action executor for action type [{0}] class [{1}]", executor.getType(), klass);
+        LOG.trace("Initialized Executor for action type [{0}] class [{1}]", executor.getType(), klass);
     }
 
     public ActionExecutor getExecutor(String actionType) {

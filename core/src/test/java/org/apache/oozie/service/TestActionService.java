@@ -18,11 +18,12 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.test.XTestCase;
 
 public class TestActionService extends XTestCase {
+
+    static final String TEST_ACTION_TYPE = "TestActionType";
 
     @Override
     protected void setUp() throws Exception {
@@ -45,4 +46,50 @@ public class TestActionService extends XTestCase {
         assertNotNull(as.getExecutor("switch"));
     }
 
+    @SuppressWarnings("deprecation")
+    public void testDuplicateActionExecutors() throws Exception {
+        ActionService as = new ActionService();
+        Services.get().getConf().set("oozie.service.ActionService.executor.classes",
+                DummyExecutor1.class.getName() + "," + DummyExecutor2.class.getName());
+        Services.get().getConf().set("oozie.service.ActionService.executor.ext.classes", "");
+        try {
+            as.init(Services.get());
+            // There are 5 hard-coded control action types + 1 TEST_ACTION_TYPE
+            assertEquals(6, as.getActionTypes().size());
+            ActionExecutor executor = as.getExecutor(TEST_ACTION_TYPE);
+            assertTrue(executor instanceof DummyExecutor2);
+            assertFalse(executor instanceof DummyExecutor1);
+        } finally {
+            as.destroy();
+        }
+
+        as = new ActionService();
+        Services.get().getConf().set("oozie.service.ActionService.executor.classes", DummyExecutor1.class.getName());
+        Services.get().getConf().set("oozie.service.ActionService.executor.ext.classes", DummyExecutor2.class.getName());
+        try {
+            as.init(Services.get());
+            // There are 5 hard-coded control action types + 1 TEST_ACTION_TYPE
+            assertEquals(6, as.getActionTypes().size());
+            ActionExecutor executor = as.getExecutor(TEST_ACTION_TYPE);
+            assertTrue(executor instanceof DummyExecutor2);
+            assertFalse(executor instanceof DummyExecutor1);
+        } finally {
+            as.destroy();
+        }
+
+        as = new ActionService();
+        Services.get().getConf().set("oozie.service.ActionService.executor.classes", "");
+        Services.get().getConf().set("oozie.service.ActionService.executor.ext.classes",
+                DummyExecutor1.class.getName() + "," + DummyExecutor2.class.getName());
+        try {
+            as.init(Services.get());
+            // There are 5 hard-coded control action types + 1 TEST_ACTION_TYPE
+            assertEquals(6, as.getActionTypes().size());
+            ActionExecutor executor = as.getExecutor(TEST_ACTION_TYPE);
+            assertTrue(executor instanceof DummyExecutor2);
+            assertFalse(executor instanceof DummyExecutor1);
+        } finally {
+            as.destroy();
+        }
+    }
 }
