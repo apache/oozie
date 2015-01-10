@@ -1270,6 +1270,15 @@ public class JavaActionExecutor extends ActionExecutor {
         return runningJob;
     }
 
+    /**
+     * Useful for overriding in actions that do subsequent job runs
+     * such as the MapReduce Action, where the launcher job is not the
+     * actual job that then gets monitored.
+     */
+    protected String getActualExternalId(WorkflowAction action) {
+        return action.getExternalId();
+    }
+
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
@@ -1285,7 +1294,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 context.setExecutionData(FAILED, null);
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
                         "Could not lookup launched hadoop Job ID [{0}] which was associated with " +
-                        " action [{1}].  Failing this action!", action.getExternalId(), action.getId());
+                        " action [{1}].  Failing this action!", getActualExternalId(action), action.getId());
             }
             if (runningJob.isComplete()) {
                 Path actionDir = context.getActionDir();

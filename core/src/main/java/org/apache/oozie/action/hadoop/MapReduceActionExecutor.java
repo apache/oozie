@@ -67,6 +67,18 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
+    protected String getActualExternalId(WorkflowAction action) {
+        String launcherJobId = action.getExternalId();
+        String childId = action.getExternalChildIDs();
+
+        if (childId != null && !childId.isEmpty()) {
+            return childId;
+        } else {
+            return launcherJobId;
+        }
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         String mainClass;
         Namespace ns = actionXml.getNamespace();
@@ -325,15 +337,9 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
 
         RunningJob runningJob;
-        String launcherJobId = action.getExternalId();
-        String childJobId = action.getExternalChildIDs();
+        String jobId = getActualExternalId(action);
 
-        if (childJobId != null && childJobId.length() > 0) {
-            runningJob = jobClient.getJob(JobID.forName(childJobId));
-        }
-        else {
-            runningJob = jobClient.getJob(JobID.forName(launcherJobId));
-        }
+        runningJob = jobClient.getJob(JobID.forName(jobId));
 
         return runningJob;
     }
