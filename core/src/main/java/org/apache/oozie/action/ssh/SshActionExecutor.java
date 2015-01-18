@@ -60,9 +60,11 @@ public class SshActionExecutor extends ActionExecutor {
 
     protected static final String SSH_COMMAND_OPTIONS =
             "-o PasswordAuthentication=no -o KbdInteractiveDevices=no -o StrictHostKeyChecking=no -o ConnectTimeout=20 ";
+    
+    public static final String COMMAND_BASE_PORT = "oozie.action.ssh.command.port";
 
-    protected static final String SSH_COMMAND_BASE = "ssh " + SSH_COMMAND_OPTIONS;
-    protected static final String SCP_COMMAND_BASE = "scp " + SSH_COMMAND_OPTIONS;
+    protected static String SSH_COMMAND_BASE = "ssh -p ";
+    protected static String SCP_COMMAND_BASE = "scp -P ";
 
     public static final String ERR_SETUP_FAILED = "SETUP_FAILED";
     public static final String ERR_EXECUTION_FAILED = "EXECUTION_FAILED";
@@ -98,6 +100,11 @@ public class SshActionExecutor extends ActionExecutor {
         super.initActionType();
         maxLen = getOozieConf().getInt(CallbackServlet.CONF_MAX_DATA_LEN, 2 * 1024);
         allowSshUserAtHost = ConfigurationService.getBoolean(CONF_SSH_ALLOW_USER_AT_HOST);
+        
+        String portId = getOozieConf().get(COMMAND_BASE_PORT, "22");
+        SSH_COMMAND_BASE += portId + " " +  SSH_COMMAND_OPTIONS;
+        SCP_COMMAND_BASE += portId + " " +  SSH_COMMAND_OPTIONS;
+        
         registerError(InterruptedException.class.getName(), ActionExecutorException.ErrorType.ERROR, "SH001");
         registerError(JDOMException.class.getName(), ActionExecutorException.ErrorType.ERROR, "SH002");
         initSshScripts();

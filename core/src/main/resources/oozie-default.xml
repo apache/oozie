@@ -2366,5 +2366,14 @@
             it will only rerun through parent.
         </description>
     </property>
+    
+    <property>
+        <name>oozie.action.ssh.command.port</name>
+        <value>22</value>
+        <description>
+            Due to linux ssh port will be change, and the default value is 22.
+            You can change to any value in your cluster
+        </description>
+    </property>
 
 </configuration>
