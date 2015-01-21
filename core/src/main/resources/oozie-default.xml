@@ -1657,6 +1657,22 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.action.retry.interval</name>
+        <value>10</value>
+        <description>
+            The interval between retries of an action in case of failure
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.retry.policy</name>
+        <value>periodic</value>
+        <description>
+            Retry policy of an action in case of failure. Possible values are periodic/exponential
+        </description>
+    </property>
+
     <!-- SshActionExecutor -->
 
     <property>

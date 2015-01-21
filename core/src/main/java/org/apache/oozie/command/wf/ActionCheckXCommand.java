@@ -166,11 +166,6 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         LOG.debug("STARTED ActionCheckXCommand for wf actionId=" + actionId + " priority =" + getPriority());
-
-        long retryInterval = Services.get().getConf().getLong(ActionCheckerService.CONF_ACTION_CHECK_INTERVAL, executor
-                .getRetryInterval());
-        executor.setRetryInterval(retryInterval);
-
         ActionExecutorContext context = null;
         boolean execSynchronous = false;
         try {

@@ -546,9 +546,6 @@ public class TestActionCheckXCommand extends XDataTestCase {
      */
     public void testCheckInterval() throws Exception {
         long testedValue = 10;
-        Services.get().getConf().setLong(ActionCheckerService.CONF_ACTION_CHECK_INTERVAL,
-                testedValue);
-
         WorkflowJobBean job0 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         final String jobId = job0.getId();
         WorkflowActionBean action0 = this.addRecordToWfActionTable(jobId, "1", WorkflowAction.Status.RUNNING);

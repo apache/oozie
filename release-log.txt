@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2088 Exponential retries for transient failures (pavan kumar via shwethags)
 OOZIE-2111 Kerberized Oozie doesn't allow connections from users with a lot of groups (rkanter)
 OOZIE-2104 oozie server dies on startup if oozie-site redefines ActionExecutor classes (rkanter)
 OOZIE-2092 Provide option to supply config to workflow during rerun of coordinator (jaydeepvishwakarma via shwethags)

@@ -47,7 +47,6 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -93,7 +92,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
             action.setStatus(status);
             action.setPending();
             action.incRetries();
-            long retryDelayMillis = executor.getRetryInterval() * 1000;
+            long retryDelayMillis = getRetryDelay(actionRetryCount, executor.getRetryInterval(), executor.getRetryPolicy());
             action.setPendingAge(new Date(System.currentTimeMillis() + retryDelayMillis));
             LOG.info("Next Retry, Attempt Number [{0}] in [{1}] milliseconds", actionRetryCount + 1, retryDelayMillis);
             this.resetUsed();
@@ -252,6 +251,21 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
 	 */
     protected void addActionCron(String type, Instrumentation.Cron cron) {
         getInstrumentation().addCron(INSTRUMENTATION_GROUP, type + "#" + getName(), cron);
+    }
+
+    /*
+     * Returns the next retry time in milliseconds, based on retry policy algorithm.
+     */
+    private long getRetryDelay(int retryCount, long retryInterval, ActionExecutor.RETRYPOLICY retryPolicy) {
+        switch (retryPolicy) {
+            case EXPONENTIAL:
+                long retryTime = ((long) Math.pow(2, retryCount) * retryInterval * 1000L);
+                return retryTime;
+            case PERIODIC:
+                return retryInterval * 1000L;
+            default:
+                throw new UnsupportedOperationException("Retry policy not supported");
+        }
     }
 
     /**

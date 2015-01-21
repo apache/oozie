@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
@@ -49,7 +50,11 @@ public abstract class ActionExecutor {
      */
 	public static final String CONF_PREFIX = "oozie.action.";
 
-	public static final String MAX_RETRIES = CONF_PREFIX + "retries.max";
+    public static final String MAX_RETRIES = CONF_PREFIX + "retries.max";
+
+    public static final String ACTION_RETRY_INTERVAL = CONF_PREFIX + "retry.interval";
+
+    public static final String ACTION_RETRY_POLICY = CONF_PREFIX + "retry.policy";
 
     /**
      * Error code used by {@link #convertException} when there is not register error information for an exception.
@@ -57,6 +62,10 @@ public abstract class ActionExecutor {
     public static final String ERROR_OTHER = "OTHER";
     
     public boolean requiresNNJT = false;
+
+    public static enum RETRYPOLICY {
+        EXPONENTIAL, PERIODIC
+    }
 
     private static class ErrorInfo {
         ActionExecutorException.ErrorType errorType;
@@ -215,6 +224,7 @@ public abstract class ActionExecutor {
     private String type;
     private int maxRetries;
     private long retryInterval;
+    private RETRYPOLICY retryPolicy;
 
     /**
      * Create an action executor with default retry parameters.
@@ -229,12 +239,27 @@ public abstract class ActionExecutor {
      * Create an action executor.
      *
      * @param type action executor type.
-     * @param retryInterval retry interval, in seconds.
+     * @param defaultRetryInterval retry interval, in seconds.
      */
-    protected ActionExecutor(String type, long retryInterval) {
+    protected ActionExecutor(String type, long defaultRetryInterval) {
         this.type = ParamChecker.notEmpty(type, "type");
         this.maxRetries = ConfigurationService.getInt(MAX_RETRIES);
-        this.retryInterval = retryInterval;
+        int retryInterval = ConfigurationService.getInt(ACTION_RETRY_INTERVAL);
+        this.retryInterval = retryInterval > 0 ? retryInterval : defaultRetryInterval;
+        this.retryPolicy = getRetryPolicyFromConf();
+    }
+
+    private RETRYPOLICY getRetryPolicyFromConf() {
+        String retryPolicy = ConfigurationService.get(ACTION_RETRY_POLICY);
+        if (StringUtils.isBlank(retryPolicy)) {
+            return RETRYPOLICY.PERIODIC;
+        } else {
+            try {
+                return RETRYPOLICY.valueOf(retryPolicy.toUpperCase().trim());
+            } catch (IllegalArgumentException e) {
+                return RETRYPOLICY.PERIODIC;
+            }
+        }
     }
 
     /**
@@ -354,6 +379,24 @@ public abstract class ActionExecutor {
      */
     public void setMaxRetries(int maxRetries) {
         this.maxRetries = maxRetries;
+    }
+
+    /**
+     * Return the retry policy for the action executor.
+     *
+     * @return the retry policy for the action executor.
+     */
+    public RETRYPOLICY getRetryPolicy() {
+        return retryPolicy;
+    }
+
+    /**
+     * Sets the retry policy for the action executor.
+     *
+     * @param retryPolicy retry policy for the action executor.
+     */
+    public void setRetryPolicy(RETRYPOLICY retryPolicy) {
+        this.retryPolicy = retryPolicy;
     }
 
     /**
