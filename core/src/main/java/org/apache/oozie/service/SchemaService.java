@@ -20,7 +20,9 @@ package org.apache.oozie.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
@@ -40,11 +42,19 @@ public class SchemaService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "SchemaService.";
 
+    public static final String WF_CONF_SCHEMAS = CONF_PREFIX + "wf.schemas";
+
     public static final String WF_CONF_EXT_SCHEMAS = CONF_PREFIX + "wf.ext.schemas";
+
+    public static final String COORD_CONF_SCHEMAS = CONF_PREFIX + "coord.schemas";
 
     public static final String COORD_CONF_EXT_SCHEMAS = CONF_PREFIX + "coord.ext.schemas";
 
+    public static final String BUNDLE_CONF_SCHEMAS = CONF_PREFIX + "bundle.schemas";
+
     public static final String BUNDLE_CONF_EXT_SCHEMAS = CONF_PREFIX + "bundle.ext.schemas";
+
+    public static final String SLA_CONF_SCHEMAS = CONF_PREFIX + "sla.schemas";
 
     public static final String SLA_CONF_EXT_SCHEMAS = CONF_PREFIX + "sla.ext.schemas";
 
@@ -63,33 +73,29 @@ public class SchemaService implements Service {
 
     private Schema slaSchema;
 
-    private static final String OOZIE_WORKFLOW_XSD[] = {
-        "oozie-workflow-0.1.xsd",
-        "oozie-workflow-0.2.xsd",
-        "oozie-workflow-0.2.5.xsd",
-        "oozie-workflow-0.3.xsd",
-        "oozie-workflow-0.4.xsd",
-        "oozie-workflow-0.4.5.xsd",
-        "oozie-workflow-0.5.xsd"};
-    private static final String OOZIE_COORDINATOR_XSD[] = { "oozie-coordinator-0.1.xsd", "oozie-coordinator-0.2.xsd",
-        "oozie-coordinator-0.3.xsd", "oozie-coordinator-0.4.xsd"};
-    private static final String OOZIE_BUNDLE_XSD[] = { "oozie-bundle-0.1.xsd", "oozie-bundle-0.2.xsd" };
-    private static final String OOZIE_SLA_SEMANTIC_XSD[] = { "gms-oozie-sla-0.1.xsd", "oozie-sla-0.2.xsd" };
-
-    private Schema loadSchema(Configuration conf, String[] baseSchemas, String extSchema) throws SAXException,
-    IOException {
-        List<StreamSource> sources = new ArrayList<StreamSource>();
-        for (String baseSchema : baseSchemas) {
-            sources.add(new StreamSource(IOUtils.getResourceAsStream(baseSchema, -1)));
-        }
-        String[] schemas = ConfigurationService.getStrings(conf, extSchema);
+    private Schema loadSchema(String baseSchemas, String extSchema) throws SAXException, IOException {
+        Set<String> schemaNames = new HashSet<String>();
+        String[] schemas = ConfigurationService.getStrings(baseSchemas);
         if (schemas != null) {
             for (String schema : schemas) {
                 schema = schema.trim();
                 if (!schema.isEmpty()) {
-                    sources.add(new StreamSource(IOUtils.getResourceAsStream(schema, -1)));
+                    schemaNames.add(schema);
                 }
             }
+        }
+        schemas = ConfigurationService.getStrings(extSchema);
+        if (schemas != null) {
+            for (String schema : schemas) {
+                schema = schema.trim();
+                if (!schema.isEmpty()) {
+                    schemaNames.add(schema);
+                }
+            }
+        }
+        List<StreamSource> sources = new ArrayList<StreamSource>();
+        for (String schemaName : schemaNames) {
+            sources.add(new StreamSource(IOUtils.getResourceAsStream(schemaName, -1)));
         }
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         return factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
@@ -101,12 +107,13 @@ public class SchemaService implements Service {
      * @param services services instance.
      * @throws ServiceException thrown if the service could not be initialized.
      */
+    @Override
     public void init(Services services) throws ServiceException {
         try {
-            wfSchema = loadSchema(services.getConf(), OOZIE_WORKFLOW_XSD, WF_CONF_EXT_SCHEMAS);
-            coordSchema = loadSchema(services.getConf(), OOZIE_COORDINATOR_XSD, COORD_CONF_EXT_SCHEMAS);
-            bundleSchema = loadSchema(services.getConf(), OOZIE_BUNDLE_XSD, BUNDLE_CONF_EXT_SCHEMAS);
-            slaSchema = loadSchema(services.getConf(), OOZIE_SLA_SEMANTIC_XSD, SLA_CONF_EXT_SCHEMAS);
+            wfSchema = loadSchema(WF_CONF_SCHEMAS, WF_CONF_EXT_SCHEMAS);
+            coordSchema = loadSchema(COORD_CONF_SCHEMAS, COORD_CONF_EXT_SCHEMAS);
+            bundleSchema = loadSchema(BUNDLE_CONF_SCHEMAS, BUNDLE_CONF_EXT_SCHEMAS);
+            slaSchema = loadSchema(SLA_CONF_SCHEMAS, SLA_CONF_EXT_SCHEMAS);
         }
         catch (SAXException ex) {
             throw new ServiceException(ErrorCode.E0130, ex.getMessage(), ex);
@@ -121,6 +128,7 @@ public class SchemaService implements Service {
      *
      * @return {@link SchemaService}.
      */
+    @Override
     public Class<? extends Service> getInterface() {
         return SchemaService.class;
     }
@@ -128,6 +136,7 @@ public class SchemaService implements Service {
     /**
      * Destroy the service.
      */
+    @Override
     public void destroy() {
         wfSchema = null;
         bundleSchema = null;
