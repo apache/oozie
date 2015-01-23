@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1722 Add support to Hadoop-2 for AM restarts of the launcher job (jaydeepvishwakarma via rkanter)
 OOZIE-2107 Schema config properties should be consistent with ActionExecutor config properties (rkanter)
 OOZIE-1730 Change hadoop-2 profile to use 2.4.0 (jaydeepvishwakarma via rkanter)
 OOZIE-2088 Exponential retries for transient failures (pavan kumar via shwethags)
