@@ -59,7 +59,7 @@ public class BundleJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
      */
     @Override
     public String getName() {
-        return "CoordJobsDeleteJPAExecutor";
+        return "BundleJobsDeleteJPAExecutor";
     }
 
     /*

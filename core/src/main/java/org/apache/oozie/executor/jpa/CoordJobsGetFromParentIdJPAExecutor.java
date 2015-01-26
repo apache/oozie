@@ -49,7 +49,7 @@ public class CoordJobsGetFromParentIdJPAExecutor implements JPAExecutor<List<Str
      */
     @Override
     public String getName() {
-        return "CoordinatorJobsGetFromParentIdJPAExecutor";
+        return "CoordJobsGetFromParentIdJPAExecutor";
     }
 
     /* (non-Javadoc)

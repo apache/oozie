@@ -51,7 +51,7 @@ public class SLAEventsGetForFilterJPAExecutor implements JPAExecutor<List<SLAEve
 
     @Override
     public String getName() {
-        return "SLAEventsGetForJobIdJPAExecutor";
+        return "SLAEventsGetForFilterJPAExecutor";
     }
 
     @Override

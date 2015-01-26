@@ -44,7 +44,7 @@ public class CoordJobGetActionModifiedDateForRangeJPAExecutor implements JPAExec
 
     @Override
     public String getName() {
-        return "CoordJobGetActionIdsForDateRangeJPAExecutor";
+        return "CoordJobGetActionModifiedDateForRangeJPAExecutor";
     }
 
     @Override

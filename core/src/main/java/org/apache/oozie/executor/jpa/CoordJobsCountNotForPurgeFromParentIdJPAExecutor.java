@@ -44,7 +44,7 @@ public class CoordJobsCountNotForPurgeFromParentIdJPAExecutor implements JPAExec
      */
     @Override
     public String getName() {
-        return "CoordChildrenCountNotForPurgeJPAExecutor";
+        return "CoordJobsCountNotForPurgeFromParentIdJPAExecutor";
     }
 
     /* (non-Javadoc)

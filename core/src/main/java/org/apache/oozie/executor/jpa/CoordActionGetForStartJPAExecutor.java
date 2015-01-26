@@ -47,7 +47,7 @@ public class CoordActionGetForStartJPAExecutor implements JPAExecutor<Coordinato
      */
     @Override
     public String getName() {
-        return "CoordActionGetForStartExecutor";
+        return "CoordActionGetForStartJPAExecutor";
     }
 
     /* (non-Javadoc)

@@ -57,7 +57,7 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
 
     @Override
     public String getName() {
-        return "CoordInfoGetJPAExecutor";
+        return "CoordJobInfoGetJPAExecutor";
     }
 
     @Override

@@ -37,7 +37,7 @@ public class CoordJobGetActionRunningCountForRangeJPAExecutor implements JPAExec
 
     @Override
     public String getName() {
-        return "CoordJobGetActionIdsForDateRangeJPAExecutor";
+        return "CoordJobGetActionRunningCountForRangeJPAExecutor";
     }
 
     @Override

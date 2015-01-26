@@ -42,8 +42,9 @@ public class CoordinatorJobGetForUserAppnameJPAExecutor implements JPAExecutor<C
      *
      * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
      */
+    @Override
     public String getName() {
-        return "CoordJobGetForUserAppnameJPAExecutor";
+        return "CoordinatorJobGetForUserAppnameJPAExecutor";
     }
 
     /*
