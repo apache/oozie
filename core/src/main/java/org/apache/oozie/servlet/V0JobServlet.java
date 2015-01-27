@@ -194,6 +194,13 @@ public class V0JobServlet extends BaseJobServlet {
         }
     }
 
+    @Override
+    protected void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);
+    }
+
+
     /*
      * Not implemented in v0
      */

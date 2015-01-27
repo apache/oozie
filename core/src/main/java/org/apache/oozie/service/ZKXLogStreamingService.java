@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import java.io.BufferedReader;
@@ -114,7 +113,8 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             }
             // Otherwise, we have to go collate relevant logs from the other Oozie servers
             else {
-                collateLogs(filter, startTime, endTime, writer, params);
+                collateLogs(filter, startTime, endTime, writer, params, xLogService.getOozieLogPath(),
+                        xLogService.getOozieLogName(), xLogService.getOozieLogRotation(), RestConstants.JOB_SHOW_LOG);
             }
         }
         else {
@@ -123,19 +123,56 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
     }
 
     /**
+     * Stream the error log of a job.  It contacts any other running Oozie servers to collate relevant error logs while streaming.
+     *
+     * @param filter log streamer filter.
+     * @param startTime start time for log events to filter.
+     * @param endTime end time for log events to filter.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     */
+    public void streamErrorLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+            throws IOException {
+        XLogService xLogService = Services.get().get(XLogService.class);
+        if (xLogService.isErrorLogEnable()) {
+            // If ALL_SERVERS_PARAM is set to false, then only stream our log
+            if (!Services.get().get(JobsConcurrencyService.class).isAllServerRequest(params)) {
+                new XLogStreamer(filter, xLogService.getOozieErrorLogPath(), xLogService.getOozieErrorLogName(),
+                        xLogService.getOozieErrorLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
+            }
+            // Otherwise, we have to go collate relevant logs from the other Oozie servers
+            else {
+                collateLogs(filter, startTime, endTime, writer, params, xLogService.getOozieLogPath(),
+                        xLogService.getOozieErrorLogName(), xLogService.getOozieErrorLogRotation(),
+                        RestConstants.JOB_SHOW_ERROR_LOG);
+            }
+        }
+        else {
+            writer.write("Error Log streaming disabled!!");
+        }
+    }
+
+
+    /**
      * Contacts each of the other Oozie servers, gets their logs for the job, collates them, and sends them to the user via the
      * Writer.  It will make sure to not read all of the log messages into memory at the same time to not use up the heap.  If there
      * is a problem talking to one of the other servers, it will ignore that server and prepend a message to the Writer about it.
      * For getting the logs from this server, it won't use the REST API and instead get them directly to be more efficient.
      *
-     * @param filter
-     * @param startTime
-     * @param endTime
-     * @param writer
-     * @throws IOException
+     * @param filter the job filter
+     * @param startTime the job start time
+     * @param endTime the job end time
+     * @param writer the writer
+     * @param params the params
+     * @param logPath the log path
+     * @param logName the log name
+     * @param rotation the rotation
+     * @param logType the log type
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     private void collateLogs(XLogFilter filter, Date startTime, Date endTime, Writer writer,
-            Map<String, String[]> params) throws IOException {
+            Map<String, String[]> params, String logPath, String logName, int rotation, final String logType) throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
         List<String> badOozies = new ArrayList<String>();
         List<ServiceInstance<Map>> oozies = null;
@@ -153,8 +190,8 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                 String otherId = oozieMeta.get(ZKUtils.ZKMetadataKeys.OOZIE_ID);
                 // If it's this server, we can just get them directly
                 if (otherId.equals(zk.getZKId())) {
-                    BufferedReader reader = new XLogStreamer(filter, xLogService.getOozieLogPath(), xLogService.getOozieLogName(),
-                                                             xLogService.getOozieLogRotation()).makeReader(startTime, endTime);
+                    BufferedReader reader = new XLogStreamer(filter, logPath, logName, rotation).makeReader(startTime,
+                            endTime);
                     parsers.add(new TimestampedMessageParser(reader, filter));
                 }
                 // If it's another server, we'll have to use the REST API
@@ -165,7 +202,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                      // It's important that we specify ALL_SERVERS_PARAM=false in the GET request to prevent the other Oozie
                      // Server from trying aggregate logs from the other Oozie servers (and creating an infinite recursion)
                         final String url = otherUrl + "/v" + OozieClient.WS_PROTOCOL_VERSION + "/" + RestConstants.JOB
-                                + "/" + jobId + "?" + RestConstants.JOB_SHOW_PARAM + "=" + RestConstants.JOB_SHOW_LOG
+                                + "/" + jobId + "?" + RestConstants.JOB_SHOW_PARAM + "=" + logType
                                 + "&" + RestConstants.ALL_SERVER_REQUEST + "=false" + AuthUrlClient.getQueryParamString(params);
 
                         BufferedReader reader = AuthUrlClient.callServer(url);

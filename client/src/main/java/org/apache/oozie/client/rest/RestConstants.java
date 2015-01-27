@@ -87,6 +87,8 @@ public interface RestConstants {
 
     public static final String JOB_SHOW_LOG = "log";
 
+    public static final String JOB_SHOW_ERROR_LOG = "errorlog";
+
     public static final String JOB_SHOW_DEFINITION = "definition";
 
     public static final String JOB_SHOW_GRAPH = "graph";

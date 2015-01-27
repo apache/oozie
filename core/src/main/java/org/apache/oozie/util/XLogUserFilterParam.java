@@ -109,7 +109,7 @@ public class XLogUserFilterParam {
     private void parseFilterParam(String param) throws Exception {
         this.params = param;
 
-        if (StringUtils.isEmpty(param)) {
+        if (StringUtils.isEmpty(param) || StringUtils.equalsIgnoreCase(param, "null")) {
             return;
         }
         for (String keyValue : param.split(";")) {

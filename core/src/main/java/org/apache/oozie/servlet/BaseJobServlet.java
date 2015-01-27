@@ -295,6 +295,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             response.setContentType(TEXT_UTF8);
             streamJobLog(request, response);
         }
+        else if (show.equals(RestConstants.JOB_SHOW_ERROR_LOG)) {
+            response.setContentType(TEXT_UTF8);
+            streamJobErrorLog(request, response);
+        }
         else if (show.equals(RestConstants.JOB_SHOW_DEFINITION)) {
             stopCron();
             response.setContentType(XML_UTF8);
@@ -426,6 +430,18 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             IOException;
 
     /**
+     * abstract method to get and stream error log information of job, either workflow, coordinator or bundle
+     *
+     * @param request
+     * @param response
+     * @throws XServletException
+     * @throws IOException
+     */
+    abstract void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+    IOException;
+
+
+    /**
      * abstract method to create and stream image for runtime DAG -- workflow only
      *
      * @param request
@@ -483,4 +499,3 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract String getJobStatus(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 }
-

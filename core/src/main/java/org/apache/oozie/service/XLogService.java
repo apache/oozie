@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.service;
 
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +36,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Built-in service that initializes and manages Logging via Log4j.
@@ -94,6 +92,7 @@ public class XLogService implements Service, Instrumentable {
     private boolean fromClasspath;
     private String log4jFileName;
     private boolean logOverWS = true;
+    private boolean errorLogEnable = true;
 
     private static final String STARTUP_MESSAGE = "{E}"
             + " ******************************************************************************* {E}"
@@ -103,18 +102,31 @@ public class XLogService implements Service, Instrumentable {
 
     private String oozieLogPath;
     private String oozieLogName;
+    private String oozieErrorLogPath;
+    private String oozieErrorLogName;
     private int oozieLogRotation = -1;
+    private int oozieErrorLogRotation = -1;
+
 
     public XLogService() {
     }
-    
+
     public String getOozieLogPath() {
         return oozieLogPath;
     }
-    
+
+    public String getOozieErrorLogPath() {
+        return oozieErrorLogPath;
+    }
+
     public String getOozieLogName() {
         return oozieLogName;
     }
+
+    public String getOozieErrorLogName() {
+        return oozieErrorLogName;
+    }
+
 
     /**
      * Initialize the log service.
@@ -190,7 +202,6 @@ public class XLogService implements Service, Instrumentable {
     }
 
     private void extractInfoForLogWebService(InputStream is) throws IOException {
-        logOverWS = true;
         Properties props = new Properties();
         props.load(is);
 
@@ -198,83 +209,18 @@ public class XLogService implements Service, Instrumentable {
         for (Map.Entry entry : props.entrySet()) {
             conf.set((String) entry.getKey(), (String) entry.getValue());
         }
-        String logFile = conf.get("log4j.appender.oozie.File");
-        if (logFile == null) {
-            log.warn("Oozie WS log will be disabled, missing property 'log4j.appender.oozie.File' for 'oozie' "
-                    + "appender");
-            logOverWS = false;
-        }
-        else {
-            logFile = logFile.trim();
-            int i = logFile.lastIndexOf("/");
-            if (i == -1) {
-                log.warn("Oozie WS log will be disabled, log file is not an absolute path [{0}] for 'oozie' appender",
-                        logFile);
-                logOverWS = false;
-            }
-            else {
-                String appenderClass = conf.get("log4j.appender.oozie");
-                if (appenderClass == null) {
-                    log.warn("Oozie WS log will be disabled, missing property [log4j.appender.oozie]");
-                    logOverWS = false;
-                }
-                else if (appenderClass.equals("org.apache.log4j.DailyRollingFileAppender")) {
-                    String pattern = conf.get("log4j.appender.oozie.DatePattern");
-                    if (pattern == null) {
-                        log.warn("Oozie WS log will be disabled, missing property [log4j.appender.oozie.DatePattern]");
-                        logOverWS = false;
-                    }
-                    else {
-                        pattern = pattern.trim();
-                        if (pattern.endsWith("HH")) {
-                            oozieLogRotation = 60 * 60;
-                        }
-                        else if (pattern.endsWith("dd")) {
-                                oozieLogRotation = 60 * 60 * 24;
-                        }
-                        else {
-                            log.warn("Oozie WS log will be disabled, DatePattern [{0}] should end with 'HH' or 'dd'",
-                                    pattern);
-                            logOverWS = false;
-                        }
-                        if (oozieLogRotation > 0) {
-                            oozieLogPath = logFile.substring(0, i);
-                            oozieLogName = logFile.substring(i + 1);
-                        }
-                    }
-                }
-                else if (appenderClass.equals("org.apache.log4j.rolling.RollingFileAppender")) {
-                    String pattern = conf.get("log4j.appender.oozie.RollingPolicy.FileNamePattern");
-                    if (pattern == null) {
-                        log.warn("Oozie WS log will be disabled, missing property "
-                                + "[log4j.appender.oozie.RollingPolicy.FileNamePattern]");
-                        logOverWS = false;
-                    }
-                    else {
-                        pattern = pattern.trim();
-                        if (pattern.matches(Pattern.quote(logFile) + ".*-%d\\{yyyy-MM-dd-HH\\}(\\.gz)?")) {
-                            oozieLogRotation = 60 * 60;
-                        }
-                        else {
-                            log.warn("Oozie WS log will be disabled, RollingPolicy.FileNamePattern [{0}] should end with " 
-                                    + "'-%d{yyyy-MM-dd-HH}' or '-%d{yyyy-MM-dd-HH}.gz' and also start with the value of "
-                                    + "log4j.appender.oozie.File [{1}]", pattern, logFile);
-                            logOverWS = false;
-                        }
-                        if (oozieLogRotation > 0) {
-                            oozieLogPath = logFile.substring(0, i);
-                            oozieLogName = logFile.substring(i + 1);
-                        }
-                    }
-                }
-                else {
-                    log.warn("Oozie WS log will be disabled, log4j.appender.oozie [" + appenderClass + "] should be "
-                            + "either org.apache.log4j.DailyRollingFileAppender or org.apache.log4j.rolling.RollingFileAppender "
-                            + "to enable it");
-                    logOverWS = false;
-                }
-            }
-        }
+
+        XLogUtil logUtil = new XLogUtil(conf, "oozie");
+        logOverWS = logUtil.isLogOverEnable();
+        oozieLogRotation = logUtil.getLogRotation() == 0 ? oozieLogRotation : logUtil.getLogRotation();
+        oozieLogPath = logUtil.getLogPath() == null ? oozieLogPath : logUtil.getLogPath();
+        oozieLogName = logUtil.getLogFileName() == null ? oozieLogName : logUtil.getLogFileName();
+
+        logUtil = new XLogUtil(conf, "oozieError");
+        errorLogEnable = logUtil.isLogOverEnable();
+        oozieErrorLogRotation = logUtil.getLogRotation() == 0 ? oozieErrorLogRotation : logUtil.getLogRotation();
+        oozieErrorLogPath = logUtil.getLogPath() == null ? oozieErrorLogPath : logUtil.getLogPath();
+        oozieErrorLogName = logUtil.getLogFileName() == null ? oozieErrorLogName : logUtil.getLogFileName();
     }
 
     /**
@@ -313,6 +259,7 @@ public class XLogService implements Service, Instrumentable {
      * @param instr instrumentation to use.
      */
     public void instrument(Instrumentation instr) {
+
         instr.addVariable(INSTRUMENTATION_GROUP, "config.file", new Instrumentation.Variable<String>() {
             public String getValue() {
                 return log4jFileName;
@@ -339,9 +286,17 @@ public class XLogService implements Service, Instrumentable {
         return logOverWS;
     }
 
+    boolean isErrorLogEnable(){
+        return errorLogEnable;
+    }
+
     int getOozieLogRotation() {
         return oozieLogRotation;
     }
+    int getOozieErrorLogRotation() {
+        return oozieErrorLogRotation;
+    }
+
 
     String getLog4jProperties() {
         return log4jFileName;

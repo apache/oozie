@@ -293,15 +293,20 @@ public class CoordinatorEngine extends BaseEngine {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of start"));
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String,
-     * java.io.Writer)
-     */
     @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BaseEngineException {
+        streamJobLog(jobId, writer, params, false);
+    }
+
+    @Override
+    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            BaseEngineException {
+        streamJobLog(jobId, writer, params, true);
+    }
+
+    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog)
+            throws IOException, BaseEngineException {
 
         try {
             XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
@@ -314,8 +319,14 @@ public class CoordinatorEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            Services.get().get(XLogStreamingService.class)
-                    .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            if (isErrorLog) {
+                Services.get().get(XLogStreamingService.class)
+                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            }
+            else {
+                Services.get().get(XLogStreamingService.class)
+                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            }
         }
         catch (Exception e) {
             throw new IOException(e);

@@ -93,6 +93,29 @@ public class XLogStreamingService implements Service, Instrumentable {
         }
     }
 
+    /**
+     * Stream the error log of a job.
+     *
+     * @param filter log streamer filter.
+     * @param startTime start time for log events to filter.
+     * @param endTime end time for log events to filter.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     */
+    public void streamErrorLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+            throws IOException {
+        XLogService xLogService = Services.get().get(XLogService.class);
+        if (xLogService.isErrorLogEnable()) {
+            new XLogStreamer(filter, xLogService.getOozieErrorLogPath(), xLogService.getOozieErrorLogName(),
+                    xLogService.getOozieErrorLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
+        }
+        else {
+            writer.write("Error Log is disabled!!");
+        }
+    }
+
+
     public int getBufferLen() {
         return bufferLen;
     }

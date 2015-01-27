@@ -606,6 +606,32 @@ $ oozie job -oozie http://localhost:11000/oozie -log 14-20090525161321-oozie-joe
 
 </verbatim>
 
+---+++ Checking the server error logs of a Workflow, Coordinator or Bundle Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:11000/oozie -errorlog 0000000-150121110331712-oozie-puru-B
+2015-01-21 11:33:29,090  WARN CoordSubmitXCommand:523 - SERVER[-] USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0000000-150121110331712-oozie-puru-B] ACTION[] SAXException :
+org.xml.sax.SAXParseException; lineNumber: 20; columnNumber: 22; cvc-complex-type.2.4.a: Invalid content was found starting with element 'concurrency'. One of '{"uri:oozie:coordinator:0.2":controls, "uri:oozie:coordinator:0.2":datasets, "uri:oozie:coordinator:0.2":input-events, "uri:oozie:coordinator:0.2":output-events, "uri:oozie:coordinator:0.2":action}' is expected.
+        at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
+        at org.apache.xerces.util.ErrorHandlerWrapper.error(Unknown Source)
+        at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+        at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+        at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+        at org.apache.xerces.impl.xs.XMLSchemaValidator$XSIErrorReporter.reportError(Unknown Source)
+        at org.apache.xerces.impl.xs.XMLSchemaValidator.reportSchemaError(Unknown Source)
+        at org.apache.xerces.impl.xs.XMLSchemaValidator.handleStartElement(Unknown Source)
+        at org.apache.xerces.impl.xs.XMLSchemaValidator.startElement(Unknown Source)
+        at org.apache.xerces.impl.XMLNSDocumentScannerImpl.scanStartElement(Unknown Source)
+        at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl$FragmentContentDispatcher.dispatch(Unknown Source)
+        at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+        at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+        at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+        at org.apache.xerces.jaxp.validation.StreamValidatorHelper.validate(Unknown Source)
+        at org.apache.xerces.jaxp.validation.ValidatorImpl.validate(Unknown Source)
+</verbatim>
+
 ---+++ Checking the server logs for particular actions of a Coordinator Job
 
 Example:

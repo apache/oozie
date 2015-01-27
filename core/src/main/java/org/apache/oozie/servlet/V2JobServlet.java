@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorActionBean;
@@ -218,4 +219,44 @@ public class V2JobServlet extends V1JobServlet {
         }
         return status;
     }
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+
+        String jobId = getResourceName(request);
+        try {
+            getBaseEngine(jobId, getUser(request)).streamErrorLog(jobId, response.getWriter(), request.getParameterMap());
+        }
+        catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (BaseEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+
+    }
+
+    /**
+     * Gets the base engine based on jobId.
+     *
+     * @param jobId the jobId
+     * @param user the user
+     * @return the baseEngine
+     */
+    final public BaseEngine getBaseEngine(String jobId, String user) {
+        if (jobId.endsWith("-W")) {
+            return Services.get().get(DagEngineService.class).getDagEngine(user);
+        }
+        else if (jobId.endsWith("-B")) {
+            return Services.get().get(BundleEngineService.class).getBundleEngine(user);
+        }
+        else if (jobId.endsWith("-C")) {
+            return Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user);
+        }
+        else {
+            throw new RuntimeException("Unknown job Type");
+        }
+    }
+
 }

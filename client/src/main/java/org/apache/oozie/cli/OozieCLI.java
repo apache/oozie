@@ -111,6 +111,8 @@ public class OozieCLI {
     public static final String RERUN_OPTION = "rerun";
     public static final String INFO_OPTION = "info";
     public static final String LOG_OPTION = "log";
+    public static final String ERROR_LOG_OPTION = "errorlog";
+
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
     public static final String CONFIG_CONTENT_OPTION = "configcontent";
@@ -312,6 +314,8 @@ public class OozieCLI {
         Option timezone = new Option(TIME_ZONE_OPTION, true,
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option log = new Option(LOG_OPTION, true, "job log");
+        Option errorlog = new Option(ERROR_LOG_OPTION, true, "job error log");
+
         Option logFilter = new Option(
                 RestConstants.LOG_FILTER_OPTION, true,
                 "job log search parameter. Can be specified as -logfilter opt1=val1;opt2=val1;opt3=val1. "
@@ -359,6 +363,7 @@ public class OozieCLI {
         actions.addOption(info);
         actions.addOption(rerun);
         actions.addOption(log);
+        actions.addOption(errorlog);
         actions.addOption(definition);
         actions.addOption(config_content);
         actions.addOption(ignore);
@@ -1159,6 +1164,16 @@ public class OozieCLI {
                     }
                 }
             }
+            else if (options.contains(ERROR_LOG_OPTION)) {
+                PrintStream ps = System.out;
+                try {
+                    wc.getJobErrorLog(commandLine.getOptionValue(ERROR_LOG_OPTION), ps);
+                }
+                finally {
+                    ps.close();
+                }
+            }
+
             else if (options.contains(DEFINITION_OPTION)) {
                 System.out.println(wc.getJobDefinition(commandLine.getOptionValue(DEFINITION_OPTION)));
             }

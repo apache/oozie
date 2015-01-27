@@ -990,6 +990,17 @@ public class OozieClient {
     }
 
     /**
+     * Get the error log of a job.
+     *
+     * @param jobId
+     * @param ps
+     * @throws OozieClientException
+     */
+    public void getJobErrorLog(String jobId, PrintStream ps) throws OozieClientException {
+        new JobErrorLog(jobId, ps).call();
+    }
+
+    /**
      * Get the log of a job.
      *
      * @param jobId job Id.
@@ -1009,6 +1020,12 @@ public class OozieClient {
         }
         JobLog(String jobId, String logRetrievalType, String logRetrievalScope, String logFilter, PrintStream ps) {
             super(jobId, logRetrievalType, logRetrievalScope, RestConstants.JOB_SHOW_LOG, logFilter, ps);
+        }
+    }
+
+    private class JobErrorLog extends JobMetadata {
+        JobErrorLog(String jobId, PrintStream ps) {
+            super(jobId, RestConstants.JOB_SHOW_ERROR_LOG, ps);
         }
     }
 
@@ -1066,6 +1083,12 @@ public class OozieClient {
         JobMetadata(String jobId, String metaType) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType));
+        }
+
+        JobMetadata(String jobId, String metaType, PrintStream ps) {
+            this(jobId, metaType);
+            printStream = ps;
+
         }
 
         JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, String logFilter,

@@ -379,7 +379,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public String getDefinition(String jobId) throws DagEngineException {
         try {
-			return new DefinitionXCommand(jobId).call();
+            return new DefinitionXCommand(jobId).call();
         }
         catch (CommandException ex) {
             throw new DagEngineException(ex);
@@ -398,6 +398,25 @@ public class DagEngine extends BaseEngine {
     @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             DagEngineException {
+        streamJobLog(jobId, writer, params, false);
+    }
+
+    /**
+     * Stream the error log of a job.
+     *
+     * @param jobId job Id.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
+     */
+    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            DagEngineException {
+        streamJobLog(jobId, writer, params, true);
+    }
+
+    public void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog)
+            throws IOException, DagEngineException {
         try {
             XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
             filter.setParameter(DagXLogInfoService.JOB, jobId);
@@ -406,7 +425,15 @@ public class DagEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = job.getLastModifiedTime();
             }
-            Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            if (isErrorLog) {
+                Services.get().get(XLogStreamingService.class)
+                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            }
+            else {
+                Services.get().get(XLogStreamingService.class)
+                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            }
+
         }
         catch (Exception e) {
             throw new IOException(e);

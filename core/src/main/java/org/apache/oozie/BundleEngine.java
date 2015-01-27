@@ -242,11 +242,18 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#streamLog(java.lang.String, java.io.Writer)
-     */
-    @Override
+
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            BundleEngineException {
+        streamJobLog(jobId, writer, params, false);
+    }
+
+    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            BundleEngineException {
+        streamJobLog(jobId, writer, params, true);
+    }
+
+    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog) throws IOException,
             BundleEngineException {
 
         BundleJobBean job;
@@ -261,7 +268,15 @@ public class BundleEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            Services.get().get(XLogStreamingService.class).streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            if (isErrorLog) {
+                Services.get().get(XLogStreamingService.class)
+                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
+            }
+            else {
+                Services.get().get(XLogStreamingService.class)
+                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
+
+            }
         }
         catch (Exception ex) {
             throw new IOException(ex);

@@ -1431,6 +1431,29 @@ Content-Type: text/plain;charset=UTF-8
 ...
 </verbatim>
 
+---++++ Job Error Log
+
+An HTTP GET request retrieves the job error log.
+
+*Request:*
+
+<verbatim>
+GET /oozie/v2/job/0000000-150121110331712-oozie-puru-B?show=errorlog
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: text/plain;charset=UTF-8
+2015-01-21 11:33:29,090  WARN CoordSubmitXCommand:523 - SERVER[-] USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0000000-150121110331712-oozie-puru-B] ACTION[] SAXException :
+org.xml.sax.SAXParseException; lineNumber: 20; columnNumber: 22; cvc-complex-type.2.4.a: Invalid content was found starting with element 'concurrency'. One of '{"uri:oozie:coordinator:0.2":controls, "uri:oozie:coordinator:0.2":datasets, "uri:oozie:coordinator:0.2":input-events, "uri:oozie:coordinator:0.2":output-events, "uri:oozie:coordinator:0.2":action}' is expected.
+        at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
+        at org.apache.xerces.util.ErrorHandlerWrapper.error(Unknown Source)
+...
+</verbatim>
+
+
 ---++++ Filtering the server logs with logfilter options
 User can provide multiple option to filter logs using -logfilter opt1=val1;opt2=val1;opt3=val1. This can be used to fetch only just logs of interest faster as fetching Oozie server logs is slow due to the overhead of pattern matching.
 
