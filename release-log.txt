@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2121 CoordinatorFunctionalSpec 4.4.1.1 swap Value and First Occurrence line 4 in example table (apivovarov via ryota)
 OOZIE-1894 Better error reporting to user (puru)
 OOZIE-2120 Many JPAExecutor names are wrong (rkanter)
 OOZIE-1722 Add support to Hadoop-2 for AM restarts of the launcher job (jaydeepvishwakarma via rkanter)

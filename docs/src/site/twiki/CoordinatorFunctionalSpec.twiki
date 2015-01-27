@@ -237,7 +237,7 @@ The =${coord:days(int n)}= EL function includes *all* the minutes of the current
 | =2009-01-01T08:00Z= | =America/Los_Angeles= | =${coord:days(1)}= | 1440 | =2009-01-01T08:00Z= | total minutes in 2009JAN01 PST8PDT time |
 | =2009-01-01T08:00Z= | =America/Los_Angeles= | =${coord:days(2)}= | 2880 | =2009-01-01T08:00Z= | total minutes in 2009JAN01 and 2009JAN02 PST8PDT time |
 | |||||
-| =2009-03-08T08:00Z= | =UTC= | =${coord:days(1)}= | =2009-03-08T08:00Z= | 1440 | total minutes on 2009MAR08 UTC time |
+| =2009-03-08T08:00Z= | =UTC= | =${coord:days(1)}= | 1440 | =2009-03-08T08:00Z= | total minutes on 2009MAR08 UTC time |
 | =2009-03-08T08:00Z= | =Europe/London= | =${coord:days(1)}= | 1440 | =2009-03-08T08:00Z= | total minutes in 2009MAR08 BST1BDT time |
 | =2009-03-08T08:00Z= | =America/Los_Angeles= | =${coord:days(1)}= | 1380 | =2009-03-08T08:00Z= | total minutes in 2009MAR08 PST8PDT time <br/> (2009MAR08 is DST switch in the US) |
 | =2009-03-08T08:00Z= | =UTC= | =${coord:days(2)}= | 2880 | =2009-03-08T08:00Z= | total minutes in 2009MAR08 and 2009MAR09 UTC time |
