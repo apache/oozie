@@ -2438,4 +2438,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.PauseTransitService.callable.batch.size
+        </name>
+        <value>10</value>
+        <description>
+            This value determines the number of callable which will be batched together
+            to be executed by a single thread.
+        </description>
+    </property>
+
 </configuration>
