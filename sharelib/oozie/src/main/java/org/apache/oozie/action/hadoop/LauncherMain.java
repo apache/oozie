@@ -63,7 +63,7 @@ public abstract class LauncherMain {
                         if (StringUtils.isEmpty(jobId) || jobId.equalsIgnoreCase("NULL")) {
                             continue;
                         }
-
+                        jobId = jobId.replaceAll("application","job");
                         sb.append(separator).append(jobId);
                         separator = ",";
                     }

@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2112 Child Job URL doesn't show properly with Hive on Tez (ryota)
 OOZIE-2122 fix test case failure of TestLiteWorkflowAppService (ryota)
 OOZIE-2055 PauseTransitService does not proceed forward if any job has issue (puru)
 OOZIE-2068 Configuration as part of sharelib (puru)
