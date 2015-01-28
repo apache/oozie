@@ -69,7 +69,7 @@ public class TestWorkflowNotificationXCommand extends XTestCase {
         Mockito.when(workflow.getStatus()).thenReturn(WorkflowJob.Status.SUCCEEDED);
         Mockito.when(workflow.getWorkflowInstance()).thenReturn(wfi);
         WorkflowNotificationXCommand command = new WorkflowNotificationXCommand(workflow);
-        command.retries = 3;
+        command.setRetry(3);
         long start = System.currentTimeMillis();
         command.call();
         long end = System.currentTimeMillis();

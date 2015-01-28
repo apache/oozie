@@ -18,17 +18,15 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,6 +78,7 @@ import org.jdom.Namespace;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.oozie.hadoop.utils.HadoopShims;
+
 
 public class JavaActionExecutor extends ActionExecutor {
 
@@ -579,22 +578,74 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected void addShareLib(Configuration conf, String[] actionShareLibNames)
             throws ActionExecutorException {
+        Set<String> confSet = new HashSet<String>(Arrays.asList(getShareLibFilesForActionConf() == null ? new String[0]
+                : getShareLibFilesForActionConf()));
+
+        Set<Path> sharelibList = new HashSet<Path>();
+
         if (actionShareLibNames != null) {
             try {
                 ShareLibService shareLibService = Services.get().get(ShareLibService.class);
                 FileSystem fs = shareLibService.getFileSystem();
                 if (fs != null) {
-                  for (String actionShareLibName : actionShareLibNames) {
+                    for (String actionShareLibName : actionShareLibNames) {
                         List<Path> listOfPaths = shareLibService.getShareLibJars(actionShareLibName);
                         if (listOfPaths != null && !listOfPaths.isEmpty()) {
-
                             for (Path actionLibPath : listOfPaths) {
-                                JobUtils.addFileToClassPath(actionLibPath, conf, fs);
-                                DistributedCache.createSymlink(conf);
+                                String fragmentName = new URI(actionLibPath.toString()).getFragment();
+                                Path pathWithFragment = fragmentName == null ? actionLibPath : new Path(new URI(
+                                        actionLibPath.toString()).getPath());
+                                String fileName = fragmentName == null ? actionLibPath.getName() : fragmentName;
+                                if (confSet.contains(fileName)) {
+                                    Configuration jobXmlConf = shareLibService.getShareLibConf(actionShareLibName,
+                                            pathWithFragment);
+                                    checkForDisallowedProps(jobXmlConf, actionLibPath.getName());
+                                    XConfiguration.injectDefaults(jobXmlConf, conf);
+                                    LOG.trace("Adding properties of " + actionLibPath + " to job conf");
+                                }
+                                else {
+                                    // Filtering out duplicate jars or files
+                                    sharelibList.add(new Path(actionLibPath.toUri()) {
+                                        @Override
+                                        public int hashCode() {
+                                            return getName().hashCode();
+                                        }
+                                        @Override
+                                        public String getName() {
+                                            try {
+                                                return (new URI(toString())).getFragment() == null ? new Path(toUri()).getName()
+                                                        : (new URI(toString())).getFragment();
+                                            }
+                                            catch (URISyntaxException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                        @Override
+                                        public boolean equals(Object input) {
+                                            if (input == null) {
+                                                return false;
+                                            }
+                                            if (input == this) {
+                                                return true;
+                                            }
+                                            if (!(input instanceof Path)) {
+                                                return false;
+                                            }
+                                            return getName().equals(((Path) input).getName());
+                                        }
+                                    });
+                                }
                             }
                         }
                     }
                 }
+                for (Path libPath : sharelibList) {
+                    addToCache(conf, libPath, libPath.toUri().getPath(), false);
+                }
+            }
+            catch (URISyntaxException ex) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "Error configuring sharelib",
+                        ex.getMessage());
             }
             catch (IOException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
@@ -697,7 +748,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
 
         addAllShareLibs(appPath, conf, context, actionXml);
-	}
+    }
 
     // Adds action specific share libs and common share libs
     private void addAllShareLibs(Path appPath, Configuration conf, Context context, Element actionXml)
@@ -719,9 +770,18 @@ public class JavaActionExecutor extends ActionExecutor {
                     ioe.getMessage());
         }
         // Action sharelibs are only added if user has specified to use system libpath
-        if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
-            // add action specific sharelibs
-            addShareLib(conf, getShareLibNames(context, actionXml, conf));
+        if (conf.get(OozieClient.USE_SYSTEM_LIBPATH) == null) {
+            if (wfJobConf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH,
+                    ConfigurationService.getBoolean(OozieClient.USE_SYSTEM_LIBPATH))) {
+                // add action specific sharelibs
+                addShareLib(conf, getShareLibNames(context, actionXml, conf));
+            }
+        }
+        else {
+            if (conf.getBoolean(OozieClient.USE_SYSTEM_LIBPATH, false)) {
+                // add action specific sharelibs
+                addShareLib(conf, getShareLibNames(context, actionXml, conf));
+            }
         }
     }
 
@@ -1450,6 +1510,10 @@ public class JavaActionExecutor extends ActionExecutor {
      * @return the sharelib name for the action, <code>NULL</code> if none.
      */
     protected String getDefaultShareLibName(Element actionXml) {
+        return null;
+    }
+
+    public String[] getShareLibFilesForActionConf() {
         return null;
     }
 

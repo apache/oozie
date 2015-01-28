@@ -140,4 +140,9 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         return XOozieClient.HIVE_SCRIPT;
     }
 
+    @Override
+    public String[] getShareLibFilesForActionConf() {
+        return new String[]{"hive-site.xml"};
+    }
+
 }

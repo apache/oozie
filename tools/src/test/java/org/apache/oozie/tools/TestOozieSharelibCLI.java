@@ -122,9 +122,9 @@ public class TestOozieSharelibCLI extends XTestCase {
 
         // test files in new folder
         assertEquals(9, fs.getFileStatus(new Path(sharelibService.getLatestLibPath(getDistPath(),
-                ShareLibService.SHARED_LIB_PREFIX), "file1")).getLen());
+                ShareLibService.SHARE_LIB_PREFIX), "file1")).getLen());
         assertEquals(10, fs.getFileStatus(new Path(sharelibService.getLatestLibPath(getDistPath(),
-                ShareLibService.SHARED_LIB_PREFIX), "file2")).getLen());
+                ShareLibService.SHARE_LIB_PREFIX), "file2")).getLen());
 
     }
 

@@ -2482,6 +2482,8 @@ classpath/libpath for all its actions.
 A workflow job can specify a share library path using the job property =oozie.libpath=.
 
 A workflow job can use the system share library by setting the job property =oozie.use.system.libpath= to =true=.
+=oozie.use.system.libpath= can be also configured at action configuration.
+=oozie.use.system.libpath= defined at action level overrides job property.
 
 ---+++ 17.1 Action Share Library Override (since Oozie 3.3)
 

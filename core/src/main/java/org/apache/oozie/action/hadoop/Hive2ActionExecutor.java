@@ -134,4 +134,9 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
         return HIVE2_SCRIPT;
     }
 
+    @Override
+    public String[] getShareLibFilesForActionConf() {
+        return new String[] { "hive-site.xml" };
+    }
+
 }
