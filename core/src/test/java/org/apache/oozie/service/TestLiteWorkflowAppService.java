@@ -456,6 +456,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             expected.add(getTestCaseFileUri("liby/maputil_y1.jar"));
             expected.add(getTestCaseFileUri("liby/maputil_y2.jar"));
             expected.add(getTestCaseFileUri("libz/maputil_z.jar"));
+            Collections.sort(expected);
             Collections.sort(found);
             assertEquals(expected.size(), found.size());
             for(int i=0; i<expected.size(); i++) {
