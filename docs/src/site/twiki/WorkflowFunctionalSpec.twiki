@@ -1775,8 +1775,8 @@ It returns the URL UTF-8 encoded value of the given string. A string with =null=
 
 *String timestamp()*
 
-It returns the UTC current date and time in W3C format down to the second (YYYY-MM-DDThh:mm:ss.sZ). I.e.:
-1997-07-16T19:20:30.45Z
+It returns the current date and time in ISO08601 format in Oozie processing timesone down to the minute (YYYY-MM-DDThh:mmZ). I.e.:
+1997-07-16T19:20Z
 
 *String toJsonStr(Map<String, String>)* (since Oozie 3.3)
 
