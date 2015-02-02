@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 public class DistcpMain extends JavaMain {
 
@@ -60,7 +61,7 @@ public class DistcpMain extends JavaMain {
         }
         try {
             Tool distcp = (Tool) construct.newInstance(constArgs);
-            int i = distcp.run(args);
+            int i = ToolRunner.run(distcp, args);
             if (i != 0) {
                 throw new RuntimeException("Returned value from distcp is non-zero (" + i + ")");
             }

@@ -61,6 +61,7 @@ public class TestDistcpMain extends MainTestCase {
         // Check normal execution
         DistcpMain.main(new String[]{inputDir.toString(), outputDir.toString()});
         assertTrue(getFileSystem().exists(outputDir));
+        fs.delete(outputDir,true);
 
         // Check exception handling
         try {
@@ -68,6 +69,18 @@ public class TestDistcpMain extends MainTestCase {
         } catch(RuntimeException re) {
             assertTrue(re.getMessage().indexOf("Returned value from distcp is non-zero") != -1);
         }
+
+        // test -D option
+        jobConf.set("mapred.job.queue.name", "non-exist");
+        fs.delete(new Path(getTestCaseDir(), "action.xml"), true);
+        os = new FileOutputStream(actionXml);
+        jobConf.writeXml(os);
+
+        assertFalse(getFileSystem().exists(outputDir));
+        String option = "-Dmapred.job.queue.name=default"; // overwrite queue setting
+        DistcpMain.main(new String[] { option, inputDir.toString(), outputDir.toString() });
+        assertTrue(getFileSystem().exists(outputDir));
+
         return null;
     }
 }
