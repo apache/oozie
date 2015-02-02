@@ -1462,7 +1462,7 @@ application. Refer to section [#FilesAchives][Adding Files and Archives for the 
 
 The =capture-output= element can be used to propagate values back into Oozie context, which can then be accessed via
 EL-functions. This needs to be written out as a java properties format file. The filename is obtained via a System 
-property specified by the constant =JavaMainMapper.OOZIE_JAVA_MAIN_CAPTURE_OUTPUT_FILE=
+property specified by the constant =oozie.action.output.properties=
 
 *IMPORTANT:* In order for a Java action to succeed on a secure cluster, it must propagate the Hadoop delegation token like in the
 following code snippet (this is benign on non-secure clusters):
