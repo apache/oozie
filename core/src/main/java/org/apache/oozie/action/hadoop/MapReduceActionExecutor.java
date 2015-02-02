@@ -87,7 +87,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     @Override
     Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context) throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
-        conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
+        conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
         return conf;
     }
 
@@ -166,6 +166,9 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 actionConf.set(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR, "");
             }
         }
+
+        // child job cancel delegation token for mapred action
+        actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
 
         return actionConf;
     }

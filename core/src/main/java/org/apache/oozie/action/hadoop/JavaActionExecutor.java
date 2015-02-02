@@ -478,6 +478,9 @@ public class JavaActionExecutor extends ActionExecutor {
             setJavaMain(actionConf, actionXml);
 
             parseJobXmlAndConfiguration(context, actionXml, appPath, actionConf);
+
+            // set cancel.delegation.token in actionConf that child job doesn't cancel delegation token
+            actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
             return actionConf;
         }
         catch (IOException ex) {
@@ -821,6 +824,9 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // launcher job configuration
             JobConf launcherJobConf = createBaseHadoopConf(context, actionXml);
+            // cancel delegation token on a launcher job which stays alive till child job(s) finishes
+            // otherwise (in mapred action), doesn't cancel not to disturb running child job
+            launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
             setupLauncherConf(launcherJobConf, actionXml, appPathRoot, context);
 
             // Properties for when a launcher job's AM gets restarted
@@ -897,9 +903,6 @@ public class JavaActionExecutor extends ActionExecutor {
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
             // maybe we should add queue to the WF schema, below job-tracker
             actionConfToLauncherConf(actionConf, launcherJobConf);
-
-            // to disable cancelation of delegation token on launcher job end
-            launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
 
             return launcherJobConf;
         }

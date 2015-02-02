@@ -288,8 +288,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         assertEquals("LQ", conf.get("mapred.job.queue.name"));
         assertEquals("AQ", actionConf.get("mapred.job.queue.name"));
-
-
+        assertEquals(true, conf.getBoolean("mapreduce.job.complete.cancel.delegation.tokens", false));
+        assertEquals(false, actionConf.getBoolean("mapreduce.job.complete.cancel.delegation.tokens", true));
     }
 
     protected Context createContext(String actionXml, String group) throws Exception {

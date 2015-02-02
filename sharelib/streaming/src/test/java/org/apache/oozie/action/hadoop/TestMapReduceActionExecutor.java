@@ -229,6 +229,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertEquals("IN", conf.get("mapred.input.dir"));
+        JobConf launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        assertEquals(false, launcherJobConf.getBoolean("mapreduce.job.complete.cancel.delegation.tokens", true));
+        assertEquals(true, conf.getBoolean("mapreduce.job.complete.cancel.delegation.tokens", false));
 
         // Enable uber jars to test that MapReduceActionExecutor picks up the oozie.mapreduce.uber.jar property correctly
         Services serv = Services.get();
@@ -239,7 +242,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));  // absolute path with namenode
-        JobConf launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
+        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
         assertEquals(getNameNodeUri() + "/app/job.jar", launcherJobConf.getJar());              // same for launcher conf
 
         actionXml = createUberJarActionXML("/app/job.jar", "");
