@@ -448,6 +448,8 @@ public class DagEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_GROUP);
         FILTER_NAMES.add(OozieClient.FILTER_STATUS);
         FILTER_NAMES.add(OozieClient.FILTER_ID);
+        FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_START);
+        FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_END);
     }
 
     /**
@@ -468,6 +470,7 @@ public class DagEngine extends BaseEngine {
                     if (pair.length != 2) {
                         throw new DagEngineException(ErrorCode.E0420, filter, "elements must be name=value pairs");
                     }
+                    pair[0] = pair[0].toLowerCase();
                     if (!FILTER_NAMES.contains(pair[0])) {
                         throw new DagEngineException(ErrorCode.E0420, filter, XLog
                                 .format("invalid name [{0}]", pair[0]));

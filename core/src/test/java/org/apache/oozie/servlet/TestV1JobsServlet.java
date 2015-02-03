@@ -235,6 +235,17 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertNull(obj.get(JsonTags.JOB_ID));
 
+                params = new HashMap<String, String>();
+                params.put(RestConstants.JOBS_FILTER_PARAM,
+                        "startCreatedTime=2000-01-01T00:00Z;endCreatedTime=2100-12-31T00:00Z");
+                url = createURL("", params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
+                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
+                assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
                 return null;
             }
         });

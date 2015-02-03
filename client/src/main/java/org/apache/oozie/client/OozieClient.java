@@ -151,6 +151,10 @@ public class OozieClient {
 
     public static final String FILTER_SLA_NOMINAL_END = "nominal_end";
 
+    public static final String FILTER_CREATED_TIME_START = "startcreatedtime";
+
+    public static final String FILTER_CREATED_TIME_END = "endcreatedtime";
+
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
 
     public static final String CHANGE_VALUE_PAUSETIME = "pausetime";

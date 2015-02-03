@@ -18,18 +18,24 @@
 
 package org.apache.oozie.executor.jpa;
 
+import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob.Status;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.apache.openjpa.persistence.OpenJPAQuery;
@@ -69,7 +75,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
     public WorkflowsInfo execute(EntityManager em) throws JPAExecutorException {
         List<String> orArray = new ArrayList<String>();
         List<String> colArray = new ArrayList<String>();
-        List<String> valArray = new ArrayList<String>();
+        List<Object> valArray = new ArrayList<Object>();
         StringBuilder sb = new StringBuilder("");
         boolean isStatus = false;
         boolean isAppName = false;
@@ -210,10 +216,68 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                             colArray.add(colVar);
                         }
                     }
+                    if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_START)) {
+                        List<String> values = filter.get(OozieClient.FILTER_CREATED_TIME_START);
+                        colName = "createdTimestampStart";
+                        if (values.size() > 1) {
+                            throw new JPAExecutorException(ErrorCode.E0302,
+                                    "cannot specify multiple startcreatedtime");
+                        }
+                        colVar = colName;
+                        colVar = colVar + index;
+                        if (!isEnabled) {
+                            sb.append(seletStr).append(" where w.createdTimestamp >= :" + colVar);
+                            isEnabled = true;
+                        }
+                        else {
+                            sb.append(" and w.createdTimestamp >= :" + colVar);
+                        }
+                        index++;
+                        Date createdTime = null;
+                        try {
+                            createdTime = parseCreatedTimeString(values.get(0));
+                        }
+                        catch (Exception e) {
+                            throw new JPAExecutorException(ErrorCode.E0302, e.getMessage());
+                        }
+                        Timestamp createdTimeStamp = new Timestamp(createdTime.getTime());
+                        valArray.add(createdTimeStamp);
+                        orArray.add(colName);
+                        colArray.add(colVar);
+
+                    }
+                    if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_END)) {
+                        List<String> values = filter.get(OozieClient.FILTER_CREATED_TIME_END);
+                        colName = "createdTimestampEnd";
+                        if (values.size() > 1) {
+                            throw new JPAExecutorException(ErrorCode.E0302,
+                                    "cannot specify multiple endcreatedtime");
+                        }
+                        colVar = colName;
+                        colVar = colVar + index;
+                        if (!isEnabled) {
+                            sb.append(seletStr).append(" where w.createdTimestamp <= :" + colVar);
+                            isEnabled = true;
+                        }
+                        else {
+                            sb.append(" and w.createdTimestamp <= :" + colVar);
+                        }
+                        index++;
+                        Date createdTime = null;
+                        try {
+                            createdTime = parseCreatedTimeString(values.get(0));
+                        }
+                        catch (Exception e) {
+                            throw new JPAExecutorException(ErrorCode.E0302, e.getMessage());
+                        }
+                        Timestamp createdTimeStamp = new Timestamp(createdTime.getTime());
+                        valArray.add(createdTimeStamp);
+                        orArray.add(colName);
+                        colArray.add(colVar);
+                    }
                 }
             }
         }
-
         int realLen = 0;
 
         Query q = null;
@@ -232,6 +296,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                 q.setFirstResult(start - 1);
                 q.setMaxResults(len);
                 qTotal = em.createQuery(sbTotal.toString().replace(seletStr, countStr));
+
                 for (int i = 0; i < orArray.size(); i++) {
                     q.setParameter(colArray.get(i), valArray.get(i));
                     qTotal.setParameter(colArray.get(i), valArray.get(i));
@@ -267,6 +332,43 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         return "WorkflowsJobGetJPAExecutor";
     }
 
+    private Date parseCreatedTimeString(String time) throws Exception{
+        Date createdTime = null;
+        int offset = 0;
+        if (Character.isLetter(time.charAt(time.length() - 1))) {
+            switch (time.charAt(time.length() - 1)) {
+                case 'd':
+                    offset = Integer.parseInt(time.substring(0, time.length() - 1));
+                    if(offset > 0) {
+                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                    }
+                    createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
+                    break;
+                case 'h':
+                    offset =  Integer.parseInt(time.substring(0, time.length() - 1));
+                    if(offset > 0) {
+                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                    }
+                    createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
+                    break;
+                case 'm':
+                    offset =  Integer.parseInt(time.substring(0, time.length() - 1));
+                    if(offset > 0) {
+                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                    }
+                    createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
+                    break;
+                case 'Z':
+                    createdTime = DateUtils.parseDateUTC(time);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported time format " + time);
+            }
+        } else {
+            throw new IllegalArgumentException("the format of createdTime is wrong: " + time);
+        }
+        return createdTime;
+    }
     private WorkflowJobBean getBeanForWorkflowFromArray(Object[] arr) {
 
         WorkflowJobBean wfBean = new WorkflowJobBean();

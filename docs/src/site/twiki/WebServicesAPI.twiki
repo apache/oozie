@@ -1596,6 +1596,8 @@ Valid filter names are:
    * user: the user that submitted the job
    * group: the group for the job
    * status: the status of the job
+   * startCreatedTime : the start of the window about workflow job's created time
+   * endCreatedTime : the end of above window
 
 The query will do an AND among all the filter names.
 
@@ -1606,6 +1608,8 @@ Additionally the =offset= and =len= parameters can be used for pagination. The s
 
 Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
 The valid values of job type are: =wf=, =coordinator= or =bundle=.
+
+startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format (*yyyy-MM-dd'T'HH:mm'Z'*) or a offset value in days or hours from the current time. for example, -2d means the current time - 2 days. -3h means the current time - 3 hours. -5m means the current time - 5 minutes
 
 ---++++ Jobs information using Bulk API
 
