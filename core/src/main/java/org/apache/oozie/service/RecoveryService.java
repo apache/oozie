@@ -96,6 +96,9 @@ public class RecoveryService implements Service {
      * Age of actions to queue, in seconds.
      */
     public static final String CONF_WF_ACTIONS_OLDER_THAN = CONF_PREFIX_WF_ACTIONS + "older.than";
+
+    public static final String CONF_WF_ACTIONS_CREATED_TIME_INTERVAL = CONF_PREFIX_WF_ACTIONS + "created.time.interval";
+
     /**
      * Age of coordinator jobs to recover, in seconds.
      */
@@ -110,6 +113,9 @@ public class RecoveryService implements Service {
     private static final String INSTR_RECOVERED_ACTIONS_COUNTER = "actions";
     private static final String INSTR_RECOVERED_COORD_ACTIONS_COUNTER = "coord_actions";
     private static final String INSTR_RECOVERED_BUNDLE_ACTIONS_COUNTER = "bundle_actions";
+
+    public static final long ONE_DAY_MILLISCONDS = 25 * 60 * 60 * 1000;
+
 
 
     /**
@@ -334,10 +340,14 @@ public class RecoveryService implements Service {
             XLog.Info.get().clear();
             XLog log = XLog.getLog(getClass());
             // queue command for action recovery
+
+            long createdTimeInterval = new Date().getTime() - ConfigurationService.getLong(CONF_WF_ACTIONS_CREATED_TIME_INTERVAL)
+                    * ONE_DAY_MILLISCONDS;
+
             List<WorkflowActionBean> actions = null;
             try {
                 actions = WorkflowActionQueryExecutor.getInstance().getList(WorkflowActionQuery.GET_PENDING_ACTIONS,
-                        olderThan);
+                        olderThan, createdTimeInterval);
             }
             catch (JPAExecutorException ex) {
                 log.warn("Exception while reading pending actions from storage", ex);

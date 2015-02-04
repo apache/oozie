@@ -333,6 +333,14 @@
     </property>
 
     <property>
+        <name>oozie.service.RecoveryService.wf.actions.created.time.interval</name>
+        <value>7</value>
+        <description>
+        Created time period of the actions which are eligible to be queued for recovery in days.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.RecoveryService.callable.batch.size</name>
         <value>10</value>
         <description>

@@ -209,7 +209,9 @@ public class WorkflowActionQueryExecutor extends
             case GET_PENDING_ACTIONS:
                 Long minimumPendingAgeSecs = (Long) parameters[0];
                 Timestamp pts = new Timestamp(System.currentTimeMillis() - minimumPendingAgeSecs * 1000);
+                Timestamp createdTimeInterval = new Timestamp((Long) parameters[1]);
                 query.setParameter("pendingAge", pts);
+                query.setParameter("createdTime", createdTimeInterval);
                 break;
             case GET_ACTIONS_FOR_WORKFLOW_RERUN:
                 query.setParameter("wfId", parameters[0]);
