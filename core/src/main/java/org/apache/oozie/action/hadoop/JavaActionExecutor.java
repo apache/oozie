@@ -114,6 +114,8 @@ public class JavaActionExecutor extends ActionExecutor {
     protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
     public static final String CONF_HADOOP_YARN_UBER_MODE = "oozie.action.launcher." + HADOOP_YARN_UBER_MODE;
+    public static final String HADOOP_JOB_CLASSLOADER = "mapreduce.job.classloader";
+    public static final String HADOOP_USER_CLASSPATH_FIRST = "mapreduce.user.classpath.first";
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
@@ -897,7 +899,12 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // setting for uber mode
             if (launcherJobConf.getBoolean(HADOOP_YARN_UBER_MODE, false)) {
-                updateConfForUberMode(launcherJobConf);
+                if (checkPropertiesToDisableUber(launcherJobConf)) {
+                    launcherJobConf.setBoolean(HADOOP_YARN_UBER_MODE, false);
+                }
+                else {
+                    updateConfForUberMode(launcherJobConf);
+                }
             }
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
@@ -909,6 +916,17 @@ public class JavaActionExecutor extends ActionExecutor {
         catch (Exception ex) {
             throw convertException(ex);
         }
+    }
+
+    private boolean checkPropertiesToDisableUber(Configuration launcherConf) {
+        boolean disable = false;
+        if (launcherConf.getBoolean(HADOOP_JOB_CLASSLOADER, false)) {
+            disable = true;
+        }
+        else if (launcherConf.getBoolean(HADOOP_USER_CLASSPATH_FIRST, false)) {
+            disable = true;
+        }
+        return disable;
     }
 
     private void injectCallback(Context context, Configuration conf) {

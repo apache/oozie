@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2123 Disable launcher uber mode if classloader options are set (ryota)
 OOZIE-2118 add createdtime option to workflow jobs query (ryota)
 OOZIE-2110 cancel delegation token of launcher jobs that stay till child jobs finish (ryota)
 OOZIE-2119 Distcp action fails when -D option in arguments (ryota)
