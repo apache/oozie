@@ -63,6 +63,7 @@ public class SqoopMain extends LauncherMain {
 
         String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
         if (delegationToken != null) {
+            sqoopConf.setBoolean("sqoop.hbase.security.token.skip", true);
             sqoopConf.set("mapreduce.job.credentials.binary", delegationToken);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to: " + delegationToken);
