@@ -19,6 +19,7 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Date;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -359,15 +360,16 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         //GET_PENDING_ACTIONS
         sleep(10);
         long olderThan = 1;
+        long createdTimeInterval = new Date().getTime() - 1000 * 3600 * 1;
         retList = WorkflowActionQueryExecutor.getInstance().getList(
-                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan);
+                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan, createdTimeInterval);
         assertEquals(2, retList.size());
         for(WorkflowActionBean bean : retList){
             assertTrue(bean.getId().equals("wrkflow@4") || bean.getId().equals("wrkflow@5"));
         }
         olderThan = 10000;
         retList = WorkflowActionQueryExecutor.getInstance().getList(
-                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan);
+                WorkflowActionQuery.GET_PENDING_ACTIONS, olderThan, createdTimeInterval);
         assertEquals(0, retList.size());
 
     }
