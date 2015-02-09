@@ -1700,6 +1700,18 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.action.launcher.yarn.timeline-service.enabled</name>
+        <value>false</value>
+        <description>
+            Enables/disables getting delegation tokens for ATS for the launcher job in
+            YARN/Hadoop 2.6 (no effect in Hadoop 1) for all action types by default if tez-site.xml is present in
+            distributed cache.
+            This can be overridden on a per-action basis by setting
+            oozie.launcher.yarn.timeline-service.enabled in an action's configuration section in a workflow.
+        </description>
+    </property>
+
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 

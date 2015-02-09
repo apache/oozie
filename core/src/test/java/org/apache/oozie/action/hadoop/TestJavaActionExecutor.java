@@ -33,6 +33,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -49,6 +50,7 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
@@ -951,8 +953,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         }
 
         // Define 'abc' token type in oozie-site
-        Configuration conf = Services.get().getConf();
-        conf.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
+        ConfigurationService.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
 
         // Try to load the token after being defined in oozie-site; should work correctly
         credentialsConf = new JobConf();
@@ -1028,7 +1029,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Assert.assertArrayEquals(new String[] { "java-action-executor" },
                 ae.getShareLibNames(context, new Element("java"), actionConf));
 
-        Services.get().getConf().set("oozie.action.sharelib.for.java", "java-oozie-conf");
+        ConfigurationService.set("oozie.action.sharelib.for.java", "java-oozie-conf");
         Assert.assertArrayEquals(new String[] { "java-oozie-conf" },
                 ae.getShareLibNames(context, new Element("java"), actionConf));
 
@@ -1301,7 +1302,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
         workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
 
-        Services.get().getConf().set("oozie.action.sharelib.for.java", "java,hcat");
+        ConfigurationService.set("oozie.action.sharelib.for.java", "java,hcat");
 
         JavaActionExecutor ae = new JavaActionExecutor();
 
@@ -1339,7 +1340,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         wfConf.set("oozie.action.sharelib.for.java", "other,hcat");
         workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
 
-        Services.get().getConf().set("oozie.action.sharelib.for.java", "java");
+        ConfigurationService.set("oozie.action.sharelib.for.java", "java");
         ae = new JavaActionExecutor();
 
         jobConf = ae.createBaseHadoopConf(context, eActionXml);
@@ -1636,7 +1637,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("false", conf.get("mapreduce.job.ubertask.enable"));
 
         // disable at oozie-site level for just the "test" action
-        Services.get().getConf().setBoolean("oozie.action.test.launcher.mapreduce.job.ubertask.enable", false);
+        ConfigurationService.setBoolean("oozie.action.test.launcher.mapreduce.job.ubertask.enable", false);
         JavaActionExecutor tjae = new JavaActionExecutor("test");
 
         // default -- should not set
@@ -1677,8 +1678,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("false", conf.get("mapreduce.job.ubertask.enable"));
 
         // disable at oozie-site level for all actions except for the "test" action
-        Services.get().getConf().setBoolean("oozie.action.test.launcher.mapreduce.job.ubertask.enable", true);
-        Services.get().getConf().setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false);
+        ConfigurationService.setBoolean("oozie.action.test.launcher.mapreduce.job.ubertask.enable", true);
+        ConfigurationService.setBoolean("oozie.action.launcher.mapreduce.job.ubertask.enable", false);
 
         // default -- should be true
         conf = new Configuration(false);
@@ -2036,11 +2037,85 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         context = new Context(wf, action);
         launcherConf = new JobConf();
-        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml1, launcherConf);
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml2, launcherConf);
 
-        // uber mode should be disabled since oozie.launcher.mapreduce.job.classloader=true
+        // uber mode should be disabled since oozie.launcher.mapreduce.user.classpath.first=true
         assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
-}
+    }
+
+    public void testUpdateConfForTimeLineServiceEnabled() throws Exception {
+        Element actionXml = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<main-class>MAIN-CLASS</main-class>"
+                        + "</java>");
+        JavaActionExecutor ae = new JavaActionExecutor();
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+        Context context = new Context(wf, action);
+        JobConf actionConf = new JobConf();
+
+        // Test when server side setting is not enabled
+        JobConf launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        assertNull(launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
+
+        ConfigurationService.set("oozie.action.launcher." + JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, "true");
+
+        // Test when server side setting is enabled but tez-site.xml is not in DistributedCache
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        assertNull(launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
+
+        final Path tezSite = new Path("/tmp/tez-site.xml");
+        final FSDataOutputStream out = getFileSystem().create(tezSite);
+        out.close();
+
+        // Test when server side setting is enabled and tez-site.xml is in DistributedCache
+        Element actionXmlWithTez = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<main-class>MAIN-CLASS</main-class>"
+                        + "<file>" + tezSite + "</file>"
+                        + "</java>");
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlWithTez, actionConf);
+        assertTrue(launcherConf.getBoolean(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, false));
+
+        // Test when server side setting is enabled, tez-site.xml is in DistributedCache
+        // but user has disabled in action configuration
+        Element actionXmlATSDisabled = XmlUtils
+                .parseXml("<java>"
+                        + "<job-tracker>"
+                        + getJobTrackerUri()
+                        + "</job-tracker>"
+                        + "<name-node>"
+                        + getNameNodeUri()
+                        + "</name-node>"
+                        + "<configuration>"
+                        + "<property><name>oozie.launcher.yarn.timeline-service.enabled</name>"
+                        + "<value>false</value></property>"
+                        + "</configuration>"
+                        + "<main-class>MAIN-CLASS</main-class>"
+                        + "<file>" + tezSite + "</file>"
+                        + "</java>");
+        actionConf = ae.createBaseHadoopConf(context, actionXmlATSDisabled);
+        ae.setupActionConf(actionConf, context, actionXmlATSDisabled, new Path("hdfs:///tmp/workflow"));
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXmlATSDisabled, actionConf);
+        assertFalse(launcherConf.getBoolean(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, false));
+
+        getFileSystem().delete(tezSite, true);
+    }
 
     public void testAddToCache() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
@@ -2315,7 +2390,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
         workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
 
-        Services.get().getConf().set("oozie.action.sharelib.for.java", "java");
+        ConfigurationService.set("oozie.action.sharelib.for.java", "java");
 
         final RunningJob runningJob = submitAction(context);
         waitFor(60 * 1000, new Predicate() {

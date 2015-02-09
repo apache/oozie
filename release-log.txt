@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2133 Support getting ATS delegation tokens for tez jobs (rohini)
 OOZIE-2131 Add flag to sqoop action to skip hbase delegation token generation (abec via ranter)
 OOZIE-2127 Add created time to RecoveryService WF queries (puru)
 OOZIE-2123 Disable launcher uber mode if classloader options are set (ryota)

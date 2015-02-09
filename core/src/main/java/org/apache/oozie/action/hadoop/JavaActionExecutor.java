@@ -93,6 +93,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
+    public static final String HADOOP_YARN_TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
     public static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
@@ -275,6 +276,17 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (ConfigurationService.getBoolean("oozie.action.launcher." + HADOOP_YARN_UBER_MODE)) {
                     launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
                 }
+            }
+        }
+    }
+
+    void injectLauncherTimelineServiceEnabled(Configuration launcherConf, Configuration actionConf) {
+        // Getting delegation token for ATS. If tez-site.xml is present in distributed cache, turn on timeline service.
+        if (actionConf.get("oozie.launcher." + HADOOP_YARN_TIMELINE_SERVICE_ENABLED) == null
+                && ConfigurationService.getBoolean("oozie.action.launcher." + HADOOP_YARN_TIMELINE_SERVICE_ENABLED)) {
+            String cacheFiles = launcherConf.get("mapred.cache.files");
+            if (cacheFiles != null && cacheFiles.contains("tez-site.xml")) {
+                launcherConf.setBoolean(HADOOP_YARN_TIMELINE_SERVICE_ENABLED, true);
             }
         }
     }
@@ -906,6 +918,8 @@ public class JavaActionExecutor extends ActionExecutor {
                     updateConfForUberMode(launcherJobConf);
                 }
             }
+
+            injectLauncherTimelineServiceEnabled(launcherJobConf, actionConf);
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
             // maybe we should add queue to the WF schema, below job-tracker

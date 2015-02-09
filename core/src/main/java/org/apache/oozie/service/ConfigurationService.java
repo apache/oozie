@@ -36,7 +36,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
+
 import org.apache.oozie.util.ZKUtils;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Built in service that initializes the services configuration.
@@ -457,6 +460,18 @@ public class ConfigurationService implements Service, Instrumentable {
                 log.warn("Invalid configuration defined, [{0}] ", entry.getKey());
             }
         }
+    }
+
+    @VisibleForTesting
+    public static void set(String name, String value) {
+        Configuration conf = Services.get().getConf();
+        conf.set(name, value);
+    }
+
+    @VisibleForTesting
+    public static void setBoolean(String name, boolean value) {
+        Configuration conf = Services.get().getConf();
+        conf.setBoolean(name, value);
     }
 
     public static String get(String name) {
