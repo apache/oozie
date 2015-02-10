@@ -182,9 +182,6 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             cron.stop();
             addActionCron(wfAction.getType(), cron);
 
-            WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
-            DagELFunctions.setActionInfo(wfInstance, wfAction);
-            wfJob.setWorkflowInstance(wfInstance);
             incrActionCounter(wfAction.getType(), 1);
 
             if (!context.isEnded()) {
@@ -226,6 +223,10 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                     }
                 }
             }
+            WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
+            DagELFunctions.setActionInfo(wfInstance, wfAction);
+            wfJob.setWorkflowInstance(wfInstance);
+
             updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_END,wfAction));
             wfJob.setLastModifiedTime(new Date());
             updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED, wfJob));
