@@ -31,14 +31,6 @@
     <name>Apache Oozie Docs</name>
     <packaging>war</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
