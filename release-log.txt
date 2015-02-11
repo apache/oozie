@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1688 New configuration to specify server-server authentication type (puru)
 OOZIE-2090 wf:lastErrorNode does not take into account transient errors with retries (ranter)
 OOZIE-2133 Support getting ATS delegation tokens for tez jobs (rohini)
 OOZIE-2131 Add flag to sqoop action to skip hbase delegation token generation (abec via ranter)

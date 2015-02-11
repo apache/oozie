@@ -1970,6 +1970,14 @@
             Supported values are: simple | kerberos | #AUTHENTICATION_HANDLER_CLASSNAME#
         </description>
     </property>
+    <property>
+        <name>oozie.server.authentication.type</name>
+        <value>${oozie.authentication.type}</value>
+        <description>
+            Defines authentication used for Oozie server communicating to other Oozie server over HTTP(s).
+            Supported values are: simple | kerberos | #AUTHENTICATOR_CLASSNAME#
+        </description>
+    </property>
 
     <property>
         <name>oozie.authentication.token.validity</name>

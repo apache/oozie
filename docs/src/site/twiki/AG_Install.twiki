@@ -867,8 +867,17 @@ be missing information until that server comes back up.
 
 ---++++ Security
 
-Oozie HA works with the existing Oozie security framework and settings.
-See the [[AG_Install#Oozie_User_Authentication_Configuration][Oozie User Authentication Configuration]] section for details.
+Oozie HA works with the existing Oozie security framework and settings. For HA features (log streaming, share lib, etc) to work
+properly in a secure setup, following property can be set on each server. If =oozie.server.authentication.type= is not set, then
+server-server authentication will fall back on =oozie.authentication.type=.
+
+<verbatim>
+<property>
+    <name>oozie.server.authentication.type</name>
+    <value>kerberos</value>
+</property>
+</verbatim>
+
 Below are some additional steps and information specific to Oozie HA:
 
 1. (Optional) To prevent unauthorized users or programs from interacting with or reading the znodes used by Oozie in ZooKeeper,
