@@ -322,7 +322,7 @@ public class ZKUtils {
                     log.info("'sasl' ACLs not set; setting...");
                     List<String> children = client.getZookeeperClient().getZooKeeper().getChildren(namespace, null);
                     for (String child : children) {
-                        checkAndSetACLs(child);
+                        checkAndSetACLs("/" + child);
                     }
                     client.getZookeeperClient().getZooKeeper().setACL(namespace, saslACL, -1);
                 }

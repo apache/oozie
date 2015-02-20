@@ -47,7 +47,7 @@ public class ZKUUIDService extends UUIDService {
     public static final String CONF_SEQUENCE_MAX = CONF_PREFIX + "jobid.sequence.max";
     public static final String LOCKS_NODE = "/SEQUENCE_LOCK";
 
-    public static final String ZK_SEQUENCE_PATH = "job_id_sequence";
+    public static final String ZK_SEQUENCE_PATH = "/job_id_sequence";
 
     public static final long RESET_VALUE = 0L;
     public static final int RETRY_COUNT = 3;
