@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.MapFile;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.ServiceException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
 public class TestXConfiguration extends XTestCase {
@@ -198,5 +200,54 @@ public class TestXConfiguration extends XTestCase {
         setSystemProperty("user.name", "foo");
         assertEquals("foo", conf.get("un"));
 
+    }
+
+    public void testSubstituteVar() throws ServiceException {
+        Services services = new Services();
+        services.init();
+        int depth = ConfigurationService.getInt(XConfiguration.CONFIGURATION_SUBSTITUTE_DEPTH);
+
+        XConfiguration conf = new XConfiguration();
+        conf.set("key0", "hello");
+        for (int i = 1; i < depth + 5; i++) {
+            // key1, ${key0}
+            conf.set(String.valueOf("key" + i), String.valueOf("${key" + (i - 1) + "}"));
+        }
+
+        assertEquals("hello", conf.get("key0"));
+        assertEquals("hello", conf.get("key1"));
+        assertEquals("hello", conf.get("key" + (depth - 1)));
+
+        try {
+            conf.get(String.valueOf("key" + (depth)));
+            fail("Fail to apply substitution depth");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage().contains("Variable substitution depth too large: " + depth));
+        }
+
+        services.destroy();
+    }
+
+    public void testSubstituteVarUnlimited() throws ServiceException {
+        XConfiguration.initalized = false;
+        Services services = new Services();
+        services.get(ConfigurationService.class).getConf().set(XConfiguration.CONFIGURATION_SUBSTITUTE_DEPTH, "-1");
+        services.init();
+        int depth = ConfigurationService.getInt(XConfiguration.CONFIGURATION_SUBSTITUTE_DEPTH);
+        assertEquals(-1, depth);
+
+        XConfiguration conf = new XConfiguration();
+        conf.set("key0", "hello");
+        int testMax = 100;
+        for (int i = 1; i < testMax + 5; i++) {
+            // key1, ${key0}
+            conf.set(String.valueOf("key" + i), String.valueOf("${key" + (i - 1) + "}"));
+        }
+
+        assertEquals("hello", conf.get("key0"));
+        assertEquals("hello", conf.get("key1"));
+        assertEquals("hello", conf.get("key" + (testMax - 1)));
+
+        services.destroy();
     }
 }
