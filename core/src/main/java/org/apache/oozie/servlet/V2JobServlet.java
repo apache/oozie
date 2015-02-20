@@ -149,6 +149,53 @@ public class V2JobServlet extends V1JobServlet {
 
     }
 
+    @Override
+    protected void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        String jobId = getResourceName(request);
+        String actions = request.getParameter(RestConstants.JOB_COORD_SCOPE_ACTION_LIST);
+        String dates = request.getParameter(RestConstants.JOB_COORD_SCOPE_DATE);
+        String childIds = request.getParameter(RestConstants.COORDINATORS_PARAM);
+        try {
+            getBaseEngine(jobId, getUser(request)).enableSLAAlert(jobId, actions, dates, childIds);
+        }
+        catch (BaseEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+
+    }
+
+    @Override
+    protected void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        String jobId = getResourceName(request);
+        String actions = request.getParameter(RestConstants.JOB_COORD_SCOPE_ACTION_LIST);
+        String dates = request.getParameter(RestConstants.JOB_COORD_SCOPE_DATE);
+        String childIds = request.getParameter(RestConstants.COORDINATORS_PARAM);
+        try {
+            getBaseEngine(jobId, getUser(request)).disableSLAAlert(jobId, actions, dates, childIds);
+        }
+        catch (BaseEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+    }
+
+    @Override
+    protected void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        String jobId = getResourceName(request);
+        String actions = request.getParameter(RestConstants.JOB_COORD_SCOPE_ACTION_LIST);
+        String dates = request.getParameter(RestConstants.JOB_COORD_SCOPE_DATE);
+        String newParams = request.getParameter(RestConstants.JOB_CHANGE_VALUE);
+        String coords = request.getParameter(RestConstants.COORDINATORS_PARAM);
+
+        try {
+            getBaseEngine(jobId, getUser(request)).changeSLA(jobId, actions, dates, coords, newParams);
+        }
+        catch (BaseEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+    }
+
     /**
      * Ignore a coordinator job/action
      *
@@ -199,21 +246,18 @@ public class V2JobServlet extends V1JobServlet {
         String status;
         String jobId = getResourceName(request);
         try {
-            if (jobId.endsWith("-B")) {
-                BundleEngine engine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
-                status = engine.getJobStatus(jobId);
-            } else if (jobId.endsWith("-W")) {
-                DagEngine engine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
-                status = engine.getJobStatus(jobId);
-            } else {
-                CoordinatorEngine engine =
-                        Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request));
-                if (jobId.contains("-C@")) {
-                    status = engine.getActionStatus(jobId);
-                } else {
-                    status = engine.getJobStatus(jobId);
-                }
+            if (jobId.endsWith("-B") || jobId.endsWith("-W")) {
+                status = getBaseEngine(jobId, getUser(request)).getJobStatus(jobId);
             }
+            else if (jobId.contains("C@")) {
+                CoordinatorEngine engine = Services.get().get(CoordinatorEngineService.class)
+                        .getCoordinatorEngine(getUser(request));
+                status = engine.getActionStatus(jobId);
+            }
+            else {
+                status = getBaseEngine(jobId, getUser(request)).getJobStatus(jobId);
+            }
+
         } catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
@@ -251,7 +295,7 @@ public class V2JobServlet extends V1JobServlet {
         else if (jobId.endsWith("-B")) {
             return Services.get().get(BundleEngineService.class).getBundleEngine(user);
         }
-        else if (jobId.endsWith("-C")) {
+        else if (jobId.contains("-C")) {
             return Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user);
         }
         else {

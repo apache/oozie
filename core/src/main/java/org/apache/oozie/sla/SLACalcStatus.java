@@ -20,8 +20,10 @@
 package org.apache.oozie.sla;
 
 import java.util.Date;
+import java.util.Map;
 
 import org.apache.oozie.AppType;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.service.JobsConcurrencyService;
@@ -65,6 +67,10 @@ public class SLACalcStatus extends SLAEvent {
         reg.setAlertContact(regBean.getAlertContact());
         reg.setAlertEvents(regBean.getAlertEvents());
         reg.setJobData(regBean.getJobData());
+        if (regBean.getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT)) {
+            reg.addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT,
+                    regBean.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT));
+        }
         reg.setId(summary.getId());
         reg.setAppType(summary.getAppType());
         reg.setUser(summary.getUser());
@@ -267,8 +273,12 @@ public class SLACalcStatus extends SLAEvent {
     }
 
     @Override
-    public String getSlaConfig() {
+    public String getSLAConfig() {
         return regBean.getSlaConfig();
+    }
+
+    public Map<String, String> getSLAConfigMap() {
+        return regBean.getSLAConfigMap();
     }
 
     @Override

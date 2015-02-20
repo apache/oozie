@@ -21,6 +21,7 @@ package org.apache.oozie.sla;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -31,6 +32,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import org.apache.oozie.AppType;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
@@ -50,7 +52,11 @@ import org.json.simple.JSONObject;
 
  @NamedQuery(name = "UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES", query = "update SLASummaryBean w set w.eventProcessed = :eventProcessed, w.actualStartTS = :actualStartTS, w.actualEndTS = :actualEndTS, w.actualEndTS = :actualEndTS, w.actualDuration = :actualDuration, w.lastModifiedTS = :lastModifiedTS where w.jobId = :jobId"),
 
+ @NamedQuery(name = "UPDATE_SLA_SUMMARY_FOR_EXPECTED_TIMES", query = "update SLASummaryBean w set w.nominalTimeTS = :nominalTime, w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime, w.expectedDuration = :expectedDuration , w.lastModifiedTS = :lastModTime where w.jobId = :jobId"),
+
  @NamedQuery(name = "UPDATE_SLA_SUMMARY_EVENTPROCESSED", query = "update SLASummaryBean w set w.eventProcessed = :eventProcessed where w.jobId = :jobId"),
+
+ @NamedQuery(name = "UPDATE_SLA_SUMMARY_LAST_MODIFIED_TIME", query = "update SLASummaryBean w set w.lastModifiedTS = :lastModifiedTS where w.jobId = :jobId"),
 
  @NamedQuery(name = "UPDATE_SLA_SUMMARY_ALL", query = "update SLASummaryBean w set w.jobId = :jobId, w.appName = :appName, w.appType = :appType, w.nominalTimeTS = :nominalTime, w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime, w.expectedDuration = :expectedDuration, w.jobStatus = :jobStatus, w.slaStatus = :slaStatus, w.eventStatus = :eventStatus, w.lastModifiedTS = :lastModTime, w.user = :user, w.parentId = :parentId, w.eventProcessed = :eventProcessed, w.actualDuration = :actualDuration, w.actualEndTS = :actualEndTS, w.actualStartTS = :actualStartTS where w.jobId = :jobId"),
 
@@ -58,7 +64,10 @@ import org.json.simple.JSONObject;
 
  @NamedQuery(name = "GET_SLA_SUMMARY_RECORDS_RESTART", query = "select OBJECT(w) from SLASummaryBean w where w.eventProcessed <= 7 AND w.lastModifiedTS >= :lastModifiedTime"),
 
- @NamedQuery(name = "GET_SLA_SUMMARY_EVENTPROCESSED", query = "select w.eventProcessed from SLASummaryBean w where w.jobId = :id")
+ @NamedQuery(name = "GET_SLA_SUMMARY_EVENTPROCESSED", query = "select w.eventProcessed from SLASummaryBean w where w.jobId = :id"),
+
+ @NamedQuery(name = "GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED", query = "select w.eventProcessed, w.lastModifiedTS from SLASummaryBean w where w.jobId = :id")
+
 })
 
 /**
@@ -431,6 +440,7 @@ public class SLASummaryBean implements JsonBean {
             json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
             json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
             json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, JsonUtils.formatDateRfc822(lastModifiedTS, timeZoneId));
+
             return json;
         }
     }
@@ -449,6 +459,27 @@ public class SLASummaryBean implements JsonBean {
         if (slaSummaryList != null) {
             for (SLASummaryBean summary : slaSummaryList) {
                 array.add(summary.toJSONObject(timeZoneId));
+            }
+        }
+        json.put(JsonTags.SLA_SUMMARY_LIST, array);
+        return json;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JSONObject toJSONObject(List<? extends SLASummaryBean> slaSummaryList,
+            Map<String, Map<String, String>> slaConfigMap, String timeZoneId) {
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        if (slaSummaryList != null) {
+            for (SLASummaryBean summary : slaSummaryList) {
+                JSONObject slaJson = summary.toJSONObject(timeZoneId);
+                String slaAlertStatus = "";
+                if (slaConfigMap.containsKey(summary.getId())) {
+                    slaAlertStatus = slaConfigMap.get(summary.getId()).containsKey(
+                            OozieClient.SLA_DISABLE_ALERT) ? "Disabled" : "Enabled";
+                }
+                slaJson.put(JsonTags.SLA_ALERT_STATUS, slaAlertStatus);
+                array.add(slaJson);
             }
         }
         json.put(JsonTags.SLA_SUMMARY_LIST, array);

@@ -172,6 +172,8 @@ public interface JsonTags {
     public static final String SLA_SUMMARY_JOB_STATUS = "jobStatus";
     public static final String SLA_SUMMARY_SLA_STATUS = "slaStatus";
     public static final String SLA_SUMMARY_LAST_MODIFIED = "lastModified";
+    public static final String SLA_ALERT_STATUS = "slaAlertStatus";
+
 
     public static final String TO_STRING = "toString";
 

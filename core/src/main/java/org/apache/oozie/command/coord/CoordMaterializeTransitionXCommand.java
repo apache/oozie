@@ -32,6 +32,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
@@ -486,7 +487,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 actionBean.setTimeOut(timeout);
 
                 if (!dryrun) {
-                    storeToDB(actionBean, action); // Storing to table
+                    storeToDB(actionBean, action, jobConf); // Storing to table
 
                 }
                 else {
@@ -524,26 +525,28 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
-    private void storeToDB(CoordinatorActionBean actionBean, String actionXml) throws Exception {
+    private void storeToDB(CoordinatorActionBean actionBean, String actionXml, Configuration jobConf) throws Exception {
         LOG.debug("In storeToDB() coord action id = " + actionBean.getId() + ", size of actionXml = "
                 + actionXml.length());
         actionBean.setActionXml(actionXml);
 
         insertList.add(actionBean);
-        writeActionSlaRegistration(actionXml, actionBean);
+        writeActionSlaRegistration(actionXml, actionBean, jobConf);
     }
 
-    private void writeActionSlaRegistration(String actionXml, CoordinatorActionBean actionBean) throws Exception {
+    private void writeActionSlaRegistration(String actionXml, CoordinatorActionBean actionBean, Configuration jobConf)
+            throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml);
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
-        SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), SlaAppType.COORDINATOR_ACTION, coordJob
-                .getUser(), coordJob.getGroup(), LOG);
-        if(slaEvent != null) {
+                SLAEventBean slaEvent = SLADbOperations.createSlaRegistrationEvent(eSla, actionBean.getId(),
+                                 SlaAppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getGroup(), LOG);
+                         if (slaEvent != null) {
             insertList.add(slaEvent);
         }
         // inserting into new table also
         SLAOperations.createSlaRegistrationEvent(eSla, actionBean.getId(), actionBean.getJobId(),
-                AppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getAppName(), LOG, false);
+                AppType.COORDINATOR_ACTION, coordJob.getUser(), coordJob.getAppName(), LOG, false,
+                CoordUtils.isSlaAlertDisabled(actionBean, coordJob.getAppName(), jobConf));
     }
 
     private void updateJobMaterializeInfo(CoordinatorJobBean job) throws CommandException {

@@ -26,13 +26,13 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.service.JPAService;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 
-public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
+public class TestCoordActionQueryExecutor extends XDataTestCase {
+
     Services services;
 
     @Override
@@ -48,7 +48,7 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
         super.tearDown();
     }
 
-    public void testCoordActionGet() throws Exception {
+    public void testGetTerminatedActionForDates() throws Exception {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.FAILED, "coord-action-get.xml", 0);
@@ -60,23 +60,51 @@ public class TestCoordJobGetActionsForDatesJPAExecutor extends XDataTestCase {
 
         Date d1 = new Date(nominalTime.getTime() - 1000);
         Date d2 = new Date(nominalTime.getTime() + 1000);
-        _testGetActionForDates(job.getId(), d1, d2, 1);
+        _testGetTerminatedActionForDates(job.getId(), d1, d2, 1);
 
         d1 = new Date(nominalTime.getTime() + 1000);
         d2 = new Date(nominalTime.getTime() + 2000);
-        _testGetActionForDates(job.getId(), d1, d2, 0);
+        _testGetTerminatedActionForDates(job.getId(), d1, d2, 0);
 
         cleanUpDBTables();
         job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
-        _testGetActionForDates(job.getId(), d1, d2, 0);
+        _testGetTerminatedActionForDates(job.getId(), d1, d2, 0);
     }
 
-    private void _testGetActionForDates(String jobId, Date d1, Date d2, int expected) throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-        CoordJobGetActionsForDatesJPAExecutor actionGetCmd = new CoordJobGetActionsForDatesJPAExecutor(jobId, d1, d2);
-        List<CoordinatorActionBean> actions = jpaService.execute(actionGetCmd);
+    private void _testGetTerminatedActionForDates(String jobId, Date d1, Date d2, int expected) throws Exception {
+        List<CoordinatorActionBean> actionIds = CoordActionQueryExecutor.getInstance().getList(
+                CoordActionQuery.GET_TERMINATED_ACTIONS_FOR_DATES, jobId, d1, d2);
+        assertEquals(expected, actionIds.size());
+    }
+
+    public void testGetTerminatedActionIdsForDates() throws Exception {
+        int actionNum = 1;
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.FAILED, "coord-action-get.xml", 0);
+
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String actionXml = getCoordActionXml(appPath, "coord-action-get.xml");
+        String actionNomialTime = getActionNominalTime(actionXml);
+        Date nominalTime = DateUtils.parseDateOozieTZ(actionNomialTime);
+
+        Date d1 = new Date(nominalTime.getTime() - 1000);
+        Date d2 = new Date(nominalTime.getTime() + 1000);
+        _testGetTerminatedActionIdsForDates(job.getId(), d1, d2, 1);
+
+        d1 = new Date(nominalTime.getTime() + 1000);
+        d2 = new Date(nominalTime.getTime() + 2000);
+        _testGetTerminatedActionIdsForDates(job.getId(), d1, d2, 0);
+
+        cleanUpDBTables();
+        job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordActionTable(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        _testGetTerminatedActionIdsForDates(job.getId(), d1, d2, 0);
+    }
+
+    private void _testGetTerminatedActionIdsForDates(String jobId, Date d1, Date d2, int expected) throws Exception {
+        List<CoordinatorActionBean> actions = CoordActionQueryExecutor.getInstance().getList(
+                CoordActionQuery.GET_TERMINATED_ACTION_IDS_FOR_DATES, jobId, d1, d2);
         assertEquals(expected, actions.size());
     }
 

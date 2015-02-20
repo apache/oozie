@@ -20,11 +20,14 @@ package org.apache.oozie.sla;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.ServiceException;
+import org.apache.oozie.util.Pair;
 
 public interface SLACalculator {
 
@@ -51,4 +54,55 @@ public interface SLACalculator {
 
     SLACalcStatus get(String jobId) throws JPAExecutorException;
 
+    /**
+     * Enable jobs sla alert.
+     *
+     * @param jobId the job ids
+     * @return true, if successful
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
+     */
+    boolean enableAlert(List<String> jobId) throws JPAExecutorException, ServiceException;
+
+    /**
+     * Enable sla alert for child jobs.
+     * @param jobId the parent job ids
+     * @return
+     * @throws JPAExecutorException
+     * @throws ServiceException
+     */
+    boolean enableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
+
+    /**
+     * Disable jobs Sla alert.
+     *
+     * @param jobId the job ids
+     * @return true, if successful
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
+     */
+    boolean disableAlert(List<String> jobId) throws JPAExecutorException, ServiceException;
+
+
+    /**
+     * Disable Sla alert for child jobs.
+     * @param jobId the parent job ids
+     * @return
+     * @throws JPAExecutorException
+     * @throws ServiceException
+     */
+    boolean disableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
+
+    /**
+     * Change jobs Sla definitions
+     * It takes list of pairs of jobid and key/value pairs of el evaluated sla definition.
+     * Support definition are sla-should-start, sla-should-end, sla-nominal-time and sla-max-duration.
+     *
+     * @param jobIdsSLAPair the job ids sla pair
+     * @return true, if successful
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
+     */
+    public boolean changeDefinition(List<Pair<String, Map<String,String>>> jobIdsSLAPair ) throws JPAExecutorException,
+            ServiceException;
 }

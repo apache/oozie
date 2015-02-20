@@ -28,6 +28,7 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.StringBlob;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
@@ -51,7 +52,12 @@ public class CoordActionQueryExecutor extends
         GET_COORD_ACTIVE_ACTIONS_COUNT_BY_JOBID,
         GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME,
         GET_COORD_ACTIONS_STATUS_UNIGNORED,
-        GET_COORD_ACTIONS_PENDING_COUNT
+        GET_COORD_ACTIONS_PENDING_COUNT,
+        GET_ACTIVE_ACTIONS_IDS_FOR_SLA_CHANGE,
+        GET_ACTIVE_ACTIONS_JOBID_FOR_SLA_CHANGE,
+        GET_TERMINATED_ACTIONS_FOR_DATES,
+        GET_TERMINATED_ACTION_IDS_FOR_DATES,
+        GET_ACTIVE_ACTIONS_FOR_DATES
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
@@ -180,6 +186,19 @@ public class CoordActionQueryExecutor extends
             case GET_COORD_ACTIONS_PENDING_COUNT:
                 query.setParameter("jobId", parameters[0]);
                 break;
+            case GET_ACTIVE_ACTIONS_IDS_FOR_SLA_CHANGE:
+            query.setParameter("ids", parameters[0]);
+            break;
+            case GET_ACTIVE_ACTIONS_JOBID_FOR_SLA_CHANGE:
+            query.setParameter("jobId", parameters[0]);
+            break;
+            case GET_TERMINATED_ACTIONS_FOR_DATES:
+            case GET_TERMINATED_ACTION_IDS_FOR_DATES:
+            case GET_ACTIVE_ACTIONS_FOR_DATES:
+                query.setParameter("jobId", parameters[0]);
+                query.setParameter("startTime", new Timestamp(((Date) parameters[1]).getTime()));
+                query.setParameter("endTime", new Timestamp(((Date) parameters[2]).getTime()));
+                break;
 
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
@@ -246,6 +265,33 @@ public class CoordActionQueryExecutor extends
                 bean = new CoordinatorActionBean();
                 bean.setStatusStr((String)arr[0]);
                 bean.setPending((Integer)arr[1]);
+                break;
+            case GET_ACTIVE_ACTIONS_IDS_FOR_SLA_CHANGE:
+            case GET_ACTIVE_ACTIONS_JOBID_FOR_SLA_CHANGE:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setId((String)arr[0]);
+                bean.setNominalTime((Timestamp)arr[1]);
+                bean.setCreatedTime((Timestamp)arr[2]);
+                bean.setActionXmlBlob((StringBlob)arr[3]);
+                break;
+            case GET_TERMINATED_ACTIONS_FOR_DATES:
+                bean = (CoordinatorActionBean) ret;
+                break;
+            case GET_TERMINATED_ACTION_IDS_FOR_DATES:
+                bean = new CoordinatorActionBean();
+                bean.setId((String) ret);
+                break;
+            case GET_ACTIVE_ACTIONS_FOR_DATES:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setId((String)arr[0]);
+                bean.setJobId((String)arr[1]);
+                bean.setStatusStr((String) arr[2]);
+                bean.setExternalId((String) arr[3]);
+                bean.setPending((Integer) arr[4]);
+                bean.setNominalTime((Timestamp) arr[5]);
+                bean.setCreatedTime((Timestamp) arr[6]);
                 break;
 
             default:

@@ -23,15 +23,14 @@ import java.util.Date;
 
 import org.apache.oozie.AppType;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
-import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
@@ -40,14 +39,20 @@ import org.jdom.Element;
 
 public class SLAOperations {
 
-    private static final String NOMINAL_TIME = "nominal-time";
-    private static final String SHOULD_START = "should-start";
-    private static final String SHOULD_END = "should-end";
-    private static final String MAX_DURATION = "max-duration";
-    private static final String ALERT_EVENTS = "alert-events";
+    public static final String NOMINAL_TIME = "nominal-time";
+    public static final String SHOULD_START = "should-start";
+    public static final String SHOULD_END = "should-end";
+    public static final String MAX_DURATION = "max-duration";
+    public static final String ALERT_EVENTS = "alert-events";
+    public static final String ALL_VALUE = "ALL";
+
+
+    static public XLog LOG = XLog.getLog(SLAOperations.class);
+
 
     public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, String parentId,
-            AppType appType, String user, String appName, XLog log, boolean rerun) throws CommandException {
+            AppType appType, String user, String appName, XLog log, boolean rerun, boolean disableAlert)
+            throws CommandException {
         if (eSla == null || !SLAService.isEnabled()) {
             log.debug("Not registering SLA for job [{0}]. Sla-Xml null OR SLAService not enabled", jobId);
             return null;
@@ -56,56 +61,19 @@ public class SLAOperations {
 
         // Setting nominal time
         String strNominalTime = getTagElement(eSla, NOMINAL_TIME);
-        if (strNominalTime == null || strNominalTime.length() == 0) {
-            throw new CommandException(ErrorCode.E1101, NOMINAL_TIME);
-        }
-        Date nominalTime;
-        try {
-            nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
-            sla.setNominalTime(nominalTime);
-        }
-        catch (ParseException pex) {
-            throw new CommandException(ErrorCode.E0302, strNominalTime, pex);
-        }
+        Date nominalTime = setNominalTime(strNominalTime, sla);
 
         // Setting expected start time
         String strExpectedStart = getTagElement(eSla, SHOULD_START);
-        if (strExpectedStart != null) {
-            float expectedStart = Float.parseFloat(strExpectedStart);
-            if (expectedStart < 0) {
-                throw new CommandException(ErrorCode.E0302, strExpectedStart, "for SLA Expected start time");
-            }
-            else {
-                Date expectedStartTime = new Date(nominalTime.getTime() + (long) (expectedStart * 60 * 1000));
-                sla.setExpectedStart(expectedStartTime);
-            }
-        }
+        setExpectedStart(strExpectedStart, nominalTime, sla);
 
         // Setting expected end time
         String strExpectedEnd = getTagElement(eSla, SHOULD_END);
-        if (strExpectedEnd == null || strExpectedEnd.length() == 0) {
-            throw new CommandException(ErrorCode.E1101, SHOULD_END);
-        }
-        float expectedEnd = Float.parseFloat(strExpectedEnd);
-        if (expectedEnd < 0) {
-            throw new CommandException(ErrorCode.E0302, strExpectedEnd, "for SLA Expected end time");
-        }
-        else {
-            Date expectedEndTime = new Date(nominalTime.getTime() + (long) (expectedEnd * 60 * 1000));
-            sla.setExpectedEnd(expectedEndTime);
-        }
+        setExpectedEnd(strExpectedEnd, nominalTime, sla);
 
         // Setting expected duration in milliseconds
         String expectedDurationStr = getTagElement(eSla, MAX_DURATION);
-        if (expectedDurationStr != null && expectedDurationStr.length() > 0) {
-            float expectedDuration = Float.parseFloat(expectedDurationStr);
-            if (expectedDuration > 0) {
-                sla.setExpectedDuration((long) (expectedDuration * 60 * 1000));
-            }
-        }
-        else if (sla.getExpectedStart() != null) {
-            sla.setExpectedDuration(sla.getExpectedEnd().getTime() - sla.getExpectedStart().getTime());
-        }
+        setExpectedDuration(expectedDurationStr, sla);
 
         // Parse desired alert-types i.e. start-miss, end-miss, start-met etc..
         String alertEvents = getTagElement(eSla, ALERT_EVENTS);
@@ -134,6 +102,10 @@ public class SLAOperations {
         sla.setAlertContact(getTagElement(eSla, "alert-contact"));
         sla.setUpstreamApps(getTagElement(eSla, "upstream-apps"));
 
+        //disable Alert flag in slaConfig
+        if (disableAlert) {
+            sla.addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT, Boolean.toString(disableAlert));
+        }
         // Oozie defined
         sla.setId(jobId);
         sla.setAppType(appType);
@@ -158,6 +130,68 @@ public class SLAOperations {
         return sla;
     }
 
+    public static Date setNominalTime(String strNominalTime, SLARegistrationBean sla) throws CommandException {
+        if (strNominalTime == null || strNominalTime.length() == 0) {
+            return sla.getNominalTime();
+        }
+        Date nominalTime;
+        try {
+            nominalTime = DateUtils.parseDateOozieTZ(strNominalTime);
+            sla.setNominalTime(nominalTime);
+        }
+        catch (ParseException pex) {
+            throw new CommandException(ErrorCode.E0302, strNominalTime, pex);
+        }
+        return nominalTime;
+    }
+
+    public static void setExpectedStart(String strExpectedStart, Date nominalTime, SLARegistrationBean sla)
+            throws CommandException {
+        if (strExpectedStart != null) {
+            float expectedStart = Float.parseFloat(strExpectedStart);
+            if (expectedStart < 0) {
+                throw new CommandException(ErrorCode.E0302, strExpectedStart, "for SLA Expected start time");
+            }
+            else {
+                Date expectedStartTime = new Date(nominalTime.getTime() + (long) (expectedStart * 60 * 1000));
+                sla.setExpectedStart(expectedStartTime);
+                LOG.debug("Setting expected start to " + expectedStartTime + " for job " + sla.getId());
+            }
+        }
+    }
+
+    public static void setExpectedEnd(String strExpectedEnd, Date nominalTime, SLARegistrationBean sla)
+            throws CommandException {
+        if (strExpectedEnd != null) {
+            float expectedEnd = Float.parseFloat(strExpectedEnd);
+            if (expectedEnd < 0) {
+                throw new CommandException(ErrorCode.E0302, strExpectedEnd, "for SLA Expected end time");
+            }
+            else {
+                Date expectedEndTime = new Date(nominalTime.getTime() + (long) (expectedEnd * 60 * 1000));
+                sla.setExpectedEnd(expectedEndTime);
+                LOG.debug("Setting expected end to " + expectedEndTime + " for job " + sla.getId());
+
+            }
+        }
+    }
+
+    public static void setExpectedDuration(String expectedDurationStr, SLARegistrationBean sla) {
+        if (expectedDurationStr != null && expectedDurationStr.length() > 0) {
+            float expectedDuration = Float.parseFloat(expectedDurationStr);
+            if (expectedDuration > 0) {
+                long duration = (long) (expectedDuration * 60 * 1000);
+                LOG.debug("Setting expected duration to " + duration + " for job " + sla.getId());
+                sla.setExpectedDuration(duration);
+            }
+        }
+        else if (sla.getExpectedStart() != null) {
+            long duration = sla.getExpectedEnd().getTime() - sla.getExpectedStart().getTime();
+            LOG.debug("Setting expected duration to " + duration + " for job " + sla.getId());
+            sla.setExpectedDuration(sla.getExpectedEnd().getTime() - sla.getExpectedStart().getTime());
+        }
+    }
+
     /**
      * Retrieve registration event
      * @param jobId the jobId
@@ -165,7 +199,6 @@ public class SLAOperations {
      * @throws JPAExecutorException
      */
     public static void updateRegistrationEvent(String jobId) throws CommandException, JPAExecutorException {
-        JPAService jpaService = Services.get().get(JPAService.class);
         SLAService slaService = Services.get().get(SLAService.class);
         try {
             SLARegistrationBean reg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, jobId);
@@ -203,7 +236,15 @@ public class SLAOperations {
         return createSlaRegistrationEvent(eSla, jobId, null, appType, user, null, log, false);
     }
 
-    private static String getTagElement(Element elem, String tagName) {
+    /*
+     * default disableAlert flag
+     */
+    public static SLARegistrationBean createSlaRegistrationEvent(Element eSla, String jobId, String parentId,
+            AppType appType, String user, String appName, XLog log, boolean rerun) throws CommandException {
+        return createSlaRegistrationEvent(eSla, jobId, null, appType, user, appName, log, rerun, false);
+    }
+
+    public static String getTagElement(Element elem, String tagName) {
         if (elem != null && elem.getChild(tagName, elem.getNamespace("sla")) != null) {
             return elem.getChild(tagName, elem.getNamespace("sla")).getText().trim();
         }

@@ -20,8 +20,10 @@ package org.apache.oozie.sla;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Level;
@@ -31,28 +33,36 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
+import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.JobUtils;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.After;
 import org.junit.Before;
@@ -67,9 +77,10 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
-        Configuration conf = services.getConf();
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
                 + "org.apache.oozie.sla.service.SLAService");
+        conf.setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 600);
         services.init();
         jpaService = Services.get().get(JPAService.class);
     }
@@ -96,7 +107,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     @Test
     public void testLoadOnRestart() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
         String jobId1 = slaRegBean1.getId();
         SLARegistrationBean slaRegBean2 = _createSLARegistration("job-2", AppType.WORKFLOW_JOB);
@@ -156,7 +167,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         assertEquals(2, slaCalcMemory.size());
 
@@ -201,7 +212,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testWorkflowJobSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -228,7 +239,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -257,7 +268,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         assertEquals(0, slaCalcMemory.size());
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
@@ -281,7 +292,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         assertEquals(1, slaCalcMemory.size());
         SLACalcStatus calc = slaCalcMemory.get(jobId1);
@@ -297,7 +308,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testWorkflowActionSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.WORKFLOW_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -322,7 +333,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         jpaService.execute(wfInsertCmd);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -343,7 +354,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testCoordinatorActionSLAStatusOnRestart() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job@1", AppType.COORDINATOR_ACTION);
         String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
@@ -373,7 +384,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         WorkflowJobQueryExecutor.getInstance().insert(wjb);
 
         slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         // As job succeeded, it should not be in memory
         assertEquals(0, slaCalcMemory.size());
@@ -394,7 +405,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAEvents1() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         slaRegBean.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); // 1 hour
@@ -445,7 +456,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAEvents2() throws Exception {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
 
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
@@ -505,7 +516,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         // test start-miss
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1 hour back
@@ -534,7 +545,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testDuplicateEndMiss() throws Exception {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() + 1 * 1 * 3600 * 1000); // 1 hour ahead
@@ -577,7 +588,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     public void testSLAHistorySet() throws Exception {
             EventHandlerService ehs = Services.get().get(EventHandlerService.class);
             SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-            slaCalcMemory.init(Services.get().getConf());
+            slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
             WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
             SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
             Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
@@ -612,9 +623,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
     }
 
     public void testHistoryPurge() throws Exception{
-        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().getConf());
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
         Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
@@ -660,6 +670,77 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertTrue(firstLogEntry.getMessage().toString().contains("JOB[dummy-id]"));
         assertEquals("org.apache.oozie.sla.SLACalculatorMemory", firstLogEntry.getLoggerName());
 
+    }
+
+    @SuppressWarnings("serial")
+    public void testDisablingAlertsEvents() throws Exception {
+        SLAService slaService = Services.get().get(SLAService.class);
+        EventHandlerService ehs = Services.get().get(EventHandlerService.class);
+        SLACalculator slaCalculator = slaService.getSLACalculator();
+        // create dummy sla records and coord action records
+        String id1 = _setupSlaMap(slaCalculator, "00020-1234567-wrkf-C", 1);
+        String id2 = _setupSlaMap(slaCalculator, "00020-1234567-wrkf-C", 2);
+
+        SLACalcStatus slaCalcObj1 = slaCalculator.get(id1);
+        assertFalse(slaCalcObj1.getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT));
+        SLACalcStatus slaCalcObj2 = slaCalculator.get(id2);
+        assertFalse(slaCalcObj2.getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT));
+        slaCalculator.updateAllSlaStatus();
+        assertTrue(ehs.getEventQueue().size() > 0);
+
+        // check that SLACalculator sends no event
+        ehs.getEventQueue().clear();
+        SLASummaryBean persistentSla = new SLASummaryBean(slaCalcObj1);
+        // reset eventProcessed for the sla calc objects
+        persistentSla.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED,
+                persistentSla);
+        persistentSla = new SLASummaryBean(slaCalcObj2);
+        persistentSla.setEventProcessed(0);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_EVENTPROCESSED,
+                persistentSla);
+        // CASE I : list of sla ids, no new params
+        slaService.enableChildJobAlert(Arrays.asList(id1, id2));
+        slaCalculator.updateAllSlaStatus();
+        assertTrue(ehs.getEventQueue().isEmpty());
+
+        // CASE II : ALL
+        _setupSlaMap(slaCalculator, "00020-1234567-wrkf-C", 3);
+        _setupSlaMap(slaCalculator, "00020-1234567-wrkf-C", 4);
+        slaCalculator.enableChildJobAlert(Arrays.asList("00020-1234567-wrkf-C"));
+        slaCalculator.updateAllSlaStatus();
+        assertFalse(ehs.getEventQueue().isEmpty());
+
+        // CASE III : resume w/ new params
+        final String id5 = _setupSlaMap(slaCalculator, "00020-1234567-wrkf-C", 5);
+        Date now = new Date();
+        now.setTime(now.getTime() - 10 * 60 * 1000);
+       final  String newParams = RestConstants.SLA_NOMINAL_TIME + "=" + DateUtils.formatDateOozieTZ(now) + ";"
+                + RestConstants.SLA_SHOULD_END + "=5";
+        slaCalculator.changeDefinition(new ArrayList<Pair<String,Map<String,String>>>(){
+            {
+            add(new Pair<String,Map<String,String>>(id5, JobUtils.parseChangeValue(newParams)));
+            }
+        });
+
+        slaCalculator.updateAllSlaStatus();
+        assertTrue(ehs.getEventQueue().size() > 0);
+
+    }
+
+    private String _setupSlaMap(SLACalculator slaCalculator, String id, int actionNum) throws Exception {
+        CoordinatorActionBean action = addRecordToCoordActionTable(id, actionNum,
+                CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml", 0);
+        action.setExternalId(null);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, action);
+        SLARegistrationBean slaRegBean = _createSLARegistration(action.getId(), AppType.COORDINATOR_ACTION);
+        Date startTime = new Date(System.currentTimeMillis() - 2 * 3600 * 1000);
+        slaRegBean.setExpectedStart(startTime); // 2 hours back
+        slaRegBean.setExpectedDuration(1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 3600 * 1000)); // 1 hr back
+        slaRegBean.setParentId(id);
+        slaCalculator.addRegistration(slaRegBean.getId(), slaRegBean);
+        return action.getId();
     }
 
 }

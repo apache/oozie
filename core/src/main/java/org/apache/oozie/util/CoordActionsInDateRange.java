@@ -30,12 +30,11 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionModifiedDateForRangeJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionIdsForDateRangeJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionRunningCountForRangeJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsByDatesForKillJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsForDatesJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 
@@ -139,10 +138,13 @@ public class CoordActionsInDateRange {
                 throw new XException(ErrorCode.E0308, "'" + range + "'. Start date '" + start + "' is older than end date: '" + end
 + "'");
             }
-            List<String> list = null;
-            JPAService jpaService = Services.get().get(JPAService.class);
-            list = jpaService.execute(new CoordJobGetActionIdsForDateRangeJPAExecutor(jobId, start, end));
-            return list;
+            List<CoordinatorActionBean> listOfActions = CoordActionQueryExecutor.getInstance().getList(
+                    CoordActionQuery.GET_TERMINATED_ACTIONS_FOR_DATES, jobId, start, end);
+            List<String> idsList = new ArrayList<String>();
+            for ( CoordinatorActionBean bean : listOfActions){
+                idsList.add(bean.getId());
+            }
+            return idsList;
     }
 
     /**
@@ -156,12 +158,13 @@ public class CoordActionsInDateRange {
     private static List<CoordinatorActionBean> getActionsFromDateRange(String jobId, Date start, Date end,
             boolean active) throws XException {
         List<CoordinatorActionBean> list;
-        JPAService jpaService = Services.get().get(JPAService.class);
         if (!active) {
-            list = jpaService.execute(new CoordJobGetActionsForDatesJPAExecutor(jobId, start, end));
+            list = CoordActionQueryExecutor.getInstance().getList(
+                    CoordActionQuery.GET_TERMINATED_ACTIONS_FOR_DATES, jobId, start, end);
         }
         else {
-            list = jpaService.execute(new CoordJobGetActionsByDatesForKillJPAExecutor(jobId, start, end));
+            list = CoordActionQueryExecutor.getInstance().getList(
+                    CoordActionQuery.GET_ACTIVE_ACTIONS_FOR_DATES, jobId, start, end);
         }
         return list;
     }

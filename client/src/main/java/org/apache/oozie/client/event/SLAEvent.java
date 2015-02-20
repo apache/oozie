@@ -157,7 +157,7 @@ public abstract class SLAEvent extends Event {
      *
      * @return String slaConfig
      */
-    public abstract String getSlaConfig();
+    public abstract String getSLAConfig();
 
     /**
      * Get the actual start time of job for SLA

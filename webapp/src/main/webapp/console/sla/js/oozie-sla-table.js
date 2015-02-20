@@ -34,6 +34,7 @@ var columnsToShow = [
               { "mData": "jobStatus", "sDefaultContent": ""},
               { "mData": "parentId", "sDefaultContent": "", "bVisible": false},
               { "mData": "appName", "bVisible": false},
+              { "mData": "slaAlertStatus", "bVisible": false},
              ];
 
 $.fn.dataTableExt.oApi.fnGetTds  = function ( oSettings, mTr )

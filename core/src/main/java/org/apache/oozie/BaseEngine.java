@@ -239,4 +239,44 @@ public abstract class BaseEngine {
      * @throws BaseEngineException thrown if the job's status could not be obtained
      */
     public abstract String getJobStatus(String jobId) throws BaseEngineException;
+
+    /**
+     * Return the status for a Job ID
+     *
+     * @param jobId job Id.
+     * @return the job's status
+     * @throws BaseEngineException thrown if the job's status could not be obtained
+     */
+
+    /**
+     * Enable SLA alert for job
+     * @param id
+     * @param actions
+     * @param dates
+     * @param childIds
+     * @throws BaseEngineException
+     */
+    public abstract void enableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException;
+
+    /**
+     * Disable SLA alert for job
+     * @param id
+     * @param actions
+     * @param dates
+     * @param childIds
+     * @throws BaseEngineException
+     */
+    public abstract void disableSLAAlert(String id, String actions, String  dates, String childIds) throws BaseEngineException;
+
+    /**
+     * Change SLA properties for job
+     * @param id
+     * @param actions
+     * @param childIds
+     * @param newParams
+     * @throws BaseEngineException
+     */
+    public abstract void changeSLA(String id, String actions, String  dates, String childIds, String newParams)
+            throws BaseEngineException;
+
 }

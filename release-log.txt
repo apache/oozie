@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-1913 Devise a way to turn off SLA alerts for bundle/coordinator flexibly (puru)
 OOZIE-2071 Add a Spark example (pavan kumar via rkanter)
 OOZIE-2145 ZooKeeper paths should start with a "/" (rkanter)
 OOZIE-2113 Oozie Command Line Utilities are failing as hadoop-auth jar not found (shwethags)

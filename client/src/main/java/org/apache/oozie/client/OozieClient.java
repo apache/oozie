@@ -52,6 +52,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -101,9 +102,9 @@ public class OozieClient {
 
     public static final String EXTERNAL_ID = "oozie.wf.external.id";
 
-    public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";
-
     public static final String WORKFLOW_NOTIFICATION_PROXY = "oozie.wf.workflow.notification.proxy";
+
+    public static final String WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url";
 
     public static final String ACTION_NOTIFICATION_URL = "oozie.wf.action.notification.url";
 
@@ -154,6 +155,14 @@ public class OozieClient {
     public static final String FILTER_CREATED_TIME_START = "startcreatedtime";
 
     public static final String FILTER_CREATED_TIME_END = "endcreatedtime";
+
+    public static final String SLA_DISABLE_ALERT = "oozie.sla.disable.alerts";
+
+    public static final String SLA_ENABLE_ALERT = "oozie.sla.enable.alerts";
+
+    public static final String SLA_DISABLE_ALERT_OLDER_THAN = SLA_DISABLE_ALERT + ".older.than";
+
+    public static final String SLA_DISABLE_ALERT_COORD = SLA_DISABLE_ALERT + ".coord";
 
     public static final String CHANGE_VALUE_ENDTIME = "endtime";
 
@@ -1626,33 +1635,137 @@ public class OozieClient {
     }
 
     /**
-     * Print sla info about coordinator and workflow jobs and actions.
+     * Sla enable alert.
      *
-     * @param start starting offset
-     * @param len number of results
-     * @throws OozieClientException
+     * @param jobIds the job ids
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @throws OozieClientException the oozie client exception
      */
-    public void getSlaInfo(int start, int len, String filter) throws OozieClientException {
-        new SlaInfo(start, len, filter).call();
+    public void slaEnableAlert(String jobIds, String actions, String dates) throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_ENABLE_ALERT, jobIds, actions, dates, null).call();
     }
 
-    private class SlaInfo extends ClientCallable<Void> {
+    /**
+     * Sla enable alert for bundle with coord name/id.
+     *
+     * @param bundleId the bundle id
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @param coords the coordinators
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaEnableAlert(String bundleId, String actions, String dates, String coords)
+            throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_ENABLE_ALERT, bundleId, actions, dates, coords).call();
+    }
 
-        SlaInfo(int start, int len, String filter) {
-            super("GET", WS_PROTOCOL_VERSION_1, RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
-                    Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len),
-                    RestConstants.JOBS_FILTER_PARAM, filter));
+    /**
+     * Sla disable alert.
+     *
+     * @param jobIds the job ids
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaDisableAlert(String jobIds, String actions, String dates) throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_DISABLE_ALERT, jobIds, actions, dates, null).call();
+    }
+
+    /**
+     * Sla disable alert for bundle with coord name/id.
+     *
+     * @param bundleId the bundle id
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @param coords the coordinators
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaDisableAlert(String bundleId, String actions, String dates, String coords)
+            throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_DISABLE_ALERT, bundleId, actions, dates, coords).call();
+    }
+
+    /**
+     * Sla change definations.
+     * SLA change definition parameters can be [<key>=<value>,...<key>=<value>]
+     * Supported parameter key names are should-start, should-end and max-duration
+     * @param jobIds the job ids
+     * @param actionIds comma separated list of action ids or action id ranges.
+     * @param dates comma separated list of the nominal times
+     * @param newSlaParams the new sla params
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaChange(String jobIds, String actions, String dates, String newSlaParams) throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_CHANGE, jobIds, actions, dates, null, newSlaParams).call();
+    }
+
+    /**
+     * Sla change defination for bundle with coord name/id.
+     * SLA change definition parameters can be [<key>=<value>,...<key>=<value>]
+     * Supported parameter key names are should-start, should-end and max-duration
+     * @param bundleId the bundle id
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @param coords the coords
+     * @param newSlaParams the new sla params
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaChange(String bundleId, String actions, String dates, String coords, String newSlaParams)
+            throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_CHANGE, bundleId, actions, dates, coords, newSlaParams).call();
+    }
+
+    /**
+     * Sla change with new sla param as hasmap.
+     * Supported parameter key names are should-start, should-end and max-duration
+     * @param bundleId the bundle id
+     * @param actionIds comma separated list of action ids or action id ranges
+     * @param dates comma separated list of the nominal times
+     * @param coords the coords
+     * @param newSlaParams the new sla params
+     * @throws OozieClientException the oozie client exception
+     */
+    public void slaChange(String bundleId, String actions, String dates, String coords, Map<String, String> newSlaParams)
+            throws OozieClientException {
+        new UpdateSLA(RestConstants.SLA_CHANGE, bundleId, actions, dates, coords, mapToString(newSlaParams)).call();
+    }
+
+    /**
+     * Convert Map to string.
+     *
+     * @param map the map
+     * @return the string
+     */
+    private String mapToString(Map<String, String> map) {
+        StringBuilder sb = new StringBuilder();
+        Iterator<Entry<String, String>> it = map.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, String> e = (Entry<String, String>) it.next();
+            sb.append(e.getKey()).append("=").append(e.getValue()).append(";");
+        }
+        return sb.toString();
+    }
+
+    private class UpdateSLA extends ClientCallable<Void> {
+
+        UpdateSLA(String action, String jobIds, String coordActions, String dates, String coords) {
+            super("PUT", RestConstants.JOB, notEmpty(jobIds, "jobIds"), prepareParams(RestConstants.ACTION_PARAM,
+                    action, RestConstants.JOB_COORD_SCOPE_ACTION_LIST, coordActions, RestConstants.JOB_COORD_SCOPE_DATE,
+                    dates, RestConstants.COORDINATORS_PARAM, coords));
+        }
+
+        UpdateSLA(String action, String jobIds, String coordActions, String dates, String coords, String newSlaParams) {
+            super("PUT", RestConstants.JOB, notEmpty(jobIds, "jobIds"), prepareParams(RestConstants.ACTION_PARAM,
+                    action, RestConstants.JOB_COORD_SCOPE_ACTION_LIST, coordActions, RestConstants.JOB_COORD_SCOPE_DATE,
+                    dates, RestConstants.COORDINATORS_PARAM, coords, RestConstants.JOB_CHANGE_VALUE, newSlaParams));
         }
 
         @Override
         protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
-                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    System.out.println(line);
-                }
+                System.out.println("Done");
             }
             else {
                 handleError(conn);
@@ -1660,6 +1773,42 @@ public class OozieClient {
             return null;
         }
     }
+
+    /**
+    * Print sla info about coordinator and workflow jobs and actions.
+    *
+    * @param start starting offset
+    * @param len number of results
+    * @throws OozieClientException
+    */
+        public void getSlaInfo(int start, int len, String filter) throws OozieClientException {
+            new SlaInfo(start, len, filter).call();
+        }
+
+        private class SlaInfo extends ClientCallable<Void> {
+
+            SlaInfo(int start, int len, String filter) {
+                super("GET", WS_PROTOCOL_VERSION_1, RestConstants.SLA, "", prepareParams(RestConstants.SLA_GT_SEQUENCE_ID,
+                        Integer.toString(start), RestConstants.MAX_EVENTS, Integer.toString(len),
+                        RestConstants.JOBS_FILTER_PARAM, filter));
+            }
+
+            @Override
+            protected Void call(HttpURLConnection conn) throws IOException, OozieClientException {
+                conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+                if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String line = null;
+                    while ((line = br.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                }
+                else {
+                    handleError(conn);
+                }
+                return null;
+            }
+        }
 
     private class JobIdAction extends ClientCallable<String> {
 

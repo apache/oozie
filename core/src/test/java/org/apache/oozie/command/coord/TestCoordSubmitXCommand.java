@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,13 +32,22 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLACalcStatus;
+import org.apache.oozie.sla.SLACalculator;
+import org.apache.oozie.sla.SLAOperations;
+import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -51,6 +61,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
+        services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES,
+                EventHandlerService.class.getName() + "," + SLAService.class.getName());
         services.init();
     }
 
@@ -1319,4 +1331,170 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         assertEquals(job.getTimeout(), 43200);
     }
 
+    public void testSubmitWithSLAAlertsDisable() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+
+        // CASE 1: Failure case i.e. multiple data-in instances
+        Reader reader = IOUtils.getResourceAsReader("coord-action-sla.xml", -1);
+        Writer writer = new FileWriter(appPathFile);
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set("start", DateUtils.formatDateOozieTZ(new Date()));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("frequency", "coord:days(1)");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
+        appPathFile = new File(getTestCaseDir(), "workflow.xml");
+        writer = new FileWriter(appPathFile);
+        IOUtils.copyCharStream(reader, writer);
+        conf.set("wfAppPath", appPathFile.getPath());
+        Date nominalTime = new Date();
+        conf.set("nominal_time", DateUtils.formatDateOozieTZ(nominalTime));
+
+        String coordId = new CoordSubmitXCommand(conf).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        SLAService slaService = services.get(SLAService.class);
+        SLACalculator calc = slaService.getSLACalculator();
+        SLACalcStatus slaCalc = calc.get(coordId + "@" + 1);
+        assertFalse(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        Configuration conf1=new Configuration(conf);
+        // CASE I: "ALL"
+        conf1.set(OozieClient.SLA_DISABLE_ALERT, "ALL");
+        coordId = new CoordSubmitXCommand(conf1).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+
+        slaService = services.get(SLAService.class);
+        calc = slaService.getSLACalculator();
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertTrue(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        // CASE II: Date Range
+        Configuration conf2=new Configuration(conf);
+        Date startRangeDate = new Date(nominalTime.getTime() - 3600 * 1000);
+        conf2.set(OozieClient.SLA_DISABLE_ALERT,
+                DateUtils.formatDateOozieTZ(startRangeDate) + "::" + DateUtils.formatDateOozieTZ(nominalTime));
+        coordId = new CoordSubmitXCommand(conf2).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertTrue(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        // CASE III: Coord name (negative test)
+        Configuration conf3=new Configuration(conf);
+        conf3.set(OozieClient.SLA_DISABLE_ALERT_COORD, "test-coord-sla-x");
+        coordId = new CoordSubmitXCommand(conf3).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertFalse(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        // CASE IV: Older than n(hours)
+        Date otherNominalTime = new Date(nominalTime.getTime() - 73 * 3600 * 1000);
+        conf = new XConfiguration();
+        appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set("wfAppPath", appPathFile.getPath());
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nominal_time", DateUtils.formatDateOozieTZ(otherNominalTime));
+        conf.setInt(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN, 72);
+        coordId = new CoordSubmitXCommand(conf).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertTrue(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        // catchup mode
+        conf = new XConfiguration();
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set("wfAppPath", appPathFile.getPath());
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nominal_time",
+                DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nominal_time",
+                DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+        coordId = new CoordSubmitXCommand(conf).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertTrue(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+        // normal mode
+        conf = new XConfiguration();
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set("wfAppPath", appPathFile.getPath());
+        conf.set("start", DateUtils.formatDateOozieTZ(new Date()));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nominal_time", DateUtils.formatDateOozieTZ(new Date()));
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("nominal_time", DateUtils.formatDateOozieTZ(new Date()));
+        coordId = new CoordSubmitXCommand(conf).call();
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        slaCalc = calc.get(coordId + "@" + 1);
+        assertFalse(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+
+    }
+
+    public void testSLAAlertWithNewlyCreatedActions() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+
+        // CASE 1: Failure case i.e. multiple data-in instances
+        Reader reader = IOUtils.getResourceAsReader("coord-action-sla.xml", -1);
+        Writer writer = new FileWriter(appPathFile);
+        IOUtils.copyCharStream(reader, writer);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addDays(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
+        appPathFile = new File(getTestCaseDir(), "workflow.xml");
+        writer = new FileWriter(appPathFile);
+        IOUtils.copyCharStream(reader, writer);
+        conf.set("wfAppPath", appPathFile.getPath());
+        Date nominalTime = new Date();
+        conf.set("nominal_time", DateUtils.formatDateOozieTZ(nominalTime));
+
+        String coordId = new CoordSubmitXCommand(conf).call();
+        CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(
+                CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, coordId);
+        job.setMatThrottling(1);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        SLAService slaService = services.get(SLAService.class);
+        SLACalculator calc = slaService.getSLACalculator();
+        SLACalcStatus slaCalc = calc.get(coordId + "@" + 1);
+        assertFalse(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+        assertEquals(slaCalc.getExpectedDuration(), 1800000);
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, coordId);
+        assertEquals(job.getLastActionNumber(), 1);
+
+        String newParams = RestConstants.SLA_MAX_DURATION + "=${5 * MINUTES}";
+
+        new CoordSLAChangeXCommand(coordId, null, null, JobUtils.parseChangeValue(newParams)).call();
+        new CoordSLAAlertsDisableXCommand(coordId, null, null).call();
+
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, coordId);
+        job.setMatThrottling(2);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, coordId);
+
+        new CoordMaterializeTransitionXCommand(coordId, 3600).call();
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, coordId);
+        slaCalc = calc.get(coordId + "@" + job.getLastActionNumber());
+        assertEquals(slaCalc.getExpectedDuration(), 300000);
+        // newly action should have sla disable after coord disable command on coord job
+        assertTrue(Boolean.valueOf(slaCalc.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT)));
+        Element eAction = XmlUtils.parseXml(job.getJobXml());
+        Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
+        assertEquals(SLAOperations.getTagElement(eSla, "max-duration"), "${5 * MINUTES}");
+    }
 }

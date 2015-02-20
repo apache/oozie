@@ -209,6 +209,8 @@ public enum ErrorCode {
     E1023(XLog.STD, "Coord Job update Error: [{0}]"),
     E1024(XLog.STD, "Cannot run ignore command: [{0}]"),
     E1025(XLog.STD, "Coord status transit error: [{0}]"),
+    E1026(XLog.STD, "SLA alert update command failed: {0}"),
+    E1027(XLog.STD, "SLA change command failed. {0}"),
 
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),

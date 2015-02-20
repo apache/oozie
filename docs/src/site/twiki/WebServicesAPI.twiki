@@ -1520,6 +1520,48 @@ Content-Type: application/json;charset=UTF-8
 
 It accepts any valid Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID.
 
+---++++ Changing job SLA definition and alerting
+An =HTTP PUT= request to change job SLA alert status/SLA definition.
+
+   * All sla commands takes actions-list or date parameter.
+   * =date=: a comma-separated list of date ranges. Each date range element is specified with dates separated by =::=
+   * =action-list=: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by =-=
+   * For bundle jobs additional =coordinators= (coord_name/id) parameter can be passed.
+   * Sla change command need extra parameter =value= to specify new sla definition.
+
+
+   * Changing SLA definition
+   SLA definition of should-start, should-end, nominal-time and max-duration can be changed.
+
+<verbatim>
+PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-change&value=<key>=<value>;...;<key>=<value>
+</verbatim>
+
+   * Disabling SLA alert
+
+<verbatim>
+PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-disable&action-list=3-4
+</verbatim>
+Will disable SLA alert for actions 3 and 4.
+
+<verbatim>
+PUT /oozie/v1/job/0000003-140319184715726-oozie-puru-C?action=sla-disable&date=2009-02-01T00:10Z::2009-03-01T00:10Z
+</verbatim>
+Will disable SLA alert for actions whose nominal time is in-between 2009-02-01T00:10Z 2009-03-01T00:10Z (inclusive).
+
+
+<verbatim>
+PUT /oozie/v1/job/0000004-140319184715726-oozie-puru-B?action=sla-disable&date=2009-02-01T00:10Z::2009-03-01T00:10Z&coordinators=abc
+</verbatim>
+For bundle jobs additional coordinators (list of comma separated coord_name/id) parameter can be passed.
+
+   * Enabling SLA alert
+
+<verbatim>
+PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-enable&action-list=1,14,17-20
+</verbatim>
+Will enable SLA alert for actions 1,14,17,18,19,20.
+
 ---++++ Jobs Information
 
 A HTTP GET request retrieves workflow and coordinator jobs information.

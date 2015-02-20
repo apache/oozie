@@ -237,6 +237,22 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
     }
 }

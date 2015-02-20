@@ -585,4 +585,20 @@ public class DagEngine extends BaseEngine {
             throw new DagEngineException(ex);
         }
     }
+
+    @Override
+    public void enableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException {
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "Not supported for workflow"));
+    }
+
+    @Override
+    public void disableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException {
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "Not supported for workflow"));
+    }
+
+    @Override
+    public void changeSLA(String id, String actions, String dates, String childIds, String newParams) throws BaseEngineException {
+        throw new BaseEngineException(new XException(ErrorCode.E0301, "Not supported for workflow"));
+    }
+
 }

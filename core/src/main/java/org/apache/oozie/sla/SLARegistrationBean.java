@@ -33,7 +33,6 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.rest.JsonBean;
@@ -48,9 +47,21 @@ import org.json.simple.JSONObject;
 
  @NamedQuery(name = "UPDATE_SLA_REG_ALL", query = "update SLARegistrationBean w set w.jobId = :jobId, w.nominalTimeTS = :nominalTime, w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime, w.expectedDuration = :expectedDuration, w.slaConfig = :slaConfig, w.notificationMsg = :notificationMsg, w.upstreamApps = :upstreamApps, w.appType = :appType, w.appName = :appName, w.user = :user, w.parentId = :parentId, w.jobData = :jobData where w.jobId = :jobId"),
 
+ @NamedQuery(name = "UPDATE_SLA_CONFIG", query = "update SLARegistrationBean w set w.slaConfig = :slaConfig where w.jobId = :jobId"),
+
+ @NamedQuery(name = "UPDATE_SLA_EXPECTED_VALUE", query = "update SLARegistrationBean w set w.expectedStartTS = :expectedStartTime, w.expectedEndTS = :expectedEndTime , w.expectedDuration = :expectedDuration  where w.jobId = :jobId"),
+
  @NamedQuery(name = "GET_SLA_REG_ON_RESTART", query = "select w.notificationMsg, w.upstreamApps, w.slaConfig, w.jobData from SLARegistrationBean w where w.jobId = :id"),
 
- @NamedQuery(name = "GET_SLA_REG_ALL", query = "select OBJECT(w) from SLARegistrationBean w where w.jobId = :id") })
+ @NamedQuery(name = "GET_SLA_REG_ALL", query = "select OBJECT(w) from SLARegistrationBean w where w.jobId = :id"),
+
+ @NamedQuery(name = "GET_SLA_CONFIGS", query = "select w.jobId, w.slaConfig from SLARegistrationBean w where w.jobId IN (:ids)"),
+
+ @NamedQuery(name = "GET_SLA_EXPECTED_VALUE_CONFIG", query = "select w.jobId, w.slaConfig, w.expectedStartTS, w.expectedEndTS, w.expectedDuration, w.nominalTimeTS from SLARegistrationBean w where w.jobId = :id"),
+
+ @NamedQuery(name = "GET_SLA_REG_FOR_PARENT_ID", query = "select w.jobId, w.slaConfig from SLARegistrationBean w where w.parentId = :parentId")
+ })
+
 public class SLARegistrationBean implements JsonBean {
 
     @Id
@@ -281,8 +292,19 @@ public class SLARegistrationBean implements JsonBean {
         slaConfig = slaConfigMapToString();
     }
 
-    public Map<String, String> getSlaConfigMap() {
+
+    public Map<String, String> getSLAConfigMap() {
         return slaConfigMap;
+    }
+
+    public void addToSLAConfigMap(String key, String value) {
+        slaConfigMap.put(key, value);
+        slaConfig = slaConfigMapToString();
+    }
+
+    public void removeFromSLAConfigMap(String key) {
+        slaConfigMap.remove(key);
+        slaConfig = slaConfigMapToString();
     }
 
     private void slaConfigStringToMap() {

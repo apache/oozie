@@ -19,6 +19,7 @@
 package org.apache.oozie;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
@@ -36,6 +37,9 @@ import org.apache.oozie.command.coord.CoordJobsXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordRerunXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
+import org.apache.oozie.command.coord.CoordSLAAlertsDisableXCommand;
+import org.apache.oozie.command.coord.CoordSLAAlertsEnableXCommand;
+import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
@@ -49,6 +53,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
@@ -847,4 +852,46 @@ public class CoordinatorEngine extends BaseEngine {
             throw new CoordinatorEngineException(e);
         }
     }
+
+    @Override
+    public void disableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException {
+        try {
+            new CoordSLAAlertsDisableXCommand(id, actions, dates).call();
+
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
+    @Override
+    public void changeSLA(String id, String actions, String dates, String childIds, String newParams)
+            throws BaseEngineException {
+        Map<String, String> slaNewParams = null;
+
+        try {
+
+            if (newParams != null) {
+                slaNewParams = JobUtils.parseChangeValue(newParams);
+            }
+
+            new CoordSLAChangeXCommand(id, actions, dates, slaNewParams).call();
+
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
+    @Override
+    public void enableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException {
+        try {
+            new CoordSLAAlertsEnableXCommand(id, actions, dates).call();
+
+        }
+        catch (CommandException e) {
+            throw new CoordinatorEngineException(e);
+        }
+    }
+
 }

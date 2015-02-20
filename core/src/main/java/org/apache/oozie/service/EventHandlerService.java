@@ -19,24 +19,6 @@
 package org.apache.oozie.service;
 
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.event.BundleJobEvent;
-import org.apache.oozie.event.CoordinatorActionEvent;
-import org.apache.oozie.event.CoordinatorJobEvent;
-import org.apache.oozie.client.event.Event;
-import org.apache.oozie.client.event.Event.MessageType;
-import org.apache.oozie.client.event.JobEvent;
-import org.apache.oozie.event.EventQueue;
-import org.apache.oozie.event.MemoryEventQueue;
-import org.apache.oozie.event.WorkflowActionEvent;
-import org.apache.oozie.event.WorkflowJobEvent;
-import org.apache.oozie.event.listener.JobEventListener;
-import org.apache.oozie.sla.listener.SLAEventListener;
-import org.apache.oozie.client.event.SLAEvent;
-import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +26,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.event.Event;
+import org.apache.oozie.client.event.Event.MessageType;
+import org.apache.oozie.client.event.JobEvent;
+import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.event.BundleJobEvent;
+import org.apache.oozie.event.CoordinatorActionEvent;
+import org.apache.oozie.event.CoordinatorJobEvent;
+import org.apache.oozie.event.EventQueue;
+import org.apache.oozie.event.MemoryEventQueue;
+import org.apache.oozie.event.WorkflowActionEvent;
+import org.apache.oozie.event.WorkflowJobEvent;
+import org.apache.oozie.event.listener.JobEventListener;
+import org.apache.oozie.sla.listener.SLAEventListener;
+import org.apache.oozie.util.LogUtils;
+import org.apache.oozie.util.XLog;
 
 /**
  * Service class that handles the events system - creating events queue,

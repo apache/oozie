@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
@@ -30,11 +31,13 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.event.EventQueue;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
@@ -52,6 +55,8 @@ import org.apache.oozie.sla.TestSLAService;
 import org.apache.oozie.sla.listener.SLAEventListener;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.oozie.util.JobUtils;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 public class TestHASLAService extends ZKXTestCase {
@@ -350,6 +355,72 @@ public class TestHASLAService extends ZKXTestCase {
             slaCalcMem.updateAllSlaStatus();
             dummySlaCalcMem.updateAllSlaStatus();
             assertEquals(0, ehs_q.size()); // no dupe event should be created again by Server 1
+        }
+        finally {
+            if (dummyOozie_1 != null) {
+                dummyOozie_1.teardown();
+            }
+        }
+    }
+
+    public void testSLAAlertCommandWithHA() throws Exception {
+
+        //Test SLA ALERT commands in HA mode.
+        //slaCalcMem1 is for server 1 and slaCalcMem2 is for server2
+
+        String id = "0000001-130521183438837-oozie-test-C@1";
+        Date expectedStartTS = new Date(System.currentTimeMillis() - 2 * 3600 * 1000); // 2 hrs passed
+        Date expectedEndTS1 = new Date(System.currentTimeMillis() + 1 * 3600 * 1000); // 1 hour ahead
+        // Coord Action of jobs 1-4 not started yet
+        createDBEntry(id, expectedStartTS, expectedEndTS1);
+
+        SLAService slas = Services.get().get(SLAService.class);
+        SLACalculatorMemory slaCalcMem1 = (SLACalculatorMemory) slas.getSLACalculator();
+        slaCalcMem1.init(Services.get().get(ConfigurationService.class).getConf());
+        List<String> idList = new ArrayList<String>();
+        idList.add(id);
+        slaCalcMem1.disableAlert(idList);
+        assertTrue(slaCalcMem1.get(id).getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT));
+
+        DummyZKOozie dummyOozie_1 = null;
+        try {
+            // start another dummy oozie instance (dummy sla and event handler services)
+            dummyOozie_1 = new DummyZKOozie("a", "http://blah");
+            DummySLACalculatorMemory slaCalcMem2 = new DummySLACalculatorMemory();
+            EventHandlerService dummyEhs = new EventHandlerService();
+            slaCalcMem2.setEventHandlerService(dummyEhs);
+
+            // So that job sla updated doesn't run automatically
+            Services.get().get(ConfigurationService.class).getConf().setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 100000);
+            Services.get().get(ConfigurationService.class).getConf().setInt(SLAService.CONF_SLA_CHECK_INITIAL_DELAY, 100000);
+            dummyEhs.init(Services.get());
+            slaCalcMem2.init(Services.get().get(ConfigurationService.class).getConf());
+
+            slaCalcMem2.updateAllSlaStatus();
+            assertTrue(slaCalcMem2.get(id).getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT));
+
+            String newParams = RestConstants.SLA_MAX_DURATION + "=5";
+            List<Pair<String, Map<String, String>>> jobIdsSLAPair = new ArrayList<Pair<String, Map<String, String>>>();
+            jobIdsSLAPair.add(new Pair<String, Map<String, String>>(id, JobUtils.parseChangeValue(newParams)));
+            slaCalcMem1.changeDefinition(jobIdsSLAPair);
+            assertEquals(slaCalcMem1.get(id).getExpectedDuration(), 5 * 60 * 1000);
+
+            //Before update, default is 10.
+            assertEquals(slaCalcMem2.get(id).getExpectedDuration(), 10 * 60 * 1000);
+
+            slaCalcMem2.updateAllSlaStatus();
+            assertEquals(slaCalcMem2.get(id).getExpectedDuration(), 5 * 60 * 1000);
+
+            newParams = RestConstants.SLA_MAX_DURATION + "=15";
+            jobIdsSLAPair.clear();
+            jobIdsSLAPair.add(new Pair<String, Map<String, String>>(id, JobUtils.parseChangeValue(newParams)));
+            slaCalcMem1.changeDefinition(jobIdsSLAPair);
+
+            // Before update
+            assertEquals(slaCalcMem2.get(id).getExpectedDuration(), 5 * 60 * 1000);
+            slaCalcMem2.updateAllSlaStatus();
+            assertEquals(slaCalcMem2.get(id).getExpectedDuration(), 15 * 60 * 1000);
+
         }
         finally {
             if (dummyOozie_1 != null) {

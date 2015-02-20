@@ -61,9 +61,25 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
         assertEquals(jobId, bean.getId());
         assertEquals(AppType.WORKFLOW_JOB, bean.getAppType());
         assertEquals(current, bean.getExpectedStart());
-        assertEquals(2, bean.getSlaConfigMap().size());
+        assertEquals(2, bean.getSLAConfigMap().size());
         assertEquals("END_MISS", bean.getAlertEvents());
         assertEquals("alert@example.com", bean.getAlertContact());
+    }
+
+    public void testSLARegistrationBulkConfigMap() throws Exception {
+        Date current = new Date();
+        String jobId = "0000000-" + current.getTime() + "-TestSLARegGetJPAExecutor-C@1";
+        List<String> jobIds = new ArrayList<String>();
+        jobIds.add(jobId);
+        _addRecordToSLARegistrationTable(jobId, AppType.COORDINATOR_ACTION, current, new Date(), "END_MISS",
+                "alert@example.com");
+        jobId = "0000000-" + current.getTime() + "-TestSLARegGetJPAExecutor-C@2";
+        jobIds.add(jobId);
+        _addRecordToSLARegistrationTable(jobId, AppType.COORDINATOR_ACTION, current, new Date(), "END_MISS",
+                "alert@example.com");
+        List<SLARegistrationBean> bean = SLARegistrationQueryExecutor.getInstance().getList(
+                SLARegQuery.GET_SLA_CONFIGS, jobIds);
+        assertEquals(bean.size(), 2);
     }
 
     private void _addRecordToSLARegistrationTable(String jobId, AppType appType, Date start, Date end,
@@ -92,7 +108,7 @@ public class TestSLARegistrationGetJPAExecutor extends XDataTestCase {
         String slaConfig = "{alert_contact=hadoopqa@oozie.com},{alert_events=START_MISS,DURATION_MISS,END_MISS},";
         SLARegistrationBean bean = new SLARegistrationBean();
         bean.setSlaConfig(slaConfig);
-        assertEquals(bean.getSlaConfigMap().size(), 2);
+        assertEquals(bean.getSLAConfigMap().size(), 2);
         assertEquals(bean.getAlertEvents(), "START_MISS,DURATION_MISS,END_MISS");
         assertEquals(bean.getAlertContact(), "hadoopqa@oozie.com");
     }

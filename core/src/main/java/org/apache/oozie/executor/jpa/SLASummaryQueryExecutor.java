@@ -18,6 +18,7 @@
 
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -39,8 +40,11 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
         UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES,
         UPDATE_SLA_SUMMARY_ALL,
         UPDATE_SLA_SUMMARY_EVENTPROCESSED,
+        UPDATE_SLA_SUMMARY_FOR_EXPECTED_TIMES,
+        UPDATE_SLA_SUMMARY_LAST_MODIFIED_TIME,
         GET_SLA_SUMMARY,
-        GET_SLA_SUMMARY_EVENTPROCESSED
+        GET_SLA_SUMMARY_EVENTPROCESSED,
+        GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED
     };
 
     private static SLASummaryQueryExecutor instance = new SLASummaryQueryExecutor();
@@ -95,10 +99,24 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
                 query.setParameter("actualStartTS", bean.getActualStartTimestamp());
                 query.setParameter("jobId", bean.getId());
                 break;
+            case UPDATE_SLA_SUMMARY_FOR_EXPECTED_TIMES:
+                query.setParameter("nominalTime", bean.getNominalTimestamp());
+                query.setParameter("expectedStartTime", bean.getExpectedStartTimestamp());
+                query.setParameter("expectedEndTime", bean.getExpectedEndTimestamp());
+                query.setParameter("expectedDuration", bean.getExpectedDuration());
+                query.setParameter("lastModTime", bean.getLastModifiedTimestamp());
+                query.setParameter("jobId", bean.getId());
+                break;
+
             case UPDATE_SLA_SUMMARY_EVENTPROCESSED:
                 query.setParameter("eventProcessed", bean.getEventProcessed());
                 query.setParameter("jobId", bean.getId());
                 break;
+            case UPDATE_SLA_SUMMARY_LAST_MODIFIED_TIME:
+                query.setParameter("lastModifiedTS", bean.getLastModifiedTime());
+                query.setParameter("jobId", bean.getId());
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot set parameters for "
                         + namedQuery.name());
@@ -113,6 +131,7 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
         switch (namedQuery) {
             case GET_SLA_SUMMARY:
             case GET_SLA_SUMMARY_EVENTPROCESSED:
+            case GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED:
                 query.setParameter("id", parameters[0]);
                 break;
         }
@@ -174,6 +193,14 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
                 bean = new SLASummaryBean();
                 bean.setEventProcessed(((Byte)ret).intValue());
                 break;
+            case GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED:
+                Object[] arr = (Object[]) ret;
+                bean = new SLASummaryBean();
+                bean.setEventProcessed((Byte)arr[0]);
+                bean.setLastModifiedTime((Timestamp)arr[1]);
+
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "
                         + namedQuery.name());

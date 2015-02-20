@@ -90,6 +90,7 @@ public class BundleStatusTransitXCommand extends StatusTransitXCommand {
                 }
 
                 if (bAction.isPending()) {
+                    LOG.debug(bAction + " has pending flag set");
                     foundPending = true;
                 }
             }

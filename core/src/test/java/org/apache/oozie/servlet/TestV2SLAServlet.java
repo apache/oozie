@@ -39,8 +39,6 @@ import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.DateUtils;
 import org.json.simple.JSONArray;

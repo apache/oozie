@@ -294,6 +294,52 @@ SLA Details:
   Actual Duration (in mins) - -1
 </verbatim>
 
+---+++ Changing job SLA definition and alerting
+Following properties can be specified in job.xml to enable/disable SLA alerts.
+
+=oozie.sla.disable.alerts.older.than= this property can be specified in hours, the SLA notification for coord actions will be disabled whose nominal is time older then this value. Default is 24 hours.
+<verbatim>
+<property>
+    <name>oozie.sla.disable.alerts.older.than</name>
+    <value>12</value>
+</property>
+</verbatim>
+
+=oozie.sla.disable.alerts= List of coord actions to be disabled. Value can be specified as list of coord actions or date range.
+<verbatim>
+<property>
+    <name>oozie.sla.disable.alerts</name>
+    <value>1,3-4,7-10</value>
+</property>
+</verbatim>
+Will disable alert for coord actions 1,3,5,7,8,9,10
+
+=oozie.sla.enable.alerts= List of coord actions to be disabled. Value can be specified as list of coord actions or date range.
+<verbatim>
+<property>
+    <name>oozie.sla.disable.alerts</name>
+    <value>2009-01-01T01:00Z::2009-05-31T23:59Z</value>
+</property>
+</verbatim>
+This will enable SLA alert for coord actions whose nominal time is in between (inclusive) 2009-01-01T01:00Z and 2009-05-31T23:59Z.
+
+ALL keyword can be specified to specify all actions. Below property will disable SLA notifications for all coord actions.
+<verbatim>
+<property>
+    <name>oozie.sla.disable.alerts</name>
+    <value>ALL</value>
+</property>
+</verbatim>
+
+SLA alert enabling or disabling can also be modified through commandline or REST API after submission for running jobs.
+
+Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]] for commandline usage.
+Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
+
+SLA definition of should-start, should-end, nominal-time and max-duration can be changed for running jobs through commandline or REST API.
+Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]] for commandline usage.
+Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
+
 ---++ Known issues
 There are two known issues when you define SLA for a workflow action.
    * If there are decision nodes and SLA is defined for a workflow action not in the execution path because of the decision node, you will still get an SLA_MISS notification.

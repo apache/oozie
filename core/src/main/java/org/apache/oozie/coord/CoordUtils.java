@@ -20,11 +20,14 @@ package org.apache.oozie.coord;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
@@ -35,14 +38,18 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class CoordUtils {
     public static final String HADOOP_USER = "user.name";
@@ -92,7 +99,8 @@ public class CoordUtils {
      * @return the list of Coordinator actions for the date range
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
-    static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope, boolean active)
+    @VisibleForTesting
+    public static List<CoordinatorActionBean> getCoordActionsFromDates(String jobId, String scope, boolean active)
             throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
         ParamChecker.notEmpty(jobId, "jobId");
@@ -132,7 +140,12 @@ public class CoordUtils {
                     throw new CommandException(ErrorCode.E0302, s.trim(), e);
                 }
                 catch (JPAExecutorException e) {
-                    throw new CommandException(e);
+                    if (e.getErrorCode() == ErrorCode.E0605) {
+                        XLog.getLog(CoordUtils.class).info("No action for nominal time:" + s + ". Skipping over");
+                    }
+                    else {
+                        throw new CommandException(e);
+                    }
                 }
 
             }
@@ -145,16 +158,7 @@ public class CoordUtils {
         return coordActions;
     }
 
-    /**
-     * Get the list of actions for given id ranges
-     *
-     * @param jobId coordinator job id
-     * @param scope a comma-separated list of action ranges. The action range is specified with two action numbers separated by '-'
-     * @return the list of all Coordinator actions for action range
-     * @throws CommandException thrown if failed to get coordinator actions by given id range
-     */
-     public static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
-        JPAService jpaService = Services.get().get(JPAService.class);
+    public static Set<String> getActionsIds(String jobId, String scope) throws CommandException {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
@@ -202,6 +206,21 @@ public class CoordUtils {
                 actions.add(jobId + "@" + s);
             }
         }
+        return actions;
+    }
+
+    /**
+     * Get the list of actions for given id ranges
+     *
+     * @param jobId coordinator job id
+     * @param scope a comma-separated list of action ranges. The action range is specified with two action numbers separated by '-'
+     * @return the list of all Coordinator actions for action range
+     * @throws CommandException thrown if failed to get coordinator actions by given id range
+     */
+     @VisibleForTesting
+     public static List<CoordinatorActionBean> getCoordActionsFromIds(String jobId, String scope) throws CommandException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        Set<String> actions = getActionsIds(jobId, scope);
         // Retrieve the actions using the corresponding actionIds
         List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
         for (String id : actions) {
@@ -223,6 +242,109 @@ public class CoordUtils {
             coordActions.add(coordAction);
         }
         return coordActions;
+    }
+
+     /**
+      * Check if sla alert is disabled for action.
+      * @param actionBean
+      * @param coordName
+      * @param jobConf
+      * @return
+      * @throws ParseException
+      */
+    public static boolean isSlaAlertDisabled(CoordinatorActionBean actionBean, String coordName, Configuration jobConf)
+            throws ParseException {
+
+        int disableSlaNotificationOlderThan = jobConf.getInt(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN,
+                ConfigurationService.getInt(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN));
+
+        if (disableSlaNotificationOlderThan > 0) {
+            // Disable alert for catchup jobs
+            long timeDiffinHrs = TimeUnit.MILLISECONDS.toHours(new Date().getTime()
+                    - actionBean.getNominalTime().getTime());
+            if (timeDiffinHrs > jobConf.getLong(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN,
+                    ConfigurationService.getLong(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN))) {
+                return true;
+            }
+        }
+
+        boolean disableAlert = false;
+        if (jobConf.get(OozieClient.SLA_DISABLE_ALERT_COORD) != null) {
+            String coords = jobConf.get(OozieClient.SLA_DISABLE_ALERT_COORD);
+            Set<String> coordsToDisableFor = new HashSet<String>(Arrays.asList(coords.split(",")));
+            if (coordsToDisableFor.contains(coordName)) {
+                return true;
+            }
+            if (coordsToDisableFor.contains(actionBean.getJobId())) {
+                return true;
+            }
+        }
+
+        // Check if sla alert is disabled for that action
+        if (!StringUtils.isEmpty(jobConf.get(OozieClient.SLA_DISABLE_ALERT))
+                && getCoordActionSLAAlertStatus(actionBean, coordName, jobConf, OozieClient.SLA_DISABLE_ALERT)) {
+            return true;
+        }
+
+        // Check if sla alert is enabled for that action
+        if (!StringUtils.isEmpty(jobConf.get(OozieClient.SLA_ENABLE_ALERT))
+                && getCoordActionSLAAlertStatus(actionBean, coordName, jobConf, OozieClient.SLA_ENABLE_ALERT)) {
+            return false;
+        }
+
+        return disableAlert;
+    }
+
+    /**
+     * Get coord action SLA alert status.
+     * @param actionBean
+     * @param coordName
+     * @param jobConf
+     * @param slaAlertType
+     * @return
+     * @throws ParseException
+     */
+    private static boolean getCoordActionSLAAlertStatus(CoordinatorActionBean actionBean, String coordName,
+            Configuration jobConf, String slaAlertType) throws ParseException {
+        String slaAlertList;
+
+       if (!StringUtils.isEmpty(jobConf.get(slaAlertType))) {
+            slaAlertList = jobConf.get(slaAlertType);
+            // check if ALL or date/action-num range
+            if (slaAlertList.equalsIgnoreCase(SLAOperations.ALL_VALUE)) {
+                return true;
+            }
+            String[] values = slaAlertList.split(",");
+            for (String value : values) {
+                value = value.trim();
+                if (value.contains("::")) {
+                    String[] datesInRange = value.split("::");
+                    Date start = DateUtils.parseDateOozieTZ(datesInRange[0].trim());
+                    Date end = DateUtils.parseDateOozieTZ(datesInRange[1].trim());
+                    // check if nominal time in this range
+                    if (actionBean.getNominalTime().compareTo(start) >= 0
+                            || actionBean.getNominalTime().compareTo(end) <= 0) {
+                        return true;
+                    }
+                }
+                else if (value.contains("-")) {
+                    String[] actionsInRange = value.split("-");
+                    int start = Integer.parseInt(actionsInRange[0].trim());
+                    int end = Integer.parseInt(actionsInRange[1].trim());
+                    // check if action number in this range
+                    if (actionBean.getActionNumber() >= start || actionBean.getActionNumber() <= end) {
+                        return true;
+                    }
+                }
+                else {
+                    int actionNumber = Integer.parseInt(value.trim());
+                    if (actionBean.getActionNumber() == actionNumber) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 }

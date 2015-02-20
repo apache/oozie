@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,15 +33,19 @@ import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetForFilterJPAExecutor;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetForFilterJPAExecutor.SLASummaryFilter;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
@@ -146,7 +152,20 @@ public class V2SLAServlet extends SLAServlet {
             else {
                 XLog.getLog(getClass()).error(ErrorCode.E0610);
             }
-            return SLASummaryBean.toJSONObject(slaSummaryList, timeZoneId);
+
+            List<String> jobIds = new ArrayList<String>();
+            for(SLASummaryBean summaryBean:slaSummaryList){
+                jobIds.add(summaryBean.getId());
+            }
+            List<SLARegistrationBean> SLARegistrationList = SLARegistrationQueryExecutor.getInstance().getList(
+                    SLARegQuery.GET_SLA_CONFIGS, jobIds);
+
+            Map<String, Map<String, String>> jobIdSLAConfigMap = new HashMap<String, Map<String, String>>();
+            for(SLARegistrationBean registrationBean:SLARegistrationList){
+                jobIdSLAConfigMap.put(registrationBean.getId(), registrationBean.getSLAConfigMap());
+            }
+
+            return SLASummaryBean.toJSONObject(slaSummaryList, jobIdSLAConfigMap, timeZoneId);
         }
         catch (XException ex) {
             throw new CommandException(ex);

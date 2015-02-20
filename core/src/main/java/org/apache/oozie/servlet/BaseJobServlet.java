@@ -177,6 +177,27 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
+        else if (action.equals(RestConstants.SLA_ENABLE_ALERT)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            stopCron();
+            slaEnableAlert(request, response);
+            startCron();
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        else if (action.equals(RestConstants.SLA_DISABLE_ALERT)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            stopCron();
+            slaDisableAlert(request, response);
+            startCron();
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        else if (action.equals(RestConstants.SLA_CHANGE)) {
+            validateContentType(request, RestConstants.XML_CONTENT_TYPE);
+            stopCron();
+            slaChange(request, response);
+            startCron();
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.ACTION_PARAM, action);
@@ -498,4 +519,38 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      */
     abstract String getJobStatus(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
+
+    /**
+     * Abstract method to enable SLA alert.
+     *
+     * @param request the request
+     * @param response the response
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
+
+    /**
+     * Abstract method to disable SLA alert.
+     *
+     * @param request the request
+     * @param response the response
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
+
+    /**
+     * Abstract method to change SLA definition.
+     *
+     * @param request the request
+     * @param response the response
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
+
 }

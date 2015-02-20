@@ -19,6 +19,8 @@
 package org.apache.oozie.sla.service;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
@@ -33,6 +35,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLACalculator;
 import org.apache.oozie.sla.SLACalculatorMemory;
 import org.apache.oozie.sla.SLARegistrationBean;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -107,7 +110,6 @@ public class SLAService implements Service {
         return calcImpl;
     }
 
-    @VisibleForTesting
     public void runSLAWorker() {
         new SLAWorker(calcImpl).run();
     }
@@ -181,4 +183,94 @@ public class SLAService implements Service {
         calcImpl.removeRegistration(jobId);
     }
 
+    /**
+     * Enable jobs sla alert.
+     *
+     * @param jobIds the job ids
+     * @param isParentJob, if jobIds are parent job
+     * @return true, if successful
+     * @throws ServiceException the service exception
+     */
+    public boolean enableAlert(List<String> jobIds) throws ServiceException {
+        try {
+            return calcImpl.enableAlert(jobIds);
+        }
+        catch (JPAExecutorException jpe) {
+            LOG.error("Exception while updating SLA alerting for Job [{0}]", jobIds.get(0));
+            throw new ServiceException(jpe);
+        }
+    }
+
+    /**
+     * Enable child jobs sla alert.
+     *
+     * @param jobIds the parent job ids
+     * @param isParentJob, if jobIds are parent job
+     * @return true, if successful
+     * @throws ServiceException the service exception
+     */
+    public boolean enableChildJobAlert(List<String> parentJobIds) throws ServiceException {
+        try {
+            return calcImpl.enableChildJobAlert(parentJobIds);
+        }
+        catch (JPAExecutorException jpe) {
+            LOG.error("Exception while updating SLA alerting for Job [{0}]", parentJobIds.get(0));
+            throw new ServiceException(jpe);
+        }
+    }
+
+    /**
+     * Disable jobs Sla alert.
+     *
+     * @param jobIds the job ids
+     * @param isParentJob, if jobIds are parent job
+     * @return true, if successful
+     * @throws ServiceException the service exception
+     */
+    public boolean disableAlert(List<String> jobIds) throws ServiceException {
+        try {
+            return calcImpl.disableAlert(jobIds);
+        }
+        catch (JPAExecutorException jpe) {
+            LOG.error("Exception while updating SLA alerting for Job [{0}]", jobIds.get(0));
+            throw new ServiceException(jpe);
+        }
+    }
+
+    /**
+     * Disable child jobs Sla alert.
+     *
+     * @param jobIds the parent job ids
+     * @param isParentJob, if jobIds are parent job
+     * @return true, if successful
+     * @throws ServiceException the service exception
+     */
+    public boolean disableChildJobAlert(List<String> parentJobIds) throws ServiceException {
+        try {
+            return calcImpl.disableChildJobAlert(parentJobIds);
+        }
+        catch (JPAExecutorException jpe) {
+            LOG.error("Exception while updating SLA alerting for Job [{0}]", parentJobIds.get(0));
+            throw new ServiceException(jpe);
+        }
+    }
+
+    /**
+     * Change jobs Sla definitions
+     * It takes list of pairs of jobid and key/value pairs of el evaluated sla definition.
+     * Support definition are sla-should-start, sla-should-end, sla-nominal-time and sla-max-duration.
+     *
+     * @param jobIdsSLAPair the job ids sla pair
+     * @return true, if successful
+     * @throws ServiceException the service exception
+     */
+    public boolean changeDefinition(List<Pair<String, Map<String, String>>> idSlaDefinitionList)
+            throws ServiceException {
+        try {
+            return calcImpl.changeDefinition(idSlaDefinitionList);
+        }
+        catch (JPAExecutorException jpe) {
+            throw new ServiceException(jpe);
+        }
+    }
 }

@@ -160,7 +160,7 @@ public class CoordMaterializeTriggerService implements Service {
                 throws JPAExecutorException {
             try {
                 List<CoordinatorJobBean> materializeJobs = CoordJobQueryExecutor.getInstance().getList(
-                        CoordJobQuery.GET_COORD_JOBS_OLDER_FOR_MATERILZATION, currDate, limit);
+                        CoordJobQuery.GET_COORD_JOBS_OLDER_FOR_MATERIALIZATION, currDate, limit);
                 LOG.info("CoordMaterializeTriggerService - Curr Date= " + DateUtils.formatDateOozieTZ(currDate)
                         + ", Num jobs to materialize = " + materializeJobs.size());
                 for (CoordinatorJobBean coordJob : materializeJobs) {

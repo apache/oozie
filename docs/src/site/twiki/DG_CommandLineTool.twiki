@@ -91,7 +91,10 @@ usage:
                 -value <arg>          new endtime/concurrency/pausetime value for changing a
                                       coordinator job
                 -verbose              verbose mode
-.
+                -sladisable           disables sla alerts for the job and its children
+                -slaenable            enables sla alerts for the job and its children
+                -slachange            Update sla param for jobs, supported param are should-start, should-end and max-duration
+
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
                  -doas <arg>          doAs user, impersonates as the specified user.
@@ -888,6 +891,23 @@ All other arguments are optional:
    * =verbose= will cause the job status to be printed at each poll; otherwise, there will be no output
    * =interval=  allows specifying the polling interval in minutes (default is 5)
    * =timeout= allows specifying the timeout in minutes (default is 30 minutes); negative values indicate no timeout
+
+---+++ Changing job SLA definition and alerting
+   * slaenable command can be used to enable job sla alerts.
+   * sladisable command can be used to disable job sla alerts.
+   * slachange command can be used to change sla job definition.
+   * Supported parameters for sla change command are should-start, should-end and max-duration. Please specify the value in single quotes instead of double quotes in command line to avoid bash interpreting braces in EL functions and causing error.
+   * All sla commands takes -action or -date parameter. For bundle jobs additional -coordinator (coord_name/id) parameter can be passed. Sla change command need extra parameter -value to specify new sla definition.
+   * Sla commands without -action or -date parameter is applied to all non terminated actions and all future actions.
+   * Sla commands with -action or -date parameter will be applied to only non terminated actions.
+
+  Eg.
+  <verbatim>
+  $oozie job -slaenable <coord_Job_id> [-action 1,3-4,7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z,2009-11-10T01:00Z::2009-12-31T22:00Z]
+  $oozie job -sladisable <coord_Job_id> [-action 1,3-4,7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z,2009-11-10T01:00Z::2009-12-31T22:00Z]
+  $oozie job -slachange <coord_Job_id> [-action 1,3-4,7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z,2009-11-10T01:00Z::2009-12-31T22:00Z] -value 'sla-max-duration=${10 * MINUTES};sla-should-end=${30 * MINUTES};sla-max-duration=${30 * MINUTES}'
+  $oozie job -slaenable <bundle_job_id> [-action 1,3-4,7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z,2009-11-10T01:00Z::2009-12-31T22:00Z] [-coordinator <List_of_coord_names/ids]
+  </verbatim>
 
 ---++ Jobs Operations
 
