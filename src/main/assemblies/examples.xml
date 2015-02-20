@@ -114,7 +114,12 @@
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/map-reduce/lib</outputDirectory>
-        </file> 
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/spark/lib</outputDirectory>
+            <destName>${artifact.artifactId}.jar</destName>
+        </file>
     </files>
 
 </assembly>

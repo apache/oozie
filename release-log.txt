@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2071 Add a Spark example (pavan kumar via rkanter)
 OOZIE-2145 ZooKeeper paths should start with a "/" (rkanter)
 OOZIE-2113 Oozie Command Line Utilities are failing as hadoop-auth jar not found (shwethags)
 OOZIE-1688 New configuration to specify server-server authentication type (puru)

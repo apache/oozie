@@ -65,14 +65,11 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
                 "<name-node>{1}</name-node>" +
                 "<master>local[*]</master>" +
                 "<mode>client</mode>" +
-                "<name>SparkRegression</name>" +
-                "<class>org.apache.spark.examples.mllib.JavaALS</class>" +
+                "<name>SparkFileCopy</name>" +
+                "<class>org.apache.oozie.example.SparkFileCopy</class>" +
                 "<jar>" + getAppPath() +"/lib/test.jar</jar>" +
                 "<arg>" + getAppPath() + "/" + SPARK_FILENAME + "</arg>" +
-                "<arg>1</arg>" +
-                "<arg>2</arg>" +
                 "<arg>" + getAppPath() + "/" + OUTPUT + "</arg>" +
-                "<arg>2</arg>" +
                 "</spark>";
         return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
     }
@@ -99,8 +96,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         SparkActionExecutor ae = new SparkActionExecutor();
         ae.check(context, context.getAction());
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertTrue(fs.exists(new Path(getAppPath() + "/" + OUTPUT + "/userFeatures")));
-        assertTrue(fs.exists(new Path(getAppPath() + "/" + OUTPUT + "/productFeatures")));
+        assertTrue(fs.exists(new Path(getAppPath() + "/" + OUTPUT)));
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 

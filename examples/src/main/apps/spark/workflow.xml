@@ -1,0 +1,42 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns='uri:oozie:workflow:0.5' name='SparkFileCopy'>
+    <start to='spark-node' />
+
+    <action name='spark-node'>
+        <spark xmlns="uri:oozie:spark-action:0.1">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <master>local[*]</master>
+            <name>Spark-FileCopy</name>
+            <class>org.apache.oozie.example.SparkFileCopy</class>
+            <jar>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar</jar>
+            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/input-data/text/data.txt</arg>
+            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/output</arg>
+        </spark>
+        <ok to="end" />
+        <error to="fail" />
+    </action>
+
+    <kill name="fail">
+        <message>Workflow failed, error
+            message[${wf:errorMessage(wf:lastErrorNode())}]
+        </message>
+    </kill>
+    <end name='end' />
+</workflow-app>

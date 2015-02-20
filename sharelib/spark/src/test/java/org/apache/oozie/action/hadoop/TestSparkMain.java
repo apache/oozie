@@ -56,10 +56,10 @@ public class TestSparkMain extends MainTestCase {
 
         jobConf.set(SparkActionExecutor.SPARK_MASTER, "local[*]");
         jobConf.set(SparkActionExecutor.SPARK_MODE, "client");
-        jobConf.set(SparkActionExecutor.SPARK_CLASS, "org.apache.spark.examples.mllib.JavaALS");
-        jobConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark ALS");
+        jobConf.set(SparkActionExecutor.SPARK_CLASS, "org.apache.oozie.example.SparkFileCopy");
+        jobConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark Copy File");
         jobConf.set(SparkActionExecutor.SPARK_OPTS, "--driver-memory 1024M");
-        jobConf.set(SparkActionExecutor.SPARK_JAR, getFsTestCaseDir()+"/lib/test.jar");
+        jobConf.set(SparkActionExecutor.SPARK_JAR, getFsTestCaseDir() + "/lib/test.jar");
 
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
@@ -76,10 +76,9 @@ public class TestSparkMain extends MainTestCase {
 
         String input  = getFsTestCaseDir() + "/" + INPUT;
         String output = getFsTestCaseDir() + "/" + OUTPUT;
-        String[] args = {input, "1", "2", output, "2"};
+        String[] args = {input, output};
         SparkMain.main(args);
-        assertTrue(getFileSystem().exists(new Path(getFsTestCaseDir() + "/" + OUTPUT + "/userFeatures")));
-        assertTrue(getFileSystem().exists(new Path(getFsTestCaseDir() + "/" + OUTPUT + "/productFeatures")));
+        assertTrue(getFileSystem().exists(new Path(getFsTestCaseDir() + "/" + OUTPUT)));
         return null;
     }
 }
