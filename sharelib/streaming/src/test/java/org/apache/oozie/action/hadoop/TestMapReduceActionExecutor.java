@@ -20,8 +20,10 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.RunningJob;
@@ -45,7 +47,9 @@ import org.apache.oozie.util.ClassUtils;
 import org.jdom.Element;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -55,6 +59,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
@@ -63,6 +68,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.util.PropertiesUtils;
 
@@ -799,16 +806,13 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         return conf;
     }
 
-    public void testStreaming() throws Exception {
+    private void runStreamingWordCountJob(Path inputDir, Path outputDir, XConfiguration streamingConf) throws Exception {
         FileSystem fs = getFileSystem();
         Path streamingJar = new Path(getFsTestCaseDir(), "jar/hadoop-streaming.jar");
 
         InputStream is = new FileInputStream(ClassUtils.findContainingJar(StreamJob.class));
         OutputStream os = fs.create(new Path(getAppPath(), streamingJar));
         IOUtils.copyStream(is, os);
-
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
         w.write("dummy\n");
@@ -818,9 +822,55 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "      <streaming>" + "        <mapper>cat</mapper>"
                 + "        <reducer>wc</reducer>" + "      </streaming>"
-                + getStreamingConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "<file>"
+                + streamingConf.toXmlString(false) + "<file>"
                 + streamingJar + "</file>" + "</map-reduce>";
         _testSubmit("streaming", actionXml);
+    }
+
+    public void testStreaming() throws Exception {
+        FileSystem fs = getFileSystem();
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+        final XConfiguration streamingConf = getStreamingConfig(inputDir.toString(), outputDir.toString());
+
+        runStreamingWordCountJob(inputDir, outputDir, streamingConf);
+
+        final FSDataInputStream dis = fs.open(getOutputFile(outputDir, fs));
+        final List<String> lines = org.apache.commons.io.IOUtils.readLines(dis);
+        dis.close();
+        assertEquals(1, lines.size());
+        // Not sure why it is 14 instead of 12. \n twice ??
+        assertEquals("2       2      14", lines.get(0).trim());
+    }
+
+    public void testStreamingConfOverride() throws Exception {
+        FileSystem fs = getFileSystem();
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+        final XConfiguration streamingConf = getStreamingConfig(inputDir.toString(), outputDir.toString());
+        streamingConf.set("mapred.output.format.class", "org.apache.hadoop.mapred.SequenceFileOutputFormat");
+
+        runStreamingWordCountJob(inputDir, outputDir, streamingConf);
+
+        SequenceFile.Reader seqFile = new SequenceFile.Reader(fs, getOutputFile(outputDir, fs), getFileSystem().getConf());
+        Text key = new Text(), value = new Text();
+        if (seqFile.next(key, value)) {
+            assertEquals("2       2      14", key.toString().trim());
+            assertEquals("", value.toString());
+        }
+        assertFalse(seqFile.next(key, value));
+        seqFile.close();
+    }
+
+    private Path getOutputFile(Path outputDir, FileSystem fs) throws FileNotFoundException, IOException {
+        final FileStatus[] files = fs.listStatus(outputDir, new PathFilter() {
+
+            @Override
+            public boolean accept(Path path) {
+                return path.getName().startsWith("part");
+            }
+        });
+        return files[0].getPath(); //part-[m/r]-00000
     }
 
     protected XConfiguration getPipesConfig(String inputDir, String outputDir) {

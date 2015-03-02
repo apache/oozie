@@ -32,38 +32,44 @@ public class PipesMain extends MapReduceMain {
     }
 
     @Override
-    protected RunningJob submitJob(JobConf jobConf) throws Exception {
-        String value = jobConf.get("oozie.pipes.map");
+    protected void addActionConf(JobConf jobConf, Configuration actionConf) {
+        String value = actionConf.get("oozie.pipes.map");
         if (value != null) {
             jobConf.setBoolean("hadoop.pipes.java.mapper", true);
             jobConf.set("mapred.mapper.class", value);
         }
-        value = jobConf.get("oozie.pipes.reduce");
+        value = actionConf.get("oozie.pipes.reduce");
         if (value != null) {
             jobConf.setBoolean("hadoop.pipes.java.reducer", true);
             jobConf.set("mapred.reducer.class", value);
         }
-        value = jobConf.get("oozie.pipes.inputformat");
+        value = actionConf.get("oozie.pipes.inputformat");
         if (value != null) {
             jobConf.setBoolean("hadoop.pipes.java.recordreader", true);
             jobConf.set("mapred.input.format.class", value);
         }
-        value = jobConf.get("oozie.pipes.partitioner");
+        value = actionConf.get("oozie.pipes.partitioner");
         if (value != null) {
             jobConf.set("mapred.partitioner.class", value);
         }
-        value = jobConf.get("oozie.pipes.writer");
+        value = actionConf.get("oozie.pipes.writer");
         if (value != null) {
             jobConf.setBoolean("hadoop.pipes.java.recordwriter", true);
             jobConf.set("mapred.output.format.class", value);
         }
-        value = jobConf.get("oozie.pipes.program");
+        value = actionConf.get("oozie.pipes.program");
         if (value != null) {
             jobConf.set("hadoop.pipes.executable", value);
             if (value.contains("#")) {
                 DistributedCache.createSymlink(jobConf);
             }
         }
+
+        super.addActionConf(jobConf, actionConf);
+    }
+
+    @Override
+    protected RunningJob submitJob(JobConf jobConf) throws Exception {
 
         //propagate delegation related props from launcher job to MR job
         if (getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION") != null) {

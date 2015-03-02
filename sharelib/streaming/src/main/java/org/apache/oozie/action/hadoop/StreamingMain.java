@@ -29,8 +29,9 @@ public class StreamingMain extends MapReduceMain {
         run(StreamingMain.class, args);
     }
 
+
     @Override
-    protected RunningJob submitJob(JobConf jobConf) throws Exception {
+    protected void addActionConf(JobConf jobConf, Configuration actionConf) {
         jobConf.set("mapred.mapper.class", "org.apache.hadoop.streaming.PipeMapper");
         jobConf.set("mapred.reducer.class", "org.apache.hadoop.streaming.PipeReducer");
         jobConf.set("mapred.map.runner.class", "org.apache.hadoop.streaming.PipeMapRunner");
@@ -43,26 +44,24 @@ public class StreamingMain extends MapReduceMain {
         jobConf.set("mapred.create.symlink", "yes");
         jobConf.set("mapred.used.genericoptionsparser", "true");
 
-        jobConf.set("stream.addenvironment", "");
-
-        String value = jobConf.get("oozie.streaming.mapper");
+        String value = actionConf.get("oozie.streaming.mapper");
         if (value != null) {
             jobConf.set("stream.map.streamprocessor", value);
         }
-        value = jobConf.get("oozie.streaming.reducer");
+        value = actionConf.get("oozie.streaming.reducer");
         if (value != null) {
             jobConf.set("stream.reduce.streamprocessor", value);
         }
-        value = jobConf.get("oozie.streaming.record-reader");
+        value = actionConf.get("oozie.streaming.record-reader");
         if (value != null) {
             jobConf.set("stream.recordreader.class", value);
         }
-        String[] values = getStrings(jobConf, "oozie.streaming.record-reader-mapping");
+        String[] values = getStrings(actionConf, "oozie.streaming.record-reader-mapping");
         for (String s : values) {
             String[] kv = s.split("=");
             jobConf.set("stream.recordreader." + kv[0], kv[1]);
         }
-        values = getStrings(jobConf, "oozie.streaming.env");
+        values = getStrings(actionConf, "oozie.streaming.env");
         value = jobConf.get("stream.addenvironment", "");
         if (value.length() > 0) {
             value = value + " ";
@@ -71,6 +70,12 @@ public class StreamingMain extends MapReduceMain {
             value = value + s + " ";
         }
         jobConf.set("stream.addenvironment", value);
+
+        super.addActionConf(jobConf, actionConf);
+    }
+
+    @Override
+    protected RunningJob submitJob(JobConf jobConf) throws Exception {
 
         // propagate delegation related props from launcher job to MR job
         if (getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION") != null) {
