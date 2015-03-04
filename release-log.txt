@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2147 Oozie upgrade from 4.0.0 to 4.1.0 fails with CLOBs of zero length with Oracle DB (venkatnrangan via bzhang)
 OOZIE-2158 Overrides in action conf in streaming action do not work (rohini)
 OOZIE-2042 Max substitution for config variables should be configurable (seoeun25 via puru)
 OOZIE-1913 Devise a way to turn off SLA alerts for bundle/coordinator flexibly (puru)
