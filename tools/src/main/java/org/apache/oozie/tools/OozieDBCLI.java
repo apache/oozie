@@ -503,7 +503,7 @@ public class OozieDBCLI {
             while (rs.next()) {
                 for (int i = 0; i < columnNames.size(); i++) {
                     Clob srcClob = rs.getClob(columnNames.get(i));
-                    if (srcClob == null) {
+                    if (srcClob == null || srcClob.length() < 1) {
                         continue;
                     }
                     tempBlobCall.execute();
