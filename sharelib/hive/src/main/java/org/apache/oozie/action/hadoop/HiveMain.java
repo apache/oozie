@@ -114,6 +114,8 @@ public class HiveMain extends LauncherMain {
         // to force hive to use the jobclient to submit the job, never using HADOOPBIN (to do localmode)
         hiveConf.setBoolean("hive.exec.mode.local.auto", false);
 
+        hiveConf.set("hive.querylog.location", "./hivelogs");
+
         return hiveConf;
     }
 
