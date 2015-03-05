@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
@@ -53,6 +54,15 @@ public class FsActionExecutor extends ActionExecutor {
     public FsActionExecutor() {
         super("fs");
         maxGlobCount = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+    }
+
+    /**
+    * Initialize Action.
+    */
+    @Override
+    public void initActionType() {
+        super.initActionType();
+        registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.ERROR, "FS014");
     }
 
     Path getPath(Element element, String attribute) {

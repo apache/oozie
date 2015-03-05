@@ -1092,4 +1092,39 @@ public void testChmodRecursive() throws Exception {
 
         fs.delete(basePath, true);
     }
+
+    private Context createContextWithUser(String actionXml, String user) throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, user);
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "fs-action");
+        wf.setUser(user);
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        return new Context(wf, action);
+    }
+
+    public void testRetryOnAccessControlError() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+
+        Path path = new Path(getFsTestCaseDir(), "dir");
+        fs.mkdirs(path);
+        fs.setPermission(path, FsPermission.valueOf("-rwx------"));
+        // do FS operation using different user to cause permission error
+        Context context = createContextWithUser("<fs/>", getTestUser2());
+        try {
+            ae.chmod(context, path, "-r--------", false, false);
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(e instanceof ActionExecutorException);
+            assertEquals("FS014", ((ActionExecutorException) e).getErrorCode());
+            assertEquals(ActionExecutorException.ErrorType.ERROR, ((ActionExecutorException) e).getErrorType());
+        }
+    }
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
@@ -44,7 +45,11 @@ import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
@@ -174,6 +179,19 @@ public class TestActionStartXCommand extends XDataTestCase {
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
         assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+    }
+
+    public void testActionStartToCheckRetry() throws Exception {
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        job.setUser(getTestUser2());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, job);
+        WorkflowActionBean action = this.addRecordToWfActionTableWithFS(job.getId(), "1", WorkflowAction.Status.PREP);
+        assertEquals(0, action.getUserRetryCount());
+        assertEquals(1, action.getUserRetryMax());
+        new ActionStartXCommand(action.getId(), "fs").call();
+        action = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION, action.getId());
+        assertNotNull(action.getExternalId());
+        assertEquals(1, action.getUserRetryCount());
     }
 
     public void testActionReuseWfJobAppPath() throws Exception {
@@ -373,6 +391,23 @@ public class TestActionStartXCommand extends XDataTestCase {
         return action;
     }
 
+    private WorkflowActionBean addRecordToWfActionTableWithFS(String wfId, String actionName,
+            WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = createWorkflowActionForFS(wfId, status);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            WorkflowActionInsertJPAExecutor actionInsertCmd = new WorkflowActionInsertJPAExecutor(action);
+            jpaService.execute(actionInsertCmd);
+        }
+        catch (JPAExecutorException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test wf action record to table");
+            throw ce;
+        }
+        return action;
+    }
+
     /**
      * Create workflow action with pending true
      *
@@ -529,5 +564,33 @@ public class TestActionStartXCommand extends XDataTestCase {
         return action;
     }
 
+    private WorkflowActionBean createWorkflowActionForFS(String wfId, WorkflowAction.Status status) throws Exception {
+        WorkflowActionBean action = new WorkflowActionBean();
+        String actionname = "testAction";
+        action.setName(actionname);
+        action.setCred("null");
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
+        action.setJobId(wfId);
+        action.setType("fs");
+        action.setTransition("transition");
+        action.setStatus(status);
+        action.setStartTime(new Date());
+        action.setEndTime(new Date());
+        action.setLastCheckTime(new Date());
+        action.setPending();
+        action.setExecutionPath("a");
+        action.setRetries(1);
+        action.setUserRetryCount(0);
+        action.setUserRetryMax(1);
 
+        Path path = new Path(getFsTestCaseDir(), "test");
+        FileSystem fs = getFileSystem();
+        fs.mkdirs(path);
+        fs.setPermission(path, FsPermission.valueOf("-rwx------"));
+
+        String actionXml = "<fs>" + "<chmod path='" + path.toString()
+                + "' permissions='-r--------' dir-files='false' />" + "</fs>";
+        action.setConf(actionXml);
+        return action;
+    }
 }
