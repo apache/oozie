@@ -19,7 +19,6 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
@@ -27,6 +26,8 @@ import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIden
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.SaslRpcServer;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -52,8 +53,7 @@ public class HCatCredentialHelper {
      */
     public void set(JobConf launcherJobConf, String principal, String server) throws Exception {
         try {
-            HiveMetaStoreClient client = getHCatClient
-                (launcherJobConf, principal, server);
+            HCatClient client = getHCatClient(launcherJobConf, principal, server);
             XLog.getLog(getClass()).debug(
                     "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
                             + launcherJobConf.get(USER_NAME));
@@ -75,13 +75,13 @@ public class HCatCredentialHelper {
      * @param jobConf
      * @param principal
      * @param server
-     * @return HiveMetaStoreClient
-     * @throws MetaException
+     * @return HCatClient
+     * @throws HCatException
      */
-    public HiveMetaStoreClient getHCatClient(JobConf launcherJobConf,
-        String principal, String server) throws MetaException {
+    public HCatClient getHCatClient(JobConf launcherJobConf,
+        String principal, String server) throws HCatException {
         HiveConf hiveConf = null;
-        HiveMetaStoreClient hiveclient = null;
+        HCatClient hiveclient = null;
         hiveConf = new HiveConf();
         XLog.getLog(getClass()).debug("getHCatClient: Principal: " + principal + " Server: " + server);
         // specified a thrift url
@@ -96,7 +96,7 @@ public class HCatCredentialHelper {
         XLog.getLog(getClass()).debug("getHCatClient, setting rpc protection to " + protection);
         hiveConf.set(HADOOP_RPC_PROTECTION, protection);
 
-        hiveclient = new HiveMetaStoreClient(hiveConf);
+        hiveclient = HCatClient.create(hiveConf);
         return hiveclient;
     }
 }

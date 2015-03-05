@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2153 modify HCatCredentialHelper to use HCatClient (ryota)
 OOZIE-2132 FS actions are not retried (ryota)
 OOZIE-2147 Oozie upgrade from 4.0.0 to 4.1.0 fails with CLOBs of zero length with Oracle DB (venkatnrangan via bzhang)
 OOZIE-2158 Overrides in action conf in streaming action do not work (rohini)
