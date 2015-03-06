@@ -138,6 +138,14 @@ line tool.
 If using MySQL, Oracle, or SQL Server, the corresponding JDBC driver JAR file mut be copied to Oozie's =libext/= directory and
 it must be added to Oozie WAR file using the =bin/addtowar.sh= or the =oozie-setup.sh= scripts using the =-jars= option.
 
+*IMPORTANT:* It is recommended to set the database's timezone to GMT (consult your database's documentation on how to do this).
+Databases don't handle Daylight Saving Time shifts correctly, and may cause problems if you run any Coordinators with actions
+scheduled to materialize during the 1 hour period where we "fall back".  For Derby, you can add '-Duser.timezone=GMT'
+to =CATALINA_OPTS= in oozie-env.sh to set this.  Alternatively, if using MySQL, you can have Oozie use GMT with MySQL without
+setting MySQL's timezone to GMT by adding 'useLegacyDatetimeCode=false&serverTimezone=GMT' arguments to the JDBC
+URL, =oozie.service.JPAService.jdbc.url=.  Be advised that changing the timezone on an existing Oozie database while Coordinators
+are already running may cause Coordinators to shift by the offset of their timezone from GMT once after making this change.
+
 The SQL database used by Oozie is configured using the following configuration properties (default values shown):
 
 <verbatim>

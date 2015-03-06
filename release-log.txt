@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2155 Incorrect DST Shifts are occurring based on the Database timezone (rkanter)
 OOZIE-2156 override hive.querylog.location in hive-site.xml (ryota)
 OOZIE-2153 modify HCatCredentialHelper to use HCatClient (ryota)
 OOZIE-2132 FS actions are not retried (ryota)
