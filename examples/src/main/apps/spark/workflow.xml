@@ -22,7 +22,7 @@
         <spark xmlns="uri:oozie:spark-action:0.1">
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
-            <master>local[*]</master>
+            <master>${master}</master>
             <name>Spark-FileCopy</name>
             <class>org.apache.oozie.example.SparkFileCopy</class>
             <jar>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar</jar>
