@@ -29,8 +29,11 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.LauncherMapperHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
@@ -43,9 +46,12 @@ import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionCheckerService;
+import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
@@ -292,6 +298,55 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         assertEquals("SUCCEEDED", action.getExternalStatus());
 
+    }
+
+    private static class ErrorCheckActionExecutor extends ActionExecutor {
+        public static final String ERROR_CODE = "some_error";
+        protected ErrorCheckActionExecutor() {
+            super("map-reduce");
+        }
+        @Override
+        public void start(Context context, WorkflowAction action) throws ActionExecutorException {}
+
+        @Override
+        public void end(Context context, WorkflowAction action) throws ActionExecutorException {}
+
+        @Override
+        public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, ERROR_CODE, "check");
+        }
+
+        @Override
+        public void kill(Context context, WorkflowAction action) throws ActionExecutorException {}
+
+        @Override
+        public boolean isCompleted(String externalStatus) {
+            return false;
+        }
+    }
+
+    public void testActionCheckErrorNoUserRetry() throws Exception {
+        WorkflowActionBean action = _testActionCheckError();
+        assertEquals(WorkflowAction.Status.FAILED, action.getStatus());
+    }
+
+    public void testActionCheckErrorUserRetry() throws Exception {
+        ConfigurationService.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, ErrorCheckActionExecutor.ERROR_CODE);
+        WorkflowActionBean action = _testActionCheckError();
+        assertEquals(WorkflowAction.Status.USER_RETRY, action.getStatus());
+    }
+
+    private WorkflowActionBean _testActionCheckError() throws Exception {
+        services.get(ActionService.class).registerAndInitExecutor(ErrorCheckActionExecutor.class);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
+
+        new ActionCheckXCommand(action.getId()).call();
+        action = jpaService.execute(wfActionGetCmd);
+        return action;
     }
 
     public void testActionCheckTransientDuringLauncher() throws Exception {
@@ -589,6 +644,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         action.setLastCheckTime(new Date());
         action.setPending();
         action.setExecutionPath("/");
+        action.setUserRetryMax(2);
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
