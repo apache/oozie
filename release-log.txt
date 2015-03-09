@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2126 SSH action can be too fast for Oozie sometimes (rkanter)
 OOZIE-2142 Changing the JT whitelist causes running Workflows to stay RUNNING forever (rkanter)
 OOZIE-2164 make master parameterizable in Spark action example (wypoon via rkanter)
 OOZIE-2155 Incorrect DST Shifts are occurring based on the Database timezone (rkanter)

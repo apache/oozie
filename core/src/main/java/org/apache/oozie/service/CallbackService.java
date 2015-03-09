@@ -36,7 +36,10 @@ public class CallbackService implements Service {
 
     public static final String CONF_BASE_URL = CONF_PREFIX + "base.url";
 
+    public static final String CONF_EARLY_REQUEUE_MAX_RETRIES = CONF_PREFIX + "early.requeue.max.retries";
+
     private Configuration oozieConf;
+    private int earlyRequeueMaxRetries;
 
     /**
      * Initialize the service.
@@ -45,6 +48,7 @@ public class CallbackService implements Service {
      */
     public void init(Services services) {
         oozieConf = services.getConf();
+        earlyRequeueMaxRetries = ConfigurationService.getInt(CONF_EARLY_REQUEUE_MAX_RETRIES);
     }
 
     /**
@@ -132,4 +136,7 @@ public class CallbackService implements Service {
         }
     }
 
+    public int getEarlyRequeueMaxRetries() {
+        return earlyRequeueMaxRetries;
+    }
 }
