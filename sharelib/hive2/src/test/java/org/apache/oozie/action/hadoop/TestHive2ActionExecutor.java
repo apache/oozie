@@ -25,6 +25,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -173,6 +174,12 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+
+        assertNotNull(context.getAction().getData());
+        Properties outputData = new Properties();
+        outputData.load(new StringReader(context.getAction().getData()));
+        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+        assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
 
         assertTrue(fs.exists(outputDir));
         assertTrue(fs.isDirectory(outputDir));

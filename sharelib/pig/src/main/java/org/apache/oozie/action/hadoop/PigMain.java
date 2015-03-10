@@ -235,10 +235,7 @@ public class PigMain extends LauncherMain {
         // So retrieving hadoop Ids here
         File file = new File(System.getProperty(EXTERNAL_CHILD_IDS));
         if (!file.exists()) {
-            Properties props = getHadoopJobIds(logFile, PIG_JOB_IDS_PATTERNS);
-            writeExternalData(props.getProperty(HADOOP_JOBS), file);
-            System.out.println(" Hadoop Job IDs executed by Pig: " + props.getProperty(HADOOP_JOBS));
-            System.out.println();
+            writeExternalChildIDs(logFile, PIG_JOB_IDS_PATTERNS, "Pig");
         }
     }
 

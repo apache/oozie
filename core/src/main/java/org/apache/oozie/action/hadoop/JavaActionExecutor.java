@@ -1436,6 +1436,16 @@ public class JavaActionExecutor extends ActionExecutor {
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
     }
 
+    protected final void readExternalChildIDs(WorkflowAction action, Context context) throws IOException {
+        if (action.getData() != null) {
+            // Load stored Hadoop jobs ids and promote them as external child ids
+            // See LauncherMain#writeExternalChildIDs for how they are written
+            Properties props = new Properties();
+            props.load(new StringReader(action.getData()));
+            context.setExternalChildIDs((String) props.get(LauncherMain.HADOOP_JOBS));
+        }
+    }
+
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
         Element eConf = XmlUtils.parseXml(action.getConf());
         Namespace ns = eConf.getNamespace();

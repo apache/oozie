@@ -20,18 +20,25 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hive.beeline.BeeLine;
 
 public class Hive2Main extends LauncherMain {
+    private static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
+            Pattern.compile("Ended Job = (job_\\S*)")
+    };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
 
     static {
@@ -92,6 +99,13 @@ public class Hive2Main extends LauncherMain {
         System.out.println();
 
         Configuration actionConf = initActionConf();
+
+        //Logfile to capture job IDs
+        String hadoopJobId = System.getProperty("oozie.launcher.job.id");
+        if (hadoopJobId == null) {
+            throw new RuntimeException("Launcher Hadoop Job ID system property not set");
+        }
+        String logFile = new File("hive2-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         List<String> arguments = new ArrayList<String>();
         String jdbcUrl = actionConf.get(Hive2ActionExecutor.HIVE2_JDBC_URL);
@@ -199,7 +213,7 @@ public class Hive2Main extends LauncherMain {
         System.out.flush();
 
         try {
-            runBeeline(arguments.toArray(new String[arguments.size()]));
+            runBeeline(arguments.toArray(new String[arguments.size()]), logFile);
         }
         catch (SecurityException ex) {
             if (LauncherSecurityManager.getExitInvoked()) {
@@ -210,11 +224,18 @@ public class Hive2Main extends LauncherMain {
         }
         finally {
             System.out.println("\n<<< Invocation of Beeline command completed <<<\n");
+            writeExternalChildIDs(logFile, HIVE2_JOB_IDS_PATTERNS, "Beeline");
         }
     }
 
-    private void runBeeline(String[] args) throws Exception {
-        BeeLine.main(args);
+    private void runBeeline(String[] args, String logFile) throws Exception {
+        // We do this instead of calling BeeLine.main so we can duplicate the error stream for harvesting Hadoop child job IDs
+        BeeLine beeLine = new BeeLine();
+        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile))));
+        int status = beeLine.begin(args, null);
+        if (status != 0) {
+            System.exit(status);
+        }
     }
 
     private static String readStringFromFile(String filePath) throws IOException {

@@ -20,8 +20,10 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Map;
@@ -44,7 +46,7 @@ public abstract class LauncherMain {
         main.run(args);
     }
 
-    public static Properties getHadoopJobIds(String logFile, Pattern[] patterns) throws IOException {
+    protected static Properties getHadoopJobIds(String logFile, Pattern[] patterns) throws IOException {
         Properties props = new Properties();
         StringBuffer sb = new StringBuffer(100);
         if (!new File(logFile).exists()) {
@@ -74,6 +76,29 @@ public abstract class LauncherMain {
             props.setProperty(HADOOP_JOBS, sb.toString());
         }
         return props;
+    }
+
+    protected static void writeExternalChildIDs(String logFile, Pattern[] patterns, String name) {
+        // Harvesting and recording Hadoop Job IDs
+        // See JavaActionExecutor#readExternalChildIDs for how they are read
+        try {
+            Properties jobIds = getHadoopJobIds(logFile, patterns);
+            File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
+                    + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
+            OutputStream os = new FileOutputStream(file);
+            try {
+                jobIds.store(os, "");
+            }
+            finally {
+                os.close();
+            }
+            System.out.println(" Hadoop Job IDs executed by " + name + ": " + jobIds.getProperty(HADOOP_JOBS));
+            System.out.println();
+        }
+        catch (Exception e) {
+            System.out.println("WARN: Error getting Hadoop Job IDs executed by " + name);
+            e.printStackTrace(System.out);
+        }
     }
 
     protected abstract void run(String[] args) throws Exception;

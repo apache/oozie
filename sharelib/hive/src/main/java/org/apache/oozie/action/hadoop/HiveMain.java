@@ -296,30 +296,7 @@ public class HiveMain extends LauncherMain {
         }
         finally {
             System.out.println("\n<<< Invocation of Hive command completed <<<\n");
-            writeExternalChildIDs(logFile);
-
-        }
-    }
-
-    private void writeExternalChildIDs(String logFile) {
-        // harvesting and recording Hadoop Job IDs
-        try {
-            Properties jobIds = getHadoopJobIds(logFile, HIVE_JOB_IDS_PATTERNS);
-            File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
-                    + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
-            OutputStream os = new FileOutputStream(file);
-            try {
-                jobIds.store(os, "");
-            }
-            finally {
-                os.close();
-            }
-            System.out.println(" Hadoop Job IDs executed by Hive: " + jobIds.getProperty(HADOOP_JOBS));
-            System.out.println();
-        }
-        catch (Exception e) {
-            System.out.println("WARN: Error getting Hadoop Job IDs executed by Hive");
-            e.printStackTrace(System.out);
+            writeExternalChildIDs(logFile, HIVE_JOB_IDS_PATTERNS, "Hive");
         }
     }
 
