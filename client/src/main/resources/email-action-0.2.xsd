@@ -29,6 +29,7 @@
             <xs:element name="subject" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="body" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="content_type" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="attachment" type="xs:string" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
 </xs:schema>

@@ -164,7 +164,7 @@ public class AbandonedCoordCheckerService implements Service {
             }
             EmailActionExecutor email = new EmailActionExecutor();
             String subject = SUBJECT + " for " + serverURL + " at " + DateUtils.formatDateOozieTZ(new Date());
-            email.email(to, new String[0], subject, body, CONTENT_TYPE);
+            email.email(to, new String[0], subject, body, null, CONTENT_TYPE, null);
         }
     }
 
