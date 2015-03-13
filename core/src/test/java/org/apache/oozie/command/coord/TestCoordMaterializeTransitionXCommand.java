@@ -574,7 +574,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY * 3), job.getNextMaterializedTime());
+        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
+        // that because startTime and endTime assume GMT
+        Date next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        TimeZone tz = TimeZone.getTimeZone(job.getTimeZone());
+        next.setTime(next.getTime() - getDSTOffset(tz, startTime, next));
+        assertEquals(next, job.getNextMaterializedTime());
 
         // test with hours, time should not pass the current time.
         startTime = new Date(new Date().getTime());
@@ -587,7 +592,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY), job.getNextMaterializedTime());
+        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
+        // that because startTime and endTime assume GMT
+        next = new Date(startTime.getTime() + TIME_IN_DAY);
+        tz = TimeZone.getTimeZone(job.getTimeZone());
+        next.setTime(next.getTime() - getDSTOffset(tz, startTime, next));
+        assertEquals(next, job.getNextMaterializedTime());
 
         // for current job in min, should not exceed hour windows
         startTime = new Date(new Date().getTime());
@@ -599,7 +609,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        assertEquals(new Date(startTime.getTime() + TIME_IN_HOURS), job.getNextMaterializedTime());
+        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
+        // that because startTime and endTime assume GMT
+        next = new Date(startTime.getTime() + TIME_IN_HOURS);
+        tz = TimeZone.getTimeZone(job.getTimeZone());
+        next.setTime(next.getTime() - getDSTOffset(tz, startTime, next));
+        assertEquals(next, job.getNextMaterializedTime());
 
         // for current job in hour, should not exceed hour windows
         startTime = new Date(new Date().getTime());
@@ -611,7 +626,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        assertEquals(new Date(startTime.getTime() + TIME_IN_DAY), job.getNextMaterializedTime());
+        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
+        // that because startTime and endTime assume GMT
+        next = new Date(startTime.getTime() + TIME_IN_DAY);
+        tz = TimeZone.getTimeZone(job.getTimeZone());
+        next.setTime(next.getTime() - getDSTOffset(tz, startTime, next));
+        assertEquals(next, job.getNextMaterializedTime());
 
     }
 
@@ -693,9 +713,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
 
-        Date currentTime = new Date();
-        Date startTime = org.apache.commons.lang.time.DateUtils.addMonths(currentTime, -3);
-        Date endTime = org.apache.commons.lang.time.DateUtils.addMonths(currentTime, 3);
+        Calendar cal = Calendar.getInstance(DateUtils.getOozieProcessingTimeZone());
+        cal.add(Calendar.MONTH, -3);
+        Date startTime = cal.getTime();
+        cal = Calendar.getInstance(DateUtils.getOozieProcessingTimeZone());
+        cal.add(Calendar.MONTH, 3);
+        Date endTime = cal.getTime();
         CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, jobId);
         assertEquals(job.getLastActionNumber(), 0);
 
@@ -927,5 +950,19 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
 
         return coordJob;
+    }
+
+    private long getDSTOffset(TimeZone tz, Date d1, Date d2) {
+        if (tz.inDaylightTime(d1) && !tz.inDaylightTime(d2)) {
+            Calendar cal = Calendar.getInstance(tz);
+            cal.setTime(d1);
+            return cal.get(Calendar.DST_OFFSET);
+        }
+        if (!tz.inDaylightTime(d1) && tz.inDaylightTime(d2)) {
+            Calendar cal = Calendar.getInstance(tz);
+            cal.setTime(d2);
+            return cal.get(Calendar.DST_OFFSET);
+        }
+        return 0;
     }
 }

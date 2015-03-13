@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2167 TestCoordMaterializeTransitionXCommand fails (rkanter)
 OOZIE-1964 Hive Server 2 action doesn't return Hadoop Job IDs (rkanter)
 OOZIE-2126 SSH action can be too fast for Oozie sometimes (rkanter)
 OOZIE-2142 Changing the JT whitelist causes running Workflows to stay RUNNING forever (rkanter)
