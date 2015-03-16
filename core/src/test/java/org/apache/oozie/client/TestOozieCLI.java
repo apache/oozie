@@ -445,6 +445,54 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testBulkSuspendResumeKill1() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"jobs", "-oozie", oozieUrl, "-suspend", "-filter",
+                        "name=workflow-1"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockDagEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-resume", "-filter",
+                        "name=workflow-1"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockDagEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-kill", "-filter",
+                        "name=workflow-1"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockDagEngineService.did);
+                return null;
+            }
+        });
+    }
+
+    public void testBulkSuspendResumeKill2() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"jobs", "-oozie", oozieUrl, "-suspend", "-filter",
+                        "name=coordinator", "-jobtype", "coordinator"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockCoordinatorEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-resume", "-filter",
+                        "name=coordinator", "-jobtype", "coordinator"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockCoordinatorEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-kill", "-filter",
+                        "name=coordinator", "-jobtype", "coordinator"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS, MockCoordinatorEngineService.did);
+                return null;
+            }
+        });
+    }
+
     /**
      * Test the working of coord action kill from Client with action numbers
      *

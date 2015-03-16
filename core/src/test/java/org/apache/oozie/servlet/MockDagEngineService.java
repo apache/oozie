@@ -154,6 +154,24 @@ public class MockDagEngineService extends DagEngineService {
         }
 
         @Override
+        public WorkflowsInfo suspendJobs(String filter, int start, int len) throws DagEngineException {
+            did = RestConstants.JOBS;
+            return new WorkflowsInfo(new ArrayList<WorkflowJobBean>(), 0, 0, 0);
+        }
+
+        @Override
+        public WorkflowsInfo resumeJobs(String filter, int start, int len) throws DagEngineException {
+            did = RestConstants.JOBS;
+            return new WorkflowsInfo(new ArrayList<WorkflowJobBean>(), 0, 0, 0);
+        }
+
+        @Override
+        public WorkflowsInfo killJobs(String filter, int start, int len) throws DagEngineException {
+            did = RestConstants.JOBS;
+            return new WorkflowsInfo(new ArrayList<WorkflowJobBean>(), 0, 0, 0);
+        }
+
+        @Override
         public void reRun(String jobId, Configuration conf) throws DagEngineException {
             did = RestConstants.JOB_ACTION_RERUN;
             int idx = validateWorkflowIdx(jobId);

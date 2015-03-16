@@ -32,6 +32,7 @@ import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
@@ -248,6 +249,27 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             }
             validateCoordinatorIdx(jobId);
             return "";
+        }
+
+        @Override
+        public CoordinatorJobInfo suspendJobs(String filter, int start, int length)
+                throws CoordinatorEngineException {
+            did = RestConstants.JOBS;
+            return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+        }
+
+        @Override
+        public CoordinatorJobInfo resumeJobs(String filter, int start, int length)
+                throws CoordinatorEngineException {
+            did = RestConstants.JOBS;
+            return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+        }
+
+        @Override
+        public CoordinatorJobInfo killJobs(String filter, int start, int length)
+                throws CoordinatorEngineException {
+            did = RestConstants.JOBS;
+            return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
         }
 
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {

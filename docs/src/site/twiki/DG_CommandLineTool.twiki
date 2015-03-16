@@ -105,6 +105,15 @@ usage:
                  -offset <arg>        jobs offset (default '1')
                  -oozie <arg>         Oozie URL
                  -timezone <arg>      use time zone with the specified ID (default GMT). See 'oozie info -timezones' for a list
+                 -kill                kill all jobs that satisfy the filter, len, offset, or/and jobtype options. If it's used without
+                                      other options, it will kill all the first 50 workflow jobs. Command will fail if one or more
+                                      of the jobs is in wrong state.
+                 -suspend             suspend all jobs that satisfy the filter, len, offset, or/and jobtype options. If it's used without
+                                      other options, it will suspend all the first 50 workflow jobs. Command will fail if one or more
+                                      of the jobs is in wrong state.
+                 -resume              resume all jobs that satisfy the filter, len, offset, or/and jobtype options. If it's used without
+                                      other options, it will resume all the first 50 workflow jobs. Command will fail if one or more
+                                      of the jobs is in wrong state.
                  -verbose             verbose mode
 .
       oozie admin <OPTIONS> : admin operations
@@ -999,6 +1008,55 @@ Job ID                                   Bundle Name    Status    Kickoff       
 </verbatim>
 
 The =jobtype= option specified the job type to display, default value is 'wf'. To see the bundle jobs, value is 'bundle'.
+
+---+++ Bulk kill, suspend or resume multiple jobs
+
+Example:
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:11000/oozie -kill|-suspend|-resume -filter name=cron-coord -jobtype coordinator
+The following jobs have been killed|suspended|resumed
+Job ID                                   App Name       Status    Freq Unit         Started                 Next Materialized
+.------------------------------------------------------------------------------------------------------------------------------------
+0000005-150224141553231-oozie-bzha-C     cron-coord     KILLED    10   MINUTE       2015-02-24 22:05 GMT    2015-02-24 23:05 GMT
+.------------------------------------------------------------------------------------------------------------------------------------
+0000001-150224141553231-oozie-bzha-C     cron-coord     KILLED    10   MINUTE       2015-02-24 22:00 GMT    2015-02-24 23:00 GMT
+.------------------------------------------------------------------------------------------------------------------------------------
+0000000-150224141553231-oozie-bzha-C     cron-coord     KILLED    10   MINUTE       2015-02-25 22:00 GMT    -
+.------------------------------------------------------------------------------------------------------------------------------------
+</verbatim>
+
+The above command will kill, suspend, or resume all the coordinator jobs with name of "cron-coord" starting with offset 1
+to 50.
+The =jobs= sub-command will bulk modify all the jobs that satisfy the filter, len, offset, and jobtype options when adding
+a -kill|-suspend|-resume option. Another way to think about is the subcommand works to modify all the jobs that will be
+displayed if the write option(kill|suspend|resume) is not there.
+
+The =offset= and =len= option specified the offset and number of jobs to be modified, default values are =1= and =50=
+respectively.
+The =jobtype= option specifies the type of jobs to be modified, be it "wf", "coordinator" or "bundle". default value is "wf".
+
+A filter can be specified after all options.
+
+The =filter=option syntax is: <code>[NAME=VALUE][;NAME=VALUE]*</code>.
+
+Valid filter names are:
+
+   * name: the workflow application name from the workflow definition.
+   * user: the user that submitted the job.
+   * group: the group for the job.
+   * status: the status of the job.
+   * frequency: the frequency of the Coordinator job.
+   * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
+
+The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
+name. Multiple values must be specified as different name value pairs.
+
+The following example shows how to suspend the first 20 bundle jobs whose name is "bundle-app":
+
+<verbatim>
+$ oozie jobs -oozie http://localhost:11000/oozie -suspend -filter name=bundle-app -jobtype bundle -len 20
+</verbatim>
 
 ---+++ Bulk monitoring for jobs launched via Bundles
 

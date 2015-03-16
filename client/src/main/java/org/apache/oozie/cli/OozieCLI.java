@@ -37,7 +37,11 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonToBean;
 import org.apache.oozie.client.rest.RestConstants;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -438,6 +442,9 @@ public class OozieCLI {
                         "startcreatedtime, endcreatedtime: time of format yyyy-MM-dd'T'HH:mm'Z')");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
+        Option kill = new Option(KILL_OPTION, false, "bulk kill operation");
+        Option suspend = new Option(SUSPEND_OPTION, false, "bulk suspend operation");
+        Option resume = new Option(RESUME_OPTION, false, "bulk resume operation");
         Option timezone = new Option(TIME_ZONE_OPTION, true,
                 "use time zone with the specified ID (default GMT).\nSee 'oozie info -timezones' for a list");
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
@@ -452,6 +459,9 @@ public class OozieCLI {
         jobsOptions.addOption(oozie);
         jobsOptions.addOption(doAs);
         jobsOptions.addOption(localtime);
+        jobsOptions.addOption(kill);
+        jobsOptions.addOption(suspend);
+        jobsOptions.addOption(resume);
         jobsOptions.addOption(timezone);
         jobsOptions.addOption(start);
         jobsOptions.addOption(len);
@@ -1507,6 +1517,11 @@ public class OozieCLI {
     private void jobsCommand(CommandLine commandLine) throws IOException, OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
 
+        List<String> options = new ArrayList<String>();
+        for (Option option : commandLine.getOptions()) {
+            options.add(option.getOpt());
+        }
+
         String filter = commandLine.getOptionValue(FILTER_OPTION);
         String s = commandLine.getOptionValue(OFFSET_OPTION);
         int start = Integer.parseInt((s != null) ? s : "0");
@@ -1518,7 +1533,16 @@ public class OozieCLI {
         String bulkFilterString = commandLine.getOptionValue(BULK_OPTION);
 
         try {
-            if (bulkFilterString != null) {
+            if (options.contains(KILL_OPTION)) {
+                printBulkModifiedJobs(wc.killJobs(filter, jobtype, start, len), timeZoneId, "killed");
+            }
+            else if (options.contains(SUSPEND_OPTION)) {
+                printBulkModifiedJobs(wc.suspendJobs(filter, jobtype, start, len), timeZoneId, "suspended");
+            }
+            else if (options.contains(RESUME_OPTION)) {
+                printBulkModifiedJobs(wc.resumeJobs(filter, jobtype, start, len), timeZoneId, "resumed");
+            }
+            else if (bulkFilterString != null) {
                 printBulkJobs(wc.getBulkInfo(bulkFilterString, start, len), timeZoneId, commandLine.hasOption(VERBOSE_OPTION));
             }
             else if (jobtype.toLowerCase().contains("wf")) {
@@ -1534,6 +1558,52 @@ public class OozieCLI {
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);
+        }
+    }
+
+    @VisibleForTesting
+    void printBulkModifiedJobs(JSONObject json, String timeZoneId, String action) throws IOException {
+        if (json.containsKey(JsonTags.WORKFLOWS_JOBS)) {
+            JSONArray workflows = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
+            if (workflows == null) {
+                workflows = new JSONArray();
+            }
+            List<WorkflowJob> wfs = JsonToBean.createWorkflowJobList(workflows);
+            if (wfs.isEmpty()) {
+                System.out.println("bulk modify command did not modify any jobs");
+            }
+            else {
+                System.out.println("the following jobs have been " + action);
+                printJobs(wfs, timeZoneId, false);
+            }
+        }
+        else if (json.containsKey(JsonTags.COORDINATOR_JOBS)) {
+            JSONArray coordinators = (JSONArray) json.get(JsonTags.COORDINATOR_JOBS);
+            if (coordinators == null) {
+                coordinators = new JSONArray();
+            }
+            List<CoordinatorJob> coords = JsonToBean.createCoordinatorJobList(coordinators);
+            if (coords.isEmpty()) {
+                System.out.println("bulk modify command did not modify any jobs");
+            }
+            else {
+                System.out.println("the following jobs have been " + action);
+                printCoordJobs(coords, timeZoneId, false);
+            }
+        }
+        else {
+            JSONArray bundles = (JSONArray) json.get(JsonTags.BUNDLE_JOBS);
+            if (bundles == null) {
+                bundles = new JSONArray();
+            }
+            List<BundleJob> bundleJobs = JsonToBean.createBundleJobList(bundles);
+            if (bundleJobs.isEmpty()) {
+                System.out.println("bulk modify command did not modify any jobs");
+            }
+            else {
+                System.out.println("the following jobs have been " + action);
+                printBundleJobs(bundleJobs, timeZoneId, false);
+            }
         }
     }
 

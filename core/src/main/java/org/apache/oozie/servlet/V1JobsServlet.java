@@ -19,6 +19,7 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,7 @@ import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class V1JobsServlet extends BaseJobsServlet {
@@ -444,5 +446,178 @@ public class V1JobsServlet extends BaseJobsServlet {
         }
 
         return json;
+    }
+
+    /**
+     * service implementation to bulk kill jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        return bulkModifyJobs(request, response);
+    }
+
+    /**
+     * service implementation to bulk suspend jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        return bulkModifyJobs(request, response);
+    }
+
+    /**
+     * service implementation to bulk resume jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        return bulkModifyJobs(request, response);
+    }
+
+    private JSONObject bulkModifyJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        String action = request.getParameter(RestConstants.ACTION_PARAM);
+        String jobType = request.getParameter(RestConstants.JOBTYPE_PARAM);
+        String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
+        String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
+        String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+        String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
+                ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
+
+        int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
+        start = (start < 1) ? 1 : start;
+        int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
+        len = (len < 1) ? 50 : len;
+
+        JSONObject json = new JSONObject();
+        List<String> ids = new ArrayList<String>();
+
+        if (jobType.equals("wf")) {
+            WorkflowsInfo jobs = null;
+            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
+            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+                try {
+                    jobs = dagEngine.killJobs(filter, start, len);
+                }
+                catch (DagEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            } else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
+                try {
+                    jobs = dagEngine.suspendJobs(filter, start, len);
+                }
+                catch (DagEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            } else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
+                try {
+                    jobs = dagEngine.resumeJobs(filter, start, len);
+                }
+                catch (DagEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+
+            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jobs.getWorkflows(), timeZoneId));
+            json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
+            json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
+            json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
+
+        }
+        else if (jobType.equals("bundle")) {
+            BundleJobInfo jobs = null;
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).
+                    getBundleEngine(getUser(request));
+            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+                try {
+                    jobs = bundleEngine.killJobs(filter, start, len);
+                }
+                catch (BundleEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
+                try {
+                    jobs = bundleEngine.suspendJobs(filter, start, len);
+                }
+                catch (BundleEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
+                try {
+                    jobs = bundleEngine.resumeJobs(filter, start, len);
+                }
+                catch (BundleEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+
+            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jobs.getBundleJobs(), timeZoneId));
+            json.put(JsonTags.BUNDLE_JOB_TOTAL, jobs.getTotal());
+            json.put(JsonTags.BUNDLE_JOB_OFFSET, jobs.getStart());
+            json.put(JsonTags.BUNDLE_JOB_LEN, jobs.getLen());
+        }
+        else {
+            CoordinatorJobInfo jobs = null;
+            CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).
+                    getCoordinatorEngine(getUser(request));
+            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
+                try {
+                    jobs = coordEngine.killJobs(filter, start, len);
+                }
+                catch (CoordinatorEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
+                try {
+                    jobs = coordEngine.suspendJobs(filter, start, len);
+                }
+                catch (CoordinatorEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
+                try {
+                    jobs = coordEngine.resumeJobs(filter, start, len);
+                }
+                catch (CoordinatorEngineException ex) {
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+                }
+            }
+
+            json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jobs.getCoordJobs(), timeZoneId));
+            json.put(JsonTags.COORD_JOB_TOTAL, jobs.getTotal());
+            json.put(JsonTags.COORD_JOB_OFFSET, jobs.getStart());
+            json.put(JsonTags.COORD_JOB_LEN, jobs.getLen());
+        }
+
+        json.put(JsonTags.JOB_IDS, toJSONArray(ids));
+        return json;
+    }
+
+    private static JSONArray toJSONArray(List<String> ids) {
+        JSONArray array = new JSONArray();
+        for (String id : ids) {
+            array.add(id);
+        }
+        return array;
     }
 }

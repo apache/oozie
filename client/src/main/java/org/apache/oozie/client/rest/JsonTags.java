@@ -40,6 +40,8 @@ public interface JsonTags {
 
     public static final String JOB_ID = "id";
 
+    public static final String JOB_IDS = "ids";
+
     public static final String WORKFLOW_APP_PATH = "appPath";
     public static final String WORKFLOW_APP_NAME = "appName";
     public static final String WORKFLOW_ID = "id";

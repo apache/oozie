@@ -699,6 +699,30 @@ public class OozieClient {
         }
     }
 
+    private class JobsAction extends ClientCallable<JSONObject> {
+
+        JobsAction(String action, String filter, String jobType, int start, int len) {
+            super("PUT", RestConstants.JOBS, "",
+                    prepareParams(RestConstants.ACTION_PARAM, action,
+                            RestConstants.JOB_FILTER_PARAM, filter, RestConstants.JOBTYPE_PARAM, jobType,
+                            RestConstants.OFFSET_PARAM, Integer.toString(start),
+                            RestConstants.LEN_PARAM, Integer.toString(len)));
+        }
+
+        @Override
+        protected JSONObject call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return json;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
     /**
      * Update coord definition.
      *
@@ -849,6 +873,25 @@ public class OozieClient {
         return new CoordActionsKill(jobId, rangeType, scope).call();
     }
 
+    public JSONObject bulkModifyJobs(String actionType, String filter, String jobType, int start, int len)
+            throws OozieClientException {
+        return new JobsAction(actionType, filter, jobType, start, len).call();
+    }
+
+    public JSONObject killJobs(String filter, String jobType, int start, int len)
+            throws OozieClientException {
+        return bulkModifyJobs("kill", filter, jobType, start, len);
+    }
+
+    public JSONObject suspendJobs(String filter, String jobType, int start, int len)
+            throws OozieClientException {
+        return bulkModifyJobs("suspend", filter, jobType, start, len);
+    }
+
+    public JSONObject resumeJobs(String filter, String jobType, int start, int len)
+            throws OozieClientException {
+        return bulkModifyJobs("resume", filter, jobType, start, len);
+    }
     /**
      * Change a coordinator job.
      *

@@ -121,4 +121,47 @@ public class V0JobsServlet extends BaseJobsServlet {
 
         return json;
     }
+
+
+    /**
+     * service implementation to bulk kill jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new UnsupportedOperationException("method not implemented in V0 API");
+    }
+
+    /**
+     * service implementation to bulk suspend jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new UnsupportedOperationException("method not implemented in V0 API");
+    }
+
+    /**
+     * service implementation to bulk resume jobs
+     * @param request
+     * @param response
+     * @return
+     * @throws XServletException
+     * @throws IOException
+     */
+    @Override
+    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new UnsupportedOperationException("method not implemented in V0 API");
+    }
 }

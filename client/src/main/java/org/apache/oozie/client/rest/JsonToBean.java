@@ -465,4 +465,18 @@ public class JsonToBean {
         return list;
     }
 
+    /**
+     * Creates a list of bulk write job ids from a JSON array.
+     *
+     * @param json json array.
+     * @return a list of jobs ids from a JSON array.
+     */
+    public static List<String> createBulkWriteJobIdList(JSONArray json) {
+        List<String> list = new ArrayList<String>();
+        for (Object obj : json) {
+            list.add(obj.toString());
+        }
+        return list;
+    }
+
 }

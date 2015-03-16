@@ -28,6 +28,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.BulkCoordXCommand;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
 import org.apache.oozie.command.coord.CoordActionsKillXCommand;
@@ -43,6 +44,7 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
+import org.apache.oozie.command.OperationType;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -894,4 +896,73 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
+    /**
+     * return a list of killed Coordinator job
+     *
+     * @param filter, the filter string for which the coordinator jobs are killed
+     * @param start, the starting index for coordinator jobs
+     * @param length, maximum number of jobs to be killed
+     * @return the list of jobs being killed
+     * @throws CoordinatorEngineException thrown if one or more of the jobs cannot be killed
+     */
+    public CoordinatorJobInfo killJobs(String filter, int start, int length) throws CoordinatorEngineException {
+        try {
+            Map<String, List<String>> filterMap = parseJobsFilter(filter);
+            CoordinatorJobInfo coordinatorJobInfo =
+                    new BulkCoordXCommand(filterMap, start, length, OperationType.Kill).call();
+            if (coordinatorJobInfo == null) {
+                return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+            }
+            return coordinatorJobInfo;
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
+    }
+
+    /**
+     * return the jobs that've been suspended
+     * @param filter Filter for jobs that will be suspended, can be name, user, group, status, id or combination of any
+     * @param start Offset for the jobs that will be suspended
+     * @param length maximum number of jobs that will be suspended
+     * @return
+     * @throws CoordinatorEngineException
+     */
+    public CoordinatorJobInfo suspendJobs(String filter, int start, int length) throws CoordinatorEngineException {
+        try {
+            Map<String, List<String>> filterMap = parseJobsFilter(filter);
+            CoordinatorJobInfo coordinatorJobInfo =
+                    new BulkCoordXCommand(filterMap, start, length, OperationType.Suspend).call();
+            if (coordinatorJobInfo == null) {
+                return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+            }
+            return coordinatorJobInfo;
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
+    }
+
+    /**
+     * return the jobs that've been resumed
+     * @param filter Filter for jobs that will be resumed, can be name, user, group, status, id or combination of any
+     * @param start Offset for the jobs that will be resumed
+     * @param length maximum number of jobs that will be resumed
+     * @return
+     * @throws CoordinatorEngineException
+     */
+    public CoordinatorJobInfo resumeJobs(String filter, int start, int length) throws CoordinatorEngineException {
+        try {
+            Map<String, List<String>> filterMap = parseJobsFilter(filter);
+            CoordinatorJobInfo coordinatorJobInfo =
+                    new BulkCoordXCommand(filterMap, start, length, OperationType.Resume).call();
+            if (coordinatorJobInfo == null) {
+                return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+            }
+            return coordinatorJobInfo;
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
+    }
 }

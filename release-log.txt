@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2108 bulk kill, suspend, resume jobs using existing filter, offset, len, and jobtype params (bzhang)
 OOZIE-2167 TestCoordMaterializeTransitionXCommand fails (rkanter)
 OOZIE-1964 Hive Server 2 action doesn't return Hadoop Job IDs (rkanter)
 OOZIE-2126 SSH action can be too fast for Oozie sometimes (rkanter)

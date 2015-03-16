@@ -1653,6 +1653,126 @@ The valid values of job type are: =wf=, =coordinator= or =bundle=.
 
 startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format (*yyyy-MM-dd'T'HH:mm'Z'*) or a offset value in days or hours from the current time. for example, -2d means the current time - 2 days. -3h means the current time - 3 hours. -5m means the current time - 5 minutes
 
+---++++ Bulk modify jobs
+
+A HTTP PUT request can kill, suspend, or resume all jobs that satisfy the url encoded parameters.
+
+*Request:*
+
+<verbatim>
+PUT /oozie/v1/jobs?action=kill&filter=name%3Dcron-coord&offset=1&len=50&jobtype=coordinator
+</verbatim>
+
+This request will kill all the coordinators with name=cron-coord up to 50 of them.
+
+Note that the filter is URL encoded, its decoded value is <code>name=cron-coord</code>.
+The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
+
+Valid filter names are:
+
+   * name: the application name from the workflow/coordinator/bundle definition
+   * user: the user that submitted the job
+   * group: the group for the job
+   * status: the status of the job
+
+The query will do an AND among all the filter names.
+
+The query will do an OR among all the filter values for the same name. Multiple values must be specified as different
+name value pairs.
+
+Additionally the =offset= and =len= parameters can be used for pagination. The start parameter is base 1.
+
+Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
+The valid values of job type are: =wf=, =coordinator= or =bundle=
+
+*Response:*
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  offset: 1,
+  len: 50,
+  total: 2,
+**jobs: [
+    {
+**    jobType: "coordinator"
+      id: "0-200905191240-oozie-C",
+      appName: "cron-coord",
+      appPath: "hdfs://user/bansalm/app/cron-coord.xml",
+      user: "bansalm",
+      group: "other",
+      status: "KILLED",
+      createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+      startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+      endTime: "Fri, 31 Dec 2009 00:00:00 GMT",
+      info: "nextAction=5",
+    },
+    {
+**    jobType: "coordinator"
+      id: "0-200905191240-oozie-C",
+      appName: "cron-coord",
+      appPath: "hdfs://user/bansalm/myapp/cron-coord.xml",
+      user: "bansalm",
+      group: "other",
+      status: "KILLED",
+      createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+      startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+      endTime: "Fri, 31 Dec 2009 00:00:00 GMT",
+    },
+    ...
+  ]
+}
+</verbatim>
+
+<verbatim>
+PUT /oozie/v1/jobs?action=suspend&filter=status%3Drunning&offset=1&len=50&jobtype=wf
+</verbatim>
+
+This request will suspend all the workflows with status=running up to 50 of them.
+Note that the filter is URL encoded, its decoded value is <code>status=running</code>.
+
+*Response:*
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  offset: 1,
+  len: 50,
+  total: 50,
+**jobs: [
+    {
+**    jobType: "workflow"
+      id: "0-200905191240-oozie-W",
+      appName: "indexer-workflow",
+      appPath: "hdfs://user/tucu/indexer-wf",
+      user: "bansalm",
+      group: "other",
+      status: "SUSPENDED",
+      createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+      startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+      endTime: null,
+      info: "run=0",
+    },
+    {
+**    jobType: "workflow"
+      id: "0-200905191240-oozie-W",
+      appName: "logprocessor-wf",
+      appPath: "hdfs://user/bansalm/myapp/workflow.xml",
+      user: "bansalm",
+      group: "other",
+      status: "SUSPENDED",
+      createdTime: "Thu, 01 Jan 2009 00:00:00 GMT",
+      startTime: "Fri, 02 Jan 2009 00:00:00 GMT",
+      endTime: null,
+      info: "run=0",
+    },
+    ...
+  ]
+}
+</verbatim>
+
 ---++++ Jobs information using Bulk API
 
 A HTTP GET request retrieves a bulk response for all actions, corresponding to a particular bundle, that satisfy user specified criteria.

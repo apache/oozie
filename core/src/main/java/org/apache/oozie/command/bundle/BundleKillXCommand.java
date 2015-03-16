@@ -91,7 +91,7 @@ public class BundleKillXCommand extends KillTransitionXCommand {
                 || bundleJob.getStatus() == Job.Status.KILLED) {
             LOG.info("Bundle job cannot be killed - job already SUCCEEDED, FAILED, KILLED or DONEWITHERROR, job id = "
                     + jobId + ", status = " + bundleJob.getStatus());
-            throw new PreconditionException(ErrorCode.E1020, jobId);
+            throw new PreconditionException(ErrorCode.E1323, jobId);
         }
     }
 

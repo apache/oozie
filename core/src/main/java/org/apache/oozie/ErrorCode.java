@@ -219,6 +219,8 @@ public enum ErrorCode {
 
     E1101(XLog.STD, "SLA <{0}> cannot be empty."),
 
+    E1102(XLog.STD, "Invalid operation [{0}] for bulk command"),
+
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 
     E1301(XLog.STD, "Could not read the bundle job definition, [{0}]"),
@@ -243,6 +245,7 @@ public enum ErrorCode {
     E1320(XLog.STD, "Bundle Job change error, [{0}]"),
     E1321(XLog.STD, "Error evaluating coord name, [{0}]"),
     E1322(XLog.STD, "Bundle status transit error: [{0}]"),
+    E1323(XLog.STD, "Could not kill bundle job, this job either finished successfully or does not exist , [{0}]"),
 
 
     E1400(XLog.STD, "doAs (proxyuser) failure"),
