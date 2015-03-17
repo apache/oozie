@@ -178,4 +178,49 @@ public class TestHadoopAccessorService extends XTestCase {
         has.checkSupportedFilesystem(new URI("/blah"));
     }
 
+    public void testValidateJobTracker() throws Exception {
+        HadoopAccessorService has = new HadoopAccessorService();
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.service.HadoopAccessorService.jobTracker.whitelist", " ");
+        has.init(conf);
+        has.validateJobTracker("foo");
+        has.validateJobTracker("bar");
+        has.validateJobTracker("blah");
+        conf.set("oozie.service.HadoopAccessorService.jobTracker.whitelist", "foo,bar");
+        has.init(conf);
+        has.validateJobTracker("foo");
+        has.validateJobTracker("bar");
+        try {
+            has.validateJobTracker("blah");
+            fail("Should have gotten an exception");
+        } catch (HadoopAccessorException hae) {
+            assertEquals(ErrorCode.E0900, hae.getErrorCode());
+            assertEquals("E0900: JobTracker [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]",
+                    hae.getMessage());
+        }
+        has.destroy();
+    }
+
+    public void testValidateNameNode() throws Exception {
+        HadoopAccessorService has = new HadoopAccessorService();
+        Configuration conf = new Configuration(false);
+        conf.set("oozie.service.HadoopAccessorService.nameNode.whitelist", " ");
+        has.init(conf);
+        has.validateNameNode("foo");
+        has.validateNameNode("bar");
+        has.validateNameNode("blah");
+        conf.set("oozie.service.HadoopAccessorService.nameNode.whitelist", "foo,bar");
+        has.init(conf);
+        has.validateNameNode("foo");
+        has.validateNameNode("bar");
+        try {
+            has.validateNameNode("blah");
+            fail("Should have gotten an exception");
+        } catch (HadoopAccessorException hae) {
+            assertEquals(ErrorCode.E0901, hae.getErrorCode());
+            assertEquals("E0901: NameNode [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]",
+                    hae.getMessage());
+        }
+        has.destroy();
+    }
 }

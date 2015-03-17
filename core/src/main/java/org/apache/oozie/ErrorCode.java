@@ -21,7 +21,7 @@ package org.apache.oozie;
 import org.apache.oozie.util.XLog;
 
 public enum ErrorCode {
-    E0000(XLog.STD, "System property 'oozie.home.dir' not defined"),
+    E0000(XLog.STD, "System property ''oozie.home.dir'' not defined"),
     E0001(XLog.OPS, "Could not create runtime directory, {0}"),
     E0002(XLog.STD, "System is in safe mode"),
     E0003(XLog.OPS, "Oozie home directory must be an absolute path [{0}]"),
@@ -29,7 +29,7 @@ public enum ErrorCode {
 
     E0010(XLog.OPS, "Could not initialize log service, {0}"),
     E0011(XLog.OPS, "Log4j file must be a file name [{0}]"),
-    E0012(XLog.OPS, "Log4j file must be a '.properties' file [{0}]"),
+    E0012(XLog.OPS, "Log4j file must be a ''.properties'' file [{0}]"),
     E0013(XLog.OPS, "Log4j file [{0}] not found in configuration dir [{1}] neither in classpath"),
 
     E0020(XLog.OPS, "Environment variable {0} not defined"),
@@ -73,7 +73,7 @@ public enum ErrorCode {
     E0402(XLog.STD, "Invalid callback ID [{0}]"),
     E0403(XLog.STD, "Invalid callback data, {0}"),
     E0404(XLog.STD, "Only one of the properties are allowed [{0}]"),
-    E0405(XLog.STD, "Submission request doesn't have any application or lib path"),
+    E0405(XLog.STD, "Submission request doesn''t have any application or lib path"),
 
     E0420(XLog.STD, "Invalid jobs filter [{0}], {1}"),
     E0421(XLog.STD, "Invalid job filter [{0}], {1}"),
@@ -143,7 +143,7 @@ public enum ErrorCode {
     E0734(XLog.STD, "Invalid transition from node [{0}] to node [{1}] while using fork/join"),
     E0735(XLog.STD, "There was an invalid \"error to\" transition to node [{1}] while using fork/join"),
     E0736(XLog.STD, "Workflow definition length [{0}] exceeded maximum allowed length [{1}]"),
-    E0737(XLog.STD, "Invalid transition from node [{0}] to node [{1}] -- nodes of type 'end' are not allowed within Fork/Join"),
+    E0737(XLog.STD, "Invalid transition from node [{0}] to node [{1}] -- nodes of type ''end'' are not allowed within Fork/Join"),
     E0738(XLog.STD, "The following {0} parameters are required but were not defined and no default values are available: {1}"),
     E0739(XLog.STD, "Parameter name cannot be empty"),
     E0740(XLog.STD, "Invalid node type encountered (node [{0}])"),
@@ -177,8 +177,8 @@ public enum ErrorCode {
     E0821(XLog.STD, "Received early callback for action still in PREP state; will wait [{0}]ms and requeue up to [{1}] more times"),
     E0822(XLog.STD, "Received early callback for action [{0}] while still in PREP state and exhausted all requeues"),
 
-    E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
-    E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie's whitelist. Allowed values are: {1}"),
+    E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
+    E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
     E0902(XLog.OPS, "Exception occured: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),

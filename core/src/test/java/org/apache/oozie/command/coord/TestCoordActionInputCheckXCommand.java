@@ -559,7 +559,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         }
         catch (IOException ioe) {
             assertEquals(caicc.getCoordActionErrorCode(), "E0901");
-            assertTrue(caicc.getCoordActionErrorMsg().contains("not in Oozies whitelist"));
+            assertTrue(caicc.getCoordActionErrorMsg().contains("not in Oozie's whitelist"));
         }
     }
 
