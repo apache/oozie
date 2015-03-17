@@ -195,8 +195,11 @@ public class TestHadoopAccessorService extends XTestCase {
             fail("Should have gotten an exception");
         } catch (HadoopAccessorException hae) {
             assertEquals(ErrorCode.E0900, hae.getErrorCode());
-            assertEquals("E0900: JobTracker [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]",
-                    hae.getMessage());
+            // We have to check for either of these because Java 7 and 8 have a different order
+            String s1 = "E0900: JobTracker [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]";
+            String s2 = "E0900: JobTracker [blah] not allowed, not in Oozie's whitelist. Allowed values are: [bar, foo]";
+            assertTrue("expected:<" + s1 + "> or <" + s2 + "> but was:<" + hae.getMessage() + ">",
+                    s1.equals(hae.getMessage()) || s2.equals(hae.getMessage()));
         }
         has.destroy();
     }
@@ -218,8 +221,11 @@ public class TestHadoopAccessorService extends XTestCase {
             fail("Should have gotten an exception");
         } catch (HadoopAccessorException hae) {
             assertEquals(ErrorCode.E0901, hae.getErrorCode());
-            assertEquals("E0901: NameNode [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]",
-                    hae.getMessage());
+            // We have to check for either of these because Java 7 and 8 have a different order
+            String s1 = "E0901: NameNode [blah] not allowed, not in Oozie's whitelist. Allowed values are: [foo, bar]";
+            String s2 = "E0901: NameNode [blah] not allowed, not in Oozie's whitelist. Allowed values are: [bar, foo]";
+            assertTrue("expected:<" + s1 + "> or <" + s2 + "> but was:<" + hae.getMessage() + ">",
+                    s1.equals(hae.getMessage()) || s2.equals(hae.getMessage()));
         }
         has.destroy();
     }
