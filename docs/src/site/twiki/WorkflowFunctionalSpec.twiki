@@ -2207,16 +2207,16 @@ It returns =true= or =false= depending if the specified path URI exists or not.
 
 It returns =true= if the specified path URI exists and it is a directory, otherwise it returns =false=.
 
-*boolean fs:dirSize(String path)*
+*long fs:dirSize(String path)*
 
 It returns the size in bytes of all the files in the specified path. If the path is not a directory, or if it does not
 exist it returns -1. It does not work recursively, only computes the size of the files under the specified path.
 
-*boolean fs:fileSize(String path)*
+*long fs:fileSize(String path)*
 
 It returns the size in bytes of specified file. If the path is not a file, or if it does not exist it returns -1.
 
-*boolean fs:blockSize(String path)*
+*long fs:blockSize(String path)*
 
 It returns the block size in bytes of specified file. If the path is not a file, or if it does not exist it returns -1.
 
