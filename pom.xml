@@ -67,6 +67,7 @@
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
         <maven.test.java.opts>-Xmx1024m -da -XX:MaxPermSize=512m</maven.test.java.opts>
+        <maven.javadoc.opts></maven.javadoc.opts>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
         <oozie.test.db.host>localhost</oozie.test.db.host>
@@ -1488,6 +1489,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>2.7</version>
+                    <configuration>
+                            <additionalparam>${maven.javadoc.opts}</additionalparam>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
