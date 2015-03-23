@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2180 Oozie hive2 should explicitly depend on commons-io rather than transitive dependency of hive-exec (bzhang)
 OOZIE-2177 Parameterize javadoc plugin configuration (ryota)
 OOZIE-2169 Fix return type for fs:dirSize, fs:fileSize and fs:blockSize in WF spec (apivovarov via puru)
 OOZIE-2171 Some error code messages are not parsed correctly due to unescaped single quote (rkanter)
