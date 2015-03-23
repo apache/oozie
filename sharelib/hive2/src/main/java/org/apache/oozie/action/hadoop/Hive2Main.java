@@ -77,6 +77,7 @@ public class Hive2Main extends LauncherMain {
         String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
         if (delegationToken != null) {
             actionConf.set("mapreduce.job.credentials.binary", delegationToken);
+            actionConf.set("tez.credentials.path", delegationToken);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to: " + delegationToken);
             System.out.println("------------------------");
