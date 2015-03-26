@@ -1752,7 +1752,7 @@
 
     <property>
         <name>oozie.action.ssh.delete.remote.tmp.dir</name>
-        <value>false</value>
+        <value>true</value>
         <description>
             If set to true, it will delete temporary directory at the end of execution of ssh action.
         </description>

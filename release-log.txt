@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2184 Change default value of action tmp dir removal to true (Viji via harsh)
 OOZIE-2006 Hive 2 action should support tez delegation tokens (bzhang)
 OOZIE-2180 Oozie hive2 should explicitly depend on commons-io rather than transitive dependency of hive-exec (bzhang)
 OOZIE-2177 Parameterize javadoc plugin configuration (ryota)
