@@ -72,6 +72,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -154,7 +155,12 @@ public class OozieCLI {
     public static final String SLA_ENABLE_ALERT = "sla_enable";
     public static final String SLA_CHANGE = "sla_change";
 
+    public static final String SERVER_CONFIGURATION_OPTION = "configuration";
+    public static final String SERVER_OS_ENV_OPTION = "osenv";
+    public static final String SERVER_JAVA_SYSTEM_PROPERTIES_OPTION = "javasysprops";
 
+    public static final String METRICS_OPTION = "metrics";
+    public static final String INSTRUMENTATION_OPTION = "instrumentation";
 
     public static final String AUTH_OPTION = "auth";
 
@@ -259,6 +265,11 @@ public class OozieCLI {
         Option availServers = new Option(AVAILABLE_SERVERS_OPTION, false, "list available Oozie servers"
                 + " (more than one only if HA is enabled)");
         Option sharelibUpdate = new Option(UPDATE_SHARELIB_OPTION, false, "Update server to use a newer version of sharelib");
+        Option serverConfiguration = new Option(SERVER_CONFIGURATION_OPTION, false, "show Oozie system configuration");
+        Option osEnv = new Option(SERVER_OS_ENV_OPTION, false, "show Oozie system OS environment");
+        Option javaSysProps = new Option(SERVER_JAVA_SYSTEM_PROPERTIES_OPTION, false, "show Oozie Java system properties");
+        Option metrics = new Option(METRICS_OPTION, false, "show Oozie system metrics");
+        Option instrumentation = new Option(INSTRUMENTATION_OPTION, false, "show Oozie system instrumentation");
 
         Option sharelib = new Option(LIST_SHARELIB_LIB_OPTION, false,
                 "List available sharelib that can be specified in a workflow action");
@@ -275,6 +286,11 @@ public class OozieCLI {
         group.addOption(availServers);
         group.addOption(sharelibUpdate);
         group.addOption(sharelib);
+        group.addOption(serverConfiguration);
+        group.addOption(osEnv);
+        group.addOption(javaSysProps);
+        group.addOption(metrics);
+        group.addOption(instrumentation);
         adminOptions.addOptionGroup(group);
         addAuthOptions(adminOptions);
         return adminOptions;
@@ -1816,9 +1832,38 @@ public class OozieCLI {
                 }
             }
             else if (options.contains(AVAILABLE_SERVERS_OPTION)) {
-                Map<String, String> availableOozieServers = wc.getAvailableOozieServers();
-                for (String key : availableOozieServers.keySet()) {
-                    System.out.println(key + " : " + availableOozieServers.get(key));
+                Map<String, String> availableOozieServers = new TreeMap<String, String>(wc.getAvailableOozieServers());
+                for (Map.Entry<String, String> ent : availableOozieServers.entrySet()) {
+                    System.out.println(ent.getKey() + " : " + ent.getValue());
+                }
+            } else if (options.contains(SERVER_CONFIGURATION_OPTION)) {
+                Map<String, String> serverConfig = new TreeMap<String, String>(wc.getServerConfiguration());
+                for (Map.Entry<String, String> ent : serverConfig.entrySet()) {
+                    System.out.println(ent.getKey() + " : " + ent.getValue());
+                }
+            } else if (options.contains(SERVER_OS_ENV_OPTION)) {
+                Map<String, String> osEnv = new TreeMap<String, String>(wc.getOSEnv());
+                for (Map.Entry<String, String> ent : osEnv.entrySet()) {
+                    System.out.println(ent.getKey() + " : " + ent.getValue());
+                }
+            } else if (options.contains(SERVER_JAVA_SYSTEM_PROPERTIES_OPTION)) {
+                Map<String, String> javaSysProps = new TreeMap<String, String>(wc.getJavaSystemProperties());
+                for (Map.Entry<String, String> ent : javaSysProps.entrySet()) {
+                    System.out.println(ent.getKey() + " : " + ent.getValue());
+                }
+            } else if (options.contains(METRICS_OPTION)) {
+                OozieClient.Metrics metrics = wc.getMetrics();
+                if (metrics == null) {
+                    System.out.println("Metrics are unavailable.  Try Instrumentation (-" + INSTRUMENTATION_OPTION + ") instead");
+                } else {
+                    printMetrics(metrics);
+                }
+            } else if (options.contains(INSTRUMENTATION_OPTION)) {
+                OozieClient.Instrumentation instrumentation = wc.getInstrumentation();
+                if (instrumentation == null) {
+                    System.out.println("Instrumentation is unavailable.  Try Metrics (-" + METRICS_OPTION + ") instead");
+                } else {
+                    printInstrumentation(instrumentation);
                 }
             }
         }
@@ -2186,4 +2231,62 @@ public class OozieCLI {
         }
     }
 
+    private void printMetrics(OozieClient.Metrics metrics) {
+        System.out.println("COUNTERS");
+        System.out.println("--------");
+        Map<String, Long> counters = new TreeMap<String, Long>(metrics.getCounters());
+        for (Map.Entry<String, Long> ent : counters.entrySet()) {
+            System.out.println(ent.getKey() + " : " + ent.getValue());
+        }
+        System.out.println("\nGAUGES");
+        System.out.println("------");
+        Map<String, Object> gauges = new TreeMap<String, Object>(metrics.getGauges());
+        for (Map.Entry<String, Object> ent : gauges.entrySet()) {
+            System.out.println(ent.getKey() + " : " + ent.getValue());
+        }
+        System.out.println("\nTIMERS");
+        System.out.println("------");
+        Map<String, OozieClient.Metrics.Timer> timers = new TreeMap<String, OozieClient.Metrics.Timer>(metrics.getTimers());
+        for (Map.Entry<String, OozieClient.Metrics.Timer> ent : timers.entrySet()) {
+            System.out.println(ent.getKey());
+            System.out.println(ent.getValue());
+        }
+        System.out.println("\nHISTOGRAMS");
+        System.out.println("----------");
+        Map<String, OozieClient.Metrics.Histogram> histograms =
+                new TreeMap<String, OozieClient.Metrics.Histogram>(metrics.getHistograms());
+        for (Map.Entry<String, OozieClient.Metrics.Histogram> ent : histograms.entrySet()) {
+            System.out.println(ent.getKey());
+            System.out.println(ent.getValue());
+        }
+    }
+
+    private void printInstrumentation(OozieClient.Instrumentation instrumentation) {
+        System.out.println("COUNTERS");
+        System.out.println("--------");
+        Map<String, Long> counters = new TreeMap<String, Long>(instrumentation.getCounters());
+        for (Map.Entry<String, Long> ent : counters.entrySet()) {
+            System.out.println(ent.getKey() + " : " + ent.getValue());
+        }
+        System.out.println("\nVARIABLES");
+        System.out.println("---------");
+        Map<String, Object> variables = new TreeMap<String, Object>(instrumentation.getVariables());
+        for (Map.Entry<String, Object> ent : variables.entrySet()) {
+            System.out.println(ent.getKey() + " : " + ent.getValue());
+        }
+        System.out.println("\nSAMPLERS");
+        System.out.println("---------");
+        Map<String, Double> samplers = new TreeMap<String, Double>(instrumentation.getSamplers());
+        for (Map.Entry<String, Double> ent : samplers.entrySet()) {
+            System.out.println(ent.getKey() + " : " + ent.getValue());
+        }
+        System.out.println("\nTIMERS");
+        System.out.println("---------");
+        Map<String, OozieClient.Instrumentation.Timer> timers =
+                new TreeMap<String, OozieClient.Instrumentation.Timer>(instrumentation.getTimers());
+        for (Map.Entry<String, OozieClient.Instrumentation.Timer> ent : timers.entrySet()) {
+            System.out.println(ent.getKey());
+            System.out.println(ent.getValue());
+        }
+    }
 }

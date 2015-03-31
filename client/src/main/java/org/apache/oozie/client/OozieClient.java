@@ -567,6 +567,30 @@ public class OozieClient {
         protected abstract T call(HttpURLConnection conn) throws IOException, OozieClientException;
     }
 
+    protected abstract class MapClientCallable extends ClientCallable<Map<String, String>> {
+
+        MapClientCallable(String method, String collection, String resource, Map<String, String> params) {
+            super(method, collection, resource, params);
+        }
+
+        @Override
+        protected Map<String, String> call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                Map<String, String> map = new HashMap<String, String>();
+                for (Object key : json.keySet()) {
+                    map.put((String)key, (String)json.get(key));
+                }
+                return map;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     static void handleError(HttpURLConnection conn) throws IOException, OozieClientException {
         int status = conn.getResponseCode();
         String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
@@ -2000,7 +2024,6 @@ public class OozieClient {
                         }
                         bf.append(System.getProperty("line.separator"));
                     }
-                    return bf.toString();
                 }
                 else{
                     JSONObject obj = (JSONObject) ((JSONObject) sharelib).get(JsonTags.SHARELIB_LIB_UPDATE);
@@ -2010,6 +2033,7 @@ public class OozieClient {
                     }
                     bf.append(System.getProperty("line.separator"));
                 }
+                return bf.toString();
             }
             else {
                 handleError(conn);
@@ -2245,27 +2269,10 @@ public class OozieClient {
         return new GetQueueDump().call();
     }
 
-    private class GetAvailableOozieServers extends ClientCallable<Map<String, String>> {
+    private class GetAvailableOozieServers extends MapClientCallable {
 
         GetAvailableOozieServers() {
             super("GET", RestConstants.ADMIN, RestConstants.ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE, prepareParams());
-        }
-
-        @Override
-        protected Map<String, String> call(HttpURLConnection conn) throws IOException, OozieClientException {
-            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
-                Reader reader = new InputStreamReader(conn.getInputStream());
-                JSONObject json = (JSONObject) JSONValue.parse(reader);
-                Map<String, String> map = new HashMap<String, String>();
-                for (Object key : json.keySet()) {
-                    map.put((String)key, (String)json.get(key));
-                }
-                return map;
-            }
-            else {
-                handleError(conn);
-            }
-            return null;
         }
     }
 
@@ -2279,6 +2286,472 @@ public class OozieClient {
         return new GetAvailableOozieServers().call();
     }
 
+    private class GetServerConfiguration extends MapClientCallable {
+
+        GetServerConfiguration() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_CONFIG_RESOURCE, prepareParams());
+        }
+    }
+
+    /**
+     * Return the Oozie system configuration.
+     *
+     * @return the Oozie system configuration.
+     * @throws OozieClientException throw if the system configuration could not be retrieved.
+     */
+    public Map<String, String> getServerConfiguration() throws OozieClientException {
+        return new GetServerConfiguration().call();
+    }
+
+    private class GetJavaSystemProperties extends MapClientCallable {
+
+        GetJavaSystemProperties() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_JAVA_SYS_PROPS_RESOURCE, prepareParams());
+        }
+    }
+
+    /**
+     * Return the Oozie Java system properties.
+     *
+     * @return the Oozie Java system properties.
+     * @throws OozieClientException throw if the system properties could not be retrieved.
+     */
+    public Map<String, String> getJavaSystemProperties() throws OozieClientException {
+        return new GetJavaSystemProperties().call();
+    }
+
+    private class GetOSEnv extends MapClientCallable {
+
+        GetOSEnv() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_OS_ENV_RESOURCE, prepareParams());
+        }
+    }
+
+    /**
+     * Return the Oozie system OS environment.
+     *
+     * @return the Oozie system OS environment.
+     * @throws OozieClientException throw if the system OS environment could not be retrieved.
+     */
+    public Map<String, String> getOSEnv() throws OozieClientException {
+        return new GetOSEnv().call();
+    }
+
+    private class GetMetrics extends ClientCallable<Metrics> {
+
+        GetMetrics() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_METRICS_RESOURCE, prepareParams());
+        }
+
+        @Override
+        protected Metrics call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                Metrics metrics = new Metrics(json);
+                return metrics;
+            }
+            else if ((conn.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE)) {
+                // Use Instrumentation endpoint
+                return null;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    public class Metrics {
+        private Map<String, Long> counters;
+        private Map<String, Object> gauges;
+        private Map<String, Timer> timers;
+        private Map<String, Histogram> histograms;
+
+        @SuppressWarnings("unchecked")
+        public Metrics(JSONObject json) {
+            JSONObject jCounters = (JSONObject) json.get("counters");
+            counters = new HashMap<String, Long>(jCounters.size());
+            for (Object entO : jCounters.entrySet()) {
+                Entry<String, JSONObject> ent = (Entry<String, JSONObject>) entO;
+                counters.put(ent.getKey(), (Long)ent.getValue().get("count"));
+            }
+
+            JSONObject jGuages = (JSONObject) json.get("gauges");
+            gauges = new HashMap<String, Object>(jGuages.size());
+            for (Object entO : jGuages.entrySet()) {
+                Entry<String, JSONObject> ent = (Entry<String, JSONObject>) entO;
+                gauges.put(ent.getKey(), ent.getValue().get("value"));
+            }
+
+            JSONObject jTimers = (JSONObject) json.get("timers");
+            timers = new HashMap<String, Timer>(jTimers.size());
+            for (Object entO : jTimers.entrySet()) {
+                Entry<String, JSONObject> ent = (Entry<String, JSONObject>) entO;
+                timers.put(ent.getKey(), new Timer(ent.getValue()));
+            }
+
+            JSONObject jHistograms = (JSONObject) json.get("histograms");
+            histograms = new HashMap<String, Histogram>(jHistograms.size());
+            for (Object entO : jHistograms.entrySet()) {
+                Entry<String, JSONObject> ent = (Entry<String, JSONObject>) entO;
+                histograms.put(ent.getKey(), new Histogram(ent.getValue()));
+            }
+        }
+
+        public Map<String, Long> getCounters() {
+            return counters;
+        }
+
+        public Map<String, Object> getGauges() {
+            return gauges;
+        }
+
+        public Map<String, Timer> getTimers() {
+            return timers;
+        }
+
+        public Map<String, Histogram> getHistograms() {
+            return histograms;
+        }
+
+        public class Timer extends Histogram {
+            private double m15Rate;
+            private double m5Rate;
+            private double m1Rate;
+            private double meanRate;
+            private String durationUnits;
+            private String rateUnits;
+
+            public Timer(JSONObject json) {
+                super(json);
+                m15Rate = Double.valueOf(json.get("m15_rate").toString());
+                m5Rate = Double.valueOf(json.get("m5_rate").toString());
+                m1Rate = Double.valueOf(json.get("m1_rate").toString());
+                meanRate = Double.valueOf(json.get("mean_rate").toString());
+                durationUnits = json.get("duration_units").toString();
+                rateUnits = json.get("rate_units").toString();
+            }
+
+            public double get15MinuteRate() {
+                return m15Rate;
+            }
+
+            public double get5MinuteRate() {
+                return m5Rate;
+            }
+
+            public double get1MinuteRate() {
+                return m1Rate;
+            }
+
+            public double getMeanRate() {
+                return meanRate;
+            }
+
+            public String getDurationUnits() {
+                return durationUnits;
+            }
+
+            public String getRateUnits() {
+                return rateUnits;
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder(super.toString());
+                sb.append("\n\t15 minute rate : ").append(m15Rate);
+                sb.append("\n\t5 minute rate : ").append(m5Rate);
+                sb.append("\n\t1 minute rate : ").append(m15Rate);
+                sb.append("\n\tmean rate : ").append(meanRate);
+                sb.append("\n\tduration units : ").append(durationUnits);
+                sb.append("\n\trate units : ").append(rateUnits);
+                return sb.toString();
+            }
+        }
+
+        public class Histogram {
+            private double p999;
+            private double p99;
+            private double p98;
+            private double p95;
+            private double p75;
+            private double p50;
+            private double mean;
+            private double min;
+            private double max;
+            private double stdDev;
+            private long count;
+
+            public Histogram(JSONObject json) {
+                p999 = Double.valueOf(json.get("p999").toString());
+                p99 = Double.valueOf(json.get("p99").toString());
+                p98 = Double.valueOf(json.get("p98").toString());
+                p95 = Double.valueOf(json.get("p95").toString());
+                p75 = Double.valueOf(json.get("p75").toString());
+                p50 = Double.valueOf(json.get("p50").toString());
+                mean = Double.valueOf(json.get("mean").toString());
+                min = Double.valueOf(json.get("min").toString());
+                max = Double.valueOf(json.get("max").toString());
+                stdDev = Double.valueOf(json.get("stddev").toString());
+                count = Long.valueOf(json.get("count").toString());
+            }
+
+            public double get999thPercentile() {
+                return p999;
+            }
+
+            public double get99thPercentile() {
+                return p99;
+            }
+
+            public double get98thPercentile() {
+                return p98;
+            }
+
+            public double get95thPercentile() {
+                return p95;
+            }
+
+            public double get75thPercentile() {
+                return p75;
+            }
+
+            public double get50thPercentile() {
+                return p50;
+            }
+
+            public double getMean() {
+                return mean;
+            }
+
+            public double getMin() {
+                return min;
+            }
+
+            public double getMax() {
+                return max;
+            }
+
+            public double getStandardDeviation() {
+                return stdDev;
+            }
+
+            public long getCount() {
+                return count;
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("\t999th percentile : ").append(p999);
+                sb.append("\n\t99th percentile : ").append(p99);
+                sb.append("\n\t98th percentile : ").append(p98);
+                sb.append("\n\t95th percentile : ").append(p95);
+                sb.append("\n\t75th percentile : ").append(p75);
+                sb.append("\n\t50th percentile : ").append(p50);
+                sb.append("\n\tmean : ").append(mean);
+                sb.append("\n\tmax : ").append(max);
+                sb.append("\n\tmin : ").append(min);
+                sb.append("\n\tcount : ").append(count);
+                sb.append("\n\tstandard deviation : ").append(stdDev);
+                return sb.toString();
+            }
+        }
+    }
+
+    /**
+     * Return the Oozie metrics.  If null is returned, then try {@link #getInstrumentation()}.
+     *
+     * @return the Oozie metrics or null.
+     * @throws OozieClientException throw if the metrics could not be retrieved.
+     */
+    public Metrics getMetrics() throws OozieClientException {
+        return new GetMetrics().call();
+    }
+
+    private class GetInstrumentation extends ClientCallable<Instrumentation> {
+
+        GetInstrumentation() {
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_INSTRUMENTATION_RESOURCE, prepareParams());
+        }
+
+        @Override
+        protected Instrumentation call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                Instrumentation instrumentation = new Instrumentation(json);
+                return instrumentation;
+            }
+            else if ((conn.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE)) {
+                // Use Metrics endpoint
+                return null;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
+    public class Instrumentation {
+        private Map<String, Long> counters;
+        private Map<String, Object> variables;
+        private Map<String, Double> samplers;
+        private Map<String, Timer> timers;
+
+        public Instrumentation(JSONObject json) {
+            JSONArray jCounters = (JSONArray) json.get("counters");
+            counters = new HashMap<String, Long>(jCounters.size());
+            for (Object groupO : jCounters) {
+                JSONObject group = (JSONObject) groupO;
+                String groupName = group.get("group").toString() + ".";
+                JSONArray data = (JSONArray) group.get("data");
+                for (Object datO : data) {
+                    JSONObject dat = (JSONObject) datO;
+                    counters.put(groupName + dat.get("name").toString(), Long.valueOf(dat.get("value").toString()));
+                }
+            }
+
+            JSONArray jVariables = (JSONArray) json.get("variables");
+            variables = new HashMap<String, Object>(jVariables.size());
+            for (Object groupO : jVariables) {
+                JSONObject group = (JSONObject) groupO;
+                String groupName = group.get("group").toString() + ".";
+                JSONArray data = (JSONArray) group.get("data");
+                for (Object datO : data) {
+                    JSONObject dat = (JSONObject) datO;
+                    variables.put(groupName + dat.get("name").toString(), dat.get("value"));
+                }
+            }
+
+            JSONArray jSamplers = (JSONArray) json.get("samplers");
+            samplers = new HashMap<String, Double>(jSamplers.size());
+            for (Object groupO : jSamplers) {
+                JSONObject group = (JSONObject) groupO;
+                String groupName = group.get("group").toString() + ".";
+                JSONArray data = (JSONArray) group.get("data");
+                for (Object datO : data) {
+                    JSONObject dat = (JSONObject) datO;
+                    samplers.put(groupName + dat.get("name").toString(), Double.valueOf(dat.get("value").toString()));
+                }
+            }
+
+            JSONArray jTimers = (JSONArray) json.get("timers");
+            timers = new HashMap<String, Timer>(jTimers.size());
+            for (Object groupO : jTimers) {
+                JSONObject group = (JSONObject) groupO;
+                String groupName = group.get("group").toString() + ".";
+                JSONArray data = (JSONArray) group.get("data");
+                for (Object datO : data) {
+                    JSONObject dat = (JSONObject) datO;
+                    timers.put(groupName + dat.get("name").toString(), new Timer(dat));
+                }
+            }
+        }
+
+        public class Timer {
+            private double ownTimeStdDev;
+            private long ownTimeAvg;
+            private long ownMaxTime;
+            private long ownMinTime;
+            private double totalTimeStdDev;
+            private long totalTimeAvg;
+            private long totalMaxTime;
+            private long totalMinTime;
+            private long ticks;
+
+            public Timer(JSONObject json) {
+                ownTimeStdDev = Double.valueOf(json.get("ownTimeStdDev").toString());
+                ownTimeAvg = Long.valueOf(json.get("ownTimeAvg").toString());
+                ownMaxTime = Long.valueOf(json.get("ownMaxTime").toString());
+                ownMinTime = Long.valueOf(json.get("ownMinTime").toString());
+                totalTimeStdDev = Double.valueOf(json.get("totalTimeStdDev").toString());
+                totalTimeAvg = Long.valueOf(json.get("totalTimeAvg").toString());
+                totalMaxTime = Long.valueOf(json.get("totalMaxTime").toString());
+                totalMinTime = Long.valueOf(json.get("totalMinTime").toString());
+                ticks = Long.valueOf(json.get("ticks").toString());
+            }
+
+            public double getOwnTimeStandardDeviation() {
+                return ownTimeStdDev;
+            }
+
+            public long getOwnTimeAverage() {
+                return ownTimeAvg;
+            }
+
+            public long getOwnMaxTime() {
+                return ownMaxTime;
+            }
+
+            public long getOwnMinTime() {
+                return ownMinTime;
+            }
+
+            public double getTotalTimeStandardDeviation() {
+                return totalTimeStdDev;
+            }
+
+            public long getTotalTimeAverage() {
+                return totalTimeAvg;
+            }
+
+            public long getTotalMaxTime() {
+                return totalMaxTime;
+            }
+
+            public long getTotalMinTime() {
+                return totalMinTime;
+            }
+
+            public long getTicks() {
+                return ticks;
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("\town time standard deviation : ").append(ownTimeStdDev);
+                sb.append("\n\town average time : ").append(ownTimeAvg);
+                sb.append("\n\town max time : ").append(ownMaxTime);
+                sb.append("\n\town min time : ").append(ownMinTime);
+                sb.append("\n\ttotal time standard deviation : ").append(totalTimeStdDev);
+                sb.append("\n\ttotal average time : ").append(totalTimeAvg);
+                sb.append("\n\ttotal max time : ").append(totalMaxTime);
+                sb.append("\n\ttotal min time : ").append(totalMinTime);
+                sb.append("\n\tticks : ").append(ticks);
+                return sb.toString();
+            }
+        }
+
+        public Map<String, Long> getCounters() {
+            return counters;
+        }
+
+        public Map<String, Object> getVariables() {
+            return variables;
+        }
+
+        public Map<String, Double> getSamplers() {
+            return samplers;
+        }
+
+        public Map<String, Timer> getTimers() {
+            return timers;
+        }
+    }
+
+    /**
+     * Return the Oozie instrumentation.  If null is returned, then try {@link #getMetrics()}.
+     *
+     * @return the Oozie intstrumentation or null.
+     * @throws OozieClientException throw if the intstrumentation could not be retrieved.
+     */
+    public Instrumentation getInstrumentation() throws OozieClientException {
+        return new GetInstrumentation().call();
+    }
 
     /**
      * Check if the string is not null or not empty.

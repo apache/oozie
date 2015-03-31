@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2174 Add missing admin commands to OozieClient and OozieCLI (rkanter)
 OOZIE-2186 Upgrade Tomcat to 6.0.43 (rkanter)
 OOZIE-2181 JsonToBean has some missing and incorrect mappings (rkanter)
 OOZIE-2184 Change default value of action tmp dir removal to true (Viji via harsh)

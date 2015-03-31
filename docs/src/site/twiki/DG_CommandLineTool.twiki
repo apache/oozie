@@ -118,17 +118,21 @@ usage:
 .
       oozie admin <OPTIONS> : admin operations
                   -auth <arg>         select authentication type [SIMPLE|KERBEROS]
-                  -doas <arg>         doAs user, impersonates as the specified user.
+                  -configuration      show Oozie system configuration
+                  -doas <arg>         doAs user, impersonates as the specified user
+                  -instrumentation    show Oozie system instrumentation
+                  -javasysprops       show Oozie Java system properties
+                  -metrics            show Oozie system metrics
                   -oozie <arg>        Oozie URL
+                  -osenv              show Oozie system OS environment
                   -queuedump          show Oozie server queue elements
                   -servers            list available Oozie servers (more than one only if HA is enabled)
+                  -shareliblist       List available sharelib that can be specified in a workflow action
+                  -sharelibupdate     Update server to use a newer version of sharelib
                   -status             show the current system status
                   -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
                   -version            show Oozie server build version
-                  -shareliblist       List available sharelib that can be specified in a workflow
-                                      action
-                  -sharelibupdate     Update server to use a newer version of sharelib
 .
       oozie validate <ARGS> : validate a workflow XML file
 .
@@ -1190,6 +1194,216 @@ hostC : http://hostC:11000/oozie
 
 It returns a list of available Oozie Servers.  This is useful when Oozie is configured for [[AG_Install#HA][High Availability]]; if
 not, it will simply return the one Oozie Server.
+
+---+++ Displaying the Oozie server configuration
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -configuration
+local.realm : LOCALHOST
+oozie.JobCommand.job.console.url : http://localhost:11000/oozie?job=
+oozie.action.fs.glob.max : 1000
+oozie.action.jobinfo.enable : false
+oozie.action.launcher.mapreduce.job.ubertask.enable : true
+oozie.action.launcher.yarn.timeline-service.enabled : false
+oozie.action.mapreduce.uber.jar.enable : false
+oozie.action.max.output.data : 2048
+oozie.action.retries.max : 3
+...
+</verbatim>
+
+It returns a list of the configuration properties and values from oozie-site.xml and oozie-default.xml being used by the Oozie
+server.
+
+---+++ Displaying the Oozie server OS environment
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -osenv
+Apple_PubSub_Socket_Render : /private/tmp/com.apple.launchd.V2oxXoP55M/Render
+CATALINA_BASE : /Users/rkanter/dev/oozie/oozie-server
+CATALINA_OUT : /Users/rkanter/dev/oozie/logs/catalina.out
+CATALINA_PID : /Users/rkanter/dev/oozie/oozie-server/temp/oozie.pid
+HADOOP_HOME : /Users/rkanter/dev/hadoop
+HADOOP_HOME_WARN_SUPPRESS : TRUE
+HADOOP_OPTS : -Djava.security.krb5.realm=OX.AC.UK -Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk
+...
+</verbatim>
+
+It returns a list of OS environment variables in the Oozie server.
+
+---+++ Displaying the Oozie server Java system properties
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -javasysprops
+awt.toolkit : sun.lwawt.macosx.LWCToolkit
+catalina.base : /Users/rkanter/dev/oozie/oozie-server
+catalina.home : /Users/rkanter/dev/oozie/oozie-server
+catalina.useNaming : true
+common.loader : ${catalina.base}/lib,${catalina.base}/lib/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar
+derby.stream.error.file : /Users/rkanter/dev/oozie/logs/derby.log
+file.encoding : UTF-8
+file.encoding.pkg : sun.io
+file.separator : /
+...
+</verbatim>
+
+It returns a list of java system properties in the Oozie server.
+
+---+++ Displaying the Oozie server Instrumentation
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -instrumentation
+COUNTERS
+--------
+callablequeue.executed : 1
+callablequeue.queued : 1
+commands.purge.executions : 1
+...
+
+VARIABLES
+---------
+configuration.action.types : [hive, shell, :START:, :FORK:, switch, spark, ssh, hive2, pig, :END:, email, distcp, :KILL:, sub-workflow, fs, java, :JOIN:, sqoop, map-reduce]
+configuration.config.dir : /Users/rkanter/dev/oozie/conf
+configuration.config.file : /Users/rkanter/dev/oozie/conf/oozie-site.xml
+...
+
+SAMPLERS
+---------
+callablequeue.queue.size : 0.0
+callablequeue.threads.active : 0.0
+jdbc.connections.active : 0.0
+...
+
+TIMERS
+---------
+callablequeue.time.in.queue
+	own time standard deviation : -1.0
+	own average time : 1
+	own max time : 1
+	own min time : 1
+	total time standard deviation : -1.0
+	total average time : 1
+	total max time : 1
+	total min time : 1
+	ticks : 1
+commands.purge.call
+	own time standard deviation : -1.0
+	own average time : 222
+	own max time : 222
+	own min time : 222
+	total time standard deviation : -1.0
+	total average time : 222
+	total max time : 222
+	total min time : 222
+	ticks : 1
+...
+</verbatim>
+
+It returns the instrumentation from the Oozie server.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Instrumentation is enabled, then Metrics is unavailable.
+
+---+++ Displaying the Oozie server Metrics
+
+Example:
+
+<verbatim>
+$ oozie admin -oozie http://localhost:11000/oozie -metrics
+COUNTERS
+--------
+callablequeue.executed : 1
+callablequeue.queued : 1
+commands.purge.executions : 1
+...
+
+GAUGES
+------
+configuration.action.types : [hive, shell, :START:, :FORK:, switch, spark, ssh, hive2, pig, :END:, email, distcp, :KILL:, sub-workflow, fs, java, :JOIN:, sqoop, map-reduce]
+configuration.config.dir : /Users/rkanter/dev/oozie/conf
+configuration.config.file : /Users/rkanter/dev/oozie/conf/oozie-site.xml
+...
+
+TIMERS
+------
+callablequeue.time.in.queue.timer
+	999th percentile : 4.0
+	99th percentile : 4.0
+	98th percentile : 4.0
+	95th percentile : 4.0
+	75th percentile : 4.0
+	50th percentile : 4.0
+	mean : 4.0
+	max : 4.0
+	min : 4.0
+	count : 1
+	standard deviation : 0.0
+	15 minute rate : 0.0
+	5 minute rate : 0.0
+	1 minute rate : 0.0
+	mean rate : 0.0
+	duration units : milliseconds
+	rate units : calls/millisecond
+commands.purge.call.timer
+	999th percentile : 260.0
+	99th percentile : 260.0
+	98th percentile : 260.0
+	95th percentile : 260.0
+	75th percentile : 260.0
+	50th percentile : 260.0
+	mean : 260.0
+	max : 260.0
+	min : 260.0
+	count : 1
+	standard deviation : 0.0
+	15 minute rate : 0.0
+	5 minute rate : 0.0
+	1 minute rate : 0.0
+	mean rate : 0.0
+	duration units : milliseconds
+	rate units : calls/millisecond
+...
+
+HISTOGRAMS
+----------
+callablequeue.queue.size.histogram
+	999th percentile : 0.0
+	99th percentile : 0.0
+	98th percentile : 0.0
+	95th percentile : 0.0
+	75th percentile : 0.0
+	50th percentile : 0.0
+	mean : 0.0
+	max : 0.0
+	min : 0.0
+	count : 13
+	standard deviation : 0.0
+callablequeue.threads.active.histogram
+	999th percentile : 10.0
+	99th percentile : 10.0
+	98th percentile : 10.0
+	95th percentile : 10.0
+	75th percentile : 0.0
+	50th percentile : 0.0
+	mean : 0.8461538461538461
+	max : 10.0
+	min : 0.0
+	count : 13
+	standard deviation : 2.764240517940803
+...
+</verbatim>
+
+It returns the metrics from the Oozie server.  Keep in mind that timers and counters that the Oozie server
+hasn't incremented yet will not show up.
+
+*Note:* If Metrics is enabled, then Instrumentation is unavailable.
 
 ---++ Validate Operations
 
