@@ -18,7 +18,12 @@
 
 package org.apache.oozie.client.rest;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -29,6 +34,7 @@ import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.JMSConnectionInfo;
+import org.apache.oozie.client.JMSConnectionInfoWrapper;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.json.simple.JSONArray;
@@ -438,4 +444,76 @@ public class TestJsonToBean extends TestCase {
         assertEquals("cj2", list.get(1).getCoordinator().getId());
     }
 
+    public void testWorkflowActionMappings() throws Exception {
+        _testMappings(JsonToBean.WF_ACTION, WorkflowAction.class, true);
+    }
+
+    public void testWorkflowJobMappings() throws Exception {
+        _testMappings(JsonToBean.WF_JOB, WorkflowJob.class, true);
+    }
+
+    public void testCoordActionMappings() throws Exception {
+        _testMappings(JsonToBean.COORD_ACTION, CoordinatorAction.class, true);
+    }
+
+    public void testCoordJobMappings() throws Exception {
+        _testMappings(JsonToBean.COORD_JOB, CoordinatorJob.class, true);
+    }
+
+    public void testBundleJobMappings() throws Exception {
+        _testMappings(JsonToBean.BUNDLE_JOB, BundleJob.class, true);
+    }
+
+    public void testBulkResponseMappings() throws Exception {
+        _testMappings(JsonToBean.BULK_RESPONSE, BulkResponse.class, false);
+    }
+
+    public void testJMSConnectionInfoMappings() throws Exception {
+        _testMappings(JsonToBean.JMS_CONNECTION_INFO, JMSConnectionInfoWrapper.class, false);
+    }
+
+    private void _testMappings(Map<String, JsonToBean.Property> mappings, Class klass, boolean toString) throws Exception {
+        Map<String, Type> methods = getGetMethods(klass);
+        if (toString) {
+            methods.put("toString", String.class);
+        }
+        for (Map.Entry<String, Type> method : methods.entrySet()) {
+            JsonToBean.Property prop = mappings.get(method.getKey());
+            assertNotNull("JsonToBean is missing a mapping for " + method.getKey(), prop);
+            if (method.getValue() instanceof ParameterizedType) {
+                assertTrue("Return type for " + method.getKey() + " is not a List in JsonToBean", prop.isList);
+                ParameterizedType parType = (ParameterizedType) method.getValue();
+                assertEquals("Return type for " + method.getKey() + " is not a List in klass.getName()",
+                        List.class, parType.getRawType());
+                assertEquals("Return types do not match for " + method.getKey(), parType.getActualTypeArguments()[0], prop.type);
+            } else {
+                assertEquals("Return types do not match for " + method.getKey(), method.getValue(), prop.type);
+            }
+        }
+        for (Map.Entry<String, JsonToBean.Property> mapping : mappings.entrySet()) {
+            Type type = methods.get(mapping.getKey());
+            assertNotNull(klass.getName() + " is missing a method for " + mapping.getKey(), type);
+            if (mapping.getValue().isList) {
+                assertTrue("Return type for " + mapping.getKey() + " is not a List in " + klass.getName(),
+                        type instanceof ParameterizedType);
+                ParameterizedType parType = (ParameterizedType) type;
+                assertEquals("Return type for " + mapping.getKey() + " is not a List in " + klass.getName(),
+                        List.class, parType.getRawType());
+                assertEquals("Return types do not match for " + mapping.getKey(),
+                        mapping.getValue().type, parType.getActualTypeArguments()[0]);
+            } else {
+                assertEquals("Return types do not match for " + mapping.getKey(), mapping.getValue().type, type);
+            }
+        }
+    }
+
+    private Map<String, Type> getGetMethods(Class klass) {
+        Map<String, Type> methods = new HashMap<String, Type>();
+        for (Method method : klass.getMethods()) {
+            if (method.getName().startsWith("get")) {
+                methods.put(method.getName(), method.getGenericReturnType());
+            }
+        }
+        return methods;
+    }
 }

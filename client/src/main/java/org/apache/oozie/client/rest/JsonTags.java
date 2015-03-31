@@ -85,7 +85,10 @@ public interface JsonTags {
     public static final String WORKFLOW_ACTION_CONSOLE_URL = "consoleUrl";
     public static final String WORKFLOW_ACTION_ERROR_CODE = "errorCode";
     public static final String WORKFLOW_ACTION_ERROR_MESSAGE = "errorMessage";
-
+    public static final String WORKFLOW_ACTION_USER_RETRY_INTERVAL = "userRetryInterval";
+    public static final String WORKFLOW_ACTION_USER_RETRY_COUNT = "userRetryCount";
+    public static final String WORKFLOW_ACTION_USER_RETRY_MAX = "userRetryMax";
+    public static final String WORKFLOW_ACTION_CRED = "cred";
 
     public static final String COORDINATOR_JOB_ID = "coordJobId";
     public static final String COORDINATOR_JOB_NAME = "coordJobName";

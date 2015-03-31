@@ -861,6 +861,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         json.put(JsonTags.WORKFLOW_ACTION_ERROR_CODE, errorCode);
         json.put(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE, errorMessage);
         json.put(JsonTags.TO_STRING, toString());
+        json.put(JsonTags.WORKFLOW_ACTION_USER_RETRY_INTERVAL, userRetryInterval);
+        json.put(JsonTags.WORKFLOW_ACTION_USER_RETRY_COUNT, userRetryCount);
+        json.put(JsonTags.WORKFLOW_ACTION_USER_RETRY_MAX, userRetryMax);
+        json.put(JsonTags.WORKFLOW_ACTION_CRED, cred);
         return json;
     }
 

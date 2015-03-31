@@ -18,6 +18,7 @@
 
 package org.apache.oozie.client.rest;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
@@ -51,7 +52,8 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 public class JsonToBean {
 
-    private static class Property {
+    @VisibleForTesting
+    static class Property {
         String label;
         Class type;
         boolean isList;
@@ -67,13 +69,20 @@ public class JsonToBean {
         }
     }
 
-    private static final Map<String, Property> WF_JOB = new HashMap<String, Property>();
-    private static final Map<String, Property> WF_ACTION = new HashMap<String, Property>();
-    private static final Map<String, Property> COORD_JOB = new HashMap<String, Property>();
-    private static final Map<String, Property> COORD_ACTION = new HashMap<String, Property>();
-    private static final Map<String, Property> BUNDLE_JOB = new HashMap<String, Property>();
-    private static final Map<String, Property> BULK_RESPONSE = new HashMap<String, Property>();
-    private static final Map<String, Property> JMS_CONNECTION_INFO = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> WF_JOB = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> WF_ACTION = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> COORD_JOB = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> COORD_ACTION = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> BUNDLE_JOB = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> BULK_RESPONSE = new HashMap<String, Property>();
+    @VisibleForTesting
+    static final Map<String, Property> JMS_CONNECTION_INFO = new HashMap<String, Property>();
 
     static {
         WF_ACTION.put("getId", new Property(JsonTags.WORKFLOW_ACTION_ID, String.class));
@@ -95,6 +104,10 @@ public class JsonToBean {
         WF_ACTION.put("getErrorCode", new Property(JsonTags.WORKFLOW_ACTION_ERROR_CODE, String.class));
         WF_ACTION.put("getErrorMessage", new Property(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE, String.class));
         WF_ACTION.put("toString", new Property(JsonTags.TO_STRING, String.class));
+        WF_ACTION.put("getUserRetryInterval", new Property(JsonTags.WORKFLOW_ACTION_USER_RETRY_INTERVAL, Integer.TYPE));
+        WF_ACTION.put("getUserRetryCount", new Property(JsonTags.WORKFLOW_ACTION_USER_RETRY_COUNT, Integer.TYPE));
+        WF_ACTION.put("getUserRetryMax", new Property(JsonTags.WORKFLOW_ACTION_USER_RETRY_MAX, Integer.TYPE));
+        WF_ACTION.put("getCred", new Property(JsonTags.WORKFLOW_ACTION_CRED, String.class));
 
         WF_JOB.put("getExternalId", new Property(JsonTags.WORKFLOW_EXTERNAL_ID, String.class));
         WF_JOB.put("getAppPath", new Property(JsonTags.WORKFLOW_APP_PATH, String.class));
@@ -161,8 +174,8 @@ public class JsonToBean {
         COORD_JOB.put("getConsoleUrl", new Property(JsonTags.COORDINATOR_JOB_CONSOLE_URL, String.class));
         COORD_JOB.put("getActions", new Property(JsonTags.COORDINATOR_ACTIONS, CoordinatorAction.class, true));
         COORD_JOB.put("toString", new Property(JsonTags.TO_STRING, String.class));
-
-        BUNDLE_JOB.put("getActions", new Property(JsonTags.COORDINATOR_ACTIONS, CoordinatorAction.class, true));
+        COORD_JOB.put("getBundleId", new Property(JsonTags.COORDINATOR_JOB_BUNDLE_ID, String.class));
+        COORD_JOB.put("getExternalId", new Property(JsonTags.COORDINATOR_JOB_EXTERNAL_ID, String.class));
 
         BUNDLE_JOB.put("getAppPath",new Property(JsonTags.BUNDLE_JOB_PATH, String.class));
         BUNDLE_JOB.put("getAppName",new Property(JsonTags.BUNDLE_JOB_NAME, String.class));
@@ -182,6 +195,7 @@ public class JsonToBean {
         BUNDLE_JOB.put("getConsoleUrl",new Property(JsonTags.BUNDLE_JOB_CONSOLE_URL, String.class));
         BUNDLE_JOB.put("getCoordinators",new Property(JsonTags.BUNDLE_COORDINATOR_JOBS, CoordinatorJob.class, true));
         BUNDLE_JOB.put("toString", new Property(JsonTags.TO_STRING, String.class));
+        BUNDLE_JOB.put("getAcl", new Property(JsonTags.BUNDLE_JOB_ACL, String.class));
 
         BULK_RESPONSE.put("getBundle", new Property(JsonTags.BULK_RESPONSE_BUNDLE, BundleJob.class, false));
         BULK_RESPONSE.put("getCoordinator", new Property(JsonTags.BULK_RESPONSE_COORDINATOR, CoordinatorJob.class, false));
