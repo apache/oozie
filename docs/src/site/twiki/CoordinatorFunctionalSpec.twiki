@@ -41,7 +41,7 @@ The goal of this document is to define a coordinator engine system specialized i
    * Clean up unsupported functions
 ---+++!! 02/JUN/2010:
 
-   * Update all EL functions in CoordFunctionSpec with "coord:" prefix
+   * Update all EL functions in CoordFunctionalSpec with "coord:" prefix
 ---+++!! 02/OCT/2009:
 
    * Added Appendix A, Oozie Coordinator XML-Schema
@@ -482,7 +482,7 @@ For example, the value "L" in the day-of-month field means "the last day of the 
 February on non-leap years.
 If used in the day-of-week field by itself, it simply means "7" or "SAT".
 But if used in the day-of-week field after another value, it means "the last xxx day of the month" - for example
-"6L" means "the last friday of the month".
+"6L" means "the last Friday of the month".
 You can also specify an offset from the last day of the month, such as "L-3" which would mean the third-to-last day of the
 calendar month.
 When using the 'L' option, it is important not to specify lists, or ranges of values, as you'll get confusing/unexpected results.
@@ -916,7 +916,7 @@ All the datasets instances defined as input events must be available for the coo
 
 Input events are normally parameterized. For example, the last 24 hourly instances of the 'searchlogs' dataset.
 
-Input events can be refer to multiple instances of multiple datasets. For example, the last 24 hourly instances of the 'searchlogs' datset and the last weekly instance of the 'celebrityRumours' dataset.
+Input events can be refer to multiple instances of multiple datasets. For example, the last 24 hourly instances of the 'searchlogs' dataset and the last weekly instance of the 'celebrityRumours' dataset.
 
 ---++++ 6.1.5. Output Events
 
@@ -959,7 +959,7 @@ This set of interdependent *coordinator applications* is referred as a *data pip
 
    * The =hourlyRevenue-coord= coordinator job triggers, every hour, a =revenueCalculator-wf= workflow. It specifies as input the last 4 =checkouts= dataset instances and it specifies as output a new instance of the =hourlyRevenue= dataset.
    * The =dailyRollUpRevenue-coord= coordinator job triggers, every day, a =rollUpRevenue-wf= workflow. It specifies as input the last 24 =hourlyRevenue= dataset instances and it specifies as output a new instance of the =dailyRevenue= dataset.
-   * The =monthlyRollUpRevenue-coord= coordinator job triggers, once a month, a =rollUpRevenue-wf= workflow. It specifies as input all the =dailyRevenue= dataset instance of the month and it specifies as ouptut a new instance of the =monthlyRevenue= dataset.
+   * The =monthlyRollUpRevenue-coord= coordinator job triggers, once a month, a =rollUpRevenue-wf= workflow. It specifies as input all the =dailyRevenue= dataset instance of the month and it specifies as output a new instance of the =monthlyRevenue= dataset.
 
 This example contains describes all the components that conform a data pipeline: datasets, coordinator jobs and coordinator actions (workflows).
 
@@ -1490,7 +1490,7 @@ CA_NT: coordinator action creation (materialization) nominal time
 coord:current(int n) = DS_II + DS_FREQ * ( (CA_NT - DS_II) div DS_FREQ + n)
 </verbatim>
 
-NOTE: The formula above is not 100% correct, because DST changes the calculation has to account for hour shifts. Oozie Coordinator must make the correct calculation accounting for DTS hour shifts.
+NOTE: The formula above is not 100% correct, because DST changes the calculation has to account for hour shifts. Oozie Coordinator must make the correct calculation accounting for DST hour shifts.
 
 When a positive integer is used with the =${coord:current(int n)}=, it refers to a dataset instance in the future from the coordinator action creation (materialization) time. This can be useful when creating dataset instances for future use by other systems.
 
@@ -1767,7 +1767,7 @@ coord:offset(int n, String timeUnit) = CA_NT + floor(timeUnit * n div DS_FREQ) *
 </verbatim>
 
 NOTE: The formula above is not 100% correct, because DST changes the calculation has to account for hour shifts. Oozie Coordinator
-must make the correct calculation accounting for DTS hour shifts.
+must make the correct calculation accounting for DST hour shifts.
 
 When used in 'instance' or 'end-instance' XML elements, the above equation is used; the effect of the floor function is to
 "rewind" the resolved datetime to match the latest instance before the resolved time.
@@ -2242,7 +2242,7 @@ In the case of the synchronous 'logs' dataset, for the first action of this coor
 
 ---+++ 6.7. Parameterization of Coordinator Application Actions
 
-Actions started by a coordinator application normally require access to the dataset instances resolved by the input and output events to be able to propagate them to the the workflow job as parameters.
+Actions started by a coordinator application normally require access to the dataset instances resolved by the input and output events to be able to propagate them to the workflow job as parameters.
 
 The following EL functions are the mechanism that enables this propagation.
 
@@ -2288,7 +2288,7 @@ Coordinator application definition:
    </coordinator-app>
 </verbatim>
 
-In this example, each coordinator action will use as input events the the last day hourly instances of the 'logs' dataset.
+In this example, each coordinator action will use as input events the last day hourly instances of the 'logs' dataset.
 
 The =${coord:dataIn(String name)}= function enables the coordinator application to pass the URIs of all the dataset instances for the last day to the workflow job triggered by the coordinator action. For the =2009-01-02T00:00Z" run, the =${coord:dataIn('inputLogs')}= function will resolve to:
 
@@ -2367,9 +2367,9 @@ Coordinator application definition:
    </coordinator-app>
 </verbatim>
 
-In this example, each coordinator action will use as input events the the last 24 hourly instances of the 'hourlyLogs' dataset to create a 'dailyLogs' dataset instance.
+In this example, each coordinator action will use as input events the last 24 hourly instances of the 'hourlyLogs' dataset to create a 'dailyLogs' dataset instance.
 
-The =${coord:dataOut(String name)}= function enables the coordinator application to pass the URIs of the the dataset instance that will be created by the workflow job triggered by the coordinator action. For the =2009-01-01T24:00Z" run, the =${coord:dataOut('dailyLogs')}= function will resolve to:
+The =${coord:dataOut(String name)}= function enables the coordinator application to pass the URIs of the dataset instance that will be created by the workflow job triggered by the coordinator action. For the =2009-01-01T24:00Z" run, the =${coord:dataOut('dailyLogs')}= function will resolve to:
 
 <verbatim>
   hdfs://bar:8020/app/logs/2009/01/02
@@ -2857,7 +2857,7 @@ with the following change in pig params in addition to database and table.
 
 *Example usage in Pig:*
 This illustrates another pig script which filters partitions based on range, with range limits parameterized with the
-EL funtions
+EL functions
 
 <blockquote>
 A = load '$HCAT_IN_DB.$HCAT_IN_TABLE' using org.apache.hive.hcatalog.pig.HCatLoader();
@@ -3069,7 +3069,7 @@ This section describes the EL functions that could be used to parameterized both
 
 ---++++ 6.9.1. coord:dateOffset(String baseDate, int instance, String timeUnit) EL Function
 
-The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates date based on the following equaltion : =newDate = baseDate + instance,  * timeUnit=
+The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates date based on the following equation : =newDate = baseDate + instance,  * timeUnit=
 
 For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be '2009-03-01T00:00Z'. If baseDate is '2009-01-01T00:00Z', instance is '1' and timeUnit is 'YEAR', the return date will be '2010-01-01T00:00Z'.
 
@@ -3478,7 +3478,7 @@ If you add *sla* tags to the Coordinator or Workflow XML files, then the SLA inf
         <sla:dev-contact>abc@example.com</sla:dev-contact>
         <sla:qa-contact>abc@example.com</sla:qa-contact>
         <sla:se-contact>abc@example.com</sla:se-contact>
-        <sla:upstream-apps>applicaion-a,application-b</sla:upstream-apps>
+        <sla:upstream-apps>application-a,application-b</sla:upstream-apps>
         <sla:alert-percentage>99</sla:alert-percentage>
         <sla:alert-frequency>${24 * LAST_HOUR}</sla:alert-frequency>
     </sla:info>
@@ -3505,10 +3505,10 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh] [-failed]
 (if neither -action nor -date is given, the exception will be thrown.)
 </verbatim>
 
-The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordiantor action when coordiator job
+The =rerun= option reruns a terminated (=TIMEDOUT=, =SUCCEEDED=, =KILLED=, =FAILED=) coordinator action when coordinator job
 is not in =FAILED= or =KILLED= state.
 
-After the command is executed the rerun coordiator action will be in =WAITING= status.
+After the command is executed the rerun coordinator action will be in =WAITING= status.
 
 Refer to the [[DG_CoordinatorRerun][Rerunning Coordinator Actions]] for details on rerun.
 

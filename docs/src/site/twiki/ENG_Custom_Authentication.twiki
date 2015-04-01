@@ -21,13 +21,13 @@ The following authenticators are provided in hadoop-auth:
    * PseudoAuthenticationHandler     : the authenticator handler provides a pseudo authentication mechanism that accepts the user name specified as a query string parameter.
    * AltKerberosAuthenticationHandler: the authenticator handler allows for Kerberos SPNEGO authentication for non-browsers and an alternate form of authentication for browsers.  A subclass must implement the alternate authentication (see [[ENG_Custom_Authentication#LoginServerExample][Example Login Server]])
 
-3. =org.apache.hadoop.security.authentication.server.AuthenticationFilter:= A servlet filter enables protecting web application resources with different authentication mechanisms provided by AuthenticationHandler. To enable the filter, web application resources file (ex. web.xml) needs to include the a filter class derived from =AuthenticationFilter=.
+3. =org.apache.hadoop.security.authentication.server.AuthenticationFilter:= A servlet filter enables protecting web application resources with different authentication mechanisms provided by AuthenticationHandler. To enable the filter, web application resources file (ex. web.xml) needs to include a filter class derived from =AuthenticationFilter=.
 
 ---++ Provide Custom Client Authenticator
 
 In client side, a custom authentication requires a extended =Authenticator= to retrieve authentication token or certificate and set it to 'token' instance in method 'authenticate()'.
 
-The following methods should be overriden by derived Authenticator.
+The following methods should be overridden by derived Authenticator.
 <verbatim>
 
    public void authenticate(URL url, AuthenticatedURL.Token token)
@@ -43,7 +43,7 @@ The following methods should be overriden by derived Authenticator.
 Eclipse and IntelliJ can use directly MiniOozie Maven project files. MiniOozie project can be imported to
 Eclipse and IntelliJ as independent project.
 
-overriden methods
+overridden methods
 <verbatim>
 		 mechanism, retrieve the cert string or token.
 		String encodedStr = URLEncoder.encode(aCertString, "UTF-8");
@@ -88,7 +88,7 @@ The following shows an example of a singleton class which can be used at a class
 
 Apache Oozie contains a default class =org.apache.oozie.client.AuthOozieClient= to support Kerberos HTTP SPNEGO authentication, pseudo/simple authentication and anonymous access for client connections.
 
-To provide other authentication mechanisms, a Oozie client should extend from =AuthOozieClient= and provide the following methods should be overriden by derived classes to provide custom authentication:
+To provide other authentication mechanisms, a Oozie client should extend from =AuthOozieClient= and provide the following methods should be overridden by derived classes to provide custom authentication:
 
    * getAuthenticator()   : return corresponding Authenticator based on value specified by user at =auth= command option.
    * createConnection()   : create a singleton class at Authenticator to allow client set and get key-value configuration for authentication.
@@ -97,7 +97,7 @@ To provide other authentication mechanisms, a Oozie client should extend from =A
 
 In server side, a custom authentication requires a extended AuthenticationHandler to retrieve authentication token or certificate from http request and verify it. After successful verification, an =AuthenticationToken= is created with user name and current authentication type. With this token, this request can be proceeded for response.
 
-The following methods should be overriden by derived AuthenticationHandler.
+The following methods should be overridden by derived AuthenticationHandler.
 <verbatim>
 
     public AuthenticationToken authenticate(HttpServletRequest request, HttpServletResponse response)

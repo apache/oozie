@@ -12,7 +12,7 @@
 ---++++ 3.2.4 Email action
 
 The =email= action allows sending emails in Oozie from a workflow application. An email action must provide =to=
-addresses, =cc= addresses (optional), a =subject= and a =body=. Multiple reciepents of an email can be provided
+addresses, =cc= addresses (optional), a =subject= and a =body=. Multiple recipients of an email can be provided
 as comma separated addresses.
 
 The email action is executed synchronously, and the workflow job will wait until the specified
@@ -41,7 +41,7 @@ All values specified in the =email= action can be parameterized (templatized) us
 </workflow-app>
 </verbatim>
 
-The =to= and =cc= commands are used to specify reciepents who should get the mail. Multiple email reciepents can be provided
+The =to= and =cc= commands are used to specify recipients who should get the mail. Multiple email recipients can be provided
 using comma-separated values. Providing a =to= command is necessary, while the =cc= may optionally be used along.
 
 The =subject= and =body= commands are used to specify subject and body of the mail.

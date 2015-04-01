@@ -9,7 +9,7 @@
 ---++ Introduction
 Oozie can be extended to support additional action types by writing a custom [[WorkflowFunctionalSpec#ActionNodes][Action Node]]. Action Nodes can be synchronous or asynchronous.
    * Synchronous Node - Sync nodes are executed inline by Oozie, which waits for completion of these nodes before proceeding. Hence, these nodes should almost never be used and are meant for lightweight tasks like FileSystem move, mkdir, delete.
-   * Asynchronouse Nodes - Oozie starts asynchrnous nodes, and then monitors the action being executed for completion. This is done via a callback from the action or Oozie polling for the action status.
+   * Asynchronous Nodes - Oozie starts asynchronous nodes, and then monitors the action being executed for completion. This is done via a callback from the action or Oozie polling for the action status.
 
 ---++ Writing a custom Action Node
 Action Executors are configured in the oozie configuration file oozie-site.xml. These executors are loaded during Oozie startup. [[DG_CustomActionExecutor#Deploying_a_custom_Action_Executor][Deploying a Custom Action Executor]].
@@ -45,7 +45,7 @@ For sync actions, this method will not be called, and should throw an Unsupporte
 The implementation for a custom action should interact with and kill the running action, and take care of any cleanup which may be required. context.setEndData(status, signalValue) should be called with both values set to Action.Status.KILLED.
 ---+++ end(ActionExecutor.Context context, Action action)
 <code>end(...)</end> is used for any cleanup or processing which may need to be done after completion of the action. After any processing, context.setEndData(status, signalValue) should be called to complete execution of the action and trigger the next workflow transition. signalValue can be Action.Status.OK or Action.Status.ERROR.
----+++ Registereing Errors
+---+++ Registering Errors
 Oozie actions can generate different types of Errors.
    * TRANSIENT - will be retried
    * NON TRANSIENT - the job will be suspended and can be resumed later by human intervention, after fixing whatever problem caused this error.

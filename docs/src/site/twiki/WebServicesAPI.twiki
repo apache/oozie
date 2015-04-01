@@ -12,7 +12,7 @@ The Oozie Web Services API is a HTTP REST JSON API.
 
 All responses are in =UTF-8=.
 
-Assuming Oozie is runing at =OOZIE_URL=, the following web services end points are supported:
+Assuming Oozie is running at =OOZIE_URL=, the following web services end points are supported:
 
    * <OOZIE_URL>/versions
    * <OOZIE_URL>/v1/admin
@@ -584,7 +584,7 @@ An HTTP POST request with an XML configuration as payload creates a job.
 
 The type of job is determined by the presence of one of the following 3 properties:
 
-   * =oozie.wf.application.path= : path to a workflow aplication directory, creates a workflow job
+   * =oozie.wf.application.path= : path to a workflow application directory, creates a workflow job
    * =oozie.coord.application.path= : path to a coordinator application file, creates a coordinator job
    * =oozie.bundle.application.path= : path to a bundle application file, creates a bundle job
    
@@ -706,7 +706,7 @@ Content-Type: application/json;charset=UTF-8
 
 ---++++ Proxy Pig Job Submission
 
-You can submit a Workflow that contains a single Pig action without writing a workflow.xml.  Any requred Jars or other files must
+You can submit a Workflow that contains a single Pig action without writing a workflow.xml.  Any required Jars or other files must
 already exist in HDFS.
 
 The following properties are required:
@@ -719,7 +719,7 @@ The following properties are required:
 
 The following properties are optional:
    * =oozie.pig.script.params.size=: The number of parameters you'll be passing to Pig
-   * =oozie.pig.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
+   required =oozie.pig.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
    * =oozie.pig.options.size=: The number of options you'll be passing to Pig
    * =oozie.pig.options.n=: An argument to pass to Pig, the 'n' should be an integer starting with 0 to indicate the option number
 
@@ -806,7 +806,7 @@ Content-Type: application/json;charset=UTF-8
 
 ---++++ Proxy Hive Job Submission
 
-You can submit a Workflow that contains a single Hive action without writing a workflow.xml.  Any requred Jars or other files must
+You can submit a Workflow that contains a single Hive action without writing a workflow.xml.  Any required Jars or other files must
 already exist in HDFS.
 
 The following properties are required:
@@ -889,7 +889,7 @@ Content-Type: application/json;charset=UTF-8
 
 ---++++ Proxy Sqoop Job Submission
 
-You can submit a Workflow that contains a single Sqoop command without writing a workflow.xml. Any requred Jars or other
+You can submit a Workflow that contains a single Sqoop command without writing a workflow.xml. Any required Jars or other
  files must already exist in HDFS.
 
 The following properties are required:
@@ -981,7 +981,7 @@ Valid values for the 'action' parameter are 'start', 'suspend', 'resume', 'kill'
 
 Rerunning and changing a job require additional parameters, and are described below:
 
----+++++  Re-Runing a Workflow Job
+---+++++  Re-Running a Workflow Job
 
 A workflow job in =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun specifying a list
 of workflow nodes to skip during the rerun. All the nodes in the skip list must have complete its
@@ -1021,7 +1021,7 @@ Content-Type: application/xml;charset=UTF-8
 HTTP/1.1 200 OK
 </verbatim>
 
----+++++ Re-Runing a coordinator job
+---+++++ Re-Running a coordinator job
 
 A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinator actions
 to re-execute.
@@ -1036,7 +1036,7 @@ The =scope= of the rerun depends on the type:
 
 The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh an action's input and output events.
 
-The =nocleanp= paramter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun actions.
+The =nocleanup= parameter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun actions.
 
 *Request:*
 
@@ -1058,7 +1058,7 @@ PUT /oozie/v1/job/job-3?action=coord-rerun&type=date2009-02-01T00:10Z::2009-03-0
 HTTP/1.1 200 OK
 </verbatim>
 
----+++++ Re-Runing a bundle job
+---+++++ Re-Running a bundle job
 
 A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinators to
 re-execute.
@@ -1072,7 +1072,7 @@ by =::=. If empty or not included, Oozie will figure this out for you
 
 The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh the coordinator's input and output events.
 
-The =nocleanp= paramter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun coordinators.
+The =nocleanup= parameter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun coordinators.
 
 *Request:*
 
@@ -1340,7 +1340,7 @@ GET /oozie/v1/job/0000002-130507145349661-oozie-joe-W?show=info&offset=5&len=10
 </verbatim>
 Query parameters, =offset=, =length=, =filter= can be specified with a coordinator job to retrieve specific actions. 
 Query parameter, =order= with value "desc" can be used to retrieve the latest coordinator actions materialized instead of actions from @1.
-Query parameters =filter= can be used to retrieve coodinator actions matching specific status.
+Query parameters =filter= can be used to retrieve coordinator actions matching specific status.
 Default is offset=0, len=0 for v2/job (i.e., does not return any coordinator actions) and offset=0, len=1000 with v1/job and v0/job.
 So if you need actions to be returned with v2 API, specifying =len= parameter is necessary.
 Default =order= is "asc".
@@ -1351,7 +1351,7 @@ Note that the filter is URL encoded, its decoded value is <code>status=KILLED</c
 <verbatim>
 GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&filter=status%21%3DSUCCEEDED&order=desc
 </verbatim>
-This retrives coordinator actions except for SUCCEEDED status, which is useful for debugging.
+This retrieves coordinator actions except for SUCCEEDED status, which is useful for debugging.
 
 ---++++ Job Application Definition
 
@@ -1390,7 +1390,7 @@ Content-Type: application/xml;charset=UTF-8
     ...
     </datasets>
     ...
-</cordinator-app>
+</coordinator-app>
 </verbatim>
 
 *Response for a bundle job:*
@@ -1651,7 +1651,7 @@ Additionally the =offset= and =len= parameters can be used for pagination. The s
 Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
 The valid values of job type are: =wf=, =coordinator= or =bundle=.
 
-startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format (*yyyy-MM-dd'T'HH:mm'Z'*) or a offset value in days or hours from the current time. for example, -2d means the current time - 2 days. -3h means the current time - 3 hours. -5m means the current time - 5 minutes
+startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format (*yyyy-MM-dd'T'HH:mm'Z'*) or a offset value in days or hours from the current time. For example, -2d means the current time - 2 days. -3h means the current time - 3 hours. -5m means the current time - 5 minutes
 
 ---++++ Bulk modify jobs
 
@@ -1890,7 +1890,7 @@ The Oozie Web Services API is a HTTP REST JSON API.
 
 All responses are in =UTF-8=.
 
-Assuming Oozie is runing at =OOZIE_URL=, the following web services end points are supported:
+Assuming Oozie is running at =OOZIE_URL=, the following web services end points are supported:
 
    * <OOZIE_URL>/versions
    * <OOZIE_URL>/v2/admin
@@ -1988,7 +1988,7 @@ Content-Type: application/json;charset=UTF-8
 A ignore request is done with an HTTP PUT request with a =ignore=
 
 The =type= parameter supports =action= only.
-The =scope= parameter can contain coodinator action id(s) to be ignored.
+The =scope= parameter can contain coordinator action id(s) to be ignored.
 Multiple action ids can be passed to the =scope= parameter
 
 *Request:*

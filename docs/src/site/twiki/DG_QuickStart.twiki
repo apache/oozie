@@ -212,7 +212,7 @@ The Java 1.6+ =bin= directory should be in the command path.
 
 Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
 
-Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
+Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a full reference of the =oozie=
 command line tool.
 
 NOTE: The Oozie server installation includes the Oozie client. The Oozie client should be installed in remote machines

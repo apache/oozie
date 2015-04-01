@@ -72,10 +72,10 @@ Usage  : oozie-setup.sh <OPTIONS>"
                                                                FS_URI is the fs.default.name"
                                                                for hdfs uri; SHARED_LIBRARY, path to the"
                                                                Oozie sharelib to install, it can be a tarball"
-                                                               or an expanded version of it. If ommited,"
+                                                               or an expanded version of it. If omitted,"
                                                                the Oozie sharelib tarball from the Oozie"
                                                                installation directory will be used)"
-                                                               (action failes if sharelib is already installed"
+                                                               (action fails if sharelib is already installed"
                                                                in HDFS)"
          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated][use create command to create new version]
                                                                  upgrade existing sharelib, fails if there"
@@ -117,7 +117,7 @@ After the Hadoop JARs and the ExtJS library has been added to the =oozie.war= fi
 Delete any previous deployment of the =oozie.war= from the servlet container (if using Tomcat, delete
 =oozie.war= and =oozie= directory from Tomcat's =webapps/= directory)
 
-Deploy the prepared =oozie.war= file (the one that contains the Hadoop JARs adn the ExtJS library) in the
+Deploy the prepared =oozie.war= file (the one that contains the Hadoop JARs and the ExtJS library) in the
 servlet container (if using Tomcat, copy the prepared =oozie.war= file to Tomcat's =webapps/= directory).
 
 *IMPORTANT:* Only one Oozie instance can be deployed per Tomcat instance.
@@ -130,12 +130,12 @@ By default, Oozie is configured to use Embedded Derby.
 
 Oozie bundles the JDBC drivers for HSQL, Embedded Derby and PostgreSQL.
 
-HSQL is normally used for testcases as it is an in-memory database and all data is lost everytime Oozie is stopped.
+HSQL is normally used for test cases as it is an in-memory database and all data is lost every time Oozie is stopped.
 
 If using Derby, MySQL, Oracle, PostgreSQL, or SQL Server, the Oozie database schema must be created using the =ooziedb.sh= command
 line tool.
 
-If using MySQL, Oracle, or SQL Server, the corresponding JDBC driver JAR file mut be copied to Oozie's =libext/= directory and
+If using MySQL, Oracle, or SQL Server, the corresponding JDBC driver JAR file must be copied to Oozie's =libext/= directory and
 it must be added to Oozie WAR file using the =bin/addtowar.sh= or the =oozie-setup.sh= scripts using the =-jars= option.
 
 *IMPORTANT:* It is recommended to set the database's timezone to GMT (consult your database's documentation on how to do this).
@@ -197,7 +197,7 @@ the =ooziedb.sh= command line tool.
 NOTE: If instead using the '-run' option, the '-sqlfile <FILE>' option is used, then all the
 database changes will be written to the specified file and the database won't be modified.
 
-If using HSQL there is no need to use the =ooziedb= command line tool as HSQL is an im-memory database. Use the
+If using HSQL there is no need to use the =ooziedb= command line tool as HSQL is an in-memory database. Use the
 following configuration properties in the oozie-site.xml:
 
 <verbatim>
@@ -246,7 +246,7 @@ Oozie logs in 4 different files:
 
    * oozie.log: web services log streaming works from this log
    * oozie-ops.log: messages for Admin/Operations to monitor
-   * oozie-instrumentation.log: intrumentation data, every 60 seconds (configurable)
+   * oozie-instrumentation.log: instrumentation data, every 60 seconds (configurable)
    * oozie-audit.log: audit messages, workflow jobs changes
 
 The embedded Tomcat and embedded Derby log files are also written to Oozie's =logs/= directory.
@@ -266,9 +266,9 @@ The =user.name= parameter value is taken from the client process Java System pro
 Kerberos HTTP SPNEGO authentication requires the user to perform a Kerberos HTTP SPNEGO authentication sequence.
 
 If Pseudo/simple or Kerberos HTTP SPNEGO authentication mechanisms are used, Oozie will return the user an
-authentication token HTTP Cookie that can be used in later requests as identy proof.
+authentication token HTTP Cookie that can be used in later requests as identity proof.
 
-Oozie uses Apache Hadoop-Auth (Java HTTP SPENGO) library for authentication.
+Oozie uses Apache Hadoop-Auth (Java HTTP SPNEGO) library for authentication.
 This library can be extended to support other authentication mechanisms.
 
 Oozie user authentication is configured using the following configuration properties (default values shown):
@@ -293,7 +293,7 @@ The =signature.secret= is the signature secret for signing the authentication to
 case Oozie will randomly generate one on startup.
 
 The =oozie.authentication.cookie.domain= The domain to use for the HTTP cookie that stores the
-authentication token. In order to authentiation to work correctly across all Hadoop nodes web-consoles
+authentication token. In order to authentication to work correctly across all Hadoop nodes web-consoles
 the domain must be correctly set.
 
 The =simple.anonymous.allowed= indicates if anonymous requests are allowed. This setting is meaningful
@@ -349,7 +349,7 @@ Because proxyuser is a powerful capability, Oozie provides the following restric
 
    * Proxyuser is an explicit configuration on per proxyuser user basis.
    * A proxyuser user can be restricted to impersonate other users from a set of hosts.
-   * A proxyser user can be restricted to impersonate users belonging to a set of groups.
+   * A proxyuser user can be restricted to impersonate users belonging to a set of groups.
 
 There are 2 configuration properties needed to set up a proxyuser:
 
@@ -945,7 +945,7 @@ additional calls to the KDC to authenticate users to the Oozie server (because t
 servers, which will cause a fallback to Kerberos).
 
 4. If you'd like to use HTTPS (SSL) with Oozie HA, there's some additional considerations that need to be made.
-See the [[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Seeting Up Oozie with HTTPS (SSL)]] section for more information.
+See the [[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Setting Up Oozie with HTTPS (SSL)]] section for more information.
 
 ---++++ JobId sequence
 Oozie in HA mode, uses ZK to generate job id sequence. Job Ids are of following format.
@@ -972,7 +972,7 @@ Use the standard Tomcat commands to start and stop Oozie.
 
 Copy and expand the =oozie-client= TAR.GZ file bundled with the distribution. Add the =bin/= directory to the =PATH=.
 
-Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a a full reference of the =oozie=
+Refer to the [[DG_CommandLineTool][Command Line Interface Utilities]] document for a full reference of the =oozie=
 command line tool.
 
 ---++ Oozie Share Lib
@@ -1022,7 +1022,7 @@ action and value is a comma separated list of DFS directories or jar files.
 
 By default Oozie runs coordinator and bundle jobs using =UTC= timezone for datetime values specified in the application
 XML and in the job parameter properties. This includes coordinator applications start and end times of jobs, coordinator
-datasets initial-instance, bundle applications kick-offtimes. In addition, coordinator dataset instance URI templates
+datasets initial-instance, and bundle applications kickoff times. In addition, coordinator dataset instance URI templates
 will be resolved using datetime values of the Oozie processing timezone.
 
 It is possible to set the Oozie processing timezone to a timezone that is an offset of UTC, alternate timezones must
@@ -1044,8 +1044,8 @@ be expressed in the corresponding timezone, for example =2012-08-08T12:42+0530=.
 
 *NOTE:* It is strongly encouraged to use =UTC=, the default Oozie processing timezone.
 
-For more details on using an alternate Oozie processing timezone, please reffer to the
-[[CoordinatorFunctionalSpec#datetime][Coordinator Fuctional Specification, section '4. Datetime']]
+For more details on using an alternate Oozie processing timezone, please refer to the
+[[CoordinatorFunctionalSpec#datetime][Coordinator Functional Specification, section '4. Datetime']]
 
 #UberJar
 ---++ MapReduce Workflow Uber Jars

@@ -114,7 +114,7 @@ expressions.
     ...
     <action name="my-hive2-action">
         <hive2 xmlns="uri:oozie:hive2-action:0.1">
-            <job-traker>foo:8021</job-tracker>
+            <job-tracker>foo:8021</job-tracker>
             <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>

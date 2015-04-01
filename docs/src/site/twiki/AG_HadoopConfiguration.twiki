@@ -30,7 +30,7 @@ Oozie supports whitelisting Hadoop services (JobTracker, HDFS), via 2 configurat
 The value must follow the pattern =[AUTHORITY,...]=. Where =AUTHORITY= is the =HOST:PORT= of
 the Hadoop service (JobTracker, HDFS).
 
-If the value is empty any HOST:PORT is accepted. Emtpy is the default value.
+If the value is empty any HOST:PORT is accepted. Empty is the default value.
 
 ---++ Hadoop Default Configuration Values
 
@@ -38,7 +38,7 @@ Oozie supports Hadoop configuration equivalent to the Hadoop =*-site.xml= files.
 
 The configuration property in the =oozie-site.xml= is =oozie.service.HadoopAccessorService.hadoop.configurations=
 and its value must follow the pattern =[<AUTHORITY>=<HADOOP_CONF_DIR>,]*=. Where =<AUTHORITY>= is the =HOST:PORT= of
-the Hadoop service (JobTracker, HDFS). The =<HADOO_CONF_DIR>= is a Hadoop configuration directory. If the specified
+the Hadoop service (JobTracker, HDFS). The =<HADOOP_CONF_DIR>= is a Hadoop configuration directory. If the specified
  directory is a relative path, it will be looked under the Oozie configuration directory. And absolute path can
  also be specified. Oozie will load the Hadoop =*-site.xml= files in the following order: core-site.xml, hdfs-site.xml,
  mapred-site.xml, yarn-site.xml, hadoop-site.xml, ssl-client.xml.

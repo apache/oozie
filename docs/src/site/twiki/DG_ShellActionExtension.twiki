@@ -105,15 +105,15 @@ using one or more =argument= element.
 The =argument= element, if present, contains argument to be passed to
 the Shell command.
 
-The =env-var= element, if present, contains the environemnt to be passed
+The =env-var= element, if present, contains the environment to be passed
 to the Shell command. =env-var= should contain only one pair of environment variable
 and value. If the pair contains the variable such as $PATH, it should follow the
 Unix convention such as PATH=$PATH:mypath. Don't use ${PATH} which will be
-substitued by Oozie's EL evaluator.
+substituted by Oozie's EL evaluator.
 
 A =shell= action creates a Hadoop configuration. The Hadoop configuration is made available as a local file to the
 Shell application in its running directory. The exact file path is exposed to the spawned shell using the environment
-variable called =OOZIE_ACTION_CONF_XML=.The Shell application can access the environemnt variable to read the action
+variable called =OOZIE_ACTION_CONF_XML=.The Shell application can access the environment variable to read the action
 configuration XML file path.
  
 If the =capture-output= element is present, it indicates Oozie to capture output of the STDOUT of the shell command

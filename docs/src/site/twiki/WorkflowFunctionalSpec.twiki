@@ -372,7 +372,7 @@ boolean value, =true= or =false=. For example:
 
 The =name= attribute in the =decision= node is the name of the decision node.
 
-Each =case= elements contains a predicate an a transition name. The predicate ELs are evaluated
+Each =case= elements contains a predicate and a transition name. The predicate ELs are evaluated
 in order until one returns =true= and the corresponding transition is taken.
 
 The =default= element indicates the transition to take if none of the predicates evaluates
@@ -390,9 +390,8 @@ state if none of the predicates evaluates to true.
         <switch>
             <case to="reconsolidatejob">
               ${fs:fileSize(secondjobOutputDir) gt 10 * GB}
-            </case>
-            <case to="rexpandjob">
-              ${fs:filSize(secondjobOutputDir) lt 100 * MB}
+            </case> <case to="rexpandjob">
+              ${fs:fileSize(secondjobOutputDir) lt 100 * MB}
             </case>
             <case to="recomputejob">
               ${ hadoop:counters('secondjob')[RECORDS][REDUCE_OUT] lt 1000000 }
@@ -603,7 +602,7 @@ MapReduce action, if you're more familiar with MapReduce's Java API, if there's 
 configuration that's difficult to do in straight XML (e.g. Avro).
 
 Create a class that implements the org.apache.oozie.action.hadoop.OozieActionConfigurator interface from the "oozie-sharelib-oozie"
-artifact.  It contains a single method that recieves a =JobConf= as an argument.  Any configuration properties set on this =JobConf=
+artifact.  It contains a single method that receives a =JobConf= as an argument.  Any configuration properties set on this =JobConf=
 will be used by the MapReduce action.
 
 The OozieActionConfigurator has this signature:
@@ -789,7 +788,7 @@ Properties specified in the =config-class= class override properties specified i
 
 External Stats can be turned on/off by specifying the property _oozie.action.external.stats.write_ as _true_ or _false_ in the configuration element of workflow.xml. The default value for this property is _false_.
 
-The =file= element, if present, must specify the target sybolic link for binaries by separating the original file and target with a # (file#target-sym-link). This is not required for libraries.
+The =file= element, if present, must specify the target symbolic link for binaries by separating the original file and target with a # (file#target-sym-link). This is not required for libraries.
 
 The =mapper= and =reducer= process for streaming jobs, should specify the executable command with URL encoding. e.g. '%' should be replaced by '%25'.
 
@@ -1835,8 +1834,8 @@ executed or it has not completed yet.
 
 *String wf:lastErrorNode()*
 
-It returns the name of the last workflow action node that exit with an =ERROR= exit state, or an empty string if no a
-ction has exited with =ERROR= state in the current workflow job.
+It returns the name of the last workflow action node that exit with an =ERROR= exit state, or an empty string if no
+action has exited with =ERROR= state in the current workflow job.
 
 *String wf:errorCode(String node)*
 
@@ -1870,7 +1869,7 @@ completed yet.
 
 *int wf:actionTrackerUri(String node)*
 
-It returns the tracker URIfor an action node, or an empty string if the action has not being executed or it has not
+It returns the tracker URI for an action node, or an empty string if the action has not being executed or it has not
 completed yet.
 
 *int wf:actionExternalStatus(String node)*
@@ -2384,7 +2383,7 @@ request to Oozie the workflow job ends reaching the =KILLED= final state.
 #JobReRun
 ---++ 10 Workflow Jobs Recovery (re-run)
 
-Oozie must provide a mechanism by which a a failed workflow job can be resubmitted and executed starting after any
+Oozie must provide a mechanism by which a failed workflow job can be resubmitted and executed starting after any
 action node that has completed its execution in the prior run. This is specially useful when the already executed
 action of a workflow job are too expensive to be re-executed.
 
@@ -2402,7 +2401,7 @@ The recovery workflow job will run under the same workflow job ID as the origina
 To submit a recovery workflow job the target workflow job to recover must be in an end state (=SUCCEEDED=, =FAILED=
 or =KILLED=).
 
-A recovery run could be done using a new worklfow application path under certain constraints (see next paragraph).
+A recovery run could be done using a new workflow application path under certain constraints (see next paragraph).
 This is to allow users to do a one off patch for the workflow application without affecting other running jobs for the
 same application.
 
@@ -2488,7 +2487,7 @@ A workflow job can use the system share library by setting the job property =ooz
 ---+++ 17.1 Action Share Library Override (since Oozie 3.3)
 
 Oozie share libraries are organized per action type, for example Pig action share library directory is =share/lib/pig/=
-and Mapreduce Streaming share library direcotry is =share/library/mapreduce-streaming/=.
+and Mapreduce Streaming share library directory is =share/library/mapreduce-streaming/=.
 
 Oozie bundles a share library for specific versions of streaming, pig, hive, sqoop, distcp actions. These versions
 of streaming, pig, hive, sqoop and distcp have been tested and verified to work correctly with the version of Oozie
@@ -2498,8 +2497,8 @@ actions (since Oozie 4.x).
 In addition, Oozie provides a mechanism to override the action share library JARs to allow using an alternate version
 of of the action JARs.
 
-This mechanism enables Oozie administrators to patch share library JARs, to include alternate versios of the share
-libraries, to provide acess to more than one version at the same time.
+This mechanism enables Oozie administrators to patch share library JARs, to include alternate versions of the share
+libraries, to provide access to more than one version at the same time.
 
 The share library override is supported at server level and at job level. The share library directory names are resolved
 using the following precedence order:
@@ -2530,7 +2529,7 @@ Oozie adminstrator can allow more error codes to be handled for User-Retry. By a
 =oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext= to =oozie.site.xml=
 and error codes as value, these error codes will be considered as User-Retry after system restart.
 
-Examples of User-Retry in a workflow aciton is :
+Examples of User-Retry in a workflow action is :
 
 <verbatim>
 <workflow-app xmlns="uri:oozie:workflow:0.3" name="wf-name">

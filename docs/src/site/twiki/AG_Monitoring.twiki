@@ -35,10 +35,10 @@ Instrumentation data includes variables, samplers, timers and counters.
 
    * logging
       * config.file: Log4j '.properties' configuration file.
-      * from.classpath: whether the config file has been read from the claspath or from the config directory.
-      * reload.interval: interval at which the config file will be realoded. 0 if the config file will never be reloaded, when loaded from the classpath is never reloaded.
+      * from.classpath: whether the config file has been read from the classpath or from the config directory.
+      * reload.interval: interval at which the config file will be reloaded. 0 if the config file will never be reloaded, when loaded from the classpath is never reloaded.
 
----+++ Samplers - Poll data at a fixed interval (default 1 sec) and report an average utlization over a longer period of time (default 60 seconds).
+---+++ Samplers - Poll data at a fixed interval (default 1 sec) and report an average utilization over a longer period of time (default 60 seconds).
 
 Poll for data over fixed interval and generate an average over the time interval. Unless specified, all samplers in
 Oozie work on a 1 minute interval.
@@ -59,7 +59,7 @@ Oozie work on a 1 minute interval.
       * requests
       * version
 
----+++ Counters - Maintain statistics about the number of times an event has occured, for the running Oozie instance. The values are reset if the Oozie instance is restarted.
+---+++ Counters - Maintain statistics about the number of times an event has occurred, for the running Oozie instance. The values are reset if the Oozie instance is restarted.
 
    * action.executors - Counters related to actions.
       * [action_type]#action.[operation_performed] (start, end, check, kill)

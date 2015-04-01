@@ -33,7 +33,7 @@ The examples assume the JobTracker is =localhost:8021= and the NameNode is =hdfs
 values are different, the job properties files in the examples directory must be edited to the correct values.
 
 The example applications are under the examples/app directory, one directory per example. The directory contains the
-application XML file (workflow, or worklfow and coordinator), the =job.properties= file to submit the job and any JAR
+application XML file (workflow, or workflow and coordinator), the =job.properties= file to submit the job and any JAR
 files the example may need.
 
 The inputs for all examples are in the =examples/input-data/= directory.
@@ -123,7 +123,7 @@ import java.util.Properties;
         Thread.sleep(10 * 1000);
     }
 .
-    // print the final status o the workflow job
+    // print the final status of the workflow job
     System.out.println("Workflow job completed ...");
     System.out.println(wf.getJobInfo(jobId));
     ...
@@ -174,7 +174,7 @@ import java.util.Properties;
         Thread.sleep(10 * 1000);
     }
 .
-    // print the final status o the workflow job
+    // print the final status of the workflow job
     System.out.println("Workflow job completed ...");
     System.out.println(wf.getJobInfo(jobId));
 .

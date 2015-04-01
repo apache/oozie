@@ -55,7 +55,7 @@ job does not end successfully e.g. goes to error state - Failed/Killed/Error/Tim
 ---++ Configuring SLA in Applications
 
 To make your jobs trackable for SLA, you simply need to add the =<sla:info>= tag to your workflow application definition.
-If you were already using the existing SLA schema in your workflows (Schema xmlns:sla="uri:oozie:sla:0.1"), you dont need to
+If you were already using the existing SLA schema in your workflows (Schema xmlns:sla="uri:oozie:sla:0.1"), you don't need to
 do anything extra to receive SLA notifications via JMS messages. This new SLA monitoring framework is backward-compatible -
 no need to change application XML for now and you can continue to fetch old records via the [[DG_CommandLineTool#SLAOperations][command line API]].
 However, usage of old schema and API is deprecated and we strongly recommend using new schema.
@@ -106,7 +106,7 @@ This new schema is much more compact and meaningful, getting rid of redundant an
    * ==should-start==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *start running* to meet SLA. This is optional.
    * ==should-end==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *finish* to meet SLA.
    * ==max-duration==: This is the maximum amount of time (along with time-unit - MINUTES, HOURS, DAYS) your job is expected to run. This is optional.
-   * ==alert-events==: Specify the types of events for which *Email* alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not neccessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
+   * ==alert-events==: Specify the types of events for which *Email* alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not necessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
    * ==alert-contact==: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
 
 NOTE: All tags can be parameterized.
