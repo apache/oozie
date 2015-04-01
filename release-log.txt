@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2146 Add option to filter sla information by bundle id or name (ryota)
 OOZIE-2188 Fix typos in twiki documentation ( jacobtolar via puru)
 OOZIE-2174 Add missing admin commands to OozieClient and OozieCLI (rkanter)
 OOZIE-2186 Upgrade Tomcat to 6.0.43 (rkanter)

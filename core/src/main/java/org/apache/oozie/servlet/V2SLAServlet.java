@@ -25,10 +25,16 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
@@ -57,13 +64,17 @@ public class V2SLAServlet extends SLAServlet {
     private static final String INSTRUMENTATION_NAME = "v2sla";
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
     private static final Set<String> SLA_FILTER_NAMES = new HashSet<String>();
+    private Pattern p = Pattern.compile("\\d{7}-\\d{15}-.*-B$");
 
     static {
         SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_ID);
         SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_PARENT_ID);
+        SLA_FILTER_NAMES.add(OozieClient.FILTER_BUNDLE);
         SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_APPNAME);
         SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_NOMINAL_START);
         SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_NOMINAL_END);
+        SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_EVENT_STATUS);
+        SLA_FILTER_NAMES.add(OozieClient.FILTER_SLA_STATUS);
     }
 
     static {
@@ -121,11 +132,43 @@ public class V2SLAServlet extends SLAServlet {
         try {
             Map<String, List<String>> filterList = parseFilter(URLDecoder.decode(filterString, "UTF-8"), SLA_FILTER_NAMES);
             SLASummaryFilter filter = new SLASummaryFilter();
+
+            if (!filterList.containsKey(OozieClient.FILTER_SLA_APPNAME)
+                    && !filterList.containsKey(OozieClient.FILTER_SLA_ID)
+                    && !filterList.containsKey(OozieClient.FILTER_SLA_PARENT_ID)
+                    && !filterList.containsKey(OozieClient.FILTER_BUNDLE)
+                    && !filterList.containsKey(OozieClient.FILTER_SLA_NOMINAL_START)
+                    && !filterList.containsKey(OozieClient.FILTER_SLA_NOMINAL_END)) {
+                StringBuffer st = new StringBuffer();
+                st.append("At least one of the filter parameters - ").append(OozieClient.FILTER_SLA_APPNAME)
+                        .append(",").append(OozieClient.FILTER_SLA_ID).append(",")
+                        .append(OozieClient.FILTER_SLA_PARENT_ID).append(",").append(OozieClient.FILTER_BUNDLE)
+                        .append(",").append(OozieClient.FILTER_SLA_NOMINAL_START).append(" or ")
+                        .append(OozieClient.FILTER_SLA_NOMINAL_END)
+                        .append(" should be specified in the filter query parameter");
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0305, st.toString());
+            }
+
             if (filterList.containsKey(OozieClient.FILTER_SLA_ID)) {
                 filter.setJobId(filterList.get(OozieClient.FILTER_SLA_ID).get(0));
             }
             if (filterList.containsKey(OozieClient.FILTER_SLA_PARENT_ID)) {
                 filter.setParentId(filterList.get(OozieClient.FILTER_SLA_PARENT_ID).get(0));
+            }
+            if (filterList.containsKey(OozieClient.FILTER_BUNDLE)) {
+                String bundle = filterList.get(OozieClient.FILTER_BUNDLE).get(0);
+                if (isBundleId(bundle)) {
+                    filter.setBundleId(bundle);
+                }
+                else {
+                    filter.setBundleName(bundle);
+                }
+            }
+            if (filterList.containsKey(OozieClient.FILTER_SLA_EVENT_STATUS)) {
+                filter.setEventStatus(filterList.get(OozieClient.FILTER_SLA_EVENT_STATUS).get(0));
+            }
+            if (filterList.containsKey(OozieClient.FILTER_SLA_STATUS)) {
+                filter.setSLAStatus(filterList.get(OozieClient.FILTER_SLA_STATUS).get(0));
             }
             if (filterList.containsKey(OozieClient.FILTER_SLA_APPNAME)) {
                 filter.setAppName(filterList.get(OozieClient.FILTER_SLA_APPNAME).get(0));
@@ -135,13 +178,6 @@ public class V2SLAServlet extends SLAServlet {
             }
             if (filterList.containsKey(OozieClient.FILTER_SLA_NOMINAL_END)) {
                 filter.setNominalEnd(DateUtils.parseDateUTC(filterList.get(OozieClient.FILTER_SLA_NOMINAL_END).get(0)));
-            }
-
-            if (filter.getAppName() == null && filter.getJobId() == null && filter.getParentId() == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0305,
-                        "At least one of the filter parameters - " + OozieClient.FILTER_SLA_ID + ","
-                                + OozieClient.FILTER_SLA_PARENT_ID + " or " + OozieClient.FILTER_SLA_APPNAME
-                                + " should be specified in the filter query parameter");
             }
 
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -181,4 +217,12 @@ public class V2SLAServlet extends SLAServlet {
 
     }
 
+    private boolean isBundleId(String id) {
+        boolean ret = false;
+        Matcher m = p.matcher(id);
+        if (m.matches()) {
+            return true;
+        }
+        return ret;
+    }
 }

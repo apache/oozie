@@ -170,12 +170,16 @@ public interface JsonTags {
     public static final String SLA_SUMMARY_NOMINAL_TIME = "nominalTime";
     public static final String SLA_SUMMARY_EXPECTED_START = "expectedStart";
     public static final String SLA_SUMMARY_ACTUAL_START = "actualStart";
+    public static final String SLA_SUMMARY_START_DELAY = "startDelay";
     public static final String SLA_SUMMARY_EXPECTED_END = "expectedEnd";
     public static final String SLA_SUMMARY_ACTUAL_END = "actualEnd";
+    public static final String SLA_SUMMARY_END_DELAY = "endDelay";
     public static final String SLA_SUMMARY_EXPECTED_DURATION = "expectedDuration";
     public static final String SLA_SUMMARY_ACTUAL_DURATION = "actualDuration";
+    public static final String SLA_SUMMARY_DURATION_DELAY = "durationDelay";
     public static final String SLA_SUMMARY_JOB_STATUS = "jobStatus";
     public static final String SLA_SUMMARY_SLA_STATUS = "slaStatus";
+    public static final String SLA_SUMMARY_EVENT_STATUS = "eventStatus";
     public static final String SLA_SUMMARY_LAST_MODIFIED = "lastModified";
     public static final String SLA_ALERT_STATUS = "slaAlertStatus";
 

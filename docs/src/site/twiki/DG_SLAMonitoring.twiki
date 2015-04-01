@@ -165,6 +165,12 @@ In the REST API, the following filters can be applied while fetching SLA informa
    * id  - id of the workflow job, workflow action or coordinator action
    * parent_id - Parent id of the workflow job, workflow action or coordinator action
    * nominal_start and nominal_end - Start and End range for nominal time of the workflow or coordinator.
+   * bundle -  Bundle Job ID or Bundle App Name. Fetches SLA information for actions of all coordinators in that bundle.
+   * event_status - event stauts such as START_MET/START_MISS/DURATION_MET/DURATION_MISS/END_MET/END_MISS
+   * sla_status - sla status such as NOT_STARTED/IN_PROCESS/MET/MISS
+
+multiple event_status and sla_status can be specified with comma separation. When multiple statuses are specified, they are considered as OR.
+For example, event_status=START_MET;END_MISS list the coordinator actions where event status is either START_MET OR END_MISS.
 
 When timezone query parameter is specified, the expected and actual start/end time returned is formatted. If not specified,
 the number of milliseconds that have elapsed since January 1, 1970 00:00:00.000 GMT is returned.
@@ -187,7 +193,7 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-1
     msgType : "SLA"
     appName : "my-sla-app"
     slaStatus : "IN_PROCESS"
-    eventStatus : "START_MISS"
+    jobStatus : "RUNNING"
     user: "joe"
     nominalTime: "2013-16-22T05:00Z"
     expectedStartTime: "2013-16-22T05:10Z" <-- (should start by this time)
@@ -218,7 +224,7 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=parent_id=000056-123879
     msgType : "SLA"
     appName : "map-reduce-action"
     slaStatus : "MISS"
-    eventStatus : "END_MISS"
+    jobStatus : "SUCCEEDED"
     user: "joe"
     nominalTime: "2013-16-22T05:00Z"
     expectedStartTime: "2013-16-22T05:10Z"
@@ -249,7 +255,7 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=id=000001-1238791320234
     msgType : "SLA"
     appName : "my-coord-app"
     slaStatus : "MET"
-    eventStatus : "DURATION_MISS"
+    jobStatus : "SUCCEEDED"
     user: "joe"
     nominalTime: "2013-16-22T05:00Z"
     expectedStartTime: "2013-16-22T05:10Z"
@@ -266,6 +272,59 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=id=000001-1238791320234
 
 Scenario #3 is particularly interesting because it is an overall "MET" because it met its expected End-time,
 but it is "Duration_Miss" because the actual run (between actual start and actual end) exceeded expected duration.
+
+---+++ Scenario 4: All Coordinator actions in a Bundle
+*Request:*
+<verbatim>
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-150130225116604-oozie-B;event_status=END_MISS
+</verbatim>
+
+*JSON Response*
+<verbatim>
+{
+    id : "000001-1238791320234-oozie-joe-C@1"
+    parentId : "000001-1238791320234-oozie-joe-C"
+    appType : "COORDINATOR_ACTION"
+    msgType : "SLA"
+    appName : "my-coord-app"
+    slaStatus : "MET"
+    eventStatus : "START_MET,DURATION_MISS,END_MISS"
+    user: "joe"
+    nominalTime: "2014-01-10T12:00Z"
+    expectedStartTime: "2014-01-10T12:00Z"
+    actualStartTime: "2014-01-10T11:59Z"
+    startDelay: -1
+    expectedEndTime: "2014-01-10T13:00Z"
+    actualEndTime: "2014-01-10T13:05Z"
+    endDelay: 5
+    expectedDuration: 60
+    actualDuration: 66
+    durationDelay: 6
+}
+{
+    id : "000001-1238791320234-oozie-joe-C@2"
+    parentId : "000001-1238791320234-oozie-joe-C"
+    appType : "COORDINATOR_ACTION"
+    msgType : "SLA"
+    appName : "my-coord-app"
+    slaStatus : "MET"
+    eventStatus : "START_MISS,DURATION_MET,END_MISS"
+    user: "joe"
+    nominalTime: "2014-01-11T12:00Z"
+    expectedStartTime: "2014-01-11T12:00Z"
+    actualStartTime: "2014-01-11T12:05Z"
+    startDelay: 5
+    expectedEndTime: "2014-01-11T13:00Z"
+    actualEndTime: "2014-01-11T13:01Z"
+    endDelay: 1
+    expectedDuration: 60
+    actualDuration: 56
+    durationDelay: -4
+}
+</verbatim>
+
+Scenario #4 (All Coordinator actions in a Bundle) is to get SLA information of all coordinator actions under bundle job in one call.
+startDelay/durationDelay/endDelay values returned indicate how much delay compared to expected time (positive values in case of MISS, and negative values in case of MET).
 
 ---+++ Sample Email Alert
 <verbatim>

@@ -20,6 +20,7 @@ package org.apache.oozie.sla;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,7 @@ import javax.persistence.Table;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonUtils;
@@ -361,10 +363,25 @@ public class SLASummaryBean implements JsonBean {
         this.lastModifiedTS = DateUtils.convertDateToTimestamp(lastModified);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public JSONObject toJSONObject() {
+        return toJSONObject(null);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSONObject(String timeZoneId) {
         JSONObject json = new JSONObject();
+        Map<EventStatus,Long> eventMap = calculateEventStatus();
+        StringBuilder eventStatusStr = new StringBuilder();
+        boolean first = true;
+        for(EventStatus e: eventMap.keySet()) {
+            if(!first) {
+                eventStatusStr.append(",");
+            }
+            eventStatusStr.append(e.toString());
+            first = false;
+        }
         json.put(JsonTags.SLA_SUMMARY_ID, jobId);
         if (parentId != null) {
             json.put(JsonTags.SLA_SUMMARY_PARENT_ID, parentId);
@@ -372,79 +389,127 @@ public class SLASummaryBean implements JsonBean {
         json.put(JsonTags.SLA_SUMMARY_APP_NAME, appName);
         json.put(JsonTags.SLA_SUMMARY_APP_TYPE, appType);
         json.put(JsonTags.SLA_SUMMARY_USER, user);
-        json.put(JsonTags.SLA_SUMMARY_NOMINAL_TIME, nominalTimeTS.getTime());
+        json.put(JsonTags.SLA_SUMMARY_NOMINAL_TIME, getTimeOnTimeZone(nominalTimeTS, timeZoneId));
         if (expectedStartTS != null) {
-            json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, expectedStartTS.getTime());
-        }
-        else {
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, getTimeOnTimeZone(expectedStartTS, timeZoneId));
+        } else {
             json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, null);
         }
+
         if (actualStartTS != null) {
-            json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, actualStartTS.getTime());
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, getTimeOnTimeZone(actualStartTS, timeZoneId));
         }
         else {
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, null);
         }
-        json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, expectedEndTS.getTime());
+        Long startDelay = eventMap.get(EventStatus.START_MET) != null ? eventMap.get(EventStatus.START_MET) : eventMap
+                .get(EventStatus.START_MISS);
+        if (startDelay != null) {
+            json.put(JsonTags.SLA_SUMMARY_START_DELAY, startDelay);
+        }
+        if (expectedEndTS != null ) {
+            json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, getTimeOnTimeZone(expectedEndTS,timeZoneId));
+        } else {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, null);
+        }
         if (actualEndTS != null) {
-            json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, actualEndTS.getTime());
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, getTimeOnTimeZone(actualEndTS,timeZoneId));
         }
         else {
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, null);
         }
+        Long endDelay = eventMap.get(EventStatus.END_MET) != null ? eventMap.get(EventStatus.END_MET) : eventMap
+                .get(EventStatus.END_MISS);
+        if (endDelay != null) {
+            json.put(JsonTags.SLA_SUMMARY_END_DELAY, endDelay);
+        }
         json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
-        json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
+        if (actualDuration == -1 && expectedDuration != -1 && actualStartTS != null) {
+            long currentDur = (new Date().getTime() - actualStartTS.getTime()) / (1000 * 60);
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, currentDur);
+        }
+        else {
+            json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
+        }
+        Long durationDelay = eventMap.get(EventStatus.DURATION_MET) != null ? eventMap.get(EventStatus.DURATION_MET)
+                : eventMap.get(EventStatus.DURATION_MISS);
+        if (durationDelay != null) {
+            json.put(JsonTags.SLA_SUMMARY_DURATION_DELAY, durationDelay);
+        }
         json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
         json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
-        json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, lastModifiedTS.getTime());
+        json.put(JsonTags.SLA_SUMMARY_EVENT_STATUS, eventStatusStr.toString());
+        json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, getTimeOnTimeZone(lastModifiedTS, timeZoneId));
         return json;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public JSONObject toJSONObject(String timeZoneId) {
-        if (timeZoneId == null) {
-            return toJSONObject();
+    private Object getTimeOnTimeZone(Timestamp ts, String timeZoneId) {
+        Object ret = null;
+        if(timeZoneId == null) {
+            ret = new Long(String.valueOf(ts.getTime()));
+        } else {
+            ret = JsonUtils.formatDateRfc822(ts, timeZoneId);
         }
-        else {
-            JSONObject json = new JSONObject();
-            json.put(JsonTags.SLA_SUMMARY_ID, jobId);
-            if (parentId != null) {
-                json.put(JsonTags.SLA_SUMMARY_PARENT_ID, parentId);
-            }
-            json.put(JsonTags.SLA_SUMMARY_APP_NAME, appName);
-            json.put(JsonTags.SLA_SUMMARY_APP_TYPE, appType);
-            json.put(JsonTags.SLA_SUMMARY_USER, user);
-            json.put(JsonTags.SLA_SUMMARY_NOMINAL_TIME, JsonUtils.formatDateRfc822(nominalTimeTS, timeZoneId));
-            if (expectedStartTS != null) {
-                json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, JsonUtils.formatDateRfc822(expectedStartTS, timeZoneId));
-            }
-            else {
-                json.put(JsonTags.SLA_SUMMARY_EXPECTED_START, null);
-            }
-            if (actualStartTS != null) {
-                json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, JsonUtils.formatDateRfc822(actualStartTS, timeZoneId));
-            }
-            else {
-                json.put(JsonTags.SLA_SUMMARY_ACTUAL_START, null);
-            }
-            json.put(JsonTags.SLA_SUMMARY_EXPECTED_END, JsonUtils.formatDateRfc822(expectedEndTS, timeZoneId));
-            if (actualEndTS != null) {
-                json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, JsonUtils.formatDateRfc822(actualEndTS, timeZoneId));
-            }
-            else {
-                json.put(JsonTags.SLA_SUMMARY_ACTUAL_END, null);
-            }
-            json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
-            json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, actualDuration);
-            json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
-            json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
-            json.put(JsonTags.SLA_SUMMARY_LAST_MODIFIED, JsonUtils.formatDateRfc822(lastModifiedTS, timeZoneId));
-
-            return json;
-        }
+        return ret;
     }
 
+    private Map<EventStatus, Long> calculateEventStatus() {
+        Map<EventStatus, Long> events = new HashMap<EventStatus, Long>();
+        if (expectedStartTS != null) {
+            if (actualStartTS != null) {
+                long diff = (actualStartTS.getTime() - expectedStartTS.getTime()) / (1000 * 60);
+                if (diff > 0) {
+                    events.put(EventStatus.START_MISS, diff);
+                }
+                else {
+                    events.put(EventStatus.START_MET, diff);
+                }
+            }
+            else {
+                long diff = (new Date().getTime() - expectedStartTS.getTime()) / (1000 * 60);
+                if (diff > 0) {
+                    events.put(EventStatus.START_MISS, diff);
+                }
+            }
+        }
+        if (expectedDuration != -1) {
+            if (actualDuration != -1) {
+                long diff = actualDuration - expectedDuration;
+                if (diff > 0) {
+                    events.put(EventStatus.DURATION_MISS, diff);
+                }
+                else {
+                    events.put(EventStatus.DURATION_MET, diff);
+                }
+            }
+            else {
+                if (actualStartTS != null) {
+                    long currentDur = (new Date().getTime() - actualStartTS.getTime()) / (1000 * 60);
+                    if (expectedDuration < currentDur) {
+                        events.put(EventStatus.DURATION_MISS, (currentDur - expectedDuration));
+                    }
+                }
+            }
+        }
+        if (expectedEndTS != null) {
+            if (actualEndTS != null) {
+                long diff = (actualEndTS.getTime() - expectedEndTS.getTime()) / (1000 * 60);
+                if (diff > 0) {
+                    events.put(EventStatus.END_MISS, diff);
+                }
+                else {
+                    events.put(EventStatus.END_MET, diff);
+                }
+            }
+            else {
+                long diff = (new Date().getTime() - expectedEndTS.getTime()) / (1000 * 60);
+                if (diff > 0) {
+                    events.put(EventStatus.END_MISS, diff);
+                }
+            }
+        }
+        return events;
+    }
     /**
      * Convert a sla summary list into a json object.
      *
@@ -475,8 +540,8 @@ public class SLASummaryBean implements JsonBean {
                 JSONObject slaJson = summary.toJSONObject(timeZoneId);
                 String slaAlertStatus = "";
                 if (slaConfigMap.containsKey(summary.getId())) {
-                    slaAlertStatus = slaConfigMap.get(summary.getId()).containsKey(
-                            OozieClient.SLA_DISABLE_ALERT) ? "Disabled" : "Enabled";
+                    slaAlertStatus = slaConfigMap.get(summary.getId()).containsKey(OozieClient.SLA_DISABLE_ALERT) ? "Disabled"
+                            : "Enabled";
                 }
                 slaJson.put(JsonTags.SLA_ALERT_STATUS, slaAlertStatus);
                 array.add(slaJson);
@@ -485,5 +550,4 @@ public class SLASummaryBean implements JsonBean {
         json.put(JsonTags.SLA_SUMMARY_LIST, array);
         return json;
     }
-
 }
