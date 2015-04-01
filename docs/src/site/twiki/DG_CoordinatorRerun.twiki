@@ -31,7 +31,7 @@ $oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh] [-failed] [-config <arg
    * If one of action in the given list of -action does not exist or not in terminal state, the rerun throws an error.
    * The dates specified in -date must be UTC.
    * Single date specified in -date must be able to find an action with matched nominal time to be effective.
-   * If -nocleanup is given, coordinator directories will not be removed; otherwise the 'output-event' will be deleted.
+   * If -nocleanup is given, coordinator directories will not be removed; otherwise the 'output-event' will be deleted, unless nocleanup attribute is explicitly set in coordinator.xml
    * If -refresh is set, new dataset is re-evaluated for latest() and future().
    * If -refresh is set, all dependencies will be re-checked; otherwise only missed dependencies will be checked.
    * If -failed is set, re-runs the failed workflow actions of the coordinator actions.

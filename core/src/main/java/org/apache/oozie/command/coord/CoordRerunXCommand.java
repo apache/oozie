@@ -147,7 +147,9 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element data : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
-                if (data.getChild("uris", data.getNamespace()) != null) {
+                String nocleanup = data.getAttributeValue("nocleanup");
+                if (data.getChild("uris", data.getNamespace()) != null
+                        && (nocleanup == null || !nocleanup.equals("true"))) {
                     String uris = data.getChild("uris", data.getNamespace()).getTextTrim();
                     if (uris != null) {
                         String[] uriArr = uris.split(CoordELFunctions.INSTANCE_SEPARATOR);

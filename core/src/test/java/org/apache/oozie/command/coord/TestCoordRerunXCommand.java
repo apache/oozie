@@ -19,6 +19,7 @@
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -585,6 +586,64 @@ public class TestCoordRerunXCommand extends XDataTestCase {
                 else {
                     fail("After refresh, latest() should get the inputDir:" + inputDir);
                 }*/
+    }
+
+    /**
+     * Test : nocleanup option in dataset
+     *
+     * @throws Exception
+     */
+    public void testCoordRerunCleanupOption() throws Exception {
+        final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
+        final int actionNum = 1;
+        final String actionId = jobId + "@" + actionNum;
+        CoordinatorStore store = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store.beginTrx();
+        try {
+            addRecordToJobTable(jobId, store, CoordinatorJob.Status.SUCCEEDED);
+            addRecordToActionTable(jobId, actionNum, actionId, store, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-rerun-action4.xml");
+            store.commitTrx();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not update db.");
+        }
+        finally {
+            store.closeTrx();
+        }
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String outputDir = appPath.toString() + "/coord-input/2009/12/14/11/00";
+        Path success = new Path(outputDir, "_SUCCESS");
+        FileSystem fs = getFileSystem();
+        fs.mkdirs(new Path(outputDir));
+        fs.create(success, true);
+        // before cleanup
+        assertTrue(fs.exists(success));
+        long beforeModifiedTime = fs.getFileStatus(success).getModificationTime();
+
+        final OozieClient coordClient = LocalOozie.getCoordClient();
+        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), false, false);
+
+        CoordinatorStore store2 = Services.get().get(StoreService.class).getStore(CoordinatorStore.class);
+        store2.beginTrx();
+        CoordinatorActionBean action2 = store2.getCoordinatorAction(actionId, false);
+        assertNotSame(action2.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        store2.commitTrx();
+        store2.closeTrx();
+
+        waitFor(120 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
+                return (bean.getStatus() == CoordinatorAction.Status.WAITING || bean.getStatus() == CoordinatorAction.Status.READY);
+            }
+        });
+
+        // after cleanup
+        assertTrue(fs.exists(success));
+        long afterModifiedTime = fs.getFileStatus(success).getModificationTime();
+        assertEquals(beforeModifiedTime, afterModifiedTime);
     }
 
     /**
