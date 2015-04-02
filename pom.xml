@@ -102,6 +102,7 @@
          <openjpa.version>2.2.2</openjpa.version>
          <xerces.version>2.10.0</xerces.version>
          <curator.version>2.5.0</curator.version>
+         <jackson.version>1.8.8</jackson.version>
     </properties>
 
     <modules>
@@ -302,13 +303,13 @@
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
-                <version>1.8.8</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-core-asl</artifactId>
-                <version>1.8.8</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <!-- core -->
@@ -1790,6 +1791,7 @@
                 <hadoop.majorversion>2</hadoop.majorversion>
                 <pig.classifier>h2</pig.classifier>
                 <sqoop.classifier>hadoop200</sqoop.classifier>
+                <jackson.version>1.9.13</jackson.version>
             </properties>
         </profile>
         <profile>
@@ -1802,6 +1804,7 @@
                 <hadoop.majorversion>3</hadoop.majorversion>
                 <pig.classifier>h2</pig.classifier>
                 <sqoop.classifier>hadoop200</sqoop.classifier>
+                <jackson.version>1.9.13</jackson.version>
             </properties>
         </profile>
         <profile>
