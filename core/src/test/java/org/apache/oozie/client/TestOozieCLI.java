@@ -1507,6 +1507,51 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testSlaEnable() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-slaenable", "aaa-C", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(MockCoordinatorEngineService.did, RestConstants.SLA_ENABLE_ALERT);
+                return null;
+            }
+        });
+
+    }
+
+    public void testSlaDisable() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-sladisable", "aaa-C", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(MockCoordinatorEngineService.did, RestConstants.SLA_DISABLE_ALERT);
+                return null;
+            }
+        });
+
+    }
+
+    public void testSlaChange() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-slachange", "aaa-C", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(MockCoordinatorEngineService.did, RestConstants.SLA_CHANGE);
+                return null;
+            }
+        });
+
+    }
+
     private String runOozieCLIAndGetStdout(String[] args) {
         PrintStream original = System.out;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

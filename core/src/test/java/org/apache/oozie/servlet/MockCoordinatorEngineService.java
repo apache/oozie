@@ -39,8 +39,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.coord.CoordUpdateXCommand;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.util.DateUtils;
 
@@ -270,6 +268,22 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
                 throws CoordinatorEngineException {
             did = RestConstants.JOBS;
             return new CoordinatorJobInfo(new ArrayList<CoordinatorJobBean>(), 0, 0, 0);
+        }
+
+        public void disableSLAAlert(String id, String actions, String dates, String childIds)
+                throws BaseEngineException {
+            did = RestConstants.SLA_DISABLE_ALERT;
+        }
+
+        @Override
+        public void changeSLA(String id, String actions, String dates, String childIds, String newParams)
+                throws BaseEngineException {
+            did = RestConstants.SLA_CHANGE;
+        }
+
+        @Override
+        public void enableSLAAlert(String id, String actions, String dates, String childIds) throws BaseEngineException {
+            did = RestConstants.SLA_ENABLE_ALERT;
         }
 
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {

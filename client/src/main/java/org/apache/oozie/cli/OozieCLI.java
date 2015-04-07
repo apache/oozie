@@ -151,9 +151,9 @@ public class OozieCLI {
 
     public static final String LIST_SHARELIB_LIB_OPTION = "shareliblist";
 
-    public static final String SLA_DISABLE_ALERT = "sla_disable";
-    public static final String SLA_ENABLE_ALERT = "sla_enable";
-    public static final String SLA_CHANGE = "sla_change";
+    public static final String SLA_DISABLE_ALERT = "sladisable";
+    public static final String SLA_ENABLE_ALERT = "slaenable";
+    public static final String SLA_CHANGE = "slachange";
 
     public static final String SERVER_CONFIGURATION_OPTION = "configuration";
     public static final String SERVER_OS_ENV_OPTION = "osenv";
