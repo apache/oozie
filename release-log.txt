@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2197 ooziedb.cmd command failed due to classpath being too long on windows (me.venkatr via bzhang)
 OOZIE-2182 SLA alert commands are not in sync with doc (puru)
 OOZIE-2191 Upgrade jackson version for hadoop-2 profile (ryota)
 OOZIE-2183 provide an option to disable cleanup for output dataset in rerun (ryota)

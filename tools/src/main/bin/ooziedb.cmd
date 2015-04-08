@@ -54,9 +54,9 @@ set OOZIEDB_OPTS=%OOZIEDB_OPTS% -Doozie.data.dir=%OOZIE_DATA%
 set OOZIECPPATH=.
 
 @rem Add libtools to the classpath
-for  %%i in (%BASEDIR%\libtools\*.jar) do set OOZIECPPATH=!OOZIECPPATH!;%%i
-@rem Add libext to the classpath
-for  %%i in (%BASEDIR%\libext\*.jar) do set OOZIECPPATH=!OOZIECPPATH!;%%i
+set OOZIECPPATH=%OOZIECPPATH%;%BASEDIR%\libtools\*
+@rem Add extra_libs to the classpath
+set OOZIECPPATH=%OOZIECPPATH%;%BASEDIR%\..\extra_libs\*
 
 @rem Set JAVA_BIN based on JAVA_HOME
 if "%JAVA_HOME%"=="" (
