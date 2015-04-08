@@ -21,6 +21,7 @@ package org.apache.oozie.servlet;
 import org.apache.hadoop.security.authentication.server.AuthenticationFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.Services;
+import org.apache.hadoop.security.SecurityUtil;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -32,6 +33,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.util.ZKUtils;
 
@@ -41,6 +44,7 @@ import org.apache.oozie.util.ZKUtils;
  */
 public class AuthFilter extends AuthenticationFilter {
     public static final String OOZIE_PREFIX = "oozie.authentication.";
+    private static final String KERBEROS_PRINCIPAL_CONFIG = "kerberos.principal";
 
     private HttpServlet optionsServlet;
     private ZKUtils zkUtils = null;
@@ -105,7 +109,19 @@ public class AuthFilter extends AuthenticationFilter {
             if (name.startsWith(OOZIE_PREFIX)) {
                 String value = conf.get(name);
                 name = name.substring(OOZIE_PREFIX.length());
-                props.setProperty(name, value);
+                if (name.equals(KERBEROS_PRINCIPAL_CONFIG)) {
+                    String hostName = "localhost";
+                    String principal = value;
+                    try {
+                        hostName = InetAddress.getLocalHost().getCanonicalHostName();
+                        principal = SecurityUtil.getServerPrincipal(value, hostName);
+                    } catch (IOException ioe) {
+                       // ignore.
+                    }
+                    props.setProperty(name, principal);
+                 } else {
+                    props.setProperty(name, value);
+                }
             }
         }
 
