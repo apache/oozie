@@ -23,18 +23,29 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BundleActionBean;
+import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleStartXCommand;
+import org.apache.oozie.command.bundle.BundleSubmitXCommand;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -278,11 +289,103 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
                 .getChildren("instance", namespace).get(0)).getText();
         assertEquals(text, "${coord:future(0, 1)}");
         new CoordActionsKillXCommand(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum)).call();
-        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), true,
-                true);
+        coordClient.reRunCoord(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, Integer.toString(actionNum), true, true);
         bean = coordClient.getCoordActionInfo(actionId);
         sleep(1000);
         assertEquals(bean.getMissingDependencies(), "!!${coord:future(0, 1)}");
+    }
+
+    public void testCoordFromBundleJobChangeConf() throws Exception {
+        final XConfiguration jobConf = new XConfiguration();
+        String coordJobId = setUpBundleAndGetCoordID(jobConf);
+
+        jobConf.set("newvalue", "yes");
+        CoordUpdateXCommand update = new CoordUpdateXCommand(false, jobConf, coordJobId);
+        update.call();
+        CoordinatorJobBean job = getCoordJobs(coordJobId);
+        Configuration xConf = new XConfiguration(new StringReader(job.getConf()));
+        assertEquals(xConf.get("newvalue"), "yes");
+        /*
+         * testProperty is part of bundle.xml <property> <name>testProperty</name> <value>abc</value> </property>
+         */
+        jobConf.set("testProperty", "xyz");
+        new CoordUpdateXCommand(false, jobConf, coordJobId).call();
+        job = getCoordJobs(coordJobId);
+        xConf = new XConfiguration(new StringReader(job.getConf()));
+        assertEquals(xConf.get("testProperty"), "xyz");
+
+    }
+
+    public void testCoordFromBundleJobChangeDefinition() throws Exception {
+        final XConfiguration jobConf = new XConfiguration();
+        String coordJobId = setUpBundleAndGetCoordID(jobConf);
+
+        CoordinatorJobBean job = getCoordJobs(coordJobId);
+        Element processedJobXml = XmlUtils.parseXml(job.getJobXml());
+        Namespace namespace = processedJobXml.getNamespace();
+        String text = ((Element) processedJobXml.getChild("input-events", namespace).getChild("data-in", namespace)
+                .getChildren("instance", namespace).get(0)).getText();
+        assertEquals(text, "${coord:latest(0)}");
+
+        final Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
+        writeCoordXml(coordPath1, "coord-multiple-input-instance4.xml");
+        Configuration newConf = new Configuration();
+        newConf.set(OozieClient.USER_NAME, getTestUser());
+        CoordUpdateXCommand update = new CoordUpdateXCommand(false, newConf, coordJobId);
+        update.call();
+        job = getCoordJobs(coordJobId);
+        processedJobXml = XmlUtils.parseXml(job.getJobXml());
+        namespace = processedJobXml.getNamespace();
+        text = ((Element) processedJobXml.getChild("input-events", namespace).getChild("data-in", namespace)
+                .getChildren("instance", namespace).get(0)).getText();
+        assertEquals(text, "${coord:future(0, 1)}");
+    }
+
+    private String setUpBundleAndGetCoordID(XConfiguration jobConf) throws UnsupportedEncodingException, IOException,
+            CommandException, JPAExecutorException {
+
+        final Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
+        final Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
+        writeCoordXml(coordPath1, "coord-multiple-input-instance3.xml");
+        writeCoordXml(coordPath2, "coord-multiple-input-instance3.xml");
+
+        Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
+        String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+        assertNotNull(bundleAppXml);
+        assertTrue(bundleAppXml.length() > 0);
+
+        bundleAppXml = bundleAppXml.replaceAll("#app_path1",
+                Matcher.quoteReplacement(new Path(coordPath1.toString(), "coordinator.xml").toString()));
+        bundleAppXml = bundleAppXml.replaceAll("#app_path2",
+                Matcher.quoteReplacement(new Path(coordPath2.toString(), "coordinator.xml").toString()));
+
+        writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
+        final Path appPath = new Path(bundleAppPath, "bundle.xml");
+        jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
+        jobConf.set("appName", "test");
+
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+
+        jobConf.set("coordName1", "NAME");
+        jobConf.set("coordName2", "coord2");
+        BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
+        final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
+        bundleBean.setStartTime(new Date());
+        bundleBean.setEndTime(new Date());
+        final String jobId = command.call();
+        sleep(2000);
+        new BundleStartXCommand(jobId).call();
+        waitFor(200000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+                return actions.get(0).getStatus().equals(Job.Status.RUNNING);
+            }
+        });
+
+        final List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+        return actions.get(0).getCoordId();
     }
 
     private CoordinatorJobBean getCoordJobs(String jobId) {

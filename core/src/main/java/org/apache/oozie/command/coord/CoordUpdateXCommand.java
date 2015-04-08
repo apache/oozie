@@ -23,6 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Date;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -53,6 +55,9 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
     private final String jobId;
     private boolean showDiff = true;
     private boolean isConfChange = false;
+
+    //This properties are set in coord jobs by bundle. An update command should not overide it.
+    final static String[] bundleConfList = new String[] { OozieClient.BUNDLE_ID };
 
     StringBuffer diff = new StringBuffer();
     CoordinatorJobBean oldCoordJob = null;
@@ -116,9 +121,23 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
         }
 
         LogUtils.setLogInfo(oldCoordJob);
-        if (!isConfChange) {
+        if (!isConfChange || StringUtils.isEmpty(conf.get(OozieClient.COORDINATOR_APP_PATH))) {
             try {
-                conf = new XConfiguration(new StringReader(oldCoordJob.getConf()));
+                XConfiguration jobConf = new XConfiguration(new StringReader(oldCoordJob.getConf()));
+
+                if (!isConfChange) {
+                    conf = jobConf;
+                }
+                else {
+                    for (String bundleConfKey : bundleConfList) {
+                        if (jobConf.get(bundleConfKey) != null) {
+                            conf.set(bundleConfKey, jobConf.get(bundleConfKey));
+                        }
+                    }
+                    if (StringUtils.isEmpty(conf.get(OozieClient.COORDINATOR_APP_PATH))) {
+                        conf.set(OozieClient.COORDINATOR_APP_PATH, jobConf.get(OozieClient.COORDINATOR_APP_PATH));
+                    }
+                }
             }
             catch (Exception e) {
                 throw new CommandException(ErrorCode.E1023, e.getMessage(), e);
