@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngine.LOG_TYPE;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
@@ -59,6 +60,7 @@ import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
 
@@ -303,20 +305,39 @@ public class CoordinatorEngine extends BaseEngine {
     @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BaseEngineException {
-        streamJobLog(jobId, writer, params, false);
+        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
     }
 
     @Override
     public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BaseEngineException {
-        streamJobLog(jobId, writer, params, true);
+        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
     }
 
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog)
-            throws IOException, BaseEngineException {
-
+    @Override
+    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+    BaseEngineException {
         try {
-            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
+        }
+        catch (CommandException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, BaseEngineException {
+        try {
+            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        }
+        catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, BaseEngineException {
+        try {
             filter.setParameter(DagXLogInfoService.JOB, jobId);
             Date lastTime = null;
             CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
@@ -326,14 +347,7 @@ public class CoordinatorEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            if (isErrorLog) {
-                Services.get().get(XLogStreamingService.class)
-                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
-            }
-            else {
-                Services.get().get(XLogStreamingService.class)
-                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
-            }
+            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
         }
         catch (Exception e) {
             throw new IOException(e);

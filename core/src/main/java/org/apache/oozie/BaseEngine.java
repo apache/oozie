@@ -20,6 +20,7 @@ package org.apache.oozie;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Date;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -28,9 +29,15 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogStreamingService;
+import org.apache.oozie.util.XLogFilter;
 
 public abstract class BaseEngine {
     public static final String USE_XCOMMAND = "oozie.useXCommand";
+
+    public enum LOG_TYPE {
+        LOG, ERROR_LOG, AUDIT_LOG
+    }
 
     protected String user;
 
@@ -182,6 +189,19 @@ public abstract class BaseEngine {
      */
     public abstract void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BaseEngineException;
+    /**
+     * Stream Audit log of a job.
+     *
+     * @param jobId job Id.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     * @throws BaseEngineException thrown if there is error in getting the Workflow/Coordinator Job Information for
+     *         jobId.
+     */
+    public abstract void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            BaseEngineException;
+
 
     /**
      * Return the workflow Job ID for an external ID.
@@ -278,5 +298,26 @@ public abstract class BaseEngine {
      */
     public abstract void changeSLA(String id, String actions, String  dates, String childIds, String newParams)
             throws BaseEngineException;
+
+    protected void fetchLog(XLogFilter filter, Date startTime, Date endTime, Writer writer,
+            Map<String, String[]> params, LOG_TYPE logType) throws IOException {
+
+        switch (logType) {
+            case LOG:
+                Services.get().get(XLogStreamingService.class).streamLog(filter, startTime, endTime, writer, params);
+                break;
+            case ERROR_LOG:
+                Services.get().get(XLogStreamingService.class)
+                        .streamErrorLog(filter, startTime, endTime, writer, params);
+                break;
+            case AUDIT_LOG:
+                Services.get().get(XLogStreamingService.class)
+                        .streamAuditLog(filter, startTime, endTime, writer, params);
+                break;
+            default:
+                throw new IOException("Unsupported log Type");
+        }
+    }
+
 
 }

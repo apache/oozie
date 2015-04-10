@@ -49,6 +49,7 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.ParamChecker;
@@ -400,7 +401,7 @@ public class DagEngine extends BaseEngine {
     @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             DagEngineException {
-        streamJobLog(jobId, writer, params, false);
+        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
     }
 
     /**
@@ -412,30 +413,52 @@ public class DagEngine extends BaseEngine {
      * @throws IOException thrown if the log cannot be streamed.
      * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
      */
+    @Override
     public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             DagEngineException {
-        streamJobLog(jobId, writer, params, true);
+        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
     }
 
-    public void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog)
+    /**
+     * Stream the audit log of a job.
+     *
+     * @param jobId job Id.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
+     */
+    @Override
+    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+            DagEngineException {
+        try {
+            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)),jobId, writer, params, LOG_TYPE.AUDIT_LOG);
+        }
+        catch (CommandException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
             throws IOException, DagEngineException {
         try {
-            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        }
+        catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, DagEngineException {
+        try {
             filter.setParameter(DagXLogInfoService.JOB, jobId);
             WorkflowJob job = getJob(jobId);
             Date lastTime = job.getEndTime();
             if (lastTime == null) {
                 lastTime = job.getLastModifiedTime();
             }
-            if (isErrorLog) {
-                Services.get().get(XLogStreamingService.class)
-                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
-            }
-            else {
-                Services.get().get(XLogStreamingService.class)
-                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
-            }
-
+            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
         }
         catch (Exception e) {
             throw new IOException(e);

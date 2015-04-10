@@ -21,11 +21,7 @@ package org.apache.oozie.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-
-import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 
@@ -64,6 +60,7 @@ public class TimestampedMessageParser {
         }
         filter.constructPattern();
     }
+
 
     /**
      * Causes the next message and timestamp to be parsed from the BufferedReader.

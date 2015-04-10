@@ -30,8 +30,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
-
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -192,7 +190,6 @@ public class XLogFilter {
         parameters.clear();
     }
 
-    @VisibleForTesting
     public final Map<String, String> getFilterParams() {
         return filterParams;
     }
@@ -343,6 +340,10 @@ public class XLogFilter {
      */
     public Date adjustOffset(Date date, int offset) throws IOException {
         return org.apache.commons.lang.time.DateUtils.addMinutes(date, offset);
+    }
+
+    public void setFilterPattern(Pattern filterPattern) {
+        this.filterPattern = filterPattern;
     }
 
 }

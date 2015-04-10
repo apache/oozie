@@ -24,17 +24,14 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngine.LOG_TYPE;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.Job;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.command.BulkJobsXCommand;
@@ -56,18 +53,16 @@ import org.apache.oozie.command.OperationType;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.JobUtils;
+import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
-import sun.reflect.generics.tree.ReturnType;
 
 import javax.servlet.ServletException;
 
@@ -251,23 +246,43 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-
+    @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BundleEngineException {
-        streamJobLog(jobId, writer, params, false);
+        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
     }
 
+    @Override
     public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BundleEngineException {
-        streamJobLog(jobId, writer, params, true);
+        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
     }
 
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, boolean isErrorLog) throws IOException,
+    @Override
+    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             BundleEngineException {
-
-        BundleJobBean job;
         try {
-            XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
+        }
+        catch (CommandException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, BundleEngineException {
+        try {
+            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        }
+        catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, BundleEngineException {
+        try {
+            BundleJobBean job;
             filter.setParameter(DagXLogInfoService.JOB, jobId);
             job = new BundleJobXCommand(jobId).call();
             Date lastTime = null;
@@ -277,15 +292,7 @@ public class BundleEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            if (isErrorLog) {
-                Services.get().get(XLogStreamingService.class)
-                        .streamErrorLog(filter, job.getCreatedTime(), lastTime, writer, params);
-            }
-            else {
-                Services.get().get(XLogStreamingService.class)
-                        .streamLog(filter, job.getCreatedTime(), lastTime, writer, params);
-
-            }
+            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
         }
         catch (Exception ex) {
             throw new IOException(ex);

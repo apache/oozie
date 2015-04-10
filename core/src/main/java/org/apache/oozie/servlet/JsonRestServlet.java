@@ -252,10 +252,10 @@ public abstract class JsonRestServlet extends HttpServlet {
             String errorMessage = (String) request.getAttribute(AUDIT_ERROR_MESSAGE);
             String hostDetail = request.getRemoteAddr();
 
-            auditLog.info(
-                    "IP [{0}], USER [{1}], GROUP [{2}], APP [{3}], JOBID [{4}], OPERATION [{5}], PARAMETER [{6}], STATUS [{7}],"
-                            + " HTTPCODE [{8}], ERRORCODE [{9}], ERRORMESSAGE [{10}]", hostDetail, user, group, app,
-                    jobId, operation, param, status, httpStatusCode, errorCode, errorMessage);
+            auditLog.info("IP [{0}], USER [{1}], GROUP [{2}], APP [{3}], " + DagXLogInfoService.AUDIT_JOBID
+                    + " [{4}], OPERATION [{5}], PARAMETER [{6}], STATUS [{7}],"
+                    + " HTTPCODE [{8}], ERRORCODE [{9}], ERRORMESSAGE [{10}]", hostDetail, user, group, app, jobId,
+                    operation, param, status, httpStatusCode, errorCode, errorMessage);
         }
     }
 

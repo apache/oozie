@@ -414,6 +414,16 @@ function jobDetailsPopup(response, request) {
         autoScroll: true,
         emptyText: ""
     });
+    var jobAuditLogArea = new Ext.form.TextArea({
+        fieldLabel: 'AuditLogs',
+        editable: false,
+        name: 'auditlogs',
+        width: 1035,
+        height: 400,
+        autoScroll: true,
+        emptyText: ""
+    });
+
 
     function fetchDefinition(workflowId) {
         Ext.Ajax.request({
@@ -429,6 +439,11 @@ function jobDetailsPopup(response, request) {
     function fetchErrorLogs(workflowId, errorLogStatus) {
         getLogs(getOozieBase() + 'job/' + workflowId + "?show=errorlog", null, errorLogStatus, jobErrorLogArea, false, null);
     }
+
+    function fetchAuditLogs(workflowId, auditLogStatus) {
+        getLogs(getOozieBase() + 'job/' + workflowId + "?show=auditlog", null, auditLogStatus, jobAuditLogArea, false, null);
+    }
+
     function fetchLogs(workflowId, logStatus) {
         getLogs(getOozieBase() + 'job/' + workflowId + "?show=log", searchFilterBox.getValue(), logStatus, jobLogArea, false, null);
 
@@ -836,6 +851,11 @@ function jobDetailsPopup(response, request) {
         text : 'Log Status : '
     });
 
+    var auditLogStatus = new Ext.form.Label({
+        text : 'Log Status : '
+    });
+
+
     var getLogButton = new Ext.Button({
         text: 'Get Logs',
         ctCls: 'x-btn-over',
@@ -846,6 +866,7 @@ function jobDetailsPopup(response, request) {
 
     var isLoadedDAG = false;
     var isErrorLogLoaded = false;
+    var isAuditLogLoaded = false;
 
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
@@ -886,6 +907,17 @@ function jobDetailsPopup(response, request) {
             }, {xtype: 'tbfill'}, errorLogStatus]
         },
         {
+            title: 'Job Audit Log',
+            items: jobAuditLogArea,
+            tbar: [ {
+                text: "&nbsp;&nbsp;&nbsp;",
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                handler: function() {
+                    fetchAuditLogs(workflowId, auditLogStatus);
+                }
+            }, {xtype: 'tbfill'}, auditLogStatus]
+        },
+        {
             title: 'Job DAG',
             items: imageContainer,
             tbar: [{
@@ -911,7 +943,14 @@ function jobDetailsPopup(response, request) {
                 fetchErrorLogs(workflowId, errorLogStatus);
                 isErrorLogLoaded=true;
             }
-        } else if(selectedTab.title == 'Job DAG') {
+
+        }else if (selectedTab.title == 'Job Audit Log') {
+            if(!isAuditLogLoaded){
+                fetchAuditLogs(workflowId, auditLogStatus);
+                isAuditLogLoaded=true;
+            }
+        }
+        else if(selectedTab.title == 'Job DAG') {
                 if(!isLoadedDAG){
                 var dagImage=   new Ext.ux.Image({
                         id: 'dagImage',
@@ -976,6 +1015,17 @@ function coordJobDetailsPopup(response, request) {
         autoScroll: true,
         emptyText: ""
     });
+    var jobAuditLogArea = new Ext.form.TextArea({
+        fieldLabel: 'AuditLogs',
+        editable: false,
+        id: 'jobAuditLogAreaId',
+        name: 'auditlogs',
+        width: 1035,
+        height: 400,
+        autoScroll: true,
+        emptyText: ""
+    });
+
     var getLogButton = new Ext.Button({
         text: 'Get Logs',
         ctCls: 'x-btn-over',
@@ -1008,9 +1058,15 @@ function coordJobDetailsPopup(response, request) {
     var logStatus = new Ext.form.Label({
         text : 'Log Status : '
     });
+
     var errorLogStatus = new Ext.form.Label({
         text : 'Log Status : '
     });
+
+    var auditLogStatus = new Ext.form.Label({
+        text : 'Log Status : '
+    });
+
     function fetchDefinition(coordJobId) {
         Ext.Ajax.request({
             url: getOozieBase() + 'job/' + coordJobId + "?show=definition",
@@ -1036,6 +1092,10 @@ function coordJobDetailsPopup(response, request) {
                     null, errorLogStatus, jobErrorLogArea, true, null);
     }
 
+    function fetchAuditLogs(coordJobId) {
+        getLogs(getOozieBase() + 'job/' + coordJobId + "?show=auditlog", null,
+                auditLogStatus, jobAuditLogArea, true, null);
+    }
 
     var jobDetails = eval("(" + response.responseText + ")");
     var coordJobId = jobDetails["coordJobId"];
@@ -1454,6 +1514,17 @@ function coordJobDetailsPopup(response, request) {
            },{xtype: 'tbfill'}, errorLogStatus]
        },
        {
+           title: 'Coord Audit Log',
+           items: jobAuditLogArea,
+           tbar: [ {
+               text: "&nbsp;&nbsp;&nbsp;",
+               icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+               handler: function() {
+                   fetchAuditLogs(coordJobId);
+               }
+           },{xtype: 'tbfill'}, auditLogStatus]
+       },
+       {
            title: 'Coord Action Reruns',
            items: rerunsUnit,
            tbar: [
@@ -1697,6 +1768,10 @@ function bundleJobDetailsPopup(response, request) {
         text : 'Log Status : '
     });
 
+    var auditLogStatus = new Ext.form.Label({
+        text : 'Log Status : '
+    });
+
     var getLogButton = new Ext.Button({
         text: 'Get Logs',
         ctCls: 'x-btn-over',
@@ -1743,7 +1818,20 @@ function bundleJobDetailsPopup(response, request) {
                          false, null);
              }
          }, {xtype: 'tbfill'}, errorLogStatus]
-     }
+     },
+     {
+          title: 'Bundle Audit Log',
+          items: jobAuditLogArea,
+          tbar: [ {
+              text: "&nbsp;&nbsp;&nbsp;",
+              icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+              handler: function() {
+                  getLogs(getOozieBase() + 'job/' + bundleJobId + "?show=auditlog", null, auditLogStatus, jobAuditLogArea,
+                          false, null);
+              }
+          }, {xtype: 'tbfill'}, auditLogStatus]
+      }
+
       ]});
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -1761,6 +1849,14 @@ function bundleJobDetailsPopup(response, request) {
                 isErrorLogLoaded=true;
             }
         }
+        else if (selectedTab.title == 'Bundle Audit Log') {
+            if(!isAuditLogLoaded){
+                getLogs(getOozieBase() + 'job/' + bundleJobId + "?show=auditlog", null, auditLogStatus, jobAuditLogArea,
+                        false, null);
+                isAuditLogLoaded=true;
+            }
+        }
+
         coord_jobs_grid.setVisible(false);
     });
 

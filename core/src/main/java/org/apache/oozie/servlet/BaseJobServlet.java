@@ -329,6 +329,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             response.setContentType(TEXT_UTF8);
             streamJobErrorLog(request, response);
         }
+        else if (show.equals(RestConstants.JOB_SHOW_AUDIT_LOG)) {
+            response.setContentType(TEXT_UTF8);
+            streamJobAuditLog(request, response);
+        }
+
         else if (show.equals(RestConstants.JOB_SHOW_DEFINITION)) {
             stopCron();
             response.setContentType(XML_UTF8);
@@ -470,6 +475,9 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
     IOException;
 
+
+    abstract void streamJobAuditLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException;
 
     /**
      * abstract method to create and stream image for runtime DAG -- workflow only

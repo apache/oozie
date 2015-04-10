@@ -135,7 +135,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
     public void streamErrorLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
             throws IOException {
         XLogService xLogService = Services.get().get(XLogService.class);
-        if (xLogService.isErrorLogEnable()) {
+        if (xLogService.isErrorLogEnabled()) {
             // If ALL_SERVERS_PARAM is set to false, then only stream our log
             if (!Services.get().get(JobsConcurrencyService.class).isAllServerRequest(params)) {
                 new XLogStreamer(filter, xLogService.getOozieErrorLogPath(), xLogService.getOozieErrorLogName(),
@@ -152,6 +152,39 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
             writer.write("Error Log streaming disabled!!");
         }
     }
+
+    /**
+     * Stream the audit log of a job.  It contacts any other running Oozie servers to collate relevant audit logs while streaming.
+     *
+     * @param filter log streamer filter.
+     * @param startTime start time for log events to filter.
+     * @param endTime end time for log events to filter.
+     * @param writer writer to stream the log to.
+     * @param params additional parameters from the request
+     * @throws IOException thrown if the log cannot be streamed.
+     */
+    @Override
+    public void streamAuditLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+            throws IOException {
+        XLogService xLogService = Services.get().get(XLogService.class);
+        if (xLogService.isAuditLogEnabled()) {
+            // If ALL_SERVERS_PARAM is set to false, then only stream our log
+            if (!Services.get().get(JobsConcurrencyService.class).isAllServerRequest(params)) {
+                new XLogStreamer(filter, xLogService.getOozieAuditLogPath(), xLogService.getOozieAuditLogName(),
+                        xLogService.getOozieAuditLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
+            }
+            // Otherwise, we have to go collate relevant logs from the other Oozie servers
+            else {
+                collateLogs(filter, startTime, endTime, writer, params, xLogService.getOozieAuditLogPath(),
+                        xLogService.getOozieAuditLogName(), xLogService.getOozieAuditLogRotation(),
+                        RestConstants.JOB_SHOW_AUDIT_LOG);
+            }
+        }
+        else {
+            writer.write("Audit Log streaming disabled!!");
+        }
+    }
+
 
 
     /**

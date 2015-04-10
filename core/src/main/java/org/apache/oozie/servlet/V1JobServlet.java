@@ -1103,7 +1103,11 @@ public class V1JobServlet extends BaseJobServlet {
             IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
-
+    @Override
+    protected void streamJobAuditLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
     @Override
     void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");

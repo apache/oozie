@@ -278,8 +278,26 @@ public class V2JobServlet extends V1JobServlet {
         catch (BaseEngineException e) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void streamJobAuditLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+
+        String jobId = getResourceName(request);
+        try {
+            getBaseEngine(jobId, getUser(request)).streamAuditLog(jobId, response.getWriter(), request.getParameterMap());
+        }
+        catch (DagEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+        catch (BaseEngineException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
 
     }
+
 
     /**
      * Gets the base engine based on jobId.

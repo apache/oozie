@@ -1061,6 +1061,17 @@ public class OozieClient {
     }
 
     /**
+     * Get the audit log of a job.
+     *
+     * @param jobId
+     * @param ps
+     * @throws OozieClientException
+     */
+    public void getJobAuditLog(String jobId, PrintStream ps) throws OozieClientException {
+        new JobAuditLog(jobId, ps).call();
+    }
+
+    /**
      * Get the log of a job.
      *
      * @param jobId job Id.
@@ -1114,6 +1125,13 @@ public class OozieClient {
             super(jobId, RestConstants.JOB_SHOW_ERROR_LOG, ps);
         }
     }
+
+    private class JobAuditLog extends JobMetadata {
+        JobAuditLog(String jobId, PrintStream ps) {
+            super(jobId, RestConstants.JOB_SHOW_AUDIT_LOG, ps);
+        }
+    }
+
 
     /**
      * Gets the JMS topic name for a particular job

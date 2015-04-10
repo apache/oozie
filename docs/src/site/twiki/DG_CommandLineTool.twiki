@@ -63,6 +63,8 @@ usage:
                 -localtime            use local time (same as passing your time zone to -timezone).
                                       Overrides -timezone option
                 -log <arg>            job log
+                -errorlog <arg>       job error log
+                -auditlog <arg>       job audit log
                 -logfilter <arg>      job log search parameter. Can be specified as -logfilter
                                       opt1=val1;opt2=val1;opt3=val1. Supported options are recent,
                                       start, end, loglevel, text, limit and debug
@@ -646,6 +648,20 @@ org.xml.sax.SAXParseException; lineNumber: 20; columnNumber: 22; cvc-complex-typ
         at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
         at org.apache.xerces.jaxp.validation.StreamValidatorHelper.validate(Unknown Source)
         at org.apache.xerces.jaxp.validation.ValidatorImpl.validate(Unknown Source)
+</verbatim>
+
+
+---+++ Checking the audit logs of a Workflow, Coordinator or Bundle Job
+
+Example:
+
+<verbatim>
+$ oozie job -oozie http://localhost:11000/oozie -auditlog 0000000-150322000230582-oozie-puru-C
+2015-03-22 00:04:35,494  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [start], PARAMETER [null], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
+2015-03-22 00:05:13,823  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
+2015-03-22 00:06:59,561  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
+2015-03-22 23:22:20,012  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
+2015-03-22 23:28:48,218  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [resume], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
 </verbatim>
 
 ---+++ Checking the server logs for particular actions of a Coordinator Job

@@ -92,7 +92,9 @@ public class XLogService implements Service, Instrumentable {
     private boolean fromClasspath;
     private String log4jFileName;
     private boolean logOverWS = true;
-    private boolean errorLogEnable = true;
+    private boolean errorLogEnabled = true;
+    private boolean auditLogEnabled = true;
+
 
     private static final String STARTUP_MESSAGE = "{E}"
             + " ******************************************************************************* {E}"
@@ -104,8 +106,12 @@ public class XLogService implements Service, Instrumentable {
     private String oozieLogName;
     private String oozieErrorLogPath;
     private String oozieErrorLogName;
+    private String oozieAuditLogPath;
+    private String oozieAuditLogName;
     private int oozieLogRotation = -1;
     private int oozieErrorLogRotation = -1;
+    private int oozieAuditLogRotation = -1;
+
 
 
     public XLogService() {
@@ -217,10 +223,17 @@ public class XLogService implements Service, Instrumentable {
         oozieLogName = logUtil.getLogFileName() == null ? oozieLogName : logUtil.getLogFileName();
 
         logUtil = new XLogUtil(conf, "oozieError");
-        errorLogEnable = logUtil.isLogOverEnable();
+        errorLogEnabled = logUtil.isLogOverEnable();
         oozieErrorLogRotation = logUtil.getLogRotation() == 0 ? oozieErrorLogRotation : logUtil.getLogRotation();
         oozieErrorLogPath = logUtil.getLogPath() == null ? oozieErrorLogPath : logUtil.getLogPath();
         oozieErrorLogName = logUtil.getLogFileName() == null ? oozieErrorLogName : logUtil.getLogFileName();
+
+        logUtil = new XLogUtil(conf, "oozieaudit");
+        auditLogEnabled = logUtil.isLogOverEnable();
+        oozieAuditLogRotation = logUtil.getLogRotation() == 0 ? oozieAuditLogRotation : logUtil.getLogRotation();
+        oozieAuditLogPath = logUtil.getLogPath() == null ? oozieAuditLogPath : logUtil.getLogPath();
+        oozieAuditLogName = logUtil.getLogFileName() == null ? oozieAuditLogName : logUtil.getLogFileName();
+
     }
 
     /**
@@ -286,17 +299,33 @@ public class XLogService implements Service, Instrumentable {
         return logOverWS;
     }
 
-    boolean isErrorLogEnable(){
-        return errorLogEnable;
+    boolean isErrorLogEnabled(){
+        return errorLogEnabled;
     }
 
     int getOozieLogRotation() {
         return oozieLogRotation;
     }
+
     int getOozieErrorLogRotation() {
         return oozieErrorLogRotation;
     }
 
+    int getOozieAuditLogRotation() {
+        return oozieAuditLogRotation;
+    }
+
+    public String getOozieAuditLogPath() {
+        return oozieAuditLogPath;
+    }
+
+    public String getOozieAuditLogName() {
+        return oozieAuditLogName;
+    }
+
+    boolean isAuditLogEnabled() {
+        return auditLogEnabled;
+    }
 
     String getLog4jProperties() {
         return log4jFileName;

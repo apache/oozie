@@ -43,6 +43,8 @@ public class DagXLogInfoService implements Service {
      */
     public static final String JOB = "JOB";
 
+    public static final String AUDIT_JOBID = "JOBID";
+
     /**
      * Action log info constant.
      */

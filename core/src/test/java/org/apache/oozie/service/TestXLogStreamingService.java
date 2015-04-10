@@ -19,7 +19,10 @@
 package org.apache.oozie.service;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
 
@@ -41,6 +44,17 @@ public class TestXLogStreamingService extends XTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
     }
+
+    private void setupXLog() throws CommandException {
+        XLogFilter.reset();
+        XLogFilter.defineParameter("USER");
+        XLogFilter.defineParameter("GROUP");
+        XLogFilter.defineParameter("TOKEN");
+        XLogFilter.defineParameter("APP");
+        XLogFilter.defineParameter("JOB");
+        XLogFilter.defineParameter("ACTION");
+    }
+
 
     public void testDisableLogOverWS() throws Exception {
         Properties props = new Properties();
@@ -218,15 +232,8 @@ public class TestXLogStreamingService extends XTestCase {
     }
 
     public void testNoDashInConversionPattern() throws Exception{
-        XLogFilter.reset();
-        XLogFilter.defineParameter("USER");
-        XLogFilter.defineParameter("GROUP");
-        XLogFilter.defineParameter("TOKEN");
-        XLogFilter.defineParameter("APP");
-        XLogFilter.defineParameter("JOB");
-        XLogFilter.defineParameter("ACTION");
+        setupXLog();
         XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
-
         xf.setParameter("USER", "oozie");
         xf.setLogLevel("DEBUG|INFO");
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
@@ -266,15 +273,8 @@ public class TestXLogStreamingService extends XTestCase {
     }
 
     public void testErrorLog() throws Exception{
-        XLogFilter.reset();
-        XLogFilter.defineParameter("USER");
-        XLogFilter.defineParameter("GROUP");
-        XLogFilter.defineParameter("TOKEN");
-        XLogFilter.defineParameter("APP");
-        XLogFilter.defineParameter("JOB");
-        XLogFilter.defineParameter("ACTION");
+        setupXLog();
         XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
-
         xf.setParameter("USER", "oozie");
         xf.setLogLevel("DEBUG|INFO");
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
@@ -337,6 +337,54 @@ public class TestXLogStreamingService extends XTestCase {
         }
     }
 
+    public void testAuditLog() throws Exception {
+        setupXLog();
+        XLogFilter xf = new XLogAuditFilter(new XLogUserFilterParam(null));
+        xf.setParameter("USER", "oozie");
+        xf.setLogLevel("DEBUG|INFO");
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.setProperty("log4j.appender.oozieaudit.File", getTestCaseDir() + "/oozie-audit.log");
+
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        try {
+            new Services().init();
+            XLog auditLog = XLog.getLog("oozieaudit");
+            xf.setParameter(DagXLogInfoService.JOB, "0000000-150322000230582-oozie-puru-C");
+
+
+            auditLog.info("2015-03-22 00:04:35,494  INFO oozieaudit:520 - IP [127.0.0.1], USER [purushah], GROUP [null], "
+                    + "APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [start], "
+                    + "PARAMETER [null], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [L1]");
+            auditLog.info("2015-03-22 00:05:13,823  INFO oozieaudit:520 - IP [127.0.0.1], USER [purushah], GROUP [null], "
+                    + "APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], "
+                    + "PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], "
+                    + "ERRORMESSAGE [L2]");
+            auditLog.info("2015-03-22 00:05:13,823  INFO oozieaudit:520 - IP [127.0.0.1], USER [purushah], GROUP [null], "
+                    + "APP [-], JOBID [0000001-150322000230582-oozie-puru-C], OPERATION [suspend], "
+                    + "PARAMETER [0000001-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], "
+                    + "ERRORMESSAGE [L3]");
+
+
+            String out = doStreamAuditLog(xf);
+            String outArr[] = out.split("\n");
+            // Lines 2 and 4 are filtered out because they have the wrong user
+            assertEquals(2, outArr.length);
+            assertTrue(outArr[0].contains("L1"));
+            assertTrue(out.contains("L2"));
+            assertFalse(out.contains("L3"));
+
+        }
+        finally {
+            Services.get().destroy();
+        }
+    }
 
     private boolean doStreamDisabledCheckWithServices() throws Exception {
         boolean result = false;
@@ -366,6 +414,12 @@ public class TestXLogStreamingService extends XTestCase {
         Services.get().get(XLogStreamingService.class).streamErrorLog(xf, null, null, w, new HashMap<String, String[]>());
         return w.toString();
     }
+    private String doStreamAuditLog(XLogFilter xf) throws Exception {
+        StringWriter w = new StringWriter();
+        Services.get().get(XLogStreamingService.class).streamAuditLog(xf, null, null, w, new HashMap<String, String[]>());
+        return w.toString();
+    }
+
 
     private boolean doErrorStreamDisabledCheck() throws Exception {
         XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
