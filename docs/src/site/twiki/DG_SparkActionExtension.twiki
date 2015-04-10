@@ -79,7 +79,8 @@ specify multiple =job.xml= files.
 The =configuration= element, if present, contains configuration
 properties that are passed to the Spark job.
 
-The =master= element indicates the url of the Spark Master. Ex: spark://host:port, mesos://host:port, yarn, or local.
+The =master= element indicates the url of the Spark Master. Ex: spark://host:port, mesos://host:port, yarn-cluster, yarn-master,
+or local.
 
 The =mode= element if present indicates the mode of spark, where to run spark driver program. Ex: client,cluster.
 
@@ -89,7 +90,9 @@ The =class= element if present, indicates the spark's application main class.
 
 The =jar= element indicates a comma separated list of jars or python files.
 
-The =spark-opts= element if present, contains a list of spark options that can be passed to spark driver.
+The =spark-opts= element if present, contains a list of spark options that can be passed to spark driver. Spark configuration
+options can be passed by specifying '--conf key=value' here, or from =oozie.service.SparkConfigurationService.spark.configurations=
+in oozie-site.xml.  The =spark-opts= configs have priority.
 
 The =arg= element if present, contains arguments that can be passed to spark application.
 
@@ -136,6 +139,23 @@ Spark action logs are redirected to the Oozie Launcher map-reduce job task STDOU
 
 From Oozie web-console, from the Spark action pop up using the 'Console URL' link, it is possible
 to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tracker web-console.
+
+---+++ Spark on YARN
+
+To make the Spark action run on YARN, you need to follow these steps:
+
+1. Make the spark-assembly jar available to your Spark action
+
+2. Specify "yarn-client" or "yarn-cluster" in the =master= element
+
+To ensure that your Spark job shows up in the Spark History Server, make sure to specify these three Spark configuration properties
+either in =spark-opts= with =--conf= or from =oozie.service.SparkConfigurationService.spark.configurations=
+
+1. spark.yarn.historyServer.address=http://SPH-HOST:18088
+
+2. spark.eventLog.dir=hdfs://NN:8020/user/spark/applicationHistory
+
+3. spark.eventLog.enabled=true
 
 ---++ Appendix, Spark XML-Schema
 

@@ -130,7 +130,8 @@
             org.apache.oozie.service.GroupsService,
             org.apache.oozie.service.ProxyUserService,
             org.apache.oozie.service.XLogStreamingService,
-            org.apache.oozie.service.JvmPauseMonitorService
+            org.apache.oozie.service.JvmPauseMonitorService,
+            org.apache.oozie.service.SparkConfigurationService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -2502,6 +2503,19 @@
         <description>
             This value determines the depth of substitution in configurations.
             If set -1, No limitation on substitution.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.SparkConfigurationService.spark.configurations</name>
+        <value>*=spark-conf</value>
+        <description>
+            Comma separated AUTHORITY=SPARK_CONF_DIR, where AUTHORITY is the HOST:PORT of
+            the ResourceManager of a YARN cluster. The wildcard '*' configuration is
+            used when there is no exact match for an authority. The SPARK_CONF_DIR contains
+            the relevant spark-defaults.conf properties file. If the path is relative is looked within
+            the Oozie configuration directory; though the path can be absolute.  This is only used
+            when the Spark master is set to either "yarn-client" or "yarn-cluster".
         </description>
     </property>
 

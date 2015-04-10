@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -27,12 +28,17 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.SparkConfigurationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
 
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,10 +48,17 @@ import java.io.Writer;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TestSparkActionExecutor extends ActionExecutorTestCase {
     private static final String SPARK_FILENAME = "file.txt";
     private static final String OUTPUT = "output";
+    private static Pattern SPARK_OPTS_PATTERN = Pattern.compile("([^= ]+)=([^= ]+)");
 
     @Override
     protected void setSystemProps() throws Exception {
@@ -53,10 +66,82 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", SparkActionExecutor.class.getName());
     }
 
-    @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
+        _testSetupMethods("local[*]", new HashMap<String, String>());
+        _testSetupMethods("yarn", new HashMap<String, String>());
+    }
+
+    public void testSetupMethodsWithSparkConfiguration() throws Exception {
+        File sparkConfDir = new File(getTestCaseConfDir(), "spark-conf");
+        sparkConfDir.mkdirs();
+        File sparkConf = new File(sparkConfDir, "spark-defaults.conf");
+        Properties sparkConfProps = new Properties();
+        sparkConfProps.setProperty("a", "A");
+        sparkConfProps.setProperty("b", "B");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(sparkConf);
+            sparkConfProps.store(fos, "");
+        } finally {
+            IOUtils.closeSafely(fos);
+        }
+        SparkConfigurationService scs = Services.get().get(SparkConfigurationService.class);
+        scs.destroy();
+        ConfigurationService.set("oozie.service.SparkConfigurationService.spark.configurations",
+                getJobTrackerUri() + "=" + sparkConfDir.getAbsolutePath());
+        scs.init(Services.get());
+
+        _testSetupMethods("local[*]", new HashMap<String, String>());
+        Map<String, String> extraSparkOpts = new HashMap<String, String>(2);
+        extraSparkOpts.put("a", "A");
+        extraSparkOpts.put("b", "B");
+        _testSetupMethods("yarn", extraSparkOpts);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void _testSetupMethods(String master, Map<String, String> extraSparkOpts) throws Exception {
         SparkActionExecutor ae = new SparkActionExecutor();
         assertEquals(Arrays.asList(SparkMain.class), ae.getLauncherClasses());
+
+        Element actionXml = XmlUtils.parseXml("<spark>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<master>" + master + "</master>" +
+                "<mode>client</mode>" +
+                "<name>Some Name</name>" +
+                "<class>org.apache.oozie.foo</class>" +
+                "<jar>" + getNameNodeUri() + "/foo.jar</jar>" +
+                "<spark-opts>--conf foo=bar</spark-opts>" +
+                "</spark>");
+
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "spark-action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+
+        Configuration conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals(master, conf.get("oozie.spark.master"));
+        assertEquals("client", conf.get("oozie.spark.mode"));
+        assertEquals("Some Name", conf.get("oozie.spark.name"));
+        assertEquals("org.apache.oozie.foo", conf.get("oozie.spark.class"));
+        assertEquals(getNameNodeUri() + "/foo.jar", conf.get("oozie.spark.jar"));
+        Map<String, String> sparkOpts = new HashMap<String, String>();
+        sparkOpts.put("foo", "bar");
+        sparkOpts.putAll(extraSparkOpts);
+        Matcher m = SPARK_OPTS_PATTERN.matcher(conf.get("oozie.spark.spark-opts"));
+        int count = 0;
+        while (m.find()) {
+            count++;
+            String key = m.group(1);
+            String val = m.group(2);
+            assertEquals(sparkOpts.get(key), val);
+        }
+        assertEquals(sparkOpts.size(), count);
     }
 
     private String getActionXml() {
