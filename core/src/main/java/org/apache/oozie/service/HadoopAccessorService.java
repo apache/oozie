@@ -39,12 +39,15 @@ import org.apache.oozie.util.JobUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +83,8 @@ public class HadoopAccessorService implements Service {
     protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
+    private static final String DEFAULT_ACTIONNAME = "default";
+
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
     private Map<String, Configuration> hadoopConfigs = new HashMap<String, Configuration>();
@@ -109,7 +114,7 @@ public class HadoopAccessorService implements Service {
             }
             jobTrackerWhitelist.add(tmp);
         }
-        XLog.getLog(getClass()).info(
+        LOG.info(
                 "JOB_TRACKER_WHITELIST :" + jobTrackerWhitelist.toString()
                         + ", Total entries :" + jobTrackerWhitelist.size());
         for (String name : ConfigurationService.getStrings(conf, NAME_NODE_WHITELIST)) {
@@ -119,12 +124,12 @@ public class HadoopAccessorService implements Service {
             }
             nameNodeWhitelist.add(tmp);
         }
-        XLog.getLog(getClass()).info(
+        LOG.info(
                 "NAME_NODE_WHITELIST :" + nameNodeWhitelist.toString()
                         + ", Total entries :" + nameNodeWhitelist.size());
 
         boolean kerberosAuthOn = ConfigurationService.getBoolean(conf, KERBEROS_AUTH_ENABLED);
-        XLog.getLog(getClass()).info("Oozie Kerberos Authentication [{0}]", (kerberosAuthOn) ? "enabled" : "disabled");
+        LOG.info("Oozie Kerberos Authentication [{0}]", (kerberosAuthOn) ? "enabled" : "disabled");
         if (kerberosAuthOn) {
             kerberosInit(conf);
         }
@@ -175,8 +180,8 @@ public class HadoopAccessorService implements Service {
                 conf.set("hadoop.security.authentication", "kerberos");
                 UserGroupInformation.setConfiguration(conf);
                 UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
-                XLog.getLog(getClass()).info("Got Kerberos ticket, keytab [{0}], Oozie principal principal [{1}]",
-                                             keytabFile, principal);
+                LOG.info("Got Kerberos ticket, keytab [{0}], Oozie principal principal [{1}]",
+                        keytabFile, principal);
             }
             catch (ServiceException ex) {
                 throw ex;
@@ -298,17 +303,63 @@ public class HadoopAccessorService implements Service {
         File dir = actionConfigDirs.get(hostPort);
         XConfiguration actionConf = new XConfiguration();
         if (dir != null) {
-            File actionConfFile = new File(dir, action + ".xml");
-            if (actionConfFile.exists()) {
-                try {
-                    actionConf = new XConfiguration(new FileInputStream(actionConfFile));
-                }
-                catch (IOException ex) {
-                    XLog.getLog(getClass()).warn("Could not read file [{0}] for action [{1}] configuration for hostPort [{2}]",
-                                                 actionConfFile.getAbsolutePath(), action, hostPort);
+            // See if a dir with the action name exists.   If so, load all the xml files in the dir
+            File actionConfDir = new File(dir, action);
+
+            if (actionConfDir.exists() && actionConfDir.isDirectory()) {
+                LOG.info("Processing configuration files under [{0}]"
+                                + " for action [{1}] and hostPort [{2}]",
+                        actionConfDir.getAbsolutePath(), action, hostPort);
+                File[] xmlFiles = actionConfDir.listFiles(
+                        new FilenameFilter() {
+                            @Override
+                            public boolean accept(File dir, String name) {
+                                return name.endsWith(".xml");
+                            }});
+                Arrays.sort(xmlFiles, new Comparator<File>() {
+                    @Override
+                    public int compare(File o1, File o2) {
+                        return o1.getName().compareTo(o2.getName());
+                    }
+                });
+                for (File f : xmlFiles) {
+                    if (f.isFile() && f.canRead()) {
+                        LOG.info("Processing configuration file [{0}]", f.getName());
+                        FileInputStream fis = null;
+                        try {
+                            fis = new FileInputStream(f);
+                            XConfiguration conf = new XConfiguration(fis);
+                            XConfiguration.copy(conf, actionConf);
+                        }
+                        catch (IOException ex) {
+                            LOG
+                                .warn("Could not read file [{0}] for action [{1}] configuration and hostPort [{2}]",
+                                        f.getAbsolutePath(), action, hostPort);
+                        }
+                        finally {
+                            if (fis != null) {
+                                try { fis.close(); } catch(IOException ioe) { }
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        // Now check for <action.xml>   This way <action.xml> has priority over <action-dir>/*.xml
+
+        File actionConfFile = new File(dir, action + ".xml");
+        if (actionConfFile.exists()) {
+            try {
+                XConfiguration conf = new XConfiguration(new FileInputStream(actionConfFile));
+                XConfiguration.copy(conf, actionConf);
+            }
+            catch (IOException ex) {
+                LOG.warn("Could not read file [{0}] for action [{1}] configuration for hostPort [{2}]",
+                        actionConfFile.getAbsolutePath(), action, hostPort);
+            }
+        }
+
         return actionConf;
     }
 
@@ -334,7 +385,17 @@ public class HadoopAccessorService implements Service {
             // doing lazy loading as we don't know upfront all actions, no need to synchronize
             // as it is a read operation an in case of a race condition loading and inserting
             // into the Map is idempotent and the action-config Map is a ConcurrentHashMap
-            actionConf = loadActionConf(hostPort, action);
+
+            // We first load a action of type default
+            // This allows for global configuration for all actions - for example
+            // all launchers in one queue and actions in another queue
+            // Are some configuration that applies to multiple actions - like
+            // config libraries path etc
+            actionConf = loadActionConf(hostPort, DEFAULT_ACTIONNAME);
+
+            // Action specific default configuration will override the default action config
+
+            XConfiguration.copy(loadActionConf(hostPort, action), actionConf);
             hostPortActionConfigs.put(action, actionConf);
         }
         return new XConfiguration(actionConf.toProperties());
@@ -535,7 +596,7 @@ public class HadoopAccessorService implements Service {
         String uriScheme = uri.getScheme();
         if (uriScheme != null) {    // skip the check if no scheme is given
             if(!supportedSchemes.isEmpty()) {
-                XLog.getLog(this.getClass()).debug("Checking if filesystem " + uriScheme + " is supported");
+                LOG.debug("Checking if filesystem " + uriScheme + " is supported");
                 if (!supportedSchemes.contains(uriScheme)) {
                     throw new HadoopAccessorException(ErrorCode.E0904, uriScheme, uri.toString());
                 }

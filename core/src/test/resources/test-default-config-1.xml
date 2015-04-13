@@ -20,17 +20,23 @@
 <configuration>
 
     <property>
-        <name>action.foo</name>
-        <value>action.bar</value>
+        <name>action.boo</name>
+        <value>action.car</value>
     </property>
 
     <property>
-        <name>oozie.launcher.action.foofoo</name>
-        <value>action.barbar</value>
+        <name>default.car</name>
+        <value>default.bus</value>
     </property>
 
     <property>
-        <name>action.testprop</name>
-        <value>100</value>
+        <name>oozie.launcher.action.booboo</name>
+        <value>action.carcar</value>
     </property>
+
+    <property>
+        <name>default.testprop</name>
+        <value>0</value>
+    </property>
+
 </configuration>

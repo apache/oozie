@@ -32,19 +32,45 @@ import java.io.OutputStream;
 import java.net.URI;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.XConfiguration;
 
 public class TestHadoopAccessorService extends XTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
         new File(getTestCaseConfDir(), "hadoop-confx").mkdir();
-        new File(getTestCaseConfDir(), "action-confx").mkdir();
+        File actConfXDir = new File(getTestCaseConfDir(), "action-confx");
+        actConfXDir.mkdir();
+        new File(actConfXDir, "action").mkdir();
+        // Create the default action dir
+        new File(actConfXDir, "default").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-hadoop-config.xml");
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "core-site.xml"));
         IOUtils.copyStream(is, os);
         is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
-        os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-confx", "action.xml"));
+        os = new FileOutputStream(new File(actConfXDir, "action.xml"));
         IOUtils.copyStream(is, os);
+
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-default-config.xml");
+        os = new FileOutputStream(new File(actConfXDir, "default.xml"));
+        IOUtils.copyStream(is, os);
+
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config-1.xml");
+        os = new FileOutputStream(new File(actConfXDir + "/action", "a-conf.xml"));
+        IOUtils.copyStream(is, os);
+
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config-2.xml");
+        os = new FileOutputStream(new File(actConfXDir + "/action", "b-conf.xml"));
+        IOUtils.copyStream(is, os);
+
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config-3.xml");
+        os = new FileOutputStream(new File(actConfXDir + "/action", "c-conf-3.xml"));
+        IOUtils.copyStream(is, os);
+
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-default-config-1.xml");
+        os = new FileOutputStream(new File(actConfXDir + "/default", "z-conf.xml"));
+        IOUtils.copyStream(is, os);
+
         setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
                           "*=hadoop-conf,jt=hadoop-confx");
         setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
@@ -74,8 +100,43 @@ public class TestHadoopAccessorService extends XTestCase {
         assertNotNull(has.createActionDefaultConf("jt", "action"));
         assertNotNull(has.createActionDefaultConf("jt", "actionx"));
         assertNotNull(has.createActionDefaultConf("jtx", "action"));
-        assertEquals("action.bar", has.createActionDefaultConf("jt", "action").get("action.foo"));
         assertNull(has.createActionDefaultConf("*", "action").get("action.foo"));
+    }
+
+    public void testActionConfigurations() throws Exception {
+        Services services = Services.get();
+        HadoopAccessorService has = services.get(HadoopAccessorService.class);
+        assertNotNull(has);
+        XConfiguration conf = has.createActionDefaultConf("jt", "action");
+        assertNotNull(conf);
+
+        // Check that the param only in default.xml is still present
+        assertEquals("default.bar", conf.get("default.foo"));
+
+        // And a property that is present in one of the conf files in default dir
+        assertEquals("default.bus", conf.get("default.car"));
+
+        // Check that a default param is overridden by one of the action config files
+        assertEquals("action.bar", conf.get("action.foo"));
+
+        // Check that params from <action-dir>/action/conf files is still present
+        assertEquals("action.car", conf.get("action.boo"));
+        assertEquals("action.carcar", conf.get("oozie.launcher.action.booboo"));
+
+        /*
+            Check precedence - Order of precedence - 0 is the lowest.   Parameters in files of
+            lower precedence will be overridden by redefinitions in higher precedence files.
+
+            0 - All files in defaultdir/*.xml (sorted by lexical name)
+               Files with names lexically lower have lesser precedence than the following ones.
+            1 - default.xml
+            2 - All files in actiondir/*.xml (sort by lexical name)
+               Files with names lexically lower have lesser precedence than the following ones
+            3 - action.xml
+         */
+        assertEquals("100", conf.get("action.testprop"));
+        assertEquals("1", conf.get("default.testprop"));
+
     }
 
     public void testAccessor() throws Exception {

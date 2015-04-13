@@ -20,17 +20,12 @@
 <configuration>
 
     <property>
-        <name>action.foo</name>
-        <value>action.bar</value>
-    </property>
-
-    <property>
-        <name>oozie.launcher.action.foofoo</name>
-        <value>action.barbar</value>
+        <name>default.param</name>
+        <value>default.value</value>
     </property>
 
     <property>
         <name>action.testprop</name>
-        <value>100</value>
+        <value>1</value>
     </property>
 </configuration>
