@@ -1566,6 +1566,7 @@ function coordJobDetailsPopup(response, request) {
 function bundleJobDetailsPopup(response, request) {
 
     var isErrorLogLoaded = false;
+    var isAuditLogLoaded = false;
     var jobDefinitionArea = new Ext.form.TextArea({
         fieldLabel: 'Definition',
         editable: false,
@@ -1744,6 +1745,16 @@ function bundleJobDetailsPopup(response, request) {
         editable: false,
         name: 'errorlogs',
         width: 1010,
+        height: 400,
+        autoScroll: true,
+        emptyText: ""
+    });
+
+    var jobAuditLogArea = new Ext.form.TextArea({
+        fieldLabel: 'AuditLogs',
+        editable: false,
+        name: 'auditlogs',
+        width: 1035,
         height: 400,
         autoScroll: true,
         emptyText: ""
