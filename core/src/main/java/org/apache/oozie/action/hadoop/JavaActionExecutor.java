@@ -98,6 +98,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
     public static final String HADOOP_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
+    public static final String HADOOP_REDUCE_JAVA_OPTS = "mapreduce.reduce.java.opts";
     public static final String HADOOP_CHILD_JAVA_ENV = "mapred.child.env";
     public static final String HADOOP_MAP_JAVA_ENV = "mapreduce.map.env";
     public static final String YARN_AM_RESOURCE_MB = "yarn.app.mapreduce.am.resource.mb";
@@ -114,6 +115,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String FAILED_KILLED = "FAILED/KILLED";
     protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
+    private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
     public static final String CONF_HADOOP_YARN_UBER_MODE = "oozie.action.launcher." + HADOOP_YARN_UBER_MODE;
     public static final String HADOOP_JOB_CLASSLOADER = "mapreduce.job.classloader";
     public static final String HADOOP_USER_CLASSPATH_FIRST = "mapreduce.user.classpath.first";
@@ -389,6 +391,31 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    void updateConfForJavaTmpDir(Configuration conf) {
+        String mapOpts = conf.get(HADOOP_MAP_JAVA_OPTS);
+        String reduceOpts = conf.get(HADOOP_REDUCE_JAVA_OPTS);
+        String childOpts = conf.get(HADOOP_CHILD_JAVA_OPTS);
+        String amChildOpts = conf.get(YARN_AM_COMMAND_OPTS);
+        String oozieJavaTmpDirSetting = "-Djava.io.tmpdir=./tmp";
+        if (childOpts == null) {
+            conf.set(HADOOP_CHILD_JAVA_OPTS, oozieJavaTmpDirSetting);
+        } else {
+            conf.set(HADOOP_CHILD_JAVA_OPTS, childOpts + " " + oozieJavaTmpDirSetting);
+        }
+
+        if (mapOpts != null && !mapOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
+            conf.set(HADOOP_MAP_JAVA_OPTS, mapOpts + " " + oozieJavaTmpDirSetting);
+        }
+
+        if (reduceOpts != null && !reduceOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
+            conf.set(HADOOP_REDUCE_JAVA_OPTS, reduceOpts + " " + oozieJavaTmpDirSetting);
+        }
+
+        if (amChildOpts != null && !amChildOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
+            conf.set(YARN_AM_COMMAND_OPTS, amChildOpts + " " + oozieJavaTmpDirSetting);
+        }
+    }
+
     private HashMap<String, List<String>> populateEnvMap(String input) {
         HashMap<String, List<String>> envMaps = new HashMap<String, List<String>>();
         String[] envEntries = input.split(",");
@@ -495,6 +522,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // set cancel.delegation.token in actionConf that child job doesn't cancel delegation token
             actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
+            updateConfForJavaTmpDir(actionConf);
             return actionConf;
         }
         catch (IOException ex) {
@@ -918,7 +946,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     updateConfForUberMode(launcherJobConf);
                 }
             }
-
+            updateConfForJavaTmpDir(launcherJobConf);
             injectLauncherTimelineServiceEnabled(launcherJobConf, actionConf);
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)

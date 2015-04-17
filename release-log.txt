@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2209 Oozie jobs to set "java.io.tmpdir" to "./tmp" (kailongs via rohini)
 OOZIE-2051 Allows multiple default action configuration files per action (venkatnrangan via bzhang)
 OOZIE-2170 Oozie should automatically set configs to make Spark jobs show up in the Spark History Server (rkanter)
 OOZIE-2140 Audit Log should be shown in Oozie UI (puru)
