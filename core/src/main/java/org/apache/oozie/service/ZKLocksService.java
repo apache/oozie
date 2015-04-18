@@ -68,7 +68,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         super.init(services);
         try {
             zk = ZKUtils.register(this);
-            reaper = new ChildReaper(zk.getClient(), LOCKS_NODE, Reaper.Mode.REAP_INDEFINITELY, getExecutorService(),
+            reaper = new ChildReaper(zk.getClient(), LOCKS_NODE, Reaper.Mode.REAP_UNTIL_GONE, getExecutorService(),
                     ConfigurationService.getInt(services.getConf(), REAPING_THRESHOLD) * 1000, REAPING_LEADER_PATH);
             reaper.start();
         }
