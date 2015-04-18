@@ -30,11 +30,15 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -138,4 +142,11 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         return new String[]{"hive-site.xml"};
     }
 
+    @Override
+    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+        boolean loadDefaultResources = ConfigurationService
+                .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);
+        JobConf conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
+        return conf;
+    }
 }

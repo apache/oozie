@@ -82,7 +82,7 @@ import org.apache.oozie.hadoop.utils.HadoopShims;
 
 public class JavaActionExecutor extends ActionExecutor {
 
-    private static final String HADOOP_USER = "user.name";
+    protected static final String HADOOP_USER = "user.name";
     public static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
     public static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
     public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
@@ -203,10 +203,20 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     public JobConf createBaseHadoopConf(Context context, Element actionXml) {
+        return createBaseHadoopConf(context, actionXml, true);
+    }
+
+    protected JobConf createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
-        JobConf conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
+        JobConf conf = null;
+        if (loadResources) {
+            conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
+        }
+        else {
+            conf = new JobConf(false);
+        }
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_JOB_TRACKER, jobTracker);
         conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
@@ -214,6 +224,10 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
         return conf;
+    }
+
+    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+        return createBaseHadoopConf(context, actionXml);
     }
 
     private void injectLauncherProperties(Configuration srcConf, Configuration launcherConf) {
@@ -512,7 +526,6 @@ public class JavaActionExecutor extends ActionExecutor {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
             XConfiguration.injectDefaults(actionDefaults, actionConf);
-
             has.checkSupportedFilesystem(appPath.toUri());
 
             // Set the Java Main Class for the Java action to give to the Java launcher
@@ -1009,7 +1022,7 @@ public class JavaActionExecutor extends ActionExecutor {
             Element actionXml = XmlUtils.parseXml(action.getConf());
 
             // action job configuration
-            Configuration actionConf = createBaseHadoopConf(context, actionXml);
+            Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);

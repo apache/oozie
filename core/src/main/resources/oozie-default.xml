@@ -1877,6 +1877,19 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.HadoopAccessorService.action.configurations.load.default.resources</name>
+        <value>true</value>
+        <description>
+            true means that default and site xml files of hadoop (core-default, core-site,
+            hdfs-default, hdfs-site, mapred-default, mapred-site, yarn-default, yarn-site)
+            are parsed into actionConf on Oozie server. false means that site xml files are
+            not loaded on server, instead loaded on launcher node.
+            This is only done for pig and hive actions which handle loading those files
+            automatically from the classpath on launcher task. It defaults to true.
+        </description>
+    </property>
+
     <!-- Credentials -->
     <property>
         <name>oozie.credentials.credentialclasses</name>

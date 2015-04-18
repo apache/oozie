@@ -20,9 +20,15 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.JDOMException;
@@ -120,4 +126,11 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
         return XOozieClient.PIG_SCRIPT;
     }
 
+    @Override
+    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+        boolean loadDefaultResources = ConfigurationService
+                .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);
+        JobConf conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
+        return conf;
+    }
 }

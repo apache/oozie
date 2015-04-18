@@ -68,6 +68,7 @@ public class HadoopAccessorService implements Service {
     public static final String NAME_NODE_WHITELIST = CONF_PREFIX + "nameNode.whitelist";
     public static final String HADOOP_CONFS = CONF_PREFIX + "hadoop.configurations";
     public static final String ACTION_CONFS = CONF_PREFIX + "action.configurations";
+    public static final String ACTION_CONFS_LOAD_DEFAULT_RESOURCES = ACTION_CONFS + ".load.default.resources";
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
