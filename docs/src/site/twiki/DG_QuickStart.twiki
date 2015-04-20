@@ -70,7 +70,7 @@ More details on building Oozie can be found on the [[ENG_Building][Building Oozi
    * Hadoop
       * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.0.0 & 0.23.1)
    * ExtJS library (optional, to enable Oozie webconsole)
-      * [[http://extjs.com/deploy/ext-2.2.zip][ExtJS 2.2]]
+      * [[http://dev.sencha.com/deploy/ext-2.2.zip][ExtJS 2.2]]
 
 The Java 1.6+ =bin= directory should be in the command path.
 
