@@ -4,6 +4,7 @@ OOZIE-2100 Publish oozie-webapp artifact (sureshms via bzhang)
 OOZIE-2098 Add Apache parent POM to oozie (sureshms via bzhang)
 -- Oozie 4.1.0 release
 
+OOZIE-2213 oozie-setup.ps1 should use "start-process" rather than "cmd /c" to invoke OozieSharelibCLI or OozieDBCLI commands (bzhang)
 OOZIE-2064 coord job with frequency coord:endOfMonths doesn't materialize (puru)
 OOZIE-2063 Cron syntax creates duplicate actions (bzhang)
 OOZIE-2032 If using SSL, the port reported by Oozie is incorrect for HA tasks (rkanter)
