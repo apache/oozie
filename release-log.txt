@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2213 oozie-setup.ps1 should use "start-process" rather than "cmd /c" to invoke OozieSharelibCLI or OozieDBCLI commands (bzhang)
 OOZIE-2210 Update extjs 2.2 link (bzhang)
 OOZIE-2205 add option to load default/site.xml to actionConf on compute node (ryota)
 OOZIE-2206 Change Reaper mode on ChildReaper in ZKLocksService (ryota)
