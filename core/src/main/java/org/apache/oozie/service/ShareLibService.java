@@ -784,13 +784,13 @@ public class ShareLibService implements Service, Instrumentable {
                 if (shareLibSymlinkMapping != null && !shareLibSymlinkMapping.isEmpty()
                         && shareLibSymlinkMapping.values() != null && !shareLibSymlinkMapping.values().isEmpty()) {
                     StringBuffer bf = new StringBuffer();
-                    for (Entry<String, Map<Path, Path>> key : shareLibSymlinkMapping.entrySet())
-                        if (key.getKey() != null && !key.getValue().isEmpty()) {
-                            for (Path path : key.getValue().keySet()) {
-                                bf.append(path).append("(").append(key).append(")").append("=>")
-                                        .append(shareLibSymlinkMapping.get(key).get(path)).append(",");
+                    for (Entry<String, Map<Path, Path>> entry : shareLibSymlinkMapping.entrySet())
+                        if (entry.getKey() != null && !entry.getValue().isEmpty()) {
+                            for (Path path : entry.getValue().keySet()) {
+                                bf.append(path).append("(").append(entry.getKey()).append(")").append("=>")
+                                        .append(shareLibSymlinkMapping.get(entry.getKey()) != null ? shareLibSymlinkMapping
+                                                .get(entry.getKey()).get(path) : "").append(",");
                             }
-
                         }
                     return bf.toString();
                 }
