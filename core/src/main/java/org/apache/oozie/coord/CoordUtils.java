@@ -143,9 +143,7 @@ public class CoordUtils {
                     if (e.getErrorCode() == ErrorCode.E0605) {
                         XLog.getLog(CoordUtils.class).info("No action for nominal time:" + s + ". Skipping over");
                     }
-                    else {
-                        throw new CommandException(e);
-                    }
+                    throw new CommandException(e);
                 }
 
             }
