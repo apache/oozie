@@ -26,10 +26,6 @@ public class LauncherMainHadoopUtils {
     private LauncherMainHadoopUtils() {
     }
 
-    public static String getYarnJobForMapReduceAction(Configuration actionConf) {
-        return null;
-    }
-
     public static void killChildYarnJobs(Configuration actionConf) {
         // no-op
     }

@@ -20,10 +20,7 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -42,6 +39,8 @@ public class JavaMain extends LauncherMain {
     protected void run(String[] args) throws Exception {
 
         Configuration actionConf = loadActionConf();
+
+        setYarnTag(actionConf);
 
         LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
 

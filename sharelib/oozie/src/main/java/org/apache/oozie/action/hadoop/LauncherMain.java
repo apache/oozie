@@ -40,6 +40,7 @@ import org.apache.hadoop.mapred.JobConf;
 public abstract class LauncherMain {
 
     public static final String HADOOP_JOBS = "hadoopJobs";
+    public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
@@ -181,7 +182,7 @@ public abstract class LauncherMain {
      * @return action  Configuration
      * @throws IOException
      */
-    protected Configuration loadActionConf() throws IOException {
+    public static Configuration loadActionConf() throws IOException {
         // loading action conf prepared by Oozie
         Configuration actionConf = new Configuration(false);
 
@@ -196,6 +197,18 @@ public abstract class LauncherMain {
 
         actionConf.addResource(new Path("file:///", actionXml));
         return actionConf;
+    }
+
+    protected static void setYarnTag(Configuration actionConf) {
+        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+            // in case the user set their own tags, appending the launcher tag.
+            if(actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
+                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(MAPREDUCE_JOB_TAGS) + ","
+                        + actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+            } else {
+                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+            }
+        }
     }
 }
 

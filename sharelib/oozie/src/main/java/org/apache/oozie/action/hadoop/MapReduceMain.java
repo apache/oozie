@@ -46,35 +46,25 @@ public class MapReduceMain extends LauncherMain {
         // loading action conf prepared by Oozie
         Configuration actionConf = new Configuration(false);
         actionConf.addResource(new Path("file:///", System.getProperty("oozie.action.conf.xml")));
+        setYarnTag(actionConf);
 
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
+        LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
 
         // Run a config class if given to update the job conf
         runConfigClass(jobConf);
 
         logMasking("Map-Reduce job configuration:", new HashSet<String>(), jobConf);
 
-        String jobId = LauncherMainHadoopUtils.getYarnJobForMapReduceAction(jobConf);
         File idFile = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_NEW_ID));
-        if (jobId != null) {
-            if (!idFile.exists()) {
-                System.out.print("JobId file is mising: writing now... ");
-                writeJobIdFile(idFile, jobId);
-                System.out.print("Done");
-            }
-            System.out.println("Exiting launcher");
-            System.out.println();
-        }
-        else {
-            System.out.println("Submitting Oozie action Map-Reduce job");
-            System.out.println();
-            // submitting job
-            RunningJob runningJob = submitJob(jobConf);
+        System.out.println("Submitting Oozie action Map-Reduce job");
+        System.out.println();
+        // submitting job
+        RunningJob runningJob = submitJob(jobConf);
 
-            jobId = runningJob.getID().toString();
-            writeJobIdFile(idFile, jobId);
-        }
+        String jobId = runningJob.getID().toString();
+        writeJobIdFile(idFile, jobId);
 
         System.out.println("=======================");
         System.out.println();

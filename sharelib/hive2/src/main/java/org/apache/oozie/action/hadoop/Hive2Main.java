@@ -72,6 +72,7 @@ public class Hive2Main extends LauncherMain {
         }
 
         actionConf.addResource(new Path("file:///", actionXml));
+        setYarnTag(actionConf);
 
         // Propagate delegation related props from launcher job to Hive job
         String delegationToken = getFilePathFromEnv("HADOOP_TOKEN_FILE_LOCATION");
@@ -197,6 +198,11 @@ public class Hive2Main extends LauncherMain {
                 throw new RuntimeException("Error: Beeline argument " + beelineArg + " is not supported");
             }
             arguments.add(beelineArg);
+        }
+
+        if (actionConf.get(LauncherMain.MAPREDUCE_JOB_TAGS) != null ) {
+            arguments.add("--hiveconf");
+            arguments.add("mapreduce.job.tags=" + actionConf.get(LauncherMain.MAPREDUCE_JOB_TAGS));
         }
 
         System.out.println("Beeline command arguments :");

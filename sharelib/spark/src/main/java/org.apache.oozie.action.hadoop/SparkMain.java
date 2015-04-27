@@ -22,8 +22,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.deploy.SparkSubmit;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +41,7 @@ public class SparkMain extends LauncherMain {
     @Override
     protected void run(String[] args) throws Exception {
         Configuration actionConf = loadActionConf();
+        setYarnTag(actionConf);
         LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
 
         List<String> sparkArgs = new ArrayList<String>();

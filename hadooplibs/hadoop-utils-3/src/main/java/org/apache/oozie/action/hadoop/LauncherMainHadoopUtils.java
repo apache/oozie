@@ -33,29 +33,35 @@ import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.ClientRMProxy;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.exceptions.YarnException;
-import org.apache.hadoop.mapreduce.TypeConverter;
 
 public class LauncherMainHadoopUtils {
+
+    public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
 
     private LauncherMainHadoopUtils() {
     }
 
     private static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
-        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        System.out.println("Fetching child yarn jobs");
         long startTime = 0L;
         try {
             startTime = Long.parseLong((System.getProperty("oozie.job.launch.time")));
         } catch(NumberFormatException nfe) {
             throw new RuntimeException("Could not find Oozie job launch time", nfe);
         }
-        String tag = actionConf.get("mapreduce.job.tags");
-        if (tag == null) {
-            throw new RuntimeException("Could not find Yarn tags property (mapreduce.job.tags)");
+
+        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        if (actionConf.get(CHILD_MAPREDUCE_JOB_TAGS) == null) {
+            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return childYarnJobs;
         }
+
+        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        System.out.println("tag id : " + tag);
         GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
         gar.setScope(ApplicationsRequestScope.OWN);
-        gar.setStartRange(startTime, System.currentTimeMillis());
         gar.setApplicationTags(Collections.singleton(tag));
+        gar.setStartRange(startTime, System.currentTimeMillis());
         try {
             ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
             GetApplicationsResponse apps = proxy.getApplications(gar);
@@ -68,19 +74,9 @@ public class LauncherMainHadoopUtils {
         } catch (YarnException ye) {
             throw new RuntimeException("Exception occurred while finding child jobs", ye);
         }
-        return childYarnJobs;
-    }
 
-    public static String getYarnJobForMapReduceAction(Configuration actionConf) {
-        Set<ApplicationId> childYarnJobs = getChildYarnJobs(actionConf);
-        String childJobId = null;
-        if (!childYarnJobs.isEmpty()) {
-            ApplicationId childJobYarnId = childYarnJobs.iterator().next();
-            System.out.println("Found Map-Reduce job [" + childJobYarnId + "] already running");
-            // Need the JobID version for Oozie
-            childJobId = TypeConverter.fromYarn(childJobYarnId).toString();
-        }
-        return childJobId;
+        System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
+        return childYarnJobs;
     }
 
     public static void killChildYarnJobs(Configuration actionConf) {

@@ -21,12 +21,15 @@ package org.apache.oozie.action.hadoop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.OutputStream;
+import java.io.FileOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
@@ -78,6 +81,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     static final String ACTION_DATA_NEW_ID = "newId";
     static final String ACTION_DATA_ERROR_PROPS = "error.properties";
     public static final String HADOOP2_WORKAROUND_DISTRIBUTED_CACHE = "oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache";
+    public static final String PROPAGATION_CONF_XML = "propagation-conf.xml";
+    public static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
 
     private void setRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId) throws LauncherException {
         try {
@@ -170,6 +175,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     setupHeartBeater(reporter);
 
                     setupMainConfiguration();
+
+                    // Propagating the conf to use by child job.
+                    propagateToHadoopConf();
 
                     try {
                         System.out.println("Starting the execution of prepare actions");
@@ -322,6 +330,34 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.out.println();
     }
 
+    /**
+     * Pushing all important conf to hadoop conf for the action
+     */
+    private void propagateToHadoopConf() throws IOException {
+        Configuration propagationConf = new Configuration(false);
+        if (System.getProperty(OOZIE_ACTION_ID) != null) {
+            propagationConf.set(OOZIE_ACTION_ID, System.getProperty(OOZIE_ACTION_ID));
+        }
+        if (System.getProperty(OOZIE_JOB_ID) != null) {
+            propagationConf.set(OOZIE_JOB_ID, System.getProperty(OOZIE_JOB_ID));
+        }
+        if(System.getProperty(OOZIE_LAUNCHER_JOB_ID) != null) {
+            propagationConf.set(OOZIE_LAUNCHER_JOB_ID, System.getProperty(OOZIE_LAUNCHER_JOB_ID));
+        }
+
+        // loading action conf prepared by Oozie
+        Configuration actionConf = LauncherMain.loadActionConf();
+
+        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+            propagationConf.set(LauncherMain.MAPREDUCE_JOB_TAGS,
+                    actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+        }
+
+        propagationConf.writeXml(new FileWriter(PROPAGATION_CONF_XML));
+        Configuration.dumpConfiguration(propagationConf, new OutputStreamWriter(System.out));
+        Configuration.addDefaultResource(PROPAGATION_CONF_XML);
+    }
+
     protected JobConf getJobConf() {
         return jobConf;
     }
@@ -421,8 +457,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         Path pathNew = new Path(new Path(actionDir, ACTION_CONF_XML),
                 new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
         FileSystem fs = FileSystem.get(pathNew.toUri(), getJobConf());
-        fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML),
-                new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
+        fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
 
         System.setProperty("oozie.launcher.job.id", getJobConf().get("mapred.job.id"));
         System.setProperty(OOZIE_JOB_ID, getJobConf().get(OOZIE_JOB_ID));
@@ -434,7 +469,6 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
-        System.setProperty("oozie.job.launch.time", getJobConf().get("oozie.job.launch.time"));
         String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
         if (actionConfigClass != null) {
             System.setProperty(OOZIE_ACTION_CONFIG_CLASS, actionConfigClass);

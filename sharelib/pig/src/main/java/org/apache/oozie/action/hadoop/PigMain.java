@@ -95,6 +95,7 @@ public class PigMain extends LauncherMain {
         }
 
         actionConf.addResource(new Path("file:///", actionXml));
+        setYarnTag(actionConf);
 
         Properties pigProperties = new Properties();
         for (Map.Entry<String, String> entry : actionConf) {

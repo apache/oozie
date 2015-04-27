@@ -57,6 +57,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -884,8 +885,16 @@ public class JavaActionExecutor extends ActionExecutor {
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
             setupLauncherConf(launcherJobConf, actionXml, appPathRoot, context);
 
+            String launcherTag = null;
+            // Extracting tag and appending action name to maintain the uniqueness.
+            if (context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG) != null) {
+                launcherTag = context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG);
+            } else { //Keeping it to maintain backward compatibly with test cases.
+                launcherTag = action.getId();
+            }
+
             // Properties for when a launcher job's AM gets restarted
-            LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, action.getId());
+            LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, launcherTag);
 
             String actionShareLibProperty = actionConf.get(ACTION_SHARELIB_FOR + getType());
             if (actionShareLibProperty != null) {
