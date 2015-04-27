@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.lang.String;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +40,7 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 public class LauncherMainHadoopUtils {
 
     public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
+    public static final String OOZIE_JOB_LAUNCH_TIME = "oozie.job.launch.time";
 
     private LauncherMainHadoopUtils() {
     }
@@ -47,7 +49,7 @@ public class LauncherMainHadoopUtils {
         System.out.println("Fetching child yarn jobs");
         long startTime = 0L;
         try {
-            startTime = Long.parseLong((System.getProperty("oozie.job.launch.time")));
+            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
         } catch(NumberFormatException nfe) {
             throw new RuntimeException("Could not find Oozie job launch time", nfe);
         }

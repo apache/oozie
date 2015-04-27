@@ -37,6 +37,7 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 public class LauncherMainHadoopUtils {
 
     public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
+    public static final String OOZIE_JOB_LAUNCH_TIME = "oozie.job.launch.time";
 
     private LauncherMainHadoopUtils() {
     }

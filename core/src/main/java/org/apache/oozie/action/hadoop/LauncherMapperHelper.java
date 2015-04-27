@@ -164,7 +164,7 @@ public class LauncherMapperHelper {
 
     public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String launcherTag)
             throws NoSuchAlgorithmException {
-        launcherJobConf.setLong("oozie.job.launch.time", System.currentTimeMillis());
+        launcherJobConf.setLong(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME, System.currentTimeMillis());
         // Tags are limited to 100 chars so we need to hash them to make sure (the actionId otherwise doesn't have a max length)
         String tag = getTag(launcherTag);
         // keeping the oozie.child.mapreduce.job.tags instead of mapreduce.job.tags to avoid killing launcher itself.
