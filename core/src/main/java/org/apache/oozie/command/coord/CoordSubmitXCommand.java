@@ -359,6 +359,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             start = cal.getTime();
 
             Date nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(start, coordJob);
+            if (nextTime == null) {
+                throw new IllegalArgumentException("Invalid coordinator cron frequency: " + coordJob.getFrequency());
+            }
             if (!nextTime.before(coordJob.getEndTime())) {
                 throw new IllegalArgumentException("Coordinator job with frequency '" +
                         coordJob.getFrequency() + "' materializes no actions between start and end time.");

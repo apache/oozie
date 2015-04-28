@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2012 coordinator with an invalid cron frequency throws NPE after validation (bzhang)
 OOZIE-2129 Duplicate child jobs per instance (jaydeepvishwakarma via shwethags)
 OOZIE-2214 fix test case TestCoordRerunXCommand.testCoordRerunDateNeg (ryota)
 OOZIE-2213 oozie-setup.ps1 should use "start-process" rather than "cmd /c" to invoke OozieSharelibCLI or OozieDBCLI commands (bzhang)
