@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2130 Add EL Function for offsetting a date by a timezone amount including DST (rkanter)
 OOZIE-2199 Ooziedb.cmd and oozie-setup.ps1 are missing jars in lib/ for classpath on Windows (venkatnrangan via bzhang)
 OOZIE-2012 coordinator with an invalid cron frequency throws NPE after validation (bzhang)
 OOZIE-2129 Duplicate child jobs per instance (jaydeepvishwakarma via shwethags)

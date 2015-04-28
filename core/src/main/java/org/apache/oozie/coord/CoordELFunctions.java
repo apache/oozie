@@ -167,13 +167,13 @@ public class CoordELFunctions {
     }
 
     /**
-     * Returns the a date string while given a base date in 'strBaseDate',
-     * offset and unit (e.g. DAY, MONTH, HOUR, MINUTE, MONTH).
+     * Returns a date string that is offset from 'strBaseDate' by the amount specified.  The unit can be one of
+     * DAY, MONTH, HOUR, MINUTE, MONTH.
      *
-     * @param strBaseDate -- base date
-     * @param offset -- any number
-     * @param unit -- DAY, MONTH, HOUR, MINUTE, MONTH
-     * @return date string
+     * @param strBaseDate The base date
+     * @param offset any number
+     * @param unit one of DAY, MONTH, HOUR, MINUTE, MONTH
+     * @return the offset date string
      * @throws Exception
      */
     public static String ph2_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
@@ -186,6 +186,27 @@ public class CoordELFunctions {
 
     public static String ph3_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
         return ph2_coord_dateOffset(strBaseDate, offset, unit);
+    }
+
+    /**
+     * Returns a date string that is offset from 'strBaseDate' by the difference from Oozie processing timezone to the given
+     * timezone. It will account for daylight saving time based on the given 'strBaseDate' and 'timezone'.
+     *
+     * @param strBaseDate The base date
+     * @param timezone
+     * @return the offset date string
+     * @throws Exception
+     */
+    public static String ph2_coord_dateTzOffset(String strBaseDate, String timezone) throws Exception {
+        Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
+        StringBuilder buffer = new StringBuilder();
+        baseCalDate.setTimeZone(DateUtils.getTimeZone(timezone));
+        buffer.append(DateUtils.formatDate(baseCalDate));
+        return buffer.toString();
+    }
+
+    public static String ph3_coord_dateTzOffset(String strBaseDate, String timezone) throws Exception{
+        return ph2_coord_dateTzOffset(strBaseDate, timezone);
     }
 
     /**
@@ -768,6 +789,10 @@ public class CoordELFunctions {
 
     public static String ph1_coord_dateOffset_echo(String n, String offset, String unit) {
         return echoUnResolved("dateOffset", n + " , " + offset + " , " + unit);
+    }
+
+    public static String ph1_coord_dateTzOffset_echo(String n, String timezone) {
+        return echoUnResolved("dateTzOffset", n + " , " + timezone);
     }
 
     public static String ph1_coord_formatTime_echo(String dateTime, String format) {

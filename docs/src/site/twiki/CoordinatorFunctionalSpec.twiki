@@ -3070,16 +3070,22 @@ This section describes the EL functions that could be used to parameterized both
 
 ---++++ 6.9.1. coord:dateOffset(String baseDate, int instance, String timeUnit) EL Function
 
-The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates date based on the following equation : =newDate = baseDate + instance,  * timeUnit=
+The =${coord:dateOffset(String baseDate, int instance, String timeUnit)}= EL function calculates the date based on the following
+equation : =newDate = baseDate + (instance * timeUnit)=
+In other words, it offsets the =baseDate= by the amount specified by =instance= and =timeUnit=.
 
-For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is 'MONTH', the return date will be '2009-03-01T00:00Z'. If baseDate is '2009-01-01T00:00Z', instance is '1' and timeUnit is 'YEAR', the return date will be '2010-01-01T00:00Z'.
+The =timeUnit= argument accepts one of 'DAY', 'MONTH', 'HOUR', 'MINUTE', 'MONTH'
+
+For example, if =baseDate= is '2009-01-01T00:00Z', =instance= is '2' and =timeUnit= is 'MONTH', the return date will be
+'2009-03-01T00:00Z'. If =baseDate= is '2009-01-01T00:00Z', =instance= is '1' and =timeUnit= is 'YEAR', the return date will be
+'2010-01-01T00:00Z'.
 
 *%GREEN% Example: %ENDCOLOR%*:
 
 
 <verbatim>
    <coordinator-app name="app-coord" frequency="${coord:days(1)}"
-                    start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
+                    start="2009-01-01T23:00Z" end="2009-12-31T23:00Z" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.1">
       ......
       <action>
@@ -3100,9 +3106,49 @@ For example, if baseDate is '2009-01-01T00:00Z', instance is '2' and timeUnit is
    </coordinator-app>
 </verbatim>
 
-In this example, the 'nextInstance' will be '2009-01-02T24:00Z' for the first action. And the value of 'previousInstance' will be  '2008-12-31T24:00Z' for the same instance.
+In this example, the 'nextInstance' will be '2009-01-02T23:00Z' for the first action. And the value of 'previousInstance' will be
+'2008-12-31T23:00Z' for the same instance.
 
----++++ 6.9.2. coord:formatTime(String ts, String format) EL Function (since Oozie 2.3.2)
+---++++ 6.9.2. coord:dateTzOffset(String baseDate, String timezone) EL Function
+
+The =${coord:dateTzOffset(String baseDate, String timezone)}= EL function calculates the date based on the following
+equation : =newDate = baseDate + (Oozie procesing timezone - timezone)=
+In other words, it offsets the =baseDate= by the difference from Oozie processing timezone to the given =timezone=.  It will
+account for daylight saving time based on the given =baseDate= and =timezone=.
+
+The =timezone= argument accepts any timezone or GMT offset that is returned by the
+[[DG_CommandLineTool#Getting_a_list_of_time_zones]["info -timezones"]] command.  For example, "America/Los_Angeles" or "PST".
+
+For example, if =baseDate= is '2012-06-13T00:00Z' and =timezone= is 'America/Los_Angeles', the return date will be
+'2012-06-12T17:00Z'. But if =baseDate= is '2012-12-13T00:00Z', then the return date will be '2012-12-12T16:00Z'.  The difference
+in return dates occurs because the former occurs during Summer when DST is in effect (UTC-0700) and the latter occurs during Winter
+when DST is no in effect (UTC-0800).
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+
+<verbatim>
+   <coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start="2009-01-01T24:00Z" end="2009-12-31T24:00Z" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.1">
+      ......
+      <action>
+        <workflow>
+          <app-path>hdfs://bar:8020/usr/joe/logsaggretor-wf</app-path>
+          <configuration>
+            <property>
+              <name>myDate</name>
+              <value>${coord:dateTzOffset(coord:nominalTime(), "America/Los_Angeles")}</value>
+            </property>
+         </configuration>
+       </workflow>
+      </action>
+   </coordinator-app>
+</verbatim>
+
+In this example, the 'myDate' will be '2009-01-01T15:00Z' for the first action.
+
+---++++ 6.9.3. coord:formatTime(String ts, String format) EL Function (since Oozie 2.3.2)
 
 The =${coord:formatTime(String timeStamp, String format)}= function allows transformation of the standard ISO8601 timestamp strings into other desired formats.
 

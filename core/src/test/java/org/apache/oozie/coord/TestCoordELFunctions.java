@@ -357,10 +357,8 @@ public class TestCoordELFunctions extends XTestCase {
     }
 
     public void testDateOffset() throws Exception {
-        init("coord-job-submit-data");
-        String expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 2, \"DAY\")}";
         init("coord-action-start");
-        expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 2, \"DAY\")}";
+        String expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 2, \"DAY\")}";
         assertEquals("2009-09-10T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
 
         expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", -1, \"DAY\")}";
@@ -368,6 +366,21 @@ public class TestCoordELFunctions extends XTestCase {
 
         expr = "${coord:dateOffset(\"2009-09-08T23:59Z\", 1, \"YEAR\")}";
         assertEquals("2010-09-08T23:59Z", CoordELFunctions.evalAndWrap(eval, expr));
+    }
+
+    public void testDateTzOffset() throws Exception {
+        init("coord-action-start");
+        // PDT is UTC - 7
+        String expr = "${coord:dateTzOffset(\"2012-06-13T00:00Z\", \"America/Los_Angeles\")}";  //Summer
+        assertEquals("2012-06-12T17:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:dateTzOffset(\"2012-06-13T00:00Z\", \"PST\")}";
+        assertEquals("2012-06-12T17:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        // PST is UTC - 8
+        expr = "${coord:dateTzOffset(\"2012-12-13T00:00Z\", \"America/Los_Angeles\")}";         //Winter
+        assertEquals("2012-12-12T16:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+        expr = "${coord:dateTzOffset(\"2012-12-13T00:00Z\", \"PST\")}";
+        assertEquals("2012-12-12T16:00Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testCurrentRange() throws Exception {

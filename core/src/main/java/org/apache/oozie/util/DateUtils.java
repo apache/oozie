@@ -216,6 +216,18 @@ public class DateUtils {
     }
 
     /**
+     * Formats a {@link Calendar} as a string in ISO8601 format without adjusting its timezone.  However, the mask will still
+     * ensure that the returned date is in the Oozie processing timezone.
+     *
+     * @param c {@link Calendar} to format.
+     * @return the ISO8601 string for the given date, <code>NULL</code> if the {@link Calendar} instance was
+     * <code>NULL</code>
+     */
+    public static String formatDate(Calendar c) {
+        return (c != null) ? getISO8601DateFormat(c.getTimeZone(), ACTIVE_MASK).format(c.getTime()) : "NULL";
+    }
+
+    /**
      * This function returns number of hour in a day when given a Calendar with appropriate TZ. It consider DST to find
      * the number of hours. Generally it is 24. At some tZ, in one day of a year it is 23 and another day it is 25
      *
