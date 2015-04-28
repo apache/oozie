@@ -55,6 +55,8 @@ set OOZIECPPATH=.
 
 @rem Add libtools to the classpath
 set OOZIECPPATH=%OOZIECPPATH%;%BASEDIR%\libtools\*
+@rem Add lib to the classpath
+set OOZIECPPATH=%OOZIECPPATH%;%BASEDIR%\lib\*
 @rem Add extra_libs to the classpath
 set OOZIECPPATH=%OOZIECPPATH%;%BASEDIR%\..\extra_libs\*
 

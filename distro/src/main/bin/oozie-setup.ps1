@@ -88,7 +88,7 @@ if (($Command -eq "sharelib") -Or ($Command -eq "db")) {
           $OOZIE_OPTS="$OOZIE_OPTS -Dderby.stream.error.file=$OOZIE_HOME\log\derby.log"
 
           $OOZIECPPATH=""
-          $OOZIECPPATH="$OOZIE_HOME\libtools\*"
+          $OOZIECPPATH="$OOZIE_HOME\libtools\*;$OOZIE_HOME\lib\*;$OOZIE_HOME\..\extra_libs\*"
 
           $COMMAND_OPTS=[string]$args
 

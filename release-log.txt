@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2199 Ooziedb.cmd and oozie-setup.ps1 are missing jars in lib/ for classpath on Windows (venkatnrangan via bzhang)
 OOZIE-2012 coordinator with an invalid cron frequency throws NPE after validation (bzhang)
 OOZIE-2129 Duplicate child jobs per instance (jaydeepvishwakarma via shwethags)
 OOZIE-2214 fix test case TestCoordRerunXCommand.testCoordRerunDateNeg (ryota)
