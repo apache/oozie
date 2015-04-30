@@ -15,6 +15,10 @@ Map/Reduce and Pig jobs.
 
 ---++ Changelog
 
+---+++!! 2015APR29
+
+   * #3.2.1.4 Added notes about Java action retries
+   * #3.2.7 Added notes about Java action retries
 ---+++!! 2014MAY08
 
    * #3.2.2.4 Added support for fully qualified job-xml path
@@ -524,10 +528,15 @@ Each action type must clearly define all the error codes it can produce.
 Oozie provides recovery capabilities when starting or ending actions.
 
 Once an action starts successfully Oozie will not retry starting the action if the action fails during its execution.
-The assumption is that the external system (i.e. Hadoop) executing the action has enough resilience to recovery jobs
+The assumption is that the external system (i.e. Hadoop) executing the action has enough resilience to recover jobs
 once it has started (i.e. Hadoop task retries).
 
-Depending on the nature of the failure, Oozie will have different recovery strategies.
+Java actions are a special case with regard to retries.  Although Oozie itself does not retry Java actions
+should they fail after they have successfully started, Hadoop itself can cause the action to be restarted due to a
+map task retry on the map task running the Java application.  See the Java Action section below for more detail.
+
+For failures that occur prior to the start of the job, Oozie will have different recovery strategies depending on the
+nature of the failure.
 
 If the failure is of transient nature, Oozie will perform retries after a pre-defined time interval. The number of
 retries and timer interval for a type of action must be pre-configured at Oozie level. Workflow jobs can override such
@@ -1474,6 +1483,13 @@ if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
 
 *IMPORTANT:* Because the Java application is run from within a Map-Reduce job, from Hadoop 0.20. onwards a queue must
 be assigned to it. The queue name must be specified as a configuration property.
+
+*IMPORTANT:* The Java application from a Java action is executed in a single map task.  If the task is abnormally terminated,
+such as due to a TaskTracker restart (e.g. during cluster maintenance), the task will be retried via the normal Hadoop task
+retry mechanism.  To avoid workflow failure, the application should be written in a fashion that is resilient to such retries,
+for example by detecting and deleting incomplete outputs or picking back up from complete outputs.  Furthermore, if a Java action
+spawns asynchronous activity outside the JVM of the action itself (such as by launching additional MapReduce jobs), the
+application must consider the possibility of collisions with activity spawned by the new instance.
 
 *Syntax:*
 
