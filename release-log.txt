@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2221 Oozie audit log has null id for some of input request (puru)
 OOZIE-2223 Improve documentation with regard to Java action retries (ben.roling via bzhang)
 OOZIE-2218 META-INF directories in the war file have 777 permissions (rkanter)
 OOZIE-2130 Add EL Function for offsetting a date by a timezone amount including DST (rkanter)

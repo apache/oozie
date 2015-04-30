@@ -145,6 +145,8 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
         }
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         setJob(coordJob);
+        LogUtils.setLogInfo(coordJob);
+
     }
 
     @Override

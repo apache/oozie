@@ -39,6 +39,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.security.AccessControlException;
 import java.util.*;
@@ -64,6 +65,8 @@ public abstract class JsonRestServlet extends HttpServlet {
 
     private XLog auditLog;
     XLog.Info logInfo;
+    private XLog LOG = XLog.getLog(getClass());
+
 
     /**
      * This bean defines a query string parameter.
@@ -245,7 +248,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             String param = (String) request.getAttribute(AUDIT_PARAM);
             String user = XLog.Info.get().getParameter(XLogService.USER);
             String group = XLog.Info.get().getParameter(XLogService.GROUP);
-            String jobId = XLog.Info.get().getParameter(DagXLogInfoService.JOB);
+            String jobId = getJobId(request);
             String app = XLog.Info.get().getParameter(DagXLogInfoService.APP);
 
             String errorCode = (String) request.getAttribute(AUDIT_ERROR_CODE);
@@ -257,6 +260,18 @@ public abstract class JsonRestServlet extends HttpServlet {
                     + " HTTPCODE [{8}], ERRORCODE [{9}], ERRORMESSAGE [{10}]", hostDetail, user, group, app, jobId,
                     operation, param, status, httpStatusCode, errorCode, errorMessage);
         }
+    }
+
+    private String getJobId(HttpServletRequest request) {
+        String jobId = XLog.Info.get().getParameter(DagXLogInfoService.JOB);
+        if (jobId == null) {
+            LOG.debug("JobId is not present in XLog.Info, getting it from HttpServletRequest" );
+            jobId = getResourceName(request);
+            if (!(jobId.endsWith("-C") || jobId.endsWith("-B") || jobId.endsWith("-W") || jobId.contains("C@"))) {
+                jobId = null;
+            }
+        }
+        return jobId;
     }
 
     /**
