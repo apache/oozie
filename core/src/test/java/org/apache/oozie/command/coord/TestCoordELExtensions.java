@@ -25,7 +25,6 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -64,14 +63,13 @@ public class TestCoordELExtensions extends XDataTestCase {
     }
 
     protected CoordinatorActionBean checkCoordAction(String actionId) throws StoreException {
-        CoordinatorStore store = new CoordinatorStore(false);
         try {
-            CoordinatorActionBean action = store.getCoordinatorAction(actionId, false);
+            CoordinatorActionBean action = getCoordinatorAction(actionId);
             assertEquals(
                     "file://#testDir/2009/03/06/00/_SUCCESS#file://#testDir/2009/03/05/23/_SUCCESS",
                     action.getMissingDependencies());
             return action;
-        } catch (StoreException se) {
+        } catch (Exception se) {
             se.printStackTrace();
             fail("Action ID " + actionId + " was not stored properly in db");
         }

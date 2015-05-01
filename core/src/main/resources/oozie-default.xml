@@ -111,7 +111,6 @@
             org.apache.oozie.service.LiteWorkflowAppService,
             org.apache.oozie.service.JPAService,
             org.apache.oozie.service.StoreService,
-            org.apache.oozie.service.CoordinatorStoreService,
             org.apache.oozie.service.SLAStoreService,
             org.apache.oozie.service.DBLiteWorkflowStoreService,
             org.apache.oozie.service.CallbackService,

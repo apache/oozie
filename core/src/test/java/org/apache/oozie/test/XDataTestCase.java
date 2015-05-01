@@ -633,6 +633,50 @@ public abstract class XDataTestCase extends XHCatTestCase {
         return action;
     }
 
+    protected CoordinatorActionBean addRecordToCoordActionTable(CoordinatorActionBean action, String wfId)
+            throws Exception {
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordActionInsertJPAExecutor coordActionInsertExecutor = new CoordActionInsertJPAExecutor(action);
+            jpaService.execute(coordActionInsertExecutor);
+
+            if (wfId != null) {
+                WorkflowJobBean wfJob = jpaService.execute(new WorkflowJobGetJPAExecutor(wfId));
+                wfJob.setParentId(action.getId());
+                WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_PARENT_MODIFIED, wfJob);
+            }
+        }
+        catch (JPAExecutorException je) {
+            je.printStackTrace();
+            fail("Unable to insert the test coord action record to table");
+            throw je;
+        }
+        return action;
+    }
+
+    protected CoordinatorJobBean getCoordinatorJob(String jobId) throws Exception{
+        CoordinatorJobBean coordJob = null;
+        try {
+            coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, jobId);
+        }
+        catch (JPAExecutorException e) {
+            throw new Exception(e);
+        }
+        return coordJob;
+    }
+
+    protected CoordinatorActionBean getCoordinatorAction(String actionId) throws Exception{
+        CoordinatorActionBean cAction = null;
+        try {
+            cAction = CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION, actionId);
+        }
+        catch (JPAExecutorException e) {
+            throw new Exception(e);
+        }
+        return cAction;
+    }
+
     protected CoordinatorActionBean createCoordAction(String jobId, int actionNum, CoordinatorAction.Status status,
             String resourceXmlName, int pending) throws Exception {
         return createCoordAction(jobId, actionNum, status, resourceXmlName, pending, "Z", null);

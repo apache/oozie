@@ -19,7 +19,6 @@
 package org.apache.oozie.service;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.SLAStore;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.store.StoreException;

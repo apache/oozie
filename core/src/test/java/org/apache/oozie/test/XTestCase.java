@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 
 import junit.framework.TestCase;
@@ -78,7 +79,6 @@ import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
-import org.apache.oozie.store.CoordinatorStore;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.test.hive.MiniHS2;
@@ -794,9 +794,9 @@ public abstract class XTestCase extends TestCase {
     }
 
     private void cleanUpDBTablesInternal() throws StoreException {
-        CoordinatorStore store = new CoordinatorStore(false);
-        EntityManager entityManager = store.getEntityManager();
-        store.beginTrx();
+        EntityManager entityManager = Services.get().get(JPAService.class).getEntityManager();
+        entityManager.setFlushMode(FlushModeType.COMMIT);
+        entityManager.getTransaction().begin();
 
         Query q = entityManager.createNamedQuery("GET_WORKFLOWS");
         List<WorkflowJobBean> wfjBeans = q.getResultList();
@@ -861,8 +861,8 @@ public abstract class XTestCase extends TestCase {
             entityManager.remove(w);
         }
 
-        store.commitTrx();
-        store.closeTrx();
+        entityManager.getTransaction().commit();
+        entityManager.close();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");

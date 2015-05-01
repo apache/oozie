@@ -830,7 +830,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     }
 
     private void addRecordToJobTable(String jobId) throws Exception {
-        // CoordinatorStore store = new CoordinatorStore(false);
         CoordinatorJobBean coordJob = new CoordinatorJobBean();
         coordJob.setId(jobId);
         coordJob.setAppName("testApp");
