@@ -347,7 +347,7 @@ public class CoordinatorEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
+            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
         }
         catch (Exception e) {
             throw new IOException(e);

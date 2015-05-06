@@ -458,7 +458,7 @@ public class DagEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = job.getLastModifiedTime();
             }
-            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
+            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
         }
         catch (Exception e) {
             throw new IOException(e);

@@ -292,7 +292,7 @@ public class BundleEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            fetchLog(filter, job.getStartTime(), lastTime, writer, params, logType);
+            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
         }
         catch (Exception ex) {
             throw new IOException(ex);

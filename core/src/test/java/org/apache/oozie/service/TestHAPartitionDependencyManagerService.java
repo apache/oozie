@@ -28,9 +28,10 @@ import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.dependency.hcat.HCatMessageHandler;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.service.RecoveryService.RecoveryRunnable;
+import org.apache.oozie.executor.jpa.CoordActionsDeleteJPAExecutor;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.HCatURI;
+import org.apache.oozie.service.RecoveryService.RecoveryRunnable;
 
 public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
 
@@ -255,4 +256,58 @@ public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
         // mytbl2 should NOT be in topic map
         assertFalse(hcatService.isRegisteredForNotification(dep3));
     }
+
+    public void testCheckAfterActionDelete() throws Exception {
+        Services.get().setService(ZKJobsConcurrencyService.class);
+        Services.get().get(ConfigurationService.class).getConf()
+                .setInt(PartitionDependencyManagerService.CACHE_PURGE_TTL, 0);
+
+        db = "default";
+        table1 = "mytbl";
+        table2 = "mytb2";
+        part1 = "dt=20120101;country=us";
+        part2 = "dt=20120102;country=us";
+        part3 = "dt=20120103;country=us";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table1 + "/" + part1;
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table1 + "/" + part2;
+        String newHCatDependency3 = "hcat://" + server + "/" + db + "/" + table2 + "/" + part3;
+        HCatURI dep1 = new HCatURI(newHCatDependency1);
+        HCatURI dep2 = new HCatURI(newHCatDependency2);
+        HCatURI dep3 = new HCatURI(newHCatDependency3);
+        // create db, table and partitions
+        populateTable();
+
+        String actionId1 = addInitRecords(newHCatDependency1);
+        String actionId2 = addInitRecords(newHCatDependency2);
+        String actionId3 = addInitRecords(newHCatDependency3);
+
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        pdms.init(Services.get());
+        pdms.addMissingDependency(dep1, actionId1);
+        pdms.addMissingDependency(dep2, actionId2);
+        pdms.addMissingDependency(dep3, actionId3);
+        pdms.runCachePurgeWorker();
+
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep1));
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep2));
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep3));
+
+        List<String> deleteList = new ArrayList<String>();
+        deleteList.add(actionId1);
+        JPAService jpaService = Services.get().get(JPAService.class);
+        jpaService.execute(new CoordActionsDeleteJPAExecutor(deleteList));
+        pdms.runCachePurgeWorker();
+
+        assertNull((Collection<String>) pdms.getWaitingActions(dep1));
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep2));
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep3));
+        deleteList.clear();
+        deleteList.add(actionId2);
+        jpaService.execute(new CoordActionsDeleteJPAExecutor(deleteList));
+        pdms.runCachePurgeWorker();
+        assertNull((Collection<String>) pdms.getWaitingActions(dep1));
+        assertNull((Collection<String>) pdms.getWaitingActions(dep2));
+        assertNotNull((Collection<String>) pdms.getWaitingActions(dep3));
+    }
+
 }

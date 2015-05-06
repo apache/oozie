@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -27,9 +28,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.coord.CoordActionUpdatePushMissingDependency;
 import org.apache.oozie.dependency.hcat.HCatDependencyCache;
@@ -119,7 +122,15 @@ public class PartitionDependencyManagerService implements Service {
                         caBean = CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION_STATUS, actionId);
                     }
                     catch (JPAExecutorException e) {
-                        LOG.warn("Error in checking coord action:" + actionId + "to purge, skipping", e);
+                        if (e.getErrorCode() == ErrorCode.E0605) {
+                            LOG.info(MessageFormat.format(
+                                    "Coord action {0} is not in database, deleting it from cache", actionId));
+                            staleActions.add(actionId);
+                            actionItr.remove();
+                        }
+                        else {
+                            LOG.warn("Error in checking coord action:" + actionId + "to purge, skipping", e);
+                        }
                     }
                     if(caBean != null && !caBean.getStatus().equals(CoordinatorAction.Status.WAITING)){
                         staleActions.add(actionId);
