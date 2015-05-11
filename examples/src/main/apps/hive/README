@@ -1,0 +1,1 @@
+For secure clusters, copy workflow.xml.security to workflow.xml and fix the metastore location appropriately.

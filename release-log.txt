@@ -1,5 +1,6 @@
 -- Oozie 4.2.0 release (trunk - unreleased)
 
+OOZIE-2224 Add example worklfow.xml for hive in secure mode (venkatnrangan via bzhang)
 OOZIE-2227 PartitionDependencyManagerService keeps on purging delete coord actions (puru)
 OOZIE-2163 Remove CoordinatorStore (seoeun25 via bzhang)
 OOZIE-2221 Oozie audit log has null id for some of input request (puru)
