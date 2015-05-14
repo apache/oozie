@@ -140,6 +140,9 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
             String jobType = request.getParameter(RestConstants.JOBTYPE_PARAM);
 
+            if (filter == null) {
+                throw new IllegalArgumentException("filter params must be specified for bulk write API");
+            }
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
             int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;

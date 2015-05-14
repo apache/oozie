@@ -500,6 +500,27 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testBulkCommandWithoutFilterNegative() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"jobs", "-oozie", oozieUrl, "-suspend", "-jobtype", "coordinator"};
+                assertEquals(-1, new OozieCLI().run(args));
+                assertNull(MockCoordinatorEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-resume", "-jobtype", "coordinator"};
+                assertEquals(-1, new OozieCLI().run(args));
+                assertNull(MockCoordinatorEngineService.did);
+
+                args = new String[]{"jobs", "-oozie", oozieUrl, "-kill", "-jobtype", "coordinator"};
+                assertEquals(-1, new OozieCLI().run(args));
+                assertNull(MockCoordinatorEngineService.did);
+                return null;
+            }
+        });
+    }
+
     /**
      * Test the working of coord action kill from Client with action numbers
      *
