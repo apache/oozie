@@ -2,6 +2,7 @@
 
 -- Oozie 4.2.0 release (unreleased)
 
+OOZIE-2236 Need to package hive-hcatalog-server-extensions.jar in the hcatalog sharelib (venkatnrangan via bzhang)
 OOZIE-2232 Oozie should invalidate bulk write command when "-filter" is missing (venkatnrangan via bzhang)
 OOZIE-2224 Add example worklfow.xml for hive in secure mode (venkatnrangan via bzhang)
 OOZIE-2227 PartitionDependencyManagerService keeps on purging delete coord actions (puru)
