@@ -1,4 +1,6 @@
--- Oozie 4.2.0 release (trunk - unreleased)
+-- Oozie 4.3.0 release (trunk - unreleased)
+
+-- Oozie 4.2.0 release (unreleased)
 
 OOZIE-2232 Oozie should invalidate bulk write command when "-filter" is missing (venkatnrangan via bzhang)
 OOZIE-2224 Add example worklfow.xml for hive in secure mode (venkatnrangan via bzhang)
