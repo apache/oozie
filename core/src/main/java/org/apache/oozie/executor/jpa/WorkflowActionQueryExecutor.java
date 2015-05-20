@@ -110,6 +110,7 @@ public class WorkflowActionQueryExecutor extends
             case UPDATE_ACTION_PENDING:
                 query.setParameter("pending", actionBean.getPending());
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
+                query.setParameter("executionPath", actionBean.getExecutionPath());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_STATUS_PENDING:

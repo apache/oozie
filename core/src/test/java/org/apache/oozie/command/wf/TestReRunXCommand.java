@@ -119,7 +119,7 @@ public class TestReRunXCommand extends XDataTestCase {
      * This tests a specific edge case where rerun can fail when there's a fork, the actions in the fork succeed, but an action
      * after the fork fails.  Previously, the rerun would step through the forked actions in the order they were listed in the
      * fork action's XML; if they happened to finish in a different order, this would cause an error during rerun.  This is fixed by
-     * enforcing the same order in LiteWorkflowInstance#signal, which this test verifies.
+     * using the new execution path for LiteWorkflowInstance#signal, which this test verifies.
      *
      * @throws Exception
      */
@@ -139,7 +139,7 @@ public class TestReRunXCommand extends XDataTestCase {
         conf.setProperty("jobTracker", getJobTrackerUri());
         conf.setProperty(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        conf.setProperty("cmd3", "echo1");      // expected to fail
+        conf.setProperty("cmd4", "echo1");      //expected to fail
 
         final String jobId1 = wfClient.submit(conf);
         wfClient.start(jobId1);
@@ -149,17 +149,21 @@ public class TestReRunXCommand extends XDataTestCase {
                 return wfClient.getJobInfo(jobId1).getStatus() == WorkflowJob.Status.KILLED;
             }
         });
+        wfClient.kill(jobId1);
+
         assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId1).getStatus());
+
         List<WorkflowAction> actions = wfClient.getJobInfo(jobId1).getActions();
         assertEquals(WorkflowAction.Status.OK, actions.get(1).getStatus());     // fork
         assertEquals(WorkflowAction.Status.OK, actions.get(2).getStatus());     // sh1
         assertEquals(WorkflowAction.Status.OK, actions.get(3).getStatus());     // sh2
-        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // join
-        assertEquals(WorkflowAction.Status.ERROR, actions.get(5).getStatus());  // sh3
+        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // sh3
+        assertEquals(WorkflowAction.Status.OK, actions.get(5).getStatus());     // j
+        assertEquals(WorkflowAction.Status.ERROR, actions.get(6).getStatus());  // sh4
 
         // rerun failed node, which is after the fork
         conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
-        conf.setProperty("cmd3", "echo");      // expected to succeed
+        conf.setProperty("cmd4", "echo");
 
         wfClient.reRun(jobId1, conf);
         waitFor(200 * 1000, new Predicate() {
@@ -173,8 +177,9 @@ public class TestReRunXCommand extends XDataTestCase {
         assertEquals(WorkflowAction.Status.OK, actions.get(1).getStatus());     // fork
         assertEquals(WorkflowAction.Status.OK, actions.get(2).getStatus());     // sh1
         assertEquals(WorkflowAction.Status.OK, actions.get(3).getStatus());     // sh2
-        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // join
-        assertEquals(WorkflowAction.Status.OK, actions.get(5).getStatus());     // sh3
+        assertEquals(WorkflowAction.Status.OK, actions.get(4).getStatus());     // sh3
+        assertEquals(WorkflowAction.Status.OK, actions.get(5).getStatus());     // join
+        assertEquals(WorkflowAction.Status.OK, actions.get(6).getStatus());     // sh4
     }
 
     /*

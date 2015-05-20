@@ -58,11 +58,10 @@ public interface WorkflowLib {
      * @param app application to create a workflow instance of.
      * @param conf job configuration.
      * @param wfId Workflow ID.
-     * @param actionEndTimes A map of the actions to their endtimes; actions with no endtime should be omitted
      * @return the newly created workflow instance.
      * @throws WorkflowException thrown if the instance could not be created.
      */
-    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId, Map<String, Date> actionEndTimes)
+    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId)
             throws WorkflowException;
 
     /**

@@ -350,6 +350,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     WorkflowActionBean oldAction = new WorkflowActionBean();
                     oldAction.setId(newAction.getId());
                     oldAction.setPending();
+                    oldAction.setExecutionPath(newAction.getExecutionPath());
                     updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING,
                             oldAction));
                     queue(new SignalXCommand(jobId, oldAction.getId()));
