@@ -41,15 +41,23 @@
         <shell xmlns="uri:oozie:shell-action:0.3">
             <exec>echo</exec>
         </shell>
+        <ok to="sh3"/>
+        <error to="k"/>
+    </action>
+
+    <action name="sh3">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+        </shell>
         <ok to="j"/>
         <error to="k"/>
     </action>
 
-    <join name="j" to="sh3"/>
+    <join name="j" to="sh4"/>
 
-    <action name="sh3">
+    <action name="sh4">
         <shell xmlns="uri:oozie:shell-action:0.3">
-            <exec>${cmd3}</exec>
+            <exec>${cmd4}</exec>
         </shell>
         <ok to="end"/>
         <error to="k"/>

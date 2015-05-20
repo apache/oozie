@@ -66,10 +66,10 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     }
 
     @Override
-    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId, Map<String, Date> actionEndTimes)
+    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId)
             throws WorkflowException {
         ParamChecker.notNull(app, "app");
         ParamChecker.notNull(wfId, "wfId");
-        return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, wfId, actionEndTimes);
+        return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, wfId);
     }
 }
