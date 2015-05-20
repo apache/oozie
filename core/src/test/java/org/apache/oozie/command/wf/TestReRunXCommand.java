@@ -428,8 +428,11 @@ public class TestReRunXCommand extends XDataTestCase {
         Properties newConf = wfClient.createConfiguration();
         newConf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
         Services.get().getConf().setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, true);
+
         try {
             wfClient.reRun(wfId, newConf);
+            fail("OozieClientException should have been thrown (" + ErrorCode.E0755 +
+                    " Rerun is not allowed through child workflow, please re-run through the parent)");
         } catch (OozieClientException ex){
             assertEquals(ErrorCode.E0755.toString(), ex.getErrorCode());
         }
