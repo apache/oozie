@@ -337,7 +337,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         // through conf.
         if (wfBean.getParentId() != null && !conf.getBoolean(SubWorkflowActionExecutor.SUBWORKFLOW_RERUN, false)
                 && ConfigurationService.getBoolean(DISABLE_CHILD_RERUN)) {
-            throw new PreconditionException(ErrorCode.E0755, " Rerun is not allowed through child workflow, please" +
+            throw new CommandException(ErrorCode.E0755, " Rerun is not allowed through child workflow, please" +
                     " re-run through the parent " + wfBean.getParentId());
         }
 
