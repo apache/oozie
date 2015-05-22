@@ -2535,4 +2535,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.email.attachment.enabled</name>
+        <value>true</value>
+        <description>
+            This value determines whether to support email attachment of a file on HDFS.
+            Set it false if there is any security concern.
+        </description>
+    </property>
 </configuration>

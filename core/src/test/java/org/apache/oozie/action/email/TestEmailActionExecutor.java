@@ -35,6 +35,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
@@ -229,18 +230,21 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         StringBuilder tag = new StringBuilder();
         tag.append(path1.toString()).append(",").append(path2.toString());
         assertAttachment(tag.toString(), 2, content1, content2);
+
+        //test case when email attachment support set to false
+        ConfigurationService.setBoolean(EmailActionExecutor.EMAIL_ATTACHMENT_ENABLED, false);
+        sendAndReceiveEmail(tag.toString());
+        MimeMessage retMeg = server.getReceivedMessages()[1];
+        String msgBody = GreenMailUtil.getBody(retMeg);
+        assertEquals(msgBody.indexOf("This is a test mail"), 0);
+        assertNotSame(msgBody.indexOf(EmailActionExecutor.EMAIL_ATTACHMENT_ERROR_MSG),-1);
+        // email content is not multi-part since not attaching files
+        assertFalse(retMeg.getContent() instanceof Multipart);
+        assertTrue(retMeg.getContentType().contains("text/plain"));
     }
 
     private void assertAttachment(String attachtag, int attachCount, String content1, String content2) throws Exception {
-        StringBuilder elem = new StringBuilder();
-        elem.append("<email xmlns=\"uri:oozie:email-action:0.2\">");
-        elem.append("<to>oozie@yahoo-inc.com</to>");
-        elem.append("<subject>sub</subject>");
-        elem.append("<body>&lt;body&gt; This is a test mail &lt;/body&gt;</body>");
-        elem.append("<attachment>").append(attachtag).append("</attachment>");
-        elem.append("</email>");
-        EmailActionExecutor emailContnetType = new EmailActionExecutor();
-        emailContnetType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
+        sendAndReceiveEmail(attachtag);
         MimeMessage retMeg = server.getReceivedMessages()[0];
         Multipart retParts = (Multipart) (retMeg.getContent());
         int numAttach = 0;
@@ -253,10 +257,22 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
                 numAttach++;
             }
             else {
-                assertEquals("<body> This is a test mail </body>", retValue);
+                assertEquals("This is a test mail", retValue);
             }
         }
         assertEquals(attachCount, numAttach);
+    }
+
+    private void sendAndReceiveEmail(String attachtag) throws Exception {
+        StringBuilder elem = new StringBuilder();
+        elem.append("<email xmlns=\"uri:oozie:email-action:0.2\">");
+        elem.append("<to>oozie@yahoo-inc.com</to>");
+        elem.append("<subject>sub</subject>");
+        elem.append("<body>This is a test mail</body>");
+        elem.append("<attachment>").append(attachtag).append("</attachment>");
+        elem.append("</email>");
+        EmailActionExecutor emailExecutor = new EmailActionExecutor();
+        emailExecutor.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
     }
 
     @Override

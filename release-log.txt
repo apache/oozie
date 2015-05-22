@@ -1,5 +1,6 @@
--- Oozie 4.2.0 release (unreleased)
+-- Oozie 4.2.0 release
 
+OOZIE-2240 add configuration to disable email attachment support (egashira via shwethags)
 OOZIE-1963 Create a Hive Server 2 example (qwertymaniac via shwethags)
 OOZIE-1993 Rerun fails during join in certain condition (shwethags)
 OOZIE-2236 Need to package hive-hcatalog-server-extensions.jar in the hcatalog sharelib (venkatnrangan via bzhang)

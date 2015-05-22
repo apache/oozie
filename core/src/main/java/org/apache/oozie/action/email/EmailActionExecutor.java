@@ -52,6 +52,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -73,6 +74,7 @@ public class EmailActionExecutor extends ActionExecutor {
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
     public static final String EMAIL_SMTP_PASS = CONF_PREFIX + "smtp.password";
     public static final String EMAIL_SMTP_FROM = CONF_PREFIX + "from.address";
+    public static final String EMAIL_ATTACHMENT_ENABLED = CONF_PREFIX + "attachment.enabled";
 
     private final static String TO = "to";
     private final static String CC = "cc";
@@ -84,6 +86,10 @@ public class EmailActionExecutor extends ActionExecutor {
 
     private final static String DEFAULT_CONTENT_TYPE = "text/plain";
     private XLog LOG = XLog.getLog(getClass());
+    public static final String EMAIL_ATTACHMENT_ERROR_MSG =
+            "\n Note: This email is missing configured email attachments "
+            + "as sending attachments in email action is disabled in the Oozie server. "
+            + "It could be for security compliance with data protection or other reasons";
 
     public EmailActionExecutor() {
         super("email");
@@ -210,7 +216,7 @@ public class EmailActionExecutor extends ActionExecutor {
             message.setSubject(subject);
 
             // when there is attachment
-            if (attachments != null && attachments.length > 0) {
+            if (attachments != null && attachments.length > 0 && ConfigurationService.getBoolean(EMAIL_ATTACHMENT_ENABLED)) {
                 Multipart multipart = new MimeMultipart();
 
                 // Set body text
@@ -234,6 +240,9 @@ public class EmailActionExecutor extends ActionExecutor {
                 message.setContent(multipart);
             }
             else {
+                if (attachments != null && attachments.length > 0 && !ConfigurationService.getBoolean(EMAIL_ATTACHMENT_ENABLED)) {
+                    body = body + EMAIL_ATTACHMENT_ERROR_MSG;
+                }
                 message.setContent(body, contentType);
             }
         }
