@@ -51,6 +51,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -211,6 +212,11 @@ public class JavaActionExecutor extends ActionExecutor {
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
+        String rn_admin_ad = actionXml.getChild("rm-admin-ad", ns) == null ? null : actionXml.getChild("rm-admin-ad", ns).getTextTrim();
+        String rm_scheduler_ad = actionXml.getChild("rm-scheduler-ad", ns) == null ? null : actionXml.getChild("rm-scheduler-ad",ns).getTextTrim();
+        String rm_resource_tracker_ad = actionXml.getChild("rm-resource-tracker-ad", ns) == null ? null : actionXml.getChild("rm-resource-tracker-ad",ns).getTextTrim();
+        String mr_jobhistory_ad = actionXml.getChild("mr-jobhistory-ad", ns) == null ? null : actionXml.getChild("mr-jobhistory-ad",ns).getTextTrim();
+        String mr_jobhistory_admin_ad = actionXml.getChild("mr-jobhistory-admin-ad", ns) == null ? null : actionXml.getChild("mr-jobhistory-admin-ad", ns).getTextTrim();
         JobConf conf = null;
         if (loadResources) {
             conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
@@ -223,6 +229,11 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
         conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
+        conf.set(YarnConfiguration.RM_ADMIN_ADDRESS,rn_admin_ad != null ? rn_admin_ad : jobTracker.split(":")[0] + ":8033");
+        conf.set(YarnConfiguration.RM_SCHEDULER_ADDRESS,rm_scheduler_ad != null ? rm_scheduler_ad : jobTracker.split(":")[0] + ":8030");
+        conf.set(YarnConfiguration.RM_RESOURCE_TRACKER_ADDRESS,rm_resource_tracker_ad != null ? rm_resource_tracker_ad : jobTracker.split(":")[0] + ":8031");
+        conf.set("mapreduce.jobhistory.address", mr_jobhistory_ad != null ? mr_jobhistory_ad : jobTracker.split(":")[0] + ":10020");
+        conf.set("mapreduce.jobhistory.admin.address", mr_jobhistory_admin_ad != null ? mr_jobhistory_admin_ad : jobTracker.split(":")[0] + ":10033");
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
         return conf;
     }
