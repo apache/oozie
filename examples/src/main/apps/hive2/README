@@ -1,0 +1,14 @@
+Running the HiveServer2 example
+
+1. Setup and run a HiveServer2 (hive --service hiveserver2) to run on localhost, port 10000,
+   prior to running the example.
+2. When running in a secure cluster, follow below
+   a. The files job.properties.security and workflow.xml.security can be
+      used and modified as needed.  Please refer to those two files and change the jdbcURL
+      and jdbcPrincipal as necessary.
+   b. Make sure oozie-site.xml under /etc/oozie/conf has the following property
+      specified.
+       <property>
+         <name>oozie.credentials.credentialclasses</name>
+         <value>hive2=org.apache.oozie.action.hadoop.Hive2Credentials</value>
+       </property>
