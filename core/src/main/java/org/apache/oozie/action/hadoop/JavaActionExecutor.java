@@ -407,25 +407,8 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     void updateConfForJavaTmpDir(Configuration conf) {
-        String mapOpts = conf.get(HADOOP_MAP_JAVA_OPTS);
-        String reduceOpts = conf.get(HADOOP_REDUCE_JAVA_OPTS);
-        String childOpts = conf.get(HADOOP_CHILD_JAVA_OPTS);
         String amChildOpts = conf.get(YARN_AM_COMMAND_OPTS);
         String oozieJavaTmpDirSetting = "-Djava.io.tmpdir=./tmp";
-        if (childOpts == null) {
-            conf.set(HADOOP_CHILD_JAVA_OPTS, oozieJavaTmpDirSetting);
-        } else {
-            conf.set(HADOOP_CHILD_JAVA_OPTS, childOpts + " " + oozieJavaTmpDirSetting);
-        }
-
-        if (mapOpts != null && !mapOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
-            conf.set(HADOOP_MAP_JAVA_OPTS, mapOpts + " " + oozieJavaTmpDirSetting);
-        }
-
-        if (reduceOpts != null && !reduceOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
-            conf.set(HADOOP_REDUCE_JAVA_OPTS, reduceOpts + " " + oozieJavaTmpDirSetting);
-        }
-
         if (amChildOpts != null && !amChildOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
             conf.set(YARN_AM_COMMAND_OPTS, amChildOpts + " " + oozieJavaTmpDirSetting);
         }
