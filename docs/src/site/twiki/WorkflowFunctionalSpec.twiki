@@ -2216,7 +2216,7 @@ For all the functions in this section the path must include the FS URI. For exam
 
 *boolean fs:exists(String path)*
 
-It returns =true= or =false= depending if the specified path URI exists or not.
+It returns =true= or =false= depending if the specified path URI exists or not. If a glob pattern is used for the URI, it returns true when there is at least one matching path.
 
 *boolean fs:isDir(String path)*
 

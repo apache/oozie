@@ -1679,7 +1679,7 @@
 
     <property>
         <name>oozie.action.fs.glob.max</name>
-        <value>1000</value>
+        <value>50000</value>
         <description>
             Maximum number of globbed files.
         </description>

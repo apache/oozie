@@ -1,11 +1,12 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2215 Support glob in FS EL function (ryota)
 OOZIE-2270 Audit log doesn't get loaded when "audit log" tab is clicked for coord job (puru)
 OOZIE-2257 BundleStatusTransitXCommand doesn't update last modified time (puru)
-
--- Oozie 4.2.0 release (unreleased)
-
 OOZIE-2260 Only set "java.io.tmpdir" to "./tmp" for the AM (ryota)
+
+-- Oozie 4.2.0 release
+
 OOZIE-2240 add configuration to disable email attachment support (egashira via shwethags)
 OOZIE-1963 Create a Hive Server 2 example (qwertymaniac via shwethags)
 OOZIE-1993 Rerun fails during join in certain condition (shwethags)

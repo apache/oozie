@@ -82,6 +82,9 @@ public class TestFsELFunctions extends XFsTestCase {
         conf.set("file1", file1);
         conf.set("file2", file2);
         conf.set("file3", "${file2}");
+        conf.set("file4", getFsTestCaseDir()+"/file{1,2}");
+        conf.set("file5", getFsTestCaseDir()+"/file*");
+        conf.set("file6", getFsTestCaseDir()+"/file_*");
         conf.set("dir", dir);
 
         LiteWorkflowApp def =
@@ -110,6 +113,9 @@ public class TestFsELFunctions extends XFsTestCase {
 
         assertEquals(true, (boolean) eval.evaluate("${fs:exists(wf:conf('file1'))}", Boolean.class));
         assertEquals(false, (boolean) eval.evaluate("${fs:exists(wf:conf('file2'))}", Boolean.class));
+        assertEquals(true, (boolean) eval.evaluate("${fs:exists(wf:conf('file4'))}", Boolean.class));
+        assertEquals(true, (boolean) eval.evaluate("${fs:exists(wf:conf('file5'))}", Boolean.class));
+        assertEquals(false, (boolean) eval.evaluate("${fs:exists(wf:conf('file6'))}", Boolean.class));
         assertEquals(true, (boolean) eval.evaluate("${fs:exists(wf:conf('dir'))}", Boolean.class));
         assertEquals(false, (boolean) eval.evaluate("${fs:isDir(wf:conf('file1'))}", Boolean.class));
         assertEquals(0, (int) eval.evaluate("${fs:fileSize(wf:conf('file1'))}", Integer.class));

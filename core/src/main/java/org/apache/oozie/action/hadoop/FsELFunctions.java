@@ -25,9 +25,12 @@ import java.net.URISyntaxException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -71,10 +74,17 @@ public class FsELFunctions {
      * @throws Exception
      */
     public static boolean fs_exists(String pathUri) throws Exception {
-        URI uri = new URI(pathUri);
-        String path = uri.getPath();
-        FileSystem fs = getFileSystem(uri);
-        return fs.exists(new Path(path));
+        Path path = new Path(pathUri);
+        FileSystem fs = getFileSystem(path.toUri());
+        FileStatus[] pathArr;
+        try {
+            pathArr = fs.globStatus(path, new FSPathFilter());
+        }
+        catch (ReachingGlobMaxException e) {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS013",
+                    "too many globbed files/dirs to do FS operation");
+        }
+        return (pathArr != null && pathArr.length > 0);
     }
 
     /**
@@ -155,6 +165,28 @@ public class FsELFunctions {
             blockSize = fileStatus.getBlockSize();
         }
         return blockSize;
+    }
+
+    static class FSPathFilter implements PathFilter {
+        int count = 0;
+        int globMax = Integer.MAX_VALUE;
+        public FSPathFilter() {
+            globMax = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+        }
+        @Override
+        public boolean accept(Path p) {
+            count++;
+            if(count > globMax) {
+                throw new ReachingGlobMaxException();
+            }
+            return true;
+        }
+    }
+
+    /**
+     * ReachingGlobMaxException thrown when globbed file count exceeds the limit
+     */
+    static class ReachingGlobMaxException extends RuntimeException {
     }
 
 }
