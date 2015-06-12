@@ -980,7 +980,8 @@ function jobDetailsPopup(response, request) {
 }
 
 function coordJobDetailsPopup(response, request) {
-    var isErrorLogLoaded= false;
+    var isErrorLogLoaded = false;
+    var isAuditLogLoaded = false;
 
     var jobDefinitionArea = new Ext.form.TextArea({
         fieldLabel: 'Definition',
@@ -1547,6 +1548,13 @@ function coordJobDetailsPopup(response, request) {
             if(!isErrorLogLoaded){
                 fetchErrorLogs(coordJobId);
                 isErrorLogLoaded=true;
+            }
+        }
+        else if (selectedTab.title == 'Coord Audit Log') {
+            if(!isAuditLogLoaded){
+                getLogs(getOozieBase() + 'job/' + coordJobId + "?show=auditlog", null, auditLogStatus, jobAuditLogArea,
+                        false, null);
+                isAuditLogLoaded=true;
             }
         }
         coord_jobs_grid.setVisible(false);
