@@ -66,7 +66,7 @@ public interface SLACalculator {
 
     /**
      * Enable sla alert for child jobs.
-     * @param jobId the parent job ids
+     * @param parentJobIds the parent job ids
      * @return
      * @throws JPAExecutorException
      * @throws ServiceException
@@ -86,7 +86,7 @@ public interface SLACalculator {
 
     /**
      * Disable Sla alert for child jobs.
-     * @param jobId the parent job ids
+     * @param parentJobIds the parent job ids
      * @return
      * @throws JPAExecutorException
      * @throws ServiceException

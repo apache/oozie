@@ -40,14 +40,14 @@ import java.io.IOException;
 import java.io.File;
 
 /**
- * Services is a singleton that manages the lifecycle of all registered {@link Services}. <p/> It has 2 built in
- * services: {@link XLogService} and {@link ConfigurationService}. <p/> The rest of the services are loaded from the
+ * Services is a singleton that manages the lifecycle of all registered {@link Services}. <p> It has 2 built in
+ * services: {@link XLogService} and {@link ConfigurationService}. <p> The rest of the services are loaded from the
  * {@link #CONF_SERVICE_CLASSES} configuration property. The services class names must be separated by commas (spaces
- * and enters are allowed). <p/> The {@link #CONF_SYSTEM_MODE} configuration property is any of
- * NORMAL/SAFEMODE/NOWEBSERVICE. <p/> Services are loaded and initialized in the order they are defined in the in
- * configuration property. <p/> After all services are initialized, if the Instrumentation service is present, all
- * services that implement the {@link Instrumentable} are instrumented. <p/> Services are destroyed in reverse order.
- * <p/> If services initialization fail, initialized services are immediatly destroyed.
+ * and enters are allowed). <p> The {@link #CONF_SYSTEM_MODE} configuration property is any of
+ * NORMAL/SAFEMODE/NOWEBSERVICE. <p> Services are loaded and initialized in the order they are defined in the in
+ * configuration property. <p> After all services are initialized, if the Instrumentation service is present, all
+ * services that implement the {@link Instrumentable} are instrumented. <p> Services are destroyed in reverse order.
+ * <p> If services initialization fail, initialized services are immediatly destroyed.
  */
 public class Services {
     private static final int MAX_SYSTEM_ID_LEN = 10;
@@ -96,7 +96,7 @@ public class Services {
     }
 
     /**
-     * Create a services. <p/> The built in services are initialized.
+     * Create a services. <p> The built in services are initialized.
      *
      * @throws ServiceException thrown if any of the built in services could not initialize.
      */
@@ -146,7 +146,7 @@ public class Services {
     }
 
     /**
-     * Return active system mode. <p/> .
+     * Return active system mode. <p> .
      *
      * @return
      */
@@ -156,7 +156,7 @@ public class Services {
     }
 
     /**
-     * Return the runtime directory of the Oozie instance. <p/> The directory is created under TMP and it is always a
+     * Return the runtime directory of the Oozie instance. <p> The directory is created under TMP and it is always a
      * new directory per Services initialization.
      *
      * @return the runtime directory of the Oozie instance.
@@ -361,7 +361,7 @@ public class Services {
     }
 
     /**
-     * Set a service programmatically. <p/> The service will be initialized by the services. <p/> If a service is
+     * Set a service programmatically. <p> The service will be initialized by the services. <p> If a service is
      * already defined with the same public interface it will be destroyed.
      *
      * @param klass service klass

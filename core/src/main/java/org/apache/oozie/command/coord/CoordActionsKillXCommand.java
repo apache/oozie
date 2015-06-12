@@ -49,10 +49,10 @@ import org.apache.oozie.util.ParamChecker;
 
 /**
  * Kill coordinator actions by a range of dates (nominal time) or action number.
- * <p/>
- * The "range" can be set with {@link RestConstants.JOB_COORD_SCOPE_DATE} or
- * {@link RestConstants.JOB_COORD_SCOPE_ACTION}.
- * <p/>
+ * <p>
+ * The "range" can be set with {@link RestConstants#JOB_COORD_SCOPE_DATE} or
+ * {@link RestConstants#JOB_COORD_SCOPE_ACTION}.
+ * <p>
  */
 public class CoordActionsKillXCommand extends KillTransitionXCommand<CoordinatorActionInfo> {
 

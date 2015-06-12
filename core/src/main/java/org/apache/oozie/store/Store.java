@@ -90,7 +90,7 @@ public abstract class Store {
     }
 
     /**
-     * Close current transaction <p/> Before close transaction, it needs to be committed.
+     * Close current transaction <p> Before close transaction, it needs to be committed.
      */
     public void closeTrx() {
         entityManager.close();

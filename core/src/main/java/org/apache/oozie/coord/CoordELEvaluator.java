@@ -58,7 +58,7 @@ public class CoordELEvaluator {
     /**
      * Create a new Evaluator to resolve the EL functions and variables using action creation time (Phase 2)
      *
-     * @param event : Xml element for data-in element usually enclosed by <data-in(out)> tag
+     * @param event : Xml element for data-in element usually enclosed by &lt;data-in(out)&gt; tag
      * @param appInst : Application Instance related information such as Action creation Time
      * @param conf :Configuration to substitute any variables
      * @return configured ELEvaluator
@@ -95,7 +95,7 @@ public class CoordELEvaluator {
      *
      * @param actualTime : Action start time
      * @param nominalTime : Action creation time
-     * @param dEvent :XML element for data-in element usually enclosed by <data-in(out)> tag
+     * @param dEvent :XML element for data-in element usually enclosed by &lt;data-in(out)&gt; tag
      * @param conf :Configuration to substitute any variables
      * @return configured ELEvaluator
      * @throws Exception : If there is any date-time string in wrong format, the exception is thrown

@@ -24,7 +24,7 @@ import org.apache.oozie.util.MetricsInstrumentation;
 
 /**
  * This service provides an {@link Instrumentation} instance mostly compatible with the original Instrumentation, but backed by
- * Codahale Metrics. <p/> This service depends on the {@link SchedulerService}. <p/> The {@link #CONF_LOGGING_INTERVAL}
+ * Codahale Metrics. <p> This service depends on the {@link SchedulerService}. <p> The {@link #CONF_LOGGING_INTERVAL}
  * configuration property indicates how often snapshots of the instrumentation should be logged.
  */
 public class MetricsInstrumentationService extends InstrumentationService {

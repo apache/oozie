@@ -28,8 +28,8 @@ import java.net.ServerSocket;
 import java.util.Map;
 
 /**
- * An embedded servlet container for testing purposes. <p/> It provides reduced functionality, it supports only
- * Servlets. <p/> The servlet container is started in a free port.
+ * An embedded servlet container for testing purposes. <p> It provides reduced functionality, it supports only
+ * Servlets. <p> The servlet container is started in a free port.
  */
 public class EmbeddedServletContainer {
     private Server server;
@@ -91,7 +91,7 @@ public class EmbeddedServletContainer {
     }
 
     /**
-     * Start the servlet container. <p/> The container starts on a free port.
+     * Start the servlet container. <p> The container starts on a free port.
      *
      * @throws Exception thrown if the container could not start.
      */

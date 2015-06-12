@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 
 
 /**
- * The workflow library provides application parsing and storage capabilities for workflow instances. <p/> The
+ * The workflow library provides application parsing and storage capabilities for workflow instances. <p> The
  * implementation is responsible for doing the store operations in a transactional way, either in autocommit or within
  * the scope of a transaction.
  */

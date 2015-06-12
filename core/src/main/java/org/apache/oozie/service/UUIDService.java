@@ -28,11 +28,11 @@ import org.apache.oozie.util.XLog;
 
 /**
  * The UUID service generates unique IDs.
- * <p/>
+ * <p>
  * The configuration property {@link #CONF_GENERATOR} specifies the ID generation type, 'random' or 'counter'.
- * <p/>
+ * <p>
  * For 'random' uses the JDK UUID.randomUUID() method.
- * <p/>
+ * <p>
  * For 'counter' uses a counter postfixed wit the system start up time.
  */
 public class UUIDService implements Service {
@@ -77,7 +77,6 @@ public class UUIDService implements Service {
 
     /**
      * reset start time
-     * @return
      */
     protected void resetStartTime() {
         startTime = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date());
@@ -151,7 +150,7 @@ public class UUIDService implements Service {
 
     /**
      * Create a child ID.
-     * <p/>
+     * <p>
      * If the same child name is given the returned child ID is the same.
      *
      * @param id unique ID.

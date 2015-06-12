@@ -313,7 +313,7 @@ public class XOozieClient extends OozieClient {
     }
 
     /**
-     * The equivalent to <file> tag in oozie's workflow xml.
+     * The equivalent to &lt;file&gt; tag in oozie's workflow xml.
      *
      * @param conf Configuration object.
      * @param file file HDFS path. A "#..." symbolic string can be appended to the path to specify symbolic link name.
@@ -329,7 +329,7 @@ public class XOozieClient extends OozieClient {
     }
 
     /**
-     * The equivalent to <archive> tag in oozie's workflow xml.
+     * The equivalent to &lt;archive&gt; tag in oozie's workflow xml.
      *
      * @param conf Configuration object.
      * @param file file HDFS path. A "#..." symbolic string can be appended to the path to specify symbolic link name.

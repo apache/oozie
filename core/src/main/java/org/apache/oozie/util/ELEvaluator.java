@@ -31,12 +31,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JSP Expression Language Evaluator. <p/> It provides a more convenient way of using the JSP EL Evaluator.
+ * JSP Expression Language Evaluator. <p> It provides a more convenient way of using the JSP EL Evaluator.
  */
 public class ELEvaluator {
 
     /**
-     * Provides functions and variables for the EL evaluator. <p/> All functions and variables in the context of an EL
+     * Provides functions and variables for the EL evaluator. <p> All functions and variables in the context of an EL
      * evaluator are accessible from EL expressions.
      */
     public static class Context implements VariableResolver, FunctionMapper {
@@ -52,7 +52,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Add variables to the context. <p/>
+         * Add variables to the context. <p>
          *
          * @param vars variables to add to the context.
          */
@@ -61,7 +61,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Add a variable to the context. <p/>
+         * Add a variable to the context. <p>
          *
          * @param name variable name.
          * @param value variable value.
@@ -71,7 +71,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Return a variable from the context. <p/>
+         * Return a variable from the context. <p>
          *
          * @param name variable name.
          * @return the variable value.
@@ -81,7 +81,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Add a function to the context. <p/>
+         * Add a function to the context. <p>
          *
          * @param prefix function prefix.
          * @param functionName function name.
@@ -96,7 +96,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Resolve a variable name. Used by the EL evaluator implemenation. <p/>
+         * Resolve a variable name. Used by the EL evaluator implemenation. <p>
          *
          * @param name variable name.
          * @return the variable value.
@@ -110,7 +110,7 @@ public class ELEvaluator {
         }
 
         /**
-         * Resolve a function prefix:name. Used by the EL evaluator implementation. <p/>
+         * Resolve a function prefix:name. Used by the EL evaluator implementation. <p>
          *
          * @param prefix function prefix.
          * @param name function name.
@@ -128,9 +128,9 @@ public class ELEvaluator {
 
     /**
      * If within the scope of a EL evaluation call, it gives access to the ELEvaluator instance performing the EL
-     * evaluation. <p/> This is useful for EL function methods to get access to the variables of the Evaluator. Because
+     * evaluation. <p> This is useful for EL function methods to get access to the variables of the Evaluator. Because
      * of this, ELEvaluator variables can be used to pass context to EL function methods (which must be static methods).
-     * <p/>
+     * <p>
      *
      * @return the ELEvaluator in scope, or <code>null</code> if none.
      */
@@ -150,7 +150,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Creates an ELEvaluator with the functions and variables defined in the given {@link ELEvaluator.Context}. <p/>
+     * Creates an ELEvaluator with the functions and variables defined in the given {@link ELEvaluator.Context}. <p>
      *
      * @param context the ELSupport with functions and variables to be available for EL evalution.
      */
@@ -159,7 +159,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Return the context with the functions and variables of the EL evaluator. <p/>
+     * Return the context with the functions and variables of the EL evaluator. <p>
      *
      * @return the context.
      */
@@ -168,7 +168,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Convenience method that sets a variable in the EL evaluator context. <p/>
+     * Convenience method that sets a variable in the EL evaluator context. <p>
      *
      * @param name variable name.
      * @param value variable value.
@@ -178,7 +178,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Convenience method that returns a variable from the EL evaluator context. <p/>
+     * Convenience method that returns a variable from the EL evaluator context. <p>
      *
      * @param name variable name.
      * @return the variable value, <code>null</code> if not defined.
@@ -188,7 +188,7 @@ public class ELEvaluator {
     }
 
     /**
-     * Evaluate an EL expression. <p/>
+     * Evaluate an EL expression. <p>
      *
      * @param expr EL expression to evaluate.
      * @param clazz return type of the EL expression.

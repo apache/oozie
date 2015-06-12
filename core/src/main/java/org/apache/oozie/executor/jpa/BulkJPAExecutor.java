@@ -48,8 +48,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * The query executor class for bulk monitoring queries i.e. debugging bundle ->
- * coord actions directly
+ * The query executor class for bulk monitoring queries i.e. debugging bundle coord actions directly
  */
 public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
     private Map<String, List<String>> bulkFilter;

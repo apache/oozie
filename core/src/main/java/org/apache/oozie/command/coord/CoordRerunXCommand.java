@@ -73,12 +73,11 @@ import org.jdom.JDOMException;
 
 /**
  * Rerun coordinator actions by a list of dates or ids. User can specify if refresh or noCleanup.
- * <p/>
- * The "rerunType" can be set as {@link RestConstants.JOB_COORD_RERUN_DATE} or
- * {@link RestConstants.JOB_COORD_RERUN_ACTION}.
- * <p/>
+ * <p>
+ * The "rerunType" can be set as {@link RestConstants#JOB_COORD_SCOPE_DATE} or {@link RestConstants#JOB_COORD_SCOPE_ACTION}.
+ * <p>
  * The "refresh" is used to indicate if user wants to refresh an action's input and output events.
- * <p/>
+ * <p>
  * The "noCleanup" is used to indicate if user wants to cleanup output events for given rerun actions
  */
 @SuppressWarnings("deprecation")
@@ -98,7 +97,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * The constructor for class {@link CoordRerunXCommand}
      *
      * @param jobId the job id
-     * @param rerunType rerun type {@link RestConstants.JOB_COORD_RERUN_DATE} or {@link RestConstants.JOB_COORD_RERUN_ACTION}
+     * @param rerunType rerun type {@link RestConstants#JOB_COORD_SCOPE_DATE} or {@link RestConstants#JOB_COORD_SCOPE_ACTION}
      * @param scope the rerun scope for given rerunType separated by ","
      * @param refresh true if user wants to refresh input/output dataset urls
      * @param noCleanup false if user wants to cleanup output events for given rerun actions

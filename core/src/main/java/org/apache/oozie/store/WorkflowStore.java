@@ -361,7 +361,6 @@ public class WorkflowStore extends Store {
      * @param wfId Workflow ID
      * @param start offset for select statement
      * @param len number of Workflow Actions to be returned
-     * @param locking true if Actions are to be locked
      * @return A List of WorkflowActionBean
      * @throws StoreException
      */

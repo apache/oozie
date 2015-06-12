@@ -28,7 +28,7 @@ import org.jdom.Namespace;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Utility class to parse and verify the <parameters> section in a workflow or coordinator job
+ * Utility class to parse and verify the &lt;parameters&gt; section in a workflow or coordinator job
  */
 public abstract class ParameterVerifier 
 {

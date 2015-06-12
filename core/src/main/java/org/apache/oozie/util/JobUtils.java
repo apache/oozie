@@ -42,7 +42,7 @@ public class JobUtils {
     /**
      * Normalize appPath in job conf with the provided user/group - If it's not jobs via proxy submission, after
      * normalization appPath always points to job's Xml definition file.
-     * <p/>
+     * <p>
      *
      * @param user user
      * @param group group
@@ -96,7 +96,7 @@ public class JobUtils {
      * key1=value1;key2=value2
      *
      * @param changeValue change value.
-     * @return This returns the hash with hash<[key1,value1],[key2,value2]>
+     * @return This returns the hash with hash&lt;[key1,value1],[key2,value2]&gt;
      * @throws CommandException thrown if changeValue cannot be parsed properly.
      */
     public static Map<String, String> parseChangeValue(String changeValue) throws CommandException {

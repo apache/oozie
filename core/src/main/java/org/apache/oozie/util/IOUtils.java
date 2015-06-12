@@ -65,7 +65,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a reader as string. <p/>
+     * Return a reader as string. <p>
      *
      * @param reader reader to read into a string.
      * @param maxLen max content length allowed, if -1 there is no limit.
@@ -91,7 +91,7 @@ public abstract class IOUtils {
 
 
     /**
-     * Return a classpath resource as a stream. <p/>
+     * Return a classpath resource as a stream. <p>
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -108,7 +108,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a classpath resource as a reader. <p/> It is assumed that the resource is a text resource.
+     * Return a classpath resource as a reader. <p> It is assumed that the resource is a text resource.
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -120,7 +120,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Return a classpath resource as string. <p/> It is assumed that the resource is a text resource.
+     * Return a classpath resource as string. <p> It is assumed that the resource is a text resource.
      *
      * @param path classpath for the resource.
      * @param maxLen max content length allowed.
@@ -261,7 +261,7 @@ public abstract class IOUtils {
     }
 
     /**
-     * Close a list of resources. </p> Any thrown exceptions are suppressed.
+     * Close a list of resources. <p> Any thrown exceptions are suppressed.
      * @param objects list of objects to close
      */
     public static void closeSafely(Closeable... objects) {

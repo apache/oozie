@@ -94,7 +94,6 @@ public class SLACalcStatus extends SLAEvent {
 
     /**
      * copy constructor
-     * @return SLACalcStatus
      */
     public SLACalcStatus(SLACalcStatus a) {
         this();
@@ -296,7 +295,7 @@ public class SLACalcStatus extends SLAEvent {
     }
     /**
      * Obtain an exclusive lock on the {link #getEntityKey}.
-     * <p/>
+     * <p>
      * A timeout of {link #getLockTimeOut} is used when trying to obtain the lock.
      *
      * @throws InterruptedException thrown if an interruption happened while trying to obtain the lock

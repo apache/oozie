@@ -29,17 +29,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The <code>XLog</code> class extends the functionality of the Apache common-logging <code>Log</code> interface. <p/>
+ * The <code>XLog</code> class extends the functionality of the Apache common-logging <code>Log</code> interface. <p>
  * It provides common prefix support, message templating with variable parameters and selective tee logging to multiple
- * logs. <p/> It provides also the LogFactory functionality.
+ * logs. <p> It provides also the LogFactory functionality.
  */
 public class XLog implements Log {
 
     public static final String INSTRUMENTATION_LOG_NAME = "oozieinstrumentation";
 
     /**
-     * <code>LogInfo</code> stores contextual information to create log prefixes. <p/> <code>LogInfo</code> uses a
-     * <code>ThreadLocal</code> to propagate the context. <p/> <code>LogInfo</code> context parameters are configurable
+     * <code>LogInfo</code> stores contextual information to create log prefixes. <p> <code>LogInfo</code> uses a
+     * <code>ThreadLocal</code> to propagate the context. <p> <code>LogInfo</code> context parameters are configurable
      * singletons.
      */
     public static class Info {
@@ -56,7 +56,7 @@ public class XLog implements Log {
         };
 
         /**
-         * Define a <code>LogInfo</code> context parameter. <p/> The parameter name and its contextual value will be
+         * Define a <code>LogInfo</code> context parameter. <p> The parameter name and its contextual value will be
          * used to create all prefixes.
          *
          * @param name name of the context parameter.
@@ -72,7 +72,7 @@ public class XLog implements Log {
         }
 
         /**
-         * Remove all defined context parameters. <p/>
+         * Remove all defined context parameters. <p>
          */
         public static void reset() {
             template = "";
@@ -662,8 +662,8 @@ public class XLog implements Log {
 
     /**
      * Utility method that does uses the <code>StringFormat</code> to format the message template using the provided
-     * parameters. <p/> In addition to the <code>StringFormat</code> syntax for message templates, it supports
-     * <code>{E}</code> for ENTER. <p/> The last parameter is ignored for the formatting if it is an Exception.
+     * parameters. <p> In addition to the <code>StringFormat</code> syntax for message templates, it supports
+     * <code>{E}</code> for ENTER. <p> The last parameter is ignored for the formatting if it is an Exception.
      *
      * @param msgTemplate message template.
      * @param params paramaters to use in the template. If the last parameter is an Exception, it is ignored.

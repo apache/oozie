@@ -53,7 +53,7 @@ public class AuthOozieClient extends XOozieClient {
 
     /**
      * File constant that defines the location of the authentication token cache file.
-     * <p/>
+     * <p>
      * It resolves to <code>${user.home}/.oozie-auth-token</code>.
      */
     public static final File AUTH_TOKEN_CACHE_FILE = new File(System.getProperty("user.home"), ".oozie-auth-token");
@@ -86,10 +86,10 @@ public class AuthOozieClient extends XOozieClient {
 
     /**
      * Create an authenticated connection to the Oozie server.
-     * <p/>
+     * <p>
      * It uses Hadoop-auth client authentication which by default supports
      * Kerberos HTTP SPNEGO, Pseudo/Simple and anonymous.
-     * <p/>
+     * <p>
      * if the Java system property {@link #USE_AUTH_TOKEN_CACHE_SYS_PROP} is set to true Hadoop-auth
      * authentication token will be cached/used in/from the '.oozie-auth-token' file in the user
      * home directory.
@@ -146,7 +146,7 @@ public class AuthOozieClient extends XOozieClient {
 
     /**
      * Read a authentication token cached in the user home directory.
-     * <p/>
+     * <p>
      *
      * @return the authentication token cached in the user home directory, NULL if none.
      */
@@ -170,9 +170,9 @@ public class AuthOozieClient extends XOozieClient {
 
     /**
      * Write the current authentication token to the user home directory.authOption
-     * <p/>
+     * <p>
      * The file is written with user only read/write permissions.
-     * <p/>
+     * <p>
      * If the file cannot be updated or the user only ready/write permissions cannot be set the file is deleted.
      *
      * @param authToken the authentication token to cache.
@@ -197,10 +197,10 @@ public class AuthOozieClient extends XOozieClient {
 
     /**
      * Return the Hadoop-auth Authenticator to use.
-     * <p/>
+     * <p>
      * It first looks for value of command line option 'auth', if not set it continues to check
      * {@link #AUTHENTICATOR_CLASS_SYS_PROP} Java system property for Authenticator.
-     * <p/>
+     * <p>
      * It the value of the {@link #AUTHENTICATOR_CLASS_SYS_PROP} is not set it uses
      * Hadoop-auth <code>KerberosAuthenticator</code> which supports both Kerberos HTTP SPNEGO and Pseudo/simple
      * authentication.
@@ -263,12 +263,11 @@ public class AuthOozieClient extends XOozieClient {
     /**
      * Get the map for classes of Authenticator.
      * Default values are:
-     * null -> KerberosAuthenticator
-     * SIMPLE -> PseudoAuthenticator
-     * KERBEROS -> KerberosAuthenticator
+     * null : KerberosAuthenticator
+     * SIMPLE : PseudoAuthenticator
+     * KERBEROS : KerberosAuthenticator
      *
      * @return the map for classes of Authenticator
-     * @throws OozieClientException
      */
     protected Map<String, Class<? extends Authenticator>> getAuthenticators() {
         Map<String, Class<? extends Authenticator>> authClasses = new HashMap<String, Class<? extends Authenticator>>();

@@ -107,7 +107,7 @@ public interface WorkflowJob {
 
     /**
      * Return the workflow job group.
-     * <p/>
+     * <p>
      * Use the {@link #getAcl()} method instead.
      *
      * @return the workflow job group.
@@ -123,7 +123,7 @@ public interface WorkflowJob {
     String getAcl();
 
     /**
-     * Return the workflow job run number. <p/> Except for reruns, this property is always 1.
+     * Return the workflow job run number. <p> Except for reruns, this property is always 1.
      *
      * @return the workflow job run number.
      */

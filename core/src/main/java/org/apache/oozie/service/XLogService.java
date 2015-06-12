@@ -39,20 +39,20 @@ import java.util.Map;
 
 /**
  * Built-in service that initializes and manages Logging via Log4j.
- * <p/>
+ * <p>
  * Oozie Lo4gj default configuration file is <code>oozie-log4j.properties</code>.
- * <p/>
+ * <p>
  * The file name can be changed by setting the Java System property <code>oozie.log4j.file</code>.
- * <p/>
+ * <p>
  * The Log4j configuration files must be a properties file.
- * <p/>
+ * <p>
  * The Log4j configuration file is first looked in the Oozie configuration directory see {@link ConfigurationService}.
  * If the file is not found there, it is looked in the classpath.
- * <p/>
+ * <p>
  * If the Log4j configuration file is loaded from Oozie configuration directory, automatic reloading is enabled.
- * <p/>
+ * <p>
  * If the Log4j configuration file is loaded from the classpath, automatic reloading is disabled.
- * <p/>
+ * <p>
  * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>. The default
  * value is 10 seconds.
  * <p>
@@ -266,7 +266,7 @@ public class XLogService implements Service, Instrumentable {
 
     /**
      * Instruments the log service.
-     * <p/>
+     * <p>
      * It sets instrumentation variables indicating the config file, reload interval and if loaded from the classpath.
      *
      * @param instr instrumentation to use.

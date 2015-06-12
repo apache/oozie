@@ -47,7 +47,7 @@ public interface EventQueue {
 
     /**
      * Add event to queue
-     * @param event
+     * @param e
      */
     public void add(Event e);
 

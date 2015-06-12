@@ -52,7 +52,7 @@ public abstract class BaseEngine {
 
     /**
      * Submit a job.
-     * <p/>
+     * <p>
      * It validates configuration properties.
      *
      * @param conf job configuration.
@@ -148,7 +148,7 @@ public abstract class BaseEngine {
      * @param filter the status filter
      * @param start starting from this index in the list of actions belonging to the job
      * @param length number of actions to be returned
-     * @param order true if actions are sorted in a descending order of nominal time, false if asc order
+     * @param desc true if actions are sorted in a descending order of nominal time, false if asc order
      * @return the coord job info.
      * @throws BaseEngineException thrown if the job info could not be obtained.
      */
@@ -205,7 +205,7 @@ public abstract class BaseEngine {
 
     /**
      * Return the workflow Job ID for an external ID.
-     * <p/>
+     * <p>
      * This is reverse lookup for recovery purposes.
      *
      * @param externalId external ID provided at job submission time.
@@ -215,9 +215,9 @@ public abstract class BaseEngine {
     public abstract String getJobIdForExternalId(String externalId) throws BaseEngineException;
 
     /**
-     * Dry run a job; like {@link BaseEngine#submitJob(org.apache.hadoop.conf.Configuration, boolean) but doesn't actually execute
+     * Dry run a job; like {@link BaseEngine#submitJob(org.apache.hadoop.conf.Configuration, boolean)} but doesn't actually execute
      * the job.
-     * <p/>
+     * <p>
      * It validates configuration properties.
      *
      * @param conf job configuration.

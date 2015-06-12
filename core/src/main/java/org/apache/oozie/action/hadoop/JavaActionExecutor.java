@@ -1541,15 +1541,15 @@ public class JavaActionExecutor extends ActionExecutor {
 
     /**
      * Return the sharelib names for the action.
-     * <p/>
+     * <p>
      * If <code>NULL</code> or empty, it means that the action does not use the action
      * sharelib.
-     * <p/>
+     * <p>
      * If a non-empty string, i.e. <code>foo</code>, it means the action uses the
      * action sharelib sub-directory <code>foo</code> and all JARs in the sharelib
      * <code>foo</code> directory will be in the action classpath. Multiple sharelib
      * sub-directories can be specified as a comma separated list.
-     * <p/>
+     * <p>
      * The resolution is done using the following precedence order:
      * <ul>
      *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the action configuration</li>

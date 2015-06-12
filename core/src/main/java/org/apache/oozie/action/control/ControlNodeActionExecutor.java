@@ -33,10 +33,10 @@ import java.util.List;
 
 /**
  * Base action executor for control nodes: START/END/KILL/FORK/JOIN
- * <p/>
+ * <p>
  * This action executor, similar to {@link FsActionExecutor}, is completed during the
  * {@link #start(Context, WorkflowAction)}.
- * <p/>
+ * <p>
  * By hooking control nodes to an action executor, control nodes get WF action entries in the DB.
  */
 public abstract class ControlNodeActionExecutor extends ActionExecutor {

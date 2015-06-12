@@ -22,7 +22,7 @@ import org.apache.oozie.client.Job;
 
 /**
  * Transition command for start the job. The derived class has to override these following functions:
- * <p/>
+ * <p>
  * loadState() : load the job's and/or actions' state
  * updateJob() : update job status and attributes
  * StartChildren() : submit or queue commands to start children

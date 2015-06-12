@@ -40,37 +40,37 @@ public abstract class SLAEventListener {
 
     /**
      * on SLA job start-time limit met
-     * @param SLAEvent
+     * @param work
      */
     public abstract void onStartMet(SLAEvent work);
 
     /**
      * on SLA job start-time limit missed
-     * @param SLAEvent
+     * @param event
      */
     public abstract void onStartMiss(SLAEvent event);
 
     /**
      * on SLA job end-time limit met
-     * @param SLAEvent
+     * @param work
      */
     public abstract void onEndMet(SLAEvent work);
 
     /**
      * on SLA job end-time limit missed
-     * @param SLAEvent
+     * @param event
      */
     public abstract void onEndMiss(SLAEvent event);
 
     /**
      * on SLA job duration limit met
-     * @param SLAEvent
+     * @param work
      */
     public abstract void onDurationMet(SLAEvent work);
 
     /**
      * on SLA job duration limit missed
-     * @param SLAEvent
+     * @param event
      */
     public abstract void onDurationMiss(SLAEvent event);
 

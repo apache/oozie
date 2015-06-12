@@ -63,7 +63,7 @@ public class CoordELFunctions {
     public static final long YEAR_MSEC = 365 * DAY_MSEC;
 
     /**
-     * Used in defining the frequency in 'day' unit. <p/> domain: <code> val &gt; 0</code> and should be integer.
+     * Used in defining the frequency in 'day' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
      * @param val frequency in number of days.
      * @return number of days and also set the frequency timeunit to "day"
@@ -77,7 +77,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used in defining the frequency in 'month' unit. <p/> domain: <code> val &gt; 0</code> and should be integer.
+     * Used in defining the frequency in 'month' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
      * @param val frequency in number of months.
      * @return number of months and also set the frequency timeunit to "month"
@@ -91,7 +91,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used in defining the frequency in 'hour' unit. <p/> parameter value domain: <code> val &gt; 0</code> and should
+     * Used in defining the frequency in 'hour' unit. <p> parameter value domain: <code> val &gt; 0</code> and should
      * be integer.
      *
      * @param val frequency in number of hours.
@@ -106,7 +106,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used in defining the frequency in 'minute' unit. <p/> domain: <code> val &gt; 0</code> and should be integer.
+     * Used in defining the frequency in 'minute' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
      * @param val frequency in number of minutes.
      * @return number of minutes and also set the frequency timeunit to "minute"
@@ -120,8 +120,8 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used in defining the frequency in 'day' unit and specify the "end of day" property. <p/> Every instance will
-     * start at 00:00 hour of each day. <p/> domain: <code> val &gt; 0</code> and should be integer.
+     * Used in defining the frequency in 'day' unit and specify the "end of day" property. <p> Every instance will
+     * start at 00:00 hour of each day. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
      * @param val frequency in number of days.
      * @return number of days and also set the frequency timeunit to "day" and end_of_duration flag to "day"
@@ -135,8 +135,8 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used in defining the frequency in 'month' unit and specify the "end of month" property. <p/> Every instance will
-     * start at first day of each month at 00:00 hour. <p/> domain: <code> val &gt; 0</code> and should be integer.
+     * Used in defining the frequency in 'month' unit and specify the "end of month" property. <p> Every instance will
+     * start at first day of each month at 00:00 hour. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
      * @param val: frequency in number of months.
      * @return number of months and also set the frequency timeunit to "month" and end_of_duration flag to "month"
@@ -150,8 +150,8 @@ public class CoordELFunctions {
     }
 
     /**
-     * Calculate the difference of timezone offset in minutes between dataset and coordinator job. <p/> Depends on: <p/>
-     * 1. Timezone of both dataset and job <p/> 2. Action creation Time
+     * Calculate the difference of timezone offset in minutes between dataset and coordinator job. <p> Depends on: <p>
+     * 1. Timezone of both dataset and job <p> 2. Action creation Time
      *
      * @return difference in minutes (DataSet TZ Offset - Application TZ offset)
      */
@@ -212,30 +212,30 @@ public class CoordELFunctions {
     /**
      * Determine the date-time in Oozie processing timezone of n-th future available dataset instance
      * from nominal Time but not beyond the instance specified as 'instance.
-     * <p/>
+     * <p>
      * It depends on:
-     * <p/>
+     * <p>
      * 1. Data set frequency
-     * <p/>
+     * <p>
      * 2. Data set Time unit (day, month, minute)
-     * <p/>
+     * <p>
      * 3. Data set Time zone/DST
-     * <p/>
+     * <p>
      * 4. End Day/Month flag
-     * <p/>
+     * <p>
      * 5. Data set initial instance
-     * <p/>
+     * <p>
      * 6. Action Creation Time
-     * <p/>
+     * <p>
      * 7. Existence of dataset's directory
      *
      * @param n :instance count
-     *        <p/>
-     *        domain: n >= 0, n is integer
+     *        <p>
+     *        domain: n &gt;= 0, n is integer
      * @param instance: How many future instance it should check? value should
-     *        be >=0
+     *        be &gt;=0
      * @return date-time in Oozie processing timezone of the n-th instance
-     *         <p/>
+     *         <p>
      * @throws Exception
      */
     public static String ph3_coord_future(int n, int instance) throws Exception {
@@ -252,34 +252,34 @@ public class CoordELFunctions {
     /**
      * Determine the date-time in Oozie processing timezone of the future available dataset instances
      * from start to end offsets from nominal Time but not beyond the instance specified as 'instance'.
-     * <p/>
+     * <p>
      * It depends on:
-     * <p/>
+     * <p>
      * 1. Data set frequency
-     * <p/>
+     * <p>
      * 2. Data set Time unit (day, month, minute)
-     * <p/>
+     * <p>
      * 3. Data set Time zone/DST
-     * <p/>
+     * <p>
      * 4. End Day/Month flag
-     * <p/>
+     * <p>
      * 5. Data set initial instance
-     * <p/>
+     * <p>
      * 6. Action Creation Time
-     * <p/>
+     * <p>
      * 7. Existence of dataset's directory
      *
      * @param start : start instance offset
-     *        <p/>
-     *        domain: start >= 0, start is integer
+     *        <p>
+     *        domain: start &gt;= 0, start is integer
      * @param end : end instance offset
-     *        <p/>
-     *        domain: end >= 0, end is integer
+     *        <p>
+     *        domain: end &gt;= 0, end is integer
      * @param instance: How many future instance it should check? value should
-     *        be >=0
+     *        be &gt;=0
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
      *        delimited by comma.
-     *         <p/>
+     *         <p>
      * @throws Exception
      */
     public static String ph3_coord_futureRange(int start, int end, int instance) throws Exception {
@@ -396,7 +396,7 @@ public class CoordELFunctions {
 
     /**
      * Return nominal time or Action Creation Time.
-     * <p/>
+     * <p>
      *
      * @return coordinator action creation or materialization date time
      * @throws Exception if unable to format the Date object to String
@@ -414,7 +414,7 @@ public class CoordELFunctions {
 
     /**
      * Convert from standard date-time formatting to a desired format.
-     * <p/>
+     * <p>
      * @param dateTimeStr - A timestamp in standard (ISO8601) format.
      * @param format - A string representing the desired format.
      * @return coordinator action creation or materialization date time
@@ -432,7 +432,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Return Action Id. <p/>
+     * Return Action Id. <p>
      *
      * @return coordinator action Id
      */
@@ -448,7 +448,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Return Job Name. <p/>
+     * Return Job Name. <p>
      *
      * @return coordinator name
      */
@@ -464,7 +464,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Return Action Start time. <p/>
+     * Return Action Start time. <p>
      *
      * @return coordinator action start time
      * @throws Exception if unable to format the Date object to String
@@ -483,14 +483,14 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used to specify a list of URI's that are used as input dir to the workflow job. <p/> Look for two evaluator-level
-     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the current list of
-     * URI. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the uris.
+     * Used to specify a list of URI's that are used as input dir to the workflow job. <p> Look for two evaluator-level
+     * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
+     * URI. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the uris.
      *
      * @param dataInName : Datain name
-     * @return the list of URI's separated by INSTANCE_SEPARATOR <p/> if there are unresolved EL function (i.e. latest)
-     *         , echo back <p/> the function without resolving the function.
+     * @return the list of URI's separated by INSTANCE_SEPARATOR <p> if there are unresolved EL function (i.e. latest)
+     *         , echo back <p> the function without resolving the function.
      */
     public static String ph3_coord_dataIn(String dataInName) {
         String uris = "";
@@ -504,8 +504,8 @@ public class CoordELFunctions {
     }
 
     /**
-     * Used to specify a list of URI's that are output dir of the workflow job. <p/> Look for one evaluator-level
-     * variable <p/> dataout.<DATAOUT_NAME> <p/> It defines the current list of URI. <p/> otherwise it sends the uris.
+     * Used to specify a list of URI's that are output dir of the workflow job. <p> Look for one evaluator-level
+     * variable <p> dataout.&lt;DATAOUT_NAME&gt; <p> It defines the current list of URI. <p> otherwise it sends the uris.
      *
      * @param dataOutName : Dataout name
      * @return the list of URI's separated by INSTANCE_SEPARATOR
@@ -518,10 +518,10 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine the date-time in Oozie processing timezone of n-th dataset instance. <p/> It depends on: <p/> 1.
-     * Data set frequency <p/> 2.
-     * Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST <p/> 4. End Day/Month flag <p/> 5. Data
-     * set initial instance <p/> 6. Action Creation Time
+     * Determine the date-time in Oozie processing timezone of n-th dataset instance. <p> It depends on: <p> 1.
+     * Data set frequency <p> 2.
+     * Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST <p> 4. End Day/Month flag <p> 5. Data
+     * set initial instance <p> 6. Action Creation Time
      *
      * @param n instance count domain: n is integer
      * @return date-time in Oozie processing timezone of the n-th instance returns 'null' means n-th instance is
@@ -539,14 +539,14 @@ public class CoordELFunctions {
 
     /**
      * Determine the date-time in Oozie processing timezone of current dataset instances
-     * from start to end offsets from the nominal time. <p/> It depends
-     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
-     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time
+     * from start to end offsets from the nominal time. <p> It depends
+     * on: <p> 1. Data set frequency <p> 2. Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST
+     * <p> 4. End Day/Month flag <p> 5. Data set initial instance <p> 6. Action Creation Time
      *
-     * @param start :start instance offset <p/> domain: start <= 0, start is integer
-     * @param end :end instance offset <p/> domain: end <= 0, end is integer
+     * @param start :start instance offset <p> domain: start &lt;= 0, start is integer
+     * @param end :end instance offset <p> domain: end &lt;= 0, end is integer
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
-     *        delimited by comma. <p/> If the current instance time of the dataset based on the Action Creation Time
+     *        delimited by comma. <p> If the current instance time of the dataset based on the Action Creation Time
      *        is earlier than the Initial-Instance of DS an empty string is returned.
      *        If an instance within the range is earlier than Initial-Instance of DS that instance is ignored
      * @throws Exception
@@ -560,9 +560,9 @@ public class CoordELFunctions {
         }
     }
     /**
-     * Determine the date-time in Oozie processing timezone of the given offset from the dataset effective nominal time. <p/> It
-     * depends on: <p> 1. Data set frequency <p/> 2. Data set Time Unit <p/> 3. Data set Time zone/DST
-     * <p/> 4. Data set initial instance <p/> 5. Action Creation Time
+     * Determine the date-time in Oozie processing timezone of the given offset from the dataset effective nominal time. <p> It
+     * depends on: <p> 1. Data set frequency <p> 2. Data set Time Unit <p> 3. Data set Time zone/DST
+     * <p> 4. Data set initial instance <p> 5. Action Creation Time
      *
      * @param n offset amount (integer)
      * @param timeUnit TimeUnit for offset n ("MINUTE", "HOUR", "DAY", "MONTH", "YEAR")
@@ -579,12 +579,12 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine how many hours is on the date of n-th dataset instance. <p/> It depends on: <p/> 1. Data set frequency
-     * <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST <p/> 4. End Day/Month flag <p/> 5.
-     * Data set initial instance <p/> 6. Action Creation Time
+     * Determine how many hours is on the date of n-th dataset instance. <p> It depends on: <p> 1. Data set frequency
+     * <p> 2. Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST <p> 4. End Day/Month flag <p> 5.
+     * Data set initial instance <p> 6. Action Creation Time
      *
-     * @param n instance count <p/> domain: n is integer
-     * @return number of hours on that day <p/> returns -1 means n-th instance is earlier than Initial-Instance of DS
+     * @param n instance count <p> domain: n is integer
+     * @return number of hours on that day <p> returns -1 means n-th instance is earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static int ph2_coord_hoursInDay(int n) throws Exception {
@@ -610,12 +610,12 @@ public class CoordELFunctions {
     }
 
     /**
-     * Calculate number of days in one month for n-th dataset instance. <p/> It depends on: <p/> 1. Data set frequency .
-     * <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST <p/> 4. End Day/Month flag <p/> 5.
-     * Data set initial instance <p/> 6. Action Creation Time
+     * Calculate number of days in one month for n-th dataset instance. <p> It depends on: <p> 1. Data set frequency .
+     * <p> 2. Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST <p> 4. End Day/Month flag <p> 5.
+     * Data set initial instance <p> 6. Action Creation Time
      *
      * @param n instance count. domain: n is integer
-     * @return number of days in that month <p/> returns -1 means n-th instance is earlier than Initial-Instance of DS
+     * @return number of days in that month <p> returns -1 means n-th instance is earlier than Initial-Instance of DS
      * @throws Exception
      */
     public static int ph2_coord_daysInMonth(int n) throws Exception {
@@ -641,13 +641,13 @@ public class CoordELFunctions {
     }
 
     /**
-     * Determine the date-time in Oozie processing timezone of n-th latest available dataset instance. <p/> It depends
-     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
-     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
+     * Determine the date-time in Oozie processing timezone of n-th latest available dataset instance. <p> It depends
+     * on: <p> 1. Data set frequency <p> 2. Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST
+     * <p> 4. End Day/Month flag <p> 5. Data set initial instance <p> 6. Action Creation Time <p> 7. Existence of
      * dataset's directory
      *
-     * @param n :instance count <p/> domain: n <= 0, n is integer
-     * @return date-time in Oozie processing timezone of the n-th instance <p/> returns 'null' means n-th instance is
+     * @param n :instance count <p> domain: n &lt;= 0, n is integer
+     * @return date-time in Oozie processing timezone of the n-th instance <p> returns 'null' means n-th instance is
      * earlier than Initial-Instance of DS
      * @throws Exception
      */
@@ -663,15 +663,15 @@ public class CoordELFunctions {
 
     /**
      * Determine the date-time in Oozie processing timezone of latest available dataset instances
-     * from start to end offsets from the nominal time. <p/> It depends
-     * on: <p/> 1. Data set frequency <p/> 2. Data set Time unit (day, month, minute) <p/> 3. Data set Time zone/DST
-     * <p/> 4. End Day/Month flag <p/> 5. Data set initial instance <p/> 6. Action Creation Time <p/> 7. Existence of
+     * from start to end offsets from the nominal time. <p> It depends
+     * on: <p> 1. Data set frequency <p> 2. Data set Time unit (day, month, minute) <p> 3. Data set Time zone/DST
+     * <p> 4. End Day/Month flag <p> 5. Data set initial instance <p> 6. Action Creation Time <p> 7. Existence of
      * dataset's directory
      *
-     * @param start :start instance offset <p/> domain: start <= 0, start is integer
-     * @param end :end instance offset <p/> domain: end <= 0, end is integer
+     * @param start :start instance offset <p> domain: start &lt;= 0, start is integer
+     * @param end :end instance offset <p> domain: end &lt;= 0, end is integer
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
-     *        delimited by comma. <p/> returns 'null' means start offset instance is
+     *        delimited by comma. <p> returns 'null' means start offset instance is
      *        earlier than Initial-Instance of DS
      * @throws Exception
      */
@@ -687,7 +687,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Configure an evaluator with data set and application specific information. <p/> Helper method of associating
+     * Configure an evaluator with data set and application specific information. <p> Helper method of associating
      * dataset and application object
      *
      * @param evaluator : to set variables
@@ -700,7 +700,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Helper method to wrap around with "${..}". <p/>
+     * Helper method to wrap around with "${..}". <p>
      *
      *
      * @param eval :EL evaluator
@@ -943,8 +943,8 @@ public class CoordELFunctions {
     // Local methods
     /**
      * @param n
-     * @return n-th instance Date-Time from current instance for data-set <p/> return empty string ("") if the
-     *         Action_Creation_time or the n-th instance <p/> is earlier than the Initial_Instance of dataset.
+     * @return n-th instance Date-Time from current instance for data-set <p> return empty string ("") if the
+     *         Action_Creation_time or the n-th instance <p> is earlier than the Initial_Instance of dataset.
      * @throws Exception
      */
     private static String coord_current_sync(int n) throws Exception {
@@ -989,8 +989,8 @@ public class CoordELFunctions {
      *
      * @param n offset amount (integer)
      * @param timeUnit TimeUnit for offset n ("MINUTE", "HOUR", "DAY", "MONTH", "YEAR")
-     * @return the offset time from the effective nominal time <p/> return empty string ("") if the Action_Creation_time or the
-     *         offset instance <p/> is earlier than the Initial_Instance of dataset.
+     * @return the offset time from the effective nominal time <p> return empty string ("") if the Action_Creation_time or the
+     *         offset instance <p> is earlier than the Initial_Instance of dataset.
      * @throws Exception
      */
     private static String coord_offset_sync(int n, String timeUnit) throws Exception {

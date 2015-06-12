@@ -26,7 +26,7 @@ public class CoordinatorActionInfo {
     /**
      * Create a coordiantor actions info bean.
      *
-     * @param coordiantor actions being returned.
+     * @param actions actions being returned.
      */
     public CoordinatorActionInfo(List<CoordinatorActionBean> actions) {
         this.actions = actions;

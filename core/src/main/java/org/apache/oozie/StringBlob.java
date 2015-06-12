@@ -46,7 +46,7 @@ public class StringBlob {
     /**
      * Construct StringBlob with uncompressed string
      *
-     * @param string
+     * @param inputString
      */
     public StringBlob(String inputString) {
         this.string = inputString;

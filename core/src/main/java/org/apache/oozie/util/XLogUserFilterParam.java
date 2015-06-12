@@ -221,7 +221,7 @@ public class XLogUserFilterParam {
     /**
      * Gets the date. Date can in TZ or yyyy-MM-dd HH:mm:ss,SSS format
      *
-     * @param String date
+     * @param date date
      * @return the date
      */
     public Date getDate(String date) {

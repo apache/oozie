@@ -58,7 +58,7 @@ public abstract class WorkflowStoreService implements Service {
     public abstract WorkflowLib getWorkflowLibWithNoDB();
 
     /**
-     * Return a workflow store instance with a fresh transaction. <p/> The workflow store has to be committed and then
+     * Return a workflow store instance with a fresh transaction. <p> The workflow store has to be committed and then
      * closed to commit changes, if only close it rolls back.
      *
      * @return a workflow store.
@@ -67,7 +67,7 @@ public abstract class WorkflowStoreService implements Service {
     public abstract WorkflowStore create() throws StoreException;
 
     /**
-     * Return a workflow store instance with an existing transaction. <p/> The workflow store has to be committed and
+     * Return a workflow store instance with an existing transaction. <p> The workflow store has to be committed and
      * then closed to commit changes, if only close it rolls back.
      *
      * @return a workflow store.

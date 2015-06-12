@@ -493,7 +493,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set a tracking information for an action, and set the action status to
-     * {@link Action.Status#DONE}
+     * {@link org.apache.oozie.client.WorkflowAction.Status#DONE}
      *
      * @param externalId external ID for the action.
      * @param trackerUri tracker URI for the action.
@@ -513,7 +513,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set the completion information for an action start. Sets the Action
-     * status to {@link Action.Status#DONE}
+     * status to {@link org.apache.oozie.client.WorkflowAction.Status#DONE}
      *
      * @param externalStatus action external end status.
      * @param actionData action output data, <code>null</code> if there is no
@@ -539,7 +539,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set the action statistics info for the workflow action.
      *
-     * @param Json representation of the stats.
+     * @param jsonStats representation of the stats.
      */
     public void setExecutionStats(String jsonStats) {
         setStats(jsonStats);
@@ -572,7 +572,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external child ids
      *
-     * @param externalChildIds
+     * @param externalChildIDs
      */
     public void setExternalChildIDsBlob(StringBlob externalChildIDs) {
         this.externalChildIDs = externalChildIDs;
@@ -590,8 +590,9 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set the completion information for an action end.
      *
-     * @param status action status, {@link Action.Status#OK} or
-     *        {@link Action.Status#ERROR} or {@link Action.Status#KILLED}
+     * @param status action status, {@link org.apache.oozie.client.WorkflowAction.Status#OK} or
+     *        {@link org.apache.oozie.client.WorkflowAction.Status#ERROR} or
+     *        {@link org.apache.oozie.client.WorkflowAction.Status#KILLED}
      * @param signalValue the signal value. In most cases, the value should be
      *        OK or ERROR.
      */
@@ -707,7 +708,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Return the signal value for the action.
-     * <p/>
+     * <p>
      * For decision nodes it is the choosen transition, for actions it is OK or
      * ERROR.
      *
@@ -719,7 +720,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set the signal value for the action.
-     * <p/>
+     * <p>
      * For decision nodes it is the choosen transition, for actions it is OK or
      * ERROR.
      *

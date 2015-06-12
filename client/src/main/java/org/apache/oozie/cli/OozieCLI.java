@@ -213,7 +213,7 @@ public class OozieCLI {
 
     /**
      * Entry point for the Oozie CLI when invoked from the command line.
-     * <p/>
+     * <p>
      * Upon completion this method exits the JVM with '0' (success) or '-1' (failure).
      *
      * @param args options and arguments for the Oozie CLI.
@@ -594,9 +594,9 @@ public class OozieCLI {
 
     /**
      * Run a CLI programmatically.
-     * <p/>
+     * <p>
      * It does not exit the JVM.
-     * <p/>
+     * <p>
      * A CLI instance can be used only once.
      *
      * @param args options and arguments for the Oozie CLI.
@@ -887,7 +887,7 @@ public class OozieCLI {
 
     /**
      * Create a OozieClient.
-     * <p/>
+     * <p>
      * It injects any '-Dheader:' as header to the the {@link org.apache.oozie.client.OozieClient}.
      *
      * @param commandLine the parsed command line options.
@@ -900,7 +900,7 @@ public class OozieCLI {
 
     /**
      * Create a XOozieClient.
-     * <p/>
+     * <p>
      * It injects any '-Dheader:' as header to the the {@link org.apache.oozie.client.OozieClient}.
      *
      * @param commandLine the parsed command line options.

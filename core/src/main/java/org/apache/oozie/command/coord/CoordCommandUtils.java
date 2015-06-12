@@ -67,7 +67,7 @@ public class CoordCommandUtils {
 
     /**
      * parse a function like coord:latest(n)/future() and return the 'n'.
-     * <p/>
+     * <p>
      *
      * @param function
      * @param restArg
@@ -138,7 +138,7 @@ public class CoordCommandUtils {
     }
 
     /**
-     * @param EL function name
+     * @param function EL function name
      * @return type of EL function
      */
     public static int getFuncType(String function) {
@@ -185,7 +185,7 @@ public class CoordCommandUtils {
 
 
     /**
-     * Resolve list of <instance> </instance> tags.
+     * Resolve list of &lt;instance&gt; &lt;/instance&gt; tags.
      *
      * @param event
      * @param instances
@@ -207,7 +207,7 @@ public class CoordCommandUtils {
     }
 
     /**
-     * Resolve <start-instance> <end-insatnce> tag. Don't resolve any
+     * Resolve &lt;start-instance&gt; &lt;end-insatnce&gt; tag. Don't resolve any
      * latest()/future()
      *
      * @param event
@@ -314,7 +314,7 @@ public class CoordCommandUtils {
     /**
      * Materialize one instance like current(-2)
      *
-     * @param event : <data-in>
+     * @param event : &lt;data-in&gt;
      * @param expr : instance like current(-1)
      * @param appInst : application specific info
      * @param conf
@@ -333,7 +333,7 @@ public class CoordCommandUtils {
     }
 
     /**
-     * Create two new tags with <uris> and <unresolved-instances>.
+     * Create two new tags with &lt;uris&gt; and &lt;unresolved-instances&gt;.
      *
      * @param event
      * @param instances
@@ -366,7 +366,7 @@ public class CoordCommandUtils {
      * The function create a list of URIs separated by "," using the instances
      * time stamp and URI-template
      *
-     * @param event : <data-in> event
+     * @param event : &lt;data-in&gt; event
      * @param instances : List of time stamp separated by ","
      * @param unresolvedInstances : list of instance with latest function
      * @param urisWithDoneFlag : list of URIs with the done flag appended
@@ -450,8 +450,8 @@ public class CoordCommandUtils {
 
     /**
      * Materialize one instance for specific nominal time. It includes: 1.
-     * Materialize data events (i.e. <data-in> and <data-out>) 2. Materialize
-     * data properties (i.e dataIn(<DS>) and dataOut(<DS>) 3. remove 'start' and
+     * Materialize data events (i.e. &lt;data-in&gt; and &lt;data-out&gt;) 2. Materialize
+     * data properties (i.e dataIn(&lt;DS&gt;) and dataOut(&lt;DS&gt;) 3. remove 'start' and
      * 'end' tag 4. Add 'instance_number' and 'nominal-time' tag
      *
      * @param jobId coordinator job id
@@ -587,7 +587,7 @@ public class CoordCommandUtils {
     }
 
     /**
-     * Materialize all <input-events>/<data-in> or <output-events>/<data-out>
+     * Materialize all &lt;input-events&gt;/&lt;data-in&gt; or &lt;output-events&gt;/&lt;data-out&gt;
      * tags Create uris for resolved instances. Create unresolved instance for
      * latest()/future().
      *

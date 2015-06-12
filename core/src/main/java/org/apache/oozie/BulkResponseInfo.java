@@ -36,7 +36,7 @@ public class BulkResponseInfo {
     /**
      * Create a bulk response info bean.
      *
-     * @param bundle job being returned.
+     * @param responses jobs being returned.
      * @param start bulk entries offset.
      * @param len number of bulk entries.
      * @param total total bulk entries.
@@ -59,7 +59,7 @@ public class BulkResponseInfo {
 
     /**
      * Return the offset of the bulk entries being returned.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the offset of the bulk entries being returned.
@@ -70,7 +70,7 @@ public class BulkResponseInfo {
 
     /**
      * Return the number of the bulk entries being returned.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the number of the bulk entries being returned.
@@ -81,7 +81,7 @@ public class BulkResponseInfo {
 
     /**
      * Return the total number of bulk entries.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the total number of bulk entries.

@@ -23,12 +23,10 @@ import org.apache.oozie.client.Job;
 
 /**
  * Transition command for pause the job. The derived class has to override these following functions:
- * <p/>
+ * <p>
  * updateJob() : update job status and attributes
  * pauseChildren() : submit or queue commands to pause children
  * notifyParent() : update the status to upstream if any
- *
- * @param <T>
  */
 public abstract class PauseTransitionXCommand extends TransitionXCommand<Void> {
     /**

@@ -77,7 +77,7 @@ public class ELConstantsFunctions {
     }
 
     /**
-     * Return the concatenation of 2 strings. <p/> A string with <code>null</code> value is considered as an empty
+     * Return the concatenation of 2 strings. <p> A string with <code>null</code> value is considered as an empty
      * string.
      *
      * @param s1 first string.

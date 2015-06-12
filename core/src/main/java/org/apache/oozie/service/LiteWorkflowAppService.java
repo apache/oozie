@@ -33,7 +33,6 @@ public class LiteWorkflowAppService extends WorkflowAppService {
      * Parse workflow definition.
      *
      * @param jobConf workflow job configuration.
-     * @param authToken authorization token.
      * @return workflow application.
      */
     public WorkflowApp parseDef(Configuration jobConf) throws WorkflowException {

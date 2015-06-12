@@ -102,7 +102,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Initialize the service. <p/> Reads the security related configuration. parameters - security enabled and list of
+     * Initialize the service. <p> Reads the security related configuration. parameters - security enabled and list of
      * super users.
      *
      * @param services services instance.
@@ -198,7 +198,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Destroy the service. <p/> This implementation does a NOP.
+     * Destroy the service. <p> This implementation does a NOP.
      */
     public void destroy() {
     }
@@ -231,7 +231,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user belongs to the group or not. <p/> <p/> Subclasses should override the {@link #isUserInGroup}
+     * Check if the user belongs to the group or not. <p> <p> Subclasses should override the {@link #isUserInGroup}
      * method.
      *
      * @param user user name.
@@ -246,7 +246,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Return the default group to which the user belongs. <p/> This implementation always returns 'users'.
+     * Return the default group to which the user belongs. <p> This implementation always returns 'users'.
      *
      * @param user user name.
      * @return default group of user.
@@ -262,7 +262,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user has admin privileges. <p/> If admin is disabled it returns always <code>true</code>. <p/> If
+     * Check if the user has admin privileges. <p> If admin is disabled it returns always <code>true</code>. <p> If
      * admin is enabled it returns <code>true</code> if the user is in the <code>adminusers.txt</code> file.
      *
      * @param user user name.
@@ -291,7 +291,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user has admin privileges. <p/> Subclasses should override the {@link #isUserInGroup} method.
+     * Check if the user has admin privileges. <p> Subclasses should override the {@link #isUserInGroup} method.
      *
      * @param user user name.
      * @param write indicates if the check is for read or write admin tasks (in this implementation this is ignored)
@@ -305,7 +305,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to use the specified application. <p/> The check is done by checking the
+     * Check if the user+group is authorized to use the specified application. <p> The check is done by checking the
      * file system permissions on the workflow application.
      *
      * @param user user name.
@@ -355,7 +355,7 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to use the specified application. <p/> The check is done by checking the
+     * Check if the user+group is authorized to use the specified application. <p> The check is done by checking the
      * file system permissions on the workflow application.
      *
      * @param user user name.
@@ -424,8 +424,8 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to operate on the specified job. <p/> Checks if the user is a super-user or
-     * the one who started the job. <p/> Read operations are allowed to all users.
+     * Check if the user+group is authorized to operate on the specified job. <p> Checks if the user is a super-user or
+     * the one who started the job. <p> Read operations are allowed to all users.
      *
      * @param user user name.
      * @param jobId job id.
@@ -509,8 +509,8 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user+group is authorized to operate on the specified jobs. <p/> Checks if the user is a super-user or
-     * the one who started the jobs. <p/> Read operations are allowed to all users.
+     * Check if the user+group is authorized to operate on the specified jobs. <p> Checks if the user is a super-user or
+     * the one who started the jobs. <p> Read operations are allowed to all users.
      *
      * @param user user name.
      * @param filter filter used to select jobs

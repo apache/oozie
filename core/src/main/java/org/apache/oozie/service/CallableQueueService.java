@@ -47,20 +47,20 @@ import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 
 /**
  * The callable queue service queues {@link XCallable}s for asynchronous execution.
- * <p/>
+ * <p>
  * Callables can be queued for immediate execution or for delayed execution (some time in the future).
- * <p/>
+ * <p>
  * Callables are consumed from the queue for execution based on their priority.
- * <p/>
+ * <p>
  * When the queues (for immediate execution and for delayed execution) are full, the callable queue service stops
  * queuing callables.
- * <p/>
+ * <p>
  * A thread-pool is used to execute the callables asynchronously.
- * <p/>
+ * <p>
  * The following configuration parameters control the callable queue service:
- * <p/>
+ * <p>
  * {@link #CONF_QUEUE_SIZE} size of the immediate execution queue. Defaulf value is 10000.
- * <p/>
+ * <p>
  * {@link #CONF_THREADS} number of threads in the thread-pool used for asynchronous command execution. When this number
  * of threads is reached, commands remain the queue until threads become available. Sets up a priority queue for the
  * execution of Commands via a ThreadPool. Sets up a Delayed Queue to handle actions which will be ready for execution
@@ -203,9 +203,9 @@ public class CallableQueueService implements Service, Instrumentable {
 
         /**
          * Filter the duplicate callables from the list before queue this.
-         * <p/>
+         * <p>
          * If it is single callable, checking if key is in unique map or not.
-         * <p/>
+         * <p>
          * If it is composite callable, remove duplicates callables from the composite.
          *
          * @return true if this callable should be queued
@@ -591,9 +591,9 @@ public class CallableQueueService implements Service, Instrumentable {
 
     /**
      * Queue a list of callables for serial execution.
-     * <p/>
+     * <p>
      * Useful to serialize callables that may compete with each other for resources.
-     * <p/>
+     * <p>
      * All callables will be processed with the priority of the highest priority of all callables.
      *
      * @param callables callables to be executed by the composite callable.
@@ -635,9 +635,9 @@ public class CallableQueueService implements Service, Instrumentable {
 
     /**
      * Queue a list of callables for serial execution sometime in the future.
-     * <p/>
+     * <p>
      * Useful to serialize callables that may compete with each other for resources.
-     * <p/>
+     * <p>
      * All callables will be processed with the priority of the highest priority of all callables.
      *
      * @param callables callables to be executed by the composite callable.

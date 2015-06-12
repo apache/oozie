@@ -90,9 +90,9 @@ import org.xml.sax.SAXException;
 /**
  * This class provides the functionalities to resolve a coordinator job XML and write the job information into a DB
  * table.
- * <p/>
+ * <p>
  * Specifically it performs the following functions: 1. Resolve all the variables or properties using job
- * configurations. 2. Insert all datasets definition as part of the <data-in> and <data-out> tags. 3. Validate the XML
+ * configurations. 2. Insert all datasets definition as part of the &lt;data-in&gt; and &lt;data-out&gt; tags. 3. Validate the XML
  * at runtime.
  */
 public class CoordSubmitXCommand extends SubmitTransitionXCommand {

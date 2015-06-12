@@ -32,10 +32,10 @@ import java.util.List;
 
 /**
  * The ELService creates {@link ELEvaluator} instances preconfigured with constants and functions defined in the
- * configuration. <p/> The following configuration parameters control the EL service: <p/> {@link #CONF_CONSTANTS} list
- * of constant definitions to be available for EL evaluations. <p/> {@link #CONF_FUNCTIONS} list of function definitions
- * to be available for EL evalations. <p/> Definitions must be separated by a comma, definitions are trimmed. <p/> The
- * syntax for a constant definition is <code>PREFIX:NAME=CLASS_NAME#CONSTANT_NAME</code>. <p/> The syntax for a constant
+ * configuration. <p> The following configuration parameters control the EL service: <p> {@link #CONF_CONSTANTS} list
+ * of constant definitions to be available for EL evaluations. <p> {@link #CONF_FUNCTIONS} list of function definitions
+ * to be available for EL evalations. <p> Definitions must be separated by a comma, definitions are trimmed. <p> The
+ * syntax for a constant definition is <code>PREFIX:NAME=CLASS_NAME#CONSTANT_NAME</code>. <p> The syntax for a constant
  * definition is <code>PREFIX:NAME=CLASS_NAME#METHOD_NAME</code>.
  */
 public class ELService implements Service {

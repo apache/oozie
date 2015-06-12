@@ -68,10 +68,10 @@ public class HCatELFunctions {
      * @param dataInName
      * @return the same EL function
      */
-    public static String ph1_coord_databaseIn_echo(String dataName) {
+    public static String ph1_coord_databaseIn_echo(String dataInName) {
         // Checking if the dataIn is correct?
-        isValidDataEvent(dataName);
-        return echoUnResolved("databaseIn", "'" + dataName + "'");
+        isValidDataEvent(dataInName);
+        return echoUnResolved("databaseIn", "'" + dataInName + "'");
     }
 
     public static String ph1_coord_databaseOut_echo(String dataName) {
@@ -137,8 +137,8 @@ public class HCatELFunctions {
      * @param dataInName
      * @return DB name
      */
-    public static String ph3_coord_databaseIn(String dataName) {
-        HCatURI hcatURI = getURIFromResolved(dataName, EventType.input);
+    public static String ph3_coord_databaseIn(String dataInName) {
+        HCatURI hcatURI = getURIFromResolved(dataInName, EventType.input);
         if (hcatURI != null) {
             return hcatURI.getDb();
         }
@@ -156,8 +156,8 @@ public class HCatELFunctions {
      * @param dataOutName
      * @return DB name
      */
-    public static String ph3_coord_databaseOut(String dataName) {
-        HCatURI hcatURI = getURIFromResolved(dataName, EventType.output);
+    public static String ph3_coord_databaseOut(String dataOutName) {
+        HCatURI hcatURI = getURIFromResolved(dataOutName, EventType.output);
         if (hcatURI != null) {
             return hcatURI.getDb();
         }
@@ -175,8 +175,8 @@ public class HCatELFunctions {
      * @param dataInName
      * @return Table name
      */
-    public static String ph3_coord_tableIn(String dataName) {
-        HCatURI hcatURI = getURIFromResolved(dataName, EventType.input);
+    public static String ph3_coord_tableIn(String dataInName) {
+        HCatURI hcatURI = getURIFromResolved(dataInName, EventType.input);
         if (hcatURI != null) {
             return hcatURI.getTable();
         }
@@ -194,8 +194,8 @@ public class HCatELFunctions {
      * @param dataOutName
      * @return Table name
      */
-    public static String ph3_coord_tableOut(String dataName) {
-        HCatURI hcatURI = getURIFromResolved(dataName, EventType.output);
+    public static String ph3_coord_tableOut(String dataOutName) {
+        HCatURI hcatURI = getURIFromResolved(dataOutName, EventType.output);
         if (hcatURI != null) {
             return hcatURI.getTable();
         }
@@ -205,10 +205,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the HCat partition filter which is input dependency for workflow job.<p/> Look for two evaluator-level
-     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the current list of
-     * HCat URIs. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the partition filter.
+     * Used to specify the HCat partition filter which is input dependency for workflow job.<p> Look for two evaluator-level
+     * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
+     * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the partition filter.
      *
      * @param dataInName : Datain name
      * @param type : for action type - pig, MR or hive
@@ -224,10 +224,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the HCat partition's value defining output for workflow job.<p/> Look for two evaluator-level
-     * variables <p/> A) .dataout.<DATAOUT_NAME> B) .dataout.<DATAOUT_NAME>.unresolved <p/> A defines the current list of
-     * HCat URIs. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the partition value.
+     * Used to specify the HCat partition's value defining output for workflow job.<p> Look for two evaluator-level
+     * variables <p> A) .dataout.&lt;DATAOUT_NAME&gt; B) .dataout.&lt;DATAOUT_NAME&gt;.unresolved <p> A defines the current list of
+     * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the partition value.
      *
      * @param dataOutName : Dataout name
      * @param partitionName : Specific partition name whose value is wanted
@@ -250,10 +250,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the entire HCat partition defining output for workflow job.<p/> Look for two evaluator-level
-     * variables <p/> A) .dataout.<DATAOUT_NAME> B) .dataout.<DATAOUT_NAME>.unresolved <p/> A defines the data-out
-     * HCat URI. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the partition.
+     * Used to specify the entire HCat partition defining output for workflow job.<p> Look for two evaluator-level
+     * variables <p> A) .dataout.&lt;DATAOUT_NAME&gt; B) .dataout.&lt;DATAOUT_NAME&gt;.unresolved <p> A defines the data-out
+     * HCat URI. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the partition.
      *
      * @param dataOutName : DataOut name
      */
@@ -273,10 +273,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the entire HCat partition defining input for workflow job. <p/> Look for two evaluator-level
-     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the data-in HCat URI.
-     * <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something unresolved,
-     * this function will echo back the original function <p/> otherwise it sends the partition.
+     * Used to specify the entire HCat partition defining input for workflow job. <p> Look for two evaluator-level
+     * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the data-in HCat URI.
+     * <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something unresolved,
+     * this function will echo back the original function <p> otherwise it sends the partition.
      *
      * @param dataInName : DataIn name
      * @param type : for action type: hive-export
@@ -314,10 +314,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.<p/> Look for two evaluator-level
-     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the current list of
-     * HCat URIs. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the max partition value.
+     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
+     * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the max partition value.
      *
      * @param dataInName : Datain name
      * @param partitionName : Specific partition name whose MAX value is wanted
@@ -359,10 +359,10 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.<p/> Look for two evaluator-level
-     * variables <p/> A) .datain.<DATAIN_NAME> B) .datain.<DATAIN_NAME>.unresolved <p/> A defines the current list of
-     * HCat URIs. <p/> B defines whether there are any unresolved EL-function (i.e latest) <p/> If there are something
-     * unresolved, this function will echo back the original function <p/> otherwise it sends the min partition value.
+     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
+     * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
+     * unresolved, this function will echo back the original function <p> otherwise it sends the min partition value.
      *
      * @param dataInName : Datain name
      * @param partitionName : Specific partition name whose MIN value is wanted

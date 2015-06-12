@@ -29,7 +29,7 @@ import java.util.Map;
 public interface WorkflowInstance {
 
     /**
-     * Separator to qualify variables belonging to a node. <p/> Variables names should be compossed as <code>nodeName +
+     * Separator to qualify variables belonging to a node. <p> Variables names should be compossed as <code>nodeName +
      * {@link #NODE_VAR_SEPARATOR} + varName</code>.
      */
     public final static String NODE_VAR_SEPARATOR = "#";
@@ -100,7 +100,7 @@ public interface WorkflowInstance {
     public boolean signal(String path, String signaValue) throws WorkflowException;
 
     /**
-     * Fail the instance. <p/> All executing nodes will be be signaled for fail.
+     * Fail the instance. <p> All executing nodes will be be signaled for fail.
      *
      * @param nodeName the name of the node to be failed.
      * @throws WorkflowException thrown if the instance could not be failed.
@@ -108,7 +108,7 @@ public interface WorkflowInstance {
     public void fail(String nodeName) throws WorkflowException;
 
     /**
-     * Kill the instance. <p/> All executing nodes will be be signaled for kill.
+     * Kill the instance. <p> All executing nodes will be be signaled for kill.
      *
      * @throws WorkflowException thrown if the instance could not be killed.
      */
@@ -136,7 +136,7 @@ public interface WorkflowInstance {
     public Status getStatus();
 
     /**
-     * Set a variable in the context of the instance. <p/> Variables are persisted with the instance.
+     * Set a variable in the context of the instance. <p> Variables are persisted with the instance.
      *
      * @param name variable name.
      * @param value variable value, setting a <code>null</code> value removes the variable.
@@ -159,14 +159,14 @@ public interface WorkflowInstance {
     public Map<String, String> getAllVars();
 
     /**
-     * Add a set of variables in the context of the instance. <p/> Variables are persisted with the instance.
+     * Add a set of variables in the context of the instance. <p> Variables are persisted with the instance.
      *
      * @param varMap map with the variables to add.
      */
     public void setAllVars(Map<String, String> varMap);
 
     /**
-     * Set a transient variable in the context of the instance. <p/> Transient variables are not persisted with the
+     * Set a transient variable in the context of the instance. <p> Transient variables are not persisted with the
      * instance.
      *
      * @param name transient variable name.
@@ -183,7 +183,7 @@ public interface WorkflowInstance {
     public Object getTransientVar(String name);
 
     /**
-     * Return the transition a node did. <p/> This is meaninful only for action and decision nodes.
+     * Return the transition a node did. <p> This is meaninful only for action and decision nodes.
      *
      * @param node the node name.
      * @return the transition the node did, <code>null</code> if the node didn't execute yet.

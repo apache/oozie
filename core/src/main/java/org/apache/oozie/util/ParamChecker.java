@@ -160,7 +160,7 @@ public class ParamChecker {
      *
      * @param value : value to test
      * @param name : Name of the parameter
-     * @return If the value is > 0, return the value. Otherwise throw IllegalArgumentException
+     * @return If the value is &gt; 0, return the value. Otherwise throw IllegalArgumentException
      */
     public static int checkGTZero(int value, String name) {
         if (value <= 0) {
@@ -175,7 +175,7 @@ public class ParamChecker {
      *
      * @param value : value to test
      * @param name : Name of the parameter
-     * @return If the value is >= 0, return the value. Otherwise throw IllegalArgumentException
+     * @return If the value is &gt;= 0, return the value. Otherwise throw IllegalArgumentException
      */
     public static int checkGEZero(int value, String name) {
         if (value < 0) {
@@ -190,7 +190,7 @@ public class ParamChecker {
      *
      * @param value : value to test
      * @param name : Name of the parameter
-     * @return If the value is <= 0, return the value. Otherwise throw IllegalArgumentException
+     * @return If the value is &lt;= 0, return the value. Otherwise throw IllegalArgumentException
      */
     public static int checkLEZero(int value, String name) {
         if (value > 0) {
@@ -203,7 +203,7 @@ public class ParamChecker {
     /**
      * Check whether the value is Integer.
      *
-     * @param value : value to test
+     * @param val : value to test
      * @param name : Name of the parameter
      * @return If the value is integer, return the value. Otherwise throw IllegalArgumentException
      */
@@ -222,7 +222,7 @@ public class ParamChecker {
     /**
      * Check whether a value is a valid coordinator frequency.
      *
-     * @param value : value to test
+     * @param val : value to test
      * @return If the value is a valid frequency, return the frequency, Otherwise throw IllegalArgumentException
      */
     public static String checkFrequency(String val) {
@@ -267,7 +267,7 @@ public class ParamChecker {
     /**
      * Check whether the value is Oozie processing timezone data format.
      *
-     * @param value : value to test
+     * @param date : date to test
      * @param name : Name of the parameter
      * @return If the value is in Oozie processing timezone date format, return the value.
      * Otherwise throw IllegalArgumentException
@@ -289,7 +289,7 @@ public class ParamChecker {
     /**
      * Check whether the value mention correct Timezone.
      *
-     * @param value : value to test
+     * @param tzStr : timezone to test
      * @param name : Name of the parameter
      * @return If the value is correct TZ return the value. Otherwise throw IllegalArgumentException
      */

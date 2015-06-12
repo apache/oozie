@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Base class for Oozie web service API Servlets. <p/> This class provides common instrumentation, error logging and
+ * Base class for Oozie web service API Servlets. <p> This class provides common instrumentation, error logging and
  * other common functionality.
  */
 public abstract class JsonRestServlet extends HttpServlet {
@@ -169,7 +169,7 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
-     * Define an instrumentation sampler. <p/> Sampling period is 60 seconds, the sampling frequency is 1 second. <p/>
+     * Define an instrumentation sampler. <p> Sampling period is 60 seconds, the sampling frequency is 1 second. <p>
      * The instrumentation group used is {@link #INSTRUMENTATION_GROUP}.
      *
      * @param samplerName sampler name.
@@ -482,7 +482,7 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
-     * Return the resource name of the request. <p/> The resource name is the whole extra path. If the extra path starts
+     * Return the resource name of the request. <p> The resource name is the whole extra path. If the extra path starts
      * with '/', the first '/' is trimmed.
      *
      * @param request request instance

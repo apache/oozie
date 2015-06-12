@@ -187,7 +187,6 @@ public class SLAService implements Service {
      * Enable jobs sla alert.
      *
      * @param jobIds the job ids
-     * @param isParentJob, if jobIds are parent job
      * @return true, if successful
      * @throws ServiceException the service exception
      */
@@ -204,8 +203,7 @@ public class SLAService implements Service {
     /**
      * Enable child jobs sla alert.
      *
-     * @param jobIds the parent job ids
-     * @param isParentJob, if jobIds are parent job
+     * @param parentJobIds the parent job ids
      * @return true, if successful
      * @throws ServiceException the service exception
      */
@@ -223,7 +221,6 @@ public class SLAService implements Service {
      * Disable jobs Sla alert.
      *
      * @param jobIds the job ids
-     * @param isParentJob, if jobIds are parent job
      * @return true, if successful
      * @throws ServiceException the service exception
      */
@@ -240,8 +237,7 @@ public class SLAService implements Service {
     /**
      * Disable child jobs Sla alert.
      *
-     * @param jobIds the parent job ids
-     * @param isParentJob, if jobIds are parent job
+     * @param parentJobIds the parent job ids
      * @return true, if successful
      * @throws ServiceException the service exception
      */
@@ -260,7 +256,7 @@ public class SLAService implements Service {
      * It takes list of pairs of jobid and key/value pairs of el evaluated sla definition.
      * Support definition are sla-should-start, sla-should-end, sla-nominal-time and sla-max-duration.
      *
-     * @param jobIdsSLAPair the job ids sla pair
+     * @param idSlaDefinitionList the job ids sla pair
      * @return true, if successful
      * @throws ServiceException the service exception
      */

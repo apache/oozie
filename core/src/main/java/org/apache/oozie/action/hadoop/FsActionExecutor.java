@@ -45,7 +45,7 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
 /**
- * File system action executor. <p/> This executes the file system mkdir, move and delete commands
+ * File system action executor. <p> This executes the file system mkdir, move and delete commands
  */
 public class FsActionExecutor extends ActionExecutor {
 

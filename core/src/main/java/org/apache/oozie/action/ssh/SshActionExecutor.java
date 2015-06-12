@@ -46,7 +46,7 @@ import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
 /**
- * Ssh action executor. <p/> <ul> <li>Execute the shell commands on the remote host</li> <li>Copies the base and wrapper
+ * Ssh action executor. <p> <ul> <li>Execute the shell commands on the remote host</li> <li>Copies the base and wrapper
  * scripts on to the remote location</li> <li>Base script is used to run the command on the remote host</li> <li>Wrapper
  * script is used to check the status of the submitted command</li> <li>handles the submission failures</li> </ul>
  */

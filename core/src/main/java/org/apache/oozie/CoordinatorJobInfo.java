@@ -29,7 +29,7 @@ public class CoordinatorJobInfo {
     /**
      * Create a coordinator info bean.
      * 
-     * @param coordiantor jobs being returned.
+     * @param jobs jobs being returned.
      * @param start coordiantor jobs offset.
      * @param len number of coordiantor jobs.
      * @param total total coordiantor jobs.
@@ -51,7 +51,7 @@ public class CoordinatorJobInfo {
     }
 
     /**
-     * Return the offset of the workflows being returned. <p/> For pagination purposes.
+     * Return the offset of the workflows being returned. <p> For pagination purposes.
      *
      * @return the offset of the coordiantor jobs being returned.
      */
@@ -60,7 +60,7 @@ public class CoordinatorJobInfo {
     }
 
     /**
-     * Return the number of the workflows being returned. <p/> For pagination purposes.
+     * Return the number of the workflows being returned. <p> For pagination purposes.
      *
      * @return the number of the coordiantor jobs being returned.
      */
@@ -69,7 +69,7 @@ public class CoordinatorJobInfo {
     }
 
     /**
-     * Return the total number of workflows. <p/> For pagination purposes.
+     * Return the total number of workflows. <p> For pagination purposes.
      *
      * @return the total number of coordiantor jobs.
      */

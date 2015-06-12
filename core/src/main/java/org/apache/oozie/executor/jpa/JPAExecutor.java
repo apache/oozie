@@ -22,7 +22,7 @@ import javax.persistence.EntityManager;
 
 /**
  * Executor pattern interface that gives access to an {@link EntityManager}.
- * <p/>
+ * <p>
  * Implementations are executed by the {@link org.apache.oozie.service.JPAService}.
  */
 public interface JPAExecutor<T> {
@@ -36,9 +36,9 @@ public interface JPAExecutor<T> {
 
     /**
      * Method that encapsulates JPA access operations.
-     * <p/>
+     * <p>
      * Implementations should not close the received {@link EntityManager}.
-     * <p/>
+     * <p>
      * Implementations should commit any transaction before ending, else the transaction will be rolled back.
      *
      * @param em an active {@link EntityManager}

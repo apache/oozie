@@ -204,7 +204,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Status of the Bundle Action
      *
-     * @return status string
+     * @param statusStr status string
      */
     public void setStatusStr(String statusStr) {
         this.statusStr = statusStr;
@@ -220,18 +220,14 @@ public class BundleActionBean implements Writable, JsonBean {
     }
 
     /**
-     * Set Whether this bundle action is critical or not.
-     *
-     * @param critical set critical to true
+     * Set that this bundle action is critical.
      */
     public void setCritical() {
         this.critical = 1;
     }
 
     /**
-     * Reseset Whether this bundle action is critical or not.
-     *
-     * @param critical set critical to false
+     * Reseset that this bundle action is not critical.
      */
     public void resetCritical() {
         this.critical = 0;

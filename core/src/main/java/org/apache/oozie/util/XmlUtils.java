@@ -273,7 +273,7 @@ public class XmlUtils {
     }
 
     /**
-     * Schema validation for a given xml. <p/>
+     * Schema validation for a given xml. <p>
      *
      * @param schema for validation
      * @param xml to be validated
@@ -362,14 +362,14 @@ public class XmlUtils {
 
     /**
      * Escape characters for text appearing as XML data, between tags.
-     * <P/>
+     * <p>
      * The following characters are replaced with corresponding character entities :
-     * '<' to '&lt';
-     * '>' to '&gt';
-     * '&' to '&amp;'
+     * '&lt;' to '&lt;'
+     * '&gt;' to '&gt;'
+     * '&amp;' to '&amp;'
      * '"' to '&quot;'
      * "'" to "&#039;"
-     * <P/>
+     * <p>
      * Note that JSTL's {@code <c:out>} escapes the exact same set of characters as this method.
      */
     public static String escapeCharsForXML(String aText) {

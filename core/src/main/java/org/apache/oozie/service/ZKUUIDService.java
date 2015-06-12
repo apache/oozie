@@ -89,7 +89,6 @@ public class ZKUUIDService extends UUIDService {
      * Gets the unique id.
      *
      * @return the id
-     * @throws Exception the exception
      */
     @Override
     protected String createSequence() {

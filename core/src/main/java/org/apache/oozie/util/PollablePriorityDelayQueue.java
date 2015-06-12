@@ -33,7 +33,7 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
      *
      * Return <tt>null</tt> if this queue has no elements eligible to run.
      *
-     * <p/>
+     * <p>
      * Invocations to this method run the anti-starvation (once every interval check).
      *
      * @return the element of this queue, for which eligibleToPoll is true.
@@ -84,7 +84,7 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
 
     /**
      * Method for checking the QueueElement eligible to poll before remove it from queue.
-     * <p/>
+     * <p>
      * This method should be overriden for checking purposes.
      *
      * @param element the element to check

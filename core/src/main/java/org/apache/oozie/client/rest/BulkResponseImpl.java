@@ -110,7 +110,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the bundle comprising this bulk response object
-     * @param BundleJobBean
+     * @param bj
      */
     public void setBundle(BundleJobBean bj) {
         this.bundle = bj;
@@ -118,7 +118,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coordinator comprising this bulk response object
-     * @param CoordinatorJobBean
+     * @param cj
      */
     public void setCoordinator(CoordinatorJobBean cj) {
         this.coordinator = cj;
@@ -126,7 +126,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coord action comprising this bulk response object
-     * @param CoordinatorActionBean
+     * @param ca
      */
     public void setAction(CoordinatorActionBean ca) {
         this.action = ca;
@@ -135,7 +135,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
     /**
      * Convert a nodes list into a JSONArray.
      *
-     * @param actions nodes list.
+     * @param responses nodes list.
      * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */

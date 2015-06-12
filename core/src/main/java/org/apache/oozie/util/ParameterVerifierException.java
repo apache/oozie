@@ -23,7 +23,7 @@ import org.apache.oozie.XException;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Exception thrown by {@link org.apache.oozie.util.ParameterHandler} .
+ * Exception thrown by {@link ParameterVerifier}.
  */
 public class ParameterVerifierException extends XException {
     

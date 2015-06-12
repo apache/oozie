@@ -154,7 +154,7 @@ public interface CoordinatorJob extends Job {
 
     /**
      * Return the application group.
-     * <p/>
+     * <p>
      * Use the {@link #getAcl()} method instead.
      *
      * @return the application group.

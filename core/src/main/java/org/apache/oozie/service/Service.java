@@ -30,7 +30,7 @@ public interface Service {
     public static final String CONF_PREFIX = "oozie.service.";
 
     /**
-     * Initialize the service. <p/> Invoked by the {@link Service} singleton at start up time.
+     * Initialize the service. <p> Invoked by the {@link Service} singleton at start up time.
      *
      * @param services services singleton initializing the service.
      * @throws ServiceException thrown if the service could not initialize.
@@ -38,12 +38,12 @@ public interface Service {
     public void init(Services services) throws ServiceException;
 
     /**
-     * Destroy the service. <p/> Invoked by the {@link Service} singleton at shutdown time.
+     * Destroy the service. <p> Invoked by the {@link Service} singleton at shutdown time.
      */
     public void destroy();
 
     /**
-     * Return the public interface of the service. <p/> Services are retrieved by its public interface. Specializations
+     * Return the public interface of the service. <p> Services are retrieved by its public interface. Specializations
      * of services must return the public interface.
      *
      * @return the interface of the service.

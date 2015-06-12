@@ -28,8 +28,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This service executes scheduled Runnables and Callables at regular intervals. <p/> It uses a
- * java.util.concurrent.ScheduledExecutorService. <p/> The {@link #SCHEDULER_THREADS} configuration property indicates
+ * This service executes scheduled Runnables and Callables at regular intervals. <p> It uses a
+ * java.util.concurrent.ScheduledExecutorService. <p> The {@link #SCHEDULER_THREADS} configuration property indicates
  * how many threads the scheduler will use to run scheduled commands.
  */
 public class SchedulerService implements Service {
@@ -84,7 +84,7 @@ public class SchedulerService implements Service {
     }
 
     /**
-     * Return the java.util.concurrent.ScheduledExecutorService instance used by the SchedulerService. <p/>
+     * Return the java.util.concurrent.ScheduledExecutorService instance used by the SchedulerService. <p>
      *
      * @return the scheduled executor service instance.
      */

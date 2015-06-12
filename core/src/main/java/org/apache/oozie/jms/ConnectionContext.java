@@ -96,8 +96,7 @@ public interface ConnectionContext {
     /**
      * Creates a threadlocal session using session opts
      *
-     * @param session
-     * @param topicName
+     * @param sessionOpts
      * @return
      * @throws JMSException
      */

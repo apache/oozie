@@ -49,9 +49,9 @@ import org.apache.oozie.util.XLog;
 
 /**
  * Rerun bundle coordinator jobs by a list of coordinator names or dates. User can specify if refresh or noCleanup.
- * <p/>
+ * <p>
  * The "refresh" is used to indicate if user wants to refresh an action's input/outpur dataset urls
- * <p/>
+ * <p>
  * The "noCleanup" is used to indicate if user wants to cleanup output events for given rerun actions
  */
 public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {

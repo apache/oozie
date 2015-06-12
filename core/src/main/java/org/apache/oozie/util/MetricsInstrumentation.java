@@ -116,7 +116,7 @@ public class MetricsInstrumentation extends Instrumentation {
     }
 
     /**
-     * Add a cron to an instrumentation timer. The timer is created if it does not exists. <p/>
+     * Add a cron to an instrumentation timer. The timer is created if it does not exists. <p>
      * Internally, this is backed by a {@link com.codahale.metrics.Timer}.
      *
      * @param group timer group.
@@ -138,7 +138,7 @@ public class MetricsInstrumentation extends Instrumentation {
     }
 
     /**
-     * Add an instrumentation variable. <p/>
+     * Add an instrumentation variable. <p>
      * Internally, this is backed by a {@link Gauge}.
      *
      * @param group counter group.
@@ -171,7 +171,7 @@ public class MetricsInstrumentation extends Instrumentation {
     }
 
    /**
-     * Increment an instrumentation counter. The counter is created if it does not exists. <p/>
+     * Increment an instrumentation counter. The counter is created if it does not exists. <p>
      * Internally, this is backed by a {@link Counter}.
      *
      * @param group counter group.
@@ -192,7 +192,7 @@ public class MetricsInstrumentation extends Instrumentation {
     }
 
     /**
-     * Add a sampling variable. <p/>
+     * Add a sampling variable. <p>
      * Internally, this is backed by a biased (decaying) {@link Histogram}.
      *
      * @param group timer group.

@@ -92,8 +92,6 @@ public interface URIHandler {
      *
      * @param uri The URI to be removed from missing dependency
      * @param actionID The id of action which was dependent on the uri.
-     *
-     * @throws URIHandlerException
      */
     public boolean unregisterFromNotification(URI uri, String actionID);
 
@@ -173,7 +171,6 @@ public interface URIHandler {
     /**
      * Check whether the URI is valid or not
      * @param uri
-     * @return
      * @throws URIHandlerException
      */
     public void validate(String uri) throws URIHandlerException;

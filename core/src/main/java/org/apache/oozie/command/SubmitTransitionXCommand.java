@@ -22,7 +22,7 @@ import org.apache.oozie.client.Job;
 
 /**
  * Base class for submit transition command. The derived class has to override these following functions:
- * <p/>
+ * <p>
  * loadState() : load the job's and/or actions' state
  * submit() : submit the job
  * notifyParent() : update the status to upstream if any

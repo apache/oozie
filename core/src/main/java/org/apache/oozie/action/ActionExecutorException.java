@@ -22,7 +22,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 /**
- * ActionExecutor exception. <p/> The exception provides information regarding the transient/no-transient/fatal nature
+ * ActionExecutor exception. <p> The exception provides information regarding the transient/no-transient/fatal nature
  * of the exception.
  */
 public class ActionExecutorException extends Exception {
@@ -73,7 +73,7 @@ public class ActionExecutorException extends Exception {
     /**
      * Create an action executor exception.
      *
-     * <p/> If the last parameter is an Exception it is used as the exception cause.
+     * <p> If the last parameter is an Exception it is used as the exception cause.
      *
      * @param errorType the error type.
      * @param errorCode the error code.

@@ -684,9 +684,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     }
 
     /**
-     * Get status
-     *
-     * @return status
+     * Set status
      */
     public void setStatusStr(String status) {
         this.statusStr = status;
@@ -744,9 +742,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     }
 
     /**
-     * Get execution
-     *
-     * @return execution
+     * Set execution order
      */
     public void setExecution(String order) {
         this.execution = order;

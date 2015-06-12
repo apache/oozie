@@ -46,7 +46,7 @@ import java.util.Set;
 /**
  * JSON to bean converter for {@link WorkflowAction}, {@link WorkflowJob}, {@link CoordinatorAction}
  * and {@link CoordinatorJob}.
- * <p/>
+ * <p>
  * It uses JDK dynamic proxy to create bean instances.
  */
 @SuppressWarnings("rawtypes")

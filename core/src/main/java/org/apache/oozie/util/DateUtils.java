@@ -59,7 +59,7 @@ public class DateUtils {
 
     /**
      * Configures the Datetime parsing with Oozie processing timezone.
-     * <p/>
+     * <p>
      * The {@link #OOZIE_PROCESSING_TIMEZONE_KEY} property is read and set as the Oozie processing timezone.
      * Valid values for this property are <code>UTC</code> and <code>GMT(+/-)####</code>
      *
@@ -87,7 +87,7 @@ public class DateUtils {
 
     /**
      * Returns Oozie processing datetime mask.
-     * <p/>
+     * <p>
      * This mask is an ISO8601 datetime mask for the Oozie processing timezone.
      *
      * @return  Oozie processing datetime mask.
@@ -193,7 +193,7 @@ public class DateUtils {
 
     /**
      * Formats a {@link Date} as a string using the specified format mask.
-     * <p/>
+     * <p>
      * The format mask must be a {@link SimpleDateFormat} valid format mask.
      *
      * @param d {@link Date} to format.

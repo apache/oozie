@@ -43,23 +43,23 @@ import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Built in service that initializes the services configuration.
- * <p/>
+ * <p>
  * The configuration loading sequence is identical to Hadoop configuration loading sequence.
- * <p/>
+ * <p>
  * Default values are loaded from the 'oozie-default.xml' file from the classpath, then site configured values
  * are loaded from a site configuration file from the Oozie configuration directory.
- * <p/>
- * The Oozie configuration directory is resolved using the <code>OOZIE_HOME<code> environment variable as
- * <code>${OOZIE_HOME}/conf</code>. If the <code>OOZIE_HOME<code> environment variable is not defined the
+ * <p>
+ * The Oozie configuration directory is resolved using the <code>OOZIE_HOME</code> environment variable as
+ * <code>${OOZIE_HOME}/conf</code>. If the <code>OOZIE_HOME</code> environment variable is not defined the
  * initialization of the <code>ConfigurationService</code> fails.
- * <p/>
+ * <p>
  * The site configuration is loaded from the <code>oozie-site.xml</code> file in the configuration directory.
- * <p/>
+ * <p>
  * The site configuration file name to use can be changed by setting the <code>OOZIE_CONFIG_FILE</code> environment
  * variable to an alternate file name. The alternate file must ber in the Oozie configuration directory.
- * <p/>
+ * <p>
  * Configuration properties, prefixed with 'oozie.', passed as system properties overrides default and site values.
- * <p/>
+ * <p>
  * The configuration service logs details on how the configuration was loaded as well as what properties were overrode
  * via system properties settings.
  */
@@ -396,7 +396,7 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     /**
-     * Instruments the configuration service. <p/> It sets instrumentation variables indicating the config dir and
+     * Instruments the configuration service. <p> It sets instrumentation variables indicating the config dir and
      * config file used.
      *
      * @param instr instrumentation to use.

@@ -70,7 +70,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     public static final String USER_ERROR_CODE_ALL = "ALL";
 
     /**
-     * Delegation method used by the Action and Decision {@link NodeHandler} on start. <p/> This method provides the
+     * Delegation method used by the Action and Decision {@link NodeHandler} on start. <p> This method provides the
      * necessary information to create ActionExecutors.
      *
      * @param context NodeHandler context.
@@ -209,7 +209,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Delegation method used when failing actions. <p/>
+     * Delegation method used when failing actions. <p>
      *
      * @param context NodeHandler context.
      */
@@ -219,7 +219,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Delegation method used when killing actions. <p/>
+     * Delegation method used when killing actions. <p>
      *
      * @param context NodeHandler context.
      */
@@ -229,7 +229,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Used to terminate jobs - FAIL or KILL. <p/>
+     * Used to terminate jobs - FAIL or KILL. <p>
      *
      * @param context NodeHandler context.
      * @param transientVar The transient variable name.

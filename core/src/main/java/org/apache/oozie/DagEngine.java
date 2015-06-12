@@ -98,7 +98,7 @@ public class DagEngine extends BaseEngine {
     }
 
     /**
-     * Submit a workflow job. <p/> It validates configuration properties.
+     * Submit a workflow job. <p> It validates configuration properties.
      *
      * @param conf job configuration.
      * @param startJob indicates if the job should be started or not.
@@ -146,7 +146,7 @@ public class DagEngine extends BaseEngine {
 
     /**
      * Submit a pig/hive/mapreduce job through HTTP.
-     * <p/>
+     * <p>
      * It validates configuration properties.
      *
      * @param conf job configuration.
@@ -544,7 +544,7 @@ public class DagEngine extends BaseEngine {
     }
 
     /**
-     * Return the workflow Job ID for an external ID. <p/> This is reverse lookup for recovery purposes.
+     * Return the workflow Job ID for an external ID. <p> This is reverse lookup for recovery purposes.
      *
      * @param externalId external ID provided at job submission time.
      * @return the associated workflow job ID if any, <code>null</code> if none.

@@ -44,7 +44,7 @@ public class BundleJobsXCommand extends XCommand<BundleJobInfo> {
      *
      * @param filter the filter string
      * @param start start location for paging
-     * @param len total length to get
+     * @param length total length to get
      */
     public BundleJobsXCommand(Map<String, List<String>> filter, int start, int length) {
         super("bundle.job.info", "bundle.job.info", 1);

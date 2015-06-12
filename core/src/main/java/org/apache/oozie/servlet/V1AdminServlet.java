@@ -128,7 +128,7 @@ public class V1AdminServlet extends BaseAdminServlet {
     /**
      * Get a json array of queue dump and a json array of unique map dump
      *
-     * @param JSONObject the result json object that contains a JSONArray for the callable dump
+     * @param json the result json object that contains a JSONArray for the callable dump
      *
      * @see
      * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple

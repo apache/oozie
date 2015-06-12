@@ -55,7 +55,7 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p/> The
+ * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p> The
  * default accessor used is the base accessor which just injects the UGI into the configuration instance used to
  * create/obtain JobClient and FileSystem instances.
  */
@@ -285,7 +285,7 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Creates a JobConf using the site configuration for the specified hostname:port.
-     * <p/>
+     * <p>
      * If the specified hostname:port is not defined it falls back to the '*' site
      * configuration if available. If the '*' site configuration is not available,
      * the JobConf has all Hadoop defaults.
@@ -366,7 +366,7 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Returns a Configuration containing any defaults for an action for a particular cluster.
-     * <p/>
+     * <p>
      * This configuration is used as default for the action configuration and enables cluster
      * level default values per action.
      *

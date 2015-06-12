@@ -49,7 +49,7 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 
 /**
- * Executes the check command for ActionHandlers. </p> Ensures the action is in
+ * Executes the check command for ActionHandlers. <p> Ensures the action is in
  * RUNNING state before executing
  * {@link ActionExecutor#check(org.apache.oozie.action.ActionExecutor.Context, org.apache.oozie.client.WorkflowAction)}
  */

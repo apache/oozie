@@ -54,7 +54,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Kill workflow job and its workflow instance and queue a {@link WorkflowActionKillXCommand} to kill the workflow
+ * Kill workflow job and its workflow instance and queue a {@link ActionKillXCommand} to kill the workflow
  * actions.
  */
 @SuppressWarnings("deprecation")

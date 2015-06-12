@@ -193,7 +193,6 @@ public class PartitionDependencyManagerService implements Service {
      * @param db name of the database
      * @param table name of the table
      * @param partitions list of available partitions
-     * @return list of actionIDs for which the dependency is now available
      */
     public void partitionAvailable(String server, String db, String table, Map<String, String> partitions) {
         Collection<String> actionsWithAvailableDep = dependencyCache.markDependencyAvailable(server, db, table,
@@ -237,8 +236,6 @@ public class PartitionDependencyManagerService implements Service {
      * Remove a coord action from dependency cache when all push missing dependencies available
      *
      * @param actionID action id
-     * @param dependencyURIs set of dependency URIs
-     * @return true if successful, else false
      */
     public void removeCoordActionWithDependenciesAvailable(String actionID) {
         if (purgeEnabled) {

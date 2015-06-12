@@ -329,7 +329,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      * Checks the pre-conditions that are required for workflow to recover - Last run of Workflow should be completed -
      * The nodes that are to be skipped are to be completed successfully in the base run.
      *
-     * @throws org.apache.oozie.command.CommandException,PreconditionException On failure of pre-conditions
+     * @throws CommandException
+     * @throws PreconditionException On failure of pre-conditions
      */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {

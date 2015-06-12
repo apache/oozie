@@ -25,7 +25,7 @@ import org.apache.oozie.util.XLog;
 import javax.servlet.ServletException;
 
 /**
- * Specialized Oozie servlet exception that uses Oozie error codes. <p/> It extends ServletException so it can be
+ * Specialized Oozie servlet exception that uses Oozie error codes. <p> It extends ServletException so it can be
  * handled in the <code>Servlet.service</code> method of the {@link JsonRestServlet}.
  */
 public class XServletException extends ServletException {

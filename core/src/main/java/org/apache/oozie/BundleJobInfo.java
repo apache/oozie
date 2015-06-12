@@ -29,7 +29,7 @@ public class BundleJobInfo {
     /**
      * Create a bundle info bean.
      *
-     * @param bundle jobs being returned.
+     * @param jobs jobs being returned.
      * @param start bundle jobs offset.
      * @param len number of bundle jobs.
      * @param total total bundle jobs.
@@ -52,7 +52,7 @@ public class BundleJobInfo {
 
     /**
      * Return the offset of the bundles being returned.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the offset of the bundle jobs being returned.
@@ -63,7 +63,7 @@ public class BundleJobInfo {
 
     /**
      * Return the number of the bundle being returned.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the number of the bundle jobs being returned.
@@ -74,7 +74,7 @@ public class BundleJobInfo {
 
     /**
      * Return the total number of bundles.
-     * <p/>
+     * <p>
      * For pagination purposes.
      *
      * @return the total number of bundle jobs.

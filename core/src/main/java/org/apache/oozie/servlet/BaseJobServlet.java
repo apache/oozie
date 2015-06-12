@@ -217,7 +217,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             IOException;
 
     /**
-     * Validate the configuration user/group. <p/>
+     * Validate the configuration user/group. <p>
      *
      * @param conf configuration.
      * @throws XServletException thrown if the configuration does not have a property {@link
@@ -517,7 +517,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request the request
      * @param response the response
-     * @param Configuration conf
+     * @param conf the Configuration
      * @return the JSON object
      * @throws XServletException the x servlet exception
      * @throws IOException Signals that an I/O exception has occurred.

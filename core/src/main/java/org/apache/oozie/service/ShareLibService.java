@@ -709,7 +709,7 @@ public class ShareLibService implements Service, Instrumentable {
 
     /**
      * Instruments the log service.
-     * <p/>
+     * <p>
      * It sets instrumentation variables indicating the location of the sharelib and launcherlib
      *
      * @param instr instrumentation to use.
@@ -818,7 +818,7 @@ public class ShareLibService implements Service, Instrumentable {
 
     /**
      * Returns file system for shared libraries.
-     * <p/>
+     * <p>
      * If WorkflowAppService#getSystemLibPath doesn't have authority then a default one assumed
      *
      * @return file system for shared libraries

@@ -29,11 +29,11 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.util.XConfiguration;
 
 /**
- * Client API to submit and manage Oozie workflow jobs against an Oozie intance. <p/> This class is thread safe. <p/>
+ * Client API to submit and manage Oozie workflow jobs against an Oozie intance. <p> This class is thread safe. <p>
  * Syntax for filter for the {@link #getJobsInfo(String)}  {@link #getJobsInfo(String, int, int)}  methods:
- * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p/> Valid filter names are: <p/> <ul/> <li>name: the workflow application
+ * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p> Valid filter names are: <p> <ul> <li>name: the workflow application
  * name from the workflow definition.</li> <li>user: the user that submitted the job.</li> <li>group: the group for the
- * job.</li> <li>status: the status of the job.</li> </ul> <p/> The query will do an AND among all the filter names. The
+ * job.</li> <li>status: the status of the job.</li> </ul> <p> The query will do an AND among all the filter names. The
  * query will do an OR among all the filter values for the same name. Multiple values must be specified as different
  * name value pairs.
  */
@@ -42,7 +42,7 @@ public class LocalOozieClient extends OozieClient {
     private DagEngine dagEngine;
 
     /**
-     * Create a workflow client for Oozie local use. <p/>
+     * Create a workflow client for Oozie local use. <p>
      *
      * @param dagEngine the dag engine instance to use.
      */
@@ -51,7 +51,7 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the Oozie URL of the workflow client instance. <p/> This URL is the base URL fo the Oozie system, with not
+     * Return the Oozie URL of the workflow client instance. <p> This URL is the base URL fo the Oozie system, with not
      * protocol versioning.
      *
      * @return the Oozie URL of the workflow client instance.
@@ -62,7 +62,7 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the Oozie URL used by the client and server for WS communications. <p/> This URL is the original URL plus
+     * Return the Oozie URL used by the client and server for WS communications. <p> This URL is the original URL plus
      * the versioning element path.
      *
      * @return the Oozie URL used by the client and server for communication.
@@ -294,7 +294,7 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the info of the workflow jobs that match the filter. <p/> It returns the first 100 jobs that match the
+     * Return the info of the workflow jobs that match the filter. <p> It returns the first 100 jobs that match the
      * filter.
      *
      * @param filter job filter. Refer to the {@link LocalOozieClient} for the filter syntax.
@@ -307,7 +307,7 @@ public class LocalOozieClient extends OozieClient {
     }
 
     /**
-     * Return the workflow job Id for an external Id. <p/> The external Id must have provided at job creation time.
+     * Return the workflow job Id for an external Id. <p> The external Id must have provided at job creation time.
      *
      * @param externalId external Id given at job creation time.
      * @return the workflow job Id for an external Id, <code>null</code> if none.

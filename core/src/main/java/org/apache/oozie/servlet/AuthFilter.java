@@ -85,7 +85,7 @@ public class AuthFilter extends AuthenticationFilter {
 
     /**
      * Returns the configuration from Oozie configuration to be used by the authentication filter.
-     * <p/>
+     * <p>
      * All properties from Oozie configuration which name starts with {@link #OOZIE_PREFIX} will
      * be returned. The keys of the returned properties are trimmed from the {@link #OOZIE_PREFIX}
      * prefix, for example the Oozie configuration property name 'oozie.authentication.type' will
@@ -143,7 +143,7 @@ public class AuthFilter extends AuthenticationFilter {
 
     /**
      * Enforces authentication using Hadoop-auth AuthenticationFilter.
-     * <p/>
+     * <p>
      * This method is overriden to respond to HTTP OPTIONS requests for authenticated calls, regardless
      * of the target servlet supporting OPTIONS or not and to inject the authenticated user name as
      * request attribute for Oozie to retrieve the user id.

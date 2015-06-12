@@ -296,8 +296,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * Read bundle definition.
      *
      * @param appPath application path.
-     * @param user user name.
-     * @param group group name.
      * @return bundle definition.
      * @throws BundleJobException thrown if the definition could not be read.
      */

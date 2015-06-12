@@ -310,8 +310,6 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
 
     /**
      * Set pending to true
-     *
-     * @param pending set pending to true
      */
     @Override
     public void setPending() {
@@ -323,14 +321,12 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
      *
      * @param pending set pending value
      */
-    public void setPending(int i) {
-        this.pending = i;
+    public void setPending(int pending) {
+        this.pending = pending;
     }
 
     /**
      * Set pending to false
-     *
-     * @param pending set pending to false
      */
     @Override
     public void resetPending() {
@@ -530,7 +526,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     }
 
     /**
-     * @param return the suspendTime
+     * @param suspendTime the suspendTime
      */
     public void setSuspendedTime(Date suspendTime) {
         this.suspendedTimestamp = DateUtils.convertDateToTimestamp(suspendTime);
@@ -704,7 +700,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     /**
      * Set status
      *
-     * @param status the status to set
+     * @param statusStr the status to set
      */
     public void setStatus(String statusStr) {
         this.statusStr = statusStr;
@@ -776,7 +772,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     /**
      * Convert a Bundle job list into a JSONArray.
      *
-     * @param application list.
+     * @param applications list of applications.
      * @param timeZoneId time zone to use for dates in the JSON array.
      * @return the corresponding JSON array.
      */

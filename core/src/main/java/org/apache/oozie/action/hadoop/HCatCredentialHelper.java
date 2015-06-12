@@ -72,7 +72,7 @@ public class HCatCredentialHelper {
 
     /**
      * Getting the HCat client.
-     * @param jobConf
+     * @param launcherJobConf
      * @param principal
      * @param server
      * @return HCatClient

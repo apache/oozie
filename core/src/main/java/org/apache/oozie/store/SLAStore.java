@@ -51,9 +51,9 @@ public class SLAStore extends Store {
     }
 
     /**
-     * Create a CoordJobBean. It also creates the process instance for the job.
+     * Create an SLAEventBeane. It also creates the process instance for the job.
      *
-     * @param workflow workflow bean
+     * @param slaEvent sla event bean
      * @throws StoreException
      */
 

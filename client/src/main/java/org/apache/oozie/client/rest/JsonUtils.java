@@ -40,7 +40,7 @@ public class JsonUtils {
      *
      * @param date date to format.
      * @param timeZoneId the time zone to use
-     * @return RFC822 for the date, <code>null</code> if the date was <code>null</null>.
+     * @return RFC822 for the date, &lt;code&gt;null&lt;/code&gt; if the date was &lt;code&gt;null&lt;/code&gt;.
      */
     public static String formatDateRfc822(Date date, String timeZoneId) {
         if (date != null) {
@@ -56,7 +56,7 @@ public class JsonUtils {
      * Format a Date in RFC822 GMT.
      *
      * @param date date to format.
-     * @return RFC822 GMT for the date, <code>null</code> if the date was <code>null</null>.
+     * @return RFC822 GMT for the date, &lt;code&gt;null&lt;/code&gt; if the date was &lt;code&gt;null&lt;/code&gt;.
      */
     public static String formatDateRfc822(Date date) {
         return formatDateRfc822(date, "GMT");
@@ -66,7 +66,7 @@ public class JsonUtils {
      * Parse a string in RFC822 GMT format.
      *
      * @param str string to parse.
-     * @return parsed date, <code>null</code> if the string was <code>null</null> or in an invalid format.
+     * @return parsed date, &lt;code&gt;null&lt;/code&gt; if the string was &lt;code&gt;null&lt;/code&gt; or in an invalid format.
      */
     static Date parseDateRfc822(String str) {
         if (str != null) {

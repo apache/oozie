@@ -37,22 +37,22 @@ import org.apache.oozie.util.XConfiguration;
 /**
  * Client API to submit and manage Oozie coordinator jobs against an Oozie
  * intance.
- * <p/>
+ * <p>
  * This class is thread safe.
- * <p/>
+ * <p>
  * Syntax for filter for the {@link #getJobsInfo(String)}
  * {@link #getJobsInfo(String, int, int)} methods:
  * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
- * <p/>
+ * <p>
  * Valid filter names are:
- * <p/>
- * <ul/>
+ * <p>
+ * <ul>
  * <li>name: the coordinator application name from the coordinator definition.</li>
  * <li>user: the user that submitted the job.</li>
  * <li>group: the group for the job.</li>
  * <li>status: the status of the job.</li>
  * </ul>
- * <p/>
+ * <p>
  * The query will do an AND among all the filter names. The query will do an OR
  * among all the filter values for the same name. Multiple values must be
  * specified as different name value pairs.
@@ -63,7 +63,7 @@ public class LocalOozieClientCoord extends OozieClient {
 
     /**
      * Create a coordinator client for Oozie local use.
-     * <p/>
+     * <p>
      *
      * @param coordEngine the engine instance to use.
      */
@@ -73,7 +73,7 @@ public class LocalOozieClientCoord extends OozieClient {
 
     /**
      * Return the Oozie URL of the coordinator client instance.
-     * <p/>
+     * <p>
      * This URL is the base URL fo the Oozie system, with not protocol
      * versioning.
      *
@@ -86,7 +86,7 @@ public class LocalOozieClientCoord extends OozieClient {
 
     /**
      * Return the Oozie URL used by the client and server for WS communications.
-     * <p/>
+     * <p>
      * This URL is the original URL plus the versioning element path.
      *
      * @return the Oozie URL used by the client and server for communication.
@@ -463,7 +463,7 @@ public class LocalOozieClientCoord extends OozieClient {
 
     /**
      * Return the info of the workflow jobs that match the filter.
-     * <p/>
+     * <p>
      * It returns the first 100 jobs that match the filter.
      *
      * @param filter job filter. Refer to the {@link LocalOozieClient} for the

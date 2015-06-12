@@ -121,7 +121,6 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      * is the OOZIE_INSTANCE_ID env var and the value is the URL (of this Oozie server).
      *
      * @return A map of Oozie instance ids and URLs
-     * @throws Exception
      */
     public Map<String, String> getServerUrls() {
         return urls;
@@ -131,7 +130,6 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      * Return a map of instance id to other Oozie servers URL in HA.  This implementation always returns a empty map.
      *
      * @return A map of Oozie instance ids and URLs
-     * @throws Exception
      */
     public Map<String, String> getOtherServerUrls() {
         return new HashMap<String, String>();

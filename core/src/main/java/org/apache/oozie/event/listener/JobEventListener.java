@@ -44,31 +44,31 @@ public abstract class JobEventListener {
 
     /**
      * On workflow job transition
-     * @param WorkflowJobEvent
+     * @param wje
      */
     public abstract void onWorkflowJobEvent(WorkflowJobEvent wje);
 
     /**
      * On workflow action transition
-     * @param WorkflowActionEvent
+     * @param wae
      */
     public abstract void onWorkflowActionEvent(WorkflowActionEvent wae);
 
     /**
      * On coordinator job transition
-     * @param CoordinatorJobEvent
+     * @param cje
      */
     public abstract void onCoordinatorJobEvent(CoordinatorJobEvent cje);
 
     /**
      * On coordinator action transition
-     * @param CoordinatorActionEvent
+     * @param cae
      */
     public abstract void onCoordinatorActionEvent(CoordinatorActionEvent cae);
 
     /**
      * On bundle job transition
-     * @param BundleJobEvent
+     * @param bje
      */
     public abstract void onBundleJobEvent(BundleJobEvent bje);
 

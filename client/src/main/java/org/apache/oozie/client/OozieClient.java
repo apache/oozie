@@ -59,21 +59,21 @@ import java.util.concurrent.Callable;
 
 /**
  * Client API to submit and manage Oozie workflow jobs against an Oozie intance.
- * <p/>
+ * <p>
  * This class is thread safe.
- * <p/>
+ * <p>
  * Syntax for filter for the {@link #getJobsInfo(String)} {@link #getJobsInfo(String, int, int)} methods:
  * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
- * <p/>
+ * <p>
  * Valid filter names are:
- * <p/>
- * <ul/>
+ * <p>
+ * <ul>
  * <li>name: the workflow application name from the workflow definition.</li>
  * <li>user: the user that submitted the job.</li>
  * <li>group: the group for the job.</li>
  * <li>status: the status of the job.</li>
  * </ul>
- * <p/>
+ * <p>
  * The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
  * name. Multiple values must be specified as different name value pairs.
  */
@@ -209,7 +209,7 @@ public class OozieClient {
     }
 
     /**
-     * debugMode =0 means no debugging. > 0 means debugging on.
+     * debugMode =0 means no debugging. 1 means debugging on.
      */
     public int debugMode = 0;
 
@@ -227,7 +227,7 @@ public class OozieClient {
     /**
      * Allows to impersonate other users in the Oozie server. The current user
      * must be configured as a proxyuser in Oozie.
-     * <p/>
+     * <p>
      * IMPORTANT: impersonation happens only with Oozie client requests done within
      * doAs() calls.
      *
@@ -265,7 +265,7 @@ public class OozieClient {
 
     /**
      * Return the Oozie URL of the workflow client instance.
-     * <p/>
+     * <p>
      * This URL is the base URL fo the Oozie system, with not protocol versioning.
      *
      * @return the Oozie URL of the workflow client instance.
@@ -276,7 +276,7 @@ public class OozieClient {
 
     /**
      * Return the Oozie URL used by the client and server for WS communications.
-     * <p/>
+     * <p>
      * This URL is the original URL plus the versioning element path.
      *
      * @return the Oozie URL used by the client and server for communication.
@@ -297,7 +297,7 @@ public class OozieClient {
     /**
      * Set debug mode.
      *
-     * @param debugMode : 0 means no debugging. > 0 means debugging
+     * @param debugMode : 0 means no debugging. 1 means debugging
      */
     public void setDebugMode(int debugMode) {
         this.debugMode = debugMode;
@@ -498,7 +498,6 @@ public class OozieClient {
      * @param method
      * @return connection
      * @throws IOException
-     * @throws OozieClientException
      */
     protected HttpURLConnection createRetryableConnection(final URL url, final String method) throws IOException{
         return (HttpURLConnection) new ConnectionRetriableClient(getRetryCount()) {
@@ -1259,7 +1258,7 @@ public class OozieClient {
 
         /**
          * Return a reader as string.
-         * <p/>
+         * <p>
          *
          * @param reader reader to read into a string.
          * @param maxLen max content length allowed, if -1 there is no limit.
@@ -1714,7 +1713,7 @@ public class OozieClient {
 
     /**
      * Return the info of the workflow jobs that match the filter.
-     * <p/>
+     * <p>
      * It returns the first 100 jobs that match the filter.
      *
      * @param filter job filter. Refer to the {@link OozieClient} for the filter syntax.
@@ -1729,7 +1728,7 @@ public class OozieClient {
      * Sla enable alert.
      *
      * @param jobIds the job ids
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @throws OozieClientException the oozie client exception
      */
@@ -1741,7 +1740,7 @@ public class OozieClient {
      * Sla enable alert for bundle with coord name/id.
      *
      * @param bundleId the bundle id
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @param coords the coordinators
      * @throws OozieClientException the oozie client exception
@@ -1755,7 +1754,7 @@ public class OozieClient {
      * Sla disable alert.
      *
      * @param jobIds the job ids
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @throws OozieClientException the oozie client exception
      */
@@ -1767,7 +1766,7 @@ public class OozieClient {
      * Sla disable alert for bundle with coord name/id.
      *
      * @param bundleId the bundle id
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @param coords the coordinators
      * @throws OozieClientException the oozie client exception
@@ -1779,10 +1778,10 @@ public class OozieClient {
 
     /**
      * Sla change definations.
-     * SLA change definition parameters can be [<key>=<value>,...<key>=<value>]
+     * SLA change definition parameters can be [&lt;key&gt;=&lt;value&gt;,...&lt;key&gt;=&lt;value&gt;]
      * Supported parameter key names are should-start, should-end and max-duration
      * @param jobIds the job ids
-     * @param actionIds comma separated list of action ids or action id ranges.
+     * @param actions comma separated list of action ids or action id ranges.
      * @param dates comma separated list of the nominal times
      * @param newSlaParams the new sla params
      * @throws OozieClientException the oozie client exception
@@ -1793,10 +1792,10 @@ public class OozieClient {
 
     /**
      * Sla change defination for bundle with coord name/id.
-     * SLA change definition parameters can be [<key>=<value>,...<key>=<value>]
+     * SLA change definition parameters can be [&lt;key&gt;=&lt;value&gt;,...&lt;key&gt;=&lt;value&gt;]
      * Supported parameter key names are should-start, should-end and max-duration
      * @param bundleId the bundle id
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @param coords the coords
      * @param newSlaParams the new sla params
@@ -1811,7 +1810,7 @@ public class OozieClient {
      * Sla change with new sla param as hasmap.
      * Supported parameter key names are should-start, should-end and max-duration
      * @param bundleId the bundle id
-     * @param actionIds comma separated list of action ids or action id ranges
+     * @param actions comma separated list of action ids or action id ranges
      * @param dates comma separated list of the nominal times
      * @param coords the coords
      * @param newSlaParams the new sla params
@@ -1924,7 +1923,7 @@ public class OozieClient {
 
     /**
      * Return the workflow job Id for an external Id.
-     * <p/>
+     * <p>
      * The external Id must have provided at job creation time.
      *
      * @param externalId external Id given at job creation time.

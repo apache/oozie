@@ -74,9 +74,8 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
     /**
      * This will be used to generate Job Notification events on status changes
      *
-     * @param user
-     * @param appName
-     * @param em
+     * @param coordJob
+     * @param startTime
      * @throws CommandException
      */
     public void generateEvents(CoordinatorJobBean coordJob, Date startTime) throws CommandException {

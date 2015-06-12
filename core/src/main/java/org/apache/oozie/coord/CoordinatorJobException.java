@@ -23,7 +23,7 @@ import org.apache.oozie.XException;
 import org.apache.oozie.util.XLog;
 
 /**
- * Exception thrown by {@link org.apache.oozie.client.CoordintorJob} .
+ * Exception thrown by {@link org.apache.oozie.client.CoordinatorJob}.
  */
 public class CoordinatorJobException extends XException {
 

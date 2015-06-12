@@ -48,7 +48,6 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
      * Save the Workflow Instance for the given Workflow Application.
      *
      * @param instance
-     * @return
      * @throws WorkflowException
      */
     @Override

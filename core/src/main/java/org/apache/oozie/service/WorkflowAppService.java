@@ -153,7 +153,7 @@ public abstract class WorkflowAppService implements Service {
         }
     }
     /**
-     * Create proto configuration. <p/> The proto configuration includes the user,group and the paths which need to be
+     * Create proto configuration. <p> The proto configuration includes the user,group and the paths which need to be
      * added to distributed cache. These paths include .jar,.so and the resource file paths.
      *
      * @param jobConf job configuration.

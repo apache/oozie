@@ -43,7 +43,7 @@ import org.apache.oozie.util.XLog;
 
 /**
  * StateTransitService is scheduled to run at the configured interval.
- * <p/>
+ * <p>
  * It is to update job's status according to its child actions' status. If all child actions' pending flag equals 0 (job
  * done), we reset the job's pending flag to 0. If all child actions are succeeded, we set the job's status to
  * SUCCEEDED.
@@ -61,7 +61,7 @@ public class StatusTransitService implements Service {
 
     /**
      * StateTransitRunnable is the runnable which is scheduled to run at the configured interval.
-     * <p/>
+     * <p>
      * It is to update job's status according to its child actions' status. If all child actions' pending flag equals 0
      * (job done), we reset the job's pending flag to 0. If all child actions are succeeded, we set the job's status to
      * SUCCEEDED.

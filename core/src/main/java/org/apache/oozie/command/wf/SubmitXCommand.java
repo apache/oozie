@@ -107,7 +107,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      *
      * @param dryrun : if dryrun
      * @param conf : Configuration for workflow job
-     * @param authToken : To be used for authentication
      */
     public SubmitXCommand(boolean dryrun, Configuration conf) {
         this(conf);

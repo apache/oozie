@@ -24,7 +24,7 @@ import org.apache.oozie.util.StatusUtils;
 
 /**
  * Transition command for rerun the job. The derived class has to override these following functions:
- * <p/>
+ * <p>
  * updateJob() : update job status and attributes
  * rerunChildren() : submit or queue commands to rerun children
  * notifyParent() : update the status to upstream if any

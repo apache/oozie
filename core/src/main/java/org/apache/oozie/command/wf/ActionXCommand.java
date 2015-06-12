@@ -132,9 +132,9 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     }
 
     /**
-     * Takes care of errors. </p> For errors while attempting to start the action, the job state is updated and an
-     * {@link ActionEndCommand} is queued. </p> For errors while attempting to end the action, the job state is updated.
-     * </p>
+     * Takes care of errors. <p> For errors while attempting to start the action, the job state is updated and an
+     * {@link ActionEndXCommand} is queued. <p> For errors while attempting to end the action, the job state is updated.
+     * <p>
      *
      * @param context the execution context.
      * @param executor the executor instance being used.
@@ -207,7 +207,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
     /**
      * Execute retry for action if this action is eligible for user-retry
      *
-     * @param context the execution context.
+     * @param action the Workflow action bean
      * @return true if user-retry has to be handled for this action
      * @throws CommandException thrown if unable to fail job
      */
