@@ -1,5 +1,7 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2257 BundleStatusTransitXCommand doesn't update last modified time (puru)
+
 -- Oozie 4.2.0 release (unreleased)
 
 OOZIE-2260 Only set "java.io.tmpdir" to "./tmp" for the AM (ryota)

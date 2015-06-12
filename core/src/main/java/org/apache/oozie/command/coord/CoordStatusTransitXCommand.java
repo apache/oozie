@@ -86,7 +86,7 @@ public class CoordStatusTransitXCommand extends StatusTransitXCommand {
             for (CoordinatorAction coordAction : coordActionStatusList) {
                 int counter = 0;
                 if (coordActionStatus.containsKey(coordAction.getStatus())) {
-                    counter = coordActionStatus.get(coordAction.getStatus()) + 1;
+                    counter = getStatusCount(coordAction.getStatus()) + 1;
                 }
                 else {
                     ++counter;
@@ -261,12 +261,12 @@ public class CoordStatusTransitXCommand extends StatusTransitXCommand {
         if (coordJob.isDoneMaterialization() && !isPending
                 && coordActionStatus.containsKey(CoordinatorAction.Status.SUSPENDED)) {
 
-            if (coordActionCount == coordActionStatus.get(CoordinatorAction.Status.SUSPENDED)
+            if (coordActionCount == getStatusCount(CoordinatorAction.Status.SUSPENDED)
                     + getStatusCount(CoordinatorAction.Status.SUCCEEDED)) {
                 return Job.Status.SUSPENDED;
 
             }
-            else if (coordActionCount == coordActionStatus.get(CoordinatorAction.Status.SUSPENDED)
+            else if (coordActionCount == getStatusCount(CoordinatorAction.Status.SUSPENDED)
                     + getStatusCount(CoordinatorAction.Status.SUCCEEDED)
                     + getStatusCount(CoordinatorAction.Status.KILLED) + getStatusCount(CoordinatorAction.Status.FAILED)
                     + getStatusCount(CoordinatorAction.Status.TIMEDOUT)) {
