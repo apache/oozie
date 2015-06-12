@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2268 Update ActiveMQ version for security and other fixes (rkanter)
 OOZIE-2215 Support glob in FS EL function (ryota)
 OOZIE-2270 Audit log doesn't get loaded when "audit log" tab is clicked for coord job (puru)
 OOZIE-2257 BundleStatusTransitXCommand doesn't update last modified time (puru)
