@@ -300,6 +300,29 @@ public class TestCoordCommandUtils extends XDataTestCase {
     }
 
     @Test
+    public void testCoordOffset() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-dataset-offset.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String actionXml = getCoordActionXml(appPath, "coord-dataset-offset.xml");
+        CoordinatorActionBean actionBean = createCoordinatorActionBean(job);
+        Configuration jobConf = new XConfiguration(new StringReader(job.getConf()));
+        Element eAction = createActionElement(actionXml);
+        jobConf.set("startInstance", "coord:offset(-4,DAY)");
+        jobConf.set("endInstance", "coord:offset(0,DAY)");
+        String output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), 1,
+                jobConf, actionBean);
+        eAction = XmlUtils.parseXml(output);
+        Element e = (Element) ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0))
+                .getChildren().get(0);
+        assertEquals(e.getChild("uris", e.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/08/20;region=us#hdfs:///tmp/workflows/2009/08/19;region=us#"
+                        + "hdfs:///tmp/workflows/2009/08/18;region=us#hdfs:///tmp/workflows/2009/08/17;"
+                        + "region=us#hdfs:///tmp/workflows/2009/08/16;region=us");
+    }
+
+    @Test
     public void testCoordAbsolute() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-dataset-absolute.xml",
                 CoordinatorJob.Status.RUNNING, false, true);

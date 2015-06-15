@@ -263,7 +263,7 @@ public class CoordCommandUtils {
                         List<Integer> expandedFreqs = CoordELFunctions.expandOffsetTimes(startCal, endCal, eval);
                         for (int i = expandedFreqs.size() - 1; i >= 0; i--) {
                             String matInstance = materializeInstance(event, "${coord:offset(" + expandedFreqs.get(i)
-                                    + ", \"MINUTE\")}", appInst, conf, eval);
+                                    + ", \"" + startRestArg + "\")}", appInst, conf, eval);
                             if (matInstance == null || matInstance.length() == 0) {
                                 // Earlier than dataset's initial instance
                                 break;
