@@ -78,7 +78,10 @@ function findFile() {
       if [ "${RET}" = "" ]; then
           RET=`find -H ${1} -name ${2} | grep -e "beta.jar"`
           if [ "${RET}" = "" ]; then
-              RET=`find -H ${1} -name ${2} | grep -e "[a-z].jar"`
+              RET=`find -H ${1} -name ${2} | grep -e "FCS.jar"`
+              if [ "${RET}" = "" ]; then
+                  RET=`find -H ${1} -name ${2} | grep -e "[a-z].jar"`
+              fi
           fi
       fi
    fi
@@ -93,6 +96,7 @@ function findFile() {
 }
 
 #finds a file under a directory any depth, file returns in variable RET, ignores if the file is not found
+#TODO: Will replace this with a more generic regex, but this requires testing on all releases so using the hardcoded fix
 function findFileIgnoreError() {
    # MapR change
    RET=`find -H ${1} -name ${2} | grep -e "[.0-9].jar"`
@@ -101,7 +105,10 @@ function findFileIgnoreError() {
       if [ "${RET}" = "" ]; then
           RET=`find -H ${1} -name ${2} | grep -e "beta.jar"`
           if [ "${RET}" = "" ]; then
-              RET=`find -H ${1} -name ${2} | grep -e "[a-z].jar"`
+              RET=`find -H ${1} -name ${2} | grep -e "FCS.jar"`
+              if [ "${RET}" = "" ]; then
+                  RET=`find -H ${1} -name ${2} | grep -e "[a-z].jar"`
+              fi
           fi
       fi
    fi
