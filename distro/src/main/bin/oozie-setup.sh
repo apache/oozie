@@ -348,6 +348,14 @@ else
   if [ ${addBothHadoopJars} = false -a "${addHadoopJars}" != "" ]; then
     OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
   fi
+  if [ "${hadoopVersion}" = "" -a "${hadoopPath}" = "" ]; then
+    version_cmd="hadoop version"
+    res=`eval $CMD`
+    hadoop_folder=`readlink \`which hadoop\` | awk -F "/" '{print$5}'`
+    hadoopVersion=`echo ${hadoop_folder} | cut -d'-' -f 2`
+    hadoopPath="${MapRHomeDir}/hadoop/${hadoop_folder}"
+    OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
+  fi
   if [ "${secure}" != "" ]; then
     OPTIONS="${OPTIONS} -secureWeb ${secureConfigsDir}/ssl-web.xml"
     #Use the SSL version of server.xml in oozie-server

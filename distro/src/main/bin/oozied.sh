@@ -82,8 +82,9 @@ if [ -e ${MAPR_CONF_DIR}/hadoop_version ]; then
   else
     # Yarn
     mode=2
-  fielse
-  mode=""
+  fi
+  else
+    mode=""
 fi
 
 hadoop_bin=`real_script_name "/usr/bin/hadoop${mode}"`
