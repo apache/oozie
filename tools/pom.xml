@@ -78,6 +78,11 @@
             <artifactId>oozie-core</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
 
     <build>
