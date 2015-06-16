@@ -378,6 +378,13 @@ else
     hadoop1Path=${MapRHomeDir}/hadoop/hadoop-${classic_version}
     hadoop2Path=${MapRHomeDir}/hadoop/hadoop-${yarn_version}
 
+    yarn_site_file="${hadoop2Path}/etc/hadoop/yarn-site.xml"
+
+    if [ -f ${yarn_site_file} ] && grep  "yarn.resourcemanager.hostname" ${yarn_site_file}
+    then
+      \cp ${yarn_site_file} ${MapRHomeDir}/oozie/oozie-4.1.0/conf/hadoop-conf/
+    fi
+
     if [ -e "${oozie_hadoop1_war}" ]; then
       chmod -f u+w ${oozie_hadoop1_war}
       rm -rf ${oozie_hadoop1_war}
