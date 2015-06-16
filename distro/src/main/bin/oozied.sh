@@ -188,10 +188,11 @@ setup_oozie() {
     # default share dir
     directory=/oozie/share
 
-    hadoop fs -rmr ${directory}
+    if hadoop fs -test -d ${directory} ; then
+      hadoop fs -rmr ${directory}
+    fi
     hadoop fs -mkdir -p $directory
     hadoop fs -put ${OOZIE_HOME}/share2/* ${directory}
-    #  echo "Created share directory"
 
     hadoop fs -rmr ${directory}/lib/distcp/*
     if [ "${mode}" == "1" ]; then
