@@ -58,6 +58,9 @@
             <includes>
                 <include>*</include>
             </includes>
+            <excludes>
+                <exclude>*hadoop*.jar</exclude>
+             </excludes>
             <fileMode>0755</fileMode>
         </fileSet>
         <!-- Tools -->
@@ -75,6 +78,9 @@
             <includes>
                 <include>*</include>
             </includes>
+            <excludes>
+                <exclude>*hadoop*.jar</exclude>
+            </excludes>
         </fileSet>
         <!-- Embedded Tomcat -->
         <fileSet>
