@@ -184,6 +184,25 @@ setup_oozie() {
       rm -rf ${CATALINA_BASE}/webapps/oozie
       echo "oozie_hadoop_version=${mode}" > ${oozie_hadoop_version_file}
     fi
+
+    # default share dir
+    directory=/oozie/share
+
+    if hadoop fs -test -d ${directory} ; then
+      echo "Share directory  exists"
+    else
+      hadoop fs -mkdir -p $directory
+      hadoop fs -put ${OOZIE_HOME}/share2/* ${directory}
+      echo "Created share directory"
+    fi
+
+    hadoop fs -rmr ${directory}/lib/distcp/*
+    if [ "${mode}" == "1" ]; then
+      hadoop fs -put ${OOZIE_HOME}/share1/lib/distcp/* ${directory}/lib/distcp/
+    else
+      hadoop fs -put ${OOZIE_HOME}/share2/lib/distcp/* ${directory}/lib/distcp/
+    fi
+
   fi
   if [ ! -e "${CATALINA_BASE}/webapps/oozie.war" ]; then
     echo "WARN: Oozie WAR has not been set up at '${CATALINA_BASE}/webapps', doing default set up"
