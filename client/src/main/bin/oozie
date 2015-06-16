@@ -74,10 +74,13 @@ if [[ ${HADOOP_HOME} = "" ]]; then
 fi
 
 # Find the hadoop core JAR and add it to the classpath
-MAPR_VERSION=`cat ${MAPR_HOME_DIR}/MapRBuildVersion | awk -F "." '{print $1"."$2}'`
-
-#if mapr-core release >=4.0 (yarn beta) returns boolean 1, else returns boolean 0
-POST_YARN=`echo "$MAPR_VERSION >= 4.0" | bc | awk '{printf "%s", $0}'`
+version=`echo ${HADOOP_VERSION} | cut -d'-' -f 2`
+case $version in
+  1.* ) POST_YARN="0" ;;
+  0.20* ) POST_YARN="0";;
+  2.* ) POST_YARN="1";;
+  *) echo "Unknown hadoop version";;
+esac
 if [ "$POST_YARN" = "0" ]; then
   hadoopCoreJar=$(find ${HADOOP_HOME} -name "hadoop*core*jar" -print 2>/dev/null)
 fi
