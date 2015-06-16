@@ -367,8 +367,8 @@ else
     source ${hadoopVersionFile}
     oozie_hadoop1_war=${OOZIE_HOME}/oozie-hadoop1.war
     oozie_hadoop2_war=${OOZIE_HOME}/oozie-hadoop2.war
-    hadoop1Path=${MapRHomeDir}/hadoop/hadoop-${hadoop1_version}
-    hadoop2Path=${MapRHomeDir}/hadoop/hadoop-${hadoop2_version}
+    hadoop1Path=${MapRHomeDir}/hadoop/hadoop-${classic_version}
+    hadoop2Path=${MapRHomeDir}/hadoop/hadoop-${yarn_version}
 
     if [ -e "${oozie_hadoop1_war}" ]; then
       chmod -f u+w ${oozie_hadoop1_war}
@@ -381,9 +381,9 @@ else
     fi
 
     # Build oozie war with Hadoop1
-    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop1_war} ${OPTIONS} -hadoop ${hadoop1_version} ${hadoop1Path}
+    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop1_war} ${OPTIONS} -hadoop ${classic_version} ${hadoop1Path}
     # Build oozie war with Hadoop2
-    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop2_war} ${OPTIONS} -hadoop ${hadoop2_version} ${hadoop2Path}
+    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop2_war} ${OPTIONS} -hadoop ${yarn_version} ${hadoop2Path}
   fi
 
   if [ "$?" != "0" ]; then
