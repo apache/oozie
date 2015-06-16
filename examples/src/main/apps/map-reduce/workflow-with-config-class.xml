@@ -22,7 +22,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/${outputDir}"/>
             </prepare>
             <!-- most of the <configuration> properties are being set by SampleOozieActionConfigurator -->
             <configuration>

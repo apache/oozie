@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.2.0</version>
+        <version>4.2.0-mapr</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-oozie</artifactId>
-    <version>4.2.0</version>
+    <version>4.2.0-mapr</version>
     <description>Apache Oozie Share Lib Oozie</description>
     <name>Apache Oozie Share Lib Oozie</name>
     <packaging>jar</packaging>
@@ -65,6 +65,23 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-hadoop-utils</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>1.4.9</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>1.4.9</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

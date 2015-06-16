@@ -41,10 +41,8 @@ public class SampleOozieActionConfigurator implements OozieActionConfigurator {
         actionConf.setMapperClass(SampleMapper.class);
         actionConf.setReducerClass(SampleReducer.class);
         actionConf.setNumMapTasks(1);
-        FileInputFormat.setInputPaths(actionConf,
-                new Path("/user/" + actionConf.getUser() + "/" + actionConf.get("examples.root") + "/input-data/text"));
+        FileInputFormat.setInputPaths(actionConf, new Path("/user/" + actionConf.getUser() + "/input-data/text"));
         FileOutputFormat.setOutputPath(actionConf,
-                new Path("/user/" + actionConf.getUser() + "/" + actionConf.get("examples.root") + "/output-data/"
-                        + actionConf.get("output.dir.name")));
+                new Path("/user/" + actionConf.getUser() + "/output-data/" + actionConf.get("output.dir.name")));
     }
 }

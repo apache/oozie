@@ -22,7 +22,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/${outputDir}"/>
             </prepare>
             <configuration>
                 <property>
@@ -30,8 +30,8 @@
                     <value>${queueName}</value>
                 </property>
             </configuration>
-            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/input-data/text/data.txt</arg>
-            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}/data.txt</arg>
+            <arg>${nameNode}/user/${wf:user()}/input-data/text/data.txt</arg>
+            <arg>${nameNode}/user/${wf:user()}/output-data/${outputDir}/data.txt</arg>
             </distcp>
         <ok to="end"/>
         <error to="fail"/>

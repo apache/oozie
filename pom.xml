@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>4.2.0</version>
+    <version>4.2.0-mapr</version>
     <description>Apache Oozie Main</description>
     <name>Apache Oozie Main</name>
     <packaging>pom</packaging>
@@ -121,18 +121,28 @@
 
     <distributionManagement>
         <repository>
-          <id>apache.staging.https</id>
-          <name>Apache Release Distribution Repository</name>
-          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+            <id>${release-repo-id}</id>
+            <name>${release-repo-name}</name>
+            <url>${release-repo-url}</url>
         </repository>
         <snapshotRepository>
-          <id>apache.snapshots.https</id>
+          <id>mapr.snapshots</id>
           <name>${distMgmtSnapshotsName}</name>
           <url>${distMgmtSnapshotsUrl}</url>
         </snapshotRepository>
     </distributionManagement>
 
     <repositories>
+        <repository>
+            <id>repository.mapr.com</id>
+            <url>http://repository.mapr.com/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>central</id>
             <url>http://repo1.maven.org/maven2</url>
@@ -212,6 +222,11 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-sharelib-pig</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-pig2</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -816,7 +831,7 @@
 
             <dependency>
                 <groupId>org.apache.pig</groupId>
-                <artifactId>pig</artifactId>
+                <artifactId>pig-withouthadoop</artifactId>
                 <version>${pig.version}</version>
                 <classifier>${pig.classifier}</classifier>
                 <exclusions>
@@ -1815,6 +1830,28 @@
             <modules>
                 <module>login</module>
             </modules>
+        </profile>
+        <profile>
+            <id>deployReleasesToApache</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <release-repo-id>apache.staging.https</release-repo-id>
+                <release-repo-name>Apache Release Distribution Repository</release-repo-name>
+                <release-repo-url>https://repository.apache.org/service/local/staging/deploy/maven2</release-repo-url>
+            </properties>
+        </profile>
+        <profile>
+            <id>deployReleasesToMapr</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <release-repo-id>mapr.staging.https</release-repo-id>
+                <release-repo-name>MapR Release Repo</release-repo-name>
+                <release-repo-url>${env.MAPR_MAVEN_REPO}</release-repo-url>
+            </properties>
         </profile>
     </profiles>
 </project>

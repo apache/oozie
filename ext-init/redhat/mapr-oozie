@@ -1,0 +1,133 @@
+#! /bin/bash
+# oozie-sys.sh needs bash
+
+###
+#
+# chkconfig: 2345 20 80
+# description:  Enables Oozie server
+#
+# LSB compliant service control script
+#
+### BEGIN INIT INFO
+# Provides:       mapr-oozie
+# Required-Start: $network
+# Required-Stop:  $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: Start MapR NFS service
+### END INIT INFO
+
+
+
+# Source function library.
+. /etc/init.d/functions
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+BASEMAPR=${MAPR_HOME:-/opt/mapr}
+env=${BASEMAPR}/conf/env.sh
+[ -f $env ] && . $env
+
+DESC="Oozie server"
+NAME=mapr-oozie
+if [ -f "${BASEMAPR}/oozie/oozieversion" ]; then
+  VER=$(cat "${BASEMAPR}/oozie/oozieversion")
+else
+  VER=$(ls -lt ${BASEMAPR}/oozie | grep "oozie-" | head -1 | sed 's/^.*oozie-//' | awk '{print $1}')
+fi
+OOZIE_START_SCRIPT=$BASEMAPR/oozie/oozie-${VER}/bin/oozie-start.sh
+OOZIE_STOP_SCRIPT=$BASEMAPR/oozie/oozie-${VER}/bin/oozie-stop.sh
+
+OOZIE_SYS_SCRIPT=$BASEMAPR/oozie/oozie-${VER}/bin/oozie-sys.sh
+OOZIE_STATUS_SCRIPT=$BASEMAPR/oozie/oozie-${VER}/bin/oozie
+SCRIPTNAME=/etc/init.d/${NAME}
+PID_FILE=$BASEMAPR/oozie/oozie-${VER}/oozie-server/temp/oozie.pid
+DAEMON_CONF="$BASEMAPR/conf/daemon.conf"
+
+# Read configuration variable file if it is present.
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+#Exit if the package is not installed
+[ -x "$OOZIE_START_SCRIPT" ] || exit 0
+
+if [ -e $DAEMON_CONF ]; then
+  MAPR_USER=$(awk -F = '$1 == "mapr.daemon.user" { print $2 }' $DAEMON_CONF)
+fi
+if [ "xxx$MAPR_USER" != "xxx" -a "$MAPR_USER" != "root" ]; then
+  MAPR_SHELL="/bin/sh"
+  RUN_AS_CMD="su -s $MAPR_SHELL -p $MAPR_USER -c "
+  OOZIE_START_SCRIPT="${RUN_AS_CMD} ${OOZIE_START_SCRIPT}"
+  OOZIE_STOP_SCRIPT="${RUN_AS_CMD} ${OOZIE_STOP_SCRIPT}"
+fi
+
+OUTPUT_FILE=${BASEMAPR}/logs/oozie.log
+
+do_start()
+{
+  echo "********" >>  ${OUTPUT_FILE}
+  echo "`date`: starting $DESC" >>  ${OUTPUT_FILE}
+  echo "********" >>  ${OUTPUT_FILE}
+  ${OOZIE_START_SCRIPT} >> ${OUTPUT_FILE} 2>&1
+}
+
+do_stop()
+{
+  if [ -f ${PID_FILE} ]; then
+    pid=`cat ${PID_FILE}`
+  else
+    pid=""
+  fi
+
+  echo "`date`: stopping $DESC" >>  ${OUTPUT_FILE}
+  ${OOZIE_STOP_SCRIPT} >> ${OUTPUT_FILE} 2>&1
+
+  if [ "X$pid" != "X" ]; then
+    while kill -0 $pid > /dev/null 2>&1; do
+      sleep 1;
+    done
+  fi
+
+}
+
+ret=0
+COMMAND="$1"
+case ${COMMAND} in
+    start)
+        do_start "$*"
+        ret=$?
+        ;;
+    stop)
+        do_stop
+        ret=$?
+        ;;
+    status)
+        . ${OOZIE_SYS_SCRIPT} >/dev/null 2>&1
+        OOZIE_STATUS_SCRIPT="${OOZIE_STATUS_SCRIPT} admin -oozie ${OOZIE_BASE_URL} -status"
+        if [ "xxx$MAPR_USER" != "xxx" -a "$MAPR_USER" != "root" ]; then
+          $RUN_AS_CMD "${OOZIE_STATUS_SCRIPT}" > /dev/null 2>&1
+        else
+          ${OOZIE_STATUS_SCRIPT} > /dev/null 2>&1
+        fi
+        ret=$?
+        case "$ret" in
+          0) echo ${DESC} is running ;;
+          *) echo ${DESC} is not running ;;
+        esac
+        ;;
+
+    restart)
+        do_stop
+        do_start
+        ret=$?
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|}" >&2
+        ret=3
+        ;;
+esac
+
+exit ${ret}

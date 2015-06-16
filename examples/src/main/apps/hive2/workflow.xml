@@ -24,8 +24,8 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/hive2"/>
-                <mkdir path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/hive2"/>
+                <mkdir path="${nameNode}/user/${wf:user()}/output-data"/>
             </prepare>
             <configuration>
                 <property>
@@ -35,8 +35,8 @@
             </configuration>
             <jdbc-url>${jdbcURL}</jdbc-url>
             <script>script.q</script>
-            <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/table</param>
-            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/hive2</param>
+            <param>INPUT=/user/${wf:user()}/input-data/table</param>
+            <param>OUTPUT=/user/${wf:user()}/output-data/hive2</param>
         </hive2>
         <ok to="end"/>
         <error to="fail"/>

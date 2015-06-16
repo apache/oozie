@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.2.0</version>
+        <version>4.2.0-mapr</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-docs</artifactId>
-    <version>4.2.0</version>
+    <version>4.2.0-mapr</version>
     <description>Apache Oozie Docs</description>
     <name>Apache Oozie Docs</name>
     <packaging>war</packaging>
@@ -103,6 +103,12 @@
                                 <groupId>org.apache.maven.doxia</groupId>
                                 <artifactId>doxia-module-twiki</artifactId>
                                 <version>1.0-alpha-9.2y</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.apache.maven.doxia</groupId>
+                                        <artifactId>doxia-core</artifactId>
+                                    </exclusion>
+                                </exclusions>
                             </dependency>
                             <dependency>
                                 <!-- Customized Doxia Maven Plugin for twiki documentation -->

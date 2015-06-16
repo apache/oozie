@@ -19,24 +19,5 @@
 -->
 <configuration>
 
-    <property>
-        <name>mapreduce.jobtracker.kerberos.principal</name>
-        <value>mapred/_HOST@LOCALREALM</value>
-    </property>
-
-    <property>
-      <name>yarn.resourcemanager.principal</name>
-      <value>yarn/_HOST@LOCALREALM</value>
-    </property>
-
-    <property>
-        <name>dfs.namenode.kerberos.principal</name>
-        <value>hdfs/_HOST@LOCALREALM</value>
-    </property>
-
-    <property>
-        <name>mapreduce.framework.name</name>
-        <value>yarn</value>
-    </property>
 
 </configuration>

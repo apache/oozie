@@ -36,6 +36,10 @@
             <outputDirectory>/</outputDirectory>
         </fileSet>
         <fileSet>
+            <directory>${basedir}/pig2/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
             <directory>${basedir}/streaming/target/partial-sharelib</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>

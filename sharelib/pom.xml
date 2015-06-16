@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.2.0</version>
+        <version>4.2.0-mapr</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib</artifactId>
-    <version>4.2.0</version>
+    <version>4.2.0-mapr</version>
     <description>Apache Oozie Share Lib</description>
     <name>Apache Oozie Share Lib</name>
     <packaging>pom</packaging>
@@ -35,6 +35,7 @@
         <module>streaming</module>
         <module>hcatalog</module>
         <module>pig</module>
+        <module>pig2</module>
         <module>hive</module>
         <module>hive2</module>
         <module>sqoop</module>

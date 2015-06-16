@@ -22,7 +22,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/custom-main/mr-node"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/custom-main/mr-node"/>
             </prepare>
             <configuration>
                 <property>
@@ -58,11 +58,11 @@
                 </property>
                 <property>
                     <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
+                    <value>/user/${wf:user()}/input-data/text</value>
                 </property>
                 <property>
                     <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/custom-main/mr-node</value>
+                    <value>/user/${wf:user()}/output-data/custom-main/mr-node</value>
                 </property>
             </configuration>
         </map-reduce>
@@ -75,7 +75,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/custom-main/pig-node"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/custom-main/pig-node"/>
             </prepare>
             <configuration>
                 <property>
@@ -91,8 +91,8 @@
 
             </configuration>
             <script>id.pig</script>
-            <param>INPUT=/user/${wf:user()}/${examplesRoot}/output-data/custom-main/mr-node</param>
-            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/custom-main/pig-node</param>
+            <param>INPUT=/user/${wf:user()}/output-data/custom-main/mr-node</param>
+            <param>OUTPUT=/user/${wf:user()}/output-data/custom-main/pig-node</param>
         </pig>
         <ok to="end"/>
         <error to="fail"/>

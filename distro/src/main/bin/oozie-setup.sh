@@ -22,6 +22,7 @@ function printUsage() {
   echo " Usage  : oozie-setup.sh <Command and OPTIONS>"
   echo "          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
   echo "                                                -secure will configure the war file to use HTTPS (SSL))"
+  echo "                                                -hadoop HADOOP_VERIONS HADOOP_HOME will add hadoop jars"
   echo "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] (create sharelib for oozie,"
   echo "                                                                FS_URI is the fs.default.name"
   echo "                                                                for hdfs uri; SHARED_LIBRARY, path to the"
@@ -93,6 +94,45 @@ function checkFileDoesNotExist() {
   fi
 }
 
+read_dom () {
+    local IFS=\>
+    read -d \< ENTITY CONTENT
+}
+
+function getKeyStoreLocationAndPassword() {
+  if [[ -n $(find ${OOZIE_HOME}/../../conf -name "ssl-server.xml" 2>&1) ]]; then
+sslServer="${OOZIE_HOME}/../../conf/ssl-server.xml"
+
+      locationFound=""
+      location=""
+      passwordFound=""
+      password=""
+
+      #parse xml and get keystore location and password
+      while read_dom; do
+if [[ $ENTITY = "name" ]]; then
+if [[ $CONTENT = "ssl.server.keystore.location" ]]; then
+locationFound="true"
+              fi
+if [[ $CONTENT = "ssl.server.keystore.password" ]]; then
+passwordFound="true"
+              fi
+fi
+if [[ $location = "" && $locationFound = "true" && $ENTITY = "value" ]]; then
+location=`echo $CONTENT`
+          fi
+if [[ $password = "" && $passwordFound = "true" && $ENTITY = "value" ]]; then
+password=`echo $CONTENT`
+          fi
+done < ${sslServer}
+
+      #replace these values in oozie's ssl-server.xml
+      sed -i -e "s@\${oozie.https.keystore.file}@${location}@g" ${CATALINA_BASE}/conf/server.xml
+      sed -i -e "s@\${oozie.https.keystore.pass}@${password}@g" ${CATALINA_BASE}/conf/server.xml
+  fi
+
+echo "Keystore location successfully added"
+}
 
 # resolve links - $0 may be a softlink
 PRG="${0}"
@@ -159,6 +199,36 @@ do
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBCLI "${@}"
     fi
     exit $?
+      elif [ "$1" = "-hadoop" ]; then
+    shift
+    if [ $# -eq 0 ]; then
+      echo
+      echo "Missing option values, HADOOP_VERSION & HADOOP_HOME_PATH"
+      echo
+      printUsage
+      exit -1
+    elif [ $# -eq 1 ]; then
+      echo
+      echo "Missing option value, HADOOP_HOME_PATH"
+      echo
+      printUsage
+      exit -1
+    fi
+    hadoopVersion=$1
+    shift
+    hadoopPath=$1
+    addHadoopJars=true
+  elif [ "$1" = "-extjs" ]; then
+    shift
+    if [ $# -eq 0 ]; then
+      echo
+      echo "Missing option value, ExtJS path"
+      echo
+      printUsage
+      exit -1
+    fi
+    extjsHome=$1
+    addExtjs=true
   elif [ "$1" = "-secure" ]; then
     shift
     secure=true
@@ -183,7 +253,7 @@ fi
 
 echo
 
-if [ "${prepareWar}" == "" ]; then
+if [ "${prepareWar}${addHadoopJars}" == "" ]; then
   echo "no arguments given"
   printUsage
   exit -1
@@ -229,8 +299,6 @@ else
 
   if [ "${addExtjs}" = "true" ]; then
     checkFileExists ${extjsHome}
-  else
-    echo "INFO: Oozie webconsole disabled, ExtJS library not specified"
   fi
 
   if [ "${addJars}" = "true" ]; then
@@ -250,6 +318,7 @@ else
     #Use the SSL version of server.xml in oozie-server
     checkFileExists ${secureConfigsDir}/ssl-server.xml
     cp ${secureConfigsDir}/ssl-server.xml ${CATALINA_BASE}/conf/server.xml
+    getKeyStoreLocationAndPassword
     #Inject the SSL version of web.xml in oozie war
     checkFileExists ${secureConfigsDir}/ssl-web.xml
     cp ${secureConfigsDir}/ssl-web.xml ${tmpWarDir}/WEB-INF/web.xml
@@ -261,66 +330,30 @@ else
     #No need to restore web.xml because its already in the original WAR file
   fi
 
-  if [ "${addExtjs}" = "true" ]; then
-    if [ ! "${components}" = "" ];then
-      components="${components}, "
-    fi
-    components="${components}ExtJS library"
-    if [ -e ${tmpWarDir}/ext-2.2 ]; then
-      echo
-      echo "Specified Oozie WAR '${inputWar}' already contains ExtJS library files"
-      echo
-      cleanUp
-      exit -1
-    fi
-    #If the extjs path given is a ZIP, expand it and use it from there
-    if [ -f ${extjsHome} ]; then
-      unzip ${extjsHome} -d ${tmpDir} > /dev/null
-      extjsHome=${tmpDir}/ext-2.2
-    fi
-    #Inject the library in oozie war
-    cp -r ${extjsHome} ${tmpWarDir}/ext-2.2
-    checkExec "copying ExtJS files into staging"
+  OPTIONS=""
+  if [ "${addExtjs}" != "" ]; then
+    OPTIONS="-extjs ${extjsHome}"
   fi
 
-  if [ "${addJars}" = "true" ]; then
-    if [ ! "${components}" = "" ];then
-      components="${components}, "
-    fi
-    components="${components}JARs"
-
-    for jarPath in ${jarsPath//:/$'\n'}
-    do
-      found=`ls ${tmpWarDir}/WEB-INF/lib/${jarPath} 2> /dev/null | wc -l`
-      checkExec "looking for JAR ${jarPath} in input WAR"
-      if [ ! $found = 0 ]; then
-        echo
-        echo "Specified Oozie WAR '${inputWar}' already contains JAR ${jarPath}"
-        echo
-        cleanUp
-        exit -1
-      fi
-      cp ${jarPath} ${tmpWarDir}/WEB-INF/lib/
-      checkExec "copying jar ${jarPath} to staging"
-    done
+  if [ "${addJars}" != "" ]; then
+    OPTIONS="${OPTIONS} -jars ${jarsPath}"
+  fi
+  if [ "${addHadoopJars}" != "" ]; then
+    OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
+  fi
+  if [ "${secure}" != "" ]; then
+    OPTIONS="${OPTIONS} -secureWeb ${secureConfigsDir}/ssl-web.xml"
+    #Use the SSL version of server.xml in oozie-server
+    cp ${secureConfigsDir}/ssl-server.xml ${CATALINA_BASE}/conf/server.xml
+    getKeyStoreLocationAndPassword
+    echo "INFO: Using secure server.xml"
+  else
+    #Use the regular version of server.xml in oozie-server
+    cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
   fi
 
-  #Creating new Oozie WAR
-  currentDir=`pwd`
-  cd ${tmpWarDir}
-  zip -r oozie.war * > /dev/null
-  checkExec "creating new Oozie WAR"
-  cd ${currentDir}
-
-  #copying new Oozie WAR to asked location
-  cp ${tmpWarDir}/oozie.war ${outputWar}
-  checkExec "copying new Oozie WAR"
-
-  echo
-  echo "New Oozie WAR file with added '${components}' at ${outputWar}"
-  echo
-  cleanUp
-
+  ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
+  echo "${hadoopVersion}" > ${OOZIE_LOG}/hadoop_version.log
   if [ "$?" != "0" ]; then
     exit -1
   fi

@@ -21,7 +21,7 @@
 
     <action name="cleanup-node">
         <fs>
-            <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo"/>
+            <delete path="${nameNode}/user/${wf:user()}/output-data/demo"/>
         </fs>
         <ok to="fork-node"/>
         <error to="fail"/>
@@ -37,7 +37,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/demo/pig-node"/>
             </prepare>
             <configuration>
                 <property>
@@ -50,8 +50,8 @@
                 </property>
             </configuration>
             <script>id.pig</script>
-            <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/text</param>
-            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node</param>
+            <param>INPUT=/user/${wf:user()}/input-data/text</param>
+            <param>OUTPUT=/user/${wf:user()}/output-data/demo/pig-node</param>
         </pig>
         <ok to="join-node"/>
         <error to="fail"/>
@@ -62,7 +62,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/demo/streaming-node"/>
             </prepare>
             <streaming>
                 <mapper>${streamingMapper}</mapper>
@@ -76,11 +76,11 @@
 
                 <property>
                     <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
+                    <value>/user/${wf:user()}/input-data/text</value>
                 </property>
                 <property>
                     <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node</value>
+                    <value>/user/${wf:user()}/output-data/demo/streaming-node</value>
                 </property>
             </configuration>
         </map-reduce>
@@ -96,7 +96,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node"/>
+                <delete path="${nameNode}/user/${wf:user()}/output-data/demo/mr-node"/>
             </prepare>
             <configuration>
                 <property>
@@ -126,11 +126,11 @@
                 </property>
                 <property>
                     <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node,/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node</value>
+                    <value>/user/${wf:user()}/output-data/demo/pig-node,/user/${wf:user()}/output-data/demo/streaming-node</value>
                 </property>
                 <property>
                     <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node</value>
+                    <value>/user/${wf:user()}/output-data/demo/mr-node</value>
                 </property>
             </configuration>
         </map-reduce>
@@ -147,8 +147,8 @@
 
     <action name="hdfs-node">
         <fs>
-            <move source="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node"
-                  target="/user/${wf:user()}/${examplesRoot}/output-data/demo/final-data"/>
+            <move source="${nameNode}/user/${wf:user()}/output-data/demo/mr-node"
+                   target="/user/${wf:user()}/output-data/demo/final-data"/>
         </fs>
         <ok to="end"/>
         <error to="fail"/>

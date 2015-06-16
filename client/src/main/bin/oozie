@@ -32,6 +32,16 @@ done
 
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
+MAPR_HOME_DIR="/opt/mapr"
+MAPR_CONF_DIR=${MAPR_HOME_DIR}/conf
+MAPR_LIB_DIR=${MAPR_HOME_DIR}/lib
+
+ENV_FILE=env.sh
+
+# MapR change. Source env.sh if it exists
+if [[ -n $(find ${MAPR_CONF_DIR} -name "${ENV_FILE}" -print) ]]; then
+    source ${MAPR_CONF_DIR}/env.sh
+fi
 
 #Create lib directory from war if lib doesn't exist
 if [ ! -d "${BASEDIR}/lib" ]; then
@@ -50,6 +60,27 @@ for i in "${BASEDIR}/libext/"*.jar; do
   OOZIECPPATH="${OOZIECPPATH}:$i"
 done
 
+# For Oozie client to authenticate to Oozie server using Mapr ticket
+# Add the JAR's in /opt/mapr/lib to its classpath
+OOZIECPPATH="${OOZIECPPATH}:${MAPR_LIB_DIR}/*"
+
+# Check if HADOOP_HOME is not set
+if [[ ${HADOOP_HOME} = "" ]]; then
+  BASEMAPR=${MAPR_HOME:-/opt/mapr}
+  CMD="hadoop version"
+  res=`eval $CMD`
+  HADOOP_VERSION=`readlink \`which hadoop\` | awk -F "/" '{print$5}'`
+  export HADOOP_HOME=${BASEMAPR}/hadoop/${HADOOP_VERSION}/
+fi
+
+# Find the hadoop core JAR and add it to the classpath
+hadoopCoreJar=$(find ${HADOOP_HOME} -name "hadoop*core*jar" -print 2>/dev/null)
+
+if [[ ${hadoopCoreJar} != "" ]]; then
+  OOZIECPPATH="${OOZIECPPATH}:${hadoopCoreJar}"
+fi
+
+
 
 if test -z ${JAVA_HOME}
 then
@@ -58,8 +89,19 @@ else
     JAVA_BIN=${JAVA_HOME}/bin/java
 fi
 
+JAVA_PROPERTIES="${JAVA_PROPERTIES} -Djava.library.path=${JAVA_LIBRARY_PATH}:/opt/mapr/lib"
+
 # Prime OOZIE_CLIENT_OPTS with JAVA_PROPERTIES for backwards compatibility
 OOZIE_CLIENT_OPTS="${JAVA_PROPERTIES} ${OOZIE_CLIENT_OPTS}"
+
+# Add MAPR_SSL_OPTS for SSL truststore location
+OOZIE_CLIENT_OPTS="${OOZIE_CLIENT_OPTS} ${MAPR_SSL_OPTS}"
+
+#If you wish to use Kerberos to authenticate to Oozie server comment the below IF block
+#where we pass MaprAuthenticator as the method of authentication
+if [ "$MAPR_SECURITY_STATUS" = "true" ]; then
+  OOZIE_CLIENT_OPTS="${OOZIE_CLIENT_OPTS} -Dauthenticator.class=com.mapr.security.maprauth.MaprAuthenticator"
+fi
 
 while [[ ${1} =~ ^\-D ]]; do
   OOZIE_CLIENT_OPTS="${OOZIE_CLIENT_OPTS} ${1}"

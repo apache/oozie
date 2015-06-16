@@ -18,7 +18,7 @@
 #
 
 if [ $# -le 0 ]; then
-  echo "Usage: oozied.sh (start|stop|run) [<catalina-args...>]"
+  echo "Usage: oozied.sh (start|stop|run|status) [<catalina-args...>]"
   exit 1
 fi
 
@@ -40,10 +40,46 @@ done
 
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
+MAPR_CONF_DIR=/opt/mapr/conf
+ENV_FILE=env.sh
+HADOOP_BASE_DIR=/opt/mapr/hadoop/hadoop-
 
 source ${BASEDIR}/bin/oozie-sys.sh
+# MapR change. Source env.sh if it exists
+if [[ -n $(find ${MAPR_CONF_DIR} -name "${ENV_FILE}" -print) ]]; then
+    source ${MAPR_CONF_DIR}/env.sh
+fi
 
 CATALINA=${OOZIE_CATALINA_HOME:-${BASEDIR}/oozie-server}/bin/catalina.sh
+
+# Find hadoop conf directory, to be passed to oozie-site.xml
+# Find hadoop home
+function real_script_name() {
+        local base=$1
+        local real
+        if readlink -f $base >/dev/null 2>&1; then
+                # Darwin/Mac OS X
+                real=`readlink -f $base`
+        fi
+        if [[ "$?" != "0" || -z "$real" ]]; then
+                # Linux
+                local bin=$(cd -P -- "$(dirname -- "$base")">/dev/null && pwd -P)
+                local script="$(basename -- "$base")"
+                real="$bin/$script"
+        fi
+        echo "$real"
+}
+hadoop_bin=`real_script_name "/usr/bin/hadoop"`
+hadoop_bin_dir=`dirname "${hadoop_bin}"`
+hadoop_home="${hadoop_bin_dir}/../"
+version=`/usr/bin/hadoop version`
+confDir="hadoop-conf"
+if  [[ "${hadoop_home}" == ${HADOOP_BASE_DIR}2.* ]] ;
+then
+    echo "INSIDE IF"
+    confDir="${hadoop_home}etc/hadoop"
+fi
+
 
 setup_catalina_opts() {
   # The Java System properties 'oozie.http.port' and 'oozie.https.port' are not
@@ -69,9 +105,23 @@ setup_catalina_opts() {
   catalina_opts="${catalina_opts} -Doozie.base.url=${OOZIE_BASE_URL}";
   catalina_opts="${catalina_opts} -Doozie.https.keystore.file=${OOZIE_HTTPS_KEYSTORE_FILE}";
   catalina_opts="${catalina_opts} -Doozie.https.keystore.pass=${OOZIE_HTTPS_KEYSTORE_PASS}";
+  catalina_opts="${catalina_opts} -Dmapr.library.flatclass=true";
+  catalina_opts="${catalina_opts} ${MAPR_AUTH_CLIENT_OPTS}";
+  catalina_opts="${catalina_opts} -Dhadoop_conf_directory=${confDir}";
 
   # add required native libraries such as compression codecs
-  catalina_opts="${catalina_opts} -Djava.library.path=${JAVA_LIBRARY_PATH}";
+  # MAPR CHANGE: Add mapr lib to the java library path
+  catalina_opts="${catalina_opts} -Djava.library.path=${JAVA_LIBRARY_PATH}:/opt/mapr/lib";
+  # MAPR Change: Set parameters in oozie-site.xml based on if MapR security is enabled or not
+  if [ "$MAPR_SECURITY_STATUS" = "true" ]; then
+      catalina_opts="${catalina_opts} -Dmapr_sec_type=org.apache.hadoop.security.authentication.server.MultiMechsAuthenticationHandler"
+      catalina_opts="${catalina_opts} -Dmapr_sec_enabled=true"
+      catalina_opts="${catalina_opts} -Dmapr_signature_secret=com.mapr.security.maprauth.MaprSignatureSecretFactory"
+  else
+      catalina_opts="${catalina_opts} -Dmapr_sec_type=simple"
+      catalina_opts="${catalina_opts} -Dmapr_sec_enabled=false"
+      catalina_opts="${catalina_opts} -Dmapr_signature_secret=oozie"
+  fi
 
   echo "Adding to CATALINA_OPTS:     ${catalina_opts}"
 
@@ -106,11 +156,34 @@ case $actionCmd in
     #TODO setup default oozie sharelib
     ;;
   (stop)
+    if [[ $@ != "-force" ]]; then
+      actionCmd=${actionCmd}" -force"
+    fi
     setup_catalina_opts
 
     # A bug in catalina.sh script does not use CATALINA_OPTS for stopping the server
     export JAVA_OPTS=${CATALINA_OPTS}
     ;;
+  (status)
+    if [ ! -z "$CATALINA_PID" ]; then
+     if [ -f "$CATALINA_PID" ]; then
+       if [ -s "$CATALINA_PID" ]; then
+         if [ -r "$CATALINA_PID" ]; then
+           PID=`cat "$CATALINA_PID"`
+           ps -p $PID >/dev/null 2>&1
+           if [ $? -eq 0 ] ; then
+             echo "Tomcat is running with PID $PID."
+             exit 0
+           fi
+          fi
+       fi
+     fi
+    fi
+    echo "Most likely Tomcat is not running"
+    exit 1
+
+    ;;
+
 esac
 
 exec $CATALINA $actionCmd "$@"
