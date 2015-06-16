@@ -244,7 +244,7 @@ public class PigMainWithOldAPI extends LauncherMain {
 
         // harvesting and recording Hadoop Job IDs
         Properties jobIds = getHadoopJobIds(logFile);
-        File file = new File(System.getProperty("oozie.action.output.properties"));
+        File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
         os = new FileOutputStream(file);
         jobIds.store(os, "");
         os.close();
