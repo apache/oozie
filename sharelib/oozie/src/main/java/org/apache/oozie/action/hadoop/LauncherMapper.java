@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.security.Permission;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -68,6 +69,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     public static final String HADOOP2_WORKAROUND_DISTRIBUTED_CACHE = "oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache";
     public static final String PROPAGATION_CONF_XML = "propagation-conf.xml";
     public static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
+    static final String JOB_ID_REGEX = "^job_\\d+_\\d+$";
 
     private void setRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId) throws LauncherException {
         try {
@@ -89,7 +91,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 String id = reader.readLine();
                 reader.close();
-                if (id == null) {
+                if (id == null || !Pattern.matches(JOB_ID_REGEX, id)) {
+                    System.out.printf("Malformed jobId %s. Attempt to recover with jobId '%s'\n", id, jobId);
+                    fs.delete(path, true);
                     Writer writer = new OutputStreamWriter(fs.create(path));
                     writer.write(jobId);
                     writer.close();

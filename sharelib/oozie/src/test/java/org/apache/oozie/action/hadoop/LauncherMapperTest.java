@@ -30,6 +30,8 @@ public class LauncherMapperTest {
     private String actionDirPath = "dir_path";
     private String actionRecoveryId = "recovery_id";
     private String mapredJobId = "job_id";
+    private String mapredJobId = "job_123123_123";
+    private String malformedJobId = "malformed_job_id";
 
     private JobConf setupConf(String actionDirPath, String actionRecoveryId, String mapredJobId) {
         JobConf jobConf = new JobConf();
@@ -143,7 +145,7 @@ public class LauncherMapperTest {
         when(fs.exists(recoveryId)).thenReturn(true);
 
         OutputStreamWriter writerMock = mockWriter(fs, recoveryId);
-        mockInput(fs, recoveryId, "something_other".getBytes());
+        mockInput(fs, recoveryId, "job_00_000".getBytes());
 
         LauncherMapper mapper = PowerMockito.spy(new LauncherMapper());
         PowerMockito.doNothing().when(mapper, "failLauncher", anyInt(), anyString(), any(Throwable.class));
@@ -152,6 +154,26 @@ public class LauncherMapperTest {
 
         verify(writerMock, times(0)).write(mapredJobId);
         verifyPrivate(mapper, times(1)).invoke("failLauncher", anyInt(), anyString(), any(Throwable.class));
+    }
+
+    public void testRecoveryIdExistsButNotMatches() throws Exception {
+        JobConf jobConf = setupConf(actionDirPath, actionRecoveryId, mapredJobId);
+        Path recoveryId = mockRecoveryId(actionDirPath, actionRecoveryId);
+        FileSystem fs = mockFileSystem(recoveryId, jobConf);
+
+        when(fs.exists(recoveryId)).thenReturn(true);
+        when(fs.delete(recoveryId, true)).thenReturn(true);
+
+        OutputStreamWriter writerMock = mockWriter(fs, recoveryId);
+        mockInput(fs, recoveryId, malformedJobId.getBytes());
+
+        LauncherMapper mapper = PowerMockito.spy(new LauncherMapper());
+        PowerMockito.doNothing().when(mapper, "failLauncher", anyInt(), anyString(), any(Throwable.class));
+
+        mapper.configure(jobConf);
+
+        verify(writerMock, times(1)).write(mapredJobId);
+        verifyPrivate(mapper, times(0)).invoke("failLauncher", anyInt(), anyString(), any(Throwable.class));
     }
 
 }
