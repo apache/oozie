@@ -154,6 +154,7 @@ source ${BASEDIR}/bin/oozie-sys.sh -silent
 
 addExtjs=""
 addHadoopJars=""
+addBothHadoopJars=false
 additionalDir=""
 extjsHome=""
 jarsPath=""
@@ -163,6 +164,12 @@ outputWar="${CATALINA_BASE}/webapps/oozie.war"
 outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
 secure=""
 secureConfigsDir="${CATALINA_BASE}/conf/ssl"
+MapRHomeDir=/opt/mapr
+hadoopVersionFile="${MapRHomeDir}/conf/hadoop_version"
+
+if [ -e ${hadoopVersionFile} ]; then
+  addBothHadoopJars=true
+fi
 
 while [ $# -gt 0 ]
 do
@@ -338,7 +345,7 @@ else
   if [ "${addJars}" != "" ]; then
     OPTIONS="${OPTIONS} -jars ${jarsPath}"
   fi
-  if [ "${addHadoopJars}" != "" ]; then
+  if [ ${addBothHadoopJars} = false -a "${addHadoopJars}" != "" ]; then
     OPTIONS="${OPTIONS} -hadoop ${hadoopVersion} ${hadoopPath}"
   fi
   if [ "${secure}" != "" ]; then
@@ -352,8 +359,33 @@ else
     cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
   fi
 
-  ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
-  echo "${hadoopVersion}" > ${OOZIE_LOG}/hadoop_version.log
+  if [ ! ${addBothHadoopJars} ]; then
+    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
+    echo "${hadoopVersion}" > ${OOZIE_LOG}/hadoop_version.log
+  else
+    # Build 2 wars. One with Hadoop1 jars and the other one with Hadoop2 jars.
+    source ${hadoopVersionFile}
+    oozie_hadoop1_war=${OOZIE_HOME}/oozie-hadoop1.war
+    oozie_hadoop2_war=${OOZIE_HOME}/oozie-hadoop2.war
+    hadoop1Path=${MapRHomeDir}/hadoop/hadoop-${hadoop1_version}
+    hadoop2Path=${MapRHomeDir}/hadoop/hadoop-${hadoop2_version}
+
+    if [ -e "${oozie_hadoop1_war}" ]; then
+      chmod -f u+w ${oozie_hadoop1_war}
+      rm -rf ${oozie_hadoop1_war}
+    fi
+
+    if [ -e "${oozie_hadoop2_war}" ]; then
+      chmod -f u+w ${oozie_hadoop2_war}
+      rm -rf ${oozie_hadoop2_war}
+    fi
+
+    # Build oozie war with Hadoop1
+    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop1_war} ${OPTIONS} -hadoop ${hadoop1_version} ${hadoop1Path}
+    # Build oozie war with Hadoop2
+    ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${oozie_hadoop2_war} ${OPTIONS} -hadoop ${hadoop2_version} ${hadoop2Path}
+  fi
+
   if [ "$?" != "0" ]; then
     exit -1
   fi

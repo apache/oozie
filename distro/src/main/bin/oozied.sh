@@ -69,10 +69,16 @@ function real_script_name() {
         fi
         echo "$real"
 }
-hadoop_bin=`real_script_name "/usr/bin/hadoop"`
-hadoop_bin_dir=`dirname "${hadoop_bin}"`
+# MapR change
+if [ -e ${MAPR_CONF_DIR}/hadoop_version ]; then
+  source ${MAPR_CONF_DIR}/hadoop_version
+else
+  default_hadoop=""
+fi
+
+hadoop_bin=`real_script_name "/usr/bin/hadoop${default_hadoop}"`hadoop_bin_dir=`dirname "${hadoop_bin}"`
 hadoop_home="${hadoop_bin_dir}/../"
-version=`/usr/bin/hadoop version`
+version=`/usr/bin/hadoop${default_hadoop} version`
 confDir="hadoop-conf"
 if  [[ "${hadoop_home}" == ${HADOOP_BASE_DIR}2.* ]] ;
 then
@@ -129,6 +135,29 @@ setup_catalina_opts() {
 }
 
 setup_oozie() {
+  if [ ${default_hadoop} != "" ]; then
+    # This means we are operating with MapR >= 4.0.0 and need to copy over correct war before startup.
+    if [ ! -e "${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war" ]; then
+      echo "WARN: Oozie WAR has not been set up at ''${OOZIE_HOME}'', doing default set up"
+      ${BASEDIR}/bin/oozie-setup.sh
+      if [ "$?" != "0" ]; then
+        exit -1
+      fi
+    fi
+    oozie_hadoop_version=""
+    oozie_hadoop_version_file=${OOZIE_HOME}/oozie-hadoop-version
+    # Determine the current war's hadoop version.
+    if [ -f ${oozie_hadoop_version_file} ]; then
+      source ${oozie_hadoop_version_file}
+    fi
+
+    # If needed, copy the correct oozie war over.
+    if [ ! -e ${CATALINA_BASE}/webapps/oozie.war -o "${default_hadoop}" != "${oozie_hadoop}" -o ${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war -nt ${CATALINA_BASE}/webapps/oozie.war ]; then
+      cp ${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war ${CATALINA_BASE}/webapps/oozie.war
+      rm -rf ${CATALINA_BASE}/webapps/oozie
+      echo "oozie_hadoop_version=${default_hadoop}" > ${oozie_hadoop_version_file}
+    fi
+  fi
   if [ ! -e "${CATALINA_BASE}/webapps/oozie.war" ]; then
     echo "WARN: Oozie WAR has not been set up at '${CATALINA_BASE}/webapps', doing default set up"
     ${BASEDIR}/bin/oozie-setup.sh prepare-war
