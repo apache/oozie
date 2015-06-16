@@ -91,10 +91,26 @@ hadoop_bin=`real_script_name "/usr/bin/hadoop${mode}"`
 hadoop_home="${hadoop_bin_dir}/../"
 version=`/usr/bin/hadoop${mode} version`
 confDir="hadoop-conf"
-if  [[ "${hadoop_home}" == ${HADOOP_BASE_DIR}2.* ]] ;
+hadoopVersionFile="${MAPR_CONF_DIR}/hadoop_version"
+if [ -f ${hadoopVersionFile} ]
 then
-    echo "INSIDE IF"
-    confDir="${hadoop_home}etc/hadoop"
+    hadoop_mode=`cat ${hadoopVersionFile} | grep default_mode | cut -d '=' -f 2`
+    if [ "$hadoop_mode" = "yarn" ]; then
+	    version_hadoop=`cat ${hadoopVersionFile} | grep yarn_version | cut -d '=' -f 2`
+	    confDir=${HADOOP_BASE_DIR}${version_hadoop}/etc/hadoop/
+    elif [ "$hadoop_mode" = "classic" ]; then
+    	version_hadoop=`cat ${hadoopVersionFile} | grep classic_version | cut -d '=' -f 2`
+    	confDir=${HADOOP_BASE_DIR}${version_hadoop}/conf/
+    else
+	    echo 'Unknown hadoop version'
+    fi
+
+else
+    version_cmd="hadoop version"
+    res=`eval $CMD`
+    HADOOP_VERSION_PATH=`readlink \`which hadoop\` | awk -F "/" '{print$5}'`
+    version_hadoop=`echo ${HADOOP_VERSION_PATH} | cut -d'-' -f 2`
+    confDir=${HADOOP_BASE_DIR}${version_hadoop}/conf/
 fi
 
 
