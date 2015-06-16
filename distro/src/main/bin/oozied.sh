@@ -71,14 +71,24 @@ function real_script_name() {
 }
 # MapR change
 if [ -e ${MAPR_CONF_DIR}/hadoop_version ]; then
-  source ${MAPR_CONF_DIR}/hadoop_version
-else
-  default_hadoop=""
+  # MapR version >= 4.0.1
+  mapreduce_mode=
+  [ ! -z "${MAPR_MAPREDUCE_MODE}" ] && mapreduce_mode=${MAPR_MAPREDUCE_MODE}
+  [ -z "${mapreduce_mode}" ] && source ${MAPR_CONF_DIR}/hadoop_version && mapreduce_mode=$default_mode
+
+  if [ "${mapreduce_mode}" = "classic" ]; then
+    # Classic
+    mode=1
+  else
+    # Yarn
+    mode=2
+  fielse
+  mode=""
 fi
 
-hadoop_bin=`real_script_name "/usr/bin/hadoop${default_hadoop}"`hadoop_bin_dir=`dirname "${hadoop_bin}"`
+hadoop_bin=`real_script_name "/usr/bin/hadoop${mode}"`
 hadoop_home="${hadoop_bin_dir}/../"
-version=`/usr/bin/hadoop${default_hadoop} version`
+version=`/usr/bin/hadoop${mode} version`
 confDir="hadoop-conf"
 if  [[ "${hadoop_home}" == ${HADOOP_BASE_DIR}2.* ]] ;
 then
@@ -135,9 +145,9 @@ setup_catalina_opts() {
 }
 
 setup_oozie() {
-  if [ ${default_hadoop} != "" ]; then
-    # This means we are operating with MapR >= 4.0.0 and need to copy over correct war before startup.
-    if [ ! -e "${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war" ]; then
+  if [ "${mode}" != "" ]; then
+    # This means we are operating with MapR >= 4.0.1 and need to copy over correct war before startup.
+    if [ ! -e "${OOZIE_HOME}/oozie-hadoop${mode}.war" ]; then
       echo "WARN: Oozie WAR has not been set up at ''${OOZIE_HOME}'', doing default set up"
       ${BASEDIR}/bin/oozie-setup.sh
       if [ "$?" != "0" ]; then
@@ -152,10 +162,10 @@ setup_oozie() {
     fi
 
     # If needed, copy the correct oozie war over.
-    if [ ! -e ${CATALINA_BASE}/webapps/oozie.war -o "${default_hadoop}" != "${oozie_hadoop}" -o ${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war -nt ${CATALINA_BASE}/webapps/oozie.war ]; then
-      cp ${OOZIE_HOME}/oozie-hadoop${default_hadoop}.war ${CATALINA_BASE}/webapps/oozie.war
+    if [ ! -e ${CATALINA_BASE}/webapps/oozie.war -o "${mode}" != "${oozie_hadoop_version}" -o ${OOZIE_HOME}/oozie-hadoop${mode}.war -nt ${CATALINA_BASE}/webapps/oozie.war ]; then
+      cp ${OOZIE_HOME}/oozie-hadoop${mode}.war ${CATALINA_BASE}/webapps/oozie.war
       rm -rf ${CATALINA_BASE}/webapps/oozie
-      echo "oozie_hadoop_version=${default_hadoop}" > ${oozie_hadoop_version_file}
+      echo "oozie_hadoop_version=${mode}" > ${oozie_hadoop_version_file}
     fi
   fi
   if [ ! -e "${CATALINA_BASE}/webapps/oozie.war" ]; then
