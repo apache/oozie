@@ -359,7 +359,7 @@ else
     cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
   fi
 
-  if [ ! ${addBothHadoopJars} ]; then
+  if [ ${addBothHadoopJars} = false ]; then
     ${OOZIE_HOME}/bin/addtowar.sh -inputwar ${inputWar} -outputwar ${outputWar} ${OPTIONS}
     echo "${hadoopVersion}" > ${OOZIE_LOG}/hadoop_version.log
   else
