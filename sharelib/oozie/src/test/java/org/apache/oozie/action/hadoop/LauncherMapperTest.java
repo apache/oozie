@@ -29,7 +29,6 @@ public class LauncherMapperTest {
 
     private String actionDirPath = "dir_path";
     private String actionRecoveryId = "recovery_id";
-    private String mapredJobId = "job_id";
     private String mapredJobId = "job_123123_123";
     private String malformedJobId = "malformed_job_id";
 
