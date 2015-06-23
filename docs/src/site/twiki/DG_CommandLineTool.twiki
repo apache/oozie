@@ -136,7 +136,9 @@ usage:
                                       system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
                   -version            show Oozie server build version
 .
-      oozie validate <ARGS> : validate a workflow XML file
+      oozie validate <OPTIONS> <ARGS> : validate a workflow, coordinator, bundle XML file
+                           -auth <arg>    select authentication type [SIMPLE|KERBEROS]
+                           -oozie <arg>   Oozie URL
 .
       oozie sla <OPTIONS> : sla operations (Deprecated as of Oozie 4.0)
                 -auth <arg>           select authentication type [SIMPLE|KERBEROS]
@@ -1430,13 +1432,28 @@ Example:
 <verbatim>
 $ oozie validate myApp/workflow.xml
 .
-Error: Invalid workflow-app, org.xml.sax.SAXParseException: cvc-complex-type.2.4.a:
+Error: E0701: XML schema error, workflow.xml, org.xml.sax.SAXParseException: cvc-complex-type.2.4.a:
        Invalid content was found starting with element 'xend'. One of '{"uri:oozie:workflow:0.1":decision,
        "uri:oozie:workflow:0.1":fork, "uri:oozie:workflow:0.1":join, "uri:oozie:workflow:0.1":kill,
        "uri:oozie:workflow:0.1":action, "uri:oozie:workflow:0.1":end}' is expected.
 </verbatim>
 
-It performs an XML Schema validation on the specified workflow XML file.
+<verbatim>
+$ oozie validate /home/test/myApp/coordinator.xml
+.
+Error: E0701: XML schema error, coordinator.xml, org.xml.sax.SAXParseException; lineNumber: 4; columnNumber: 52; cvc-elt.1.a:
+       Cannot find the declaration of element 'coordinator-app-invalid'.
+</verbatim>
+
+<verbatim>
+$ oozie validate hdfs://localhost:8020/user/test/myApp/bundle.xml
+.
+Error: E0701: XML schema error, bundle.xml, org.xml.sax.SAXParseException: cvc-complex-type.2.4.b:
+       The content of element 'bundle-app' is not complete. One of '{"uri:oozie:bundle:0.1":coordinator}' is expected.
+</verbatim>
+
+It performs an XML Schema validation on the specified workflow, coordinator, bundle XML file.
+The XML file can be a local file or in HDFS.
 
 ---+++ Getting list of available sharelib
 This command is used to get list of available sharelib.

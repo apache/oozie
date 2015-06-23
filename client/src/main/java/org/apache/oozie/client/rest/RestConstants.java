@@ -208,4 +208,11 @@ public interface RestConstants {
     public static final String SLA_MAX_DURATION = "sla-max-duration";
 
     public static final String JOB_COORD_SCOPE_ACTION_LIST = "action-list";
+
+    public static final String VALIDATE = "validate";
+
+    public static final String FILE_PARAM = "file";
+
+    public static final String USER_PARAM = "user";
+
 }

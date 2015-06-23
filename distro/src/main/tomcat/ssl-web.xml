@@ -122,6 +122,13 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>validate</servlet-name>
+        <display-name>WS API for Workflow Applications</display-name>
+        <servlet-class>org.apache.oozie.servlet.V2ValidateServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
     <!-- servlet-mapping -->
     <servlet-mapping>
         <servlet-name>versions</servlet-name>
@@ -186,6 +193,11 @@
     <servlet-mapping>
         <servlet-name>v2sla</servlet-name>
         <url-pattern>/v2/sla/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>validate</servlet-name>
+        <url-pattern>/v2/validate</url-pattern>
     </servlet-mapping>
 
     <!-- welcome-file -->

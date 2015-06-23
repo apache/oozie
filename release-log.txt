@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2159 'oozie validate' command should be moved server-side (seoeun25 via rkanter)
 OOZIE-2271 Upgrade Tomcat to 6.0.44 (rkanter)
 OOZIE-2266 Fix 'total' actions returned in coordinator job info (sai-krish via rkanter)
 OOZIE-2264 Fix coord:offset(n,"DAY") to resolve correct data set(kailongs via puru)

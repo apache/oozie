@@ -514,6 +514,19 @@ public class OozieCLI {
     }
 
     /**
+     * Create option for command line option 'validate'
+     *
+     * @return validate options
+     */
+    protected Options createValidateOptions() {
+        Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
+        Options validateOption = new Options();
+        validateOption.addOption(oozie);
+        addAuthOptions(validateOption);
+        return validateOption;
+    }
+
+    /**
      * Create option for command line option 'pig' or 'hive'
      * @return pig or hive options
      */
@@ -652,7 +665,7 @@ public class OozieCLI {
         parser.addCommand(JOB_CMD, "", "job operations", createJobOptions(), false);
         parser.addCommand(JOBS_CMD, "", "jobs status", createJobsOptions(), false);
         parser.addCommand(ADMIN_CMD, "", "admin operations", createAdminOptions(), false);
-        parser.addCommand(VALIDATE_CMD, "", "validate a workflow XML file", new Options(), true);
+        parser.addCommand(VALIDATE_CMD, "", "validate a workflow, coordinator, bundle XML file", createValidateOptions(), true);
         parser.addCommand(SLA_CMD, "", "sla operations (Deprecated with Oozie 4.0)", createSlaOptions(), false);
         parser.addCommand(PIG_CMD, "-X ", "submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' "
                 + "arguments after '-X' are put in <configuration>", createScriptLanguageOptions(PIG_CMD), true);
@@ -1981,6 +1994,33 @@ public class OozieCLI {
     }
 
     private void validateCommand(CommandLine commandLine) throws OozieCLIException {
+        String[] args = commandLine.getArgs();
+        if (args.length != 1) {
+            throw new OozieCLIException("One file must be specified");
+        }
+        try {
+            XOozieClient wc = createXOozieClient(commandLine);
+            String result = wc.validateXML(args[0].toString());
+            if (result == null) {
+                // TODO This is only for backward compatibility. Need to remove after 4.2.0 higher version.
+                System.out.println("Using client-side validation. Check out Oozie server version.");
+                validateCommandV41(commandLine);
+                return;
+            }
+            System.out.println(result);
+        } catch (OozieClientException e) {
+            throw new OozieCLIException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Validate on client-side. This is only for backward compatibility. Need to removed after <tt>4.2.0</tt> higher version.
+     * @param commandLine
+     * @throws OozieCLIException
+     */
+    @Deprecated
+    @VisibleForTesting
+    void validateCommandV41(CommandLine commandLine) throws OozieCLIException {
         String[] args = commandLine.getArgs();
         if (args.length != 1) {
             throw new OozieCLIException("One file must be specified");

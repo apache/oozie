@@ -2025,6 +2025,75 @@ Ignore coordinator actions
 <verbatim>
 PUT /oozie/v2/job/job-3?action=ignore&type=action&scope=3-4
 </verbatim>
+
+---+++ Validate End-Point
+
+This endpoint is to validate a workflow, coordinator, bundle XML file.
+
+---++++ Validate a local file
+
+*Request:*
+
+<verbatim>
+POST /oozie/v2/validate?file=/home/test/myApp/workflow.xml
+Content-Type: application/xml;charset=UTF-8
+.
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflow-app xmlns="uri:oozie:workflow:0.3" name="test">
+    <start to="shell"/>
+    <action name="shell">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <exec>script.sh</exec>
+            <argument></argument>
+            <file>script.sh</file>
+            <capture-output/>
+        </shell>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  validate: "Valid workflow-app"
+}
+</verbatim>
+
+---++++ Validate a file in HDFS
+
+You can validate a workflow, coordinator, bundle XML file in HDFS. The XML file must already exist in HDFS.
+
+*Request:*
+
+<verbatim>
+POST /oozie/v2/validate?file=hdfs://localhost:8020/user/test/myApp/workflow.xml
+Content-Type: application/xml;charset=UTF-8
+.
+</verbatim>
+
+*Response:*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+  validate: "Valid workflow-app"
+}
+</verbatim>
+
 </noautolink>
 
 

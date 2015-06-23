@@ -19,7 +19,11 @@
 package org.apache.oozie.cli;
 
 import junit.framework.TestCase;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.net.URL;
 import java.net.URI;
 import java.io.File;
@@ -35,11 +39,37 @@ public class TestValidation extends TestCase {
 
     public void testValid() throws Exception {
         String[] args = new String[]{"validate", getPath("valid.xml")};
-        assertEquals(0, new OozieCLI().run(args));
+        assertTrue(captureOutput(args).contains("Valid workflow-app"));
     }
 
     public void testInvalid() throws Exception {
         String[] args = new String[]{"validate", getPath("invalid.xml")};
-        assertEquals(-1, new OozieCLI().run(args));
+        assertTrue(captureOutput(args).contains("Invalid app definition"));
+    }
+
+    private String captureOutput(String[] args) throws ParseException {
+        OozieCLI cli = new OozieCLI();
+        CLIParser parser = cli.getCLIParser();
+        CLIParser.Command command = parser.parse(args);
+        PrintStream original = System.out;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        String outStr = null;
+        System.out.flush();
+        try {
+            System.setOut(ps);
+            cli.validateCommandV41(command.getCommandLine());
+            System.out.flush();
+            outStr = baos.toString();
+        } catch (OozieCLIException e) {
+            outStr = e.getMessage();
+        } finally {
+            System.setOut(original);
+            if (outStr != null) {
+                System.out.print(outStr);
+            }
+            System.out.flush();
+        }
+        return outStr;
     }
 }

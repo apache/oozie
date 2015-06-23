@@ -35,6 +35,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -2023,6 +2025,42 @@ public class OozieClient {
         }
     }
 
+    private class ValidateXML extends ClientCallable<String> {
+
+        String file = null;
+
+        ValidateXML(String file, String user) {
+            super("POST", RestConstants.VALIDATE, "",
+                    prepareParams(RestConstants.FILE_PARAM, file, RestConstants.USER_PARAM, user));
+            this.file = file;
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            if (file.startsWith("/")) {
+                FileInputStream fi = new FileInputStream(new File(file));
+                byte[] buffer = new byte[1024];
+                int n = 0;
+                while (-1 != (n = fi.read(buffer))) {
+                    conn.getOutputStream().write(buffer, 0, n);
+                }
+            }
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                return (String) json.get(JsonTags.VALIDATE);
+            }
+            else if ((conn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND)) {
+                return null;
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
 
     private  class UpdateSharelib extends ClientCallable<String> {
 
@@ -2120,6 +2158,32 @@ public class OozieClient {
      */
     public String getClientBuildVersion() {
         return BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION);
+    }
+
+    /**
+     * Return the workflow application is valid.
+     *
+     * @param file local file or hdfs file.
+     * @return the workflow application is valid.
+     * @throws OozieClientException throw if it the workflow application's validation could not be retrieved.
+     */
+    public String validateXML(String file) throws OozieClientException {
+        String fileName = file;
+        if (file.startsWith("file://")) {
+            fileName = file.substring(7, file.length());
+        }
+        if (!fileName.contains("://")) {
+            File f = new File(fileName);
+            if (!f.isFile()) {
+                throw new OozieClientException("File error", "File does not exist : " + f.getAbsolutePath());
+            }
+            fileName = f.getAbsolutePath();
+        }
+        String user = USER_NAME_TL.get();
+        if (user == null) {
+            user = System.getProperty("user.name");
+        }
+        return new ValidateXML(fileName, user).call();
     }
 
     /**

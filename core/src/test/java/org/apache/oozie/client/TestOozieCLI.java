@@ -31,6 +31,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.cli.OozieCLI;
@@ -47,6 +48,7 @@ import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
+import org.apache.oozie.servlet.V2ValidateServlet;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
@@ -60,13 +62,15 @@ public class TestOozieCLI extends DagServletTestCase {
         new V1AdminServlet();
         new V2AdminServlet();
         new V2JobServlet();
+        new V2ValidateServlet();
     }
 
     static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
-    static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*"};
+    static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*",
+            VERSION + "/validate/*"};
     static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
-            V2JobServlet.class, V2AdminServlet.class, V2JobServlet.class, V2AdminServlet.class };
+            V2JobServlet.class, V2AdminServlet.class, V2ValidateServlet.class, V2JobServlet.class, V2AdminServlet.class};
 
     @Override
     protected void setUp() throws Exception {
@@ -1155,8 +1159,8 @@ public class TestOozieCLI extends DagServletTestCase {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                String validFileName = "./test-workflow-app.xml";
-                String invalidFileName = "./test-invalid-workflow-app.xml";
+                String validFileName = "test-workflow-app.xml";
+                String invalidFileName = "test-invalid-workflow-app.xml";
 
                 String validContent = "<workflow-app xmlns=\"uri:oozie:workflow:0.2\" name=\"no-op-wf\"> "+
                         " <start to=\"end\"/> <end name=\"end\"/> </workflow-app>";
@@ -1167,20 +1171,21 @@ public class TestOozieCLI extends DagServletTestCase {
                 validfile.delete();
                 invalidfile.delete();
 
+                String oozieUrl = getContextURL();
 
-                IOUtils.copyCharStream(new StringReader(validContent), new FileWriter(validfile));
-                String [] args = new String[] { "validate", validFileName };
+                IOUtils.copyCharStream(new StringReader(validContent), new  FileWriter(validfile));
+                String [] args = new String[] { "validate", "-oozie", oozieUrl, validfile.getAbsolutePath() };
                 String out = runOozieCLIAndGetStdout(args);
                 assertTrue(out.contains("Valid"));
 
                 IOUtils.copyCharStream(new StringReader(invalidContent), new FileWriter(invalidfile));
-                args = new String[] { "validate", invalidFileName };
+                args = new String[] { "validate", "-oozie", oozieUrl, invalidfile.getAbsolutePath() };
                 out = runOozieCLIAndGetStderr(args);
-                assertTrue(out.contains("Invalid"));
+                assertTrue(out.contains("XML schema error"));
 
                 return null;
-          }
-      });
+            }
+        });
     }
 
    /**
