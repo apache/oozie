@@ -61,7 +61,7 @@ public class HadoopShims {
         fs.createSymlink(target, link, createParent);
     }
 
-    public boolean isYARN() {
+    public static boolean isYARN() {
         return true;
     }
 
