@@ -129,7 +129,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
             if (jpaService != null) {
                 coordJob = jpaService.execute(new CoordJobGetJPAExecutor(id));
                 if (getActionInfo) {
-                    int numAction = jpaService.execute(new CoordActionsCountForJobIdJPAExecutor(id));
+                    int numAction = jpaService.execute(new CoordActionsCountForJobIdJPAExecutor(id, filterMap));
                     List<CoordinatorActionBean> coordActions = null;
                     if (len == 0) {
                         coordActions = new ArrayList<CoordinatorActionBean>();

@@ -19,14 +19,25 @@
 
 package org.apache.oozie.coord;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.Pair;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 public class TestCoordUtils extends  XDataTestCase{
     private Services services;
@@ -102,5 +113,31 @@ public class TestCoordUtils extends  XDataTestCase{
         List<CoordinatorActionBean> coordActions = CoordUtils.getCoordActionsFromDates(jobId, rerunScope, false);
 
         assertEquals(2, coordActions.size());
+    }
+
+    public void testGetWhereClause() throws Exception{
+        Map<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>, List<Object>>
+                filterMap = new HashMap<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>, List<Object>>();
+        final Pair<String, CoordinatorEngine.FILTER_COMPARATORS> STATUS_FILTER =
+                Pair.of(OozieClient.FILTER_STATUS, CoordinatorEngine.FILTER_COMPARATORS.EQUALS);
+        List<Object> positiveFilter = new ArrayList<Object>();
+        positiveFilter.add("RUNNING");
+        positiveFilter.add("KILLED");
+        filterMap.put(STATUS_FILTER, positiveFilter);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+
+        Query q = em.createNamedQuery("GET_COORD_ACTIONS_COUNT_BY_JOBID");
+        String query = q.toString();
+        StringBuilder sbTotal = new StringBuilder(query);
+        // Get the 'where' clause for status filters
+        StringBuilder statusClause = new StringBuilder();
+        Map<String, Object> params = CoordUtils.getWhereClause(statusClause, filterMap);
+        sbTotal.insert(sbTotal.length(), statusClause);
+
+        assertTrue(sbTotal.toString().contains("and a.statusStr IN (:p1, :p2)"));
+        assertEquals(params.get("p1"), "RUNNING");
+        assertEquals(params.get("p2"), "KILLED");
     }
 }

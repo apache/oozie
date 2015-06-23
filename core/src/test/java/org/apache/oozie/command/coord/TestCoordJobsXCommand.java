@@ -57,6 +57,10 @@ public class TestCoordJobsXCommand extends XDataTestCase {
         _testGetJobsForAppName();
         _testGetJobInfoForUser();
         _testGetJobsForUserAndStatus();
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        _testGetJobCount();
     }
 
     private void _testGetJobsForStatus() throws Exception {
@@ -121,6 +125,46 @@ public class TestCoordJobsXCommand extends XDataTestCase {
         CoordinatorJobInfo ret = coordsGetCmd.call();
         assertNotNull(ret);
         assertEquals(ret.getCoordJobs().size(), 2);
+    }
+
+    private void _testGetJobCount() throws Exception {
+
+        // With no Filter and different offset/len
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        CoordJobsXCommand coordsGetCmd = new CoordJobsXCommand(filter, 1, 1);
+        CoordinatorJobInfo ret = coordsGetCmd.call();
+        assertNotNull(ret);
+        assertEquals(ret.getTotal(), 6);
+
+        coordsGetCmd = new CoordJobsXCommand(filter, 3, 6);
+        ret = coordsGetCmd.call();
+        assertNotNull(ret);
+        assertEquals(ret.getTotal(), 6);
+
+        coordsGetCmd = new CoordJobsXCommand(filter, 5, 20);
+        ret = coordsGetCmd.call();
+        assertNotNull(ret);
+        assertEquals(ret.getTotal(), 6);
+
+        // With User and status
+        List<String> list1 = new ArrayList<String>();
+        list1.add(getTestUser());
+        filter.put(OozieClient.FILTER_USER, list1);
+
+        List<String> list2 = new ArrayList<String>();
+        list2.add("RUNNING");
+        filter.put(OozieClient.FILTER_STATUS, list2);
+
+        coordsGetCmd = new CoordJobsXCommand(filter, 1, 20);
+        ret = coordsGetCmd.call();
+        assertNotNull(ret);
+        assertEquals(ret.getTotal(), 4);
+
+        coordsGetCmd = new CoordJobsXCommand(filter, 2, 1);
+        ret = coordsGetCmd.call();
+        assertNotNull(ret);
+        assertEquals(ret.getTotal(), 4);
+
     }
 
 }

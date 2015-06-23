@@ -25,11 +25,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.OozieClient;
@@ -45,11 +48,13 @@ import org.apache.oozie.service.XLogService;
 import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.CoordActionsInDateRange;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 
 import com.google.common.annotations.VisibleForTesting;
+
 
 public class CoordUtils {
     public static final String HADOOP_USER = "user.name";
@@ -345,4 +350,68 @@ public class CoordUtils {
         return false;
     }
 
+    // Form the where clause to filter by status values
+    public static Map<String, Object> getWhereClause(StringBuilder sb, Map<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>,
+            List<Object>> filterMap) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        int pcnt= 1;
+        for (Map.Entry<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>, List<Object>> filter : filterMap.entrySet()) {
+            String field = filter.getKey().getFist();
+            CoordinatorEngine.FILTER_COMPARATORS comp = filter.getKey().getSecond();
+            String sqlField;
+            if (field.equals(OozieClient.FILTER_STATUS)) {
+                sqlField = "a.statusStr";
+            } else if (field.equals(OozieClient.FILTER_NOMINAL_TIME)) {
+                sqlField = "a.nominalTimestamp";
+            } else {
+                throw new IllegalArgumentException("Invalid filter key " + field);
+            }
+
+            sb.append(" and ").append(sqlField).append(" ");
+            switch (comp) {
+                case EQUALS:
+                    sb.append("IN (");
+                    params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                    sb.append(")");
+                    break;
+
+                case NOT_EQUALS:
+                    sb.append("NOT IN (");
+                    params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                    sb.append(")");
+                    break;
+
+                case GREATER:
+                case GREATER_EQUAL:
+                case LESSTHAN:
+                case LESSTHAN_EQUAL:
+                    if (filter.getValue().size() != 1) {
+                        throw new IllegalArgumentException(field + comp.getSign() + " can't have more than 1 values");
+                    }
+
+                    sb.append(comp.getSign()).append(" ");
+                    params.putAll(appendParams(sb, filter.getValue(), pcnt));
+                    break;
+            }
+
+            pcnt += filter.getValue().size();
+        }
+        sb.append(" ");
+        return params;
+    }
+
+    private static Map<String, Object> appendParams(StringBuilder sb, List<Object> value, int sindex) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        boolean first = true;
+        for (Object val : value) {
+            String pname = "p" + sindex++;
+            params.put(pname, val);
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(':').append(pname);
+            first = false;
+        }
+        return params;
+    }
 }

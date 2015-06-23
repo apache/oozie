@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2266 Fix 'total' actions returned in coordinator job info (sai-krish via rkanter)
 OOZIE-2264 Fix coord:offset(n,"DAY") to resolve correct data set(kailongs via puru)
 OOZIE-2178 fix javadoc to compile on JDK8 (rkanter)
 OOZIE-2268 Update ActiveMQ version for security and other fixes (rkanter)

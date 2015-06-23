@@ -21,8 +21,14 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.oozie.coord.CoordUtils;
+import org.apache.oozie.CoordinatorEngine.FILTER_COMPARATORS;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Load the number of running actions for a coordinator job.
@@ -30,10 +36,12 @@ import org.apache.oozie.util.ParamChecker;
 public class CoordActionsCountForJobIdJPAExecutor implements JPAExecutor<Integer> {
 
     private String coordJobId = null;
+    private Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap;
 
-    public CoordActionsCountForJobIdJPAExecutor(String coordJobId) {
+    public CoordActionsCountForJobIdJPAExecutor(String coordJobId, Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap) {
         ParamChecker.notNull(coordJobId, "coordJobId");
         this.coordJobId = coordJobId;
+        this.filterMap = filterMap;
     }
 
     @Override
@@ -45,13 +53,34 @@ public class CoordActionsCountForJobIdJPAExecutor implements JPAExecutor<Integer
     public Integer execute(EntityManager em) throws JPAExecutorException {
         try {
             Query q = em.createNamedQuery("GET_COORD_ACTIONS_COUNT_BY_JOBID");
-            q.setParameter("jobId", coordJobId);
+            q = setQueryParameters(q, em);
             Long count = (Long) q.getSingleResult();
             return Integer.valueOf(count.intValue());
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
+    }
+
+    private Query setQueryParameters(Query q, EntityManager em){
+        Map<String, Object> params = null;
+        if (filterMap != null) {
+            // Add the filter clause
+            String query = q.toString();
+            StringBuilder sbTotal = new StringBuilder(query);
+            // Get the 'where' clause for status filters
+            StringBuilder statusClause = new StringBuilder();
+            params = CoordUtils.getWhereClause(statusClause, filterMap);
+            sbTotal.insert(sbTotal.length(), statusClause);
+            q = em.createQuery(sbTotal.toString());
+        }
+        if (params != null) {
+            for (String pname : params.keySet()) {
+                q.setParameter(pname, params.get(pname));
+            }
+        }
+        q.setParameter("jobId", coordJobId);
+        return q;
     }
 
 }
