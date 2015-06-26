@@ -178,6 +178,14 @@ setup_oozie() {
       source ${oozie_hadoop_version_file}
     fi
 
+    #replace lib to correct
+    rm -rf ${BASEDIR}/lib
+    mkdir ${BASEDIR}/lib
+    unzip ${BASEDIR}/oozie-hadoop${mode}.war WEB-INF/lib/*.jar -d ${BASEDIR}/lib > /dev/null
+    mv ${BASEDIR}/lib/WEB-INF/lib/*.jar ${BASEDIR}/lib/
+    rmdir ${BASEDIR}/lib/WEB-INF/lib
+    rmdir ${BASEDIR}/lib/WEB-INF
+
     # If needed, copy the correct oozie war over.
     if [ ! -e ${CATALINA_BASE}/webapps/oozie.war -o "${mode}" != "${oozie_hadoop_version}" -o ${OOZIE_HOME}/oozie-hadoop${mode}.war -nt ${CATALINA_BASE}/webapps/oozie.war ]; then
       cp ${OOZIE_HOME}/oozie-hadoop${mode}.war ${CATALINA_BASE}/webapps/oozie.war
