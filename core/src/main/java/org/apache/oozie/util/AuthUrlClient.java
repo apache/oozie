@@ -23,8 +23,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
@@ -142,7 +144,7 @@ public class AuthUrlClient {
         return reader;
     }
 
-    public static String getQueryParamString(Map<String, String[]> params) {
+    public static String getQueryParamString(Map<String, String[]> params) throws UnsupportedEncodingException {
         StringBuilder stringBuilder = new StringBuilder();
         if (params == null || params.isEmpty()) {
             return "";
@@ -153,7 +155,7 @@ public class AuthUrlClient {
                 String value = params.get(key)[0]; // We don't support multi value.
                 stringBuilder.append(key);
                 stringBuilder.append("=");
-                stringBuilder.append(value);
+                stringBuilder.append(URLEncoder.encode(value,"UTF-8"));
             }
         }
         return stringBuilder.toString();
