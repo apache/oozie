@@ -1037,6 +1037,7 @@ function coordJobDetailsPopup(response, request) {
     var actionsTextBox = new Ext.form.TextField({
              fieldLabel: 'ActionsList',
              name: 'ActionsList',
+             id: 'actions_text_box',
              width: 150,
              value: ''
          });
@@ -1052,6 +1053,7 @@ function coordJobDetailsPopup(response, request) {
     var searchFilterBox = new Ext.form.TextField({
                  fieldLabel: 'searchFilterBox',
                  name: 'searchFilterBox',
+                 id: 'search_filter_box',
                  width: 350,
                  value: ''
     });
@@ -1278,7 +1280,15 @@ function coordJobDetailsPopup(response, request) {
     function showWorkflowPopup(thisGrid, rowIndex, cellIndex, e) {
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         var workflowId = actionStatus["externalId"];
-        jobDetailsGridWindow(workflowId);
+        if(workflowId == null) {
+            jobDetailsTab.getComponent('coord_job_log').show();
+            Ext.getCmp('actions_text_box').setValue(actionStatus["id"].split("@")[1]);
+            Ext.getCmp('search_filter_box').setValue('recent=5m');
+            fetchLogs(coordJobId, actionsTextBox.getValue());
+        }
+        else {
+            jobDetailsGridWindow(workflowId);
+        }
     }
     // alert("Coordinator PopUP 4 inside coordDetailsPopup ");
     function showCoordActionContextMenu(thisGrid, rowIndex, cellIndex, e) {
@@ -1500,6 +1510,7 @@ function coordJobDetailsPopup(response, request) {
 	},{
            title: 'Coord Job Log',
            items: jobLogArea,
+           id: 'coord_job_log',
            tbar: [
                   actionsText,actionsTextBox, searchFilter, searchFilterBox, getLogButton, {xtype: 'tbfill'}, logStatus]
        },
