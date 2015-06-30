@@ -15,5 +15,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
+DROP TABLE test;
 CREATE EXTERNAL TABLE test (a INT) STORED AS TEXTFILE LOCATION '${INPUT}';
 INSERT OVERWRITE DIRECTORY '${OUTPUT}' SELECT * FROM test;

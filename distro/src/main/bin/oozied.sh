@@ -203,10 +203,13 @@ setup_oozie() {
     hadoop fs -put ${OOZIE_HOME}/share2/* ${directory}
 
     hadoop fs -rmr ${directory}/lib/distcp/*
+    hadoop fs -rmr ${directory}/lib/oozie/*
     if [ "${mode}" == "1" ]; then
       hadoop fs -put ${OOZIE_HOME}/share1/lib/distcp/* ${directory}/lib/distcp/
+      hadoop fs -put ${OOZIE_HOME}/share1/lib/oozie/* ${directory}/lib/oozie/
     else
       hadoop fs -put ${OOZIE_HOME}/share2/lib/distcp/* ${directory}/lib/distcp/
+      hadoop fs -put ${OOZIE_HOME}/share2/lib/oozie/* ${directory}/lib/oozie/
     fi
 
   fi
