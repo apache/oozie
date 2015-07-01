@@ -58,7 +58,8 @@ public class HbaseCredentials extends Credentials {
 
     void copyHbaseConfToJobConf(JobConf jobConf, CredentialsProperties props) {
         // Create configuration using hbase-site.xml/hbase-default.xml
-        Configuration hbaseConf = HBaseConfiguration.create();
+        Configuration hbaseConf = new Configuration(false);
+        HBaseConfiguration.addHbaseResources(hbaseConf);
         // copy cred props to hbaseconf and override if values already exists
         addPropsConf(props, hbaseConf);
         // copy cred props to jobconf and override if values already exist
