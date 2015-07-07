@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2287 Add support for deleting hcat partitions in fs action delete (kailongs via rohini)
 OOZIE-2285 Change in concurrency should trigger coord action ready command (kailongs via rohini)
 OOZIE-2284 HBaseCredentials should only add hbase-default.xml and hbase-site.xml to actionConf (rohini)
 OOZIE-2286 Update Log4j and Log4j-extras to latest 1.2.x release (rkanter)

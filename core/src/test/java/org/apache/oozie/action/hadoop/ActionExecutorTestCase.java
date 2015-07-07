@@ -36,6 +36,8 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.test.XHCatTestCase;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -58,7 +60,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public abstract class ActionExecutorTestCase extends XFsTestCase {
+public abstract class ActionExecutorTestCase extends XHCatTestCase {
 
     @Override
     protected void setUp() throws Exception {

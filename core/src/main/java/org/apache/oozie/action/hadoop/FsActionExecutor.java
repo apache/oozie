@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,10 +37,13 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -363,20 +367,28 @@ public class FsActionExecutor extends ActionExecutor {
      * @throws ActionExecutorException
      */
     public void delete(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
+        URI uri = path.toUri();
+        URIHandler handler;
         try {
-            path = resolveToFullPath(nameNodePath, path, true);
-            FileSystem fs = getFileSystemFor(path, context, fsConf);
-            Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
-            if (pathArr != null && pathArr.length > 0) {
-                checkGlobMax(pathArr);
-                for (Path p : pathArr) {
-                    if (fs.exists(p)) {
-                        if (!fs.delete(p, true)) {
-                            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS005",
-                                    "delete, path [{0}] could not delete path", p);
+            handler = Services.get().get(URIHandlerService.class).getURIHandler(uri);
+            if (handler instanceof FSURIHandler) {
+                // Use legacy code to handle hdfs partition deletion
+                path = resolveToFullPath(nameNodePath, path, true);
+                FileSystem fs = getFileSystemFor(path, context, fsConf);
+                Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(path));
+                if (pathArr != null && pathArr.length > 0) {
+                    checkGlobMax(pathArr);
+                    for (Path p : pathArr) {
+                        if (fs.exists(p)) {
+                            if (!fs.delete(p, true)) {
+                                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS005",
+                                        "delete, path [{0}] could not delete path", p);
+                            }
                         }
                     }
                 }
+            } else {
+                handler.delete(uri, handler.getContext(uri, fsConf, context.getWorkflow().getUser(), false));
             }
         }
         catch (Exception ex) {
@@ -511,8 +523,9 @@ public class FsActionExecutor extends ActionExecutor {
                 st = fs.getFileStatus(path);
                 if (st.isDir()) {
                     throw new Exception(path.toString() + " is a directory");
-                } else if (st.getLen() != 0)
+                } else if (st.getLen() != 0) {
                     throw new Exception(path.toString() + " must be a zero-length file");
+                }
             }
             FSDataOutputStream out = fs.create(path);
             out.close();

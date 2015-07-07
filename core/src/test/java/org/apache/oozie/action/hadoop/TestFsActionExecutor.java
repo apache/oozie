@@ -22,22 +22,34 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.dependency.FSURIHandler;
+import org.apache.oozie.dependency.HCatURIHandler;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
 
+    final String db = "db1";
+    final String table = "table1";
+    private Services services;
+    private URIHandlerService uriService;
+    private JobConf conf;
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", FsActionExecutor.class.getName());
@@ -243,6 +255,46 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         ae.delete(context, path);
 
+    }
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        services = new Services();
+        services.getConf().set(URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services.setService(HCatAccessorService.class);
+        services.init();
+        conf = createJobConf();
+        uriService = Services.get().get(URIHandlerService.class);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        services.destroy();
+        super.tearDown();
+    }
+
+    private void createTestTable() throws Exception {
+        dropTable(db, table, true);
+        dropDatabase(db, true);
+        createDatabase(db);
+        createTable(db, table, "year,month,dt,country");
+    }
+
+    public void testDeleteHcat() throws Exception {
+        createTestTable();
+        addPartition(db, table, "year=2012;month=12;dt=02;country=us");
+        URI hcatURI = getHCatURI(db, table, "country=us;year=2012;month=12;dt=02");
+        URIHandler handler = uriService.getURIHandler(hcatURI);
+        FsActionExecutor ae = new FsActionExecutor();
+        Path path = new Path(hcatURI);
+        Path nameNodePath = new Path(getNameNodeUri());
+        Context context = createContext("<fs/>");
+        XConfiguration conf = new XConfiguration();
+        assertTrue(handler.exists(hcatURI, conf, getTestUser()));
+        ae.delete(context, conf, nameNodePath, path);
+        assertFalse(handler.exists(hcatURI, conf, getTestUser()));
     }
 
     public void testDeleteWithGlob() throws Exception {
