@@ -39,17 +39,17 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -64,6 +64,7 @@ import org.apache.oozie.util.StatusUtils;
 public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;
     private Date newEndTime = null;
+    private Integer oldConcurrency = null;
     private Integer newConcurrency = null;
     private Date newPauseTime = null;
     private Date oldPauseTime = null;
@@ -344,6 +345,7 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         LOG.info("STARTED CoordChangeXCommand for jobId=" + jobId);
 
         try {
+            oldConcurrency = this.coordJob.getConcurrency();
             if (newEndTime != null) {
                 // during coord materialization, nextMaterializedTime is set to
                 // startTime + n(actions materialized) * frequency and this can be AFTER endTime,
@@ -451,6 +453,10 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
             coordJob.setLastModifiedTime(new Date());
             updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_CHANGE, coordJob));
             BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, deleteList);
+
+            if (newConcurrency != null && newConcurrency > oldConcurrency) {
+                queue(new CoordActionReadyXCommand(jobId));
+            }
 
             return null;
         }

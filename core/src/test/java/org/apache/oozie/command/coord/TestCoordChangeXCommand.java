@@ -29,20 +29,21 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
-import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
-import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
+import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
+import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
@@ -628,6 +629,34 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertNotNull(slaSummaryBean1);
     }
 
+    public void testCoordChangeConcurrency() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T04:59Z");
+        final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING,
+                startTime, endTime, endTime, true, false, 4);
+        CoordinatorActionBean ca1 = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.RUNNING,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca2 = addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.RUNNING,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca3 = addRecordToCoordActionTable(job.getId(), 3, CoordinatorAction.Status.READY,
+                "coord-action-get.xml", 0);
+        CoordinatorActionBean ca4 = addRecordToCoordActionTable(job.getId(), 4, CoordinatorAction.Status.READY,
+                "coord-action-get.xml", 0);
+        new CoordChangeXCommand(job.getId(), "concurrency=4").call();
+        Thread.sleep(100);
+        ca1 = CoordActionQueryExecutor.getInstance().get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION,
+                job.getId() + "@1");
+        ca2 = CoordActionQueryExecutor.getInstance().get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION,
+                job.getId() + "@2");
+        ca3 = CoordActionQueryExecutor.getInstance().get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION,
+                job.getId() + "@3");
+        ca4 = CoordActionQueryExecutor.getInstance().get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION,
+                job.getId() + "@4");
+        assertEquals(ca1.getStatusStr(), CoordinatorAction.Status.RUNNING.toString());
+        assertEquals(ca2.getStatusStr(), CoordinatorAction.Status.RUNNING.toString());
+        assertFalse(ca3.getStatus().equals(CoordinatorAction.Status.READY));
+        assertFalse(ca4.getStatus().equals(CoordinatorAction.Status.READY));
+    }
     // Checks that RUNNING coord action is not deleted
     public void testChangeTimeDeleteRunning() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
