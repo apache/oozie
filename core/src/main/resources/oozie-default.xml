@@ -2108,7 +2108,7 @@
 
     <property>
         <name>oozie.service.URIHandlerService.uri.handlers</name>
-        <value>org.apache.oozie.dependency.FSURIHandler</value>
+        <value>org.apache.oozie.dependency.FSURIHandler,org.apache.oozie.dependency.S3URIHandler</value>
         <description>
                 Enlist the different uri handlers supported for data availability checks.
         </description>
