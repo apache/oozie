@@ -31,6 +31,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -95,6 +97,8 @@ public class ConfigurationService implements Service, Instrumentable {
     private static final Set<String> MASK_PROPS = new HashSet<String>();
     private static Map<String,String> defaultConfigs = new HashMap<String,String>();
 
+    private static Method getPasswordMethod;
+
     static {
 
         //all this properties are seeded as system properties, no need to log changes
@@ -114,6 +118,14 @@ public class ConfigurationService implements Service, Instrumentable {
         // These properties should be masked when displayed because they contain sensitive info (e.g. password)
         MASK_PROPS.add(JPAService.CONF_PASSWORD);
         MASK_PROPS.add("oozie.authentication.signature.secret");
+
+        try {
+            // Only supported in Hadoop 2.6.0+
+            getPasswordMethod = Configuration.class.getMethod("getPassword", String.class);
+        } catch (NoSuchMethodException e) {
+            // Not supported
+            getPasswordMethod = null;
+        }
     }
 
     public static final String DEFAULT_CONFIG_FILE = "oozie-default.xml";
@@ -537,4 +549,25 @@ public class ConfigurationService implements Service, Instrumentable {
         return conf.getClass(name, Object.class);
     }
 
+    public static String getPassword(Configuration conf, String name) {
+        if (getPasswordMethod != null) {
+            try {
+                char[] pass = (char[]) getPasswordMethod.invoke(conf, name);
+                return new String(pass);
+            } catch (IllegalAccessException e) {
+                log.error(e);
+                throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
+            } catch (InvocationTargetException e) {
+                log.error(e);
+                throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
+            }
+        } else {
+            return conf.get(name);
+        }
+    }
+
+    public static String getPassword(String name) {
+        Configuration conf = Services.get().getConf();
+        return getPassword(conf, name);
+    }
 }

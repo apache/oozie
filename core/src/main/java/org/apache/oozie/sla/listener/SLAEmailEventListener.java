@@ -107,7 +107,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         String smtpPort = conf.get(EmailActionExecutor.EMAIL_SMTP_PORT, SMTP_PORT_DEFAULT);
         Boolean smtpAuth = conf.getBoolean(EmailActionExecutor.EMAIL_SMTP_AUTH, SMTP_AUTH_DEFAULT);
         String smtpUser = conf.get(EmailActionExecutor.EMAIL_SMTP_USER, "");
-        String smtpPassword = conf.get(EmailActionExecutor.EMAIL_SMTP_PASS, "");
+        String smtpPassword = ConfigurationService.getPassword(EmailActionExecutor.EMAIL_SMTP_PASS);
         String smtpConnectTimeout = conf.get(SMTP_CONNECTION_TIMEOUT, SMTP_CONNECTION_TIMEOUT_DEFAULT);
         String smtpTimeout = conf.get(SMTP_TIMEOUT, SMTP_TIMEOUT_DEFAULT);
 

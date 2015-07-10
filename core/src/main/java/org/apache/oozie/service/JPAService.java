@@ -141,7 +141,7 @@ public class JPAService implements Service, Instrumentable {
         String url = ConfigurationService.get(conf, CONF_URL);
         String driver = ConfigurationService.get(conf, CONF_DRIVER);
         String user = ConfigurationService.get(conf, CONF_USERNAME);
-        String password = ConfigurationService.get(conf, CONF_PASSWORD).trim();
+        String password = ConfigurationService.getPassword(conf, CONF_PASSWORD).trim();
         String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
         String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
         String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
