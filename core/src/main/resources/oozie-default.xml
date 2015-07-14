@@ -2543,4 +2543,25 @@
             Set it false if there is any security concern.
         </description>
     </property>
+
+    <property>
+        <name>oozie.actions.default.name-node</name>
+        <value> </value>
+        <description>
+            The default value to use for the &lt;name-node&gt; element in applicable action types.  This value will be used when
+            neither the action itself nor the global section specifies a &lt;name-node&gt;.  As expected, it should be of the form
+            "hdfs://HOST:PORT".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.actions.default.job-tracker</name>
+        <value> </value>
+        <description>
+            The default value to use for the &lt;job-tracker&gt; element in applicable action types.  This value will be used when
+            neither the action itself nor the global section specifies a &lt;job-tracker&gt;.  As expected, it should be of the form
+            "HOST:PORT".
+        </description>
+    </property>
+
 </configuration>

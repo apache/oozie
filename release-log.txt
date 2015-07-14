@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2187 Add a way to specify a default JT/RM and NN (rkanter)
 OOZIE-2272 Use Hadoop's CredentialProvider for passwords in oozie-site (rkanter)
 OOZIE-2287 Add support for deleting hcat partitions in fs action delete (kailongs via rohini)
 OOZIE-2285 Change in concurrency should trigger coord action ready command (kailongs via rohini)

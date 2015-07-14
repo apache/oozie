@@ -135,7 +135,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected JavaActionExecutor(String type) {
         super(type);
-        requiresNNJT = true;
     }
 
     public static List<Class> getCommonLauncherClasses() {
@@ -1627,5 +1626,13 @@ public class JavaActionExecutor extends ActionExecutor {
                 LOG.error("Error while populating job info", e);
             }
         }
+    }
+
+    public boolean requiresNameNodeJobTracker() {
+        return true;
+    }
+
+    public boolean supportsConfigurationJobXML() {
+        return true;
     }
 }

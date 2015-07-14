@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
@@ -47,7 +48,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd");
+        setSystemProperty("oozie.service.SchemaService.wf.ext.schemas", "hive-action-0.2.xsd,email-action-0.2.xsd");
         new Services().init();
     }
 
@@ -55,6 +56,13 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     protected void tearDown() throws Exception {
         Services.get().destroy();
         super.tearDown();
+    }
+
+    private String cleanupXml(String xml) {
+        xml = xml.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
+        xml = xml.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        xml = xml.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        return xml;
     }
 
     public void testParserGlobal() throws Exception {
@@ -79,8 +87,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  </streaming>\r\n" +
              "  <file>/tmp</file>\r\n" +
              "  <archive>/tmp</archive>\r\n" +
-             "  <job-tracker>${foo}</job-tracker>\r\n" +
              "  <name-node>bar</name-node>\r\n" +
+             "  <job-tracker>${foo}</job-tracker>\r\n" +
              "  <configuration>\r\n" +
              "    <property>\r\n" +
              "      <name>b</name>\r\n" +
@@ -92,11 +100,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "    </property>\r\n" +
              "  </configuration>\r\n" +
              "</map-reduce>";
-        d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
-        d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
-        System.out.println("\n" + d +"\n");
-        assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
+        d = cleanupXml(d);
+        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
 
     }
 
@@ -123,8 +128,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <job-xml>/tmp</job-xml>\r\n" +
              "  <file>/tmp</file>\r\n" +
              "  <archive>/tmp</archive>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
              "  <name-node>bar</name-node>\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
              "  <job-xml>/spam1</job-xml>\r\n" +
              "  <job-xml>/spam2</job-xml>\r\n" +
              "  <configuration>\r\n" +
@@ -138,10 +143,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "    </property>\r\n" +
              "  </configuration>\r\n" +
              "</map-reduce>";
-        d = d.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
-        d = d.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        d = d.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
-        assertEquals(expectedD.replaceAll(" ",""), d.replaceAll(" ", ""));
+        d = cleanupXml(d);
+        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
 
     }
 
@@ -175,12 +178,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                 "  <param>x</param>\r\n" +
                 "  <file>/tmp</file>\r\n" +
                 "  <file>/tmp</file>\r\n" +
-                "  <job-tracker>${foo}</job-tracker>\r\n" +
                 "  <name-node>bar</name-node>\r\n" +
+                "  <job-tracker>${foo}</job-tracker>\r\n" +
                 "</pig>";
-        e = e.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
-        e = e.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        e = e.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        e = cleanupXml(e);
         assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
 
     }
@@ -218,12 +219,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <script>script.q</script>\r\n" +
              "  <param>INPUT=/tmp/table</param>\r\n" +
              "  <param>OUTPUT=/tmp/hive</param>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
              "  <name-node>bar</name-node>\r\n" +
+             "  <job-tracker>foo</job-tracker>\r\n" +
              "</hive>";
-        a = a.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
-        a = a.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        a = a.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
@@ -258,10 +257,29 @@ public class TestLiteWorkflowAppParser extends XTestCase {
              "  <arg>/tmp/data.txt</arg>\r\n" +
              "  <arg>/tmp2/data.txt</arg>\r\n" +
              "</distcp>";
-        b = b.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
-        b = b.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        b = b.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
-        assertEquals(expectedB.replaceAll(" ",""), b.replaceAll(" ", ""));
+        b = cleanupXml(b);
+        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+    }
+
+    public void testParserGlobalExtensionActionsNotApplicable() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // Not all actions want a JT, NN, conf, or jobxml (e.g. email action)
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
+                new Configuration());
+
+        String c1 = app.getNode("c1").getConf();
+        String expectedC1 =
+                "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
+                "  <to>foo@bar.com</to>\r\n" +
+                "  <subject>foo</subject>\r\n" +
+                "  <body>bar</body>\r\n" +
+                "</email>";
+        c1 = cleanupXml(c1);
+        assertEquals(expectedC1.replaceAll(" ", ""), c1.replaceAll(" ", ""));
     }
 
     public void testParserGlobalExtensionActionsNoGlobal() throws Exception {
@@ -285,6 +303,210 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
         catch (Exception ex) {
             fail();
+        }
+    }
+
+    public void testParserDefaultNameNode() throws Exception {
+        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
+                        "  <prepare>\r\n" +
+                        "    <delete path=\"/tmp\" />\r\n" +
+                        "    <mkdir path=\"/tmp\" />\r\n" +
+                        "  </prepare>\r\n" +
+                        "  <job-tracker>foo</job-tracker>\r\n" +
+                        "  <configuration>\r\n" +
+                        "    <property>\r\n" +
+                        "      <name>c</name>\r\n" +
+                        "      <value>C</value>\r\n" +
+                        "    </property>\r\n" +
+                        "  </configuration>\r\n" +
+                        "  <script>script.q</script>\r\n" +
+                        "  <param>INPUT=/tmp/table</param>\r\n" +
+                        "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+                        "  <name-node>default-nn</name-node>\r\n" +
+                        "</hive>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultNameNodeWithGlobal() throws Exception {
+        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode-global.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
+                        "  <prepare>\r\n" +
+                        "    <delete path=\"/tmp\" />\r\n" +
+                        "    <mkdir path=\"/tmp\" />\r\n" +
+                        "  </prepare>\r\n" +
+                        "  <job-tracker>foo</job-tracker>\r\n" +
+                        "  <configuration>\r\n" +
+                        "    <property>\r\n" +
+                        "      <name>c</name>\r\n" +
+                        "      <value>C</value>\r\n" +
+                        "    </property>\r\n" +
+                        "  </configuration>\r\n" +
+                        "  <script>script.q</script>\r\n" +
+                        "  <param>INPUT=/tmp/table</param>\r\n" +
+                        "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+                        "  <name-node>global-nn</name-node>\r\n" +
+                        "</hive>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultNameNodeNotApplicable() throws Exception {
+        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // Not all actions want a NN (e.g. email action)
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
+                new Configuration());
+        String b1 = app.getNode("b1").getConf();
+        String expectedB1 =
+                "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
+                        "  <to>foo@bar.com</to>\r\n" +
+                        "  <subject>foo</subject>\r\n" +
+                        "  <body>bar</body>\r\n" +
+                        "</email>";
+        b1 = cleanupXml(b1);
+        assertEquals(expectedB1.replaceAll(" ", ""), b1.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultNameNodeFail() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // No default NN is set
+        try {
+            LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
+                    new Configuration());
+            fail();
+        } catch (WorkflowException e) {
+            assertEquals(ErrorCode.E0701, e.getErrorCode());
+            assertTrue(e.getMessage().contains("No name-node defined"));
+        }
+    }
+
+    public void testParserDefaultJobTracker() throws Exception {
+        ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
+                        "  <prepare>\r\n" +
+                        "    <delete path=\"/tmp\" />\r\n" +
+                        "    <mkdir path=\"/tmp\" />\r\n" +
+                        "  </prepare>\r\n" +
+                        "  <name-node>bar</name-node>\r\n" +
+                        "  <configuration>\r\n" +
+                        "    <property>\r\n" +
+                        "      <name>c</name>\r\n" +
+                        "      <value>C</value>\r\n" +
+                        "    </property>\r\n" +
+                        "  </configuration>\r\n" +
+                        "  <script>script.q</script>\r\n" +
+                        "  <param>INPUT=/tmp/table</param>\r\n" +
+                        "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+                        "  <job-tracker>default-jt</job-tracker>\r\n" +
+                        "</hive>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultJobTrackerWithGlobal() throws Exception {
+        ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker-global.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
+                        "  <prepare>\r\n" +
+                        "    <delete path=\"/tmp\" />\r\n" +
+                        "    <mkdir path=\"/tmp\" />\r\n" +
+                        "  </prepare>\r\n" +
+                        "  <name-node>bar</name-node>\r\n" +
+                        "  <configuration>\r\n" +
+                        "    <property>\r\n" +
+                        "      <name>c</name>\r\n" +
+                        "      <value>C</value>\r\n" +
+                        "    </property>\r\n" +
+                        "  </configuration>\r\n" +
+                        "  <script>script.q</script>\r\n" +
+                        "  <param>INPUT=/tmp/table</param>\r\n" +
+                        "  <param>OUTPUT=/tmp/hive</param>\r\n" +
+                        "  <job-tracker>global-jt</job-tracker>\r\n" +
+                        "</hive>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultJobTrackerNotApplicable() throws Exception {
+        ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // Not all actions want a NN (e.g. email action)
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
+                new Configuration());
+        String b1 = app.getNode("b1").getConf();
+        String expectedB1 =
+                "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
+                        "  <to>foo@bar.com</to>\r\n" +
+                        "  <subject>foo</subject>\r\n" +
+                        "  <body>bar</body>\r\n" +
+                        "</email>";
+        b1 = cleanupXml(b1);
+        assertEquals(expectedB1.replaceAll(" ", ""), b1.replaceAll(" ", ""));
+    }
+
+    public void testParserDefaultJobTrackerFail() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        // No default NN is set
+        try {
+            LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
+                    new Configuration());
+            fail();
+        } catch (WorkflowException e) {
+            assertEquals(ErrorCode.E0701, e.getErrorCode());
+            assertTrue(e.getMessage().contains("No job-tracker defined"));
         }
     }
 

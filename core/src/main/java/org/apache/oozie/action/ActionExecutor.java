@@ -60,8 +60,6 @@ public abstract class ActionExecutor {
      * Error code used by {@link #convertException} when there is not register error information for an exception.
      */
     public static final String ERROR_OTHER = "OTHER";
-    
-    public boolean requiresNNJT = false;
 
     public static enum RETRYPOLICY {
         EXPONENTIAL, PERIODIC
@@ -562,4 +560,25 @@ public abstract class ActionExecutor {
      */
     public abstract boolean isCompleted(String externalStatus);
 
+    /**
+     * Returns true if this action type requires a NameNode and JobTracker.  These can either be specified directly in the action
+     * via &lt;name-node&gt; and &lt;job-tracker&gt;, from the fields in the global section, or from their default values.  If
+     * false, Oozie won't ensure (i.e. won't throw an Exception if non-existant) that this action type has these values.
+     *
+     * @return true if a NameNode and JobTracker are required; false if not
+     */
+    public boolean requiresNameNodeJobTracker() {
+        return false;
+    }
+
+    /**
+     * Returns true if this action type supports a Configuration and JobXML.  In this case, Oozie will include the
+     * &lt;configuration&gt; and &lt;job-xml&gt; elements from the global section (if provided) with the action.  If false, Oozie
+     * won't add these.
+     *
+     * @return true if the global section's Configuration and JobXML should be given; false if not
+     */
+    public boolean supportsConfigurationJobXML() {
+        return false;
+    }
 }
