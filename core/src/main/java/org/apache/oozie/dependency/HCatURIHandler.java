@@ -48,6 +48,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
+import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.security.token.Token;
 
 public class HCatURIHandler implements URIHandler {
 
@@ -270,8 +273,10 @@ public class HCatURIHandler implements URIHandler {
                     delegationToken = tokenClient.getDelegationToken(user, UserGroupInformation.getLoginUser()
                             .getUserName());
                     // Store Delegation token in the UGI
-                    ShimLoader.getHadoopShims().setTokenStr(ugi, delegationToken,
-                            hiveConf.get("hive.metastore.token.signature"));
+                    Token<DelegationTokenIdentifier> token = new Token<DelegationTokenIdentifier>();
+                    token.decodeFromUrlString(delegationToken);
+                    token.setService(new Text(hiveConf.get("hive.metastore.token.signature")));
+                    ugi.addToken(token);
                 }
                 finally {
                     if (tokenClient != null)
