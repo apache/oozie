@@ -551,11 +551,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             else {
                 String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
-                if (fileName.endsWith(".so") || fileName.contains(".so.")) { // .so files
-                    uri = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), fileName);
-                    DistributedCache.addCacheFile(uri.normalize(), conf);
-                }
-                else if (fileName.endsWith(".jar")) { // .jar files
+                if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
                         String user = conf.get("user.name");
                         Path pathToAdd = new Path(uri.normalize());
