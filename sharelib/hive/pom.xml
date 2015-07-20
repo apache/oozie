@@ -49,14 +49,6 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.hive</groupId>
-                    <artifactId>hive-hwi</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hive</groupId>
-                    <artifactId>hive-jdbc</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hive</groupId>
                     <artifactId>hive-anttasks</artifactId>
                 </exclusion>
                 <exclusion>
@@ -86,10 +78,6 @@
                 <exclusion>
                     <groupId>javax.servlet</groupId>
                     <artifactId>servlet-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hive</groupId>
-                    <artifactId>hive-exec</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
