@@ -34,6 +34,7 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -157,6 +158,33 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
 
     public void testClientAuthTokenCache() throws Exception {
         Configuration conf = new Configuration(false);
+        // This test requires a constant secret.
+        // In Hadoop 2.5.0, you can set a secret string directly with oozie.authentication.signature.secret and the
+        // AuthenticationFilter will use it.
+        // In Hadoop 2.6.0 (HADOOP-10868), this was abstracted out to SecretProviders that have differnet implementations.  By
+        // default, if a String was given for the secret, the StringSignerSecretProvider would be automatically used and
+        // oozie.authentication.signature.secret would still be loaded.
+        // In Hadoop 2.7.0 (HADOOP-11748), this automatic behavior was removed for security reasons, and the class was made package
+        // private and moved to the hadoop-auth test artifact.  So, not only can we not simply set
+        // oozie.authentication.signature.secret, but we also can't manually configure the StringSignerSecretProvider either.
+        // However, Hadoop 2.7.0  (HADOOP-10670) also added a FileSignerSecretProvider, which we'll use if it exists
+        try {
+            if (Class.forName("org.apache.hadoop.security.authentication.util.FileSignerSecretProvider") != null) {
+                String secretFile = getTestCaseConfDir() + "/auth-secret";
+                conf.set("oozie.authentication.signature.secret.file", secretFile);
+                FileWriter fw = null;
+                try {
+                    fw = new FileWriter(secretFile);
+                    fw.write("secret");
+                } finally {
+                    if (fw != null) {
+                        fw.close();
+                    }
+                }
+            }
+        } catch (ClassNotFoundException cnfe) {
+            // ignore
+        }
         conf.set("oozie.authentication.signature.secret", "secret");
         conf.set("oozie.authentication.simple.anonymous.allowed", "false");
 

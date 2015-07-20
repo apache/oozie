@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2300 TestAuthFilterAuthOozieClient.testClientAuthTokenCache fails with Hadoop 2.7.0 and later (rkanter)
 OOZIE-1837 LauncherMainHadoopUtils sensitive to clock skew (rkanter)
 OOZIE-2187 Add a way to specify a default JT/RM and NN (rkanter)
 OOZIE-2272 Use Hadoop's CredentialProvider for passwords in oozie-site (rkanter)
