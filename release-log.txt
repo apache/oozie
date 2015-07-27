@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2315 TestOozieCLI.testshareLibUpdate_withSecurity fails with Hadoop 2 (rkanter)
 OOZIE-2291 Hive2 workflow.xml.security should have "cred" in action tag instead of "hive2" tag (bzhang via rkanter)
 OOZIE-2289 hive-jdbc dependency in core/pom.xml should be compile (bzhang)
 OOZIE-2300 TestAuthFilterAuthOozieClient.testClientAuthTokenCache fails with Hadoop 2.7.0 and later (rkanter)
