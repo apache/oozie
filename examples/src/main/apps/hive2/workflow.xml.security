@@ -31,8 +31,8 @@
     </credentials>
     <start to="hive2-node"/>
 
-    <action name="hive2-node">
-        <hive2 xmlns="uri:oozie:hive2-action:0.1" cred="hs2-creds">
+    <action name="hive2-node"  cred="hs2-creds">
+        <hive2 xmlns="uri:oozie:hive2-action:0.1">
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <prepare>
