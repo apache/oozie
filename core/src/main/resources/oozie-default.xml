@@ -549,7 +549,7 @@
     <!--  List of supported groups for ELService -->
 	<property>
         <name>oozie.service.ELService.groups</name>
-        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout</value>
+        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout,bundle-submit</value>
         <description>List of groups for different ELServices</description>
     </property>
 
@@ -1000,6 +1000,11 @@
             This property is a convenience property to add extensions to the built in executors without having to
             include all the built in ones.
         </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ELService.functions.bundle-submit</name>
+        <value>bundle:conf=org.apache.oozie.bundle.BundleELFunctions#bundle_conf</value>
     </property>
 
     <property>

@@ -99,6 +99,7 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         final XConfiguration jobConf = setUpBundle();
         jobConf.set("coordName1", "coord1");
         jobConf.set("coordName2", "coord2");
+        jobConf.set("coord1.starttime","2009-02-01T00:00Z");
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
         final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
@@ -149,7 +150,7 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         writeCoordXml(coordPath2, "coord-job-bundle.xml");
 
         Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
-        String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+        String bundleAppXml = getBundleXml("bundle-submit-job-with-functions.xml");
         assertNotNull(bundleAppXml);
         assertTrue(bundleAppXml.length() > 0);
 

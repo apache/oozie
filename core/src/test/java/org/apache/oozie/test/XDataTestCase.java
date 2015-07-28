@@ -1477,6 +1477,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set("nameNode", getNameNodeUri());
         conf.set("coordName1", "coord1");
         conf.set("coordName2", "coord2");
+        conf.set("coord1.starttime","2009-02-01T00:00Z");
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));

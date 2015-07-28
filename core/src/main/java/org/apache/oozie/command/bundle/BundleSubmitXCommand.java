@@ -45,12 +45,13 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.SubmitTransitionXCommand;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
+import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.SchemaService.SchemaName;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.DateUtils;
@@ -60,10 +61,10 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.ParameterVerifier;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.ParameterVerifier;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -136,7 +137,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             }
             conf = resolvedVarsConf;
 
-            String resolvedJobXml = resolvedVars(jobXmlWithNoComment, conf);
+            String resolvedJobXml = resolvedVarsandFunctions(jobXmlWithNoComment, conf);
 
             //verify the uniqueness of coord names
             verifyCoordNameUnique(resolvedJobXml);
@@ -414,6 +415,18 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return bundleBean;
     }
 
+    public static ELEvaluator createELEvaluatorForGroup(Configuration conf, String group) {
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator(group);
+        setConfigToEval(eval, conf);
+        return eval;
+    }
+
+    private static void setConfigToEval(ELEvaluator eval, Configuration conf) {
+        for (Map.Entry<String, String> entry : conf) {
+            eval.setVariable(entry.getKey(), entry.getValue().trim());
+        }
+    }
+
     /**
      * Resolve job xml with conf
      *
@@ -422,9 +435,10 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @return resolved job xml
      * @throws BundleJobException thrown if failed to resolve variables
      */
-    private String resolvedVars(String bundleXml, Configuration conf) throws BundleJobException {
+    private String resolvedVarsandFunctions(String bundleXml, Configuration conf) throws BundleJobException {
+        ELEvaluator eval;
         try {
-            ELEvaluator eval = createEvaluator(conf);
+            eval = createELEvaluatorForGroup(conf, "bundle-submit");
             return eval.evaluate(bundleXml, String.class);
         }
         catch (Exception e) {
