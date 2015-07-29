@@ -20,13 +20,14 @@ package org.apache.oozie.service;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URLDecoder;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Used by {@link TestZKXLogStreamingService#testStreamingWithMultipleOozieServers() } to stream logs from another Oozie "server".
+ * Used by {@link TestZKXLogStreamingService} to stream logs from another Oozie "server".
  * Due to the way the servlet gets loaded, it has to be its own class instead of an inner class.
  */
 public class DummyLogStreamingServlet extends HttpServlet {
@@ -36,7 +37,7 @@ public class DummyLogStreamingServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        lastQueryString = request.getQueryString();
+        lastQueryString = URLDecoder.decode(request.getQueryString(), "UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
         Writer writer = response.getWriter();
         writer.append(logs);

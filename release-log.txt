@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2320 TestZKXLogStreamingService.testStreamingWithMultipleOozieServers_coordActionList is failing (rkanter)
 OOZIE-2293 Oozie 4.0.1 build failed while building Catalog (raviprak via shwethags)
 OOZIE-2308 Add support for bundle:conf() function (kailongs via rohini)
 OOZIE-2315 TestOozieCLI.testshareLibUpdate_withSecurity fails with Hadoop 2 (rkanter)
