@@ -73,7 +73,7 @@ public class CoordELEvaluator {
                                                          Configuration conf) throws Exception {
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator(tag);
         setConfigToEval(eval, conf);
-        SyncCoordDataset ds = getDSObject(event);
+        SyncCoordDataset ds = getDSObject(eval, event);
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
         return eval;
     }
@@ -104,7 +104,7 @@ public class CoordELEvaluator {
             throws Exception {
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("coord-action-start");
         setConfigToEval(eval, conf);
-        SyncCoordDataset ds = getDSObject(dEvent);
+        SyncCoordDataset ds = getDSObject(eval, dEvent);
         SyncCoordAction appInst = new SyncCoordAction();
         appInst.setNominalTime(nominalTime);
         appInst.setActualTime(actualTime);
@@ -254,11 +254,12 @@ public class CoordELEvaluator {
      * @return
      * @throws Exception
      */
-    private static SyncCoordDataset getDSObject(Element eData) throws Exception {
+    private static SyncCoordDataset getDSObject(ELEvaluator eval, Element eData) throws Exception {
         SyncCoordDataset ds = new SyncCoordDataset();
         Element eDataset = eData.getChild("dataset", eData.getNamespace());
         // System.out.println("eDATA :"+ XmlUtils.prettyPrint(eData));
-        Date initInstance = DateUtils.parseDateOozieTZ(eDataset.getAttributeValue("initial-instance"));
+        String expr = eDataset.getAttributeValue("initial-instance");
+        Date initInstance = DateUtils.parseDateOozieTZ(eval.evaluate(expr, String.class));
         ds.setInitInstance(initInstance);
         if (eDataset.getAttributeValue("frequency") != null) {
             int frequency = Integer.parseInt(eDataset.getAttributeValue("frequency"));

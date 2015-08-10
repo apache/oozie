@@ -18,17 +18,13 @@
 
 package org.apache.oozie.coord;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.StringReader;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
-
-import java.io.StringReader;
-
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -173,6 +169,23 @@ public class TestCoordELEvaluator extends XTestCase {
         String expr = "${coord:current(0)}";
         // System.out.println("OUTPUT :" + eval.evaluate(expr, String.class));
         assertEquals("2009-09-08T00:00Z", eval.evaluate(expr, String.class));
+    }
+
+    public void testCreateInstancesELEvaluatorWithDateOffset() throws Exception {
+        SyncCoordAction appInst = new SyncCoordAction();
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2009-09-08T01:00Z"));
+        appInst.setActualTime(DateUtils.parseDateOozieTZ("2010-10-01T00:00Z"));
+        appInst.setTimeUnit(TimeUnit.MINUTE);
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/"
+                + "US/2009/1/31</uris>";
+        dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"${coord:dateOffset('2009-09-08T23:59Z'"
+                + ", 2, 'MINUTE')}\" freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
+        dataEvntXML += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
+        Element event = XmlUtils.parseXml(dataEvntXML);
+        Configuration conf = new XConfiguration(new StringReader(getConfString()));
+        ELEvaluator eval = CoordELEvaluator.createInstancesELEvaluator(event, appInst, conf);
+        SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(CoordELFunctions.DATASET);
+        assertEquals("2009-09-09T00:01Z", DateUtils.formatDateOozieTZ(ds.getInitInstance()));
     }
 
     public void testCreateLazyEvaluator() throws Exception {
