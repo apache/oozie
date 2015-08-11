@@ -131,6 +131,7 @@ public class WorkflowActionQueryExecutor extends
                 query.setParameter("pendingAge", actionBean.getPendingAgeTimestamp());
                 query.setParameter("errorCode", actionBean.getErrorCode());
                 query.setParameter("errorMessage", actionBean.getErrorMessage());
+                query.setParameter("status", actionBean.getStatusStr());
                 query.setParameter("id", actionBean.getId());
                 break;
             case UPDATE_ACTION_START:

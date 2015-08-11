@@ -31,6 +31,7 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.control.KillActionExecutor;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.OozieClient;
@@ -244,8 +245,42 @@ public class TestActionErrors extends XDataTestCase {
      * @throws Exception
      */
     public void testKillNodeErrorMessage() throws Exception {
+        WorkflowActionBean killAction = _testKillNodeErrorMessage("wf-test-kill-node-message.xml");
+        assertEquals("E0729", killAction.getErrorCode());
+        assertEquals("[end]", killAction.getErrorMessage());
+        assertEquals(WorkflowAction.Status.OK, killAction.getStatus());
+    }
+
+    /**
+     * Provides functionality to test kill node message when there's an error processing the message itself
+     *
+     * @throws Exception
+     */
+    public void testKillNodeErrorMessageError() throws Exception {
+        WorkflowActionBean killAction = _testKillNodeErrorMessage("wf-test-kill-node-message-error.xml");
+        assertEquals("E0756", killAction.getErrorCode());
+        assertEquals("E0756: Exception parsing Kill node message [Encountered \"{\", expected one of [<INTEGER_LITERAL>, " +
+                        "<FLOATING_POINT_LITERAL>, <STRING_LITERAL>, \"true\", \"false\", \"null\", \"(\", \"-\", \"not\", " +
+                        "\"!\", \"empty\", <IDENTIFIER>]]", killAction.getErrorMessage());
+        assertEquals(WorkflowAction.Status.ERROR, killAction.getStatus());
+    }
+
+    /**
+     * Provides functionality to test kill node message when there's an error processing the message itself
+     *
+     * @throws Exception
+     */
+    public void testKillNodeErrorMessageError2() throws Exception {
+        WorkflowActionBean killAction = _testKillNodeErrorMessage("wf-test-kill-node-message-error2.xml");
+        assertEquals("E0756", killAction.getErrorCode());
+        assertEquals("E0756: Exception parsing Kill node message [variable [bar] cannot be resolved]",
+                killAction.getErrorMessage());
+        assertEquals(WorkflowAction.Status.ERROR, killAction.getStatus());
+    }
+
+    private WorkflowActionBean _testKillNodeErrorMessage(String workflowXmlFile) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
-        Reader reader = IOUtils.getResourceAsReader("wf-test-kill-node-message.xml", -1);
+        Reader reader = IOUtils.getResourceAsReader(workflowXmlFile, -1);
         Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
         IOUtils.copyCharStream(reader, writer);
 
@@ -277,18 +312,22 @@ public class TestActionErrors extends XDataTestCase {
         WorkflowActionsGetForJobJPAExecutor wfActionsGetCmd = new WorkflowActionsGetForJobJPAExecutor(jobId);
         List<WorkflowActionBean> actions = jpaService.execute(wfActionsGetCmd);
 
-        int n = actions.size();
         WorkflowActionBean action = null;
+        WorkflowActionBean killAction = null;
         for (WorkflowActionBean bean : actions) {
             if (bean.getType().equals("test")) {
                 action = bean;
-                break;
+            }
+            if (bean.getType().equals(KillActionExecutor.TYPE)) {
+                killAction = bean;
             }
         }
         assertNotNull(action);
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals("end", action.getErrorMessage());
         assertEquals(WorkflowAction.Status.ERROR, action.getStatus());
+        assertNotNull(killAction);
+        return killAction;
     }
 
     /**

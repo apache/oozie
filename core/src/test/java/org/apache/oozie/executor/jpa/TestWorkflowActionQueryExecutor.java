@@ -121,6 +121,7 @@ public class TestWorkflowActionQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("transition"), bean.getTransition());
         assertEquals(query.getParameterValue("errorCode"), bean.getErrorCode());
         assertEquals(query.getParameterValue("errorMessage"), bean.getErrorMessage());
+        assertEquals(query.getParameterValue("status"), bean.getStatusStr());
         assertEquals(query.getParameterValue("id"), bean.getId());
         // UPDATE_ACTION_START
         query = WorkflowActionQueryExecutor.getInstance().getUpdateQuery(WorkflowActionQuery.UPDATE_ACTION_START, bean,

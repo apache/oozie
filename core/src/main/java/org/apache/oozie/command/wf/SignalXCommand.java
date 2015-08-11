@@ -297,23 +297,24 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                     InstrumentUtils.incrJobCounter(INSTR_KILLED_JOBS_COUNTER_NAME, 1, getInstrumentation());
                     try {
                         String tmpNodeConf = nodeDef.getConf();
-                        String actionConf = context.getELEvaluator().evaluate(tmpNodeConf, String.class);
+                        String message = context.getELEvaluator().evaluate(tmpNodeConf, String.class);
                         LOG.debug(
                                 "Try to resolve KillNode message for jobid [{0}], actionId [{1}], before resolve [{2}], "
-                                        + "after resolve [{3}]", jobId, actionId, tmpNodeConf, actionConf);
+                                        + "after resolve [{3}]", jobId, actionId, tmpNodeConf, message);
                         if (wfAction.getErrorCode() != null) {
-                            wfAction.setErrorInfo(wfAction.getErrorCode(), actionConf);
+                            wfAction.setErrorInfo(wfAction.getErrorCode(), message);
                         }
                         else {
-                            wfAction.setErrorInfo(ErrorCode.E0729.toString(), actionConf);
+                            wfAction.setErrorInfo(ErrorCode.E0729.toString(), message);
                         }
-                        updateList.add(new UpdateEntry<WorkflowActionQuery>(
-                                WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS_ERROR, wfAction));
                     }
                     catch (Exception ex) {
-                        LOG.warn("Exception in SignalXCommand ", ex.getMessage(), ex);
-                        throw new CommandException(ErrorCode.E0729, wfAction.getName(), ex);
+                        LOG.warn("Exception in SignalXCommand when processing Kill node message: {0}", ex.getMessage(), ex);
+                        wfAction.setErrorInfo(ErrorCode.E0756.toString(), ErrorCode.E0756.format(ex.getMessage()));
+                        wfAction.setStatus(WorkflowAction.Status.ERROR);
                     }
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(
+                            WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS_ERROR, wfAction));
                 }
             }
 
