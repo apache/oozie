@@ -85,12 +85,13 @@
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
 
          <!-- Sharelib component versions -->
-         <hive.version>0.13.1</hive.version>
-         <pig.version>0.12.1-mapr-1408</pig.version>
+        <!-- Pig and Hive version must be changed after release -->
+         <hive.version>1.2.0-mapr</hive.version>
+         <pig.version>0.15.0-mapr-SNAPSHOT</pig.version>
          <pig.classifier></pig.classifier>
          <pig-2.classifier>h2</pig-2.classifier>
-         <sqoop.version>1.4.4</sqoop.version>
-         <spark.version>1.2.1</spark.version>
+         <sqoop.version>1.4.6</sqoop.version>
+         <spark.version>1.4.1</spark.version>
          <spark.guava.version>14.0.1</spark.guava.version>
          <sqoop.classifier>hadoop100</sqoop.classifier>
          <streaming.version>${hadoop.version}</streaming.version>
@@ -134,6 +135,19 @@
     </distributionManagement>
 
     <repositories>
+
+        <!-- Temporary repo -->
+        <repository>
+            <id>repository_cv.mapr.com</id>
+            <url>http://repository_cv.mapr.com/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+
         <repository>
             <id>repository.mapr.com</id>
             <url>http://repository.mapr.com/maven/</url>
@@ -147,13 +161,6 @@
         <repository>
             <id>central</id>
             <url>http://repo1.maven.org/maven2</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>Codehaus repository</id>
-            <url>http://repository.codehaus.org/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -832,7 +839,7 @@
 
             <dependency>
                 <groupId>org.apache.pig</groupId>
-                <artifactId>pig-withouthadoop</artifactId>
+                <artifactId>pig</artifactId>
                 <version>${pig.version}</version>
                 <classifier>${pig.classifier}</classifier>
                 <exclusions>
@@ -902,7 +909,7 @@
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
-                <version>0.9.94</version>
+                <version>2.12</version>
                 <exclusions>
                     <exclusion>
                         <groupId>junit</groupId>
@@ -1147,6 +1154,64 @@
                         <groupId>org.apache.zookeeper</groupId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-common</artifactId>
+                <version>${hive.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-exec</artifactId>
+                <version>${hive.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-server-applicationhistoryservice</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-server-annotations</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-server-common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-server-resourcemanager</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-metastore</artifactId>
+                <version>${hive.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-serde</artifactId>
+                <version>${hive.version}</version>
             </dependency>
 
             <dependency>

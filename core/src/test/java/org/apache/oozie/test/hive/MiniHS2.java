@@ -18,24 +18,15 @@
 
 package org.apache.oozie.test.hive;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.shims.HadoopShims.MiniDFSShim;
 import org.apache.hadoop.hive.shims.HadoopShims.MiniMrShim;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hive.service.Service;
 import org.apache.hive.service.cli.CLIServiceClient;
 import org.apache.hive.service.cli.SessionHandle;
@@ -44,7 +35,13 @@ import org.apache.hive.service.cli.thrift.ThriftCLIServiceClient;
 import org.apache.hive.service.cli.thrift.ThriftHttpCLIService;
 import org.apache.hive.service.server.HiveServer2;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.assertNotNull;
 
 // TODO: This class and AbstractHiveService are copied from the org.apache.hive.jdbc package in Hive 13.1; we can remove them once
 // Hive publishes its "hive-it-unit" artifact to maven.
@@ -84,7 +81,6 @@ public class MiniHS2 extends AbstractHiveService {
     hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST, getHost());
     hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_PORT, getBinaryPort());
     hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PORT, getHttpPort());
-    HiveMetaStore.HMSHandler.resetDefaultDBFlag();
 
     Path scratchDir = new Path(baseDfsDir, "scratch");
     fs.mkdirs(scratchDir);
