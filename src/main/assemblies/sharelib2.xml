@@ -31,6 +31,26 @@
     </files>
 
     <fileSets>
+        <fileSet>
+            <directory>${basedir}/pig/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/pig2/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/streaming/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/hive/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/sqoop/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
          <fileSet>
             <directory>${basedir}/oozie/target/partial-sharelib</directory>
             <outputDirectory>/</outputDirectory>
@@ -39,6 +59,18 @@
            <directory>${basedir}/distcp/target/partial-sharelib</directory>
            <outputDirectory>/</outputDirectory>
        </fileSet>
+       <fileSet>
+           <directory>${basedir}/hcatalog/target/partial-sharelib</directory>
+           <outputDirectory>/</outputDirectory>
+       </fileSet>
+       <fileSet>
+           <directory>${basedir}/hive2/target/partial-sharelib</directory>
+           <outputDirectory>/</outputDirectory>
+       </fileSet>
+        <fileSet>
+            <directory>${basedir}/spark/target/partial-sharelib</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>
