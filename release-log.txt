@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2325 Shell action fails if user overrides oozie.launcher.mapreduce.map.env (kailongs via puru)
 OOZIE-2324 A syntax error in the kill node causes the workflow to get stuck and other problems (rkanter)
 OOZIE-2309 Enable the coord:dateOffset() function in /coordinator-app/datasets/dataset/@initial-instance (kailongs via rohini)
 OOZIE-2305 Compile Oozie with Hive-1.2.0 (raviprak via shwethags)

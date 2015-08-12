@@ -33,6 +33,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
      * Config property name to set the child environment
      */
     public String OOZIE_LAUNCHER_CHILD_ENV = "mapred.child.env";
+    public String OOZIE_LAUNCHER_MAP_ENV = "mapreduce.map.env";
 
     public ShellActionExecutor() {
         super("shell");
@@ -129,6 +130,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
      */
     protected void addDefaultChildEnv(Configuration conf) {
         String envValues = "PATH=.:$PATH";
+        updateProperty(conf, OOZIE_LAUNCHER_MAP_ENV, envValues);
         updateProperty(conf, OOZIE_LAUNCHER_CHILD_ENV, envValues);
     }
 
