@@ -1648,7 +1648,38 @@ public class TestStatusTransitService extends XDataTestCase {
 
     }
 
-    static class JobLock implements Runnable {
+    public void testBundleRunningAfterCoordResume() throws Exception {
+
+        setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
+        services = new Services();
+        services.init();
+        CoordinatorJobBean coord = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+
+        BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, true);
+        final String bundleId = bundleJob.getId();
+        addRecordToBundleActionTable(bundleId, coord.getId(), "COORD-TEST", 0, Job.Status.RUNNING);
+        new CoordSuspendXCommand(coord.getId()).call();
+
+        coord = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, coord.getId());
+        assertEquals(Job.Status.SUSPENDED, coord.getStatus());
+
+        Runnable runnable = new StatusTransitRunnable();
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.SUSPENDED, bundleJob.getStatus());
+
+        new CoordResumeXCommand(coord.getId()).call();
+        coord = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, coord.getId());
+        assertEquals(Job.Status.RUNNING, coord.getStatus());
+
+        runnable = new StatusTransitRunnable();
+        runnable.run();
+        bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
+        assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
+
+    }
+
+  static class JobLock implements Runnable {
         String jobId;
 
         public JobLock(String jobId) {

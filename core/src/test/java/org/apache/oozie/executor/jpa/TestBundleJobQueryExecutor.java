@@ -128,7 +128,7 @@ public class TestBundleJobQueryExecutor extends XDataTestCase {
         BundleJobBean bean = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
         // GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME
         BundleJobBean retBean = BundleJobQueryExecutor.getInstance().get(
-                BundleJobQuery.GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME, bean.getId());
+                BundleJobQuery.GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME, bean.getId());
         assertEquals(bean.getId(), retBean.getId());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
         assertEquals(bean.getPending(), retBean.getPending());

@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2228 Statustransit service doesn't pick bundle with suspend status (puru)
 OOZIE-2325 Shell action fails if user overrides oozie.launcher.mapreduce.map.env (kailongs via puru)
 OOZIE-2324 A syntax error in the kill node causes the workflow to get stuck and other problems (rkanter)
 OOZIE-2309 Enable the coord:dateOffset() function in /coordinator-app/datasets/dataset/@initial-instance (kailongs via rohini)

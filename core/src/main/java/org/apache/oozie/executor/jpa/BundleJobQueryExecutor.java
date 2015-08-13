@@ -48,7 +48,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         UPDATE_BUNDLE_JOB_PAUSE_KICKOFF,
         GET_BUNDLE_JOB,
         GET_BUNDLE_JOB_STATUS,
-        GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME,
+        GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME,
         GET_BUNDLE_JOB_ID_JOBXML_CONF,
         GET_BUNDLE_IDS_FOR_STATUS_TRANSIT
     };
@@ -131,7 +131,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
         Query query = em.createNamedQuery(namedQuery.name());
         switch (namedQuery) {
             case GET_BUNDLE_JOB:
-            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME:
+            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME:
             case GET_BUNDLE_JOB_ID_JOBXML_CONF:
             case GET_BUNDLE_JOB_STATUS:
                 query.setParameter("id", parameters[0]);
@@ -196,13 +196,16 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 bean.setId((String) parameters[0]);
                 bean.setStatus((String) ret);
                 break;
-            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MODTIME:
+            case GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME:
                 bean = new BundleJobBean();
                 arr = (Object[]) ret;
                 bean.setId((String) arr[0]);
                 bean.setStatus((String) arr[1]);
                 bean.setPending((Integer) arr[2]);
                 bean.setLastModifiedTime(DateUtils.toDate((Timestamp) arr[3]));
+                bean.setPauseTime(DateUtils.toDate((Timestamp) arr[4]));
+                bean.setSuspendedTime(DateUtils.toDate((Timestamp) arr[5]));
+
                 break;
             case GET_BUNDLE_JOB_ID_JOBXML_CONF:
                 bean = new BundleJobBean();
