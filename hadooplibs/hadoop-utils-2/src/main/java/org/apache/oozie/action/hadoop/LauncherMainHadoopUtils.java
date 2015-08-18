@@ -47,6 +47,13 @@ public class LauncherMainHadoopUtils {
 
     private static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
         System.out.println("Fetching child yarn jobs");
+        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        if (tag == null) {
+            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return childYarnJobs;
+        }
+        System.out.println("tag id : " + tag);
         long startTime = 0L;
         try {
             startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
@@ -54,14 +61,6 @@ public class LauncherMainHadoopUtils {
             throw new RuntimeException("Could not find Oozie job launch time", nfe);
         }
 
-        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
-        if (actionConf.get(CHILD_MAPREDUCE_JOB_TAGS) == null) {
-            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
-            return childYarnJobs;
-        }
-
-        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
-        System.out.println("tag id : " + tag);
         GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
         gar.setScope(ApplicationsRequestScope.OWN);
         gar.setApplicationTags(Collections.singleton(tag));

@@ -1695,6 +1695,16 @@
     <!-- This is common to the subclasses of action executors for Java (e.g. map-reduce, pig, hive, java, etc) -->
 
     <property>
+        <name>oozie.action.launcher.am.restart.kill.childjobs</name>
+        <value>true</value>
+        <description>
+            Multiple instances of launcher jobs can happen due to RM non-work preserving recovery on RM restart, AM recovery
+            due to crashes or AM network connectivity loss. This could also lead to orphaned child jobs of the old AM attempts
+            leading to conflicting runs. This kills child jobs of previous attempts using YARN application tags.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
         <value>true</value>
         <description>

@@ -23,7 +23,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -322,13 +324,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    protected RunningJob submitAction(Context context) throws Exception {
-        JavaActionExecutor ae = new JavaActionExecutor();
+    protected RunningJob submitAction(Context context, JavaActionExecutor javaActionExecutor) throws Exception {
 
         WorkflowAction action = context.getAction();
-
-        ae.prepareActionDir(getFileSystem(), context);
-        ae.submitLauncher(getFileSystem(), context, action);
+        javaActionExecutor.prepareActionDir(getFileSystem(), context);
+        javaActionExecutor.submitLauncher(getFileSystem(), context, action);
 
         String jobId = action.getExternalId();
         String jobTracker = action.getTrackerUri();
@@ -345,6 +345,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
         assertNotNull(runningJob);
         return runningJob;
+    }
+
+    protected RunningJob submitAction(Context context) throws Exception {
+        return submitAction(context, new JavaActionExecutor());
     }
 
     public void testSimpestSleSubmitOK() throws Exception {
@@ -2478,6 +2482,46 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ConfigurationService.set("oozie.action.sharelib.for.java", "java");
 
         final RunningJob runningJob = submitAction(context);
+        waitFor(60 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
+        assertTrue(runningJob.isSuccessful());
+    }
+
+    public void testJobSubmissionWithoutYarnKill() throws Exception {
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "id.pig")));
+        w.write("A = load '$INPUT' using PigStorage(':');\n");
+        w.write("store B into '$OUTPUT' USING PigStorage();\n");
+        w.close();
+        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<prepare>" + "<delete path='outputdir' />" + "</prepare>"
+                + "<configuration>" + "<property>" + "<name>mapred.compress.map.output</name>" + "<value>true</value>"
+                + "</property>" + "<property>" + "<name>mapred.job.queue.name</name>" + "<value>default</value>"
+                + "</property>" + "</configuration>" + "<script>" + inputDir.toString() + "/id.pig" + "</script>"
+                + "<param>INPUT=" + inputDir.toUri().getPath() + "</param>" + "<param>OUTPUT="
+                + outputDir.toUri().getPath() + "/pig-output</param>" + "</pig>";
+
+        PigActionExecutor ae = new PigActionExecutor();
+        WorkflowJobBean wfBean = addRecordToWfJobTable("test1", actionXml);
+        WorkflowActionBean action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+        Context context = new Context(wfBean, action);
+
+        ConfigurationService.setBoolean(JavaActionExecutor.HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART, false);
+
+        final RunningJob runningJob = submitAction(context, ae);
         waitFor(60 * 1000, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
