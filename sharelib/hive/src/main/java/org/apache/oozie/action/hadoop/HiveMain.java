@@ -34,6 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
@@ -205,15 +206,6 @@ public class HiveMain extends LauncherMain {
         Configuration hiveConf = setUpHiveSite();
 
         List<String> arguments = new ArrayList<String>();
-        String scriptPath = hiveConf.get(HiveActionExecutor.HIVE_SCRIPT);
-
-        if (scriptPath == null) {
-            throw new RuntimeException("Action Configuration does not have [" +  HiveActionExecutor.HIVE_SCRIPT + "] property");
-        }
-
-        if (!new File(scriptPath).exists()) {
-            throw new RuntimeException("Hive script file [" + scriptPath + "] does not exist");
-        }
 
         String logFile = setUpHiveLog4J(hiveConf);
         arguments.add("--hiveconf");
@@ -221,24 +213,45 @@ public class HiveMain extends LauncherMain {
         arguments.add("--hiveconf");
         arguments.add("hive.log4j.exec.file=" + new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath());
 
-        // print out current directory & its contents
-        File localDir = new File("dummy").getAbsoluteFile().getParentFile();
-        System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
-        System.out.println("------------------------");
-        for (String file : localDir.list()) {
-            System.out.println("  " + file);
+        String scriptPath = hiveConf.get(HiveActionExecutor.HIVE_SCRIPT);
+        String query = hiveConf.get(HiveActionExecutor.HIVE_QUERY);
+        if (scriptPath != null) {
+            if (!new File(scriptPath).exists()) {
+                throw new RuntimeException("Hive script file [" + scriptPath + "] does not exist");
+            }
+            // print out current directory & its contents
+            File localDir = new File("dummy").getAbsoluteFile().getParentFile();
+            System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
+            System.out.println("------------------------");
+            for (String file : localDir.list()) {
+                System.out.println("  " + file);
+            }
+            System.out.println("------------------------");
+            System.out.println();
+            // Prepare the Hive Script
+            String script = readStringFromFile(scriptPath);
+            System.out.println();
+            System.out.println("Script [" + scriptPath + "] content: ");
+            System.out.println("------------------------");
+            System.out.println(script);
+            System.out.println("------------------------");
+            System.out.println();
+            arguments.add("-f");
+            arguments.add(scriptPath);
+        } else if (query != null) {
+            System.out.println("Query: ");
+            System.out.println("------------------------");
+            System.out.println(query);
+            System.out.println("------------------------");
+            System.out.println();
+            String filename = createScriptFile(query);
+            arguments.add("-f");
+            arguments.add(filename);
+        } else {
+            throw new RuntimeException("Action Configuration does not have ["
+                +  HiveActionExecutor.HIVE_SCRIPT + "], or ["
+                +  HiveActionExecutor.HIVE_QUERY + "] property");
         }
-        System.out.println("------------------------");
-        System.out.println();
-
-        // Prepare the Hive Script
-        String script = readStringFromFile(scriptPath);
-        System.out.println();
-        System.out.println("Script [" + scriptPath + "] content: ");
-        System.out.println("------------------------");
-        System.out.println(script);
-        System.out.println("------------------------");
-        System.out.println();
 
         // Pass any parameters to Hive via arguments
         String[] params = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
@@ -260,9 +273,6 @@ public class HiveMain extends LauncherMain {
             System.out.println("------------------------");
             System.out.println();
         }
-
-        arguments.add("-f");
-        arguments.add(scriptPath);
 
         String[] hiveArgs = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
         for (String hiveArg : hiveArgs) {
@@ -300,6 +310,13 @@ public class HiveMain extends LauncherMain {
             System.out.println("\n<<< Invocation of Hive command completed <<<\n");
             writeExternalChildIDs(logFile, HIVE_JOB_IDS_PATTERNS, "Hive");
         }
+    }
+
+    private String createScriptFile(String query) throws IOException {
+        String filename = "oozie-hive-query-" + System.currentTimeMillis() + ".hql";
+        File f = new File(filename);
+        FileUtils.writeStringToFile(f, query, "UTF-8");
+        return filename;
     }
 
     private void runHive(String[] args) throws Exception {

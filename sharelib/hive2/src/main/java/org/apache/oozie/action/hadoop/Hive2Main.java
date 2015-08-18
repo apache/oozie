@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -136,32 +137,44 @@ public class Hive2Main extends LauncherMain {
         arguments.add("org.apache.hive.jdbc.HiveDriver");
 
         String scriptPath = actionConf.get(Hive2ActionExecutor.HIVE2_SCRIPT);
-        if (scriptPath == null) {
-            throw new RuntimeException("Action Configuration does not have [" +  Hive2ActionExecutor.HIVE2_SCRIPT
-                    + "] property");
+        String query = actionConf.get(Hive2ActionExecutor.HIVE2_QUERY);
+        if (scriptPath != null) {
+            if (!new File(scriptPath).exists()) {
+                throw new RuntimeException("Hive 2 script file [" + scriptPath + "] does not exist");
+            }
+            // print out current directory & its contents
+            File localDir = new File("dummy").getAbsoluteFile().getParentFile();
+            System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
+            System.out.println("------------------------");
+            for (String file : localDir.list()) {
+                System.out.println("  " + file);
+            }
+            System.out.println("------------------------");
+            System.out.println();
+            // Prepare the Hive Script
+            String script = readStringFromFile(scriptPath);
+            System.out.println();
+            System.out.println("Script [" + scriptPath + "] content: ");
+            System.out.println("------------------------");
+            System.out.println(script);
+            System.out.println("------------------------");
+            System.out.println();
+            arguments.add("-f");
+            arguments.add(scriptPath);
+        } else if (query != null) {
+            System.out.println("Query: ");
+            System.out.println("------------------------");
+            System.out.println(query);
+            System.out.println("------------------------");
+            System.out.println();
+            String filename = createScriptFile(query);
+            arguments.add("-f");
+            arguments.add(filename);
+        } else {
+            throw new RuntimeException("Action Configuration does not have ["
+                +  Hive2ActionExecutor.HIVE2_SCRIPT + "], or ["
+                +  Hive2ActionExecutor.HIVE2_QUERY + "] property");
         }
-        if (!new File(scriptPath).exists()) {
-            throw new RuntimeException("Hive 2 script file [" + scriptPath + "] does not exist");
-        }
-
-        // print out current directory & its contents
-        File localDir = new File("dummy").getAbsoluteFile().getParentFile();
-        System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
-        System.out.println("------------------------");
-        for (String file : localDir.list()) {
-            System.out.println("  " + file);
-        }
-        System.out.println("------------------------");
-        System.out.println();
-
-        // Prepare the Hive Script
-        String script = readStringFromFile(scriptPath);
-        System.out.println();
-        System.out.println("Script [" + scriptPath + "] content: ");
-        System.out.println("------------------------");
-        System.out.println(script);
-        System.out.println("------------------------");
-        System.out.println();
 
         // Pass any parameters to Beeline via arguments
         String[] params = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
@@ -183,9 +196,6 @@ public class Hive2Main extends LauncherMain {
             System.out.println("------------------------");
             System.out.println();
         }
-
-        arguments.add("-f");
-        arguments.add(scriptPath);
 
         // This tells BeeLine to look for a delegation token; otherwise it won't and will fail in secure mode because there are no
         // Kerberos credentials.  In non-secure mode, this argument is ignored so we can simply always pass it.
@@ -233,6 +243,13 @@ public class Hive2Main extends LauncherMain {
             System.out.println("\n<<< Invocation of Beeline command completed <<<\n");
             writeExternalChildIDs(logFile, HIVE2_JOB_IDS_PATTERNS, "Beeline");
         }
+    }
+
+    private String createScriptFile(String query) throws IOException {
+        String filename = "oozie-hive2-query-" + System.currentTimeMillis() + ".hql";
+        File f = new File(filename);
+        FileUtils.writeStringToFile(f, query, "UTF-8");
+        return filename;
     }
 
     private void runBeeline(String[] args, String logFile) throws Exception {

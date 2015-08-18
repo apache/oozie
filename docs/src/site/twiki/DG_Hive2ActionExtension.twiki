@@ -16,8 +16,9 @@ The workflow job will wait until the Hive Server 2 job completes before
 continuing to the next action.
 
 To run the Hive Server 2 job, you have to configure the =hive2= action with the
-=job-tracker=, =name-node=, =jdbc-url=, =password=, and Hive =script= elements as
-well as the necessary parameters and configuration.
+=job-tracker=, =name-node=, =jdbc-url=, =password= elements, and either
+Hive's =script= or =query= element, as well as the necessary parameters
+and configuration.
 
 A =hive2= action can be configured to create or delete HDFS directories
 before starting the Hive Server 2 job.
@@ -99,6 +100,10 @@ execute. The Hive script can be templatized with variables of the form
 =${VARIABLE}=. The values of these variables can then be specified
 using the =params= element.
 
+The =query= element available from uri:oozie:hive2-action:0.2, can be used instead of the =script= element. It allows for embedding
+queries within the =worklfow.xml= directly.  Similar to the =script= element, it also allows for the templatization of variables
+in the form =${VARIABLE}=.
+
 The =params= element, if present, contains parameters to be passed to
 the Hive script.
 
@@ -149,6 +154,66 @@ with a Kerberized Hive Server 2.
 ---++ Appendix, Hive 2 XML-Schema
 
 ---+++ AE.A Appendix A, Hive 2 XML-Schema
+
+---++++ Hive 2 Action Schema Version 0.2
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hive2="uri:oozie:hive2-action:0.2" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:hive2-action:0.2">
+.
+    <xs:element name="hive2" type="hive2:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="hive2:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="hive2:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="jdbc-url" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="password" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="1" maxOccurs="1">
+                <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="query"  type="xs:string" minOccurs="1" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="argument" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="hive2:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="hive2:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+.
+</xs:schema>
+</verbatim>
 
 ---++++ Hive 2 Action Schema Version 0.1
 <verbatim>

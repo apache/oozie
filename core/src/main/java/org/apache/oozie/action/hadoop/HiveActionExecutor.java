@@ -21,11 +21,9 @@ package org.apache.oozie.action.hadoop;
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,7 +31,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.service.ConfigurationService;
@@ -46,12 +43,16 @@ import org.jdom.Namespace;
 public class HiveActionExecutor extends ScriptLanguageActionExecutor {
 
     private static final String HIVE_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.HiveMain";
+    static final String HIVE_QUERY = "oozie.hive.query";
     static final String HIVE_SCRIPT = "oozie.hive.script";
     static final String HIVE_PARAMS = "oozie.hive.params";
     static final String HIVE_ARGS = "oozie.hive.args";
 
+    private boolean addScriptToCache;
+
     public HiveActionExecutor() {
         super("hive");
+        this.addScriptToCache = false;
     }
 
     @Override
@@ -67,6 +68,11 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
+    protected boolean shouldAddScriptToCache() {
+        return this.addScriptToCache;
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HIVE_MAIN_CLASS_NAME);
     }
@@ -78,12 +84,20 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         Configuration conf = super.setupActionConf(actionConf, context, actionXml, appPath);
 
         Namespace ns = actionXml.getNamespace();
-        String script = actionXml.getChild("script", ns).getTextTrim();
-        String scriptName = new Path(script).getName();
-        String hiveScriptContent = context.getProtoActionConf().get(XOozieClient.HIVE_SCRIPT);
-
-        if (hiveScriptContent == null){
-            addToCache(conf, appPath, script + "#" + scriptName, false);
+        Element scriptElement = actionXml.getChild("script", ns);
+        Element queryElement = actionXml.getChild("query", ns);
+        if (scriptElement != null){
+            String script = scriptElement.getTextTrim();
+            String scriptName = new Path(script).getName();
+            this.addScriptToCache = true;
+            conf.set(HIVE_SCRIPT, scriptName);
+        } else if (queryElement != null) {
+            // Unable to use getTextTrim due to https://issues.apache.org/jira/browse/HIVE-8182
+            String query = queryElement.getText();
+            conf.set(HIVE_QUERY, query);
+        } else {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "INVALID_ARGUMENTS",
+                "Hive action requires one of <script> or <query> to be set. Neither were found.");
         }
 
         List<Element> params = (List<Element>) actionXml.getChildren("param", ns);
@@ -91,6 +105,8 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
+        MapReduceMain.setStrings(conf, HIVE_PARAMS, strParams);
+
         String[] strArgs = null;
         List<Element> eArgs = actionXml.getChildren("argument", ns);
         if (eArgs != null && eArgs.size() > 0) {
@@ -99,15 +115,8 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
-
-        setHiveScript(conf, scriptName, strParams, strArgs);
+        MapReduceMain.setStrings(conf, HIVE_ARGS, strArgs);
         return conf;
-    }
-
-    public static void setHiveScript(Configuration conf, String script, String[] params, String[] args) {
-        conf.set(HIVE_SCRIPT, script);
-        MapReduceMain.setStrings(conf, HIVE_PARAMS, params);
-        MapReduceMain.setStrings(conf, HIVE_ARGS, args);
     }
 
     @Override

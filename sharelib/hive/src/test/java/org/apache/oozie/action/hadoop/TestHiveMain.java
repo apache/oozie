@@ -50,6 +50,7 @@ public class TestHiveMain extends MainTestCase {
     private String getHiveScript(String inputPath, String outputPath) {
         StringBuilder buffer = new StringBuilder(NEW_LINE);
         buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
         buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
         buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");
         buffer.append(inputPath).append("';").append(NEW_LINE);
@@ -100,8 +101,12 @@ public class TestHiveMain extends MainTestCase {
 
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
-            HiveActionExecutor.setHiveScript(jobConf, script.toString(), new String[]{"IN=" + inputDir.toUri().getPath(),
-                    "OUT=" + outputDir.toUri().getPath()}, new String[] { "-v" });
+            jobConf.set(HiveActionExecutor.HIVE_SCRIPT, script.toString());
+            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_PARAMS, new String[]{
+                "IN=" + inputDir.toUri().getPath(),
+                "OUT=" + outputDir.toUri().getPath()});
+            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_ARGS,
+                new String[]{ "-v" });
 
             File actionXml = new File(getTestCaseDir(), "action.xml");
             OutputStream os = new FileOutputStream(actionXml);

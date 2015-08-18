@@ -21,11 +21,9 @@ package org.apache.oozie.action.hadoop;
 import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,11 +42,15 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
     static final String HIVE2_JDBC_URL = "oozie.hive2.jdbc.url";
     static final String HIVE2_PASSWORD = "oozie.hive2.password";
     static final String HIVE2_SCRIPT = "oozie.hive2.script";
+    static final String HIVE2_QUERY = "oozie.hive2.query";
     static final String HIVE2_PARAMS = "oozie.hive2.params";
     static final String HIVE2_ARGS = "oozie.hive2.args";
 
+    private boolean addScriptToCache;
+
     public Hive2ActionExecutor() {
         super("hive2");
+        this.addScriptToCache = false;
     }
 
     @Override
@@ -64,6 +66,11 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
+    protected boolean shouldAddScriptToCache(){
+        return this.addScriptToCache;
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS, HIVE2_MAIN_CLASS_NAME);
     }
@@ -76,19 +83,29 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
         Namespace ns = actionXml.getNamespace();
 
         String jdbcUrl = actionXml.getChild("jdbc-url", ns).getTextTrim();
+        conf.set(HIVE2_JDBC_URL, jdbcUrl);
 
         String password = null;
         Element passwordElement = actionXml.getChild("password", ns);
         if (passwordElement != null) {
             password = actionXml.getChild("password", ns).getTextTrim();
+            conf.set(HIVE2_PASSWORD, password);
         }
 
-        String script = actionXml.getChild("script", ns).getTextTrim();
-        String scriptName = new Path(script).getName();
-        String beelineScriptContent = context.getProtoActionConf().get(HIVE2_SCRIPT);
-
-        if (beelineScriptContent == null){
-            addToCache(conf, appPath, script + "#" + scriptName, false);
+        Element queryElement = actionXml.getChild("query", ns);
+        Element scriptElement  = actionXml.getChild("script", ns);
+        if(scriptElement != null) {
+            String script = scriptElement.getTextTrim();
+            String scriptName = new Path(script).getName();
+            this.addScriptToCache = true;
+            conf.set(HIVE2_SCRIPT, scriptName);
+        } else if(queryElement != null) {
+            // Unable to use getTextTrim due to https://issues.apache.org/jira/browse/HIVE-8182
+            String query = queryElement.getText();
+            conf.set(HIVE2_QUERY, query);
+        } else {
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "INVALID_ARGUMENTS",
+                "Hive 2 action requires one of <script> or <query> to be set. Neither were found.");
         }
 
         List<Element> params = (List<Element>) actionXml.getChildren("param", ns);
@@ -96,6 +113,8 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
+        MapReduceMain.setStrings(conf, HIVE2_PARAMS, strParams);
+
         String[] strArgs = null;
         List<Element> eArgs = actionXml.getChildren("argument", ns);
         if (eArgs != null && eArgs.size() > 0) {
@@ -104,20 +123,9 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
+        MapReduceMain.setStrings(conf, HIVE2_ARGS, strArgs);
 
-        setHive2Props(conf, jdbcUrl, password, scriptName, strParams, strArgs);
         return conf;
-    }
-
-    public static void setHive2Props(Configuration conf, String jdbcUrl, String password, String script, String[] params,
-            String[] args) {
-        conf.set(HIVE2_JDBC_URL, jdbcUrl);
-        if (password != null) {
-            conf.set(HIVE2_PASSWORD, password);
-        }
-        conf.set(HIVE2_SCRIPT, script);
-        MapReduceMain.setStrings(conf, HIVE2_PARAMS, params);
-        MapReduceMain.setStrings(conf, HIVE2_ARGS, args);
     }
 
     @Override

@@ -71,23 +71,23 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
     }
 
     @SuppressWarnings("unchecked")
-    public void testSetupMethods() throws Exception {
+    public void testSetupMethodsForScript() throws Exception {
         Hive2ActionExecutor ae = new Hive2ActionExecutor();
         List<Class> classes = new ArrayList<Class>();
         classes.add(Hive2Main.class);
         assertEquals(classes, ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<hive2>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<jdbc-url>jdbc:hive2://foo:1234/bar</jdbc-url>" +
-                "<password>pass</password>" +
-                "<script>script.q</script>" +
-                "<param>a=A</param>" +
-                "<param>b=B</param>" +
-                "<argument>-c</argument>" +
-                "<argument>--dee</argument>" +
-                "</hive2>");
+            "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+            "<name-node>" + getNameNodeUri() + "</name-node>" +
+            "<jdbc-url>jdbc:hive2://foo:1234/bar</jdbc-url>" +
+            "<password>pass</password>" +
+            "<script>script.q</script>" +
+            "<param>a=A</param>" +
+            "<param>b=B</param>" +
+            "<argument>-c</argument>" +
+            "<argument>--dee</argument>" +
+            "</hive2>");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -111,29 +111,85 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         assertEquals("--dee", conf.get("oozie.hive2.args.1"));
     }
 
+    @SuppressWarnings("unchecked")
+    public void testSetupMethodsForQuery() throws Exception {
+        Hive2ActionExecutor ae = new Hive2ActionExecutor();
+        List<Class> classes = new ArrayList<Class>();
+        classes.add(Hive2Main.class);
+        assertEquals(classes, ae.getLauncherClasses());
+
+        String sampleQuery = "SELECT count(*) from foobar";
+        Element actionXml = XmlUtils.parseXml("<hive2  xmlns=\"uri:oozie:hive2-action:0.2\">" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<jdbc-url>jdbc:hive2://foo:1234/bar</jdbc-url>" +
+                "<password>pass</password>" +
+                "<query>" + sampleQuery + "</query>" +
+                "<param>a=A</param>" +
+                "<param>b=B</param>" +
+                "<argument>-c</argument>" +
+                "<argument>--dee</argument>" +
+                "</hive2>");
+
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "hive2-action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+
+        Configuration conf = ae.createBaseHadoopConf(context, actionXml);
+        ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
+        assertEquals("jdbc:hive2://foo:1234/bar", conf.get("oozie.hive2.jdbc.url"));
+        assertEquals("pass", conf.get("oozie.hive2.password"));
+        assertEquals(sampleQuery, conf.get("oozie.hive2.query"));
+        assertNull(conf.get("oozie.hive2.script"));
+        assertEquals("2", conf.get("oozie.hive2.params.size"));
+        assertEquals("a=A", conf.get("oozie.hive2.params.0"));
+        assertEquals("b=B", conf.get("oozie.hive2.params.1"));
+        assertEquals("2", conf.get("oozie.hive2.args.size"));
+        assertEquals("-c", conf.get("oozie.hive2.args.0"));
+        assertEquals("--dee", conf.get("oozie.hive2.args.1"));
+    }
+
     private String getHive2Script(String inputPath, String outputPath) {
         StringBuilder buffer = new StringBuilder(NEW_LINE);
         buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
         buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
         buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");
         buffer.append(inputPath).append("';").append(NEW_LINE);
         buffer.append("INSERT OVERWRITE DIRECTORY '");
         buffer.append(outputPath).append("'").append(NEW_LINE);
         buffer.append("SELECT (a-1) FROM test;").append(NEW_LINE);
-
         return buffer.toString();
     }
 
-    private String getActionXml() {
+    private String getScriptActionXml() {
         String script = "<hive2 xmlns=''uri:oozie:hive2-action:0.1''>" +
+            "<job-tracker>{0}</job-tracker>" +
+            "<name-node>{1}</name-node>" +
+            "<configuration></configuration>" +
+            "<jdbc-url>{2}</jdbc-url>" +
+            "<password>dummy</password>" +
+            "<script>" + HIVE_SCRIPT_FILENAME + "</script>" +
+            "</hive2>";
+        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
+    }
+
+    private String getQueryActionXml(String query) {
+        String script = "<hive2 xmlns=\"uri:oozie:hive2-action:0.2\">" +
         "<job-tracker>{0}</job-tracker>" +
         "<name-node>{1}</name-node>" +
         "<configuration></configuration>" +
         "<jdbc-url>{2}</jdbc-url>" +
-        "<password>dummy</password>" +
-        "<script>" + HIVE_SCRIPT_FILENAME + "</script>" +
-        "</hive2>";
-        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
+        "<password>dummy</password>";
+        String expanded = MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
+        // MessageFormat strips single quotes, which causes issues with the hive query parser
+        return expanded +
+            "<query>" + query + "</query>" + "</hive2>";
     }
 
     @SuppressWarnings("deprecation")
@@ -141,51 +197,85 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         setupHiveServer2();
         Path inputDir = new Path(getFsTestCaseDir(), INPUT_DIRNAME);
         Path outputDir = new Path(getFsTestCaseDir(), OUTPUT_DIRNAME);
-
         FileSystem fs = getFileSystem();
-        Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
-        Writer scriptWriter = new OutputStreamWriter(fs.create(script));
-        scriptWriter.write(getHive2Script(inputDir.toString(), outputDir.toString()));
-        scriptWriter.close();
 
-        Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
-        dataWriter.write(SAMPLE_DATA_TEXT);
-        dataWriter.close();
-
-        Context context = createContext(getActionXml());
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(200 * 1000, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Configuration conf = new XConfiguration();
-        conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        {
+            String query = getHive2Script(inputDir.toString(), outputDir.toString());
+            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+            dataWriter.write(SAMPLE_DATA_TEXT);
+            dataWriter.close();
+            Context context = createContext(getQueryActionXml(query));
+            final RunningJob launcherJob = submitAction(context,
+                Namespace.getNamespace("uri:oozie:hive2-action:0.2"));
+            String launcherId = context.getAction().getExternalId();
+            waitFor(200 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    return launcherJob.isComplete();
+                }
+            });
+            assertTrue(launcherJob.isSuccessful());
+            Configuration conf = new XConfiguration();
+            conf.set("user.name", getTestUser());
+            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            Hive2ActionExecutor ae = new Hive2ActionExecutor();
+            ae.check(context, context.getAction());
+            assertTrue(launcherId.equals(context.getAction().getExternalId()));
+            assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+            ae.end(context, context.getAction());
+            assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+            assertNotNull(context.getAction().getData());
+            Properties outputData = new Properties();
+            outputData.load(new StringReader(context.getAction().getData()));
+            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            assertTrue(fs.exists(outputDir));
+            assertTrue(fs.isDirectory(outputDir));
+        }
+        {
+            Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
+            Writer scriptWriter = new OutputStreamWriter(fs.create(script));
+            scriptWriter.write(getHive2Script(inputDir.toString(), outputDir.toString()));
+            scriptWriter.close();
 
-        Hive2ActionExecutor ae = new Hive2ActionExecutor();
-        ae.check(context, context.getAction());
-        assertTrue(launcherId.equals(context.getAction().getExternalId()));
-        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        ae.end(context, context.getAction());
-        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
-
-        assertTrue(fs.exists(outputDir));
-        assertTrue(fs.isDirectory(outputDir));
+            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+            dataWriter.write(SAMPLE_DATA_TEXT);
+            dataWriter.close();
+            Context context = createContext(getScriptActionXml());
+            final RunningJob launcherJob = submitAction(context,
+                Namespace.getNamespace("uri:oozie:hive2-action:0.1"));
+            String launcherId = context.getAction().getExternalId();
+            waitFor(200 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    return launcherJob.isComplete();
+                }
+            });
+            assertTrue(launcherJob.isSuccessful());
+            Configuration conf = new XConfiguration();
+            conf.set("user.name", getTestUser());
+            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                conf);
+            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            Hive2ActionExecutor ae = new Hive2ActionExecutor();
+            ae.check(context, context.getAction());
+            assertTrue(launcherId.equals(context.getAction().getExternalId()));
+            assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+            ae.end(context, context.getAction());
+            assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+            assertNotNull(context.getAction().getData());
+            Properties outputData = new Properties();
+            outputData.load(new StringReader(context.getAction().getData()));
+            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            assertTrue(fs.exists(outputDir));
+            assertTrue(fs.isDirectory(outputDir));
+        }
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    private RunningJob submitAction(Context context, Namespace ns) throws Exception {
         Hive2ActionExecutor ae = new Hive2ActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -200,7 +290,6 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
         Element e = XmlUtils.parseXml(action.getConf());
-        Namespace ns = Namespace.getNamespace("uri:oozie:hive2-action:0.1");
         XConfiguration conf =
                 new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration", ns)).toString()));
         conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker", ns));

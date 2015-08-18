@@ -39,7 +39,6 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -76,6 +75,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
     private String getHiveScript(String inputPath, String outputPath) {
         StringBuilder buffer = new StringBuilder(NEW_LINE);
         buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
         buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
         buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");
         buffer.append(inputPath).append("';").append(NEW_LINE);
@@ -86,7 +86,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         return buffer.toString();
     }
 
-    private String getActionXml() {
+    private String getActionScriptXml() {
         String script = "<hive xmlns=''uri:oozie:hive-action:0.2''>" +
         "<job-tracker>{0}</job-tracker>" +
         "<name-node>{1}</name-node>" +
@@ -117,58 +117,121 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
     }
 
+    private String getActionQueryXml(String query) {
+        String script = "<hive xmlns=''uri:oozie:hive-action:0.6''>" +
+            "<job-tracker>{0}</job-tracker>" +
+            "<name-node>{1}</name-node>" +
+            "<configuration>" +
+            "<property>" +
+            "<name>javax.jdo.option.ConnectionURL</name>" +
+            "<value>jdbc:derby:" + getTestCaseDir() + "/db;create=true</value>" +
+            "</property>" +
+            "<property>" +
+            "<name>javax.jdo.option.ConnectionDriverName</name>" +
+            "<value>org.apache.derby.jdbc.EmbeddedDriver</value>" +
+            "</property>" +
+            "<property>" +
+            "<name>javax.jdo.option.ConnectionUserName</name>" +
+            "<value>sa</value>" +
+            "</property>" +
+            "<property>" +
+            "<name>javax.jdo.option.ConnectionPassword</name>" +
+            "<value> </value>" +
+            "</property>" +
+            "<property>" +
+            "<name>oozie.hive.log.level</name>" +
+            "<value>DEBUG</value>" +
+            "</property>" +
+            "</configuration>";
+        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri())
+            + "<query>" + query + "</query>" +
+            "</hive>";
+    }
+
     public void testHiveAction() throws Exception {
         Path inputDir = new Path(getFsTestCaseDir(), INPUT_DIRNAME);
         Path outputDir = new Path(getFsTestCaseDir(), OUTPUT_DIRNAME);
-
+        String hiveScript = getHiveScript(inputDir.toString(), outputDir.toString());
         FileSystem fs = getFileSystem();
-        Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
-        Writer scriptWriter = new OutputStreamWriter(fs.create(script));
-        scriptWriter.write(getHiveScript(inputDir.toString(), outputDir.toString()));
-        scriptWriter.close();
 
-        Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
-        dataWriter.write(SAMPLE_DATA_TEXT);
-        dataWriter.close();
-
-        Context context = createContext(getActionXml());
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(200 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Configuration conf = new XConfiguration();
-        conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        {
+            Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
+            Writer scriptWriter = new OutputStreamWriter(fs.create(script));
+            scriptWriter.write(hiveScript);
+            scriptWriter.close();
+            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+            dataWriter.write(SAMPLE_DATA_TEXT);
+            dataWriter.close();
+            Context context = createContext(getActionScriptXml());
+            Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
+            final RunningJob launcherJob = submitAction(context, ns);
+            String launcherId = context.getAction().getExternalId();
+            waitFor(200 * 1000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return launcherJob.isComplete();
+                }
+            });
+            assertTrue(launcherJob.isSuccessful());
+            Configuration conf = new XConfiguration();
+            conf.set("user.name", getTestUser());
+            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
-
-        HiveActionExecutor ae = new HiveActionExecutor();
-        ae.check(context, context.getAction());
-        assertTrue(launcherId.equals(context.getAction().getExternalId()));
-        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertNotNull(context.getAction().getData());
-        ae.end(context, context.getAction());
-        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
-
-        //while this works in a real cluster, it does not with miniMR
-        //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
-        //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
-
-        assertTrue(fs.exists(outputDir));
-        assertTrue(fs.isDirectory(outputDir));
+            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            HiveActionExecutor ae = new HiveActionExecutor();
+            ae.check(context, context.getAction());
+            assertTrue(launcherId.equals(context.getAction().getExternalId()));
+            assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+            assertNotNull(context.getAction().getData());
+            ae.end(context, context.getAction());
+            assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+            assertNotNull(context.getAction().getData());
+            Properties outputData = new Properties();
+            outputData.load(new StringReader(context.getAction().getData()));
+            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            //while this works in a real cluster, it does not with miniMR
+            //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
+            //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
+            assertTrue(fs.exists(outputDir));
+            assertTrue(fs.isDirectory(outputDir));
+        }
+        {
+            Context context = createContext(getActionQueryXml(hiveScript));
+            Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.6");
+            final RunningJob launcherJob = submitAction(context, ns);
+            String launcherId = context.getAction().getExternalId();
+            waitFor(200 * 1000, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return launcherJob.isComplete();
+                }
+            });
+            assertTrue(launcherJob.isSuccessful());
+            Configuration conf = new XConfiguration();
+            conf.set("user.name", getTestUser());
+            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                conf);
+            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            HiveActionExecutor ae = new HiveActionExecutor();
+            ae.check(context, context.getAction());
+            assertTrue(launcherId.equals(context.getAction().getExternalId()));
+            assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+            assertNotNull(context.getAction().getData());
+            ae.end(context, context.getAction());
+            assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+            assertNotNull(context.getAction().getData());
+            Properties outputData = new Properties();
+            outputData.load(new StringReader(context.getAction().getData()));
+            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
+            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            //while this works in a real cluster, it does not with miniMR
+            //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
+            //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
+            assertTrue(fs.exists(outputDir));
+            assertTrue(fs.isDirectory(outputDir));
+        }
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    private RunningJob submitAction(Context context, Namespace ns) throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -183,7 +246,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
         Element e = XmlUtils.parseXml(action.getConf());
-        Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
         XConfiguration conf =
                 new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration", ns)).toString()));
         conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker", ns));
@@ -246,8 +308,9 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         dataWriter.write(SAMPLE_DATA_TEXT);
         dataWriter.close();
 
-        Context context = createContext(getActionXml());
-        submitAction(context);
+        Context context = createContext(getActionScriptXml());
+        Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
+        submitAction(context, ns);
         FSDataInputStream os = fs.open(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML));
         XConfiguration conf = new XConfiguration();
         conf.addResource(os);

@@ -42,10 +42,23 @@ public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
         return null;
     }
 
+    protected boolean shouldAddScriptToCache(){
+        return true;
+    }
+
     @Override
     protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
+        throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
+        if(shouldAddScriptToCache()) {
+            addScriptToCache(conf, actionXml, appPath, context);
+        }
+        return conf;
+
+    }
+
+    protected void addScriptToCache(Configuration conf, Element actionXml, Path appPath, Context context)
+        throws ActionExecutorException {
         Namespace ns = actionXml.getNamespace();
         String script = actionXml.getChild("script", ns).getTextTrim();
         String name = new Path(script).getName();
@@ -82,8 +95,6 @@ public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
         else {
             addToCache(conf, appPath, script + "#" + name, false);
         }
-
-        return conf;
     }
 
     protected abstract String getScriptName();
