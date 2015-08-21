@@ -44,6 +44,24 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-beeline</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-core</artifactId>
             <scope>compile</scope>
@@ -155,61 +173,6 @@
                     </descriptors>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-sharelib</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-pig</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-hive</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-sqoop</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-streaming</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-oozie</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-hcatalog</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-distcp</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-hive2</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.oozie</groupId>
-                                    <artifactId>oozie-sharelib-spark</artifactId>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                       </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -281,6 +244,73 @@
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-sharelib</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-pig</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-hive</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-sqoop</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-streaming</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-oozie</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-hcatalog</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-distcp</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-hive2</artifactId>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.apache.oozie</groupId>
+                                            <artifactId>oozie-sharelib-spark</artifactId>
+                                        </artifactItem>
+                                    </artifactItems>
+                                    <outputDirectory>
+                                        ${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib
+                                    </outputDirectory>
+                                    <overWriteIfNewer>true</overWriteIfNewer>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-nameNode=hdfs://localhost:8020
-jobTracker=localhost:8021
+nameNode=maprfs:///
+jobTracker=maprfs:///
 queueName=default
 jdbcURL=jdbc:hive2://localhost:10000/default
-jdbcPrincipal=hive/localhost@EXAMPLE.COM
+jdbcPrincipal=mapr/localhost@EXAMPLE.COM
 examplesRoot=examples
 
 oozie.use.system.libpath=true

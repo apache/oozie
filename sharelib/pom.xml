@@ -37,7 +37,6 @@
         <module>pig</module>
         <module>pig2</module>
         <module>hive</module>
-        <module>hive2</module>
         <module>sqoop</module>
         <module>oozie</module>
         <module>distcp</module>
@@ -112,6 +111,9 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <modules>
+                <module>hive2</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
