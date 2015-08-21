@@ -61,10 +61,6 @@
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.mesos</groupId>
-                    <artifactId>mesos</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-client</artifactId>
                 </exclusion>
@@ -88,6 +84,13 @@
             <artifactId>oozie-core</artifactId>
             <classifier>tests</classifier>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.mesos</groupId>
+            <artifactId>mesos</artifactId>
+            <version>0.23.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

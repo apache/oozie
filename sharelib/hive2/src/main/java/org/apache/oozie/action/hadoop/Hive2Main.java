@@ -34,12 +34,15 @@ import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hive.beeline.BeeLine;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
 
 public class Hive2Main extends LauncherMain {
     private static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)")
     };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
+    private static final String MAPRSASL = "auth=maprsasl";
 
     static {
         DISALLOWED_BEELINE_OPTIONS.add("-u");
@@ -187,10 +190,15 @@ public class Hive2Main extends LauncherMain {
         arguments.add("-f");
         arguments.add(scriptPath);
 
-        // This tells BeeLine to look for a delegation token; otherwise it won't and will fail in secure mode because there are no
-        // Kerberos credentials.  In non-secure mode, this argument is ignored so we can simply always pass it.
+        // Added MapR SASL or Kerberos security argument
+        // In non-secure mode, this argument is ignored so we can simply always pass it.
         arguments.add("-a");
-        arguments.add("delegationToken");
+        if (jdbcUrl.toLowerCase().contains(MAPRSASL)) {
+            arguments.add("maprsasl");
+            UserGroupInformation.getCurrentUser().setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.CUSTOM);
+        } else {
+            arguments.add("delegationToken");
+        }
 
         String[] beelineArgs = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
         for (String beelineArg : beelineArgs) {
