@@ -138,8 +138,8 @@
 
         <!-- Temporary repo -->
         <repository>
-            <id>repository_cv.mapr.com</id>
-            <url>http://repository_cv.mapr.com/maven/</url>
+            <id>mapr.release</id>
+            <url>${env.MAPR_MAVEN_REPO}</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
