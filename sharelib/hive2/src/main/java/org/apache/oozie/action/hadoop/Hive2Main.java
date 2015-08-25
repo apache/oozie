@@ -43,6 +43,7 @@ public class Hive2Main extends LauncherMain {
     };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
     private static final String MAPRSASL = "auth=maprsasl";
+    private static final String KERBEROS = "auth=kerberos";
 
     static {
         DISALLOWED_BEELINE_OPTIONS.add("-u");
@@ -191,13 +192,14 @@ public class Hive2Main extends LauncherMain {
         arguments.add(scriptPath);
 
         // Added MapR SASL or Kerberos security argument
-        // In non-secure mode, this argument is ignored so we can simply always pass it.
-        arguments.add("-a");
-        if (jdbcUrl.toLowerCase().contains(MAPRSASL)) {
-            arguments.add("maprsasl");
+        if (jdbcUrl.toLowerCase().contains(MAPRSASL) || jdbcUrl.toLowerCase().contains(KERBEROS)) {
+            arguments.add("-a");
             UserGroupInformation.getCurrentUser().setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.CUSTOM);
-        } else {
-            arguments.add("delegationToken");
+            if (jdbcUrl.toLowerCase().contains(MAPRSASL)) {
+                arguments.add("maprsasl");
+            } else {
+                arguments.add("delegationToken");
+            }
         }
 
         String[] beelineArgs = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
