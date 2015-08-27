@@ -130,7 +130,8 @@
             org.apache.oozie.service.ProxyUserService,
             org.apache.oozie.service.XLogStreamingService,
             org.apache.oozie.service.JvmPauseMonitorService,
-            org.apache.oozie.service.SparkConfigurationService
+            org.apache.oozie.service.SparkConfigurationService,
+            org.apache.oozie.service.SchemaCheckerService
         </value>
         <description>
             All services to be created and managed by Oozie Services singleton.
@@ -2577,6 +2578,24 @@
             The default value to use for the &lt;job-tracker&gt; element in applicable action types.  This value will be used when
             neither the action itself nor the global section specifies a &lt;job-tracker&gt;.  As expected, it should be of the form
             "HOST:PORT".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.SchemaCheckerService.check.interval</name>
+        <value>168</value>
+        <description>
+            This is the interval at which Oozie will check the database schema, in hours.
+            A zero or negative value will disable the checker.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.SchemaCheckerService.ignore.extras</name>
+        <value>false</value>
+        <description>
+            When set to false, the schema checker will consider extra (unused) tables, columns, and indexes to be incorrect.  When
+            set to true, these will be ignored.
         </description>
     </property>
 

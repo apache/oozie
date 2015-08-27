@@ -158,6 +158,32 @@ query parameters:
    * threadsort - The order in which the threads are sorted for display. Valid values are name, cpu, state. Default is state.
    * cpuwatch - Time interval in milliseconds to monitor cpu usage of threads. Default value is 0.
 
+---++ Monitoring Database Schema Integrity
+
+Oozie stores all of its state in a database.  Hence, ensuring that the database schema is correct is very important to ensuring that
+Oozie is healthy and behaves correctly.  To help with this, Oozie includes a =SchemaCheckerService= which periodically runs and
+performs a series of checks on the database schema.  More specifically, it checks the following:
+   * Existence of the required tables
+   * Existence of the required columns in each table
+   * Each column has the correct type and default value
+   * Existence of the required primary keys and indexes
+
+After each run, the =SchemaCheckerService= writes the result of the checks to the Oozie log and to the "schema-checker.status"
+instrumentation variable.  If there's a problem, it will be logged at the ERROR level, while correct checks are logged at the DEBUG
+level.
+
+By default, the =SchemaCheckerService= runs every 7 days.  This can be configured
+by =oozie.service.SchemaCheckerService.check.interval=
+
+By default, the =SchemaCheckerService= will consider "extra" tables, columns, and indexes to be incorrect. Advanced users who have
+added additional tables, columns, and indexes can tell Oozie to ignore these by
+seting =oozie.service.SchemaCheckerService.ignore.extras= to =false=.
+
+The =SchemaCheckerService= currently only supports MySQL, PostgreSQL, and Oracle databases.  SQL Server and Derby are currently not
+supported.
+
+When Oozie HA is enabled, only one of the Oozie servers will perform the checks.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>
