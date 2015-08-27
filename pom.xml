@@ -86,8 +86,8 @@
 
          <!-- Sharelib component versions -->
         <!-- Pig and Hive version must be changed after release -->
-         <hive.version>1.2.0-mapr</hive.version>
-         <pig.version>0.15.0-mapr-SNAPSHOT</pig.version>
+         <hive.version>1.2.0-mapr-1508</hive.version>
+         <pig.version>0.15.0-mapr-1508</pig.version>
          <pig.classifier></pig.classifier>
          <pig-2.classifier>h2</pig-2.classifier>
          <sqoop.version>1.4.6</sqoop.version>
