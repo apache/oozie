@@ -229,7 +229,9 @@ public class TestConfigurationService extends XTestCase {
 
         assertEquals("simple", cl.getConf().get(AuthFilter.OOZIE_PREFIX + AuthFilter.AUTH_TYPE));
         assertEquals("36000", cl.getConf().get(AuthFilter.OOZIE_PREFIX + AuthFilter.AUTH_TOKEN_VALIDITY));
-        assertEquals(" ", cl.getConf().get(AuthFilter.OOZIE_PREFIX + AuthFilter.COOKIE_DOMAIN));
+        // The cookie.domain config is in oozie-default.xml mostly for documentation purposes, but it needs to have an empty string
+        // value by default, which Configuration parses as null
+        assertNull(cl.getConf().get(AuthFilter.OOZIE_PREFIX + AuthFilter.COOKIE_DOMAIN));
         assertEquals("true", cl.getConf().get(AuthFilter.OOZIE_PREFIX + "simple.anonymous.allowed"));
         assertEquals("HTTP/localhost@LOCALHOST", cl.getConf().get(AuthFilter.OOZIE_PREFIX + "kerberos.principal"));
         assertEquals(cl.getConf().get(HadoopAccessorService.KERBEROS_KEYTAB),

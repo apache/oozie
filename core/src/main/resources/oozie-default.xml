@@ -2048,7 +2048,7 @@
 
     <property>
       <name>oozie.authentication.cookie.domain</name>
-      <value> </value>
+      <value></value>
       <description>
         The domain to use for the HTTP cookie that stores the authentication token.
         In order to authentiation to work correctly across multiple hosts
