@@ -1731,6 +1731,20 @@
     </property>
 
     <property>
+        <name>oozie.action.shell.setup.hadoop.conf.dir</name>
+        <value>false</value>
+        <description>
+            The Shell action is commonly used to run programs that rely on HADOOP_CONF_DIR (e.g. hive, beeline, sqoop, etc).  With
+            YARN, HADOO_CONF_DIR is set to the NodeManager's copies of Hadoop's *-site.xml files, which can be problematic because
+            (a) they are for meant for the NM, not necessarily clients, and (b) they won't have any of the configs that Oozie, or
+            the user through Oozie, sets.  When this property is set to true, The Shell action will prepare the *-site.xml files
+            based on the correct config and set HADOOP_CONF_DIR to point to it.  Setting it to false will make Oozie leave
+            HADOOP_CONF_DIR alone.  This can also be set at the Action level by putting it in the Shell Action's configuration
+            section, which also has priorty.  That all said, it's recommended to use the appropriate action type when possible.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.launcher.yarn.timeline-service.enabled</name>
         <value>false</value>
         <description>

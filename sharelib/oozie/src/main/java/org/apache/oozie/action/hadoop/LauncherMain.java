@@ -20,9 +20,11 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Collection;
@@ -207,6 +209,41 @@ public abstract class LauncherMain {
                         + actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
             } else {
                 actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+            }
+        }
+    }
+
+    /**
+     * Utility method that copies the contents of the src file into all of the dst file(s).
+     * It only requires reading the src file once.
+     *
+     * @param src The source file
+     * @param dst The destination file(s)
+     * @throws IOException
+     */
+    protected static void copyFileMultiplex(File src, File... dst) throws IOException {
+        InputStream is = null;
+        OutputStream[] osa = new OutputStream[dst.length];
+        try {
+            is = new FileInputStream(src);
+            for (int i = 0; i < osa.length; i++) {
+                osa[i] = new FileOutputStream(dst[i]);
+            }
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = is.read(buffer)) > -1) {
+                for (OutputStream os : osa) {
+                    os.write(buffer, 0, read);
+                }
+            }
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+            for (OutputStream os : osa) {
+                if (os != null) {
+                    os.close();
+                }
             }
         }
     }

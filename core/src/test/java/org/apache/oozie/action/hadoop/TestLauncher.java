@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
@@ -32,6 +33,8 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.util.Map;
 
@@ -369,5 +372,24 @@ public class TestLauncher extends XFsTestCase {
     assertTrue(jobConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
     assertEquals("aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
   }
+
+    public void testCopyFileMultiplex() throws Exception {
+        String contents = "Hello World!\nThis is Oozie";
+        File src = new File(getTestCaseDir(), "src.txt");
+        Writer w = new FileWriter(src);
+        w.write(contents);
+        w.close();
+
+        File[] dsts = new File[]{new File("dst1.txt"), new File("dist2.txt"), new File("dist3.txt")};
+        for (File dst : dsts) {
+            dst.delete();
+            assertFalse(dst.exists());
+        }
+        LauncherMain.copyFileMultiplex(src, dsts);
+        for (File dst : dsts) {
+            assertTrue(dst.exists());
+            assertEquals(contents, FileUtils.readFileToString(dst));
+        }
+    }
 
 }

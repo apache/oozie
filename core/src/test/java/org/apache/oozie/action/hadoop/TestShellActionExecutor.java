@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
@@ -41,6 +42,7 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.junit.Assert;
 
 public class TestShellActionExecutor extends ActionExecutorTestCase {
 
@@ -57,6 +59,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             ? "dir /s /b\necho %1 %2\nexit 1"
             : "ls -ltr\necho $1 $2\nexit 1";
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
+    private static final String SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT = Shell.WINDOWS
+            ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho HADOOP_CONF_DIR=%HADOOP_CONF_DIR%"
+            : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho HADOOP_CONF_DIR=$HADOOP_CONF_DIR";
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
@@ -86,6 +91,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertEquals("2", conf.get("oozie.shell.args.size"));
         assertEquals("a=A", conf.get("oozie.shell.args.0"));
         assertEquals("b=B", conf.get("oozie.shell.args.1"));
+        assertEquals("false", conf.get("oozie.action.shell.setup.hadoop.conf.dir"));
     }
 
     /**
@@ -109,6 +115,36 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
                 + "#" + script.getName() + "</file>" + "</shell>";
         // Submit and verify the job's status
         _testSubmit(actionXml, true, "");
+    }
+
+    /**
+     * test if a sample shell script could run successfully
+     *
+     * @throws Exception
+     */
+    public void testShellScriptHadoopConfDir() throws Exception {
+        FileSystem fs = getFileSystem();
+        // Create the script file with canned shell command
+        Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
+        Writer w = new OutputStreamWriter(fs.create(script));
+        w.write(SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT);
+        w.close();
+
+        // Create sample Shell action xml
+        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<configuration>"
+                + "<property><name>oozie.action.shell.setup.hadoop.conf.dir</name><value>true</value></property>"
+                + "</configuration>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
+                + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<file>" + script.toString()
+                + "#" + script.getName() + "</file>" + "<capture-output/>" + "</shell>";
+        // Submit and verify the job's status
+        WorkflowAction action = _testSubmit(actionXml, true, "");
+        String oozieActionConfXml = PropertiesUtils.stringToProperties(action.getData()).getProperty("OOZIE_ACTION_CONF_XML");
+        String hadoopConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("HADOOP_CONF_DIR");
+        assertNotNull(oozieActionConfXml);
+        assertNotNull(hadoopConfDir);
+        String s = new File(oozieActionConfXml).getParent() + File.separator + "oozie-hadoop-conf-";
+        Assert.assertTrue("Expected HADOOP_CONF_DIR to start with " + s + " but was " + hadoopConfDir, hadoopConfDir.startsWith(s));
     }
 
     /**
@@ -213,7 +249,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @param checkForSuccess
      * @throws Exception
      */
-    private void _testSubmit(String actionXml, boolean checkForSuccess, String capture_output) throws Exception {
+    private WorkflowAction _testSubmit(String actionXml, boolean checkForSuccess, String capture_output) throws Exception {
 
         Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);// Submit the
@@ -258,6 +294,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         else {// Negative test cases
             assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
         }
+        return context.getAction();
     }
 
     /**

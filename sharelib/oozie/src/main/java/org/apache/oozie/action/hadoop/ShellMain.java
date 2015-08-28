@@ -26,12 +26,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 
 public class ShellMain extends LauncherMain {
@@ -39,7 +38,11 @@ public class ShellMain extends LauncherMain {
     public static final String CONF_OOZIE_SHELL_EXEC = "oozie.shell.exec";
     public static final String CONF_OOZIE_SHELL_ENVS = "oozie.shell.envs";
     public static final String CONF_OOZIE_SHELL_CAPTURE_OUTPUT = "oozie.shell.capture-output";
+    public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR = "oozie.action.shell.setup.hadoop.conf.dir";
     public static final String OOZIE_ACTION_CONF_XML = "OOZIE_ACTION_CONF_XML";
+    private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
+
+    private static String[] HADOOP_SITE_FILES = new String[] {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
     /**
      * @param args Invoked from LauncherMapper:map()
@@ -81,6 +84,9 @@ public class ShellMain extends LauncherMain {
         System.out.println("Current working dir " + currDir);
         builder.directory(currDir);
 
+        // Setup Hadoop *-site files in case the user runs a Hadoop-type program (e.g. hive)
+        prepareHadoopConfigs(actionConf, envp, currDir);
+
         printCommand(cmdArray, envp); // For debugging purpose
 
         System.out.println("=================================================================");
@@ -107,6 +113,37 @@ public class ShellMain extends LauncherMain {
         System.out.println("<<< Invocation of Shell command completed <<<");
         System.out.println();
         return exitValue;
+    }
+
+    /**
+     * This method takes the OOZIE_ACTION_CONF_XML and copies it to Hadoop *-site files in a new directory; it then sets the
+     * HADOOP_CONF_DIR to point there.  This should allow most Hadoop ecosystem CLI programs to have the proper configuration,
+     * propagated from Oozie's copy and including anything set in the Workflow's configuration section as well.  Otherwise,
+     * HADOOP_CONF_DIR points to the NodeManager's *-site files, which are likely not suitable for client programs.
+     * It will only do this if {@link CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} is set to true.
+     *
+     * @param actionConf The action configuration
+     * @param envp The environment for the Shell process
+     * @param currDir The current working dir
+     * @throws IOException
+     */
+    private void prepareHadoopConfigs(Configuration actionConf, Map<String, String> envp, File currDir) throws IOException {
+        if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {
+            String actionXml = envp.get(OOZIE_ACTION_CONF_XML);
+            if (actionXml != null) {
+                File actionXmlFile = new File(actionXml);
+                File confDir = new File(currDir, "oozie-hadoop-conf-" + System.currentTimeMillis());
+                System.out.println("Copying " + actionXml + " to " + confDir + "/" + Arrays.toString(HADOOP_SITE_FILES));
+                confDir.mkdirs();
+                File[] dstFiles = new File[HADOOP_SITE_FILES.length];
+                for (int i = 0; i < dstFiles.length; i++) {
+                    dstFiles[i] = new File(confDir, HADOOP_SITE_FILES[i]);
+                }
+                copyFileMultiplex(actionXmlFile, dstFiles);
+                System.out.println("Setting " + HADOOP_CONF_DIR + " to " + confDir.getAbsolutePath());
+                envp.put(HADOOP_CONF_DIR, confDir.getAbsolutePath());
+            }
+        }
     }
 
     /**
