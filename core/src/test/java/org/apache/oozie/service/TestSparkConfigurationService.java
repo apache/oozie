@@ -68,6 +68,7 @@ public class TestSparkConfigurationService extends XTestCase {
         Properties sparkConf1Props = new Properties();
         sparkConf1Props.setProperty("a", "A");
         sparkConf1Props.setProperty("b", "B");
+        sparkConf1Props.setProperty("spark.yarn.jar", "foo");   // should be ignored by default
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(sparkConf1);
@@ -109,6 +110,17 @@ public class TestSparkConfigurationService extends XTestCase {
         assertEquals(2, sparkConfigs.size());
         assertEquals("Y", sparkConfigs.get("y"));
         assertEquals("Z", sparkConfigs.get("z"));
+        scs.destroy();
+        // Setting this to false should make it not ignore spark.yarn.jar
+        ConfigurationService.setBoolean("oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar",
+                false);
+        scs.init(Services.get());
+        sparkConfigs = scs.getSparkConfig("rm1");
+        assertEquals(3, sparkConfigs.size());
+        assertEquals("A", sparkConfigs.get("a"));
+        assertEquals("B", sparkConfigs.get("b"));
+        assertEquals("foo", sparkConfigs.get("spark.yarn.jar"));
+        ConfigurationService.setBoolean("oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar", true);
 
         scs.destroy();
         ConfigurationService.set("oozie.service.SparkConfigurationService.spark.configurations",

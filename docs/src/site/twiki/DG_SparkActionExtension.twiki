@@ -82,7 +82,14 @@ properties that are passed to the Spark job.
 The =master= element indicates the url of the Spark Master. Ex: spark://host:port, mesos://host:port, yarn-cluster, yarn-master,
 or local.
 
-The =mode= element if present indicates the mode of spark, where to run spark driver program. Ex: client,cluster.
+The =mode= element if present indicates the mode of spark, where to run spark driver program. Ex: client,cluster.  This is typically
+not required because you can specify it as part of =master= (i.e. master=yarn, mode=client is equivalent to master=yarn-client).
+A local =master= always runs in client mode.
+
+Depending on the =master= (and =mode=) entered, the Spark job will run differently as follows:
+   * local mode: everything runs here in the Launcher Job.
+   * yarn-client mode: the driver runs here in the Launcher Job and the executor in Yarn.
+   * yarn-cluster mode: the driver and executor run in Yarn.
 
 The =name= element indicates the name of the spark application.
 
@@ -142,14 +149,8 @@ to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tr
 
 ---+++ Spark on YARN
 
-To make the Spark action run on YARN, you need to follow these steps:
-
-1. Make the spark-assembly jar available to your Spark action
-
-2. Specify "yarn-client" or "yarn-cluster" in the =master= element
-
 To ensure that your Spark job shows up in the Spark History Server, make sure to specify these three Spark configuration properties
-either in =spark-opts= with =--conf= or from =oozie.service.SparkConfigurationService.spark.configurations=
+either in =spark-opts= with =--conf= or from =oozie.service.SparkConfigurationService.spark.configurations= in oozie-site.xml.
 
 1. spark.yarn.historyServer.address=http://SPH-HOST:18088
 

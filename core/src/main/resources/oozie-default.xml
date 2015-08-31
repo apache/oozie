@@ -2567,6 +2567,16 @@
     </property>
 
     <property>
+        <name>oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar</name>
+        <value>true</value>
+        <description>
+            If true, Oozie will ignore the "spark.yarn.jar" property from any Spark configurations specified in
+            oozie.service.SparkConfigurationService.spark.configurations.  If false, Oozie will not ignore it.  It is recommended
+            to leave this as true because it can interfere with the jars in the Spark sharelib.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.email.attachment.enabled</name>
         <value>true</value>
         <description>

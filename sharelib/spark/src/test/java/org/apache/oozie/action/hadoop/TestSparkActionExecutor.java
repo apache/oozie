@@ -67,8 +67,11 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testSetupMethods() throws Exception {
-        _testSetupMethods("local[*]", new HashMap<String, String>());
-        _testSetupMethods("yarn", new HashMap<String, String>());
+        _testSetupMethods("local[*]", new HashMap<String, String>(), "client");
+        _testSetupMethods("yarn", new HashMap<String, String>(), "cluster");
+        _testSetupMethods("yarn", new HashMap<String, String>(), "client");
+        _testSetupMethods("yarn-cluster", new HashMap<String, String>(), null);
+        _testSetupMethods("yarn-client", new HashMap<String, String>(), null);
     }
 
     public void testSetupMethodsWithSparkConfiguration() throws Exception {
@@ -91,15 +94,16 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
                 getJobTrackerUri() + "=" + sparkConfDir.getAbsolutePath());
         scs.init(Services.get());
 
-        _testSetupMethods("local[*]", new HashMap<String, String>());
+        _testSetupMethods("local[*]", new HashMap<String, String>(), "client");
         Map<String, String> extraSparkOpts = new HashMap<String, String>(2);
         extraSparkOpts.put("a", "A");
         extraSparkOpts.put("b", "B");
-        _testSetupMethods("yarn", extraSparkOpts);
+        _testSetupMethods("yarn-cluster", extraSparkOpts, null);
+        _testSetupMethods("yarn-client", extraSparkOpts, null);
     }
 
     @SuppressWarnings("unchecked")
-    private void _testSetupMethods(String master, Map<String, String> extraSparkOpts) throws Exception {
+    private void _testSetupMethods(String master, Map<String, String> extraSparkOpts, String mode) throws Exception {
         SparkActionExecutor ae = new SparkActionExecutor();
         assertEquals(Arrays.asList(SparkMain.class), ae.getLauncherClasses());
 
@@ -107,7 +111,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<master>" + master + "</master>" +
-                "<mode>client</mode>" +
+                (mode != null ? "<mode>" + mode + "</mode>" : "") +
                 "<name>Some Name</name>" +
                 "<class>org.apache.oozie.foo</class>" +
                 "<jar>" + getNameNodeUri() + "/foo.jar</jar>" +
@@ -126,7 +130,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         Configuration conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertEquals(master, conf.get("oozie.spark.master"));
-        assertEquals("client", conf.get("oozie.spark.mode"));
+        assertEquals(mode, conf.get("oozie.spark.mode"));
         assertEquals("Some Name", conf.get("oozie.spark.name"));
         assertEquals("org.apache.oozie.foo", conf.get("oozie.spark.class"));
         assertEquals(getNameNodeUri() + "/foo.jar", conf.get("oozie.spark.jar"));

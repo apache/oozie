@@ -36,10 +36,14 @@ public class SparkConfigurationService implements Service {
 
     private static XLog LOG = XLog.getLog(SparkConfigurationService.class);
 
-    public static final String SPARK_CONFIGURATION = "oozie.service.SparkConfigurationService.spark.configurations";
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "SparkConfigurationService.";
+    public static final String SPARK_CONFIGURATIONS = CONF_PREFIX + "spark.configurations";
+    public static final String SPARK_CONFIGURATIONS_IGNORE_SPARK_YARN_JAR
+            = CONF_PREFIX + "spark.configurations.ignore.spark.yarn.jar";
 
     private Map<String, Map<String, String>> sparkConfigs;
     private static final String SPARK_CONFIG_FILE = "spark-defaults.conf";
+    private static final String SPARK_YARN_JAR_PROP = "spark.yarn.jar";
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -59,8 +63,9 @@ public class SparkConfigurationService implements Service {
     private void loadSparkConfigs() throws ServiceException {
         sparkConfigs = new HashMap<String, Map<String, String>>();
         File configDir = new File(ConfigurationService.getConfigurationDirectory());
-        String[] confDefs = ConfigurationService.getStrings(SPARK_CONFIGURATION);
+        String[] confDefs = ConfigurationService.getStrings(SPARK_CONFIGURATIONS);
         if (confDefs != null) {
+            boolean ignoreSparkYarnJar = ConfigurationService.getBoolean(SPARK_CONFIGURATIONS_IGNORE_SPARK_YARN_JAR);
             for (String confDef : confDefs) {
                 if (confDef.trim().length() > 0) {
                     String[] parts = confDef.split("=");
@@ -80,6 +85,10 @@ public class SparkConfigurationService implements Service {
                                     fr = new FileReader(file);
                                     props.load(fr);
                                     fr.close();
+                                    if (ignoreSparkYarnJar) {
+                                        // Ignore spark.yarn.jar because it may interfere with the Spark Sharelib jars
+                                        props.remove(SPARK_YARN_JAR_PROP);
+                                    }
                                     sparkConfigs.put(hostPort, propsToMap(props));
                                     LOG.info("Loaded Spark Configuration: {0}={1}", hostPort, file.getAbsolutePath());
                                 } catch (IOException ioe) {
