@@ -52,6 +52,8 @@ import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
@@ -383,8 +385,26 @@ public class TestRecoveryService extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
                 CoordinatorJob.Status.RUNNING, false, true);
 
+        CoordinatorJobBean jobWithError = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNINGWITHERROR, false, true);
+
+        CoordinatorJobBean suspendedJob = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.SUSPENDED, false, true);
+
         CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
                 CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+        CoordinatorActionBean actionReady = addRecordToCoordActionTableForWaiting(job.getId(), 2,
+                CoordinatorAction.Status.READY, "coord-action-for-action-input-check.xml");
+
+        CoordinatorActionBean suspendedAction = addRecordToCoordActionTableForWaiting(suspendedJob.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+        CoordinatorActionBean runningWithErrorAction = addRecordToCoordActionTableForWaiting(jobWithError.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml");
+
+        CoordinatorActionBean submittedAction = addRecordToCoordActionTableForWaiting(suspendedJob.getId(), 2,
+                CoordinatorAction.Status.SUBMITTED, "coord-action-for-action-input-check.xml");
 
         createDir(new File(getTestCaseDir(), "/2009/29/"));
         createDir(new File(getTestCaseDir(), "/2009/22/"));
@@ -397,24 +417,36 @@ public class TestRecoveryService extends XDataTestCase {
         recoveryRunnable.run();
 
         final String actionId = action.getId();
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
 
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
-                CoordActionGetJPAExecutor coordGetCmd = new CoordActionGetJPAExecutor(actionId);
-                CoordinatorActionBean newAction = jpaService.execute(coordGetCmd);
+                CoordinatorActionBean newAction = CoordActionQueryExecutor.getInstance().get(
+                        CoordActionQuery.GET_COORD_ACTION, actionId);
                 return (newAction.getStatus() != CoordinatorAction.Status.WAITING);
             }
         });
 
-        CoordActionGetJPAExecutor coordGetCmd = new CoordActionGetJPAExecutor(actionId);
-        action = jpaService.execute(coordGetCmd);
-        if (action.getStatus() == CoordinatorAction.Status.WAITING) {
-            fail("recovery waiting coord action failed, action is WAITING");
-        }
-    }
+        action = CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION, actionId);
+        // action status should change from waiting
+        assertFalse(action.getStatus().equals(CoordinatorAction.Status.WAITING));
+        // action status should change from waiting
+        assertFalse(CoordActionQueryExecutor.getInstance()
+                .get(CoordActionQuery.GET_COORD_ACTION, runningWithErrorAction.getId()).getStatus()
+                .equals(CoordinatorAction.Status.WAITING));
+        // action status should change from waiting
+        assertFalse(CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION, actionReady.getId())
+                .getStatus().equals(CoordinatorAction.Status.READY));
+        assertTrue(CoordActionQueryExecutor.getInstance()
 
+                // action status should remain to waiting bcz job is suspended
+                .get(CoordActionQuery.GET_COORD_ACTION, suspendedAction.getId()).getStatus()
+                .equals(CoordinatorAction.Status.WAITING));
+        // action status should remain to submitted bcz job is suspended
+        assertEquals(
+                CoordActionQueryExecutor.getInstance().get(CoordActionQuery.GET_COORD_ACTION, submittedAction.getId())
+                        .getStatus(), (CoordinatorAction.Status.SUBMITTED));
+
+    }
 
     public void testCoordActionRecoveryServiceForWaitingRegisterPartition() throws Exception {
         services.destroy();

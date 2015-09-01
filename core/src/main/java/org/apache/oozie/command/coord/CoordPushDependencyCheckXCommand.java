@@ -100,6 +100,20 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     @Override
     protected Void execute() throws CommandException {
+        // this action should only get processed if current time > nominal time;
+        // otherwise, requeue this action for delay execution;
+        Date nominalTime = coordAction.getNominalTime();
+        Date currentTime = new Date();
+        if (nominalTime.compareTo(currentTime) > 0) {
+            queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), Math.max((nominalTime.getTime() - currentTime
+                    .getTime()), getCoordPushCheckRequeueInterval()));
+            updateCoordAction(coordAction, false);
+            LOG.info("[" + actionId
+                    + "]::CoordPushDependency:: nominal Time is newer than current time, so requeue and wait. Current="
+                    + DateUtils.formatDateOozieTZ(currentTime) + ", nominal=" + DateUtils.formatDateOozieTZ(nominalTime));
+            return null;
+        }
+
         String pushMissingDeps = coordAction.getPushMissingDependencies();
         if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
             LOG.info("Nothing to check. Empty push missing dependency");
