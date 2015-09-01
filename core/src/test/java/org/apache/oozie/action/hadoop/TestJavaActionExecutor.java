@@ -2247,7 +2247,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         // test .jar without fragment where app path is on same cluster as jar path
         Path appJarPath = new Path("lib/a.jar");
         Path appJarFullPath = new Path(appPath, appJarPath);
-        conf.clear();
+        conf = new Configuration();
         conf.set(WorkflowAppService.HADOOP_USER, getTestUser());
         ae.addToCache(conf, appPath, appJarFullPath.toString(), false);
         // assert that mapred.cache.files contains jar URI path (full on Hadoop-2)

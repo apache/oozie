@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2347 Remove unnecessary new Configuration()/new jobConf() calls from oozie (puru)
 OOZIE-2348 Recovery service keeps on recovering coord action of suspended jobs (puru)
 OOZIE-2277 Honor oozie.action.sharelib.for.spark in Spark jobs (rkanter)
 OOZIE-2322 Oozie Web UI doesn't work with Kerberos in Internet Explorer 10 or 11 and curl (rkanter)

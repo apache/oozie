@@ -642,9 +642,11 @@ public class JavaActionExecutor extends ActionExecutor {
                                 if (confSet.contains(fileName)) {
                                     Configuration jobXmlConf = shareLibService.getShareLibConf(actionShareLibName,
                                             pathWithFragment);
-                                    checkForDisallowedProps(jobXmlConf, actionLibPath.getName());
-                                    XConfiguration.injectDefaults(jobXmlConf, conf);
-                                    LOG.trace("Adding properties of " + actionLibPath + " to job conf");
+                                    if (jobXmlConf != null) {
+                                        checkForDisallowedProps(jobXmlConf, actionLibPath.getName());
+                                        XConfiguration.injectDefaults(jobXmlConf, conf);
+                                        LOG.trace("Adding properties of " + actionLibPath + " to job conf");
+                                    }
                                 }
                                 else {
                                     // Filtering out duplicate jars or files

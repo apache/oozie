@@ -862,12 +862,11 @@ public class ShareLibService implements Service, Instrumentable {
     }
 
     public Configuration getShareLibConf(String inputKey, Path path) {
-        Configuration conf = new Configuration();
         if (shareLibConfigMap.containsKey(inputKey)) {
-            conf = shareLibConfigMap.get(inputKey).get(path);
+            return shareLibConfigMap.get(inputKey).get(path);
         }
 
-        return conf;
+        return null;
     }
 
     @VisibleForTesting
