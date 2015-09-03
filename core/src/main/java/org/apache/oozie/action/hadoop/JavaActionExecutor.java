@@ -903,6 +903,9 @@ public class JavaActionExecutor extends ActionExecutor {
             launcherJobConf.setJobName(jobName);
             }
 
+            // Inject Oozie job information if enabled.
+            injectJobInfo(launcherJobConf, actionConf, context, action);
+
             String jobId = context.getWorkflow().getId();
             String actionId = action.getId();
             Path actionDir = context.getActionDir();
@@ -1066,7 +1069,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
-            injectJobInfo(launcherJobConf, actionConf, context, action);
             injectLauncherCallback(context, launcherJobConf);
             LOG.debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);

@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2344 Enabling 'oozie.action.jobinfo.enable' doesn't inject the job information into the map/reduce job's configuration. (akshayrai09 via rkanter)
 OOZIE-2350 Package changes for release (shwethags)
 OOZIE-2347 Remove unnecessary new Configuration()/new jobConf() calls from oozie (puru)
 OOZIE-2348 Recovery service keeps on recovering coord action of suspended jobs (puru)
