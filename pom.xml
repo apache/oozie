@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
-        <version>16</version>
+        <version>17</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -118,19 +118,6 @@
         <module>distro</module>
         <module>zookeeper-security-tests</module>
     </modules>
-
-    <distributionManagement>
-        <repository>
-          <id>apache.staging.https</id>
-          <name>Apache Release Distribution Repository</name>
-          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-          <id>apache.snapshots.https</id>
-          <name>${distMgmtSnapshotsName}</name>
-          <url>${distMgmtSnapshotsUrl}</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <repositories>
         <repository>
