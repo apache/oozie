@@ -27,6 +27,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -210,9 +211,15 @@ public class Hive2Main extends LauncherMain {
             arguments.add(beelineArg);
         }
 
+        // Propagate MR job tag if defined
         if (actionConf.get(LauncherMain.MAPREDUCE_JOB_TAGS) != null ) {
             arguments.add("--hiveconf");
             arguments.add("mapreduce.job.tags=" + actionConf.get(LauncherMain.MAPREDUCE_JOB_TAGS));
+        }
+        // Propagate "oozie.*" configs
+        for (Map.Entry<String, String> oozieConfig : actionConf.getValByRegex("^oozie\\.(?!launcher).+").entrySet()) {
+            arguments.add("--hiveconf");
+            arguments.add(oozieConfig.getKey() + "=" + oozieConfig.getValue());
         }
 
         System.out.println("Beeline command arguments :");

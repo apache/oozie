@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2355 Hive2 Action doesn't pass along oozie configs to jobconf (rkanter)
 OOZIE-2318 Provide better solution for specifying SSL truststore to Oozie Client (rkanter)
 OOZIE-2344 Enabling 'oozie.action.jobinfo.enable' doesn't inject the job information into the map/reduce job's configuration. (akshayrai09 via rkanter)
 OOZIE-2350 Package changes for release (shwethags)
