@@ -1932,6 +1932,14 @@
             A list of credential class mapping for CredentialsProvider
         </description>
     </property>
+    <property>
+        <name>oozie.credentials.skip</name>
+        <value>false</value>
+        <description>
+            This determines if Oozie should skip getting credentials from the credential providers.  This can be overwritten at a
+            job-level or action-level.
+        </description>
+    </property>
 
     <property>
         <name>oozie.actions.main.classnames</name>

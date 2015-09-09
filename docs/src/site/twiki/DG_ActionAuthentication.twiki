@@ -88,6 +88,19 @@ so that Oozie will include these credentials with the action.  You can include m
 a comma-separated list of =credential= names.  And finally, the HCatCredentials required two properties (the metastore URI and
 principal), which we also specified.
 
+Adding the =credentials= section to a workflow and referencing it in an action will make Oozie always try to obtain that delegation
+token.  Ordinarily, this would mean that you cannot re-use this workflow in a non-secure cluster without editing it because trying
+to obtain the delegation token will likely fail.  However, you can tell Oozie to ignore the =credentials= for a workflow by setting
+the job-level property =oozie.credentials.skip= to =true=; this will allow you to use the same workflow.xml in a secure and
+non-secure cluster by simply changing the job-level property at runtime. If omitted or set to =false=, Oozie will handle
+the =credentials= section normally. In addition, you can also set this property at the action-level or server-level to skip getting
+credentials for just that action or for all workflows, respectively.  The order of priority is this:
+
+   1. =oozie.credentials.skip= in the =configuration= section of an action, if set
+   1. =oozie.credentials.skip= in the job.properties for a workflow, if set
+   1. =oozie.credentials.skip= in oozie-site.xml for all workflows, if set
+   1. (don't skip)
+
 ---++ Built-in Credentials Implementations
 
 Oozie currently comes with the following Credentials implementations:

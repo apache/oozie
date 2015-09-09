@@ -29,8 +29,10 @@ import java.io.Writer;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -938,6 +940,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
                 action, actionConf);
 
+        assertNotNull(credProperties);
         CredentialsProperties prop = credProperties.get("abcname");
         assertEquals("value1", prop.getProperties().get("property1"));
         assertEquals("value2", prop.getProperties().get("property2"));
@@ -969,7 +972,123 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNotNull(tk);
     }
 
+    public void testCredentialsSkip() throws Exception {
+        // Try setting oozie.credentials.skip at different levels, and verifying the correct behavior
+        // oozie-site: false -- job-level: null -- action-level: null
+        _testCredentialsSkip(false, null, null, true);
+
+        // oozie-site: false -- job-level: null -- action-level: false
+        _testCredentialsSkip(false, null, "false", true);
+
+        // oozie-site: false -- job-level: null -- action-level: true
+        _testCredentialsSkip(false, null, "true", false);
+
+        // oozie-site: false -- job-level: false -- action-level: null
+        _testCredentialsSkip(false, "false", null, true);
+
+        // oozie-site: false -- job-level: false -- action-level: false
+        _testCredentialsSkip(false, "false", "false", true);
+
+        // oozie-site: false -- job-level: false -- action-level: true
+        _testCredentialsSkip(false, "false", "true", false);
+
+        // oozie-site: false -- job-level: true -- action-level: null
+        _testCredentialsSkip(false, "true", null, false);
+
+        // oozie-site: false -- job-level: true -- action-level: false
+        _testCredentialsSkip(false, "true", "false", true);
+
+        // oozie-site: false -- job-level: true -- action-level: true
+        _testCredentialsSkip(false, "true", "true", false);
+
+        // oozie-site: true -- job-level: null -- action-level: null
+        _testCredentialsSkip(true, null, null, false);
+
+        // oozie-site: true -- job-level: null -- action-level: false
+        _testCredentialsSkip(true, null, "false", true);
+
+        // oozie-site: true -- job-level: null -- action-level: true
+        _testCredentialsSkip(true, null, "true", false);
+
+        // oozie-site: true -- job-level: false -- action-level: null
+        _testCredentialsSkip(true, "false", null, true);
+
+        // oozie-site: true -- job-level: false -- action-level: false
+        _testCredentialsSkip(true, "false", "false", true);
+
+        // oozie-site: true -- job-level: false -- action-level: true
+        _testCredentialsSkip(true, "false", "true", false);
+
+        // oozie-site: true -- job-level: true -- action-level: null
+        _testCredentialsSkip(true, "true", null, false);
+
+        // oozie-site: true -- job-level: true -- action-level: false
+        _testCredentialsSkip(true, "true", "false", true);
+
+        // oozie-site: true -- job-level: true -- action-level: true
+        _testCredentialsSkip(true, "true", "true", false);
+    }
+
+    private void _testCredentialsSkip(boolean skipSite, String skipJob, String skipAction, boolean expectingTokens)
+            throws Exception {
+        String actionLevelSkipConf = (skipAction == null) ? "" :
+                "<property><name>oozie.credentials.skip</name><value>" + skipAction + "</value></property>";
+        String actionxml = "<pig>" + "<job-tracker>${jobTracker}</job-tracker>" + "<name-node>${nameNode}</name-node>"
+                + "<prepare>" + "<delete path='outputdir' />" + "</prepare>" + "<configuration>" + "<property>"
+                + "<name>mapred.compress.map.output</name>" + "<value>true</value>" + "</property>" + "<property>"
+                + "<name>mapred.job.queue.name</name>" + "<value>${queueName}</value>" + "</property>" + actionLevelSkipConf
+                + "</configuration>" + "<script>org/apache/oozie/examples/pig/id.pig</script>"
+                + "<param>INPUT=${inputDir}</param>" + "<param>OUTPUT=${outputDir}/pig-output</param>" + "</pig>";
+        String workflowXml = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='pig-wf'>" + "<credentials>"
+                + "<credential name='abcname' type='abc'>" + "<property>" + "<name>property1</name>"
+                + "<value>value1</value>" + "</property>" + "<property>" + "<name>property2</name>"
+                + "<value>value2</value>" + "</property>" + "<property>" + "<name>${property3}</name>"
+                + "<value>${value3}</value>" + "</property>" + "</credential>" + "</credentials>"
+                + "<start to='pig1' />" + "<action name='pig1' cred='abcname'>" + actionxml
+                + "<ok to='end' />" + "<error to='fail' />" + "</action>" + "<kill name='fail'>"
+                + "<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" + "</kill>"
+                + "<end name='end' />" + "</workflow-app>";
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+        WorkflowJobBean wfBean = addRecordToWfJobTable("test1", workflowXml,
+                (skipJob == null) ? null : Collections.singletonMap("oozie.credentials.skip", skipJob));
+        WorkflowActionBean action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        action.setCred("abcname");
+        action.setConf(actionxml);
+        Context context = new Context(wfBean, action);
+
+        Element actionXmlconf = XmlUtils.parseXml(action.getConf());
+        // action job configuration
+        Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+        actionConf = ae.setupActionConf(actionConf, context, actionXmlconf, new Path("/tmp/foo"));
+
+        // Define 'abc' token type in oozie-site
+        ConfigurationService.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
+        ConfigurationService.setBoolean("oozie.credentials.skip", skipSite);
+
+        // Setting the credential properties in launcher conf
+        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
+                action, actionConf);
+
+        // Try to load the token without it being defined in oozie-site; should get an exception
+        JobConf credentialsConf = new JobConf();
+        Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
+        XConfiguration.copy(launcherConf, credentialsConf);
+        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
+        Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
+        if (expectingTokens) {
+            assertNotNull(tk);
+        } else {
+            assertNull(tk);
+        }
+    }
+
     private WorkflowJobBean addRecordToWfJobTable(String wfId, String wfxml) throws Exception {
+        return addRecordToWfJobTable(wfId, wfxml, null);
+    }
+
+    private WorkflowJobBean addRecordToWfJobTable(String wfId, String wfxml, Map<String, String> otherProps) throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", wfxml,
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "start")).
                 addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
@@ -980,6 +1099,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("property3", "prop3");
         conf.set("value3", "val3");
+        if (otherProps != null) {
+            for (Map.Entry<String, String> ent : otherProps.entrySet()) {
+                conf.set(ent.getKey(), ent.getValue());
+            }
+        }
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, "auth");
         wfBean.setId(wfId);
