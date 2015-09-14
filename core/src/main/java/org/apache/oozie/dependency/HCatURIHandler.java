@@ -31,7 +31,6 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.hcatalog.api.ConnectionFailureException;
 import org.apache.hive.hcatalog.api.HCatClient;
@@ -279,8 +278,9 @@ public class HCatURIHandler implements URIHandler {
                     ugi.addToken(token);
                 }
                 finally {
-                    if (tokenClient != null)
+                    if (tokenClient != null) {
                         tokenClient.close();
+                    }
                 }
             }
             XLog.getLog(HCatURIHandler.class).info(
@@ -415,8 +415,16 @@ public class HCatURIHandler implements URIHandler {
         @Override
         public void destroy() {
             try {
-                hcatClient.close();
+                if (delegationToken != null && !delegationToken.isEmpty()) {
+                    hcatClient.cancelDelegationToken(delegationToken);
+                }
                 delegationToken = null;
+            }
+            catch (Exception ignore) {
+                XLog.getLog(HCatContext.class).warn("Error cancelling delegation token", ignore);
+            }
+            try {
+                hcatClient.close();
             }
             catch (Exception ignore) {
                 XLog.getLog(HCatContext.class).warn("Error closing hcat client", ignore);

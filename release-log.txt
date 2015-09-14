@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2358 Coord rerun cleanup should reuse hcat connections (rohini)
 OOZIE-2356 Add a way to enable/disable credentials in a workflow (rkanter)
 OOZIE-2355 Hive2 Action doesn't pass along oozie configs to jobconf (rkanter)
 OOZIE-2318 Provide better solution for specifying SSL truststore to Oozie Client (rkanter)
