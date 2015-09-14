@@ -252,10 +252,10 @@ do
 done
 
 if [ -e "${CATALINA_PID}" ]; then
-  echo
-  echo "ERROR: Stop Oozie first"
-  echo
-  exit -1
+  ${BASEDIR}/bin/oozied.sh stop
+  if [ -f "${CATALINA_PID}" ]; then
+    rm -f "${CATALINA_PID}"
+  fi
 fi
 
 echo
