@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 /**
  * The HadoopAccessorService returns HadoopAccessor instances configured to work on behalf of a user-group. <p> The
  * default accessor used is the base accessor which just injects the UGI into the configuration instance used to
@@ -83,7 +84,7 @@ public class HadoopAccessorService implements Service {
     protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
-    private static JobConf cachedJobConf;
+    private static Configuration cachedConf;
 
     private static final String DEFAULT_ACTIONNAME = "default";
 
@@ -147,9 +148,6 @@ public class HadoopAccessorService implements Service {
 
         loadHadoopConfigs(conf);
         preLoadActionConfigs(conf);
-        cachedJobConf = new JobConf();
-        //calling .size to invoke lazy loading of hadoop properties
-        cachedJobConf.size();
 
         supportedSchemes = new HashSet<String>();
         String[] schemesFromConf = ConfigurationService.getStrings(conf, SUPPORTED_FILESYSTEMS);
@@ -298,10 +296,23 @@ public class HadoopAccessorService implements Service {
      * @return a JobConf with the corresponding site configuration for hostPort.
      */
     public JobConf createJobConf(String hostPort) {
-        JobConf jobConf = new JobConf(cachedJobConf);
+        JobConf jobConf = new JobConf(getCachedConf());
         XConfiguration.copy(getConfiguration(hostPort), jobConf);
         jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
         return jobConf;
+    }
+
+    public Configuration getCachedConf() {
+        if (cachedConf == null) {
+            loadCachedConf();
+        }
+        return cachedConf;
+    }
+
+    private void loadCachedConf() {
+        cachedConf = new Configuration();
+        //for lazy loading
+        cachedConf.size();
     }
 
     private XConfiguration loadActionConf(String hostPort, String action) {

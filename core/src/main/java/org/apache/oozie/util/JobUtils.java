@@ -149,7 +149,7 @@ public class JobUtils {
         fs = file.getFileSystem(conf);
       }
       // Hadoop 0.20/1.x.
-      if (conf.get("yarn.resourcemanager.webapp.address") == null) {
+      if (Services.get().get(HadoopAccessorService.class).getCachedConf().get("yarn.resourcemanager.webapp.address") == null) {
           // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
           // Refer OOZIE-1806.
           String filepath = file.toUri().getPath();
