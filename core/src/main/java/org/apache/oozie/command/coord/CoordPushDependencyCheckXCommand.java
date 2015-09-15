@@ -105,8 +105,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         Date nominalTime = coordAction.getNominalTime();
         Date currentTime = new Date();
         if (nominalTime.compareTo(currentTime) > 0) {
-            queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), Math.max((nominalTime.getTime() - currentTime
-                    .getTime()), getCoordPushCheckRequeueInterval()));
+            queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), nominalTime.getTime() - currentTime.getTime());
             updateCoordAction(coordAction, false);
             LOG.info("[" + actionId
                     + "]::CoordPushDependency:: nominal Time is newer than current time, so requeue and wait. Current="

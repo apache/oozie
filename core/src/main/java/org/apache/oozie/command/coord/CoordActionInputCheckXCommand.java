@@ -138,8 +138,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         Date nominalTime = coordAction.getNominalTime();
         Date currentTime = new Date();
         if (nominalTime.compareTo(currentTime) > 0) {
-            queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), Math.max((nominalTime.getTime() - currentTime
-                    .getTime()), getCoordInputCheckRequeueInterval()));
+            queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), nominalTime.getTime()
+                    - currentTime.getTime());
             updateCoordAction(coordAction, false);
             LOG.info("[" + actionId
                     + "]::ActionInputCheck:: nominal Time is newer than current time, so requeue and wait. Current="
