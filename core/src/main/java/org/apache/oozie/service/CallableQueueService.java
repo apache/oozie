@@ -29,14 +29,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.command.XCommand;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.PollablePriorityDelayQueue;
@@ -144,10 +146,10 @@ public class CallableQueueService implements Service, Instrumentable {
     // and instrumentation.
     // The wrapper implements Runnable and Comparable to be able to work with an
     // executor and a priority queue.
-    class CallableWrapper extends PriorityDelayQueue.QueueElement<XCallable<?>> implements Runnable {
+    public class CallableWrapper<E> extends PriorityDelayQueue.QueueElement<E> implements Runnable, Callable<E> {
         private Instrumentation.Cron cron;
 
-        public CallableWrapper(XCallable<?> callable, long delay) {
+        public CallableWrapper(XCallable<E> callable, long delay) {
             super(callable, callable.getPriority(), delay, TimeUnit.MILLISECONDS);
             cron = new Instrumentation.Cron();
             cron.start();
@@ -172,7 +174,8 @@ public class CallableQueueService implements Service, Instrumentable {
                     log.trace("executing callable [{0}]", callable.getName());
 
                     try {
-                        callable.call();
+                        //FutureTask.run() will invoke cllable.call()
+                        super.run();
                         incrCounter(INSTR_EXECUTED_COUNTER, 1);
                         log.trace("executed callable [{0}]", callable.getName());
                     }
@@ -244,6 +247,13 @@ public class CallableQueueService implements Service, Instrumentable {
             else {
                 uniqueCallables.remove(callable.getKey());
             }
+        }
+
+        //this will not get called, bcz  newTaskFor of threadpool will convert it in futureTask which is a runnable.
+        // futureTask  will call the cllable.call from run method. so we override run to call super.run method.
+        @Override
+        public E call() throws Exception {
+            return null;
         }
     }
 
@@ -497,6 +507,9 @@ public class CallableQueueService implements Service, Instrumentable {
             protected void beforeExecute(Thread t, Runnable r) {
                 super.beforeExecute(t,r);
                 XLog.Info.get().clear();
+            }
+            protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+                return (RunnableFuture<T>)callable;
             }
         };
 
@@ -768,6 +781,12 @@ public class CallableQueueService implements Service, Instrumentable {
             list.add(entry.toString());
         }
         return list;
+    }
+
+    // Refer executor.invokeAll
+    public <T> List<Future<T>> invokeAll(List<CallableWrapper<T>> tasks)
+            throws InterruptedException {
+        return executor.invokeAll(tasks);
     }
 
 }

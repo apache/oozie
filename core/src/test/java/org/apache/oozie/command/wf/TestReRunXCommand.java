@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.CoordinatorAction;
@@ -37,6 +38,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
@@ -123,7 +125,13 @@ public class TestReRunXCommand extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testRerunFork() throws Exception {
+    public void testRerunFork() throws Exception{
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
+        _testRerunFork();
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, false);
+        _testRerunFork();
+    }
+    public void _testRerunFork() throws Exception {
         // We need the shell schema and action for this test
         Services.get().setService(ActionService.class);
         Services.get().getConf().set(SchemaService.WF_CONF_EXT_SCHEMAS, "shell-action-0.3.xsd");

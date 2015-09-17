@@ -34,6 +34,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
@@ -56,7 +57,7 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
  * Base class for Action execution commands. Provides common functionality to handle different types of errors while
  * attempting to start or end an action.
  */
-public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
+public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
@@ -281,8 +282,10 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         private boolean started;
         private boolean ended;
         private boolean executed;
+        private boolean shouldEndWF;
+        private Job.Status jobStatus;
 
-		/**
+        /**
 		 * Constructing the ActionExecutorContext, setting the private members
 		 * and constructing the proto configuration
 		 */
@@ -498,6 +501,23 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<Void> {
         public void setErrorInfo(String str, String exMsg) {
             action.setErrorInfo(str, exMsg);
         }
+
+        public boolean isShouldEndWF() {
+            return shouldEndWF;
+        }
+
+        public void setShouldEndWF(boolean shouldEndWF) {
+            this.shouldEndWF = shouldEndWF;
+        }
+
+        public Job.Status getJobStatus() {
+            return jobStatus;
+        }
+
+        public void setJobStatus(Job.Status jobStatus) {
+            this.jobStatus = jobStatus;
+        }
+
     }
 
 }

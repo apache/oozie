@@ -25,6 +25,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.control.ForkActionExecutor;
 import org.apache.oozie.action.control.StartActionExecutor;
 import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
@@ -46,6 +47,9 @@ import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQ
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.CallableQueueService.CallableWrapper;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
@@ -70,6 +74,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.apache.oozie.client.OozieClient;
 
@@ -86,6 +91,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     private boolean generateEvent = false;
     private String wfJobErrorCode;
     private String wfJobErrorMsg;
+    public final static String FORK_PARALLEL_JOBSUBMISSION = "oozie.workflow.parallel.fork.action.start";
 
     public SignalXCommand(String name, int priority, String jobId) {
         super(name, name, priority);
@@ -164,6 +170,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         WorkflowJob.Status prevStatus = wfJob.getStatus();
         boolean completed = false, skipAction = false;
         WorkflowActionBean syncAction = null;
+        List<WorkflowActionBean> workflowActionBeanListForForked = new ArrayList<WorkflowActionBean>();
+
 
         if (wfAction == null) {
             if (wfJob.getStatus() == WorkflowJob.Status.PREP) {
@@ -387,15 +395,31 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         ActionExecutor current = as.getExecutor(wfAction.getType());
                         LOG.trace("Current Action Type:" + current.getClass());
                         if (!suspendNewAction) {
-                            if (!(current instanceof ForkActionExecutor) && !(current instanceof StartActionExecutor)) {
+                            if (current instanceof StartActionExecutor) {
                                 // Excluding :start: here from executing first action synchronously since it
                                 // blocks the consumer thread till the action is submitted to Hadoop,
                                 // in turn reducing the number of new submissions the threads can accept.
                                 // Would also be susceptible to longer delays in case Hadoop cluster is busy.
-                                syncAction = newAction;
+                                queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
+                            }
+                            else if (current instanceof ForkActionExecutor) {
+                                if (ConfigurationService.getBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION)) {
+                                    workflowActionBeanListForForked.add(newAction);
+                                }
+                                else {
+                                    queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
+
+                                }
                             }
                             else {
-                                queue(new ActionStartXCommand(newAction.getId(), newAction.getType()));
+                                syncAction = newAction;
+                            }
+                        }
+                        else {
+                            // suspend check will happen later... where if one of action is suspended all forked action
+                            // will be ignored.
+                            if (ConfigurationService.getBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION)) {
+                                workflowActionBeanListForForked.add(newAction);
                             }
                         }
                     }
@@ -434,8 +458,85 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         else if (syncAction != null) {
             new ActionStartXCommand(wfJob, syncAction.getId(), syncAction.getType()).call(getEntityKey());
         }
+        else if (!workflowActionBeanListForForked.isEmpty() && !checkForSuspendNode(workflowActionBeanListForForked)){
+            startForkedActions(workflowActionBeanListForForked);
+        }
         LOG.debug("ENDED SignalCommand for jobid=" + jobId + ", actionId=" + actionId);
         return null;
+    }
+
+    public void startForkedActions(List<WorkflowActionBean> workflowActionBeanListForForked) throws CommandException {
+
+        List<CallableWrapper<ActionExecutorContext>> tasks =
+                new ArrayList<CallableWrapper<ActionExecutorContext>>();
+        boolean updateLastModified = true;
+        for (WorkflowActionBean workflowActionBean : workflowActionBeanListForForked) {
+            LOG.debug("Starting forked actions parallely : " + workflowActionBean.getId());
+            tasks.add(Services.get().get(CallableQueueService.class).new CallableWrapper<ActionExecutorContext>(
+                    new ForkedActionStartXCommand(wfJob, workflowActionBean.getId(), workflowActionBean.getType()), 0));
+        }
+
+        try {
+            List<Future<ActionExecutorContext>> futures = Services.get().get(CallableQueueService.class).invokeAll(tasks);
+            for (Future<ActionExecutorContext> result : futures) {
+                ActionExecutorContext context = result.get();
+                if (context.getJobStatus() != null && context.getJobStatus().equals(Job.Status.FAILED)) {
+                    LOG.warn("Action has failed, failing job" + context.getAction().getId());
+                    new ActionStartXCommand(context.getAction().getId(), null).failJob(context);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_START,
+                            (WorkflowActionBean) context.getAction()));
+                    if (context.isShouldEndWF()) {
+                        endWF();
+                        updateLastModified = false;
+                        break;
+                    }
+                }
+                if (context.getJobStatus() != null && context.getJobStatus().equals(Job.Status.SUSPENDED)) {
+                    LOG.warn("Action has failed, failing job" + context.getAction().getId());
+                    new ActionStartXCommand(context.getAction().getId(), null).handleNonTransient(context, null,
+                            WorkflowAction.Status.START_MANUAL);
+                    updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_START,
+                            (WorkflowActionBean) context.getAction()));
+                    if (context.isShouldEndWF()) {
+                        endWF();
+                        updateLastModified = false;
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            LOG.error("Error running forked jobs parallely", e);
+            startForkedActionsByQueuing(workflowActionBeanListForForked);
+        }
+        if (updateLastModified) {
+            updateJobLastModified();
+        }
+        LOG.debug("forked actions submitted parallely");
+    }
+
+    public void startForkedActionsByQueuing(List<WorkflowActionBean> workflowActionBeanListForForked) throws CommandException {
+        //queuing all jobs, submitted job will fail in precondition
+        for (WorkflowActionBean workflowActionBean : workflowActionBeanListForForked) {
+            LOG.debug("Queuing fork action " + workflowActionBean.getId());
+            queue(new ActionStartXCommand(wfJob, workflowActionBean.getId(), workflowActionBean.getType()));
+        }
+    }
+
+    protected void updateJobLastModified() {
+        wfJob.setLastModifiedTime(new Date());
+        updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MODIFIED,
+                wfJob));
+    }
+
+    protected void endWF() throws CommandException {
+        updateParentIfNecessary(wfJob, 3);
+        new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
+        SLAEventBean slaEvent2 = SLADbXOperations.createStatusEvent(wfJob.getSlaXml(), wfJob.getId(), Status.FAILED,
+                SlaAppType.WORKFLOW_JOB);
+        if (slaEvent2 != null) {
+            insertList.add(slaEvent2);
+        }
     }
 
     public static ELEvaluator createELEvaluatorForGroup(Configuration conf, String group) {
@@ -537,5 +638,16 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
         }
         return suspendNewAction;
     }
+
+
+
+private boolean checkForSuspendNode(List<WorkflowActionBean> workflowActionBeanListForForked) {
+    for(WorkflowActionBean bean :workflowActionBeanListForForked)
+        if(checkForSuspendNode(bean)){
+            return true;
+        }
+    return false;
+}
+
 
 }

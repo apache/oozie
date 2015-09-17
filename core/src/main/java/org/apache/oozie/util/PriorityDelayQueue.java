@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -59,8 +60,8 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      * <p>
      * This wrapper keeps track of the priority and the age of a queue element.
      */
-    public static class QueueElement<E> implements Delayed {
-        private E element;
+    public static class QueueElement<E> extends FutureTask<E> implements Delayed {
+        private XCallable<E> element;
         private int priority;
         private long baseTime;
         boolean inQueue;
@@ -76,7 +77,8 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
          * @throws IllegalArgumentException if the element is <tt>NULL</tt>, the priority is negative or if the delay is
          * negative.
          */
-        public QueueElement(E element, int priority, long delay, TimeUnit unit) {
+        public QueueElement(XCallable<E> element, int priority, long delay, TimeUnit unit) {
+            super(element);
             if (element == null) {
                 throw new IllegalArgumentException("element cannot be null");
             }
@@ -92,20 +94,11 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
         }
 
         /**
-         * Create an Element wrapper with no delay and minimum priority.
-         *
-         * @param element element.
-         */
-        public QueueElement(E element) {
-            this(element, 0, 0, TimeUnit.MILLISECONDS);
-        }
-
-        /**
          * Return the element from the wrapper.
          *
          * @return the element.
          */
-        public E getElement() {
+        public XCallable<E> getElement() {
             return element;
         }
 

@@ -38,6 +38,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
@@ -51,8 +52,8 @@ public class TestSignalXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        services.getConf().setBoolean(LiteWorkflowAppParser.VALIDATE_FORK_JOIN, false);
         services.init();
+        ConfigurationService.setBoolean(LiteWorkflowAppParser.VALIDATE_FORK_JOIN, false);
 
     }
 
@@ -61,8 +62,34 @@ public class TestSignalXCommand extends XDataTestCase {
         services.destroy();
         super.tearDown();
     }
+    public void testJoinFail() throws Exception{
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
+        _testJoinFail();
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, false);
+        _testJoinFail();
+    }
 
-    public void testJoinFail() throws Exception {
+    public void testSuspendPoints() throws Exception{
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
+        _testSuspendPoints();
+        services.destroy();
+        services = new Services();
+        services.init();
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, false);
+        _testSuspendPoints();
+    }
+
+    public void testSuspendPointsAll() throws Exception{
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
+        _testSuspendPointsAll();
+        services.destroy();
+        services = new Services();
+        services.init();
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, false);
+        _testSuspendPointsAll();
+    }
+
+    public void _testJoinFail() throws Exception {
         Logger logger = Logger.getLogger(SignalXCommand.class);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Layout layout = new SimpleLayout();
@@ -94,7 +121,7 @@ public class TestSignalXCommand extends XDataTestCase {
         assertFalse(out.toString().contains("EntityExistsException"));
     }
 
-    public void testSuspendPoints() throws Exception {
+    public void _testSuspendPoints() throws Exception {
         services.destroy();
         LocalOozie.start();
         FileSystem fs = getFileSystem();
@@ -168,7 +195,7 @@ public class TestSignalXCommand extends XDataTestCase {
         LocalOozie.stop();
     }
 
-    public void testSuspendPointsAll() throws Exception {
+    public void _testSuspendPointsAll() throws Exception {
         services.destroy();
         LocalOozie.start();
         FileSystem fs = getFileSystem();

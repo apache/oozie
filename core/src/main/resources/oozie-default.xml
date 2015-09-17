@@ -2127,6 +2127,15 @@
 		</description>
 	</property>
 
+    <property>
+        <name>oozie.workflow.parallel.fork.action.start</name>
+        <value>true</value>
+        <description>
+            Determines how Oozie processes starting of forked actions. If true, forked actions and their job submissions
+            are done in parallel which is best for performance. If false, they are submitted sequentially.
+        </description>
+    </property>
+
 	<property>
 		<name>oozie.coord.action.get.all.attributes</name>
 		<value>false</value>
