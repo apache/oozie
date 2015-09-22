@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2360 Spark Action fails due to missing mesos jar (rkanter)
 OOZIE-2345 Parallel job submission for forked actions (puru)
 OOZIE-2358 Coord rerun cleanup should reuse hcat connections (rohini)
 OOZIE-2356 Add a way to enable/disable credentials in a workflow (rkanter)
