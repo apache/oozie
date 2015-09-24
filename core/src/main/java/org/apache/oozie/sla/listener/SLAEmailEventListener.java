@@ -93,6 +93,7 @@ public class SLAEmailEventListener extends SLAEventListener {
             this.name = name;
         }
 
+        @Override
         public String toString() {
             return name;
         }
@@ -107,7 +108,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         String smtpPort = conf.get(EmailActionExecutor.EMAIL_SMTP_PORT, SMTP_PORT_DEFAULT);
         Boolean smtpAuth = conf.getBoolean(EmailActionExecutor.EMAIL_SMTP_AUTH, SMTP_AUTH_DEFAULT);
         String smtpUser = conf.get(EmailActionExecutor.EMAIL_SMTP_USER, "");
-        String smtpPassword = ConfigurationService.getPassword(EmailActionExecutor.EMAIL_SMTP_PASS);
+        String smtpPassword = ConfigurationService.getPassword(EmailActionExecutor.EMAIL_SMTP_PASS, "");
         String smtpConnectTimeout = conf.get(SMTP_CONNECTION_TIMEOUT, SMTP_CONNECTION_TIMEOUT_DEFAULT);
         String smtpTimeout = conf.get(SMTP_TIMEOUT, SMTP_TIMEOUT_DEFAULT);
 
@@ -118,6 +119,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         blackList = CacheBuilder.newBuilder()
                 .expireAfterWrite(blacklistTimeOut, TimeUnit.SECONDS)
                 .build(new CacheLoader<String, AtomicInteger>() {
+                    @Override
                     public AtomicInteger load(String key) throws Exception {
                         return new AtomicInteger();
                     }
@@ -256,8 +258,9 @@ public class SLAEmailEventListener extends SLAEventListener {
             }
         }
 
-        if (addrList.size() > 0)
+        if (addrList.size() > 0) {
             addrs = (Address[]) addrList.toArray(new InternetAddress[addrList.size()]);
+        }
 
         return addrs;
     }

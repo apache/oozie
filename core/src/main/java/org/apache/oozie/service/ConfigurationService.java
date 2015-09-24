@@ -148,6 +148,7 @@ public class ConfigurationService implements Service, Instrumentable {
      * @param services services instance.
      * @throws ServiceException thrown if the log service could not be initialized.
      */
+    @Override
     public void init(Services services) throws ServiceException {
         configDir = getConfigurationDirectory();
         configFile = System.getProperty(OOZIE_CONFIG_FILE, SITE_CONFIG_FILE);
@@ -179,6 +180,7 @@ public class ConfigurationService implements Service, Instrumentable {
     /**
      * Destroy the configuration service.
      */
+    @Override
     public void destroy() {
         configuration = null;
     }
@@ -188,6 +190,7 @@ public class ConfigurationService implements Service, Instrumentable {
      *
      * @return {@link ConfigurationService}.
      */
+    @Override
     public Class<? extends Service> getInterface() {
         return ConfigurationService.class;
     }
@@ -316,11 +319,13 @@ public class ConfigurationService implements Service, Instrumentable {
             }
         }
 
+        @Override
         public String[] getStrings(String name) {
             String s = get(name);
             return (s != null && s.trim().length() > 0) ? super.getStrings(name) : new String[0];
         }
 
+        @Override
         public String[] getStrings(String name, String[] defaultValue) {
             String s = get(name);
             if (s == null) {
@@ -330,6 +335,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return (s != null && s.trim().length() > 0) ? super.getStrings(name) : defaultValue;
         }
 
+        @Override
         public String get(String name, String defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -341,6 +347,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return value;
         }
 
+        @Override
         public void set(String name, String value) {
             setValue(name, value);
             boolean maskValue = MASK_PROPS.contains(name);
@@ -348,6 +355,7 @@ public class ConfigurationService implements Service, Instrumentable {
             log.info(XLog.OPS, "Programmatic configuration change, property[{0}]=[{1}]", name, value);
         }
 
+        @Override
         public boolean getBoolean(String name, boolean defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -356,6 +364,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return super.getBoolean(name, defaultValue);
         }
 
+        @Override
         public int getInt(String name, int defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -364,6 +373,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return super.getInt(name, defaultValue);
         }
 
+        @Override
         public long getLong(String name, long defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -372,6 +382,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return super.getLong(name, defaultValue);
         }
 
+        @Override
         public float getFloat(String name, float defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -380,6 +391,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return super.getFloat(name, defaultValue);
         }
 
+        @Override
         public Class<?>[] getClasses(String name, Class<?> ... defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -388,6 +400,7 @@ public class ConfigurationService implements Service, Instrumentable {
             return super.getClasses(name, defaultValue);
         }
 
+        @Override
         public Class<?> getClass(String name, Class<?> defaultValue) {
             String value = get(name);
             if (value == null) {
@@ -413,13 +426,16 @@ public class ConfigurationService implements Service, Instrumentable {
      *
      * @param instr instrumentation to use.
      */
+    @Override
     public void instrument(Instrumentation instr) {
         instr.addVariable(INSTRUMENTATION_GROUP, "config.dir", new Instrumentation.Variable<String>() {
+            @Override
             public String getValue() {
                 return configDir;
             }
         });
         instr.addVariable(INSTRUMENTATION_GROUP, "config.file", new Instrumentation.Variable<String>() {
+            @Override
             public String getValue() {
                 return configFile;
             }
@@ -550,10 +566,14 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static String getPassword(Configuration conf, String name) {
+        return getPassword(conf, name, null);
+    }
+
+    public static String getPassword(Configuration conf, String name, String defaultValue) {
         if (getPasswordMethod != null) {
             try {
                 char[] pass = (char[]) getPasswordMethod.invoke(conf, name);
-                return new String(pass);
+                return pass == null ? defaultValue : new String(pass);
             } catch (IllegalAccessException e) {
                 log.error(e);
                 throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
@@ -566,8 +586,8 @@ public class ConfigurationService implements Service, Instrumentable {
         }
     }
 
-    public static String getPassword(String name) {
+    public static String getPassword(String name, String defaultValue) {
         Configuration conf = Services.get().getConf();
-        return getPassword(conf, name);
+        return getPassword(conf, name, defaultValue);
     }
 }

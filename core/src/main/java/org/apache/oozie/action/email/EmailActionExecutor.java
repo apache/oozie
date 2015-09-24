@@ -168,7 +168,7 @@ public class EmailActionExecutor extends ActionExecutor {
         String smtpPort = getOozieConf().get(EMAIL_SMTP_PORT, "25");
         Boolean smtpAuth = getOozieConf().getBoolean(EMAIL_SMTP_AUTH, false);
         String smtpUser = getOozieConf().get(EMAIL_SMTP_USER, "");
-        String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS);
+        String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
         String fromAddr = getOozieConf().get(EMAIL_SMTP_FROM, "oozie@localhost");
 
         Properties properties = new Properties();
@@ -322,18 +322,22 @@ public class EmailActionExecutor extends ActionExecutor {
             fs = has.createFileSystem(user, uri, fsConf);
         }
 
+        @Override
         public InputStream getInputStream() throws IOException {
             return fs.open(new Path(uri));
         }
 
+        @Override
         public OutputStream getOutputStream() throws IOException {
             return fs.create(new Path(uri));
         }
 
+        @Override
         public String getContentType() {
             return "application/octet-stream";
         }
 
+        @Override
         public String getName() {
             return uri.getPath();
         }
