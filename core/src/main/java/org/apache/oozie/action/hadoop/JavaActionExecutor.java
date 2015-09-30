@@ -251,24 +251,22 @@ public class JavaActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         try {
             Namespace ns = actionXml.getNamespace();
+            XConfiguration launcherConf = new XConfiguration();
+            // Inject action defaults for launcher
+            HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
+            injectLauncherProperties(actionDefaultConf, launcherConf);
+            // Inject <configuration> for launcher
             Element e = actionXml.getChild("configuration", ns);
             if (e != null) {
                 String strConf = XmlUtils.prettyPrint(e).toString();
                 XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-
-                XConfiguration launcherConf = new XConfiguration();
-                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-                XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
-                injectLauncherProperties(actionDefaultConf, launcherConf);
                 injectLauncherProperties(inlineConf, launcherConf);
-                injectLauncherUseUberMode(launcherConf);
-                checkForDisallowedProps(launcherConf, "launcher configuration");
-                XConfiguration.copy(launcherConf, conf);
-            } else {
-                XConfiguration launcherConf = new XConfiguration();
-                injectLauncherUseUberMode(launcherConf);
-                XConfiguration.copy(launcherConf, conf);
             }
+            // Inject use uber mode for launcher
+            injectLauncherUseUberMode(launcherConf);
+            XConfiguration.copy(launcherConf, conf);
+            checkForDisallowedProps(launcherConf, "launcher configuration");
             e = actionXml.getChild("config-class", actionXml.getNamespace());
             if (e != null) {
                 conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());

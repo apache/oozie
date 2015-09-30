@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2376 Default action configs not honored if no <configuration> section in workflow (rkanter)
 OOZIE-2365 oozie fail to start when smtp password not set (rohini)
 OOZIE-2360 Spark Action fails due to missing mesos jar (rkanter)
 OOZIE-2345 Parallel job submission for forked actions (puru)

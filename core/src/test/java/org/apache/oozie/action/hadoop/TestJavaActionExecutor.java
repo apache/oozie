@@ -2654,4 +2654,52 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         });
         assertTrue(runningJob.isSuccessful());
     }
+
+    public void testDefaultConfigurationInLauncher() throws Exception {
+        JavaActionExecutor ae = new JavaActionExecutor();
+        Element actionXmlWithConfiguration = XmlUtils.parseXml(
+                "<java>" + "<job-tracker>" + getJobTrackerUri() +"</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<configuration>" +
+                "<property><name>oozie.launcher.a</name><value>AA</value></property>" +
+                "<property><name>b</name><value>BB</value></property>" +
+                "</configuration>" +
+                "<main-class>MAIN-CLASS</main-class>" +
+                "</java>");
+        Element actionXmlWithoutConfiguration = XmlUtils.parseXml(
+                "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>MAIN-CLASS</main-class>" +
+                "</java>");
+
+        Configuration conf = new Configuration(false);
+        Assert.assertEquals(0, conf.size());
+        conf.set("mapred.job.tracker", getJobTrackerUri());
+        ae.setupLauncherConf(conf, actionXmlWithConfiguration, null, null);
+        assertEquals(getJobTrackerUri(), conf.get("mapred.job.tracker"));
+        assertEquals("AA", conf.get("oozie.launcher.a"));
+        assertEquals("AA", conf.get("a"));
+        assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
+        assertEquals("action.barbar", conf.get("action.foofoo"));
+        assertEquals("true", conf.get("mapreduce.job.ubertask.enable"));
+        if (conf.size() == 7) {
+            assertEquals(getJobTrackerUri(), conf.get("mapreduce.jobtracker.address"));
+        } else {
+            assertEquals(6, conf.size());
+        }
+
+        conf = new Configuration(false);
+        Assert.assertEquals(0, conf.size());
+        conf.set("mapred.job.tracker", getJobTrackerUri());
+        ae.setupLauncherConf(conf, actionXmlWithoutConfiguration, null, null);
+        assertEquals(getJobTrackerUri(), conf.get("mapred.job.tracker"));
+        assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
+        assertEquals("action.barbar", conf.get("action.foofoo"));
+        assertEquals("true", conf.get("mapreduce.job.ubertask.enable"));
+        if (conf.size() == 5) {
+            assertEquals(getJobTrackerUri(), conf.get("mapreduce.jobtracker.address"));
+        } else {
+            assertEquals(4, conf.size());
+        }
+    }
 }
