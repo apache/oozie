@@ -399,8 +399,8 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         assertEquals(1, callableQueueService.getQueueDump().size());
         assertTrue(queueDump.get(0).contains("coord_push_dep_check"));
         log.info("Queue dump is " + queueDump.toString());
-        // Delay should be something like delay=599999. Ignore last three digits
-        assertTrue(queueDump.get(0).matches(".* delay=599[0-9]{3}"));
+        // Delay should be something like delay=599999 (ignore last three digits) or delay=600000
+        assertTrue(queueDump.get(0).matches(".* delay=(599[0-9]{3}|600000)"));
     }
 
     @Test

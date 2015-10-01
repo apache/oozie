@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2379 org.apache.oozie.command.coord.TestCoordPushDependencyCheckXCommand.testRequeueOnException is flakey (rkanter)
 OOZIE-2378 org.apache.oozie.client.TestOozieCLI.testAdminInstrumentation is flakey (rkanter)
 OOZIE-2377 Hive2 Action should not propagate oozie.hive2.* properties to Beeline (rkanter)
 OOZIE-2376 Default action configs not honored if no <configuration> section in workflow (rkanter)
