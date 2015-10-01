@@ -57,6 +57,8 @@ public class V2AdminServlet extends V1AdminServlet {
             Instrumentation instrumentation = services.get(InstrumentationService.class).get();
             if (instrumentation instanceof MetricsInstrumentation) {
                 metricsInstrumentation = (MetricsInstrumentation) instrumentation;
+            } else {
+                metricsInstrumentation = null;
             }
         }
     }
