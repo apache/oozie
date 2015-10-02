@@ -81,6 +81,12 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
     }
 
     @Override
+    protected void tearDown() throws Exception {
+        PigTestCase.resetPigStats();
+        super.tearDown();
+    }
+
+    @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
         setSystemProperty("oozie.service.ActionService.executor.classes", PigActionExecutor.class.getName());

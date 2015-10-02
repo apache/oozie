@@ -48,6 +48,7 @@ public class TestPigMain extends PigTestCase {
     @Override
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
+        resetPigStats();
         super.tearDown();
     }
 

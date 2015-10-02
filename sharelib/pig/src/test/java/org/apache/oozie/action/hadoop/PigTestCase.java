@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import org.antlr.runtime.ANTLRReaderStream;
@@ -32,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.pig.tools.pigstats.PigStats;
 import org.python.util.jython;
 
 import com.google.common.primitives.Booleans;
@@ -114,4 +116,32 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
     }
 
 
+    /**
+     * PigStats is a singleton, so it gets persisted between unit tests that run different Pig jobs that run PigMain. Unfortunetly,
+     * there isn't a clean way to reset it.  Pig v 0.9 has a set method which we can pass null to in order to reset the PigStats.
+     * However, this was changed in Pig v 0.13 to the start method.  In either case, they're both package private, so we have to use
+     * reflection to find the existing method for whichever version of Pig we're using and make it public.
+     *
+     * This should be called when tearing down any unit test that runs PigMain.
+     *
+     * @throws Exception
+     */
+    static void resetPigStats() throws Exception {
+        Method m = null;
+        try {
+            System.out.println("Attempting to reset PigStats via 'set' method");
+            m = PigStats.class.getDeclaredMethod("set", PigStats.class);
+        } catch (NoSuchMethodException e1) {
+            try {
+                System.out.println("Attempting to reset PigStats via 'start' method");
+                m = PigStats.class.getDeclaredMethod("start", PigStats.class);
+            } catch (NoSuchMethodException e2) {
+                System.out.println("WARNING: Unable to reset PigStats. This may cause test failures.");
+            }
+        }
+        if (m != null) {
+            m.setAccessible(true);
+            m.invoke(null, (PigStats) null);
+        }
+    }
 }
