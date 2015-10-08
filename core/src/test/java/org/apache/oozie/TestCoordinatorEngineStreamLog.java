@@ -18,14 +18,9 @@
 
 package org.apache.oozie;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -33,23 +28,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
-import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XLogUserFilterParam;
-import org.apache.oozie.util.XConfiguration;
 
-public class TestCoordinatorEngineStreamLog extends XFsTestCase {
+public class TestCoordinatorEngineStreamLog extends XDataTestCase {
     private Services services;
 
     @Override
@@ -63,23 +55,6 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     protected void tearDown() throws Exception {
         services.destroy();
         super.tearDown();
-    }
-
-    private void writeToFile(String appXml, String appPath) throws Exception {
-        File wf = new File(new URI(appPath).getPath());
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new FileWriter(wf));
-            out.println(appXml);
-        }
-        catch (IOException iex) {
-            throw iex;
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
     }
 
     static class DummyXLogStreamingService extends XLogStreamingService {
@@ -101,12 +76,14 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
     }
 
     public void testCoordLogStreaming() throws Exception {
+        services.setService(DummyXLogStreamingService.class);
+        new DagXLogInfoService().init(services);
         CoordinatorEngine ce = createCoordinatorEngine();
-        final String jobId = runJobsImpl(ce, 6);
+        final String jobId = createJobs(6);
 
         CoordinatorJobBean cjb = ce.getCoordJob(jobId);
         Date createdDate = cjb.getCreatedTime();
-        Date endDate = new Date();
+        Date endDate = cjb.getEndTime();
         assertTrue(endDate.after(createdDate));
 
         List<CoordinatorAction> list = cjb.getActions();
@@ -115,16 +92,14 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
                 return a.getId().compareTo(b.getId());
             }
         });
-        
-        endDate = new Date();
-        
-        Thread.sleep(2000);
+
         // Test 1.to test if fields are injected
         ce.streamLog(jobId, new StringWriter(), new HashMap<String, String[]>());
         DummyXLogStreamingService service = (DummyXLogStreamingService) services.get(XLogStreamingService.class);
         XLogFilter filter = service.filter;
         assertEquals(filter.getFilterParams().get(DagXLogInfoService.JOB), jobId);
-        assertTrue(endDate.before(service.endTime));
+        assertEquals(cjb.getCreatedTime(), service.startTime);
+        assertEquals(cjb.getLastModifiedTime(), service.endTime);
 
 
         // Test2
@@ -234,76 +209,22 @@ public class TestCoordinatorEngineStreamLog extends XFsTestCase {
         }
     }
 
-    private String runJobsImpl(final CoordinatorEngine ce, int count) throws Exception {
-        try {
-            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", false);
-            services.setService(DummyXLogStreamingService.class);
-            // need to re-define the parameters that are cleared upon the service
-            // reset:
-            new DagXLogInfoService().init(services);
-
-            Configuration conf = new XConfiguration();
-
-            final String appPath = getTestCaseFileUri("coordinator.xml");
-            final long now = System.currentTimeMillis();
-            final String start = DateUtils.formatDateOozieTZ(new Date(now));
-            long e = now + 1000 * 60 * count;
-            final String end = DateUtils.formatDateOozieTZ(new Date(e));
-
-            String wfXml = IOUtils.getResourceAsString("wf-no-op.xml", -1);
-            writeToFile(wfXml, getFsTestCaseDir(), "workflow.xml");
-
-            String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(1)}\" start=\"" + start
-                    + "\" end=\"" + end + "\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.1\"> " + "<controls> "
-                    + "  <timeout>1</timeout> " + "  <concurrency>1</concurrency> " + "  <execution>LIFO</execution> "
-                    + "</controls> " + "<action> " + "  <workflow> " + "  <app-path>" + getFsTestCaseDir()
-                    + "/workflow.xml</app-path>"
-                    + "  <configuration> <property> <name>inputA</name> <value>valueA</value> </property> "
-                    + "  <property> <name>inputB</name> <value>valueB</value> " + "  </property></configuration> "
-                    + "</workflow>" + "</action> " + "</coordinator-app>";
-            writeToFile(appXml, appPath);
-            conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
-            conf.set(OozieClient.USER_NAME, getTestUser());
-
-            final String jobId = ce.submitJob(conf, true);
-            waitFor(1000 * 60 * count, new Predicate() {
-                @Override
-                public boolean evaluate() throws Exception {
-                    try {
-                        List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
-                        if (actions.size() < 1) {
-                            return false;
-                        }
-                        for (CoordinatorAction action : actions) {
-                            CoordinatorAction.Status actionStatus = action.getStatus();
-                            if (actionStatus != CoordinatorAction.Status.SUCCEEDED) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                    catch (Exception ex) {
-                        ex.printStackTrace();
-                        return false;
-                    }
-                }
-            });
-            // Assert all the actions are succeeded (useful for waitFor() timeout
-            // case):
-            final List<CoordinatorAction> actions = ce.getCoordJob(jobId).getActions();
-            for (CoordinatorAction action : actions) {
-                assertEquals(CoordinatorAction.Status.SUCCEEDED, action.getStatus());
-            }
-            return jobId;
-        } finally {
-            Services.get().getConf().setBoolean("oozie.service.coord.check.maximum.frequency", true);
+    private String createJobs(int numActions) throws Exception {
+        long time = System.currentTimeMillis();
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, true);
+        job.setCreatedTime(new Date(time));
+        time += 1000 * 60;
+        for (int i = 1; i <= numActions; i++) {
+            CoordinatorActionBean action = createCoordAction(job.getId(), i, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", 0, new Date(time));
+            action.setCreatedTime(new Date(time));
+            time += 1000 * 60;
+            action.setLastModifiedTime(new Date(time));
+            time += 1000 * 60;
+            addRecordToCoordActionTable(action, null);
         }
-    }
-
-    private void writeToFile(String content, Path appPath, String fileName) throws IOException {
-        FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true));
-        writer.write(content);
-        writer.close();
+        job.setEndTime(new Date(time));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        return job.getId();
     }
 }
