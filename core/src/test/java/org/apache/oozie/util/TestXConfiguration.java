@@ -38,6 +38,14 @@ import org.apache.oozie.test.XTestCase;
 
 public class TestXConfiguration extends XTestCase {
 
+    @Override
+    public void setUp() throws Exception {
+        // Make sure to reinitialize XConfiguration for each of these tests in case they rely on it doing something (e.g. setting
+        // max substitution depth)
+        XConfiguration.initalized = false;
+        super.setUp();
+    }
+
     public void testFromStream() throws Exception {
         String configPath = "test-oozie-default.xml";
         InputStream is = IOUtils.getResourceAsStream(configPath, -1);
@@ -229,7 +237,6 @@ public class TestXConfiguration extends XTestCase {
     }
 
     public void testSubstituteVarUnlimited() throws ServiceException {
-        XConfiguration.initalized = false;
         Services services = new Services();
         services.get(ConfigurationService.class).getConf().set(XConfiguration.CONFIGURATION_SUBSTITUTE_DEPTH, "-1");
         services.init();

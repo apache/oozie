@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2386 org.apache.oozie.util.TestXConfiguration.testSubstituteVar is flakey (rkanter)
 OOZIE-2385 org.apache.oozie.TestCoordinatorEngineStreamLog.testCoordLogStreaming is flakey (rkanter)
 OOZIE-2382 org.apache.oozie.action.hadoop.TestPigMain.testPig_withNullExternalID is flakey (rkanter)
 OOZIE-2379 org.apache.oozie.command.coord.TestCoordPushDependencyCheckXCommand.testRequeueOnException is flakey (rkanter)
