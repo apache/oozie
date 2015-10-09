@@ -43,6 +43,7 @@ public class TestPigMain extends PigTestCase {
         System.setProperty("oozie.test.metastore.server", "false");
         super.setUp();
         SECURITY_MANAGER = System.getSecurityManager();
+        resetPigStats();
     }
 
     @Override

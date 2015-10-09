@@ -51,10 +51,12 @@ public class TestPigMainWithOldAPI extends XFsTestCase implements Callable<Void>
     protected void setUp() throws Exception {
         super.setUp();
         SECURITY_MANAGER = System.getSecurityManager();
+        PigTestCase.resetPigStats();
     }
 
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
+        PigTestCase.resetPigStats();
         super.tearDown();
     }
 
