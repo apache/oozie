@@ -64,26 +64,26 @@ done
 # Add the JAR's in /opt/mapr/lib to its classpath
 OOZIECPPATH="${OOZIECPPATH}:${MAPR_LIB_DIR}/*"
 
+BASEMAPR=${MAPR_HOME:-/opt/mapr}
+if [ -f ${BASEMAPR}/conf/hadoop_version ]; then
+  hadoop_mode=`cat ${BASEMAPR}/conf/hadoop_version | grep default_mode | cut -d '=' -f 2`
+  if [ "$hadoop_mode" = "yarn" ]; then
+    version=`cat ${BASEMAPR}/conf/hadoop_version | grep yarn_version | cut -d '=' -f 2`
+    HADOOP_VERSION="hadoop-$version"
+  elif [ "$hadoop_mode" = "classic" ]; then
+    version=`cat ${BASEMAPR}/conf/hadoop_version | grep classic_version | cut -d '=' -f 2`
+    HADOOP_VERSION="hadoop-$version"
+  else
+    echo 'Unknown hadoop version'
+  fi
+else
+  CMD="hadoop version"
+  res=`eval $CMD`
+  HADOOP_VERSION=`readlink \`which hadoop\` | awk -F "/" '{print$5}'`
+  version=`echo ${HADOOP_VERSION} | cut -d'-' -f 2`
+fi
 # Check if HADOOP_HOME is not set
 if [[ ${HADOOP_HOME} = "" ]]; then
-  BASEMAPR=${MAPR_HOME:-/opt/mapr}
-  if [ -f ${BASEMAPR}/conf/hadoop_version ]; then
-    hadoop_mode=`cat ${BASEMAPR}/conf/hadoop_version | grep default_mode | cut -d '=' -f 2`
-      if [ "$hadoop_mode" = "yarn" ]; then
-		version=`cat ${BASEMAPR}/conf/hadoop_version | grep yarn_version | cut -d '=' -f 2`
-		HADOOP_VERSION="hadoop-$version"
-	  elif [ "$hadoop_mode" = "classic" ]; then
-		version=`cat ${BASEMAPR}/conf/hadoop_version | grep classic_version | cut -d '=' -f 2`
-		HADOOP_VERSION="hadoop-$version"
-	else
-		echo 'Unknown hadoop version'
-	fi
-  else
-    CMD="hadoop version"
-    res=`eval $CMD`
-    HADOOP_VERSION=`readlink \`which hadoop\` | awk -F "/" '{print$5}'`
-    version=`echo ${HADOOP_VERSION} | cut -d'-' -f 2`
-  fi
   export HADOOP_HOME=${BASEMAPR}/hadoop/${HADOOP_VERSION}/
 fi
 
