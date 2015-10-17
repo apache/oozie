@@ -58,6 +58,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -880,7 +881,19 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // Properties for when a launcher job's AM gets restarted
             if (ConfigurationService.getBoolean(HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART)) {
-                LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, launcherTag);
+                // launcher time filter is required to prune the search of launcher tag.
+                // Setting coordinator action nominal time as launcher time as it child job cannot launch before nominal
+                // time. Workflow created time is good enough when workflow is running independently or workflow is
+                // rerunning from failed node.
+                long launcherTime = System.currentTimeMillis();
+                String coordActionNominalTime = context.getProtoActionConf()
+                        .get(CoordActionStartXCommand.OOZIE_COORD_ACTION_NOMINAL_TIME);
+                if (coordActionNominalTime != null) {
+                    launcherTime = Long.parseLong(coordActionNominalTime);
+                } else if (context.getWorkflow().getCreatedTime() != null) {
+                    launcherTime = context.getWorkflow().getCreatedTime().getTime();
+                }
+                LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, launcherTag, launcherTime);
             }
             else {
                 LOG.info(MessageFormat.format("{0} is set to false, not setting YARN restart properties",
