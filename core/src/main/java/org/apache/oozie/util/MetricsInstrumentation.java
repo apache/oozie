@@ -23,7 +23,11 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ganglia.GangliaReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.json.MetricsModule;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,9 +36,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import info.ganglia.gmetric4j.gmetric.GMetric;
+import org.apache.oozie.service.ConfigurationService;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -65,14 +74,83 @@ public class MetricsInstrumentation extends Instrumentation {
     private Lock countersLock;
     private Lock histogramsLock;
 
+    public static final String EXTERNAL_MONITORING_ENABLE = "oozie.external_monitoring.enable";
+    public static final String EXTERNAL_MONITORING_TYPE = "oozie.external_monitoring.type";
+    public static final String EXTERNAL_MONITORING_ADDRESS = "oozie.external_monitoring.address";
+    public static final String EXTERNAL_MONITORING_PREFIX = "oozie.external_monitoring.metricPrefix";
+    public static final String EXTERNAL_MONITORING_INTERVAL = "oozie.external_monitoring.reporterIntervalSecs";
+    public static final String GRAPHITE="graphite";
+    public static final String GANGLIA="ganglia";
+    private String metricsAddress;
+    private String metricsHost;
+    private String metricsPrefix;
+    private String metricsServerName;
+    private int metricsPort;
+    private GraphiteReporter graphiteReporter = null;
+    private GangliaReporter gangliaReporter = null;
+    private long metricsReportIntervalSec;
+    private boolean isExternalMonitoringEnabled;
+
     private static final TimeUnit RATE_UNIT = TimeUnit.MILLISECONDS;
     private static final TimeUnit DURATION_UNIT = TimeUnit.MILLISECONDS;
+
+    protected XLog LOG = XLog.getLog(getClass());
 
     /**
      * Creates the MetricsInstrumentation and starts taking some metrics.
      */
     public MetricsInstrumentation() {
         metricRegistry = new MetricRegistry();
+
+        isExternalMonitoringEnabled = ConfigurationService.getBoolean(EXTERNAL_MONITORING_ENABLE);
+        if(isExternalMonitoringEnabled) {
+            metricsServerName = ConfigurationService.get(EXTERNAL_MONITORING_TYPE);
+            if (metricsServerName != null) {
+                String modifiedServerName = metricsServerName.trim().toLowerCase();
+                if (modifiedServerName.equals(GRAPHITE) || modifiedServerName.equals(GANGLIA)) {
+                    metricsAddress = ConfigurationService.get(EXTERNAL_MONITORING_ADDRESS);
+                    metricsPrefix = ConfigurationService.get(EXTERNAL_MONITORING_PREFIX);
+                    metricsReportIntervalSec = ConfigurationService.getLong(EXTERNAL_MONITORING_INTERVAL);
+                    LOG.debug("Publishing external monitoring to [{0}]  at host [{1}] every [{2}] seconds with prefix " +
+                            "[{3}]", metricsServerName, metricsAddress, metricsReportIntervalSec, metricsPrefix);
+
+                    try {
+                        URL url = new URL(metricsAddress);
+                        metricsHost = url.getHost();
+                        metricsPort = url.getPort();
+                    } catch (MalformedURLException e) {
+                        LOG.error("Exception, ", e);
+                    }
+
+                    if (modifiedServerName.equals(GRAPHITE)) {
+                        Graphite graphite = new Graphite(new InetSocketAddress(metricsHost, metricsPort));
+                        graphiteReporter = GraphiteReporter.forRegistry(metricRegistry).prefixedWith(metricsPrefix)
+                                .convertDurationsTo(TimeUnit.SECONDS).filter(MetricFilter.ALL).build(graphite);
+                        graphiteReporter.start(metricsReportIntervalSec, TimeUnit.SECONDS);
+                    }
+
+                    if (modifiedServerName.equals(GANGLIA)) {
+                        GMetric ganglia;
+                        try {
+                            ganglia = new GMetric(metricsHost, metricsPort, GMetric.UDPAddressingMode.MULTICAST, 1);
+                        } catch (IOException e) {
+                            LOG.error("Exception, ", e);
+                            throw new RuntimeException(e);
+                        }
+                        gangliaReporter = GangliaReporter.forRegistry(metricRegistry).prefixedWith(metricsPrefix)
+                                .convertRatesTo(TimeUnit.SECONDS)
+                                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                                .build(ganglia);
+                        gangliaReporter.start(metricsReportIntervalSec, TimeUnit.SECONDS);
+                    }
+                } else {
+                    throw new RuntimeException("Metrics Server Name should be either graphite or ganglia");
+                }
+            }
+            else {
+                throw new RuntimeException("Metrics Server Name is not specified");
+            }
+        }
 
         timersLock = new ReentrantLock();
         gaugesLock = new ReentrantLock();
@@ -113,6 +191,29 @@ public class MetricsInstrumentation extends Instrumentation {
         );
         gauges = new ConcurrentHashMap<String, Gauge>();
         histograms = new ConcurrentHashMap<String, Histogram>();
+    }
+
+    /**
+     * Reporting final metrics into the server before stopping
+     */
+    @Override
+    public void stop() {
+        if (graphiteReporter != null) {
+            try {
+                // reporting final metrics into graphite before stopping
+                graphiteReporter.report();
+            } finally {
+                graphiteReporter.stop();
+            }
+        }
+        if (gangliaReporter != null) {
+            try {
+                // reporting final metrics into ganglia before stopping
+                gangliaReporter.report();
+            } finally {
+                gangliaReporter.stop();
+            }
+        }
     }
 
     /**

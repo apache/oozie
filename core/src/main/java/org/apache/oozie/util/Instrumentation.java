@@ -801,4 +801,8 @@ public class Instrumentation {
         return samplers;
     }
 
+    public void stop() {
+
+    }
+
 }

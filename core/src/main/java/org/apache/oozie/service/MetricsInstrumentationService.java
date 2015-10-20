@@ -52,6 +52,7 @@ public class MetricsInstrumentationService extends InstrumentationService {
     @Override
     public void destroy() {
         isEnabled = false;
+        instrumentation.stop();
         instrumentation = null;
     }
 

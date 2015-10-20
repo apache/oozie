@@ -37,6 +37,39 @@
     </property>
 
     <property>
+        <name>oozie.external_monitoring.enable</name>
+        <value>false</value>
+        <description>
+            If the oozie functional metrics needs to be exposed to the metrics-server backend, set it to true
+            If set to true, the following properties has to be specified : oozie.metrics.server.name,
+            oozie.metrics.host, oozie.metrics.prefix, oozie.metrics.report.interval.sec, oozie.metrics.port
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.external_monitoring.type</name>
+        <value>graphite</value>
+        <description>
+            The name of the server to which we want to send the metrics, would be graphite or ganglia.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.external_monitoring.address</name>
+        <value>http://localhost:2020</value>
+    </property>
+
+    <property>
+        <name>oozie.external_monitoring.metricPrefix</name>
+        <value>oozie</value>
+    </property>
+
+    <property>
+        <name>oozie.external_monitoring.reporterIntervalSecs</name>
+        <value>60</value>
+    </property>
+
+    <property>
         <name>oozie.action.mapreduce.uber.jar.enable</name>
         <value>false</value>
         <description>
