@@ -411,7 +411,7 @@ public class JavaActionExecutor extends ActionExecutor {
         String reduceOpts = conf.get(HADOOP_REDUCE_JAVA_OPTS);
         String childOpts = conf.get(HADOOP_CHILD_JAVA_OPTS);
         String amChildOpts = conf.get(YARN_AM_COMMAND_OPTS);
-        String oozieJavaTmpDirSetting = "-Djava.io.tmpdir=./tmp";
+        String oozieJavaTmpDirSetting = JAVA_TMP_DIR_SETTINGS + System.getProperty("user.dir") + "/tmp";
         if (childOpts == null) {
             conf.set(HADOOP_CHILD_JAVA_OPTS, oozieJavaTmpDirSetting);
         } else {
