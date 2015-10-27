@@ -305,21 +305,42 @@ public class TestCoordCommandUtils extends XDataTestCase {
                 CoordinatorJob.Status.RUNNING, false, true);
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String actionXml = getCoordActionXml(appPath, "coord-dataset-offset.xml");
+        actionXml = actionXml.replace("-unit-", "DAY");
+        actionXml = actionXml.replace("-frequency-", "1");
         CoordinatorActionBean actionBean = createCoordinatorActionBean(job);
         Configuration jobConf = new XConfiguration(new StringReader(job.getConf()));
         Element eAction = createActionElement(actionXml);
         jobConf.set("startInstance", "coord:offset(-4,DAY)");
         jobConf.set("endInstance", "coord:offset(0,DAY)");
         String output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
-                DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), 1,
+                DateUtils.parseDateOozieTZ("2009-08-20T10:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T10:00Z"), 1,
                 jobConf, actionBean);
         eAction = XmlUtils.parseXml(output);
         Element e = (Element) ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0))
                 .getChildren().get(0);
         assertEquals(e.getChild("uris", e.getNamespace()).getTextTrim(),
-                "hdfs:///tmp/workflows/2009/08/20;region=us#hdfs:///tmp/workflows/2009/08/19;region=us#"
-                        + "hdfs:///tmp/workflows/2009/08/18;region=us#hdfs:///tmp/workflows/2009/08/17;"
-                        + "region=us#hdfs:///tmp/workflows/2009/08/16;region=us");
+                "hdfs:///tmp/workflows/2009/08/20/01;region=us#hdfs:///tmp/workflows/2009/08/19/01;region=us#"
+                        + "hdfs:///tmp/workflows/2009/08/18/01;region=us#hdfs:///tmp/workflows/2009/08/17/01;"
+                        + "region=us#hdfs:///tmp/workflows/2009/08/16/01;region=us");
+
+        jobConf.set("startInstance", "coord:offset(-4,HOUR)");
+        jobConf.set("endInstance", "coord:offset(0,HOUR)");
+        actionXml = getCoordActionXml(appPath, "coord-dataset-offset.xml");
+        actionXml = actionXml.replace("-unit-", "MINUTE");
+        actionXml = actionXml.replace("-frequency-", "60");
+        eAction = createActionElement(actionXml);
+
+        output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), DateUtils.parseDateOozieTZ("2009-08-20T01:00Z"), 1,
+                jobConf, actionBean);
+        eAction = XmlUtils.parseXml(output);
+        e = (Element) ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0))
+                .getChildren().get(0);
+        assertEquals(e.getChild("uris", e.getNamespace()).getTextTrim(),
+                "hdfs:///tmp/workflows/2009/08/20/01;region=us#hdfs:///tmp/workflows/2009/08/20/00;region=us#"
+                + "hdfs:///tmp/workflows/2009/08/19/23;region=us#hdfs:///tmp/workflows/2009/08/19/22;region=us#"
+                + "hdfs:///tmp/workflows/2009/08/19/21;region=us");
+
     }
 
     @Test

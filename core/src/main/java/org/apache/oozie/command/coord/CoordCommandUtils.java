@@ -262,8 +262,9 @@ public class CoordCommandUtils {
                     if (startCal != null && endCal != null) {
                         List<Integer> expandedFreqs = CoordELFunctions.expandOffsetTimes(startCal, endCal, eval);
                         for (int i = expandedFreqs.size() - 1; i >= 0; i--) {
+                            //we need to use DS timeout, bcz expandOffsetTimes will expand offset in Freqs in DS timeunit
                             String matInstance = materializeInstance(event, "${coord:offset(" + expandedFreqs.get(i)
-                                    + ", \"" + startRestArg + "\")}", appInst, conf, eval);
+                                    + ", \"" + CoordELFunctions.getDSTimeUnit(eval) + "\")}", appInst, conf, eval);
                             if (matInstance == null || matInstance.length() == 0) {
                                 // Earlier than dataset's initial instance
                                 break;

@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2369 coord:offset doesn't resolve correctly (puru)
 OOZIE-2251 Expose instrumental matrices in Realtime Graphing tool (nperiwal via rkanter)
 OOZIE-2314 Unable to kill old instance child job by workflow or coord rerun by Launcher (jaydeepvishwakarma via rkanter)
 OOZIE-2386 org.apache.oozie.util.TestXConfiguration.testSubstituteVar is flakey (rkanter)

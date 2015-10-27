@@ -1463,7 +1463,7 @@ public class CoordELFunctions {
     /**
      * @return dataset TimeUnit
      */
-    private static TimeUnit getDSTimeUnit(ELEvaluator eval) {
+    public static TimeUnit getDSTimeUnit(ELEvaluator eval) {
         SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(DATASET);
         if (ds == null) {
             throw new RuntimeException("Associated Dataset should be defined with key " + DATASET);
