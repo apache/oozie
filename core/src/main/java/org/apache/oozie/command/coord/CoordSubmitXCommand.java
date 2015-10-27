@@ -143,6 +143,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private ELEvaluator evalAction = null;
     private ELEvaluator evalSla = null;
     private ELEvaluator evalTimeout = null;
+    private ELEvaluator evalInitialInstance = null;
 
     static {
         String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
@@ -661,6 +662,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
         evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
         evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
+        evalInitialInstance = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-initial-instance");
+
     }
 
     /**
@@ -969,7 +972,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     .toString() : ((TimeUnit) evalFreq.getVariable("timeunit")).toString());
             addAnAttribute("end_of_duration", dsElem, evalFreq.getVariable("endOfDuration") == null ? TimeUnit.NONE
                     .toString() : ((TimeUnit) evalFreq.getVariable("endOfDuration")).toString());
-            val = resolveAttribute("initial-instance", dsElem, evalNofuncs);
+            val = resolveAttribute("initial-instance", dsElem, evalInitialInstance);
             ParamChecker.checkDateOozieTZ(val, "initial-instance");
             checkInitialInstance(val);
             val = resolveAttribute("timezone", dsElem, evalNofuncs);

@@ -583,7 +583,7 @@
     <!--  List of supported groups for ELService -->
 	<property>
         <name>oozie.service.ELService.groups</name>
-        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout,bundle-submit</value>
+        <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout,bundle-submit,coord-job-submit-initial-instance</value>
         <description>List of groups for different ELServices</description>
     </property>
 
@@ -798,6 +798,18 @@
     </property>
 
     <property>
+        <name>oozie.service.ELService.functions.coord-job-submit-initial-instance</name>
+        <value>
+            ${oozie.service.ELService.functions.coord-job-submit-nofuncs},
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateOffset,
+            coord:dateTzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateTzOffset
+        </value>
+        <description>
+            EL functions for coord job submit initial instance, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.ELService.ext.functions.coord-job-submit-freq</name>
         <value>
         </value>
@@ -932,7 +944,9 @@
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo,
-            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateOffset_echo,
+            coord:dateTzOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateTzOffset_echo
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.
@@ -1104,7 +1118,6 @@
             coord:current=org.apache.oozie.coord.CoordELFunctions#ph2_coord_current,
             coord:currentRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_currentRange,
             coord:offset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_offset,
-            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateOffset,
             coord:latest=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latest_echo,
             coord:latestRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_latestRange_echo,
             coord:future=org.apache.oozie.coord.CoordELFunctions#ph2_coord_future_echo,
@@ -1173,7 +1186,9 @@
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
             coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
-            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
+            hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
+            coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateOffset,
+            coord:dateTzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateTzOffset
         </value>
         <description>
             EL functions declarations, separated by commas, format is [PREFIX:]NAME=CLASS#METHOD.

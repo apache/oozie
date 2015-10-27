@@ -28,12 +28,14 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -1519,4 +1521,52 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         Element eSla = eAction.getChild("action", eAction.getNamespace()).getChild("info", eAction.getNamespace("sla"));
         assertEquals(SLAOperations.getTagElement(eSla, "max-duration"), "${5 * MINUTES}");
     }
+
+    public void testSubmitDateOffset() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"${NAME}\" frequency=\"${coord:days(1)}\" start=\"${startDate}\" "
+                + "end=\"${endDate}\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.3\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:days(1)}\" "
+                + "initial-instance=\"${coord:dateOffset(startDate,-2,'DAY')}\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/a/${YEAR}/${DAY}"
+                + "</uri-template>  </dataset> "
+                + "<dataset name=\"b\" frequency=\"${coord:days(1)}\" initial-instance=\"${coord:dateTzOffset(startDate,'UTC')}\" "
+                + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/b/${YEAR}/${DAY}</uri-template> "
+                + "<done-flag>${MY_DONE_FLAG}</done-flag> </dataset>"
+                + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <start-instance>${coord:absolute(coord:dateOffset(startDate,-1,'DAY'))}"
+                + "</start-instance><end-instance>${coord:current(0)}</end-instance></data-in>  "
+                + "<data-in name=\"B\" dataset=\"b\"> <start-instance>${coord:absolute(coord:dateTzOffset(startDate,'UTC'))}"
+                + "</start-instance><end-instance>${coord:current(0)}</end-instance></data-in>  "
+                + "</input-events> "
+                + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "</workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("MY_DONE_FLAG", "complete");
+        conf.set("NAME", "test_app_name");
+        conf.set("startDate", "2009-02-03T00:00Z");
+        conf.set("endDate", "2009-03-03T00:00Z");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+        CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(
+                CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, jobId);
+        assertTrue(job.getJobXml()
+                .contains("dataset name=\"a\" frequency=\"1\" initial-instance=\"2009-02-01T00:00Z\""));
+        assertTrue(job.getJobXml()
+                .contains("dataset name=\"b\" frequency=\"1\" initial-instance=\"2009-02-03T00:00Z\""));
+        new CoordMaterializeTransitionXCommand(jobId, 3600).call();
+        CoordinatorActionBean action = CoordActionQueryExecutor.getInstance().get(
+                CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION, jobId+"@1");
+        action.getActionXml();
+        assertTrue(action.getActionXml()
+                .contains("tmp/coord/a/2009/02"));
+        assertTrue(action.getActionXml()
+                .contains("tmp/coord/b/2009/03"));
+    }
+
 }
