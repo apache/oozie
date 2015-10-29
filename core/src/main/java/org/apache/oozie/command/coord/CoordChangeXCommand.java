@@ -41,8 +41,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionByActionNumberJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -269,26 +268,30 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 return null;
             }
 
-            String actionId = jpaService.execute(new CoordJobGetActionByActionNumberJPAExecutor(jobId, actionNum));
-            CoordinatorActionBean bean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+            String actionId = jobId + "@" + actionNum;
+            CoordinatorActionBean bean = CoordActionQueryExecutor.getInstance().getIfExist(
+                    CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION, actionId);
+            if (bean == null) {
+                return null;
+            }
             if (afterDate.compareTo(bean.getNominalTime()) <= 0) {
-                // delete SLA registration entry (if any) for action
-                if (SLAService.isEnabled()) {
-                    Services.get().get(SLAService.class).removeRegistration(actionId);
-                }
-                SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
-                if (slaReg != null) {
-                    LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
-                    deleteList.add(slaReg);
-                }
-                SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
-                        SLASummaryQuery.GET_SLA_SUMMARY, actionId);
-                if (slaSummaryBean != null) {
-                    LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
-                    deleteList.add(slaSummaryBean);
-                }
                 if (bean.getStatus() == CoordinatorAction.Status.WAITING
                         || bean.getStatus() == CoordinatorAction.Status.READY) {
+                    // delete SLA registration entry (if any) for action
+                    if (SLAService.isEnabled()) {
+                        Services.get().get(SLAService.class).removeRegistration(actionId);
+                    }
+                    SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
+                    if (slaReg != null) {
+                        LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
+                        deleteList.add(slaReg);
+                    }
+                    SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
+                            SLASummaryQuery.GET_SLA_SUMMARY, actionId);
+                    if (slaSummaryBean != null) {
+                        LOG.debug("Deleting summary bean corresponding to action " + slaSummaryBean.getId());
+                        deleteList.add(slaSummaryBean);
+                    }
                     deleteList.add(bean);
                 }
                 else {

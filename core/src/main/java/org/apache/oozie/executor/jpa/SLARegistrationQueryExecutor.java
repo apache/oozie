@@ -144,6 +144,19 @@ public class SLARegistrationQueryExecutor extends QueryExecutor<SLARegistrationB
     }
 
     @Override
+    public SLARegistrationBean getIfExist(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null && !namedQuery.equals(SLARegQuery.GET_SLA_REG_ALL)) {
+            return null;
+        }
+        SLARegistrationBean bean = constructBean(namedQuery, ret, parameters);
+        return bean;
+    }
+
+    @Override
     public List<SLARegistrationBean> getList(SLARegQuery namedQuery, Object... parameters) throws JPAExecutorException {
         JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();

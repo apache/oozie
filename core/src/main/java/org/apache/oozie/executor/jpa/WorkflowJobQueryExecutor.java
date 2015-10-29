@@ -18,19 +18,21 @@
 
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
 import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Query Executor that provides API to run query for Workflow Job
@@ -337,12 +339,22 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
 
     @Override
     public WorkflowJobBean get(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        WorkflowJobBean bean = getIfExist(namedQuery, parameters);
+        if (bean == null) {
+            throw new JPAExecutorException(ErrorCode.E0605, getSelectQuery(namedQuery,
+                    Services.get().get(JPAService.class).getEntityManager(), parameters).toString());
+        }
+        return bean;
+    }
+
+    @Override
+    public WorkflowJobBean getIfExist(WorkflowJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
         if (ret == null) {
-            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+            return null;
         }
         WorkflowJobBean bean = constructBean(namedQuery, ret, parameters);
         return bean;

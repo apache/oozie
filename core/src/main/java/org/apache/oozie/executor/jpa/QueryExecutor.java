@@ -19,6 +19,7 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -75,5 +76,7 @@ public abstract class QueryExecutor<T, E extends Enum<E>> {
 
     public abstract Object getSingleValue(E namedQuery, Object... parameters)
             throws JPAExecutorException;
+
+    public abstract T getIfExist(E namedQuery, Object... parameters) throws JPAExecutorException;
 
 }

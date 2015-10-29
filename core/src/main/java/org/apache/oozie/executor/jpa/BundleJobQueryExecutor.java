@@ -157,12 +157,22 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
 
     @Override
     public BundleJobBean get(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        BundleJobBean bean = getIfExist(namedQuery, parameters);
+        if (bean == null) {
+            throw new JPAExecutorException(ErrorCode.E0605, getSelectQuery(namedQuery,
+                    Services.get().get(JPAService.class).getEntityManager(), parameters).toString());
+        }
+        return bean;
+    }
+
+    @Override
+    public BundleJobBean getIfExist(BundleJobQuery namedQuery, Object... parameters) throws JPAExecutorException {
         JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
         if (ret == null) {
-            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+            return null;
         }
         BundleJobBean bean = constructBean(namedQuery, ret, parameters);
         return bean;

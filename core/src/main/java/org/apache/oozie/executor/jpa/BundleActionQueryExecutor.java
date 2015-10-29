@@ -20,7 +20,6 @@ package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -123,14 +122,11 @@ public class BundleActionQueryExecutor extends
 
     @Override
     public BundleActionBean get(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        EntityManager em = jpaService.getEntityManager();
-        Query query = getSelectQuery(namedQuery, em, parameters);
-        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
-        if (ret == null) {
-            throw new JPAExecutorException(ErrorCode.E0604, query.toString());
+        BundleActionBean bean = getIfExist(namedQuery, parameters);
+        if (bean == null) {
+            throw new JPAExecutorException(ErrorCode.E0604, getSelectQuery(namedQuery,
+                    Services.get().get(JPAService.class).getEntityManager(), parameters));
         }
-        BundleActionBean bean = constructBean(namedQuery, ret);
         return bean;
     }
 
@@ -184,6 +180,19 @@ public class BundleActionQueryExecutor extends
     @Override
     public Object getSingleValue(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BundleActionBean getIfExist(BundleActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null) {
+            return null;
+        }
+        BundleActionBean bean = constructBean(namedQuery, ret);
+        return bean;
     }
 
 }

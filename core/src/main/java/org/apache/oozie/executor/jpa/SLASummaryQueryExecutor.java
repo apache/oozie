@@ -161,6 +161,19 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
     }
 
     @Override
+    public SLASummaryBean getIfExist(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        EntityManager em = jpaService.getEntityManager();
+        Query query = getSelectQuery(namedQuery, em, parameters);
+        Object ret = jpaService.executeGet(namedQuery.name(), query, em);
+        if (ret == null && !namedQuery.equals(SLASummaryQuery.GET_SLA_SUMMARY)) {
+            return null;
+        }
+        SLASummaryBean bean = constructBean(namedQuery, ret, parameters);
+        return bean;
+    }
+
+    @Override
     public List<SLASummaryBean> getList(SLASummaryQuery namedQuery, Object... parameters) throws JPAExecutorException {
         JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();

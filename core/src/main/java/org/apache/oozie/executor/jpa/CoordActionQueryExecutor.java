@@ -227,12 +227,22 @@ public class CoordActionQueryExecutor extends
 
     @Override
     public CoordinatorActionBean get(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
+        CoordinatorActionBean bean = getIfExist(namedQuery, parameters);
+        if (bean == null) {
+            throw new JPAExecutorException(ErrorCode.E0605, getSelectQuery(namedQuery,
+                    Services.get().get(JPAService.class).getEntityManager(), parameters).toString());
+        }
+        return bean;
+    }
+
+    @Override
+    public CoordinatorActionBean getIfExist(CoordActionQuery namedQuery, Object... parameters) throws JPAExecutorException {
         JPAService jpaService = Services.get().get(JPAService.class);
         EntityManager em = jpaService.getEntityManager();
         Query query = getSelectQuery(namedQuery, em, parameters);
         Object ret = jpaService.executeGet(namedQuery.name(), query, em);
         if (ret == null) {
-            throw new JPAExecutorException(ErrorCode.E0605, query.toString());
+            return null;
         }
         CoordinatorActionBean bean = constructBean(namedQuery, ret);
         return bean;

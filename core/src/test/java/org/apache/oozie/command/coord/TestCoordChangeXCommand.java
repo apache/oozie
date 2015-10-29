@@ -388,6 +388,53 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         assertTrue(coordJob.isDoneMaterialization());
     }
 
+    /**
+     * Testcase when no actions are added to coord action table
+     * reflects correct job state and values
+     *
+     * @throws Exception
+     */
+    public void testCoordChangeEndTime4() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + (50 * 60 * 1000));
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, true, true, 1);
+        coordJob.setNextMaterializedTime(new Date(startTime.getTime() + (30 * 60 * 1000)));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+
+        Runnable runnable = new StatusTransitService.StatusTransitRunnable();
+        runnable.run(); // dummy run so we get to the interval check following coord job change
+        sleep(1000);
+
+        assertEquals(endTime.getTime(), coordJob.getEndTime().getTime()); // checking before change
+
+        String newEndTime = convertDateToString(startTime.getTime() + 30 * 60 * 1000);
+
+        new CoordChangeXCommand(coordJob.getId(), "endtime=" + newEndTime).call();
+        try {
+            checkCoordJobs(coordJob.getId(), DateUtils.parseDateOozieTZ(newEndTime), null, null, false);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            fail("Invalid date" + ex);
+        }
+
+        CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.RUNNING, coordJob.getStatus());
+        assertEquals(newEndTime, convertDateToString(coordJob.getEndTime().getTime())); // checking after change
+        assertTrue(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+
+        runnable.run();
+        sleep(1000);
+        coordJob = jpaService.execute(coordGetCmd);
+        assertEquals(Job.Status.SUCCEEDED, coordJob.getStatus());
+        assertFalse(coordJob.isPending());
+        assertTrue(coordJob.isDoneMaterialization());
+    }
+
     // Testcase to test deletion of lookahead action in case of end-date change
     public void testCoordChangeEndTimeDeleteAction() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
