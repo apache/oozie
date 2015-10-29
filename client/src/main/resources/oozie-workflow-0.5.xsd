@@ -282,7 +282,8 @@
     </xs:complexType>
 
     <xs:complexType name="DELETE">
-        <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="path" type="xs:string" use="required" />
+        <xs:attribute name="skip-trash" type="xs:boolean" use="optional" />
     </xs:complexType>
 
     <xs:complexType name="MKDIR">

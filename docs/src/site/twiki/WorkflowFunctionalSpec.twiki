@@ -1158,7 +1158,7 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
     ...
     <action name="[NODE-NAME]">
         <fs>
-            <delete path='[PATH]'/>
+            <delete path='[PATH]' skip-trash='[true/false]'/>
             ...
             <mkdir path='[PATH]'/>
             ...
@@ -1178,7 +1178,9 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
 </verbatim>
 
 The =delete= command deletes the specified path, if it is a directory it deletes recursively all its content and then
-deletes the directory. It can also be used to drop hcat partitions. This is the only FS command which supports HCatalog URIs as well. For eg: <verbatim><delete path='hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value];...'/></verbatim>
+deletes the directory. By default it does skip trash. It can be moved to trash by setting the value of skip-trash to
+'false'. It can also be used to drop hcat partitions. This is the only FS command which supports HCatalog URIs as well.
+For eg: <verbatim><delete path='hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value];...'/></verbatim>
 
 The =mkdir= command creates the specified directory, it creates all missing directories in the path. If the directory
 already exist it does a no-op.
@@ -2868,6 +2870,7 @@ to be executed.
 
     <xs:complexType name="DELETE">
         <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="skip-trash" type="xs:boolean" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="MKDIR">

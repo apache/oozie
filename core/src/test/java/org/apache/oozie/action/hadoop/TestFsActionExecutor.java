@@ -65,6 +65,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.setLong("fs.trash.interval", 6000L);
 
         WorkflowJobBean wf = createBaseWorkflow(protoConf, "fs-action");
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
@@ -257,6 +258,25 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
     }
 
+    public void testMovetoTrash() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+
+        Path path = new Path(getFsTestCaseDir(), "dir1");
+
+        Context context = createContext("<fs/>");
+
+        fs.mkdirs(path);
+
+        ae.delete(context, null, null, path, false);
+
+        Path trashPath = new Path(fs.getHomeDirectory() + "/.Trash/Current/" + path.toUri().getPath() );
+
+        assertTrue(!fs.exists(path));
+
+        assertTrue(fs.exists(trashPath));
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -293,7 +313,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         Context context = createContext("<fs/>");
         XConfiguration conf = new XConfiguration();
         assertTrue(handler.exists(hcatURI, conf, getTestUser()));
-        ae.delete(context, conf, nameNodePath, path);
+        ae.delete(context, conf, nameNodePath, path, true);
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
     }
 
