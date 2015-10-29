@@ -28,6 +28,7 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
@@ -145,23 +146,26 @@ public class JobUtils {
      * @throws IOException
      */
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
-      if (fs == null) {
-        fs = file.getFileSystem(conf);
-      }
-      // Hadoop 0.20/1.x.
-      if (Services.get().get(HadoopAccessorService.class).getCachedConf().get("yarn.resourcemanager.webapp.address") == null) {
-          // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
-          // Refer OOZIE-1806.
-          String filepath = file.toUri().getPath();
-          String classpath = conf.get("mapred.job.classpath.files");
-          conf.set("mapred.job.classpath.files", classpath == null
-              ? filepath
-              : classpath + System.getProperty("path.separator") + filepath);
-          URI uri = fs.makeQualified(file).toUri();
-          DistributedCache.addCacheFile(uri, conf);
-      }
-      else { // Hadoop 0.23/2.x
-          DistributedCache.addFileToClassPath(file, conf, fs);
-      }
+        if (fs == null) {
+            Configuration defaultConf = Services.get().get(HadoopAccessorService.class)
+                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER));
+            XConfiguration.copy(conf, defaultConf);
+            // it fails with conf, therefore we pass defaultConf instead
+            fs = file.getFileSystem(defaultConf);
+        }
+        // Hadoop 0.20/1.x.
+        if (Services.get().get(HadoopAccessorService.class).getCachedConf().get("yarn.resourcemanager.webapp.address") == null) {
+            // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
+            // Refer OOZIE-1806.
+            String filepath = file.toUri().getPath();
+            String classpath = conf.get("mapred.job.classpath.files");
+            conf.set("mapred.job.classpath.files",
+                    classpath == null ? filepath : classpath + System.getProperty("path.separator") + filepath);
+            URI uri = fs.makeQualified(file).toUri();
+            DistributedCache.addCacheFile(uri, conf);
+        }
+        else { // Hadoop 0.23/2.x
+            DistributedCache.addFileToClassPath(file, conf, fs);
+        }
     }
 }
