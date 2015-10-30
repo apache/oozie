@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2303 Typo in documentation (lars_francke via rohini)
 OOZIE-2328 Coordinator endtime change should check if the last action is in database (kailongs via puru) 
 OOZIE-2367 fs delete should support skipTrash option (jaydeepvishwakarma via rohini)
 OOZIE-2368 coord:dateOffset and coord:dateTzOffset can't be used for coord initial-instance (puru)

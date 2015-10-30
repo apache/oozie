@@ -1451,7 +1451,7 @@ A =java= action can create a Hadoop configuration for interacting with a cluster
 Oozie prepares a Hadoop configuration file which includes the environments site configuration files (e.g. hdfs-site.xml, 
 mapred-site.xml, etc) plus the properties added to the =<configuration>= section of the =java= action. The Hadoop configuration 
 file is made available as a local file to the Java application in its running directory. It can be added to the =java= actions 
-Hadoop configuration by referencing the system property: =oozie-action.conf.xml=. For example:
+Hadoop configuration by referencing the system property: =oozie.action.conf.xml=. For example:
 
 <verbatim>
 // loading action conf prepared by Oozie
