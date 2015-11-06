@@ -26,8 +26,10 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.ActionExecutor.Context;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.command.wf.JobXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XConfiguration;
@@ -43,6 +45,8 @@ public class OozieJobInfo {
     public static final String COORD_NOMINAL_TIME = "coord.nominal.time";
     public static final String WORKFLOW_ID = "wf.id";
     public static final String WORKFLOW_NAME = "wf.name";
+    public static final String WORKFLOW_DEPTH = "wf.depth";
+    public static final String WORKFLOW_SUPER_PARENT = "wf.superparent.id";
     public static final String ACTION_TYPE = "action.type";
     public static final String ACTION_NAME = "action.name";
     public static final String JOB_INFO_KEY = "oozie.job.info";
@@ -105,14 +109,14 @@ public class OozieJobInfo {
     private void addCoordInfo(StringBuffer sb) throws IOException {
         addJobInfo(sb, COORD_NAME, contextConf.get(OozieJobInfo.COORD_NAME));
         addJobInfo(sb, COORD_NOMINAL_TIME, contextConf.get(OozieJobInfo.COORD_NOMINAL_TIME));
-        addJobInfo(sb, COORD_ID, context.getWorkflow().getParentId());
-
+        addJobInfo(sb, COORD_ID, contextConf.get(OozieJobInfo.COORD_ID));
     }
 
     private void addWorkflowInfo(StringBuffer sb) {
         addJobInfo(sb, WORKFLOW_ID, context.getWorkflow().getId());
         addJobInfo(sb, WORKFLOW_NAME, context.getWorkflow().getAppName());
-
+        addJobInfo(sb, WORKFLOW_DEPTH, contextConf.get(SubWorkflowActionExecutor.SUBWORKFLOW_DEPTH, "0"));
+        addJobInfo(sb, WORKFLOW_SUPER_PARENT, computeSuperParent());
     }
 
     private void addActionInfo(StringBuffer sb) {
@@ -139,5 +143,20 @@ public class OozieJobInfo {
             sb.append(key).append("=").append(value).append(OozieJobInfo.SEPARATOR);
         }
 
+    }
+
+    private String computeSuperParent() {
+        String superParentId = contextConf.get(SubWorkflowActionExecutor.SUPER_PARENT_ID);
+        if (superParentId == null) {
+            // Not a sub-workflow
+            if (context.getWorkflow().getParentId() != null) {
+                // return coord id as the super parent id
+                return context.getWorkflow().getParentId();
+            } else {
+                // return the current workflow id as the super parent id.
+                return context.getWorkflow().getId();
+            }
+        }
+        return superParentId;
     }
 }

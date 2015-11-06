@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.oozie;
 
+import org.apache.oozie.action.hadoop.OozieJobInfo;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
@@ -51,8 +52,9 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
     public static final String LOCAL = "local";
     public static final String PARENT_ID = "oozie.wf.parent.id";
+    public static final String SUPER_PARENT_ID = "oozie.wf.superparent.id";
     public static final String SUBWORKFLOW_MAX_DEPTH = "oozie.action.subworkflow.max.depth";
-    private static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
+    public static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
     public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
@@ -125,6 +127,23 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         conf.set(PARENT_ID, parentId);
     }
 
+    protected void injectSuperParent(WorkflowJob parentWorkflow, Configuration parentConf, Configuration conf) {
+        String superParentId = parentConf.get(SUPER_PARENT_ID);
+        if (superParentId == null) {
+            // This is a sub-workflow at depth 1
+            superParentId = parentWorkflow.getParentId();
+
+            // If the parent workflow is not submitted through a coordinator then the parentId will be the super parent id.
+            if (superParentId == null) {
+                superParentId = parentWorkflow.getId();
+            }
+            conf.set(SUPER_PARENT_ID, superParentId);
+        } else {
+            // Sub-workflow at depth 2 or more.
+            conf.set(SUPER_PARENT_ID, superParentId);
+        }
+    }
+
     protected void verifyAndInjectSubworkflowDepth(Configuration parentConf, Configuration conf) throws ActionExecutorException {
         int depth = parentConf.getInt(SUBWORKFLOW_DEPTH, 0);
         int maxDepth = ConfigurationService.getInt(SUBWORKFLOW_MAX_DEPTH);
@@ -165,6 +184,19 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                     XConfiguration.copy(parentConf, subWorkflowConf);
                 }
 
+                // Propagate coordinator and bundle info to subworkflow
+                if (OozieJobInfo.isJobInfoEnabled()) {
+                  if (parentConf.get(OozieJobInfo.COORD_ID) != null) {
+                    subWorkflowConf.set(OozieJobInfo.COORD_ID, parentConf.get(OozieJobInfo.COORD_ID));
+                    subWorkflowConf.set(OozieJobInfo.COORD_NAME, parentConf.get(OozieJobInfo.COORD_NAME));
+                    subWorkflowConf.set(OozieJobInfo.COORD_NOMINAL_TIME, parentConf.get(OozieJobInfo.COORD_NOMINAL_TIME));
+                  }
+                  if (parentConf.get(OozieJobInfo.BUNDLE_ID) != null) {
+                    subWorkflowConf.set(OozieJobInfo.BUNDLE_ID, parentConf.get(OozieJobInfo.BUNDLE_ID));
+                    subWorkflowConf.set(OozieJobInfo.BUNDLE_NAME, parentConf.get(OozieJobInfo.BUNDLE_NAME));
+                  }
+                }
+
                 // the proto has the necessary credentials
                 Configuration protoActionConf = context.getProtoActionConf();
                 XConfiguration.copy(protoActionConf, subWorkflowConf);
@@ -177,6 +209,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
                 injectParent(context.getWorkflow().getId(), subWorkflowConf);
+                injectSuperParent(context.getWorkflow(), parentConf, subWorkflowConf);
                 verifyAndInjectSubworkflowDepth(parentConf, subWorkflowConf);
 
                 //TODO: this has to be refactored later to be done in a single place for REST calls and this

@@ -137,9 +137,9 @@ public interface WorkflowJob {
     String getConsoleUrl();
     
     /**
-     * Return the coordinator action ID.
+     * Return the coordinator action ID or the parent workflow ID
      *
-     * @return the coordinator action ID.
+     * @return the coordinator action ID/ Parent Workflow ID.
      */
     String getParentId();
 

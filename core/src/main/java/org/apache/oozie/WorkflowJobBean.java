@@ -575,18 +575,20 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     }
 
     /**
-     * Return the corresponding Action ID, if any.
+     * For a sub-workflow, return the Parent Workflow ID and for a top level workflow
+     * return the Coordinator action id, if any.
      *
-     * @return the coordinator Action Id.
+     * @return the Parent Workflow Id/Coordinator Id if any.
      */
     public String getParentId() {
         return parentId;
     }
 
     /**
-     * Set coordinator action id
+     * Set parent id for the workflow.
+     * For a top level workflow it is the coordinator action id if submitted through coordinator
      *
-     * @param parentId : coordinator action id
+     * @param parentId the Parent Action id
      */
     public void setParentId(String parentId) {
         this.parentId = parentId;

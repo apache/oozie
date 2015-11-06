@@ -199,6 +199,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                     insertList.add(slaEvent);
                 }
                 if (OozieJobInfo.isJobInfoEnabled()) {
+                    conf.set(OozieJobInfo.COORD_ID, actionId);
                     conf.set(OozieJobInfo.COORD_NAME, appName);
                     conf.set(OozieJobInfo.COORD_NOMINAL_TIME, coordAction.getNominalTimestamp().toString());
                 }
