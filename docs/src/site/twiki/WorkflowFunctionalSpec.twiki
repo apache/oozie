@@ -587,7 +587,7 @@ Streaming and inline property values can be parameterized (templatized) using EL
 The Hadoop =mapred.job.tracker= and =fs.default.name= properties must not be present in the job-xml and inline
 configuration.
 
-#FilesAchives
+#FilesArchives
 ---+++++ 3.2.2.1 Adding Files and Archives for the Job
 
 The =file=, =archive= elements make available, to map-reduce jobs, files and archives. If the specified path is
@@ -948,7 +948,7 @@ The Hadoop =mapred.job.tracker= and =fs.default.name= properties must not be pre
 configuration.
 
 As with Hadoop map-reduce jobs, it  is possible to add files and archives to be available to the Pig job, refer to
-section [#FilesAchives][Adding Files and Archives for the Job].
+section [#FilesArchives][Adding Files and Archives for the Job].
 
 *Syntax for Pig actions in Oozie schema 0.2:*
 <verbatim>
@@ -1468,7 +1468,7 @@ The Hadoop =mapred.job.tracker= (=job-tracker=) and =fs.default.name= (=name-nod
 the =job-xml= and in the inline configuration.
 
 As with =map-reduce= and =pig= actions, it  is possible to add files and archives to be available to the Java
-application. Refer to section [#FilesAchives][Adding Files and Archives for the Job].
+application. Refer to section [#FilesArchives][Adding Files and Archives for the Job].
 
 The =capture-output= element can be used to propagate values back into Oozie context, which can then be accessed via
 EL-functions. This needs to be written out as a java properties format file. The filename is obtained via a System 

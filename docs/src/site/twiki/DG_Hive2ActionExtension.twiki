@@ -29,7 +29,7 @@ in the =job-xml= file.
 
 As with Hadoop =map-reduce= jobs, it is possible to add files and
 archives in order to make them available to Beeline. Refer to the
-[WorkflowFunctionalSpec#FilesAchives][Adding Files and Archives for the Job]
+[WorkflowFunctionalSpec#FilesArchives][Adding Files and Archives for the Job]
 section for more information about this feature.
 
 Oozie Hive 2 action supports Hive scripts with parameter variables, their

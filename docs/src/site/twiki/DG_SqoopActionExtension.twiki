@@ -36,7 +36,7 @@ must not be present in the inline configuration.
 
 As with Hadoop =map-reduce= jobs, it is possible to add files and
 archives in order to make them available to the Sqoop job. Refer to the
-[WorkflowFunctionalSpec#FilesAchives][Adding Files and Archives for the Job]
+[WorkflowFunctionalSpec#FilesArchives][Adding Files and Archives for the Job]
 section for more information about this feature.
 
 *Syntax:*
