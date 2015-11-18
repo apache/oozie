@@ -31,6 +31,8 @@ import java.text.ParseException;
  */
 public class ParamChecker {
 
+    private static final int MAX_NODE_NAME_LEN = 128;
+
     /**
      * Check that a value is not null. If null throws an IllegalArgumentException.
      *
@@ -106,10 +108,8 @@ public class ParamChecker {
         return list;
     }
 
-    private static final int MAX_NODE_NAME_LEN = 50;
-
     /**
-     * Check that the given string is a valid action name [a-zA-Z_][0-9a-zA-Z_\-]* and not longer than 50 chars.
+     * Check that the given string is a valid action name [a-zA-Z_][0-9a-zA-Z_\-]* and not longer than 128 chars.
      *
      * @param actionName string to validate is a token.
      * @return the given string.

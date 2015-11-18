@@ -239,4 +239,52 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    public void testValidateActionName() {
+        String actionName = "actionName";
+        ParamChecker.validateActionName(actionName);
+
+        actionName = "actionName01";
+        ParamChecker.validateActionName(actionName);
+
+        actionName = "actionName01_02";
+        ParamChecker.validateActionName(actionName);
+
+        actionName = "actionName01_02-test";
+        ParamChecker.validateActionName(actionName);
+
+        // actionName with = 128 chars
+        StringBuilder sb = new StringBuilder();
+        sb.append("a");
+        for (int i = 0; i < 127; i++) {
+            sb.append(i % 10);
+        }
+        ParamChecker.validateActionName(sb.toString());
+
+        try {
+            actionName = "1actionName";
+            ParamChecker.validateActionName(actionName);
+            fail();
+        } catch (IllegalArgumentException ex) {
+        }
+
+        try {
+            actionName = "-actionName";
+            ParamChecker.validateActionName(actionName);
+            fail();
+        } catch (IllegalArgumentException ex) {
+        }
+
+        try {
+            // actionName with > 128 chars
+            sb.setLength(0);
+            sb.append("ab");
+            for (int i = 0; i < 128; i++) {
+                sb.append(i);
+            }
+            ParamChecker.validateActionName(sb.toString());
+            fail();
+        } catch (IllegalArgumentException ex) {
+        }
+    }
+
 }

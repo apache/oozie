@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2168 Oozie flow and action names have 50 char limit (akshayrai09, me.venkatr via rkanter)
 OOZIE-2346 Add sub-workflow information like the super-parent id and workflow depth into the 'oozie.job.info' property (akshayrai09 via puru)
 OOZIE-2303 Typo in documentation (lars_francke via rohini)
 OOZIE-2328 Coordinator endtime change should check if the last action is in database (kailongs via puru) 
