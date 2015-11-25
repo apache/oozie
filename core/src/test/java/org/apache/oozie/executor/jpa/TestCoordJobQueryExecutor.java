@@ -209,9 +209,10 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getFrequency(), retBean.getFrequency());
         assertEquals(bean.getTimeUnit(), retBean.getTimeUnit());
         assertEquals(bean.getTimeZone(), retBean.getTimeZone());
+        assertEquals(bean.getStartTime(), retBean.getStartTime());
         assertEquals(bean.getEndTime(), retBean.getEndTime());
+        assertEquals(bean.getJobXml(), retBean.getJobXml());
         assertNull(retBean.getConf());
-        assertNull(retBean.getJobXmlBlob());
         assertNull(retBean.getOrigJobXmlBlob());
         assertNull(retBean.getSlaXmlBlob());
         // GET_COORD_JOB_ACTION_READY
@@ -223,8 +224,13 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
         assertEquals(bean.getExecution(), retBean.getExecution());
         assertEquals(bean.getConcurrency(), retBean.getConcurrency());
+        assertEquals(bean.getFrequency(), retBean.getFrequency());
+        assertEquals(bean.getTimeUnit(), retBean.getTimeUnit());
+        assertEquals(bean.getTimeZone(), retBean.getTimeZone());
+        assertEquals(bean.getStartTime(), retBean.getStartTime());
+        assertEquals(bean.getEndTime(), retBean.getEndTime());
+        assertEquals(bean.getJobXml(), retBean.getJobXml());
         assertNull(retBean.getConf());
-        assertNull(retBean.getJobXmlBlob());
         assertNull(retBean.getOrigJobXmlBlob());
         assertNull(retBean.getSlaXmlBlob());
         // GET_COORD_JOB_ACTION_KILL

@@ -976,13 +976,13 @@ A synchronous coordinator definition is a is defined by a name, start time and e
    * *%BLUE% timezone:%ENDCOLOR%* The timezone of the coordinator application.
    * *%BLUE% frequency: %ENDCOLOR%* The frequency, in minutes, to materialize actions. Refer to section #4 'Time Interval Representation' for syntax details.
    * Control information:
-      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materialization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=.
+      * *%BLUE% timeout: %ENDCOLOR%* The maximum time, in minutes, that a materialized action will be waiting for the additional conditions to be satisfied before being discarded. A timeout of =0= indicates that at the time of materialization all the other conditions must be satisfied, else the action will be discarded. A timeout of =0= indicates that if all the input events are not satisfied at the time of action materialization, the action should timeout immediately. A timeout of =-1= indicates no timeout, the materialized action will wait forever for the other conditions to be satisfied. The default value is =-1=. The timeout can only cause a =WAITING= action to transition to =TIMEDOUT=; once the data dependency is satisified, a =WAITING= action transitions to =READY=, and the timeout no longer has any affect, even if the action hasn't transitioned to =SUBMITTED= or =RUNNING= when it expires.
       * *%BLUE% concurrency: %ENDCOLOR%* The maximum number of actions for this job that can be running at the same time. This value allows to materialize and submit multiple instances of the coordinator app, and allows operations to catchup on delayed processing. The default value is =1=.
       * *%BLUE% execution: %ENDCOLOR%* Specifies the execution order if multiple instances of the coordinator job have satisfied their execution criteria. Valid values are:
          * =FIFO= (oldest first) *default*.
          * =LIFO= (newest first).
          * =LAST_ONLY= (see explanation below).
-         * =NONE= (discards all older materialization, see explanation below).
+         * =NONE= (see explanation below).
       * *%BLUE% throttle: %ENDCOLOR%* The maximum coordinator actions are allowed to be in WAITING state concurrently. The default value is =12=.
    * *%BLUE% datasets: %ENDCOLOR%* The datasets coordinator application uses.
    * *%BLUE% input-events: %ENDCOLOR%* The coordinator job input events.
@@ -1004,23 +1004,23 @@ A synchronous coordinator definition is a is defined by a name, start time and e
 *LAST_ONLY:* While =FIFO= and =LIFO= simply specify the order in which READY actions should be executed, =LAST_ONLY= can actually
 cause some actions to be SKIPPED and is a little harder to understand.  When =LAST_ONLY= is set, an action that is =WAITING=
 or =READY= will be =SKIPPED= when the current time is past the next action's nominal time.  For example, suppose action 1 and 2
-are both =WAITING=, the current time is 5:00pm, and action 2's nominal time is 5:10pm.  In 10 minutes from now, at 5:10pm, action 1
-will become SKIPPED, assuming it doesn't transition to =SUBMITTED= (or a terminal state) before then.  Another way of thinking about
-this is to view it as similar to setting the =timeout= equal to the =frequency=, except that the =SKIPPED= status doesn't cause the
-coordinator job to eventually become =DONEWITHERROR= and can actually become =SUCCEEDED= (i.e. it's a "good" version
-of =TIMEDOUT=).  =LAST_ONLY= is useful if you want a recurring job, but do not actually care about the individual instances and just
-always want the latest action.  For example, if you have a coordinator running every 10 minutes and take Oozie down for 1 hour, when
-Oozie comes back, there would normally be 6 actions =READY= to run.  However, with =LAST_ONLY=, only the current one will go
-to =SUBMITTED= and =RUNNING=; the others will go to SKIPPED.
+are both =READY=, the current time is 5:00pm, and action 2's nominal time is 5:10pm.  In 10 minutes from now, at 5:10pm, action 1
+will become SKIPPED, assuming it doesn't transition to =SUBMITTED= (or a terminal state) before then.  This sounds similar to the
+timeout control, but there are some important differences:
+   * The timeout time is configurable while the =LAST_ONLY= time is effectively the frequency.
+   * Reaching the timeout causes an action to transition to =TIMEDOUT=, which will cause the Coordinator Job to become =RUNNINGWITHERROR= and eventually =DONEWITHERROR=.  With =LAST_ONLY=, an action becomes =SKIPPED= and the Coordinator Job remains =RUNNING= and eventually =DONE=.
+   * The timeout is looking satisfying the data dependency, while =LAST_ONLY= is looking at the action itself.  This means that the timeout can only cause a transition from =WAITING=, while =LAST_ONLY= can cause a transition from =WAITING= or =READY=.
 
-*NONE:* Similar to LAST_ONLY except all older materializations are skipped. When =NONE= is set, an action that is =WAITING=
-or =READY= will be =SKIPPED= when the current time is more than a certain configured number of minutes (tolerance) past the action's
-nominal time. By default, the threshold is 1 minute. For example, suppose action 1 and 2
-are both =WAITING=, the current time is 5:20pm, and both actions' nominal times are before 5:19pm. Both actions
-will become SKIPPED, assuming they don't transition to =SUBMITTED= (or a terminal state) before then.  Another way of thinking about
-this is to view it as similar to setting the =timeout= equal to 1 minute which is the smallest time unit, except that the =SKIPPED= status doesn't cause the
-coordinator job to eventually become =DONEWITHERROR= and can actually become =SUCCEEDED= (i.e. it's a "good" version
-of =TIMEDOUT=).
+=LAST_ONLY= is useful if you want a recurring job, but do not actually care about the individual instances and just
+always want the latest action.  For example, if you have a coordinator running every 10 minutes and take Oozie down for 1 hour, when
+Oozie comes back, there would normally be 6 actions =WAITING= or =READY= to run.  However, with =LAST_ONLY=, only the current one
+will go to =SUBMITTED= and then =RUNNING=; the others will go to =SKIPPED=.
+
+*NONE:* Similar to =LAST_ONLY= except instead of looking at the next action's nominal time, it looks
+at =oozie.coord.execution.none.tolerance= in oozie-site.xml (default is 1 minute). When =NONE= is set, an action that is =WAITING=
+or =READY= will be =SKIPPED= when the current time is more than the configured number of minutes (tolerance) past that action's
+nominal time. For example, suppose action 1 and 2 are both =READY=, the current time is 5:20pm, and both actions' nominal times are
+before 5:19pm. Both actions will become =SKIPPED=, assuming they don't transition to =SUBMITTED= (or a terminal state) before then.
 
 *%PURPLE% Syntax: %ENDCOLOR%*
 

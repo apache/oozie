@@ -18,12 +18,17 @@
 
 package org.apache.oozie.command.coord;
 
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
@@ -34,10 +39,13 @@ import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
+import org.jdom.JDOMException;
 
 public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;
@@ -67,7 +75,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
         int numActionsToStart = -1;
 
         // get execution setting for this job (FIFO, LIFO, LAST_ONLY)
-        String jobExecution = coordJob.getExecution();
+        CoordinatorJob.Execution jobExecution = coordJob.getExecutionOrder();
         // get concurrency setting for this job
         int jobConcurrency = coordJob.getConcurrency();
         // if less than 0, then UNLIMITED concurrency
@@ -93,21 +101,70 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
             // no actions to start
             if (numActionsToStart == 0) {
                 log.warn("No actions to start for jobId=" + jobId + " as max concurrency reached!");
-                return null;
             }
         }
         // get list of actions that are READY and fit in the concurrency and execution
 
         List<CoordinatorActionBean> actions;
         try {
-            actions = jpaService.execute(new CoordJobGetReadyActionsJPAExecutor(jobId, numActionsToStart, jobExecution));
+            actions = jpaService.execute(new CoordJobGetReadyActionsJPAExecutor(jobId, jobExecution.name()));
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
         }
         log.debug("Number of READY actions = " + actions.size());
-        // make sure auth token is not null
-        // log.denug("user=" + user + ", token=" + authToken);
+        Date now = new Date();
+        // If we're using LAST_ONLY or NONE, we should check if any of these need to be SKIPPED instead of SUBMITTED
+        if (jobExecution.equals(CoordinatorJobBean.Execution.LAST_ONLY)) {
+            for (Iterator<CoordinatorActionBean> it = actions.iterator(); it.hasNext(); ) {
+                CoordinatorActionBean action = it.next();
+                try {
+                    Date nextNominalTime = CoordCommandUtils.computeNextNominalTime(coordJob, action);
+                    if (nextNominalTime != null) {
+                        // If the current time is after the next action's nominal time, then we've passed the window where this
+                        // action should be started; so set it to SKIPPED
+                        if (now.after(nextNominalTime)) {
+                            LOG.info("LAST_ONLY execution: Preparing to skip action [{0}] because the current time [{1}] is later "
+                                    + "than the nominal time [{2}] of the next action]", action.getId(),
+                                    DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
+                            queue(new CoordActionSkipXCommand(action, coordJob.getUser(), coordJob.getAppName()));
+                            it.remove();
+                        } else {
+                            LOG.debug("LAST_ONLY execution: Not skipping action [{0}] because the current time [{1}] is earlier "
+                                    + "than the nominal time [{2}] of the next action]", action.getId(),
+                                    DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
+                        }
+                    }
+                } catch (ParseException e) {
+                    LOG.error("Should not happen", e);
+                } catch (JDOMException e) {
+                    LOG.error("Should not happen", e);
+                }
+            }
+        }
+        else if (jobExecution.equals(CoordinatorJobBean.Execution.NONE)) {
+            for (Iterator<CoordinatorActionBean> it = actions.iterator(); it.hasNext(); ) {
+                CoordinatorActionBean action = it.next();
+                // If the current time is after the nominal time of this action plus some tolerance,
+                // then we've passed the window where this action should be started; so set it to SKIPPED
+                Calendar cal = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
+                cal.setTime(action.getNominalTime());
+                int tolerance = ConfigurationService.getInt(CoordActionInputCheckXCommand.COORD_EXECUTION_NONE_TOLERANCE);
+                cal.add(Calendar.MINUTE, tolerance);
+                if (now.after(cal.getTime())) {
+                    LOG.info("NONE execution: Preparing to skip action [{0}] because the current time [{1}] is more than [{2}]"
+                                    + " minutes later than the nominal time [{3}] of the current action]", action.getId(),
+                            DateUtils.formatDateOozieTZ(now), tolerance, DateUtils.formatDateOozieTZ(action.getNominalTime()));
+                    queue(new CoordActionSkipXCommand(action, coordJob.getUser(), coordJob.getAppName()));
+                    it.remove();
+                } else {
+                    LOG.debug("NONE execution: Not skipping action [{0}] because the current time [{1}] is earlier than [{2}]"
+                                    + " minutes later than the nominal time [{3}] of the current action]", action.getId(),
+                            DateUtils.formatDateOozieTZ(now), tolerance, DateUtils.formatDateOozieTZ(action.getNominalTime()));
+                }
+            }
+        }
+
         int counter = 0;
         for (CoordinatorActionBean action : actions) {
             // continue if numActionsToStart is negative (no limit on number of

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.executor.jpa;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,7 @@ import javax.persistence.Query;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 
 /**
@@ -35,13 +37,11 @@ import org.apache.oozie.util.ParamChecker;
 public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<CoordinatorActionBean>> {
 
     private String coordJobId = null;
-    private int numResults;
     private String executionOrder = null;
 
-    public CoordJobGetReadyActionsJPAExecutor(String coordJobId, int numResults, String executionOrder) {
+    public CoordJobGetReadyActionsJPAExecutor(String coordJobId, String executionOrder) {
         ParamChecker.notNull(coordJobId, "coordJobId");
         this.coordJobId = coordJobId;
-        this.numResults = numResults;
         this.executionOrder = executionOrder;
     }
 
@@ -65,9 +65,6 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
             }
             q.setParameter("jobId", coordJobId);
 
-            if (numResults > 0) {
-                q.setMaxResults(numResults);
-            }
             List<Object[]> objectArrList = q.getResultList();
             actionBeans = new ArrayList<CoordinatorActionBean>();
             for (Object[] arr : objectArrList) {
@@ -87,13 +84,22 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
             bean.setId((String) arr[0]);
         }
         if (arr[1] != null) {
-            bean.setJobId((String) arr[1]);
+            bean.setActionNumber((Integer) arr[1]);
         }
         if (arr[2] != null) {
-            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[2]));
+            bean.setJobId((String) arr[2]);
         }
         if (arr[3] != null) {
-            bean.setPending((Integer) arr[3]);
+            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[3]));
+        }
+        if (arr[4] != null) {
+            bean.setPending((Integer) arr[4]);
+        }
+        if (arr[5] != null) {
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[5]));
+        }
+        if (arr[6] != null) {
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[6]));
         }
         return bean;
     }

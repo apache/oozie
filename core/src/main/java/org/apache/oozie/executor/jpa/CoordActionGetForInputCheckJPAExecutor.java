@@ -73,34 +73,37 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
             bean.setId((String) arr[0]);
         }
         if (arr[1] != null) {
-            bean.setJobId((String) arr[1]);
+            bean.setActionNumber((Integer) arr[1]);
         }
         if (arr[2] != null) {
-            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[2]));
+            bean.setJobId((String) arr[2]);
         }
         if (arr[3] != null) {
-            bean.setRunConfBlob((StringBlob) arr[3]);
+            bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[3]));
         }
         if (arr[4] != null) {
-            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[4]));
+            bean.setRunConfBlob((StringBlob) arr[4]);
         }
         if (arr[5] != null) {
-            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[5]));
+            bean.setNominalTime(DateUtils.toDate((Timestamp) arr[5]));
         }
         if (arr[6] != null) {
-            bean.setActionXmlBlob((StringBlob) arr[6]);
+            bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[6]));
         }
         if (arr[7] != null) {
-            bean.setMissingDependenciesBlob((StringBlob) arr[7]);
+            bean.setActionXmlBlob((StringBlob) arr[7]);
         }
         if (arr[8] != null) {
-            bean.setPushMissingDependenciesBlob((StringBlob) arr[8]);
+            bean.setMissingDependenciesBlob((StringBlob) arr[8]);
         }
         if (arr[9] != null) {
-            bean.setTimeOut((Integer) arr[9]);
+            bean.setPushMissingDependenciesBlob((StringBlob) arr[9]);
         }
         if (arr[10] != null) {
-            bean.setExternalId((String)arr[10]);
+            bean.setTimeOut((Integer) arr[10]);
+        }
+        if (arr[11] != null) {
+            bean.setExternalId((String)arr[11]);
         }
         return bean;
     }

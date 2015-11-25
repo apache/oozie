@@ -51,6 +51,7 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.quartz.CronExpression;
 import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.CoordinatorJobBean;
@@ -749,4 +750,51 @@ public class CoordCommandUtils {
         return nextTime;
     }
 
+    /**
+     * Computes the nominal time of the next action.
+     * Based on CoordMaterializeTransitionXCommand#materializeActions
+     *
+     * The Coordinator Job needs to have the frequency, time unit, time zone, start time, end time, and job xml.
+     * The Coordinator Action needs to have the nominal time and action number.
+     *
+     * @param coordJob The Coordinator Job
+     * @param coordAction The Coordinator Action
+     * @return the nominal time of the next action
+     * @throws ParseException
+     * @throws JDOMException
+     */
+    public static Date computeNextNominalTime(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction)
+            throws ParseException, JDOMException {
+        Date nextNominalTime;
+        boolean isCronFrequency = false;
+        int freq = -1;
+        try {
+            freq = Integer.parseInt(coordJob.getFrequency());
+        } catch (NumberFormatException e) {
+            isCronFrequency = true;
+        }
+
+        if (isCronFrequency) {
+            nextNominalTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(coordAction.getNominalTime(), coordJob);
+        } else {
+            TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
+            Calendar nextNominalTimeCal = Calendar.getInstance(appTz);
+            nextNominalTimeCal.setTime(coordJob.getStartTimestamp());
+            TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
+            // Action Number is indexed by 1, so no need to +1 here
+            nextNominalTimeCal.add(freqTU.getCalendarUnit(), coordAction.getActionNumber() * freq);
+            String jobXml = coordJob.getJobXml();
+            Element eJob = XmlUtils.parseXml(jobXml);
+            TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
+            // Move to the End of duration, if needed.
+            DateUtils.moveToEnd(nextNominalTimeCal, endOfFlag);
+            nextNominalTime = nextNominalTimeCal.getTime();
+        }
+
+        // If the next nominal time is after the job's end time, then this is the last action, so return null
+        if (nextNominalTime.after(coordJob.getEndTime())) {
+            nextNominalTime = null;
+        }
+        return nextNominalTime;
+    }
 }

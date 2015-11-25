@@ -459,6 +459,61 @@ public class TestCoordCommandUtils extends XDataTestCase {
         }
     }
 
+    @Test
+    public void testComputeNextNominalTime() throws Exception {
+        // The 10th minute of every hour
+        CoordinatorJobBean job = new CoordinatorJobBean();
+        CoordinatorActionBean action = new CoordinatorActionBean();
+        job.setFrequency("10 * * * *");
+        job.setTimeUnit(CoordinatorJob.Timeunit.CRON);
+        job.setTimeZone("America/Los_Angeles");
+        job.setStartTime(DateUtils.parseDateOozieTZ("2015-07-21T08:00Z"));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-07-21T13:50Z"));
+        job.setJobXml("<coordinator-app name=\"test\" end_of_duration='NONE'></coordinator-app>");
+        // @5 occurs at the 10th minute of the 5th hour after the starting time (12:10)
+        action.setNominalTime(DateUtils.parseDateOozieTZ("2015-07-21T12:10Z"));
+        action.setActionNumber(5);
+        // The next nominal time should be at the 10th minute of the next hour (13:10)
+        assertEquals(DateUtils.parseDateOozieTZ("2015-07-21T13:10Z"), CoordCommandUtils.computeNextNominalTime(job, action));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-07-21T13:00Z"));
+        assertNull(CoordCommandUtils.computeNextNominalTime(job, action));
+
+        // Every 10 hours
+        job = new CoordinatorJobBean();
+        action = new CoordinatorActionBean();
+        job.setFrequency("10");
+        job.setTimeUnit(CoordinatorJob.Timeunit.HOUR);
+        job.setTimeZone("America/Los_Angeles");
+        job.setStartTime(DateUtils.parseDateOozieTZ("2015-07-21T14:00Z"));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-07-25T23:00Z"));
+        job.setJobXml("<coordinator-app name=\"test\" end_of_duration='NONE'></coordinator-app>");
+        // @5 occurs 50 hours after the start time (23T06:00)
+        action.setNominalTime(DateUtils.parseDateOozieTZ("2015-07-23T06:00Z"));
+        action.setActionNumber(5);
+        // The next nominal time should be 10 hours after that (23T16:00)
+        assertEquals(DateUtils.parseDateOozieTZ("2015-07-23T16:00Z"), CoordCommandUtils.computeNextNominalTime(job, action));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-07-23T09:00Z"));
+        assertNull(CoordCommandUtils.computeNextNominalTime(job, action));
+
+        // Every 10 days, at the end of the day
+        job = new CoordinatorJobBean();
+        action = new CoordinatorActionBean();
+        job.setFrequency("10");
+        job.setTimeUnit(CoordinatorJob.Timeunit.END_OF_DAY);
+        job.setTimeZone("America/Los_Angeles");
+        job.setStartTime(DateUtils.parseDateOozieTZ("2015-07-21T14:00Z"));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-09-21T23:00Z"));
+        job.setJobXml("<coordinator-app name=\"test\" end_of_duration='END_OF_DAY'></coordinator-app>");
+        // @5 occurs at 50 days, at the end of the day, after the starting time (08-31T07:00Z)
+        // (Timezone is America/Los_Angeles so end of day is -0700)
+        action.setNominalTime(DateUtils.parseDateOozieTZ("2015-08-31T07:00Z"));
+        action.setActionNumber(5);
+        // The next nominal time should be 10 days after that, at the end of the day
+        assertEquals(DateUtils.parseDateOozieTZ("2015-09-10T07:00Z"), CoordCommandUtils.computeNextNominalTime(job, action));
+        job.setEndTime(DateUtils.parseDateOozieTZ("2015-09-08T23:00Z"));
+        assertNull(CoordCommandUtils.computeNextNominalTime(job, action));
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             String freq) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);

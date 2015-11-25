@@ -95,40 +95,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(actionId);
     }
 
-    /**
-     * Computes the nominal time of the next action.
-     * Based on CoordMaterializeTransitionXCommand#materializeActions
-     *
-     * @return the nominal time of the next action
-     * @throws ParseException
-     */
-    private Date computeNextNominalTime() throws ParseException {
-        Date nextNominalTime;
-        boolean isCronFrequency = false;
-        int freq = -1;
-        try {
-            freq = Integer.parseInt(coordJob.getFrequency());
-        } catch (NumberFormatException e) {
-            isCronFrequency = true;
-        }
-
-        if (isCronFrequency) {
-            nextNominalTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(coordAction.getNominalTime(), coordJob);
-        } else {
-            Calendar nextNominalTimeCal = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
-            nextNominalTimeCal.setTime(coordAction.getNominalTime());
-            TimeUnit freqTU = TimeUnit.valueOf(coordJob.getTimeUnitStr());
-            nextNominalTimeCal.add(freqTU.getCalendarUnit(), freq);
-            nextNominalTime = nextNominalTimeCal.getTime();
-        }
-
-        // If the next nominal time is after the job's end time, then this is the last action, so return null
-        if (nextNominalTime.after(coordJob.getEndTime())) {
-            nextNominalTime = null;
-        }
-        return nextNominalTime;
-    }
-
     @Override
     protected Void execute() throws CommandException {
         LOG.debug("[" + actionId + "]::ActionInputCheck:: Action is in WAITING state.");
@@ -154,7 +120,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
             Date now = new Date();
             if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.LAST_ONLY)) {
-                Date nextNominalTime = computeNextNominalTime();
+                Date nextNominalTime = CoordCommandUtils.computeNextNominalTime(coordJob, coordAction);
                 if (nextNominalTime != null) {
                     // If the current time is after the next action's nominal time, then we've passed the window where this action
                     // should be started; so set it to SKIPPED
@@ -173,22 +139,21 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             else if (coordJob.getExecutionOrder().equals(CoordinatorJobBean.Execution.NONE)) {
                 // If the current time is after the nominal time of this action plus some tolerance,
-                // then we've passed the window where this action
-                // should be started; so set it to SKIPPED
+                // then we've passed the window where this action should be started; so set it to SKIPPED
                 Calendar cal = Calendar.getInstance(DateUtils.getTimeZone(coordJob.getTimeZone()));
                 cal.setTime(nominalTime);
-                cal.add(Calendar.MINUTE, ConfigurationService.getInt(COORD_EXECUTION_NONE_TOLERANCE));
-                nominalTime = cal.getTime();
-                if (now.after(nominalTime)) {
-                    LOG.info("NONE execution: Preparing to skip action [{0}] because the current time [{1}] is later than "
-                            + "the nominal time [{2}] of the current action]", coordAction.getId(),
-                            DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nominalTime));
+                int tolerance = ConfigurationService.getInt(COORD_EXECUTION_NONE_TOLERANCE);
+                cal.add(Calendar.MINUTE, tolerance);
+                if (now.after(cal.getTime())) {
+                    LOG.info("NONE execution: Preparing to skip action [{0}] because the current time [{1}] is more than [{2}]"
+                            + " minutes later than the nominal time [{3}] of the current action]", coordAction.getId(),
+                            DateUtils.formatDateOozieTZ(now), tolerance, DateUtils.formatDateOozieTZ(nominalTime));
                     queue(new CoordActionSkipXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                     return null;
                 } else {
-                    LOG.debug("NONE execution: Not skipping action [{0}] because the current time [{1}] is earlier than "
-                            + "the nominal time [{2}] of the current action]", coordAction.getId(),
-                            DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(coordAction.getNominalTime()));
+                    LOG.debug("NONE execution: Not skipping action [{0}] because the current time [{1}] is earlier than [{2}]"
+                            + " minutes later than the nominal time [{3}] of the current action]", coordAction.getId(),
+                            DateUtils.formatDateOozieTZ(now), tolerance, DateUtils.formatDateOozieTZ(coordAction.getNominalTime()));
                 }
             }
 

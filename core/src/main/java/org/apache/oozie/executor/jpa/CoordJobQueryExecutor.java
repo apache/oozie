@@ -282,7 +282,9 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setFrequency((String) arr[5]);
                 bean.setTimeUnitStr((String) arr[6]);
                 bean.setTimeZone((String) arr[7]);
-                bean.setEndTime(DateUtils.toDate((Timestamp) arr[8]));
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[8]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[9]));
+                bean.setJobXmlBlob((StringBlob) arr[10]);
                 break;
             case GET_COORD_JOB_ACTION_READY:
                 bean = new CoordinatorJobBean();
@@ -294,6 +296,12 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setStatusStr((String) arr[4]);
                 bean.setExecution((String) arr[5]);
                 bean.setConcurrency((Integer) arr[6]);
+                bean.setFrequency((String) arr[7]);
+                bean.setTimeUnitStr((String) arr[8]);
+                bean.setTimeZone((String) arr[9]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[10]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[11]));
+                bean.setJobXmlBlob((StringBlob) arr[12]);
                 break;
             case GET_COORD_JOB_ACTION_KILL:
                 bean = new CoordinatorJobBean();

@@ -1674,9 +1674,20 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
              boolean pending, boolean doneMatd) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
+        return addRecordToCoordJobTableForWaiting(testFileName, coordJob);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
+            Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
+        return addRecordToCoordJobTableForWaiting(testFileName, coordJob);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJobBean coordJob)
+            throws Exception {
 
         String testDir = getTestCaseDir();
-        CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
         coordJob.setJobXml(appXml);
 
@@ -1721,6 +1732,13 @@ public abstract class XDataTestCase extends XHCatTestCase {
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
     }
 
+    protected void setCoordActionStatus(String actionId, CoordinatorAction.Status status) throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        action.setStatus(status);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION, action);
+    }
+
     protected void setMissingDependencies(String actionId, String missingDependencies) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
@@ -1752,4 +1770,23 @@ public abstract class XDataTestCase extends XHCatTestCase {
         }
     }
 
+    protected CoordinatorActionBean checkCoordActionStatus(final String actionId, final CoordinatorAction.Status stat)
+            throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        waitFor(5 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                try {
+                    CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+                    return stat.equals(action.getStatus());
+                }
+                catch (JPAExecutorException se) {
+                    throw new Exception("Action ID " + actionId + " was not stored properly in db");
+                }
+            }
+        });
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+        assertEquals(stat, action.getStatus());
+        return action;
+    }
 }

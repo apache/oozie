@@ -929,29 +929,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
     }
 
-    private CoordinatorJobBean addRecordToCoordJobTableForWaiting(String testFileName, CoordinatorJob.Status status,
-            Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
-
-        String testDir = getTestCaseDir();
-        CoordinatorJobBean coordJob = createCoordJob(testFileName, status, start, end, pending, doneMatd, lastActionNum);
-        String appXml = getCoordJobXmlForWaiting(testFileName, testDir);
-        coordJob.setJobXml(appXml);
-
-        try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
-            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
-            jpaService.execute(coordInsertCmd);
-        }
-        catch (JPAExecutorException je) {
-            je.printStackTrace();
-            fail("Unable to insert the test coord job record to table");
-            throw je;
-        }
-
-        return coordJob;
-    }
-
     private long getDSTOffset(TimeZone tz, Date d1, Date d2) {
         if (tz.inDaylightTime(d1) && !tz.inDaylightTime(d2)) {
             Calendar cal = Calendar.getInstance(tz);

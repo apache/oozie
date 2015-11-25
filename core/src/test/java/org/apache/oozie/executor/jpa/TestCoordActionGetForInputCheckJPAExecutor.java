@@ -76,12 +76,13 @@ public class TestCoordActionGetForInputCheckJPAExecutor extends XDataTestCase {
         String actionNominalTime = getActionNominalTime(actionXml);
 
         // Pass the expected values
-        _testGetForInputCheckX(action.getId(), job.getId(), CoordinatorAction.Status.WAITING, 0, actionXml, XmlUtils
-                .prettyPrint(conf).toString(), DateUtils.parseDateOozieTZ(actionNominalTime), dummyCreationTime, missDeps);
+        _testGetForInputCheckX(action.getId(), action.getActionNumber(), job.getId(), CoordinatorAction.Status.WAITING, 0,
+                actionXml, XmlUtils.prettyPrint(conf).toString(), DateUtils.parseDateOozieTZ(actionNominalTime),
+                dummyCreationTime, missDeps);
     }
 
 
-    private void _testGetForInputCheckX(String actionId, String jobId, CoordinatorAction.Status status, int pending,
+    private void _testGetForInputCheckX(String actionId, int actionNum, String jobId, CoordinatorAction.Status status, int pending,
             String actionXml, String runConf, Date nominalTime, Date createdTime, String missDeps) throws Exception {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
@@ -92,6 +93,7 @@ public class TestCoordActionGetForInputCheckJPAExecutor extends XDataTestCase {
 
             // Check for expected column values
             assertEquals(actionId, action.getId());
+            assertEquals(actionNum, action.getActionNumber());
             assertEquals(jobId, action.getJobId());
             assertEquals(status, action.getStatus());
             assertEquals(pending, action.getPending());
