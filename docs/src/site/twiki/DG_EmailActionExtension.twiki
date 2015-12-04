@@ -12,8 +12,8 @@
 ---++++ 3.2.4 Email action
 
 The =email= action allows sending emails in Oozie from a workflow application. An email action must provide =to=
-addresses, =cc= addresses (optional), a =subject= and a =body=. Multiple recipients of an email can be provided
-as comma separated addresses.
+addresses, =cc= addresses (optional), =bcc= addresses (optional), a =subject= and a =body=.
+Multiple recipients of an email can be provided as comma separated addresses.
 
 The email action is executed synchronously, and the workflow job will wait until the specified
 emails are sent before continuing to the next action.
@@ -29,6 +29,7 @@ All values specified in the =email= action can be parameterized (templatized) us
         <email xmlns="uri:oozie:email-action:0.2">
             <to>[COMMA-SEPARATED-TO-ADDRESSES]</to>
             <cc>[COMMA-SEPARATED-CC-ADDRESSES]</cc> <!-- cc is optional -->
+            <bcc>[COMMA-SEPARATED-BCC-ADDRESSES]</bcc> <!-- bcc is optional -->
             <subject>[SUBJECT]</subject>
             <body>[BODY]</body>
             <content_type>[CONTENT-TYPE]</content_type> <!-- content_type is optional -->
@@ -41,8 +42,9 @@ All values specified in the =email= action can be parameterized (templatized) us
 </workflow-app>
 </verbatim>
 
-The =to= and =cc= commands are used to specify recipients who should get the mail. Multiple email recipients can be provided
-using comma-separated values. Providing a =to= command is necessary, while the =cc= may optionally be used along.
+The =to= and =cc= and =bcc= commands are used to specify recipients who should get the mail. Multiple email recipients
+can be provided using comma-separated values. Providing a =to= command is necessary, while the =cc= or =bcc= may
+optionally be used along.
 
 The =subject= and =body= commands are used to specify subject and body of the mail.
 From uri:oozie:email-action:0.2 one can also specify mail content type as <content_type>text/html</content_type>.
@@ -71,6 +73,7 @@ it looks for:
         <email xmlns="uri:oozie:email-action:0.1">
             <to>bob@initech.com,the.other.bob@initech.com</to>
             <cc>will@initech.com</cc>
+            <bcc>yet.another.bob@initech.com</bcc>
             <subject>Email notifications for ${wf:id()}</subject>
             <body>The wf ${wf:id()} successfully completed.</body>
         </email>
@@ -81,7 +84,7 @@ it looks for:
 </workflow-app>
 </verbatim>
 
-In the above example, an email is sent to 'bob', 'the.other.bob' and 'will' (cc)
+In the above example, an email is sent to 'bob', 'the.other.bob', 'will' (cc), yet.another.bob (bcc)
 with the subject and body both containing the workflow ID after substitution.
 
 ---+++ AE.A Appendix A, Email XML-Schema
@@ -97,6 +100,7 @@ with the subject and body both containing the workflow ID after substitution.
         <xs:sequence>
             <xs:element name="to" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="cc" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="bcc" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="subject" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="body" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="content_type" type="xs:string" minOccurs="0" maxOccurs="1"/>

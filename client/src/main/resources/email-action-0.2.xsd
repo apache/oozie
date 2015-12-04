@@ -26,6 +26,7 @@
         <xs:sequence>
             <xs:element name="to" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="cc" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="bcc" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="subject" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="body" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="content_type" type="xs:string" minOccurs="0" maxOccurs="1"/>

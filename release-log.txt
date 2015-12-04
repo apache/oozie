@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2411 Add BCC to oozie email action (fdenes via rkanter)
 OOZIE-2397 LAST_ONLY and NONE don't properly handle READY actions (rkanter)
 OOZIE-2401 Typo in twiki docs with FilesAchives instead of FilesArchives (anthony@cloudera.com via rkanter)
 OOZIE-2168 Oozie flow and action names have 50 char limit (akshayrai09, me.venkatr via rkanter)

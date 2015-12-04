@@ -62,7 +62,7 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 
 /**
- * Email action executor. It takes to, cc addresses along with a subject and body and sends
+ * Email action executor. It takes to, cc, bcc addresses along with a subject and body and sends
  * out an email.
  */
 public class EmailActionExecutor extends ActionExecutor {
@@ -78,6 +78,7 @@ public class EmailActionExecutor extends ActionExecutor {
 
     private final static String TO = "to";
     private final static String CC = "cc";
+    private final static String BCC = "bcc";
     private final static String SUB = "subject";
     private final static String BOD = "body";
     private final static String ATTACHMENT = "attachment";
@@ -119,6 +120,7 @@ public class EmailActionExecutor extends ActionExecutor {
         Namespace ns = element.getNamespace();
         String tos[] = new String[0];
         String ccs[] = new String[0];
+        String bccs[] ;
         String subject = "";
         String body = "";
         String attachments[] = new String[0];
@@ -140,6 +142,13 @@ public class EmailActionExecutor extends ActionExecutor {
             ccs = new String[0];
         }
 
+        // <bcc> - Optional, but only one ought to exist.
+        try {
+            bccs = element.getChildTextTrim(BCC, ns).split(COMMA);
+        } catch (Exception e) {
+            // It is alright for bcc to be given empty or not be present.
+            bccs = new String[0];
+        }
         // <subject> - One ought to exist.
         subject = element.getChildTextTrim(SUB, ns);
 
@@ -158,11 +167,16 @@ public class EmailActionExecutor extends ActionExecutor {
         }
 
         // All good - lets try to mail!
-        email(tos, ccs, subject, body, attachments, contentType, context.getWorkflow().getUser());
+        email(tos, ccs, bccs, subject, body, attachments, contentType, context.getWorkflow().getUser());
     }
 
-    public void email(String[] to, String[] cc, String subject, String body, String[] attachments, String contentType,
-            String user) throws ActionExecutorException {
+    public void email(String[] to, String[] cc, String subject, String body, String[] attachments,
+                      String contentType, String user) throws ActionExecutorException {
+        email(to, cc, new String[0], subject, body, attachments, contentType, user);
+    }
+
+    public void email(String[] to, String[] cc, String[] bcc, String subject, String body, String[] attachments,
+                      String contentType, String user) throws ActionExecutorException {
         // Get mailing server details.
         String smtpHost = getOozieConf().get(EMAIL_SMTP_HOST, "localhost");
         String smtpPort = getOozieConf().get(EMAIL_SMTP_PORT, "25");
@@ -189,6 +203,7 @@ public class EmailActionExecutor extends ActionExecutor {
         InternetAddress from;
         List<InternetAddress> toAddrs = new ArrayList<InternetAddress>(to.length);
         List<InternetAddress> ccAddrs = new ArrayList<InternetAddress>(cc.length);
+        List<InternetAddress> bccAddrs = new ArrayList<InternetAddress>(bcc.length);
 
         try {
             from = new InternetAddress(fromAddr);
@@ -211,6 +226,12 @@ public class EmailActionExecutor extends ActionExecutor {
                 ccAddrs.add(new InternetAddress(ccStr.trim()));
             }
             message.addRecipients(RecipientType.CC, ccAddrs.toArray(new InternetAddress[0]));
+
+            // Add all <bcc>
+            for (String bccStr : bcc) {
+                bccAddrs.add(new InternetAddress(bccStr.trim()));
+            }
+            message.addRecipients(RecipientType.BCC, bccAddrs.toArray(new InternetAddress[0]));
 
             // Set subject
             message.setSubject(subject);
@@ -247,7 +268,7 @@ public class EmailActionExecutor extends ActionExecutor {
             }
         }
         catch (AddressException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc>.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc> or <bcc>.", e);
         }
         catch (MessagingException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM005", "An error occured while adding recipients.", e);
