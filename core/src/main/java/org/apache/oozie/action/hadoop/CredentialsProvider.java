@@ -19,10 +19,13 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
+
+import java.io.IOException;
 
 public class CredentialsProvider {
     Credentials cred;
@@ -70,6 +73,18 @@ public class CredentialsProvider {
             }
         }
         return cred;
+    }
+
+    /**
+     * Relogs into Kerberos using the Keytab for the Oozie server user.  This should be called before attempting to get delegation
+     * tokens via {@link Credentials} implementations to ensure that the Kerberos credentials are current and won't expire too soon.
+     *
+     * @throws IOException
+     */
+    public static void ensureKerberosLogin() throws IOException {
+        LOG.debug("About to relogin from keytab");
+        UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
+        LOG.debug("Relogin from keytab successful");
     }
 
     /**

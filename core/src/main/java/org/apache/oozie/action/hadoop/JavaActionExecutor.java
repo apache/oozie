@@ -1221,6 +1221,8 @@ public class JavaActionExecutor extends ActionExecutor {
             HashMap<String, CredentialsProperties> credPropertiesMap) throws Exception {
 
         if (context != null && action != null && credPropertiesMap != null) {
+            // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
+            CredentialsProvider.ensureKerberosLogin();
             for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
                 String credName = entry.getKey();
                 CredentialsProperties credProps = entry.getValue();
