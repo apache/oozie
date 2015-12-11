@@ -220,7 +220,8 @@ restrict from which hosts a user may impersonate users, as well as users of whic
 ---+++ Oozie URL
 
 All =oozie= CLI sub-commands expect the <code>-oozie OOZIE_URL</code> option indicating the URL of the Oozie system
-to run the command against.
+to run the command against. If the OOZIE_URL environment variable has not been set, =oozie= will use the default
+URL specified in oozie-client-env.sh (equivalent to =!http://$(hostname -f):11000/oozie=).
 
 If the <code>-oozie</code> option is not specified, the =oozie= CLI will look for the =OOZIE_URL= environment variable
 and uses it if set.

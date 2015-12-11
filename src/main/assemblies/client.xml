@@ -47,6 +47,15 @@
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
+
+        <fileSet>
+            <directory>${basedir}/src/main/conf</directory>
+            <outputDirectory>oozie-client-${project.version}/conf</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
     </fileSets>
 
     <dependencySets>
