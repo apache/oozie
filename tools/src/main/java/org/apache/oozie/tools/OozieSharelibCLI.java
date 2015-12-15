@@ -21,8 +21,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -48,6 +57,7 @@ public class OozieSharelibCLI {
     public static final String UPGRADE_CMD = "upgrade";
     public static final String LIB_OPT = "locallib";
     public static final String FS_OPT = "fs";
+    public static final String CONCURRENCY_OPT = "concurrency";
     public static final String OOZIE_HOME = "oozie.home.dir";
     public static final String SHARE_LIB_PREFIX = "lib_";
 
@@ -64,9 +74,11 @@ public class OozieSharelibCLI {
     protected Options createUpgradeOptions(String subCommand){
         Option sharelib = new Option(LIB_OPT, true, "Local share library directory");
         Option uri = new Option(FS_OPT, true, "URI of the fileSystem to " + subCommand + " oozie share library");
+        Option concurrency = new Option(CONCURRENCY_OPT, true, "Number of threads to be used for copy operations. (default=1)");
         Options options = new Options();
         options.addOption(sharelib);
         options.addOption(uri);
+        options.addOption(concurrency);
         return options;
     }
 
@@ -99,6 +111,7 @@ public class OozieSharelibCLI {
                 throw new Exception("-fs option must be specified");
             }
 
+            int threadPoolSize = Integer.valueOf(command.getCommandLine().getOptionValue(CONCURRENCY_OPT, "1"));
             File srcFile = null;
 
             //Check whether user provided locallib
@@ -163,7 +176,12 @@ public class OozieSharelibCLI {
                 throw new IOException(srcPath + " cannot be found");
             }
 
-            fs.copyFromLocalFile(false, srcPath, dstPath);
+            if (threadPoolSize > 1) {
+                concurrentCopyFromLocal(fs, threadPoolSize, srcFile, dstPath);
+            } else {
+                fs.copyFromLocalFile(false, srcPath, dstPath);
+            }
+
             services.destroy();
             FileUtils.deleteDirectory(temp);
 
@@ -176,16 +194,20 @@ public class OozieSharelibCLI {
             return 1;
         }
         catch (Exception ex) {
-            System.err.println();
-            System.err.println("Error: " + ex.getMessage());
-            System.err.println();
-            System.err.println("Stack trace for the error was (for debug purposes):");
-            System.err.println("--------------------------------------");
-            ex.printStackTrace(System.err);
-            System.err.println("--------------------------------------");
-            System.err.println();
+            logError(ex.getMessage(), ex);
             return 1;
         }
+    }
+
+    private void logError(String errorMessage, Throwable ex) {
+        System.err.println();
+        System.err.println("Error: " + errorMessage);
+        System.err.println();
+        System.err.println("Stack trace for the error was (for debug purposes):");
+        System.err.println("--------------------------------------");
+        ex.printStackTrace(System.err);
+        System.err.println("--------------------------------------");
+        System.err.println();
     }
 
     public String getTimestampDirectory() {
@@ -194,4 +216,59 @@ public class OozieSharelibCLI {
         return dateFormat.format(date).toString();
     }
 
+    private void concurrentCopyFromLocal(final FileSystem fs, int threadPoolSize,
+            File srcFile, final Path dstPath) throws IOException {
+        List<Future<Void>> futures = Collections.emptyList();
+        ExecutorService threadPool = Executors.newFixedThreadPool(threadPoolSize);
+        try {
+            futures = copyFolderRecursively(fs, threadPool, srcFile, dstPath);
+            System.out.println("Running " + futures.size() + " copy tasks on " + threadPoolSize + " threads");
+        } finally {
+            try {
+                threadPool.shutdown();
+            } finally {
+                checkCopyResults(futures);
+            }
+        }
+    }
+
+    private void checkCopyResults(List<Future<Void>> futures) throws IOException {
+        Throwable t = null;
+        for (Future<Void> future : futures) {
+            try {
+                future.get();
+            } catch (CancellationException ce) {
+                t = ce;
+                logError("Copy task was cancelled", ce);
+            } catch (ExecutionException ee) {
+                t = ee.getCause();
+                logError("Copy task failed with exception", t);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        if (t != null) {
+            throw new IOException ("At least one copy task failed with exception", t);
+        }
+    }
+
+    private List<Future<Void>> copyFolderRecursively(final FileSystem fs, final ExecutorService threadPool,
+            File srcFile, final Path dstPath) throws IOException {
+        List<Future<Void>> taskList = new ArrayList<Future<Void>>();
+        for (final File file : srcFile.listFiles()) {
+            final Path trgName = new Path(dstPath, file.getName());
+            if (file.isDirectory()) {
+                taskList.addAll(copyFolderRecursively(fs, threadPool, file, trgName));
+            } else {
+                taskList.add(threadPool.submit(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        fs.copyFromLocalFile(new Path(file.toURI()), trgName);
+                        return null;
+                    }
+                }));
+            }
+        }
+        return taskList;
+    }
 }

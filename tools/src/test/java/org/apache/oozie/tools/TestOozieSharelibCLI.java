@@ -22,55 +22,51 @@ package org.apache.oozie.tools;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Writer;
 import java.net.URI;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import org.apache.commons.io.IOUtils;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.test.XTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Test OozieSharelibCLI
  */
 public class TestOozieSharelibCLI extends XTestCase {
     private SecurityManager SECURITY_MANAGER;
-    private String outPath = "outFolder";
+    private final String outPath = "outFolder";
     private Services services = null;
     private Path dstPath = null;
     private FileSystem fs;
+    private final TemporaryFolder tmpFolder = new TemporaryFolder();
 
-    @BeforeClass
+    @Override
     protected void setUp() throws Exception {
         SECURITY_MANAGER = System.getSecurityManager();
         new LauncherSecurityManager();
+        tmpFolder.create();
         super.setUp(false);
 
     }
 
-    @AfterClass
+    @Override
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
         if (services != null) {
             services.destroy();
         }
+        tmpFolder.delete();
         super.tearDown();
-
     }
 
     /**
@@ -83,12 +79,15 @@ public class TestOozieSharelibCLI extends XTestCase {
         try {
             String[] argsHelp = { "help" };
             assertEquals(0, execOozieSharelibCLICommands(argsHelp));
-            assertTrue(data.toString().contains(
+            String helpMessage = data.toString();
+            assertTrue(helpMessage.contains(
                     "oozie-setup.sh create <OPTIONS> : create a new timestamped version of oozie sharelib"));
-            assertTrue(data.toString().contains(
+            assertTrue(helpMessage.contains(
                     "oozie-setup.sh upgrade <OPTIONS> : [deprecated][use command \"create\" "
                             + "to create new version]   upgrade oozie sharelib "));
-            assertTrue(data.toString().contains(" oozie-setup.sh help"));
+            assertTrue(helpMessage.contains(" oozie-setup.sh help"));
+            assertTrue(helpMessage.contains(
+                    "-concurrency <arg>   Number of threads to be used for copy operations."));
         }
         finally {
             System.setOut(oldPrintStream);
@@ -99,17 +98,9 @@ public class TestOozieSharelibCLI extends XTestCase {
     /**
      * test copy libraries
      */
-    public void testOozieSharelibCLI() throws Exception {
+    public void testOozieSharelibCLICreate() throws Exception {
 
-        File libDirectory = new File(getTestCaseConfDir() + File.separator + "lib");
-
-        if (!libDirectory.exists()) {
-            libDirectory.mkdirs();
-        }
-        else {
-            FileUtil.fullyDelete(libDirectory);
-            libDirectory.mkdirs();
-        }
+        File libDirectory = tmpFolder.newFolder("lib");
 
         writeFile(libDirectory, "file1", "test File");
         writeFile(libDirectory, "file2", "test File2");
@@ -125,6 +116,46 @@ public class TestOozieSharelibCLI extends XTestCase {
                 ShareLibService.SHARE_LIB_PREFIX), "file1")).getLen());
         assertEquals(10, fs.getFileStatus(new Path(sharelibService.getLatestLibPath(getDistPath(),
                 ShareLibService.SHARE_LIB_PREFIX), "file2")).getLen());
+
+    }
+
+    /**
+     * test parallel copy libraries
+     */
+    public void testOozieSharelibCLICreateConcurrent() throws Exception {
+
+        final int testFiles = 7;
+        final int concurrency = 5;
+
+        File libDirectory = tmpFolder.newFolder("lib");
+
+        for (int i = 0; i < testFiles; i++) {
+            writeFile(libDirectory, generateFileName(i), generateFileContent(i));
+        }
+
+        String[] argsCreate = {"create", "-fs", outPath, "-locallib", libDirectory.getParentFile().getAbsolutePath(),
+            "-concurrency", String.valueOf(concurrency)};
+        assertEquals(0, execOozieSharelibCLICommands(argsCreate));
+
+        getTargetFileSysyem();
+        ShareLibService sharelibService = getServices().get(ShareLibService.class);
+        Path latestLibPath = sharelibService.getLatestLibPath(getDistPath(),
+                ShareLibService.SHARE_LIB_PREFIX);
+
+        // test files in new folder
+
+        for (int i = 0; i < testFiles; i++) {
+            String fileName = generateFileName(i);
+            String expectedFileContent = generateFileContent(i);
+            InputStream in = null;
+            try {
+                in = fs.open(new Path(latestLibPath, fileName));
+                String actualFileContent = IOUtils.toString(in);
+                assertEquals(fileName, expectedFileContent, actualFileContent);
+            } finally {
+                IOUtils.closeQuietly(in);
+            }
+        }
 
     }
 
@@ -206,4 +237,11 @@ public class TestOozieSharelibCLI extends XTestCase {
         return 1;
     }
 
+    private static String generateFileName(int i) {
+        return "file_" + i;
+    }
+
+    private static String generateFileContent(int i) {
+        return "test File " + i;
+    }
 }
