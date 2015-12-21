@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.action.email.EmailActionExecutor;
 import org.apache.oozie.command.CommandException;
@@ -33,8 +32,6 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * The Abandoned Coord Checker Service check finds out the abandoned coord jobs in system and kills it. A job is
@@ -59,7 +56,6 @@ public class AbandonedCoordCheckerService implements Service {
     private static String serverURL;
 
     public static class AbandonedCoordCheckerRunnable implements Runnable {
-        private  StringBuilder msg;
         final int failureLimit;
         XLog LOG = XLog.getLog(getClass());
         private boolean shouldKill = false;
@@ -78,15 +74,9 @@ public class AbandonedCoordCheckerService implements Service {
                 LOG.info("Server is not primary server. Skipping run");
                 return;
             }
-            msg = new StringBuilder();
             XLog.Info.get().clear();
-            msg.append("<!DOCTYPE html><html><head><style>table,th,td{border:1px solid black;border-collapse:collapse;}</style>"
-                    + "</head><body><table>");
-            addTableHeader();
             try {
                 checkCoordJobs();
-                msg.append("</table></body></html>");
-                sendMail(msg.toString());
             }
             catch (Exception e) {
                 LOG.error("Error running AbandonedCoordChecker", e);
@@ -95,43 +85,52 @@ public class AbandonedCoordCheckerService implements Service {
 
         /**
          * Check coordinator
-         *
-         * @throws CommandException
+         * @throws Exception
          */
-        private void checkCoordJobs() throws CommandException {
+        private void checkCoordJobs() throws Exception {
+            StringBuilder msg = new StringBuilder();
 
+            addTableHeader(msg);
             List<CoordinatorJobBean> jobs;
             try {
-                Timestamp createdTS = new Timestamp(
-                        System.currentTimeMillis()
-                                - (ConfigurationService.getInt(CONF_JOB_OLDER_THAN) * 60 * 1000));
+                Timestamp createdTS = new Timestamp(System.currentTimeMillis()
+                        - (ConfigurationService.getInt(CONF_JOB_OLDER_THAN) * 60 * 1000));
 
                 jobs = CoordJobQueryExecutor.getInstance().getList(CoordJobQuery.GET_COORD_FOR_ABANDONEDCHECK,
                         failureLimit, createdTS);
 
                 for (CoordinatorJobBean job : jobs) {
-                    String killStatus = "Coord kill is disabled";
-                    LOG.info("Abandoned Coord found : " + job.getId());
-                    if (shouldKill) {
-                        try {
-                            new CoordKillXCommand(job.getId()).call();
-                            LOG.info("Killed abandoned coord :  " + job.getId());
-                            killStatus = "Successful";
-                        }
-                        catch (Exception e) {
-                            LOG.error("Can't kill abandoned coord :  " + job.getId(), e);
-                            killStatus = " Failed : " + e.getMessage();
-                        }
-                    }
-                    addCoordToMessage(job, killStatus);
+                    processJob(job, msg);
                 }
+                if (jobs.size() > 0) {
+                    addTableTail(msg);
+                    sendMail(msg.toString());
+                }
+
             }
             catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
         }
 
-        public void addCoordToMessage(CoordinatorJobBean job, String killStatus) {
+        private void processJob(CoordinatorJobBean job, StringBuilder msg){
+            String killStatus = "Coord kill is disabled";
+            LOG.info("Abandoned Coord found : " + job.getId());
+            if (shouldKill) {
+                try {
+                    new CoordKillXCommand(job.getId()).call();
+                    LOG.info("Killed abandoned coord :  " + job.getId());
+                    killStatus = "Successful";
+                }
+                catch (Exception e) {
+                    LOG.error("Can't kill abandoned coord :  " + job.getId(), e);
+                    killStatus = " Failed : " + e.getMessage();
+                }
+            }
+            addCoordToMessage(job, killStatus, msg);
+        }
+
+        public void addCoordToMessage(CoordinatorJobBean job, String killStatus, StringBuilder msg) {
             msg.append("<tr>");
             msg.append("<td><a href=\"").append(JobXCommand.getJobConsoleUrl(job.getId())).append("\">")
                     .append(job.getId()).append("</a></td>");
@@ -142,7 +141,9 @@ public class AbandonedCoordCheckerService implements Service {
             msg.append("</tr>");
         }
 
-        public void addTableHeader() {
+        public void addTableHeader(StringBuilder msg) {
+            msg.append("<!DOCTYPE html><html><head><style>table,th,td{border:1px solid black;border-collapse:collapse;}</style>"
+                    + "</head><body><table>");
             msg.append("<tr>");
             msg.append("<td>").append("Coordinator id").append("</td>");
             msg.append("<td>").append("Coordinator name").append("</td>");
@@ -152,10 +153,10 @@ public class AbandonedCoordCheckerService implements Service {
             msg.append("</tr>");
         }
 
-        @VisibleForTesting
-        public String getMessage() {
-            return msg.toString();
+        public void addTableTail(StringBuilder msg) {
+            msg.append("</table></body></html>");
         }
+
 
         public void sendMail(String body) throws Exception {
             if (to == null || to.length == 0 || (to.length == 1 && StringUtils.isEmpty(to[0]))) {
