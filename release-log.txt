@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2222 Oozie UI parent job should be clickable (puru)
 OOZIE-2407 AbandonedService should not send mail if there is no abandoned coord (puru)
 OOZIE-2402 oozie-setup.sh sharelib create takes a long time on large clusters (yalovyyi via rkanter)
 OOZIE-2185 Make oozie cli source conf/oozie-client-env.sh (grimesmi via rkanter)
