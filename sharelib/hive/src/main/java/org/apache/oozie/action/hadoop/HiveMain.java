@@ -69,7 +69,7 @@ public class HiveMain extends LauncherMain {
         run(HiveMain.class, args);
     }
 
-    private static Configuration initActionConf() {
+    private static Configuration initActionConf() throws java.io.IOException {
         // Loading action conf prepared by Oozie
         Configuration hiveConf = new Configuration(false);
 
@@ -117,7 +117,9 @@ public class HiveMain extends LauncherMain {
         // to force hive to use the jobclient to submit the job, never using HADOOPBIN (to do localmode)
         hiveConf.setBoolean("hive.exec.mode.local.auto", false);
 
-        hiveConf.set("hive.querylog.location", "./hivelogs");
+        String pwd = new java.io.File("").getCanonicalPath();
+        hiveConf.set("hive.querylog.location", pwd + File.separator + "hivetmp" + File.separator + "querylog");
+        hiveConf.set("hive.exec.local.scratchdir", pwd + File.separator + "hivetmp" + File.separator + "scratchdir");
 
         return hiveConf;
     }
