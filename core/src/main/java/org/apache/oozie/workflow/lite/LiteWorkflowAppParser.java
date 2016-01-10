@@ -18,8 +18,10 @@
 
 package org.apache.oozie.workflow.lite;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.io.Writable;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -27,7 +29,9 @@ import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.ParameterVerifier;
 import org.apache.oozie.util.ParameterVerifierException;
+import org.apache.oozie.util.WritableUtils;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ActionService;
@@ -46,6 +50,12 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -54,6 +64,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.*;
 
 /**
  * Class to parse and validate workflow xml
@@ -95,6 +106,7 @@ public class LiteWorkflowAppParser {
 
     public static final String DEFAULT_NAME_NODE = "oozie.actions.default.name-node";
     public static final String DEFAULT_JOB_TRACKER = "oozie.actions.default.job-tracker";
+    public static final String OOZIE_GLOBAL = "oozie.wf.globalconf";
 
     private static final String JOB_TRACKER = "job-tracker";
     private static final String NAME_NODE = "name-node";
@@ -417,7 +429,9 @@ public class LiteWorkflowAppParser {
             throws WorkflowException {
         Namespace ns = root.getNamespace();
         LiteWorkflowApp def = null;
-        GlobalSectionData gData = null;
+        GlobalSectionData gData = jobConf.get(OOZIE_GLOBAL) == null ?
+                null : getGlobalFromString(jobConf.get(OOZIE_GLOBAL));
+        boolean serializedGlobalConf = false;
         for (Element eNode : (List<Element>) root.getChildren()) {
             if (eNode.getName().equals(START_E)) {
                 def = new LiteWorkflowApp(root.getAttributeValue(NAME_A), strDef,
@@ -457,6 +471,11 @@ public class LiteWorkflowAppParser {
                     } else if (SLA_INFO.equals(elem.getName()) || CREDENTIALS.equals(elem.getName())) {
                         continue;
                     } else {
+                        if (!serializedGlobalConf  && elem.getName().equals(SubWorkflowActionExecutor.ACTION_TYPE) &&
+                                elem.getChild(("propagate-configuration"), ns) != null) {
+                            serializedGlobalConf = true;
+                            jobConf.set(OOZIE_GLOBAL, getGlobalString(gData));
+                        }
                         eActionConf = elem;
                         handleDefaultsAndGlobal(gData, configDefault, elem);
                     }
@@ -484,6 +503,10 @@ public class LiteWorkflowAppParser {
             } else if (SLA_INFO.equals(eNode.getName()) || CREDENTIALS.equals(eNode.getName())) {
                 // No operation is required
             } else if (eNode.getName().equals(GLOBAL)) {
+                if(jobConf.get(OOZIE_GLOBAL) != null) {
+                    gData = getGlobalFromString(jobConf.get(OOZIE_GLOBAL));
+                    handleDefaultsAndGlobal(gData, null, eNode);
+                }
                 gData = parseGlobalSection(ns, eNode);
             } else if (eNode.getName().equals(PARAMETERS)) {
                 // No operation is required
@@ -492,6 +515,47 @@ public class LiteWorkflowAppParser {
             }
         }
         return def;
+    }
+
+    /**
+     * Read the GlobalSectionData from Base64 string.
+     * @param globalStr
+     * @return GlobalSectionData
+     * @throws WorkflowException
+     */
+    private GlobalSectionData getGlobalFromString(String globalStr) throws WorkflowException {
+        GlobalSectionData globalSectionData = new GlobalSectionData();
+        try {
+            byte[] data = Base64.decodeBase64(globalStr);
+            Inflater inflater = new Inflater();
+            DataInputStream ois = new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(data), inflater));
+            globalSectionData.readFields(ois);
+            ois.close();
+        } catch (Exception ex) {
+            throw new WorkflowException(ErrorCode.E0700, "Error while processing global section conf");
+        }
+        return globalSectionData;
+    }
+
+
+    /**
+     * Write the GlobalSectionData to a Base64 string.
+     * @param globalSectionData
+     * @return String
+     * @throws WorkflowException
+     */
+    private String getGlobalString(GlobalSectionData globalSectionData) throws WorkflowException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream oos = null;
+        try {
+            Deflater def = new Deflater();
+            oos = new DataOutputStream(new DeflaterOutputStream(baos, def));
+            globalSectionData.write(oos);
+            oos.close();
+        } catch (IOException e) {
+            throw new WorkflowException(ErrorCode.E0700, "Error while processing global section conf");
+        }
+        return Base64.encodeBase64String(baos.toByteArray());
     }
 
     /**
@@ -570,17 +634,57 @@ public class LiteWorkflowAppParser {
         parent.addContent(child);
     }
 
-    private class GlobalSectionData {
-        final String jobTracker;
-        final String nameNode;
-        final List<String> jobXmls;
-        final Configuration conf;
+    private class GlobalSectionData implements Writable {
+        String jobTracker;
+        String nameNode;
+        List<String> jobXmls;
+        Configuration conf;
+
+        public GlobalSectionData() {
+        }
 
         public GlobalSectionData(String jobTracker, String nameNode, List<String> jobXmls, Configuration conf) {
             this.jobTracker = jobTracker;
             this.nameNode = nameNode;
             this.jobXmls = jobXmls;
             this.conf = conf;
+        }
+
+        @Override
+        public void write(DataOutput dataOutput) throws IOException {
+            WritableUtils.writeStr(dataOutput, jobTracker);
+            WritableUtils.writeStr(dataOutput, nameNode);
+
+            if(jobXmls != null && !jobXmls.isEmpty()) {
+                dataOutput.writeInt(jobXmls.size());
+                for (String content : jobXmls) {
+                    WritableUtils.writeStr(dataOutput, content);
+                }
+            } else {
+                dataOutput.writeInt(0);
+            }
+            if(conf != null) {
+                WritableUtils.writeStr(dataOutput, XmlUtils.prettyPrint(conf).toString());
+            } else {
+                WritableUtils.writeStr(dataOutput, null);
+            }
+        }
+
+        @Override
+        public void readFields(DataInput dataInput) throws IOException {
+            jobTracker = WritableUtils.readStr(dataInput);
+            nameNode = WritableUtils.readStr(dataInput);
+            int length = dataInput.readInt();
+            if (length > 0) {
+                jobXmls = new ArrayList<String>();
+                for (int i = 0; i < length; i++) {
+                    jobXmls.add(WritableUtils.readStr(dataInput));
+                }
+            }
+            String confString = WritableUtils.readStr(dataInput);
+            if(confString != null) {
+                conf = new XConfiguration(new StringReader(confString));
+            }
         }
     }
 
@@ -625,20 +729,23 @@ public class LiteWorkflowAppParser {
 
     private void handleDefaultsAndGlobal(GlobalSectionData gData, Configuration configDefault, Element actionElement)
             throws WorkflowException {
+
         ActionExecutor ae = Services.get().get(ActionService.class).getExecutor(actionElement.getName());
-        if (ae == null) {
+        if (ae == null && !GLOBAL.equals(actionElement.getName())) {
             throw new WorkflowException(ErrorCode.E0723, actionElement.getName(), ActionService.class.getName());
         }
 
         Namespace actionNs = actionElement.getNamespace();
 
-        if (ae.requiresNameNodeJobTracker()) {
+        if (SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
+                GLOBAL.equals(actionElement.getName()) || ae.requiresNameNodeJobTracker()) {
             if (actionElement.getChild(NAME_NODE, actionNs) == null) {
                 if (gData != null && gData.nameNode != null) {
                     addChildElement(actionElement, actionNs, NAME_NODE, gData.nameNode);
                 } else if (defaultNameNode != null) {
                     addChildElement(actionElement, actionNs, NAME_NODE, defaultNameNode);
-                } else {
+                } else if (!(SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
+                        GLOBAL.equals(actionElement.getName()))) {
                     throw new WorkflowException(ErrorCode.E0701, "No " + NAME_NODE + " defined");
                 }
             }
@@ -647,13 +754,14 @@ public class LiteWorkflowAppParser {
                     addChildElement(actionElement, actionNs, JOB_TRACKER, gData.jobTracker);
                 } else if (defaultJobTracker != null) {
                     addChildElement(actionElement, actionNs, JOB_TRACKER, defaultJobTracker);
-                } else {
+                } else if (!(SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
+                        GLOBAL.equals(actionElement.getName()))) {
                     throw new WorkflowException(ErrorCode.E0701, "No " + JOB_TRACKER + " defined");
                 }
             }
         }
 
-        if (ae.supportsConfigurationJobXML()) {
+        if ( GLOBAL.equals(actionElement.getName()) || ae.supportsConfigurationJobXML()) {
             @SuppressWarnings("unchecked")
             List<Element> actionJobXmls = actionElement.getChildren(JOB_XML, actionNs);
             if (gData != null && gData.jobXmls != null) {
@@ -706,5 +814,4 @@ public class LiteWorkflowAppParser {
             }
         }
     }
-
 }

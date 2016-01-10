@@ -306,4 +306,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public boolean isCompleted(String externalStatus) {
         return FINAL_STATUS.contains(externalStatus);
     }
+
+    public boolean supportsConfigurationJobXML() {
+        return true;
+    }
 }
