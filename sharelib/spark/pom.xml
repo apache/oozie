@@ -90,6 +90,14 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-server-resourcemanager</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-annotations</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
