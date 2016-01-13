@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2428 TestSLAService, TestSLAEventGeneration flakey tests (fdenes via rkanter)
 OOZIE-2437 Exclude additional Hadoop dependencies from Spark Sharelib (rkanter)
 OOZIE-2030 Configuration properties from global section is not getting set in Hadoop job conf when using sub-workflow action in Oozie workflow.xml (jaydeepvishwakarma via rohini)
 OOZIE-2380 Oozie Hive action failed with wrong tmp path (vaifer via rkanter)

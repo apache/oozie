@@ -52,6 +52,7 @@ public class TestEventHandlerService extends XDataTestCase {
         conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
         conf.setClass(EventHandlerService.CONF_LISTENERS, DummyJobEventListener.class, JobEventListener.class);
         services.init();
+        output.setLength(0);
     }
 
     @After

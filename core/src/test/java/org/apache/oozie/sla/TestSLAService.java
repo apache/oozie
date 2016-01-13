@@ -67,6 +67,7 @@ public class TestSLAService extends XDataTestCase {
         conf.setLong(SLAService.CONF_JOB_EVENT_LATENCY, 0);
         conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
         services.init();
+        output.setLength(0);
     }
 
     @Override
