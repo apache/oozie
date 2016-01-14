@@ -44,7 +44,9 @@ import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -52,6 +54,7 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XCallable;
 
 public class TestCoordChangeXCommand extends XDataTestCase {
     private Services services;
@@ -67,11 +70,26 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         return DateUtils.formatDateOozieTZ(new Date(timeStamp));
     }
 
+    /**
+     * Class is used to change the queueservice, as that one meddles with the actions in the background.
+     */
+    static class FakeCallableQueueService extends CallableQueueService implements Service {
+        @Override
+        public void init(Services services){}
+
+        @Override
+        public void destroy(){}
+
+        @Override
+        public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay){return false;}
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
         services.init();
+        services.setService(FakeCallableQueueService.class);
     }
 
     @Override
@@ -699,10 +717,10 @@ public class TestCoordChangeXCommand extends XDataTestCase {
                 job.getId() + "@3");
         ca4 = CoordActionQueryExecutor.getInstance().get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION,
                 job.getId() + "@4");
-        assertEquals(ca1.getStatusStr(), CoordinatorAction.Status.RUNNING.toString());
-        assertEquals(ca2.getStatusStr(), CoordinatorAction.Status.RUNNING.toString());
-        assertFalse(ca3.getStatus().equals(CoordinatorAction.Status.READY));
-        assertFalse(ca4.getStatus().equals(CoordinatorAction.Status.READY));
+        assertEquals(CoordinatorAction.Status.RUNNING.toString(), ca1.getStatusStr());
+        assertEquals(CoordinatorAction.Status.RUNNING.toString(), ca2.getStatusStr());
+        assertEquals(CoordinatorAction.Status.READY.toString(), ca3.getStatusStr());
+        assertEquals(CoordinatorAction.Status.READY.toString(), ca4.getStatusStr());
     }
     // Checks that RUNNING coord action is not deleted
     public void testChangeTimeDeleteRunning() throws Exception {
