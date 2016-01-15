@@ -20,6 +20,7 @@ package org.apache.oozie.workflow.lite;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.Writable;
+import org.apache.oozie.action.hadoop.FsActionExecutor;
 import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.ELUtils;
@@ -737,7 +738,13 @@ public class LiteWorkflowAppParser {
 
         Namespace actionNs = actionElement.getNamespace();
 
+        // If this is the global section or ActionExecutor.requiresNameNodeJobTracker() returns true, we parse the action's
+        // <name-node> and <job-tracker> fields.  If those aren't defined, we take them from the <global> section.  If those
+        // aren't defined, we take them from the oozie-site defaults.  If those aren't defined, we throw a WorkflowException.
+        // However, for the SubWorkflow and FS Actions, as well as the <global> section, we don't throw the WorkflowException.
+        // Also, we only parse the NN (not the JT) for the FS Action.
         if (SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
+                FsActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
                 GLOBAL.equals(actionElement.getName()) || ae.requiresNameNodeJobTracker()) {
             if (actionElement.getChild(NAME_NODE, actionNs) == null) {
                 if (gData != null && gData.nameNode != null) {
@@ -745,11 +752,13 @@ public class LiteWorkflowAppParser {
                 } else if (defaultNameNode != null) {
                     addChildElement(actionElement, actionNs, NAME_NODE, defaultNameNode);
                 } else if (!(SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
+                        FsActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
                         GLOBAL.equals(actionElement.getName()))) {
                     throw new WorkflowException(ErrorCode.E0701, "No " + NAME_NODE + " defined");
                 }
             }
-            if (actionElement.getChild(JOB_TRACKER, actionNs) == null) {
+            if (actionElement.getChild(JOB_TRACKER, actionNs) == null &&
+                    !FsActionExecutor.ACTION_TYPE.equals(actionElement.getName())) {
                 if (gData != null && gData.jobTracker != null) {
                     addChildElement(actionElement, actionNs, JOB_TRACKER, gData.jobTracker);
                 } else if (defaultJobTracker != null) {
@@ -761,6 +770,9 @@ public class LiteWorkflowAppParser {
             }
         }
 
+        // If this is the global section or ActionExecutor.supportsConfigurationJobXML() returns true, we parse the action's
+        // <configuration> and <job-xml> fields.  We also merge this with those from the <global> section, if given.  If none are
+        // defined, empty values are placed.  Exceptions are thrown if there's an error parsing, but not if they're not given.
         if ( GLOBAL.equals(actionElement.getName()) || ae.supportsConfigurationJobXML()) {
             @SuppressWarnings("unchecked")
             List<Element> actionJobXmls = actionElement.getChildren(JOB_XML, actionNs);

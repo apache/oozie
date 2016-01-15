@@ -510,6 +510,91 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
     }
 
+    public void testParserFsGlobalNN() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode-global.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <name-node>action-nn</name-node>\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+        String b = app.getNode("b").getConf();
+        String expectedB =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <name-node>global-nn</name-node>\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        b = cleanupXml(b);
+        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+    }
+
+    public void testParserFsDefaultNN() throws Exception {
+        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <name-node>action-nn</name-node>\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+        String b = app.getNode("b").getConf();
+        String expectedB =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <name-node>default-nn</name-node>\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        b = cleanupXml(b);
+        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+    }
+
+    public void testParserFsNoNN() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
+                new Configuration());
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <name-node>action-nn</name-node>\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+        // The FS Action shouldn't care if there's no NN in the end
+        String b = app.getNode("b").getConf();
+        String expectedB =
+                "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "  <mkdir path=\"/foo\" />\r\n" +
+                        "  <configuration />\r\n" +
+                        "</fs>";
+        b = cleanupXml(b);
+        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+    }
+
     public void testParser() throws Exception {
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
                                                                  LiteWorkflowStoreService.LiteControlNodeHandler.class,

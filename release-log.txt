@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2439 FS Action no longer uses name-node from global section or default NN (rkanter)
 OOZIE-2435 TestCoordChangeXCommand is flakey (fdenes via rkanter)
 OOZIE-2428 TestSLAService, TestSLAEventGeneration flakey tests (fdenes via rkanter)
 OOZIE-2437 Exclude additional Hadoop dependencies from Spark Sharelib (rkanter)
