@@ -80,7 +80,7 @@
         <hadoop.majorversion>1</hadoop.majorversion>
         <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
         <oozie.hadoop-utils.version>hadoop-${hadoop.majorversion}-${project.version}</oozie.hadoop-utils.version>
-        <hbase.version>0.94.2</hbase.version>
+        <hbase.version>0.94.27</hbase.version>
 
         <dropwizard.metrics.version>3.1.0</dropwizard.metrics.version>
 
