@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2370 Docs for Coordinator Action Status Notification has wrong property name (eeeva via rkanter)
 OOZIE-2419 HBase credentials are not correctly proxied (qwertymaniac via rkanter)
 OOZIE-2439 FS Action no longer uses name-node from global section or default NN (rkanter)
 OOZIE-2435 TestCoordChangeXCommand is flakey (fdenes via rkanter)

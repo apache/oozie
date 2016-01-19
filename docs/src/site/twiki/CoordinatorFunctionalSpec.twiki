@@ -3571,7 +3571,7 @@ See also [[WorkflowFunctionalSpec#WorkflowNotifications][Workflow Notifications]
 
 ---+++ 15.1 Coordinator Action Status Notification
 
-If the =oozie.coord.workflow.notification.url= property is present in the coordinator job properties when submitting the job,
+If the =oozie.coord.action.notification.url= property is present in the coordinator job properties when submitting the job,
 Oozie will make a notification to the provided URL when any of the coordinator's actions changes its status.
 =oozie.coord.action.notification.proxy= property can be used to configure either a http or socks proxy.
 The format is proxyHostname:port or proxyType@proxyHostname:port. If proxy type is not specified, it defaults to http.
