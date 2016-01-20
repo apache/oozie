@@ -510,6 +510,27 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
     }
 
+    public void testParserSubWorkflowPropagateNoGlobal() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp app = parser.validateAndParse(
+                IOUtils.getResourceAsReader("wf-schema-subworkflow-propagate-no-global.xml", -1),
+                new Configuration());
+
+        String a = app.getNode("a").getConf();
+        String expectedA =
+                "<sub-workflowxmlns=\"uri:oozie:workflow:0.4\">\r\n" +
+                        "<app-path>/tmp/foo/</app-path>\r\n" +
+                        "<propagate-configuration/>\r\n" +
+                        "<configuration/>\r\n" +
+                        "</sub-workflow>";
+        a = cleanupXml(a);
+        assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
+    }
+
     public void testParserFsGlobalNN() throws Exception {
         LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
                 LiteWorkflowStoreService.LiteControlNodeHandler.class,

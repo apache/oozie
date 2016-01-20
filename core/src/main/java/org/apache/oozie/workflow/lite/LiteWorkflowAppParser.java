@@ -472,8 +472,8 @@ public class LiteWorkflowAppParser {
                     } else if (SLA_INFO.equals(elem.getName()) || CREDENTIALS.equals(elem.getName())) {
                         continue;
                     } else {
-                        if (!serializedGlobalConf  && elem.getName().equals(SubWorkflowActionExecutor.ACTION_TYPE) &&
-                                elem.getChild(("propagate-configuration"), ns) != null) {
+                        if (!serializedGlobalConf && elem.getName().equals(SubWorkflowActionExecutor.ACTION_TYPE) &&
+                                elem.getChild(("propagate-configuration"), ns) != null && gData != null) {
                             serializedGlobalConf = true;
                             jobConf.set(OOZIE_GLOBAL, getGlobalString(gData));
                         }
