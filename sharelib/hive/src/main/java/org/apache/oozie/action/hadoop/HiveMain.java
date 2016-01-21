@@ -143,7 +143,9 @@ public class HiveMain extends LauncherMain {
         }
 
         String logLevel = hiveConf.get("oozie.hive.log.level", "INFO");
+        String rootLogLevel = hiveConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
+        hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");
         hadoopProps.setProperty("log4j.logger.hive", logLevel + ", A");
         hadoopProps.setProperty("log4j.logger.DataNucleus", logLevel + ", A");
@@ -151,13 +153,14 @@ public class HiveMain extends LauncherMain {
         hadoopProps.setProperty("log4j.logger.JPOX", logLevel + ", A");
         hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
         hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+        hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] -5p %c %x - %m%n");
 
         hadoopProps.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
         hadoopProps.setProperty("log4j.appender.jobid.file", logFile);
         hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
+        hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
 
         String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);
@@ -199,6 +202,7 @@ public class HiveMain extends LauncherMain {
         return hiveConf;
     }
 
+    @Override
     protected void run(String[] args) throws Exception {
         System.out.println();
         System.out.println("Oozie Hive action configuration");

@@ -2702,4 +2702,30 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             assertEquals(4, conf.size());
         }
     }
+
+    public void testSetRootLoggerLevel() throws Exception {
+        String oozieActionRootLogger = "oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL;
+        String oozieActionHiveRootLogger = "oozie.action.hive" + LauncherMapper.ROOT_LOGGER_LEVEL;
+
+        // default should be INFO
+        JavaActionExecutor jae = new JavaActionExecutor();
+        Configuration conf = new Configuration(false);
+        jae.setRootLoggerLevel(conf);
+        assertEquals("INFO", conf.get(oozieActionRootLogger));
+
+        // explicitly set root logger level to DEBUG
+        jae = new JavaActionExecutor();
+        conf = new Configuration(false);
+        conf.set(oozieActionRootLogger, "DEBUG");
+        jae.setRootLoggerLevel(conf);
+        assertEquals("DEBUG", conf.get(oozieActionRootLogger));
+
+        // explicitly set root logger level to DEBUG for hive action
+        HiveActionExecutor hae = new HiveActionExecutor();
+        conf = new Configuration(false);
+        conf.set(oozieActionHiveRootLogger, "DEBUG");
+        hae.setRootLoggerLevel(conf);
+        assertEquals("DEBUG", conf.get(oozieActionHiveRootLogger));
+    }
+
 }

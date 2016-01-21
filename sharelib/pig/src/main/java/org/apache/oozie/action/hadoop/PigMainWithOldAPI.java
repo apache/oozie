@@ -153,10 +153,12 @@ public class PigMainWithOldAPI extends LauncherMain {
         if (log4jFile != null) {
 
             String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
+            String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
             // append required PIG properties to the default hadoop log4j file
             Properties hadoopProps = new Properties();
             hadoopProps.load(log4jFile.openStream());
+            hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A, B");
             hadoopProps.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A, B");
             hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
             hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");

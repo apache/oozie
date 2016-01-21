@@ -33,9 +33,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,12 +45,15 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
+import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -67,6 +70,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
@@ -74,13 +78,9 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.ELEvaluationException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.oozie.hadoop.utils.HadoopShims;
 
 
 public class JavaActionExecutor extends ActionExecutor {
@@ -521,6 +521,7 @@ public class JavaActionExecutor extends ActionExecutor {
             // set cancel.delegation.token in actionConf that child job doesn't cancel delegation token
             actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
             updateConfForJavaTmpDir(actionConf);
+            setRootLoggerLevel(actionConf);
             return actionConf;
         }
         catch (IOException ex) {
@@ -531,6 +532,34 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         catch (URISyntaxException ex) {
             throw convertException(ex);
+        }
+    }
+
+    /**
+     * Set root log level property in actionConf
+     * @param actionConf
+     */
+    void setRootLoggerLevel(Configuration actionConf) {
+        String oozieActionTypeRootLogger = "oozie.action." + getType() + LauncherMapper.ROOT_LOGGER_LEVEL;
+        String oozieActionRootLogger = "oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL;
+
+        // check if root log level has already mentioned in action configuration
+        String rootLogLevel = actionConf.get(oozieActionTypeRootLogger, actionConf.get(oozieActionRootLogger));
+        if (rootLogLevel != null) {
+            // root log level is mentioned in action configuration
+            return;
+        }
+
+        // set the root log level which is mentioned in oozie default
+        rootLogLevel = ConfigurationService.get(oozieActionTypeRootLogger);
+        if (rootLogLevel != null && rootLogLevel.length() > 0) {
+            actionConf.set(oozieActionRootLogger, rootLogLevel);
+        }
+        else {
+            rootLogLevel = ConfigurationService.get(oozieActionRootLogger);
+            if (rootLogLevel != null && rootLogLevel.length() > 0) {
+                actionConf.set(oozieActionRootLogger, rootLogLevel);
+            }
         }
     }
 
@@ -1673,10 +1702,12 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    @Override
     public boolean requiresNameNodeJobTracker() {
         return true;
     }
 
+    @Override
     public boolean supportsConfigurationJobXML() {
         return true;
     }

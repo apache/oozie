@@ -1804,6 +1804,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.action.rootlogger.log.level</name>
+        <value>INFO</value>
+        <description>
+            Logging level for root logger
+        </description>
+    </property>
+
     <!-- HadoopActionExecutor -->
     <!-- This is common to the subclasses action executors for map-reduce and pig -->
 
