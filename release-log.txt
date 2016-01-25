@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2434 inconsistent coord action status and workflow job status (satishsaley via puru)
 OOZIE-2438 Oozie client "jobs -filter" diagnostic message clarification (satishsaley via puru)
 OOZIE-2165 Job log fetching can fail in Oozie HA mode when using doAs impersonation (satishsaley via puru)
 OOZIE-2430 Add root logger for hive,sqoop action (satishsaley via puru)

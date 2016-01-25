@@ -18,35 +18,35 @@
 
 package org.apache.oozie.action.oozie;
 
-import org.apache.oozie.action.hadoop.OozieJobInfo;
-import org.apache.oozie.client.OozieClientException;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.ActionExecutorException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.hadoop.OozieJobInfo;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.OozieClientException;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagEngineService;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.PropertiesUtils;
-import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.service.Services;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
-
-import java.io.StringReader;
-import java.io.IOException;
-import java.util.Set;
-import java.util.HashSet;
 
 public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";
@@ -286,8 +286,10 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
         try {
             String subWorkflowId = action.getExternalId();
             String oozieUri = action.getTrackerUri();
-            OozieClient oozieClient = getWorkflowClient(context, oozieUri);
-            oozieClient.kill(subWorkflowId);
+            if (subWorkflowId != null && oozieUri != null) {
+                OozieClient oozieClient = getWorkflowClient(context, oozieUri);
+                oozieClient.kill(subWorkflowId);
+            }
             context.setEndData(WorkflowAction.Status.KILLED, getActionSignal(WorkflowAction.Status.KILLED));
         }
         catch (Exception ex) {
