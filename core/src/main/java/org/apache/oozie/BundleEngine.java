@@ -28,17 +28,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import javax.servlet.ServletException;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.BaseEngine.LOG_TYPE;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.command.BulkJobsXCommand;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.bundle.BundleSLAAlertsDisableXCommand;
-import org.apache.oozie.command.bundle.BundleSLAAlertsEnableXCommand;
-import org.apache.oozie.command.bundle.BundleSLAChangeXCommand;
+import org.apache.oozie.command.OperationType;
 import org.apache.oozie.command.bundle.BulkBundleXCommand;
 import org.apache.oozie.command.bundle.BundleJobChangeXCommand;
 import org.apache.oozie.command.bundle.BundleJobResumeXCommand;
@@ -47,24 +46,24 @@ import org.apache.oozie.command.bundle.BundleJobXCommand;
 import org.apache.oozie.command.bundle.BundleJobsXCommand;
 import org.apache.oozie.command.bundle.BundleKillXCommand;
 import org.apache.oozie.command.bundle.BundleRerunXCommand;
+import org.apache.oozie.command.bundle.BundleSLAAlertsDisableXCommand;
+import org.apache.oozie.command.bundle.BundleSLAAlertsEnableXCommand;
+import org.apache.oozie.command.bundle.BundleSLAChangeXCommand;
 import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
-import org.apache.oozie.command.OperationType;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.JobUtils;
+import org.apache.oozie.util.JobsFilterUtils;
+import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
-import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import javax.servlet.ServletException;
 
 public class BundleEngine extends BaseEngine {
     /**
@@ -408,7 +407,7 @@ public class BundleEngine extends BaseEngine {
                     String[] pair = token.split("=");
                     if (pair.length != 2) {
                         throw new BundleEngineException(ErrorCode.E0420, token,
-                                "elements must be name=value pairs");
+                                "elements must be semicolon-separated name=value pairs");
                     }
                     pair[0] = pair[0].toLowerCase();
                     String[] values = pair[1].split(",");
@@ -454,7 +453,8 @@ public class BundleEngine extends BaseEngine {
                         list.add(value);
                     }
                 } else {
-                    throw new BundleEngineException(ErrorCode.E0420, token, "elements must be name=value pairs");
+                    throw new BundleEngineException(ErrorCode.E0420, token,
+                            "elements must be semicolon-separated name=value pairs");
                 }
             }
             if (!bulkFilter.containsKey(BulkResponseImpl.BULK_FILTER_BUNDLE)) {

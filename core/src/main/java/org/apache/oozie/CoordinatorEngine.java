@@ -18,17 +18,32 @@
 
 package org.apache.oozie;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.io.Writer;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.BaseEngine.LOG_TYPE;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.OperationType;
 import org.apache.oozie.command.coord.BulkCoordXCommand;
 import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
@@ -45,7 +60,6 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
-import org.apache.oozie.command.OperationType;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -64,22 +78,7 @@ import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogUserFilterParam;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import com.google.common.annotations.VisibleForTesting;
 
 public class CoordinatorEngine extends BaseEngine {
     private static final XLog LOG = XLog.getLog(CoordinatorEngine.class);
@@ -720,7 +719,7 @@ public class CoordinatorEngine extends BaseEngine {
                     String[] pair = token.split("=");
                     if (pair.length != 2) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter,
-                                "elements must be name=value pairs");
+                                "elements must be semicolon-separated name=value pairs");
                     }
                     if (!FILTER_NAMES.contains(pair[0].toLowerCase())) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format("invalid name [{0}]",
@@ -764,7 +763,8 @@ public class CoordinatorEngine extends BaseEngine {
                     }
                     list.add(pair[1]);
                 } else {
-                    throw new CoordinatorEngineException(ErrorCode.E0420, filter, "elements must be name=value pairs");
+                    throw new CoordinatorEngineException(ErrorCode.E0420, filter,
+                            "elements must be semicolon-separated name=value pairs");
                 }
             }
             // Unit is specified and frequency is not specified

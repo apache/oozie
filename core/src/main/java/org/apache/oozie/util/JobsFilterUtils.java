@@ -17,14 +17,6 @@
  */
 package org.apache.oozie.util;
 
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.Job;
-import org.apache.oozie.servlet.XServletException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.servlet.XServletException;
 
 public class JobsFilterUtils {
 
@@ -55,7 +55,7 @@ public class JobsFilterUtils {
                     String[] pair = token.split("=");
                     if (pair.length != 2) {
                         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0420,
-                                "filter elements must be name=value pairs");
+                                "filter elements must be semicolon-separated name=value pairs");
                     }
                     if (!FILTER_NAMES.contains(pair[0])) {
                         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0420,
@@ -80,7 +80,7 @@ public class JobsFilterUtils {
                 }
                 else {
                     throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0420,
-                            "filter elements must be name=value pairs");
+                            "filter elements must be semicolon-separated name=value pairs");
                 }
             }
         }

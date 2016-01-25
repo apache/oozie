@@ -18,13 +18,26 @@
 
 package org.apache.oozie;
 
-import org.apache.oozie.service.XLogService;
-import org.apache.oozie.service.DagXLogInfoService;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.OperationType;
+import org.apache.oozie.command.wf.BulkWorkflowXCommand;
 import org.apache.oozie.command.wf.CompletedActionXCommand;
 import org.apache.oozie.command.wf.DefinitionXCommand;
 import org.apache.oozie.command.wf.ExternalIdXCommand;
@@ -42,34 +55,20 @@ import org.apache.oozie.command.wf.SubmitSqoopXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
-import org.apache.oozie.command.OperationType;
-import org.apache.oozie.command.wf.BulkWorkflowXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.util.XLogAuditFilter;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.service.XLogStreamingService;
-
-import java.io.StringReader;
-import java.io.Writer;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.StringTokenizer;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.io.IOException;
+import org.apache.oozie.util.XLogAuditFilter;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogUserFilterParam;
 
 /**
  * The DagEngine provides all the DAG engine functionality for WS calls.
@@ -493,7 +492,8 @@ public class DagEngine extends BaseEngine {
                 if (token.contains("=")) {
                     String[] pair = token.split("=");
                     if (pair.length != 2) {
-                        throw new DagEngineException(ErrorCode.E0420, filter, "elements must be name=value pairs");
+                        throw new DagEngineException(ErrorCode.E0420, filter,
+                                "elements must be semicolon-separated name=value pairs");
                     }
                     pair[0] = pair[0].toLowerCase();
                     if (!FILTER_NAMES.contains(pair[0])) {
@@ -517,7 +517,8 @@ public class DagEngine extends BaseEngine {
                     list.add(pair[1]);
                 }
                 else {
-                    throw new DagEngineException(ErrorCode.E0420, filter, "elements must be name=value pairs");
+                    throw new DagEngineException(ErrorCode.E0420, filter,
+                            "elements must be semicolon-separated name=value pairs");
                 }
             }
         }
