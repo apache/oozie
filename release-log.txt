@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2165 Job log fetching can fail in Oozie HA mode when using doAs impersonation (satishsaley via puru)
 OOZIE-2430 Add root logger for hive,sqoop action (satishsaley via puru)
 OOZIE-2441 SubWorkflow action with propagate-configuration but no global section throws NPE on submit (rkanter)
 OOZIE-2370 Docs for Coordinator Action Status Notification has wrong property name (eeeva via rkanter)

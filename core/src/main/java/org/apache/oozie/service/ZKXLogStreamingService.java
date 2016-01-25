@@ -18,13 +18,9 @@
 package org.apache.oozie.service;
 
 import java.io.BufferedReader;
-
-import org.apache.oozie.util.Instrumentable;
-import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XLogStreamer;
-
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,10 +32,13 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.util.AuthUrlClient;
-import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.SimpleTimestampedMessageParser;
 import org.apache.oozie.util.TimestampedMessageParser;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.ZKUtils;
 
 /**
@@ -237,8 +236,18 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                         final String url = otherUrl + "/v" + OozieClient.WS_PROTOCOL_VERSION + "/" + RestConstants.JOB
                                 + "/" + jobId + "?" + RestConstants.JOB_SHOW_PARAM + "=" + logType
                                 + "&" + RestConstants.ALL_SERVER_REQUEST + "=false" + AuthUrlClient.getQueryParamString(params);
-
-                        BufferedReader reader = AuthUrlClient.callServer(url);
+                        // remove doAs from url to avoid failure while fetching
+                        // logs in case of HA mode
+                        String key = "doAs";
+                        String[] value = params.get(key);
+                        String urlWithoutdoAs = null;
+                        if (value != null && value.length > 0 && value[0] != null && value[0].length() > 0) {
+                            urlWithoutdoAs = url.replace("&" + key + "=" + URLEncoder.encode(value[0], "UTF-8"), "");
+                        }
+                        else {
+                            urlWithoutdoAs = url;
+                        }
+                        BufferedReader reader = AuthUrlClient.callServer(urlWithoutdoAs);
                         parsers.add(new SimpleTimestampedMessageParser(reader, filter));
                     }
                     catch(IOException ioe) {
