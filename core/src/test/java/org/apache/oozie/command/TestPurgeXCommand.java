@@ -241,6 +241,7 @@ public class TestPurgeXCommand extends XDataTestCase {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException ce) {
+            ce.printStackTrace();
             fail("Workflow Job should not have been purged");
         }
 
@@ -2296,6 +2297,7 @@ public class TestPurgeXCommand extends XDataTestCase {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
+            je.printStackTrace();
             fail("Workflow Job should not have been purged");
         }
 
@@ -3853,8 +3855,10 @@ public class TestPurgeXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
-        wfBean.setStartTime(DateUtils.parseDateOozieTZ("2015-12-18T01:00Z"));
-        wfBean.setEndTime(DateUtils.parseDateOozieTZ("2015-12-18T03:00Z"));
+        //Set start time to 100 days from now
+        wfBean.setStartTime(new Date(System.currentTimeMillis() + (long)100*24*60*60*1000));
+        //Set end time to 100 days + 2 hours from now
+        wfBean.setEndTime(new Date(System.currentTimeMillis() + (long)100*24*60*60*1000 + (long)2*60*60*1000));
 
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
