@@ -21,9 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.action.hadoop.CredentialException;
-import org.apache.oozie.action.hadoop.Credentials;
-import org.apache.oozie.action.hadoop.CredentialsProperties;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -38,6 +35,8 @@ public class HCatCredentials extends Credentials {
 
     private static final String HCAT_METASTORE_PRINCIPAL = "hcat.metastore.principal";
     private static final String HCAT_METASTORE_URI = "hcat.metastore.uri";
+    private static final String HIVE_METASTORE_PRINCIPAL = "hive.metastore.kerberos.principal";
+    private static final String HIVE_METASTORE_URI = "hive.metastore.uris";
 
     /* (non-Javadoc)
      * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
@@ -45,12 +44,14 @@ public class HCatCredentials extends Credentials {
     @Override
     public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
         try {
-            String principal = props.getProperties().get(HCAT_METASTORE_PRINCIPAL);
+            String principal = props.getProperties().get(HCAT_METASTORE_PRINCIPAL) == null
+                    ? props.getProperties().get(HIVE_METASTORE_PRINCIPAL) : null;
             if (principal == null || principal.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_PRINCIPAL + " is required to get hcat credential");
             }
-            String server = props.getProperties().get(HCAT_METASTORE_URI);
+            String server = props.getProperties().get(HCAT_METASTORE_URI) == null
+                    ? props.getProperties().get(HIVE_METASTORE_URI) : null;
             if (server == null || server.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_URI + " is required to get hcat credential");

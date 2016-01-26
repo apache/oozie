@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2431 Support hive.metastore.uris as alias for hcat.metastore.uri (satishsaley via puru)
 OOZIE-1976 Specifying coordinator input datasets in more logical ways (puru)
 OOZIE-2444 Need conditional logic in bundles (satishsaley via puru)
 OOZIE-2394 Oozie can execute command without holding lock (puru)

@@ -111,8 +111,8 @@ Oozie currently comes with the following Credentials implementations:
 
 HCatCredentials requires these two properties:
 
-   1. =hcat.metastore.principal=
-   1. =hcat.metastore.uri=
+   1. =hcat.metastore.principal= or hive.metastore.kerberos.principal
+   1. =hcat.metastore.uri= or hive.metastore.uris
 
 *Note:* The HCatalog Metastore and Hive Metastore are one and the same and so the "hcat" type credential can also be used to talk
 to a secure Hive Metastore, though the property names would still start with "hcat.".
