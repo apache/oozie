@@ -94,9 +94,8 @@ A bundle definition is defined in XML by a name, controls and one or more coordi
     * *%BLUE% controls: %ENDCOLOR%* The control specification for the bundle.
       * *%BLUE% kick-off-time: %ENDCOLOR%* It defines when the bundle job should start and submit the coordinator applications. This field is optional and the default is *NOW* that means the job should start right-a-way.
    * *%BLUE% coordinator: %ENDCOLOR%* Coordinator application specification. There should be at least one coordinator application in any bundle.
-      * *%BLUE% name: %ENDCOLOR%* Name of the coordinator application. It can be used for referring this application through
-      bundle to control such as kill, suspend, rerun. Enabled can be used to enable or disable a coordinator. It is optional.
-      The default value for enabled is true.
+      * *%BLUE% name: %ENDCOLOR%* Name of the coordinator application. It can be used for referring this application through bundle to control such as kill, suspend, rerun.
+      * *%BLUE% enabled: %ENDCOLOR%* Enabled can be used to enable or disable a coordinator. It is optional. The default value for enabled is true.
       * *%BLUE% app-path: %ENDCOLOR%* Path of the coordinator application definition in hdfs. This is a mandatory element.
       * *%BLUE% configuration: %ENDCOLOR%* A hadoop like configuration to parameterize corresponding coordinator application. This is optional.
     * *%BLUE% Parameterization: %ENDCOLOR%*  Configuration properties that are a valid Java identifier, [A-Za-z_][0-9A-Za-z_]*, are available as =${NAME}= variables within the bundle application definition. Configuration properties that are not a valid Java identifier, for example =job.tracker=, are available via the =${bundle:conf(String name)}= function. Valid Java identifier properties are available via this function as well.
