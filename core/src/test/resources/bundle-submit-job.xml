@@ -40,7 +40,7 @@
                      </property>
                  </configuration>
           </coordinator>
-          <coordinator name='${coordName2}' critical='false'>
+          <coordinator name='${coordName2}' critical='false' enabled='${isEnabled}'>
                  <app-path>#app_path2</app-path>
                  <configuration>
                      <property>

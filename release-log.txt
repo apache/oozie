@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2444 Need conditional logic in bundles (satishsaley via puru)
 OOZIE-2394 Oozie can execute command without holding lock (puru)
 OOZIE-1922 MemoryLocksService fails if lock is acquired multiple times in same thread and released (puru)
 OOZIE-2432 TestPurgeXCommand fails (fdenes via rkanter)

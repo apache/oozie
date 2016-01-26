@@ -1030,6 +1030,95 @@ public abstract class XDataTestCase extends XHCatTestCase {
     }
 
     /**
+     * Insert bundle job for testing.
+     *
+     * @param jobStatus job status
+     * @param pending true if pending
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean addRecordToBundleJobTableDisabledCoord(Job.Status jobStatus) throws Exception {
+        BundleJobBean bundle = createBundleJobCoordDisabled(jobStatus);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            BundleJobInsertJPAExecutor bundleInsertjpa = new BundleJobInsertJPAExecutor(bundle);
+            jpaService.execute(bundleInsertjpa);
+        }
+        catch (JPAExecutorException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test bundle job record to table");
+            throw ce;
+        }
+        return bundle;
+    }
+
+    /**
+     * Creates bundle job bean with one disabled coordinator
+     *
+     * @param jobStatus job status
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJobCoordDisabled(Job.Status jobStatus) throws Exception {
+        return createBundleJobCoordDisabled(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE),
+                jobStatus);
+    }
+
+    /**
+     * Creates bundle job bean with one disabled coordinator
+     *
+     * @param jobID
+     * @param jobStatus job status
+     * @return bundle job bean
+     * @throws Exception
+     */
+    protected BundleJobBean createBundleJobCoordDisabled(String jobID, Job.Status jobStatus) throws Exception {
+        Path coordPath1 = new Path(getFsTestCaseDir(), "coord1");
+        Path coordPath2 = new Path(getFsTestCaseDir(), "coord2");
+        writeCoordXml(coordPath1, "coord-job-bundle.xml");
+        writeCoordXml(coordPath2, "coord-job-bundle.xml");
+
+        Path bundleAppPath = new Path(getFsTestCaseDir(), "bundle");
+        String bundleAppXml = getBundleXml("bundle-submit-job.xml");
+        assertNotNull(bundleAppXml);
+        assertTrue(bundleAppXml.length() > 0);
+
+        bundleAppXml = bundleAppXml.replaceAll("#app_path1",
+                Matcher.quoteReplacement(new Path(coordPath1.toString(), "coordinator.xml").toString()));
+        bundleAppXml = bundleAppXml.replaceAll("#app_path2",
+                Matcher.quoteReplacement(new Path(coordPath2.toString(), "coordinator.xml").toString()));
+
+        writeToFile(bundleAppXml, bundleAppPath, "bundle.xml");
+
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("jobTracker", getJobTrackerUri());
+        conf.set("nameNode", getNameNodeUri());
+        conf.set("appName", "bundle-app-name");
+        conf.set("coordName1", "coord1");
+        conf.set("coordName2", "coord2");
+        conf.set("isEnabled", "false");
+
+        BundleJobBean bundle = new BundleJobBean();
+        bundle.setId(jobID);
+        bundle.setAppName("BUNDLE-TEST");
+        bundle.setAppPath(bundleAppPath.toString());
+        bundle.setConf(XmlUtils.prettyPrint(conf).toString());
+        bundle.setConsoleUrl("consoleUrl");
+        bundle.setCreatedTime(new Date());
+        bundle.setJobXml(bundleAppXml);
+        bundle.setLastModifiedTime(new Date());
+        bundle.setOrigJobXml(bundleAppXml);
+        bundle.resetPending();
+        bundle.setStatus(jobStatus);
+        bundle.setUser(conf.get(OozieClient.USER_NAME));
+        bundle.setGroup(conf.get(OozieClient.GROUP_NAME));
+        return bundle;
+    }
+
+    /**
      * Create bundle action bean and save to db
      *
      * @param jobId bundle job id
@@ -1409,6 +1498,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set("appName", "bundle-app-name");
         conf.set("coordName1", "coord1");
         conf.set("coordName2", "coord2");
+        conf.set("isEnabled", "true");
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(jobID);
@@ -1478,6 +1568,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         conf.set("coordName1", "coord1");
         conf.set("coordName2", "coord2");
         conf.set("coord1.starttime","2009-02-01T00:00Z");
+        conf.set("isEnabled", "true");
 
         BundleJobBean bundle = new BundleJobBean();
         bundle.setId(Services.get().get(UUIDService.class).generateId(ApplicationType.BUNDLE));

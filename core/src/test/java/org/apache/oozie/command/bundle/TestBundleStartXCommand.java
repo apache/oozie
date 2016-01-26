@@ -155,6 +155,34 @@ public class TestBundleStartXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : Start bundle job when certain coord jobs are not enabled
+     *
+     * @throws Exception
+     */
+    public void testBundleStart3() throws Exception {
+        BundleJobBean job = this.addRecordToBundleJobTableDisabledCoord(Job.Status.PREP);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.PREP);
+
+        new BundleStartXCommand(job.getId()).call();
+
+        job = jpaService.execute(bundleJobGetExecutor);
+        assertEquals(job.getStatus(), Job.Status.RUNNING);
+
+        sleep(2000);
+
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance()
+                .getList(BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, job.getId());
+
+        assertEquals(1, actions.size());
+        assertEquals(job.getId(), actions.get(0).getBundleId());
+    }
+
+    /**
      * Test : Start bundle job with dryrun
      *
      * @throws Exception
