@@ -18,6 +18,10 @@
 
 package org.apache.oozie.lock;
 
+import java.util.UUID;
+import org.apache.oozie.service.MemoryLocksService;
+import org.apache.oozie.service.ServiceException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XLog;
 
@@ -217,6 +221,118 @@ public class TestMemoryLocks extends XTestCase {
         l2.finish();
         Thread.sleep(500);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
+    }
+
+    public class SameThreadWriteLocker implements Runnable {
+        protected String name;
+        private String nameIndex;
+        private StringBuffer sb;
+        protected long timeout;
+
+        public SameThreadWriteLocker(String name, int nameIndex, long timeout, StringBuffer buffer) {
+            this.name = name;
+            this.nameIndex = name + ":" + nameIndex;
+            this.sb = buffer;
+            this.timeout = timeout;
+        }
+
+        public void run() {
+            try {
+                log.info("Getting lock [{0}]", nameIndex);
+                MemoryLocks.MemoryLockToken token = getLock();
+                MemoryLocks.MemoryLockToken token2 = getLock();
+
+                if (token != null) {
+                    log.info("Got lock [{0}]", nameIndex);
+                    sb.append(nameIndex + "-L1 ");
+                    if (token2 != null) {
+                        sb.append(nameIndex + "-L2 ");
+                    }
+                    sb.append(nameIndex + "-U1 ");
+                    token.release();
+                    synchronized (this) {
+                        wait();
+                    }
+                    sb.append(nameIndex + "-U2 ");
+                    token2.release();
+                    log.info("Release lock [{0}]", nameIndex);
+                }
+                else {
+                    sb.append(nameIndex + "-N ");
+                    log.info("Did not get lock [{0}]", nameIndex);
+                }
+            }
+            catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        public void finish() {
+            synchronized (this) {
+                notify();
+            }
+        }
+
+        protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {
+            return locks.getWriteLock(name, timeout);
+        }
+
+    }
+
+    public void testWriteLockSameThreadNoWait() throws Exception {
+        StringBuffer sb = new StringBuffer("");
+        SameThreadWriteLocker l1 = new SameThreadWriteLocker("a", 1, 0, sb);
+        Locker l2 = new WriteLocker("a", 2, 0, sb);
+
+        new Thread(l1).start();
+        Thread.sleep(500);
+        new Thread(l2).start();
+        Thread.sleep(500);
+        l1.finish();
+        Thread.sleep(500);
+        l2.finish();
+        Thread.sleep(500);
+        assertEquals("a:1-L1 a:1-L2 a:1-U1 a:2-N a:1-U2", sb.toString().trim());
+    }
+
+    public void testWriteLockSameThreadWait() throws Exception {
+        StringBuffer sb = new StringBuffer("");
+        SameThreadWriteLocker l1 = new SameThreadWriteLocker("a", 1, 0, sb);
+        Locker l2 = new WriteLocker("a", 2, 1000, sb);
+
+        new Thread(l1).start();
+        Thread.sleep(500);
+        new Thread(l2).start();
+        Thread.sleep(500);
+        l1.finish();
+        Thread.sleep(500);
+        l2.finish();
+        Thread.sleep(500);
+        assertEquals("a:1-L1 a:1-L2 a:1-U1 a:1-U2 a:2-L a:2-U", sb.toString().trim());
+    }
+
+    public void testLockReentrant() throws ServiceException, InterruptedException {
+        final String path = UUID.randomUUID().toString();
+        MemoryLocksService lockService = new MemoryLocksService();
+        try {
+            lockService.init(Services.get());
+            LockToken lock = lockService.getWriteLock(path, 5000);
+            lock = (LockToken) lockService.getWriteLock(path, 5000);
+            lock = (LockToken) lockService.getWriteLock(path, 5000);
+            assertEquals(lockService.getMemoryLocks().size(), 1);
+            lock.release();
+            assertEquals(lockService.getMemoryLocks().size(), 1);
+            lock.release();
+            assertEquals(lockService.getMemoryLocks().size(), 1);
+            lock.release();
+            assertEquals(lockService.getMemoryLocks().size(), 0);
+        }
+        catch (Exception e) {
+            fail("Reentrant property, it should have acquired lock");
+        }
+        finally {
+            lockService.destroy();
+        }
     }
 
 }

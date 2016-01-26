@@ -464,49 +464,16 @@ public class TestZKLocksService extends ZKXTestCase {
     public void testReentrantMultipleThread() throws ServiceException, InterruptedException {
         final String path = UUID.randomUUID().toString();
         final ZKLocksService zkls = new ZKLocksService();
-        final LockToken[] locks = new LockToken[2];
-
+        zkls.init(Services.get());
         try {
-            zkls.init(Services.get());
-            Thread t1 = new Thread() {
-                public void run() {
-                    try {
-                        locks[0] = zkls.getWriteLock(path, 5000);
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-            Thread t2 = new Thread() {
-                public void run() {
-                    try {
-                        locks[1] = zkls.getWriteLock(path, 5000);
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
+            ThreadLock t1 = new ThreadLock(zkls, path);
+            ThreadLock t2 = new ThreadLock(zkls, path);
             t1.start();
-            t2.start();
             t1.join();
+            assertFalse(zkls.getLocks().containsKey(path));
+            t2.start();
             t2.join();
-
-            if (locks[0] != null) {
-                assertNull(locks[1]);
-            }
-            if (locks[1] != null) {
-                assertNull(locks[0]);
-            }
-
-            if (locks[0] != null) {
-                locks[0].release();
-            }
-            if (locks[1] != null) {
-                locks[1].release();
-            }
-            assertTrue(zkls.getLocks().containsKey(path));
+            assertFalse(zkls.getLocks().containsKey(path));
         }
         finally {
             zkls.destroy();
@@ -514,8 +481,9 @@ public class TestZKLocksService extends ZKXTestCase {
     }
 
     public void testLockReaper() throws Exception {
-        Services.get().getConf().set(ZKLocksService.REAPING_THRESHOLD, "1");
+        ConfigurationService.set(ZKLocksService.REAPING_THRESHOLD, "1");
         ZKLocksService zkls = new ZKLocksService();
+
         try {
             zkls.init(Services.get());
             for (int i = 0; i < 10; ++i) {
@@ -529,6 +497,33 @@ public class TestZKLocksService extends ZKXTestCase {
         }
         finally {
             zkls.destroy();
+        }
+    }
+
+    static class ThreadLock extends Thread {
+        ZKLocksService zkls;
+        String path;
+        LockToken lock = null;
+
+        public ThreadLock(ZKLocksService zkls, String path) {
+            this.zkls = zkls;
+            this.path = path;
+
+        }
+
+        public void run() {
+            try {
+                lock = zkls.getWriteLock(path, 5000);
+                if (lock != null) {
+                    lock = zkls.getWriteLock(path, 5000);
+                    Thread.sleep(1000);
+                    lock.release();
+                    Thread.sleep(1000);
+                    lock.release();
+                }
+            }
+            catch (InterruptedException e) {
+            }
         }
     }
 }

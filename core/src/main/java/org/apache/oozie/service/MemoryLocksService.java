@@ -23,6 +23,8 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.lock.MemoryLocks;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Service that provides in-memory locks.  Assumes no other Oozie servers are using the database.
  */
@@ -94,5 +96,10 @@ public class MemoryLocksService implements Service, Instrumentable {
      */
     public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
         return locks.getWriteLock(resource, wait);
+    }
+
+    @VisibleForTesting
+    public MemoryLocks getMemoryLocks() {
+        return locks;
     }
 }

@@ -52,13 +52,17 @@ public class MemoryLocks {
          */
         @Override
         public void release() {
-            int val = rwLock.getQueueLength();
-            if (val == 0) {
+            lock.unlock();
+            if (!isLockHeld()) {
                 synchronized (locks) {
-                    locks.remove(resource);
+                    if (!isLockHeld()) {
+                        locks.remove(resource);
+                    }
                 }
             }
-            lock.unlock();
+        }
+        private boolean isLockHeld(){
+            return rwLock.hasQueuedThreads() || rwLock.isWriteLocked() || rwLock.getReadLockCount() > 0;
         }
     }
 
