@@ -456,7 +456,7 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             new WfEndXCommand(wfJob).call(); // To delete the WF temp dir
         }
         else if (syncAction != null) {
-            new ActionStartXCommand(wfJob, syncAction.getId(), syncAction.getType()).call(getEntityKey());
+            new ActionStartXCommand(wfJob, syncAction.getId(), syncAction.getType()).call();
         }
         else if (!workflowActionBeanListForForked.isEmpty() && !checkForSuspendNode(workflowActionBeanListForForked)){
             startForkedActions(workflowActionBeanListForForked);

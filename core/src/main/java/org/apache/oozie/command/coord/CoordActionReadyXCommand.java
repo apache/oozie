@@ -182,7 +182,7 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                 }
                 // start action
                 new CoordActionStartXCommand(action.getId(), coordJob.getUser(), coordJob.getAppName(),
-                        action.getJobId()).call(getEntityKey());
+                        action.getJobId()).call();
             }
             else {
                 break;

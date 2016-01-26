@@ -277,7 +277,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
             if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
                 generateEvent(wfAction, wfJob.getUser());
             }
-            new SignalXCommand(jobId, actionId).call(getEntityKey());
+            new SignalXCommand(jobId, actionId).call();
         }
 
         LOG.debug("ENDED ActionEndXCommand for action " + actionId);

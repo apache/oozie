@@ -353,7 +353,7 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
     }
 
     protected void callActionEnd() throws CommandException {
-        new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call(getEntityKey());
+        new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call();
     }
 
     protected void updateJobLastModified(){

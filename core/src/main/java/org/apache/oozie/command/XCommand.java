@@ -74,7 +74,6 @@ public abstract class XCommand<T> implements XCallable<T> {
     private LockToken lock;
     private AtomicBoolean used = new AtomicBoolean(false);
     private boolean inInterrupt = false;
-    private boolean isSynchronous = false;
 
     private Map<Long, List<XCommand<?>>> commandQueue;
     protected boolean dryrun = false;
@@ -212,13 +211,16 @@ public abstract class XCommand<T> implements XCallable<T> {
         if (lock == null) {
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".lockTimeOut", 1);
             if (isReQueueRequired()) {
-                //if not acquire the lock, re-queue itself with default delay
+                // if not acquire the lock, re-queue itself with default delay
                 queue(this, getRequeueDelay());
-                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(), getLockTimeOut(), getName());
-            } else {
+                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(),
+                        getLockTimeOut(), getName());
+            }
+            else {
                 throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
             }
-        } else {
+        }
+        else {
             LOG.debug("Acquired lock for [{0}] in [{1}]", getEntityKey(), getName());
         }
     }
@@ -252,13 +254,11 @@ public abstract class XCommand<T> implements XCallable<T> {
         Instrumentation.Cron callCron = new Instrumentation.Cron();
         try {
             callCron.start();
-            if (!isSynchronous) {
-                eagerLoadState();
-                eagerVerifyPrecondition();
-            }
+            eagerLoadState();
+            eagerVerifyPrecondition();
             try {
                 T ret = null;
-                if (!isSynchronous && isLockRequired() && !this.inInterruptMode()) {
+                if (isLockRequired() && !this.inInterruptMode()) {
                     Instrumentation.Cron acquireLockCron = new Instrumentation.Cron();
                     acquireLockCron.start();
                     acquireLock();
@@ -270,10 +270,11 @@ public abstract class XCommand<T> implements XCallable<T> {
                     this.executeInterrupts();
                 }
 
-                if (isSynchronous || !isLockRequired() || (lock != null) || this.inInterruptMode()) {
+                if (!isLockRequired() || (lock != null) || this.inInterruptMode()) {
                     if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType())
                             && !used.compareAndSet(false, true)) {
-                        LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(), this.toString());
+                        LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(),
+                                this.toString());
                         return null;
                     }
                     LOG.trace("Load state for [{0}]", getEntityKey());
@@ -300,12 +301,12 @@ public abstract class XCommand<T> implements XCallable<T> {
                 return ret;
             }
             finally {
-                if (!isSynchronous && isLockRequired() && !this.inInterruptMode()) {
+                if (isLockRequired() && !this.inInterruptMode()) {
                     releaseLock();
                 }
             }
         }
-        catch(PreconditionException pex){
+        catch (PreconditionException pex) {
             LOG.warn(pex.getMessage().toString() + ", Error Code: " + pex.getErrorCode().toString());
             instrumentation.incr(INSTRUMENTATION_GROUP, getName() + ".preconditionfailed", 1);
             return null;
@@ -335,25 +336,6 @@ public abstract class XCommand<T> implements XCallable<T> {
             callCron.stop();
             instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".call", callCron);
         }
-    }
-
-    /**
-     * Call this command synchronously from its caller. This benefits faster
-     * execution of command lifecycle for control nodes and kicking off
-     * subsequent actions
-     *
-     * @param callerEntityKey
-     * @return the {link #execute} return value.
-     * @throws CommandException
-     */
-    public final T call(String callerEntityKey) throws CommandException {
-        if (!callerEntityKey.equals(this.getEntityKey())) {
-            throw new CommandException(ErrorCode.E0607, "Entity Keys mismatch during synchronous call", "caller="
-                    + callerEntityKey + ", callee=" + getEntityKey());
-        }
-        isSynchronous = true; //setting to true so lock acquiring and release is not repeated
-        LOG.trace("Executing synchronously command [{0}] on job [{1}]", this.getName(), this.getKey());
-        return call();
     }
 
     /**
@@ -441,7 +423,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * <p>
      * A trivial implementation is calling {link #loadState}.
      */
-    protected void eagerLoadState() throws CommandException{
+    protected void eagerLoadState() throws CommandException {
     }
 
     /**
@@ -453,7 +435,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      *
      * @throws CommandException thrown if the precondition is not met.
      */
-    protected void eagerVerifyPrecondition() throws CommandException,PreconditionException {
+    protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
     }
 
     /**
@@ -470,7 +452,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      *
      * @throws CommandException thrown if the precondition is not met.
      */
-    protected abstract void verifyPrecondition() throws CommandException,PreconditionException;
+    protected abstract void verifyPrecondition() throws CommandException, PreconditionException;
 
     /**
      * Command execution body.
@@ -484,7 +466,6 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @throws CommandException thrown if the command execution failed.
      */
     protected abstract T execute() throws CommandException;
-
 
     /**
      * Return the {@link Instrumentation} instance in use.
@@ -501,7 +482,6 @@ public abstract class XCommand<T> implements XCallable<T> {
     public void resetUsed() {
         this.used.set(false);
     }
-
 
     /**
      * Return the delay time for requeue
@@ -522,7 +502,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @return command key
      */
     @Override
-    public String getKey(){
+    public String getKey() {
         return this.key;
     }
 

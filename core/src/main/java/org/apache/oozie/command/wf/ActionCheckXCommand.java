@@ -241,7 +241,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
                     generateEvent(wfAction, wfJob.getUser());
                 }
                 if (execSynchronous) {
-                    new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call(getEntityKey());
+                    new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call();
                 }
             }
             catch (JPAExecutorException e) {

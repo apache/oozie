@@ -197,7 +197,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 coordAction.setActionXml(actionXml.toString());
                 coordAction.setStatus(CoordinatorAction.Status.READY);
                 updateCoordAction(coordAction, true);
-                new CoordActionReadyXCommand(coordAction.getJobId()).call(getEntityKey());
+                new CoordActionReadyXCommand(coordAction.getJobId()).call();
             }
             else if (!isTimeout(currentTime)) {
                 if (status == false) {
