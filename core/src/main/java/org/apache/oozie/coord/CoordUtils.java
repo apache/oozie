@@ -38,6 +38,8 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluator;
+import org.apache.oozie.coord.input.logic.InputLogicParser;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionForNominalTimeJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -51,7 +53,9 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -414,4 +418,22 @@ public class CoordUtils {
         }
         return params;
     }
+
+    public static boolean isInputLogicSpecified(String actionXml) throws JDOMException {
+        return isInputLogicSpecified(XmlUtils.parseXml(actionXml));
+    }
+
+    public static boolean isInputLogicSpecified(Element eAction) throws JDOMException {
+        return eAction.getChild(CoordInputLogicEvaluator.INPUT_LOGIC, eAction.getNamespace()) != null;
+    }
+
+    public static String getInputLogic(String actionXml) throws JDOMException {
+        return getInputLogic(XmlUtils.parseXml(actionXml));
+    }
+
+    public static String getInputLogic(Element actionXml) throws JDOMException {
+        return new InputLogicParser().parse(actionXml.getChild(CoordInputLogicEvaluator.INPUT_LOGIC,
+                actionXml.getNamespace()));
+    }
+
 }

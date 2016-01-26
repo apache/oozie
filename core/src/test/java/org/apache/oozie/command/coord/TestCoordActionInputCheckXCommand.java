@@ -19,7 +19,6 @@
 package org.apache.oozie.command.coord;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +33,7 @@ import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.input.dependency.CoordOldInputDependency;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
@@ -553,13 +553,14 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String inputDir = appPath.toString() + "/coord-input/2010/07/09/01/00";
         String nonExistDir = inputDir.replaceFirst("localhost", "nonExist");
+        CoordinatorActionBean actionBean = new CoordinatorActionBean();
         try {
-            caicc.pathExists(nonExistDir, new XConfiguration(), getTestUser());
+            new CoordOldInputDependency().pathExists(actionBean, nonExistDir, new XConfiguration(), getTestUser());
             fail("Should throw exception due to non-existent NN path. Therefore fail");
         }
         catch (IOException ioe) {
-            assertEquals(caicc.getCoordActionErrorCode(), "E0901");
-            assertTrue(caicc.getCoordActionErrorMsg().contains("not in Oozie's whitelist"));
+            assertEquals(actionBean.getErrorCode(), "E0901");
+            assertTrue(actionBean.getErrorMessage().contains("not in Oozie's whitelist"));
         }
     }
 

@@ -21,10 +21,10 @@ package org.apache.oozie.command.coord;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -34,7 +34,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.dependency.DependencyChecker;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
@@ -113,14 +113,15 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             return null;
         }
 
-        String pushMissingDeps = coordAction.getPushMissingDependencies();
-        if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
+        CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+        CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+        if (coordPushInputDependency.getMissingDependenciesAsList().size() == 0) {
             LOG.info("Nothing to check. Empty push missing dependency");
         }
         else {
-            String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
-            LOG.info("First Push missing dependency is [{0}] ", missingDepsArray[0]);
-            LOG.trace("Push missing dependencies are [{0}] ", pushMissingDeps);
+            List<String> missingDependenciesArray = coordPushInputDependency.getMissingDependenciesAsList();
+            LOG.info("First Push missing dependency is [{0}] ", missingDependenciesArray.get(0));
+            LOG.trace("Push missing dependencies are [{0}] ", missingDependenciesArray);
             if (registerForNotification) {
                 LOG.debug("Register for notifications is true");
             }
@@ -134,27 +135,27 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     throw new CommandException(ErrorCode.E1307, e.getMessage(), e);
                 }
 
-                // Check all dependencies during materialization to avoid registering in the cache.
-                // But check only first missing one afterwards similar to
-                // CoordActionInputCheckXCommand for efficiency. listPartitions is costly.
-                ActionDependency actionDep = DependencyChecker.checkForAvailability(missingDepsArray, actionConf,
-                        !registerForNotification);
 
                 boolean isChangeInDependency = true;
                 boolean timeout = false;
-                if (actionDep.getMissingDependencies().size() == 0) {
-                    // All push-based dependencies are available
-                    onAllPushDependenciesAvailable();
+                ActionDependency actionDependency = coordPushInputDependency.checkPushMissingDependencies(coordAction,
+                        registerForNotification);
+                // Check all dependencies during materialization to avoid registering in the cache.
+                // But check only first missing one afterwards similar to
+                // CoordActionInputCheckXCommand for efficiency. listPartitions is costly.
+                if (actionDependency.getMissingDependencies().size() == missingDependenciesArray.size()) {
+                    isChangeInDependency = false;
                 }
                 else {
-                    if (actionDep.getMissingDependencies().size() == missingDepsArray.length) {
-                        isChangeInDependency = false;
-                    }
-                    else {
-                        String stillMissingDeps = DependencyChecker.dependenciesAsString(actionDep
-                                .getMissingDependencies());
-                        coordAction.setPushMissingDependencies(stillMissingDeps);
-                    }
+                    coordPushInputDependency.setMissingDependencies(StringUtils.join(
+                            actionDependency.getMissingDependencies(), CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR));
+                }
+
+                if (coordPushInputDependency.isDependencyMet()) {
+                    // All push-based dependencies are available
+                    onAllPushDependenciesAvailable(coordPullInputDependency.isDependencyMet());
+                }
+                else {
                     // Checking for timeout
                     timeout = isTimeout();
                     if (timeout) {
@@ -166,15 +167,15 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     }
                 }
 
-                updateCoordAction(coordAction, isChangeInDependency);
+                updateCoordAction(coordAction, isChangeInDependency || coordPushInputDependency.isDependencyMet());
                 if (registerForNotification) {
-                    registerForNotification(actionDep.getMissingDependencies(), actionConf);
+                    registerForNotification(coordPushInputDependency.getMissingDependenciesAsList(), actionConf);
                 }
                 if (removeAvailDependencies) {
-                    unregisterAvailableDependencies(actionDep.getAvailableDependencies());
+                    unregisterAvailableDependencies(actionDependency.getAvailableDependencies());
                 }
                 if (timeout) {
-                    unregisterMissingDependencies(actionDep.getMissingDependencies(), actionId);
+                    unregisterMissingDependencies(coordPushInputDependency.getMissingDependenciesAsList(), actionId);
                 }
             }
             catch (Exception e) {
@@ -183,10 +184,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
                     callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
-                    unregisterMissingDependencies(Arrays.asList(missingDepsArray), actionId);
+                    unregisterMissingDependencies(missingDependenciesArray, actionId);
                 }
-                else if (coordAction.getMissingDependencies() != null
-                        && coordAction.getMissingDependencies().length() > 0) {
+                else if (coordPullInputDependency.getMissingDependenciesAsList().size() > 0) {
                     // Queue again on exception as RecoveryService will not queue this again with
                     // the action being updated regularly by CoordActionInputCheckXCommand
                     callableQueueService.queue(new CoordPushDependencyCheckXCommand(coordAction.getId(),
@@ -221,18 +221,18 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         return (timeOut >= 0) && (waitingTime > timeOut);
     }
 
-    protected void onAllPushDependenciesAvailable() throws CommandException {
-        coordAction.setPushMissingDependencies("");
+    protected void onAllPushDependenciesAvailable(boolean isPullDependencyMeet) throws CommandException {
         Services.get().get(PartitionDependencyManagerService.class)
                 .removeCoordActionWithDependenciesAvailable(coordAction.getId());
-        if (coordAction.getMissingDependencies() == null || coordAction.getMissingDependencies().length() == 0) {
+        if (isPullDependencyMeet) {
             Date nominalTime = coordAction.getNominalTime();
             Date currentTime = new Date();
             // The action should become READY only if current time > nominal time;
             // CoordActionInputCheckXCommand will take care of moving it to READY when it is nominal time.
             if (nominalTime.compareTo(currentTime) > 0) {
                 LOG.info("[" + actionId + "]::ActionInputCheck:: nominal Time is newer than current time. Current="
-                        + DateUtils.formatDateOozieTZ(currentTime) + ", nominal=" + DateUtils.formatDateOozieTZ(nominalTime));
+                        + DateUtils.formatDateOozieTZ(currentTime) + ", nominal="
+                        + DateUtils.formatDateOozieTZ(nominalTime));
             }
             else {
                 String actionXml = resolveCoordConfiguration();
@@ -248,6 +248,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             // wait till RecoveryService kicks in
             queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()));
         }
+        coordAction.getPushInputDependencies().setDependencyMet(true);
+
     }
 
     private String resolveCoordConfiguration() throws CommandException {
@@ -255,7 +257,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
             StringBuilder actionXml = new StringBuilder(coordAction.getActionXml());
             String newActionXml = CoordActionInputCheckXCommand.resolveCoordConfiguration(actionXml, actionConf,
-                    actionId);
+                    actionId, coordAction.getPullInputDependencies(), coordAction
+                            .getPushInputDependencies());
             actionXml.replace(0, actionXml.length(), newActionXml);
             return actionXml.toString();
         }
@@ -270,6 +273,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
         if (jpaService != null) {
             try {
                 if (isChangeInDependency) {
+                    coordAction.setPushMissingDependencies(coordAction.getPushInputDependencies().serialize());
                     CoordActionQueryExecutor.getInstance().executeUpdate(
                             CoordActionQuery.UPDATE_COORD_ACTION_FOR_PUSH_INPUTCHECK, coordAction);
                     if (EventHandlerService.isEnabled() && coordAction.getStatus() != CoordinatorAction.Status.READY) {
@@ -285,6 +289,9 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
             catch (JPAExecutorException jex) {
                 throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
+            }
+            catch (IOException ioe) {
+                throw new CommandException(ErrorCode.E1021, ioe.getMessage(), ioe);
             }
         }
     }

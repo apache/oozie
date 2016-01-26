@@ -20,6 +20,7 @@ package org.apache.oozie.coord;
 
 import java.util.Date;
 import java.util.TimeZone;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 
 /**
  * This class represents a Coordinator action.
@@ -33,6 +34,10 @@ public class SyncCoordAction {
     private String frequency;
     private TimeUnit timeUnit;
     private TimeUnit endOfDuration; // End of Month or End of Days
+
+    private CoordInputDependency pullDependencies;
+    private CoordInputDependency pushDependencies;
+
 
     public String getActionId() {
         return this.actionId;
@@ -109,5 +114,22 @@ public class SyncCoordAction {
     public void setEndOfDuration(TimeUnit endOfDuration) {
         this.endOfDuration = endOfDuration;
     }
+
+    public CoordInputDependency getPullDependencies() {
+        return pullDependencies;
+    }
+
+    public void setPullDependencies(CoordInputDependency pullDependencies) {
+        this.pullDependencies = pullDependencies;
+    }
+
+    public CoordInputDependency getPushDependencies() {
+        return pushDependencies;
+    }
+
+    public void setPushDependencies(CoordInputDependency pushDependencies) {
+        this.pushDependencies = pushDependencies;
+    }
+
 
 }

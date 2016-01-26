@@ -211,6 +211,11 @@ public class HCatURIHandler implements URIHandler {
     }
 
     @Override
+    public String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException {
+        return uri;
+    }
+
+    @Override
     public void validate(String uri) throws URIHandlerException {
         try {
             new HCatURI(uri); // will fail if uri syntax is incorrect

@@ -18,11 +18,9 @@
 
 package org.apache.oozie.command.coord;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
@@ -35,9 +33,11 @@ public class CoordActionUpdatePushMissingDependency extends CoordPushDependencyC
 
     @Override
     protected Void execute() throws CommandException {
+        CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+        CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+
         LOG.info("STARTED for Action id [{0}]", actionId);
-        String pushMissingDeps = coordAction.getPushMissingDependencies();
-        if (pushMissingDeps == null || pushMissingDeps.length() == 0) {
+        if (coordPushInputDependency.isDependencyMet()) {
             LOG.info("Nothing to check. Empty push missing dependency");
         }
         else {
@@ -50,24 +50,18 @@ public class CoordActionUpdatePushMissingDependency extends CoordPushDependencyC
                 }
             }
             else {
-                LOG.debug("Updating with available uris=[{0}] where missing uris=[{1}]", availDepList.toString(),
-                        pushMissingDeps);
-
-                String[] missingDepsArray = DependencyChecker.dependenciesAsArray(pushMissingDeps);
-                List<String> stillMissingDepsList = new ArrayList<String>(Arrays.asList(missingDepsArray));
-                stillMissingDepsList.removeAll(availDepList);
+                String pushMissingDependencies = coordPushInputDependency.getMissingDependencies().toString();
+                LOG.debug("Updating with available uris = [{0}] where missing uris = [{1}]", pushMissingDependencies);
+                String[] missingDependenciesArray = DependencyChecker.dependenciesAsArray(pushMissingDependencies);
+                coordPushInputDependency.addToAvailableDependencies(availDepList);
                 boolean isChangeInDependency = true;
-                if (stillMissingDepsList.size() == 0) {
+                if (coordPushInputDependency.isDependencyMet()) {
                     // All push-based dependencies are available
-                    onAllPushDependenciesAvailable();
+                    onAllPushDependenciesAvailable(coordPullInputDependency.isDependencyMet());
                 }
                 else {
-                    if (stillMissingDepsList.size() == missingDepsArray.length) {
+                    if (coordPushInputDependency.getMissingDependenciesAsList().size() == missingDependenciesArray.length) {
                         isChangeInDependency = false;
-                    }
-                    else {
-                        String stillMissingDeps = DependencyChecker.dependenciesAsString(stillMissingDepsList);
-                        coordAction.setPushMissingDependencies(stillMissingDeps);
                     }
                     if (isTimeout()) { // Poll and check as one last try
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId()), 100);

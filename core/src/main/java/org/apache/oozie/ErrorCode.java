@@ -214,6 +214,8 @@ public enum ErrorCode {
     E1025(XLog.STD, "Coord status transit error: [{0}]"),
     E1026(XLog.STD, "SLA alert update command failed: {0}"),
     E1027(XLog.STD, "SLA change command failed. {0}"),
+    E1028(XLog.STD, "Coord input logic error. {0}"),
+
 
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),

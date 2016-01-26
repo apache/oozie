@@ -19,11 +19,13 @@
 package org.apache.oozie.coord;
 
 import com.google.common.collect.Lists;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandler.Context;
 import org.apache.oozie.service.Services;
@@ -32,6 +34,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+import org.jdom.JDOMException;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -61,7 +64,6 @@ public class CoordELFunctions {
     public static final long DAY_MSEC = 24 * HOUR_MSEC;
     public static final long MONTH_MSEC = 30 * DAY_MSEC;
     public static final long YEAR_MSEC = 365 * DAY_MSEC;
-
     /**
      * Used in defining the frequency in 'day' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
@@ -348,7 +350,7 @@ public class CoordELFunctions {
                             resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
                             resolvedURIPaths.append(uriPath);
                             retVal = resolvedInstances.toString();
-                            eval.setVariable("resolved_path", resolvedURIPaths.toString());
+                            eval.setVariable(CoordELConstants.RESOLVED_PATH, resolvedURIPaths.toString());
                             break;
                         }
                         else if (available >= startOffset) {
@@ -356,6 +358,7 @@ public class CoordELFunctions {
                             resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal)).append(
                                     INSTANCE_SEPARATOR);
                             resolvedURIPaths.append(uriPath).append(INSTANCE_SEPARATOR);
+
                         }
                         available++;
                     }
@@ -366,6 +369,10 @@ public class CoordELFunctions {
                     checkedInstance++;
                     // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
                 }
+                if (!StringUtils.isEmpty(resolvedURIPaths.toString()) && eval.getVariable(CoordELConstants.RESOLVED_PATH) == null) {
+                    eval.setVariable(CoordELConstants.RESOLVED_PATH, resolvedURIPaths.toString());
+                }
+
             }
             finally {
                 if (uriContext != null) {
@@ -375,7 +382,7 @@ public class CoordELFunctions {
             if (!resolved) {
                 // return unchanged future function with variable 'is_resolved'
                 // to 'false'
-                eval.setVariable("is_resolved", Boolean.FALSE);
+                eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.FALSE);
                 if (startOffset == endOffset) {
                     retVal = "${coord:future(" + startOffset + ", " + instance + ")}";
                 }
@@ -384,11 +391,11 @@ public class CoordELFunctions {
                 }
             }
             else {
-                eval.setVariable("is_resolved", Boolean.TRUE);
+                eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.TRUE);
             }
         }
         else {// No feasible nominal time
-            eval.setVariable("is_resolved", Boolean.TRUE);
+            eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.TRUE);
             retVal = "";
         }
         return retVal;
@@ -495,8 +502,24 @@ public class CoordELFunctions {
     public static String ph3_coord_dataIn(String dataInName) {
         String uris = "";
         ELEvaluator eval = ELEvaluator.getCurrent();
+        if (eval.getVariable(".datain." + dataInName) == null
+                && !StringUtils.isEmpty(eval.getVariable(".actionInputLogic").toString())) {
+            try {
+                return new CoordInputLogicEvaluatorUtil().getInputDependencies(dataInName,
+                        (SyncCoordAction) eval.getVariable(COORD_ACTION));
+            }
+            catch (JDOMException e) {
+                XLog.getLog(CoordELFunctions.class).error(e);
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+
         uris = (String) eval.getVariable(".datain." + dataInName);
-        Boolean unresolved = (Boolean) eval.getVariable(".datain." + dataInName + ".unresolved");
+        Object unResolvedObj = eval.getVariable(".datain." + dataInName + ".unresolved");
+        if (unResolvedObj == null) {
+            return uris;
+        }
+        Boolean unresolved = Boolean.parseBoolean(unResolvedObj.toString());
         if (unresolved != null && unresolved.booleanValue() == true) {
             return "${coord:dataIn('" + dataInName + "')}";
         }
@@ -835,7 +858,7 @@ public class CoordELFunctions {
     public static String ph1_coord_dataIn_echo(String n) {
         ELEvaluator eval = ELEvaluator.getCurrent();
         String val = (String) eval.getVariable("oozie.dataname." + n);
-        if (val == null || val.equals("data-in") == false) {
+        if ((val == null || val.equals("data-in") == false)) {
             XLog.getLog(CoordELFunctions.class).error("data_in_name " + n + " is not valid");
             throw new RuntimeException("data_in_name " + n + " is not valid");
         }
@@ -1112,7 +1135,8 @@ public class CoordELFunctions {
                             resolvedInstances.append(DateUtils.formatDateOozieTZ(nominalInstanceCal));
                             resolvedURIPaths.append(uriPath);
                             retVal = resolvedInstances.toString();
-                            eval.setVariable("resolved_path", resolvedURIPaths.toString());
+                            eval.setVariable(CoordELConstants.RESOLVED_PATH, resolvedURIPaths.toString());
+
                             break;
                         }
                         else if (available <= endOffset) {
@@ -1130,6 +1154,9 @@ public class CoordELFunctions {
                     nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), instCount[0] * datasetFrequency);
                     // DateUtils.moveToEnd(nominalInstanceCal, getDSEndOfFlag());
                 }
+                if (!StringUtils.isEmpty(resolvedURIPaths.toString()) && eval.getVariable(CoordELConstants.RESOLVED_PATH) == null) {
+                    eval.setVariable(CoordELConstants.RESOLVED_PATH, resolvedURIPaths.toString());
+                }
             }
             finally {
                 if (uriContext != null) {
@@ -1139,7 +1166,7 @@ public class CoordELFunctions {
             if (!resolved) {
                 // return unchanged latest function with variable 'is_resolved'
                 // to 'false'
-                eval.setVariable("is_resolved", Boolean.FALSE);
+                eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.FALSE);
                 if (startOffset == endOffset) {
                     retVal = "${coord:latest(" + startOffset + ")}";
                 }
@@ -1148,11 +1175,11 @@ public class CoordELFunctions {
                 }
             }
             else {
-                eval.setVariable("is_resolved", Boolean.TRUE);
+                eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.TRUE);
             }
         }
         else {// No feasible nominal time
-            eval.setVariable("is_resolved", Boolean.FALSE);
+            eval.setVariable(CoordELConstants.IS_RESOLVED, Boolean.FALSE);
         }
         return retVal;
     }

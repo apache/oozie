@@ -28,6 +28,8 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.coord.CoordCommandUtils;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluator;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
@@ -141,7 +143,7 @@ public class CoordELEvaluator {
                     uris = uris.replaceAll(CoordELFunctions.INSTANCE_SEPARATOR, CoordELFunctions.DIR_SEPARATOR);
                     eval.setVariable(".dataout." + data.getAttributeValue("name"), uris);
                 }
-                if (data.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, data.getNamespace()) != null) {
+                if (data.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, data.getNamespace()) != null) {
                     eval.setVariable(".dataout." + data.getAttributeValue("name") + ".unresolved", "true");
                 }
             }
@@ -172,7 +174,13 @@ public class CoordELEvaluator {
      * @return configured ELEvaluator
      * @throws Exception : If there is any date-time string in wrong format, the exception is thrown
      */
+
     public static ELEvaluator createDataEvaluator(Element eJob, Configuration conf, String actionId) throws Exception {
+        return createDataEvaluator(eJob, conf, actionId, null, null);
+    }
+
+    public static ELEvaluator createDataEvaluator(Element eJob, Configuration conf, String actionId,
+            CoordInputDependency pullDependencies, CoordInputDependency pushDependencies) throws Exception {
         ELEvaluator e = Services.get().get(ELService.class).createEvaluator("coord-action-start");
         setConfigToEval(e, conf);
         SyncCoordAction appInst = new SyncCoordAction();
@@ -184,6 +192,12 @@ public class CoordELEvaluator {
             appInst.setTimeUnit(TimeUnit.valueOf(eJob.getAttributeValue("freq_timeunit")));
             appInst.setActionId(actionId);
             appInst.setName(eJob.getAttributeValue("name"));
+            appInst.setPullDependencies(pullDependencies);
+            appInst.setPushDependencies(pushDependencies);
+            if (CoordUtils.isInputLogicSpecified(eJob)) {
+                e.setVariable(".actionInputLogic",
+                        XmlUtils.prettyPrint(eJob.getChild(CoordInputLogicEvaluator.INPUT_LOGIC, eJob.getNamespace())).toString());
+            }
         }
         String strActualTime = eJob.getAttributeValue("action-actual-time");
         if (strActualTime != null) {
@@ -200,11 +214,14 @@ public class CoordELEvaluator {
                 }
                 else {
                 }
-                if (data.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, data.getNamespace()) != null) {
+                if (data.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, data.getNamespace()) != null) {
                     e.setVariable(".datain." + data.getAttributeValue("name") + ".unresolved", "true"); // TODO:
                     // check
                     // null
                 }
+                Element doneFlagElement = data.getChild("done-flag", data.getNamespace());
+                String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
+                e.setVariable(".datain." + data.getAttributeValue("name") + ".doneFlag", doneFlag);
             }
         }
         events = eJob.getChild("output-events", eJob.getNamespace());
@@ -217,7 +234,7 @@ public class CoordELEvaluator {
                 }
                 else {
                 }// TODO
-                if (data.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, data.getNamespace()) != null) {
+                if (data.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, data.getNamespace()) != null) {
                     e.setVariable(".dataout." + data.getAttributeValue("name") + ".unresolved", "true"); // TODO:
                     // check
                     // null

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.command.coord;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
@@ -34,6 +35,7 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
@@ -148,7 +150,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
                         Math.max(checkDelay, 0));
 
-                    if (coordAction.getPushMissingDependencies() != null) {
+                    if (!StringUtils.isEmpty(coordAction.getPushMissingDependencies())) {
                         // TODO: Delay in catchup mode?
                         queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);
                     }
@@ -485,7 +487,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 action = CoordCommandUtils.materializeOneInstance(jobId, dryrun, (Element) eJob.clone(),
                         nextTime, actualTime, lastActionNumber, jobConf, actionBean);
                 actionBean.setTimeOut(timeout);
-
                 if (!dryrun) {
                     storeToDB(actionBean, action, jobConf); // Storing to table
 
@@ -529,7 +530,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         LOG.debug("In storeToDB() coord action id = " + actionBean.getId() + ", size of actionXml = "
                 + actionXml.length());
         actionBean.setActionXml(actionXml);
-
         insertList.add(actionBean);
         writeActionSlaRegistration(actionXml, actionBean, jobConf);
     }

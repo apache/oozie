@@ -169,6 +169,19 @@ public interface URIHandler {
     public String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
     /**
+     * Get the URI path from path which has done flag
+     *
+     * @param uri URI of the dependency
+     * @param doneFlag flag that determines URI availability
+     *
+     * @return the final URI without the doneFlag incorporated
+     *
+     * @throws URIHandlerException
+     */
+    public String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException;
+
+
+    /**
      * Check whether the URI is valid or not
      * @param uri
      * @throws URIHandlerException
@@ -219,5 +232,6 @@ public interface URIHandler {
         }
 
     }
+
 
 }

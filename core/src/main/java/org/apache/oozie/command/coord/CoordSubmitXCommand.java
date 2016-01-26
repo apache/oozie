@@ -53,8 +53,10 @@ import org.apache.oozie.command.SubmitTransitionXCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.CoordinatorJobException;
 import org.apache.oozie.coord.TimeUnit;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluator;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CoordMaterializeTriggerService;
@@ -799,6 +801,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         resolveIODataset(eAppXml);
         resolveIOEvents(eAppXml, dataNameList);
 
+        if (CoordUtils.isInputLogicSpecified(eAppXml)) {
+            resolveInputLogic(eAppXml.getChild(CoordInputLogicEvaluator.INPUT_LOGIC, eAppXml.getNamespace()), evalInst,
+                    dataNameList);
+        }
+
         resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
                 eAppXml.getNamespace()), evalNofuncs);
         // TODO: If action or workflow tag is missing, NullPointerException will
@@ -894,6 +901,26 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             }
         }
 
+    }
+
+    private void resolveInputLogic(Element root, ELEvaluator evalInputLogic, HashMap<String, String> dataNameList)
+            throws Exception {
+        for (Object event : root.getChildren()) {
+            Element inputElement = (Element) event;
+            resolveAttribute("dataset", inputElement, evalInputLogic);
+            String name=resolveAttribute("name", inputElement, evalInputLogic);
+            resolveAttribute("or", inputElement, evalInputLogic);
+            resolveAttribute("and", inputElement, evalInputLogic);
+            resolveAttribute("combine", inputElement, evalInputLogic);
+
+            if (name != null) {
+                dataNameList.put(name, "data-in");
+            }
+
+            if (!inputElement.getChildren().isEmpty()) {
+                resolveInputLogic(inputElement, evalInputLogic, dataNameList);
+            }
+        }
     }
 
     /**

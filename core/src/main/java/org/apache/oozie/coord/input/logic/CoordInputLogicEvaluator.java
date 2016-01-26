@@ -16,24 +16,29 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.coord;
+package org.apache.oozie.coord.input.logic;
 
-public class CoordELConstants {
-    /*
-     * Echo backing some constants used in Coordinator EL variables
+public interface CoordInputLogicEvaluator {
+    public static final String INPUT_LOGIC = "input-logic";
+
+
+    /**
+     * Eval input.
+     *
+     * @param inputDataSet the input data set
+     * @param min the min
+     * @param wait the wait
+     * @return the coord input logic evaluator result
      */
-    public static final String SUBMIT_MINUTE = "${MINUTE}";
-    public static final String SUBMIT_HOUR = "${HOUR}";
-    public static final String SUBMIT_MONTH = "${MONTH}";
-    public static final String SUBMIT_DAY = "${DAY}";
-    public static final String SUBMIT_YEAR = "${YEAR}";
+    public CoordInputLogicEvaluatorResult evalInput(String inputDataSet, int min, int wait);
 
-    public static final int SUBMIT_MINUTES = 1;
-    public static final int SUBMIT_HOURS = 60;
-    public static final int SUBMIT_DAYS = 24 * 60;
-
-    public static final String DEFAULT_DONE_FLAG = "_SUCCESS";
-    final public static String RESOLVED_PATH = "resolved_path";
-
-    final public static String IS_RESOLVED = "is_resolved";
+    /**
+     * Eval combine input.
+     *
+     * @param combineDatasets the combine datasets
+     * @param min the min
+     * @param wait the wait
+     * @return the coord input logic evaluator result
+     */
+    public CoordInputLogicEvaluatorResult evalCombineInput(String[] combineDatasets, int min, int wait);
 }

@@ -16,24 +16,34 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.coord;
+package org.apache.oozie.coord.input.dependency;
 
-public class CoordELConstants {
-    /*
-     * Echo backing some constants used in Coordinator EL variables
-     */
-    public static final String SUBMIT_MINUTE = "${MINUTE}";
-    public static final String SUBMIT_HOUR = "${HOUR}";
-    public static final String SUBMIT_MONTH = "${MONTH}";
-    public static final String SUBMIT_DAY = "${DAY}";
-    public static final String SUBMIT_YEAR = "${YEAR}";
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
-    public static final int SUBMIT_MINUTES = 1;
-    public static final int SUBMIT_HOURS = 60;
-    public static final int SUBMIT_DAYS = 24 * 60;
+public class CoordPushInputDependency extends AbstractCoordInputDependency {
 
-    public static final String DEFAULT_DONE_FLAG = "_SUCCESS";
-    final public static String RESOLVED_PATH = "resolved_path";
+    public CoordPushInputDependency() {
+        super();
+    }
 
-    final public static String IS_RESOLVED = "is_resolved";
+    @Override
+    public void setMissingDependencies(String join) {
+    }
+
+    @Override
+    public void addUnResolvedList(String name, String tmpUnresolved) {
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        super.write(out);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        super.readFields(in);
+    }
+
 }

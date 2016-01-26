@@ -1,0 +1,124 @@
+<!-- /**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */ -->
+
+<coordinator-app name="aggregator-coord" frequency="${coord:hours(1)}"
+    start="${start_time}" end="${end_time}" timezone="UTC"
+    xmlns="uri:oozie:coordinator:0.5">
+    <controls>
+        <concurrency>1</concurrency>
+        <throttle>1</throttle>
+    </controls>
+
+    <datasets>
+        <dataset name="a" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_a}" timezone="UTC">
+            <uri-template>${data_set_a}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+        <dataset name="b" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_b}" timezone="UTC">
+            <uri-template>${data_set_b}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+        <dataset name="c" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_a}" timezone="UTC">
+            <uri-template>${data_set_c}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+
+        <dataset name="d" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_a}" timezone="UTC">
+            <uri-template>${data_set_d}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+
+        <dataset name="e" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_a}" timezone="UTC">
+            <uri-template>${data_set_e}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+
+        <dataset name="f" frequency="${coord:hours(1)}"
+            initial-instance="${initial_instance_a}" timezone="UTC">
+            <uri-template>${data_set_f}/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+
+
+        <dataset name="aggregated-logs" frequency="${coord:hours(10)}"
+            initial-instance="2014-10-08T00:00Z" timezone="UTC">
+            <uri-template>file:///output-data/aggregator/aggregatedLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}
+            </uri-template>
+        </dataset>
+    </datasets>
+
+    <input-events>
+        <data-in name="A" dataset="a">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+        <data-in name="B" dataset="b">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+        <data-in name="C" dataset="c">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+        <data-in name="D" dataset="d">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+        <data-in name="E" dataset="e">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+        <data-in name="F" dataset="f">
+            <instance>${coord:latest(0)}</instance>
+        </data-in>
+    </input-events>
+
+    <input-logic>
+        =input-logic=
+    </input-logic>
+
+    <output-events>
+        <data-out name="output" dataset="aggregated-logs">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+
+    <action>
+        <workflow>
+            <app-path>${wfPath}</app-path>
+            <configuration>
+                <property>
+                    <name>jobTracker</name>
+                    <value>${jobTracker}</value>
+                </property>
+                <property>
+                    <name>nameNode</name>
+                    <value>${nameNode}</value>
+                </property>
+                <property>
+                    <name>queueName</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>inputLogicData</name>
+                    <value>${coord:dataIn(partitionName)}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

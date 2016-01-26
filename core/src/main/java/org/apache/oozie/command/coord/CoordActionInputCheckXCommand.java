@@ -20,13 +20,9 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.CoordinatorActionBean;
@@ -34,14 +30,11 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.Job;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
-import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.dependency.URIHandler;
-import org.apache.oozie.dependency.URIHandlerException;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
@@ -54,7 +47,6 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.LogUtils;
@@ -159,40 +151,38 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
             StringBuilder existList = new StringBuilder();
             StringBuilder nonExistList = new StringBuilder();
-            StringBuilder nonResolvedList = new StringBuilder();
-            String firstMissingDependency = "";
-            String missingDeps = coordAction.getMissingDependencies();
-            CoordCommandUtils.getResolvedList(missingDeps, nonExistList, nonResolvedList);
+            CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+            CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
 
+
+            String missingDependencies = coordPullInputDependency.getMissingDependencies();
+            StringBuilder nonResolvedList = new StringBuilder();
+
+            CoordCommandUtils.getResolvedList(missingDependencies, nonExistList, nonResolvedList);
+            String firstMissingDependency = "";
             // For clarity regarding which is the missing dependency in synchronous order
             // instead of printing entire list, some of which, may be available
-            if(nonExistList.length() > 0) {
+            if (nonExistList.length() > 0) {
                 firstMissingDependency = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
             }
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
-            // Updating the list of data dependencies that are available and those that are yet not
-            boolean status = checkInput(actionXml, existList, nonExistList, actionConf);
-            String pushDeps = coordAction.getPushMissingDependencies();
-            // Resolve latest/future only when all current missingDependencies and
-            // pushMissingDependencies are met
+
+
+            boolean status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
+            String nonExistListStr = nonExistList.toString();
+            boolean isPushDependenciesMet = coordPushInputDependency.isDependencyMet();
             if (status && nonResolvedList.length() > 0) {
-                status = (pushDeps == null || pushDeps.length() == 0) ? checkUnResolvedInput(actionXml, actionConf)
-                        : false;
+                status = (isPushDependenciesMet) ? checkUnResolvedInput(actionXml, actionConf) : false;
             }
             coordAction.setLastModifiedTime(currentTime);
             coordAction.setActionXml(actionXml.toString());
-            if (nonResolvedList.length() > 0 && status == false) {
-                nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
-            }
-            String nonExistListStr = nonExistList.toString();
-            if (!nonExistListStr.equals(missingDeps) || missingDeps.isEmpty()) {
-                // missingDeps null or empty means action should become READY
-                isChangeInDependency = true;
-                coordAction.setMissingDependencies(nonExistListStr);
-            }
-            if (status && (pushDeps == null || pushDeps.length() == 0)) {
-                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId);
+
+            isChangeInDependency = isChangeInDependency(nonExistList, missingDependencies, nonResolvedList, status);
+
+            if (status && isPushDependenciesMet) {
+                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId,
+                        coordPullInputDependency, coordPushInputDependency);
                 actionXml.replace(0, actionXml.length(), newActionXml);
                 coordAction.setActionXml(actionXml.toString());
                 coordAction.setStatus(CoordinatorAction.Status.READY);
@@ -207,7 +197,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 updateCoordAction(coordAction, isChangeInDependency);
             }
             else {
-                if (!nonExistListStr.isEmpty() && pushDeps == null || pushDeps.length() == 0) {
+                if (!nonExistListStr.isEmpty() && isPushDependenciesMet) {
                     queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                 }
                 else {
@@ -246,10 +236,25 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         return null;
     }
 
+    private boolean isChangeInDependency(StringBuilder nonExistList, String missingDependencies,
+            StringBuilder nonResolvedList, boolean status) throws IOException {
+        if (nonResolvedList.length() > 0 && status == false) {
+            nonExistList.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR).append(nonResolvedList);
+        }
+        return coordAction.getPullInputDependencies().isChangeInDependency(nonExistList, missingDependencies,
+                nonResolvedList, status);
+    }
 
-    static String resolveCoordConfiguration(StringBuilder actionXml, Configuration actionConf, String actionId) throws Exception {
+    static String resolveCoordConfiguration(StringBuilder actionXml, Configuration actionConf, String actionId)
+            throws Exception {
+        return resolveCoordConfiguration(actionXml, actionConf, actionId, null, null);
+    }
+
+    static String resolveCoordConfiguration(StringBuilder actionXml, Configuration actionConf, String actionId,
+            CoordInputDependency pullDependencies, CoordInputDependency pushDependencies) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
-        ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eAction, actionConf, actionId);
+        ELEvaluator eval = CoordELEvaluator.createDataEvaluator(eAction, actionConf, actionId, pullDependencies,
+                pushDependencies);
         materializeDataProperties(eAction, actionConf, eval);
         return XmlUtils.prettyPrint(eAction).toString();
     }
@@ -268,6 +273,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         if (jpaService != null) {
             try {
                 if (isChangeInDependency) {
+                    coordAction.setMissingDependencies(coordAction.getPullInputDependencies().serialize());
                     CoordActionQueryExecutor.getInstance().executeUpdate(
                             CoordActionQuery.UPDATE_COORD_ACTION_FOR_INPUTCHECK, coordAction);
                     if (EventHandlerService.isEnabled() && coordAction.getStatus() != CoordinatorAction.Status.READY) {
@@ -281,12 +287,11 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                             CoordActionQuery.UPDATE_COORD_ACTION_FOR_MODIFIED_DATE, coordAction);
                 }
             }
-            catch (JPAExecutorException jex) {
+            catch (Exception jex) {
                 throw new CommandException(ErrorCode.E1021, jex.getMessage(), jex);
             }
         }
     }
-
     /**
      * This function reads the value of re-queue interval for coordinator input
      * check command from the Oozie configuration provided by Configuration
@@ -310,20 +315,42 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @return true if all input paths are existed
      * @throws Exception thrown of unable to check input path
      */
-    protected boolean checkInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
+    protected boolean checkResolvedInput(StringBuilder actionXml, StringBuilder existList, StringBuilder nonExistList,
             Configuration conf) throws Exception {
-        Element eAction = XmlUtils.parseXml(actionXml.toString());
-        return checkResolvedUris(eAction, existList, nonExistList, conf);
+        return coordAction.getPullInputDependencies().checkPullMissingDependencies(coordAction, existList,
+                nonExistList);
     }
 
-    protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
+    /**
+     * Check un resolved input.
+     *
+     * @param coordAction the coord action
+     * @param actionXml the action xml
+     * @param conf the conf
+     * @return true, if successful
+     * @throws Exception the exception
+     */
+    protected boolean checkUnResolvedInput(CoordinatorActionBean coordAction, StringBuilder actionXml,
+            Configuration conf) throws Exception {
         Element eAction = XmlUtils.parseXml(actionXml.toString());
         LOG.debug("[" + actionId + "]::ActionInputCheck:: Checking Latest/future");
-        boolean allExist = checkUnresolvedInstances(eAction, conf);
+        boolean allExist = checkUnresolvedInstances(coordAction, eAction, conf);
         if (allExist) {
             actionXml.replace(0, actionXml.length(), XmlUtils.prettyPrint(eAction).toString());
         }
         return allExist;
+    }
+
+    /**
+     * Check un resolved input.
+     *
+     * @param actionXml the action xml
+     * @param conf the conf
+     * @return true, if successful
+     * @throws Exception the exception
+     */
+    protected boolean checkUnResolvedInput(StringBuilder actionXml, Configuration conf) throws Exception {
+        return checkUnResolvedInput(coordAction, actionXml, conf);
     }
 
     /**
@@ -378,222 +405,23 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      * @throws Exception thrown if failed to resolve data input and output paths
      */
     @SuppressWarnings("unchecked")
-    private boolean checkUnresolvedInstances(Element eAction, Configuration actionConf) throws Exception {
-        String strAction = XmlUtils.prettyPrint(eAction).toString();
-        Date nominalTime = DateUtils.parseDateOozieTZ(eAction.getAttributeValue("action-nominal-time"));
-        String actualTimeStr = eAction.getAttributeValue("action-actual-time");
-        Date actualTime = null;
-        if (actualTimeStr == null) {
-            LOG.debug("Unable to get action-actual-time from action xml, this job is submitted " +
-            "from previous version. Assign current date to actual time, action = " + actionId);
-            actualTime = new Date();
-        } else {
-            actualTime = DateUtils.parseDateOozieTZ(actualTimeStr);
-        }
+    private boolean checkUnresolvedInstances(CoordinatorActionBean coordAction, Element eAction,
+            Configuration actionConf) throws Exception {
 
-        StringBuffer resultedXml = new StringBuffer();
-
-        boolean ret;
-        Element inputList = eAction.getChild("input-events", eAction.getNamespace());
-        if (inputList != null) {
-            ret = materializeUnresolvedEvent(inputList.getChildren("data-in", eAction.getNamespace()), nominalTime,
-                    actualTime, actionConf);
-            if (ret == false) {
-                resultedXml.append(strAction);
-                return false;
-            }
-        }
+        boolean ret = coordAction.getPullInputDependencies().checkUnresolved(coordAction, eAction);
 
         // Using latest() or future() in output-event is not intuitive.
         // We need to make sure, this assumption is correct.
         Element outputList = eAction.getChild("output-events", eAction.getNamespace());
         if (outputList != null) {
             for (Element dEvent : (List<Element>) outputList.getChildren("data-out", eAction.getNamespace())) {
-                if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()) != null) {
+                if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace()) != null) {
                     throw new CommandException(ErrorCode.E1006, "coord:latest()/future()",
                             " not permitted in output-event ");
                 }
             }
         }
-        return true;
-    }
-
-    /**
-     * Resolve the list of data input paths
-     *
-     * @param eDataEvents the list of data input elements
-     * @param nominalTime action nominal time
-     * @param actualTime current time
-     * @param conf action configuration
-     * @return true if all unresolved URIs can be resolved
-     * @throws Exception thrown if failed to resolve data input paths
-     */
-    @SuppressWarnings("unchecked")
-    private boolean materializeUnresolvedEvent(List<Element> eDataEvents, Date nominalTime, Date actualTime,
-            Configuration conf) throws Exception {
-        for (Element dEvent : eDataEvents) {
-            if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()) == null) {
-                continue;
-            }
-            ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
-            String uresolvedInstance = dEvent.getChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace()).getTextTrim();
-            String unresolvedList[] = uresolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
-            StringBuffer resolvedTmp = new StringBuffer();
-            for (int i = 0; i < unresolvedList.length; i++) {
-                String ret = CoordELFunctions.evalAndWrap(eval, unresolvedList[i]);
-                Boolean isResolved = (Boolean) eval.getVariable("is_resolved");
-                if (isResolved == false) {
-                    LOG.info("[" + actionId + "]::Cannot resolve: " + ret);
-                    return false;
-                }
-                if (resolvedTmp.length() > 0) {
-                    resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                }
-                resolvedTmp.append((String) eval.getVariable("resolved_path"));
-            }
-            if (resolvedTmp.length() > 0) {
-                if (dEvent.getChild("uris", dEvent.getNamespace()) != null) {
-                    resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR).append(
-                            dEvent.getChild("uris", dEvent.getNamespace()).getTextTrim());
-                    dEvent.removeChild("uris", dEvent.getNamespace());
-                }
-                Element uriInstance = new Element("uris", dEvent.getNamespace());
-                uriInstance.addContent(resolvedTmp.toString());
-                dEvent.getContent().add(1, uriInstance);
-            }
-            dEvent.removeChild(CoordCommandUtils.UNRESOLVED_INST_TAG, dEvent.getNamespace());
-        }
-
-        return true;
-    }
-
-    /**
-     * Check all resolved URIs existence
-     *
-     * @param eAction action element
-     * @param existList the list of existed paths
-     * @param nonExistList the list of paths to check existence
-     * @param conf action configuration
-     * @return true if all nonExistList paths exist
-     * @throws IOException thrown if unable to access the path
-     */
-    private boolean checkResolvedUris(Element eAction, StringBuilder existList, StringBuilder nonExistList,
-            Configuration conf) throws IOException {
-        Element inputList = eAction.getChild("input-events", eAction.getNamespace());
-        if (inputList != null) {
-            if (nonExistList.length() > 0) {
-                checkListOfPaths(existList, nonExistList, conf);
-            }
-            return nonExistList.length() == 0;
-        }
-        return true;
-    }
-
-    /**
-     * Check a list of non existed paths and add to exist list if it exists
-     *
-     * @param existList the list of existed paths
-     * @param nonExistList the list of paths to check existence
-     * @param conf action configuration
-     * @return true if all nonExistList paths exist
-     * @throws IOException thrown if unable to access the path
-     */
-    private boolean checkListOfPaths(StringBuilder existList, StringBuilder nonExistList, Configuration conf)
-            throws IOException {
-
-        String[] uriList = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR);
-        if (uriList[0] != null) {
-            LOG.info("[" + actionId + "]::ActionInputCheck:: In checkListOfPaths: " + uriList[0] + " is Missing.");
-        }
-
-        nonExistList.delete(0, nonExistList.length());
-        boolean allExists = true;
-        String existSeparator = "", nonExistSeparator = "";
-        String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
-        for (int i = 0; i < uriList.length; i++) {
-            if (allExists) {
-                allExists = pathExists(uriList[i], conf, user);
-                LOG.info("[" + actionId + "]::ActionInputCheck:: File:" + uriList[i] + ", Exists? :" + allExists);
-            }
-            if (allExists) {
-                existList.append(existSeparator).append(uriList[i]);
-                existSeparator = CoordELFunctions.INSTANCE_SEPARATOR;
-            }
-            else {
-                nonExistList.append(nonExistSeparator).append(uriList[i]);
-                nonExistSeparator = CoordELFunctions.INSTANCE_SEPARATOR;
-            }
-        }
-        return allExists;
-    }
-
-    /**
-     * Check if given path exists
-     *
-     * @param sPath uri path
-     * @param actionConf action configuration
-     * @return true if path exists
-     * @throws IOException thrown if unable to access the path
-     */
-    protected boolean pathExists(String sPath, Configuration actionConf, String user) throws IOException {
-        LOG.debug("checking for the file " + sPath);
-        try {
-            URI uri = new URI(sPath);
-            URIHandlerService service = Services.get().get(URIHandlerService.class);
-            URIHandler handler = service.getURIHandler(uri);
-            return handler.exists(uri, actionConf, user);
-        }
-        catch (URIHandlerException e) {
-            coordAction.setErrorCode(e.getErrorCode().toString());
-            coordAction.setErrorMessage(e.getMessage());
-            if (e.getCause() != null && e.getCause() instanceof AccessControlException) {
-                throw (AccessControlException) e.getCause();
-            }
-            else {
-                throw new IOException(e);
-            }
-        }
-        catch (URISyntaxException e) {
-            coordAction.setErrorCode(ErrorCode.E0906.toString());
-            coordAction.setErrorMessage(e.getMessage());
-            throw new IOException(e);
-        }
-    }
-
-    /**
-     * The function create a list of URIs separated by "," using the instances time stamp and URI-template
-     *
-     * @param event : <data-in> event
-     * @param instances : List of time stamp seprated by ","
-     * @param unresolvedInstances : list of instance with latest/future function
-     * @return : list of URIs separated by ",".
-     * @throws Exception thrown if failed to create URIs from unresolvedInstances
-     */
-    @SuppressWarnings("unused")
-    private String createURIs(Element event, String instances, StringBuilder unresolvedInstances) throws Exception {
-        if (instances == null || instances.length() == 0) {
-            return "";
-        }
-        String[] instanceList = instances.split(CoordELFunctions.INSTANCE_SEPARATOR);
-        StringBuilder uris = new StringBuilder();
-
-        for (int i = 0; i < instanceList.length; i++) {
-            int funcType = CoordCommandUtils.getFuncType(instanceList[i]);
-            if (funcType == CoordCommandUtils.LATEST || funcType == CoordCommandUtils.FUTURE) {
-                if (unresolvedInstances.length() > 0) {
-                    unresolvedInstances.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                }
-                unresolvedInstances.append(instanceList[i]);
-                continue;
-            }
-            ELEvaluator eval = CoordELEvaluator.createURIELEvaluator(instanceList[i]);
-            if (uris.length() > 0) {
-                uris.append(CoordELFunctions.INSTANCE_SEPARATOR);
-            }
-            uris.append(CoordELFunctions.evalAndWrap(eval, event.getChild("dataset", event.getNamespace()).getChild(
-                    "uri-template", event.getNamespace()).getTextTrim()));
-        }
-        return uris.toString();
+        return ret;
     }
 
     /**

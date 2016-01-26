@@ -16,24 +16,32 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.coord;
+package org.apache.oozie.coord.input.logic;
 
-public class CoordELConstants {
-    /*
-     * Echo backing some constants used in Coordinator EL variables
-     */
-    public static final String SUBMIT_MINUTE = "${MINUTE}";
-    public static final String SUBMIT_HOUR = "${HOUR}";
-    public static final String SUBMIT_MONTH = "${MONTH}";
-    public static final String SUBMIT_DAY = "${DAY}";
-    public static final String SUBMIT_YEAR = "${YEAR}";
+import org.apache.commons.jexl2.Interpreter;
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
 
-    public static final int SUBMIT_MINUTES = 1;
-    public static final int SUBMIT_HOURS = 60;
-    public static final int SUBMIT_DAYS = 24 * 60;
+/**
+ * Oozie implementation of Jexl Engine
+ *
+ */
+public class OozieJexlEngine extends JexlEngine {
+    OozieJexlInterpreter oozieInterpreter;
 
-    public static final String DEFAULT_DONE_FLAG = "_SUCCESS";
-    final public static String RESOLVED_PATH = "resolved_path";
+    public OozieJexlEngine() {
+    }
 
-    final public static String IS_RESOLVED = "is_resolved";
+    protected Interpreter createInterpreter(JexlContext context, boolean strictFlag, boolean silentFlag) {
+        if (oozieInterpreter == null) {
+            oozieInterpreter = new OozieJexlInterpreter(this, context == null ? EMPTY_CONTEXT : context, true,
+                    silentFlag);
+        }
+        return oozieInterpreter;
+    }
+
+    public OozieJexlInterpreter getOozieInterpreter() {
+        return oozieInterpreter;
+    }
+
 }

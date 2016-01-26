@@ -114,6 +114,15 @@ public class FSURIHandler implements URIHandler {
     }
 
     @Override
+    public String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException {
+        if (doneFlag.length() > 0 && uri.endsWith(doneFlag)) {
+            return uri.substring(0, uri.lastIndexOf("/" + doneFlag));
+        }
+        return uri;
+    }
+
+
+    @Override
     public void validate(String uri) throws URIHandlerException {
     }
 

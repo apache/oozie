@@ -34,12 +34,15 @@ import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonUtils;
+import org.apache.oozie.coord.input.dependency.CoordInputDependency;
+import org.apache.oozie.coord.input.dependency.CoordInputDependencyFactory;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
@@ -284,6 +287,13 @@ public class CoordinatorActionBean implements
     public JSONObject toJSONObject() {
         return toJSONObject("GMT");
     }
+
+    @Transient
+    private CoordInputDependency coordPushInputDependency;
+
+    @Transient
+    private CoordInputDependency coordPullInputDependency;
+
 
     public CoordinatorActionBean() {
     }
@@ -745,23 +755,21 @@ public class CoordinatorActionBean implements
         json.put(JsonTags.COORDINATOR_ACTION_TYPE, type);
         json.put(JsonTags.COORDINATOR_ACTION_NUMBER, actionNumber);
         json.put(JsonTags.COORDINATOR_ACTION_CREATED_CONF, getCreatedConf());
-        json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, JsonUtils
-                .formatDateRfc822(getCreatedTime(), timeZoneId));
-        json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, JsonUtils
-                .formatDateRfc822(getNominalTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_ACTION_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_ACTION_NOMINAL_TIME, JsonUtils.formatDateRfc822(getNominalTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNALID, externalId);
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
         // .formatDateRfc822(startTime), timeZoneId);
         json.put(JsonTags.COORDINATOR_ACTION_STATUS, statusStr);
         json.put(JsonTags.COORDINATOR_ACTION_RUNTIME_CONF, getRunConf());
-        json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME, JsonUtils
-                .formatDateRfc822(getLastModifiedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_ACTION_LAST_MODIFIED_TIME,
+                JsonUtils.formatDateRfc822(getLastModifiedTime(), timeZoneId));
         // json.put(JsonTags.COORDINATOR_ACTION_START_TIME, JsonUtils
         // .formatDateRfc822(startTime), timeZoneId);
         // json.put(JsonTags.COORDINATOR_ACTION_END_TIME, JsonUtils
         // .formatDateRfc822(endTime), timeZoneId);
-        json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, getMissingDependencies());
-        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, getPushMissingDependencies());
+        json.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, getPullInputDependencies().getMissingDependencies());
+        json.put(JsonTags.COORDINATOR_ACTION_PUSH_MISSING_DEPS, getPushInputDependencies().getMissingDependencies());
         json.put(JsonTags.COORDINATOR_ACTION_EXTERNAL_STATUS, externalStatus);
         json.put(JsonTags.COORDINATOR_ACTION_TRACKER_URI, trackerUri);
         json.put(JsonTags.COORDINATOR_ACTION_CONSOLE_URL, consoleUrl);
@@ -818,5 +826,27 @@ public class CoordinatorActionBean implements
         return true;
     }
 
+    public CoordInputDependency getPullInputDependencies() {
+        if (coordPullInputDependency == null) {
+            coordPullInputDependency = CoordInputDependencyFactory.getPullInputDependencies(missingDependencies);
+        }
+        return coordPullInputDependency;
+
+    }
+
+    public CoordInputDependency getPushInputDependencies() {
+        if (coordPushInputDependency == null) {
+            coordPushInputDependency = CoordInputDependencyFactory.getPushInputDependencies(pushMissingDependencies);
+        }
+        return coordPushInputDependency;
+    }
+
+    public void setPullInputDependencies(CoordInputDependency coordPullInputDependency) {
+        this.coordPullInputDependency = coordPullInputDependency;
+    }
+
+    public void setPushInputDependencies(CoordInputDependency coordPushInputDependency) {
+        this.coordPushInputDependency = coordPushInputDependency;
+    }
 
 }

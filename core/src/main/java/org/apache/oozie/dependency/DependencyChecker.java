@@ -21,7 +21,9 @@ package org.apache.oozie.dependency;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
@@ -53,6 +55,9 @@ public class DependencyChecker {
      * @return missing dependencies as a array
      */
     public static String[] dependenciesAsArray(String missingDependencies) {
+        if(StringUtils.isEmpty(missingDependencies)){
+            return new String[0];
+        }
         return missingDependencies.split(CoordELFunctions.INSTANCE_SEPARATOR);
     }
 
@@ -69,7 +74,7 @@ public class DependencyChecker {
      */
     public static ActionDependency checkForAvailability(String missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {
-        return checkForAvailability(dependenciesAsArray(missingDependencies), actionConf, stopOnFirstMissing);
+        return checkForAvailability(Arrays.asList(dependenciesAsArray(missingDependencies)), actionConf, stopOnFirstMissing);
     }
 
     /**
@@ -83,7 +88,7 @@ public class DependencyChecker {
      * @return ActionDependency which has the list of missing and available dependencies
      * @throws CommandException
      */
-    public static ActionDependency checkForAvailability(String[] missingDependencies, Configuration actionConf,
+    public static ActionDependency checkForAvailability(List<String> missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {
         final XLog LOG = XLog.getLog(DependencyChecker.class); //OOZIE-1251. Don't initialize as static variable.
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
@@ -92,9 +97,9 @@ public class DependencyChecker {
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
         boolean continueChecking = true;
         try {
-            for (int index = 0; index < missingDependencies.length; index++) {
+            for (int index = 0; index < missingDependencies.size(); index++) {
                 if (continueChecking) {
-                    String dependency = missingDependencies[index];
+                    String dependency = missingDependencies.get(index);
 
                     URI uri = new URI(dependency);
                     URIHandler uriHandler = uriService.getURIHandler(uri);
@@ -113,7 +118,7 @@ public class DependencyChecker {
 
                 }
                 else {
-                    missingDeps.add(missingDependencies[index]);
+                    missingDeps.add(missingDependencies.get(index));
                 }
             }
         }
