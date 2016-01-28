@@ -45,13 +45,14 @@ public class HCatCredentials extends Credentials {
     public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
         try {
             String principal = props.getProperties().get(HCAT_METASTORE_PRINCIPAL) == null
-                    ? props.getProperties().get(HIVE_METASTORE_PRINCIPAL) : null;
+                    ? props.getProperties().get(HIVE_METASTORE_PRINCIPAL)
+                    : props.getProperties().get(HCAT_METASTORE_PRINCIPAL);
             if (principal == null || principal.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_PRINCIPAL + " is required to get hcat credential");
             }
             String server = props.getProperties().get(HCAT_METASTORE_URI) == null
-                    ? props.getProperties().get(HIVE_METASTORE_URI) : null;
+                    ? props.getProperties().get(HIVE_METASTORE_URI) : props.getProperties().get(HCAT_METASTORE_URI);
             if (server == null || server.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_URI + " is required to get hcat credential");
