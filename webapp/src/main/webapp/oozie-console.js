@@ -511,7 +511,9 @@ function jobDetailsPopup(response, request) {
             onTriggerClick: function() {
                 if (jobDetails["parentId"]) {
                     var jobId = jobDetails["parentId"];
-                    jobId = jobId.substring(0, jobId.indexOf("-C@") + 2)
+                    if(jobId.indexOf("-C@") > 0){
+                        jobId = jobId.substring(0, jobId.indexOf("-C@") + 2)
+                    }
                     window.open(oozie_host + "?job=" + jobId);
                 }
             }
