@@ -19,17 +19,21 @@
 package org.apache.oozie.util;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.regex.Matcher;
+
 import org.apache.log4j.Appender;
+import org.apache.log4j.pattern.ExtrasPatternParser;
 import org.apache.log4j.rolling.RollingPolicyBase;
 import org.apache.log4j.rolling.RolloverDescription;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.apache.log4j.rolling.TriggeringPolicy;
 import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.pattern.LiteralPatternConverter;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
 
@@ -49,7 +53,10 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
     private Thread deleteThread;
     
     private int maxHistory = 720;       // (720 hours / 24 hours per day = 30 days) as default
-    
+
+    String oozieLogDir;
+    String logFileName;
+
     public int getMaxHistory() {
         return maxHistory;
     }
@@ -63,7 +70,28 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
         deleteThread = new Thread();
         tbrp = new TimeBasedRollingPolicy();
     }
-    
+
+
+    @SuppressWarnings("rawtypes")
+    public void setFileNamePattern(String fnp) {
+        super.setFileNamePattern(fnp);
+        List converters = new ArrayList();
+        StringBuffer file = new StringBuffer();
+        ExtrasPatternParser
+                .parse(fnp, converters, new ArrayList(), null, ExtrasPatternParser.getFileNamePatternRules());
+        if (!converters.isEmpty()) {
+            ((LiteralPatternConverter) converters.get(0)).format(null, file);
+            File f = new File(file.toString());
+            oozieLogDir = f.getParent();
+            logFileName = f.getName();
+        }
+        else {
+            XLogService xls = Services.get().get(XLogService.class);
+            oozieLogDir = xls.getOozieLogPath();
+            logFileName = xls.getOozieLogName();
+        }
+
+    }
     @Override
     public void activateOptions() {
         super.activateOptions();
@@ -106,34 +134,30 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
     
     private void deleteOldFiles() {
         ArrayList<FileInfo> fileList = new ArrayList<FileInfo>();
-        XLogService xls = getXLogService();
-        if (xls != null) {      // We need this to get the paths
-            String oozieLogPath = xls.getOozieLogPath();
-            String logFile = xls.getOozieLogName();
-            if (oozieLogPath != null && logFile != null) {
-                String[] children = new File(oozieLogPath).list();
-                if (children != null) {
-                    for (String child : children) {
-                        if (child.startsWith(logFile) && !child.equals(logFile)) {
-                            File childFile = new File(new File(oozieLogPath).getAbsolutePath(), child);
-                            if (child.endsWith(".gz")) {
-                                long gzFileCreationTime = getGZFileCreationTime(child);
-                                if (gzFileCreationTime != -1) {
-                                    fileList.add(new FileInfo(childFile.getAbsolutePath(), gzFileCreationTime));
-                                }
-                            } else{ 
-                                long modTime = childFile.lastModified();
-                                fileList.add(new FileInfo(childFile.getAbsolutePath(), modTime));
+        if (oozieLogDir != null && logFileName != null) {
+            String[] children = new File(oozieLogDir).list();
+            if (children != null) {
+                for (String child : children) {
+                    if (child.startsWith(logFileName) && !child.equals(logFileName)) {
+                        File childFile = new File(new File(oozieLogDir).getAbsolutePath(), child);
+                        if (child.endsWith(".gz")) {
+                            long gzFileCreationTime = getGZFileCreationTime(child);
+                            if (gzFileCreationTime != -1) {
+                                fileList.add(new FileInfo(childFile.getAbsolutePath(), gzFileCreationTime));
                             }
+                        }
+                        else {
+                            long modTime = childFile.lastModified();
+                            fileList.add(new FileInfo(childFile.getAbsolutePath(), modTime));
                         }
                     }
                 }
             }
         }
-        
+
         if (fileList.size() > maxHistory) {
             Collections.sort(fileList);
-            
+
             for (int i = maxHistory; i < fileList.size(); i++) {
                 new File(fileList.get(i).getFileName()).delete();
             }
@@ -141,23 +165,22 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
     }
     
     private long getGZFileCreationTime(String fileName) {
-        // Default return value of -1 to exclude the file
-        long returnVal = -1;
-        Matcher m = XLogStreamer.gzTimePattern.matcher(fileName);
-        if (m.matches() && m.groupCount() == 4) {
-            int year = Integer.parseInt(m.group(1));
-            int month = Integer.parseInt(m.group(2));
-            int day = Integer.parseInt(m.group(3));
-            int hour = Integer.parseInt(m.group(4));
-            int minute = 0;
-            Calendar calendarEntry = Calendar.getInstance();
-            calendarEntry.set(year, month - 1, day, hour, minute); // give month-1(Say, 7 for August)
-            long logFileStartTime = calendarEntry.getTimeInMillis();
-            returnVal = logFileStartTime;
+        SimpleDateFormat formatter;
+        String date = fileName.substring(logFileName.length(), fileName.length() - 3); //3 for .gz
+        if (date.length() == 10) {
+            formatter = new SimpleDateFormat("yyyy-MM-dd");
         }
-        return returnVal;
+        else {
+            formatter = new SimpleDateFormat("yyyy-MM-dd-HH");
+        }
+        try {
+            return formatter.parse(date).getTime();
+        }
+        catch (ParseException e) {
+            return -1;
+        }
     }
-    
+
     class FileInfo implements Comparable<FileInfo> {
         String fileName;
         long modTime;
@@ -190,12 +213,4 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
         }
     }
     
-    // Needed for TestOozieRollingPolicy tests to be able to override getOozieLogPath() and getOozieLogName()
-    // by overriding getXLogService()
-    XLogService getXLogService() {
-        if (Services.get() != null) {
-            return Services.get().get(XLogService.class);
-        }
-        return null;
-    }
 }

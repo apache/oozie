@@ -96,6 +96,11 @@ public class XLogUtil {
                         if (pattern.matches(Pattern.quote(logFile) + ".*-%d\\{yyyy-MM-dd-HH\\}(\\.gz)?")) {
                             logRotation = 60 * 60;
                         }
+                        else if (pattern.matches(Pattern.quote(logFile) + ".*-%d\\{yyyy-MM-dd\\}(\\.gz)?")
+                                || pattern.matches(Pattern.quote(logFile) + ".*\\.%d\\{yyyy-MM-dd\\}(\\.gz)?")) {
+                            logRotation = 60 * 60 * 24;
+                        }
+
                         else {
                             log.warn(
                                     "Oozie WS "
