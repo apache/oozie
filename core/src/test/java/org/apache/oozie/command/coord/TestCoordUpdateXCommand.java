@@ -368,6 +368,7 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
 
         jobConf.set("coordName1", "NAME");
         jobConf.set("coordName2", "coord2");
+        jobConf.set("isEnabled", "true");
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
         final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
         bundleBean.setStartTime(new Date());
