@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2452 Coordinator Functional Specification - EL Constants Typo (markgreene via puru)
 OOZIE-2173 DISCLAIMER.txt still refers to Apache Incubator (eeeva via rkanter)
 OOZIE-2312 oozie doesn't purge audit and error log (puru)
 OOZIE-2431 Support hive.metastore.uris as alias for hcat.metastore.uri (satishsaley via puru)
