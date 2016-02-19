@@ -747,6 +747,9 @@ public class OozieCLI {
     private Properties parse(InputStream is, Properties conf) throws IOException {
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+            docBuilderFactory.setNamespaceAware(true);
+            // support for includes in the xml file
+            docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
@@ -765,7 +768,7 @@ public class OozieCLI {
     private Properties parseDocument(Document doc, Properties conf) throws IOException {
         try {
             Element root = doc.getDocumentElement();
-            if (!"configuration".equals(root.getTagName())) {
+            if (!"configuration".equals(root.getLocalName())) {
                 throw new RuntimeException("bad conf file: top-level element not <configuration>");
             }
             NodeList props = root.getChildNodes();
@@ -775,7 +778,7 @@ public class OozieCLI {
                     continue;
                 }
                 Element prop = (Element) propNode;
-                if (!"property".equals(prop.getTagName())) {
+                if (!"property".equals(prop.getLocalName())) {
                     throw new RuntimeException("bad conf file: element not <property>");
                 }
                 NodeList fields = prop.getChildNodes();
@@ -787,10 +790,10 @@ public class OozieCLI {
                         continue;
                     }
                     Element field = (Element) fieldNode;
-                    if ("name".equals(field.getTagName()) && field.hasChildNodes()) {
+                    if ("name".equals(field.getLocalName()) && field.hasChildNodes()) {
                         attr = ((Text) field.getFirstChild()).getData();
                     }
-                    if ("value".equals(field.getTagName()) && field.hasChildNodes()) {
+                    if ("value".equals(field.getLocalName()) && field.hasChildNodes()) {
                         value = ((Text) field.getFirstChild()).getData();
                     }
                 }

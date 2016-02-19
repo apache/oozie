@@ -107,6 +107,19 @@ public class TestXConfiguration extends XTestCase {
         bw.close();
     }
 
+    public void testWithNamespacePrefix() throws Exception {
+        String configPath = "test-oozie-with-prefix.xml";
+        InputStream is = null;
+        try {
+            is = IOUtils.getResourceAsStream(configPath, -1);
+            XConfiguration conf = new XConfiguration(is);
+            assertEquals("DEFAULT", conf.get("oozie.dummy"));
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+    }
 
     public void testInvalidParsing() throws Exception {
         try {

@@ -98,6 +98,11 @@ public class PrepareActionsDriver {
     static Document getDocumentFromXML(String prepareXML) throws ParserConfigurationException, SAXException,
             IOException {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        docBuilderFactory.setNamespaceAware(true);
+        // support for includes in the xml file
+        docBuilderFactory.setXIncludeAware(true);
+        // ignore all comments inside the xml file
+        docBuilderFactory.setIgnoringComments(true);
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
         InputStream is = new ByteArrayInputStream(prepareXML.getBytes("UTF-8"));
         return docBuilder.parse(is);

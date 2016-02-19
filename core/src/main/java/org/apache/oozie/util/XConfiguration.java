@@ -296,7 +296,7 @@ public class XConfiguration extends Configuration {
     // Canibalized from Hadoop <code>Configuration.loadResource()</code>.
     private void parseDocument(Document doc) throws IOException {
         Element root = doc.getDocumentElement();
-        if (!"configuration".equals(root.getTagName())) {
+        if (!"configuration".equals(root.getLocalName())) {
             throw new IOException("bad conf file: top-level element not <configuration>");
         }
         processNodes(root);
@@ -312,11 +312,11 @@ public class XConfiguration extends Configuration {
                     continue;
                 }
                 Element prop = (Element) propNode;
-                if (prop.getTagName().equals("configuration")) {
+                if (prop.getLocalName().equals("configuration")) {
                     processNodes(prop);
                     continue;
                 }
-                if (!"property".equals(prop.getTagName())) {
+                if (!"property".equals(prop.getLocalName())) {
                     throw new IOException("bad conf file: element not <property>");
                 }
                 NodeList fields = prop.getChildNodes();
@@ -328,10 +328,10 @@ public class XConfiguration extends Configuration {
                         continue;
                     }
                     Element field = (Element) fieldNode;
-                    if ("name".equals(field.getTagName()) && field.hasChildNodes()) {
+                    if ("name".equals(field.getLocalName()) && field.hasChildNodes()) {
                         attr = ((Text) field.getFirstChild()).getData().trim();
                     }
-                    if ("value".equals(field.getTagName()) && field.hasChildNodes()) {
+                    if ("value".equals(field.getLocalName()) && field.hasChildNodes()) {
                         value = ((Text) field.getFirstChild()).getData();
                     }
                 }
