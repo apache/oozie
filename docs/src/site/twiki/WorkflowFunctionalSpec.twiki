@@ -15,6 +15,9 @@ Map/Reduce and Pig jobs.
 
 ---++ Changelog
 
+---+++!! 2016FEB19
+
+   * #3.2.7 Updated notes on System.exit(int n) behavior
 ---+++!! 2015APR29
 
    * #3.2.1.4 Added notes about Java action retries
@@ -1439,8 +1442,8 @@ To indicate an =ok= action transition, the main Java class must complete gracefu
 
 To indicate an =error= action transition, the main Java class must throw an exception.
 
-The main Java class must not call =System.exit(int n)= as this will make the =java= action to do an =error= transition
-regardless of the used exit code.
+The main Java class can call =System.exit(int n)=. Exit code zero is regarded as OK, while non-zero exit codes will 
+cause the =java= action to do an =error= transition and exit.
 
 A =java= action can be configured to perform HDFS files/directories cleanup or HCatalog partitions cleanup before
 starting the Java application. This capability enables Oozie to retry a Java application in the situation of a transient
