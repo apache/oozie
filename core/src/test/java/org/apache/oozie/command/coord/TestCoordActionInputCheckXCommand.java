@@ -1017,4 +1017,20 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
             throw new Exception("Action ID " + actionId + " was not stored properly in db");
         }
     }
+
+    public void testHarFileInputCheck() throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+        String pathName = createTestCaseSubDir("2009/01/29".split("/"));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
+        String missingDeps = "file://" + pathName + CoordELFunctions.INSTANCE_SEPARATOR
+                + "har:///dirx/archive.har/data";
+        String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
+        new CoordActionInputCheckXCommand(actionId1, job.getId()).call();
+        CoordinatorActionBean coordAction = CoordActionQueryExecutor.getInstance()
+                .get(CoordActionQuery.GET_COORD_ACTION, actionId1);
+        // the directory (2009/01/29) exists and successfully removed from
+        // missing dependency of the coord action
+        assertEquals(coordAction.getMissingDependencies(), "har:///dirx/archive.har/data");
+    }
 }

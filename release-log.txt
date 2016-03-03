@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2246 CoordinatorInputCheckCommand does not behave properly when har file is one of data dependency and doesn't exist (satishsaley via puru)
 OOZIE-2446 Job does not fail during submission if non existent credential is specified (satishsaley via puru)
 OOZIE-2283 Documentation should not say that System.exit is not allowed in Java Action (eeeva via rkanter)
 OOZIE-2400 Workflow xml configuration parser cannot deal with namespace prefix (lars_francke via rkanter)

@@ -100,6 +100,15 @@ public class FSURIHandler implements URIHandler {
             FileSystem fs = getFileSystem(uri, conf, user);
             return fs.exists(getNormalizedPath(uri));
         }
+        catch (HadoopAccessorException e) {
+            if (ErrorCode.E0902.equals(e.getErrorCode()) && e.getMessage() != null
+                    && e.getMessage().indexOf("Invalid path for the Har Filesystem. No index file") != -1) {
+                return false;
+            }
+            else {
+                throw e;
+            }
+        }
         catch (IOException e) {
             throw new HadoopAccessorException(ErrorCode.E0902, e);
         }
