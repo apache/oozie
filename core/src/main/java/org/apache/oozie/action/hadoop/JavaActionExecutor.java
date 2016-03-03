@@ -1324,6 +1324,10 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                 }
             }
+            if (credProp == null && credName != null) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA021",
+                        "Could not load credentials with name [{0}]].", credName);
+            }
         } else {
             LOG.debug("credentials is null for the action");
         }
