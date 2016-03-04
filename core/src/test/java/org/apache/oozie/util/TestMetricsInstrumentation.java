@@ -164,7 +164,8 @@ public class TestMetricsInstrumentation extends XTestCase {
 
             assertEquals(1D, inst.getMetricRegistry().getHistograms().get("a.1.histogram").getSnapshot().getMean(), 0.01D);
             assertEquals(2D, inst.getMetricRegistry().getHistograms().get("a.2.histogram").getSnapshot().getMean(), 0.02D);
-            assertEquals(4D, inst.getMetricRegistry().getHistograms().get("b.1.histogram").getSnapshot().getMean(), 0.5D);
+            assertEquals(4.5D, inst.getMetricRegistry().getHistograms().get("b.1.histogram").getSnapshot().getMean(),
+                    0.5D);
         } finally {
             scheduledExecutorService.shutdownNow();
         }
