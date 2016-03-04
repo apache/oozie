@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.ServerSocket;
 import java.util.regex.Pattern;
 
 import javax.mail.BodyPart;
@@ -65,18 +68,17 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
-
-        Services.get().getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
+        Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
         // Use default host 'localhost'. Hence, do not set the smtp host.
-        // Services.get().getConf().set("oozie.email.smtp.host", "localhost");
+        // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.host", "localhost");
         // Use default from address, 'oozie@localhost'.
         // Hence, do not set the from address conf.
-        // Services.get().getConf().set("oozie.email.from.address", "oozie@localhost");
+        // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.from.address", "oozie@localhost");
 
         // Disable auth tests by default.
-        Services.get().getConf().setBoolean("oozie.email.smtp.auth", false);
-        Services.get().getConf().set("oozie.email.smtp.username", "");
-        Services.get().getConf().set("oozie.email.smtp.password", "");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", false);
+        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "");
+        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -94,9 +96,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Context ctx = createNormalContext(actionXml);
 
         // Override and enable auth.
-        Services.get().getConf().setBoolean("oozie.email.smtp.auth", true);
-        Services.get().getConf().set("oozie.email.smtp.username", "oozie@localhost");
-        Services.get().getConf().set("oozie.email.smtp.password", "oozie");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", true);
+        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "oozie@localhost");
+        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "oozie");
         return ctx;
     }
 
@@ -170,6 +172,50 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         EmailActionExecutor email = new EmailActionExecutor();
         email.validateAndMail(createAuthContext("email-action"), prepareEmailElement(true, true));
         checkEmail(server.getReceivedMessages()[0], true, true);
+    }
+
+    public void testServerTimeouts() throws Exception {
+        final ServerSocket srvSocket = new ServerSocket(0);
+        int srvPort = srvSocket.getLocalPort();
+        Thread serverThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Socket clientSocket = srvSocket.accept();
+                    // Sleep 1s (timeout applied on client is 0.1s)
+                    Thread.sleep(1000);
+                    clientSocket.getOutputStream().write(0);
+                    clientSocket.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        serverThread.setDaemon(true);
+        try {
+            serverThread.start();
+            EmailActionExecutor email = new EmailActionExecutor();
+            Context ctx = createNormalContext("email-action");
+            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", srvPort);
+            // Apply a 0.1s timeout to induce a very quick "Read timed out" error
+            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.socket.timeout.ms", 100);
+            try {
+              email.validateAndMail(ctx, prepareEmailElement(false, false));
+              fail("Should have failed with a socket timeout error!");
+            } catch (Exception e) {
+              Throwable rootCause = e;
+              while (rootCause.getCause() != null) {
+                rootCause = rootCause.getCause();
+              }
+              assertTrue("Expected exception type to be a SocketTimeoutException, but received: " + rootCause,
+                  rootCause instanceof SocketTimeoutException);
+              assertTrue("Expected error to be that of a socket read timeout, but got: " + rootCause.getMessage(),
+                  rootCause.getMessage().contains("Read timed out"));
+            }
+        } finally {
+            serverThread.interrupt();
+            srvSocket.close();
+        }
     }
 
     public void testValidation() throws Exception {

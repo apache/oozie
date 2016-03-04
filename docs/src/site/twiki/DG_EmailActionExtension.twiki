@@ -63,6 +63,8 @@ it looks for:
 =oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
 =oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
 =oozie.email.smtp.password= - If authentication is enabled, the username's password (empty by default).
+=oozie.email.attachment.enabled= - Boolean property that toggles if configured attachments are to be placed into the emails. (false by default).
+=oozie.email.smtp.socket.timeout.ms= - The timeout to apply over all SMTP server socket operations (10000ms by default).
 
 *Example:*
 

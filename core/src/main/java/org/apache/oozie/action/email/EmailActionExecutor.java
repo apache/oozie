@@ -74,6 +74,7 @@ public class EmailActionExecutor extends ActionExecutor {
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
     public static final String EMAIL_SMTP_PASS = CONF_PREFIX + "smtp.password";
     public static final String EMAIL_SMTP_FROM = CONF_PREFIX + "from.address";
+    public static final String EMAIL_SMTP_SOCKET_TIMEOUT_MS = CONF_PREFIX + "smtp.socket.timeout.ms";
     public static final String EMAIL_ATTACHMENT_ENABLED = CONF_PREFIX + "attachment.enabled";
 
     private final static String TO = "to";
@@ -178,22 +179,28 @@ public class EmailActionExecutor extends ActionExecutor {
     public void email(String[] to, String[] cc, String[] bcc, String subject, String body, String[] attachments,
                       String contentType, String user) throws ActionExecutorException {
         // Get mailing server details.
-        String smtpHost = getOozieConf().get(EMAIL_SMTP_HOST, "localhost");
-        String smtpPort = getOozieConf().get(EMAIL_SMTP_PORT, "25");
-        Boolean smtpAuth = getOozieConf().getBoolean(EMAIL_SMTP_AUTH, false);
-        String smtpUser = getOozieConf().get(EMAIL_SMTP_USER, "");
+        String smtpHost = ConfigurationService.get(EMAIL_SMTP_HOST);
+        Integer smtpPortInt = ConfigurationService.getInt(EMAIL_SMTP_PORT);
+        Boolean smtpAuthBool = ConfigurationService.getBoolean(EMAIL_SMTP_AUTH);
+        String smtpUser = ConfigurationService.get(EMAIL_SMTP_USER);
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
-        String fromAddr = getOozieConf().get(EMAIL_SMTP_FROM, "oozie@localhost");
+        String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
+        Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", smtpHost);
-        properties.setProperty("mail.smtp.port", smtpPort);
-        properties.setProperty("mail.smtp.auth", smtpAuth.toString());
+        properties.setProperty("mail.smtp.port", smtpPortInt.toString());
+        properties.setProperty("mail.smtp.auth", smtpAuthBool.toString());
+
+        // Apply sensible timeouts, as defaults are infinite. See https://s.apache.org/javax-mail-timeouts
+        properties.setProperty("mail.smtp.connectiontimeout", timeoutMillisInt.toString());
+        properties.setProperty("mail.smtp.timeout", timeoutMillisInt.toString());
+        properties.setProperty("mail.smtp.writetimeout", timeoutMillisInt.toString());
 
         Session session;
         // Do not use default instance (i.e. Session.getDefaultInstance)
         // (cause it may lead to issues when used second time).
-        if (!smtpAuth) {
+        if (!smtpAuthBool) {
             session = Session.getInstance(properties);
         } else {
             session = Session.getInstance(properties, new JavaMailAuthenticator(smtpUser, smtpPassword));

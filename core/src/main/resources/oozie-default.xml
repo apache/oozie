@@ -2659,6 +2659,62 @@
     </property>
 
     <property>
+      <name>oozie.email.smtp.host</name>
+      <value>localhost</value>
+      <description>
+          The host where the email action may find the SMTP server.
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.smtp.port</name>
+      <value>25</value>
+      <description>
+          The port to connect to for the SMTP server, for email actions.
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.smtp.auth</name>
+      <value>false</value>
+      <description>
+          Boolean property that toggles if authentication is to be done or not when using email actions.
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.smtp.username</name>
+      <value></value>
+      <description>
+          If authentication is enabled for email actions, the username to login as (to the SMTP server).
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.smtp.password</name>
+      <value></value>
+      <description>
+          If authentication is enabled for email actions, the password to login with (to the SMTP server).
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.from.address</name>
+      <value>oozie@localhost</value>
+      <description>
+          The from address to be used for mailing all emails done via the email action.
+      </description>
+    </property>
+
+    <property>
+      <name>oozie.email.smtp.socket.timeout.ms</name>
+      <value>10000</value>
+      <description>
+          The timeout to apply over all SMTP server socket operations done during the email action.
+      </description>
+    </property>
+
+    <property>
         <name>oozie.actions.default.name-node</name>
         <value> </value>
         <description>
