@@ -77,7 +77,9 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         try {
-            LOG.debug("STARTED CoordActionUpdateXCommand for wfId=" + workflow.getId());
+            LOG.debug("STARTED CoordActionUpdateXCommand for wfId=[{0}]", workflow.getId());
+            final CoordinatorAction.Status formerCoordinatorStatus = coordAction.getStatus();
+            final int formerCoordinatorPending = coordAction.getPending();
             Status slaStatus = null;
             if (workflow.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 coordAction.setStatus(CoordinatorAction.Status.SUCCEEDED);
@@ -105,7 +107,7 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 coordAction.decrementAndGetPending();
             }
             else {
-                LOG.warn("Unexpected workflow " + workflow.getId() + " STATUS " + workflow.getStatus());
+                LOG.warn("Unexpected workflow [{0}] STATUS [{1}]", workflow.getId(), workflow.getStatus());
                 // update lastModifiedTime
                 coordAction.setLastModifiedTime(new Date());
                 CoordActionQueryExecutor.getInstance().executeUpdate(
@@ -119,8 +121,9 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 return null;
             }
 
-            LOG.info("Updating Coordintaor action id :" + coordAction.getId() + " status "
-                    + " to " + coordAction.getStatus() + ", pending = " + coordAction.getPending());
+            LOG.info("Updating Coordinator action id: [{0}] status [{1}] to [{2}] pending [{3}] to [{4}]",
+                    coordAction.getId(), formerCoordinatorStatus, coordAction.getStatus(),
+                    formerCoordinatorPending, coordAction.getPending());
 
             coordAction.setLastModifiedTime(new Date());
             updateList.add(new UpdateEntry<CoordActionQuery>(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME,
@@ -133,9 +136,9 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 LOG.info("Updating Coordinator job "+ coordJob.getId() + "pending to true");
             }*/
             if (slaStatus != null) {
-                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), slaStatus,
-                        SlaAppType.COORDINATOR_ACTION, LOG);
-                if(slaEvent != null) {
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(),
+                        coordAction.getId(), slaStatus, SlaAppType.COORDINATOR_ACTION, LOG);
+                if (slaEvent != null) {
                     insertList.add(slaEvent);
                 }
             }
@@ -149,10 +152,10 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
                 generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), workflow.getStartTime());
             }
 
-            LOG.debug("ENDED CoordActionUpdateXCommand for wfId=" + workflow.getId());
+            LOG.debug("ENDED CoordActionUpdateXCommand for wfId= [{0}]", workflow.getId());
         }
         catch (XException ex) {
-            LOG.warn("CoordActionUpdate Failed ", ex.getMessage());
+            LOG.warn("CoordActionUpdate Failed [{0}]", ex.getMessage());
             throw new CommandException(ex);
         }
         return null;
@@ -202,18 +205,26 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-
-        // if coord action is RUNNING and pending false and workflow is RUNNING, this doesn't need to be updated.
-        if (workflow.getStatus() == WorkflowJob.Status.RUNNING
-                && coordAction.getStatus() == CoordinatorAction.Status.RUNNING && !coordAction.isPending()) {
+        // if coord action status == workflow, and pending false then coord action is already updated
+        if (((workflow.getStatus() == WorkflowJob.Status.SUCCEEDED
+                && coordAction.getStatus() == CoordinatorAction.Status.SUCCEEDED) ||
+                (workflow.getStatus() == WorkflowJob.Status.FAILED
+                        && coordAction.getStatus() == CoordinatorAction.Status.FAILED) ||
+                (workflow.getStatus() == WorkflowJob.Status.KILLED
+                        && coordAction.getStatus() == CoordinatorAction.Status.KILLED) ||
+                (workflow.getStatus() == WorkflowJob.Status.SUSPENDED
+                        && coordAction.getStatus() == CoordinatorAction.Status.SUSPENDED) ||
+                (workflow.getStatus() == WorkflowJob.Status.RUNNING
+                        && coordAction.getStatus() == CoordinatorAction.Status.RUNNING)
+            ) && !coordAction.isPending()) {
             try {
                 CoordActionQueryExecutor.getInstance().executeUpdate(
                         CoordActionQueryExecutor.CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, coordAction);
-            }
-            catch (JPAExecutorException je) {
+            } catch (JPAExecutorException je) {
                 throw new CommandException(je);
             }
-            throw new PreconditionException(ErrorCode.E1100, ", workflow is RUNNING and coordinator action is RUNNING and pending false");
+            throw new PreconditionException(ErrorCode.E1100, ", workflow is " + workflow.getStatus() +
+                    " and coordinator action is " + coordAction.getStatus() + " and pending false");
         }
     }
 
