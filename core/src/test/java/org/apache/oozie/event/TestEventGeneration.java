@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -570,18 +571,41 @@ public class TestEventGeneration extends XDataTestCase {
         });
 
         assertEquals(3, queue.size());
-        JobEvent coordActionEvent = (JobEvent) queue.poll();
-        assertEquals(EventStatus.FAILURE, coordActionEvent.getEventStatus());
-        assertEquals(action.getId(), coordActionEvent.getId());
-        assertEquals(AppType.COORDINATOR_ACTION, coordActionEvent.getAppType());
-        JobEvent wfActionEvent = (JobEvent) queue.poll();
-        assertEquals(EventStatus.FAILURE, wfActionEvent.getEventStatus());
-        assertEquals(waId, wfActionEvent.getId());
-        assertEquals(AppType.WORKFLOW_ACTION, wfActionEvent.getAppType());
-        JobEvent wfJobEvent = (JobEvent) queue.poll();
-        assertEquals(EventStatus.FAILURE, wfJobEvent.getEventStatus());
-        assertEquals(wf.getId(), wfJobEvent.getId());
-        assertEquals(AppType.WORKFLOW_JOB, wfJobEvent.getAppType());
+
+        HashMap<AppType,JobEvent> eventsMap = new HashMap<AppType,JobEvent>();
+        while (queue.size() > 0){
+            JobEvent event = (JobEvent) queue.poll();
+            eventsMap.put(event.getAppType(), event);
+        }
+
+        assertEquals(3, eventsMap.size());
+
+        //Check the WF action
+        {
+            JobEvent wfActionEvent = eventsMap.get(AppType.WORKFLOW_ACTION);
+            assertNotNull("There should be a WF action", wfActionEvent);
+            assertEquals(EventStatus.FAILURE, wfActionEvent.getEventStatus());
+            assertEquals(waId, wfActionEvent.getId());
+            assertEquals(AppType.WORKFLOW_ACTION, wfActionEvent.getAppType());
+        }
+
+        //Check the WF job
+        {
+            JobEvent wfJobEvent = eventsMap.get(AppType.WORKFLOW_JOB);
+            assertNotNull("There should be a WF job", wfJobEvent);
+            assertEquals(EventStatus.FAILURE, wfJobEvent.getEventStatus());
+            assertEquals(wf.getId(), wfJobEvent.getId());
+            assertEquals(AppType.WORKFLOW_JOB, wfJobEvent.getAppType());
+        }
+
+        //Check the Coordinator action
+        {
+            JobEvent coordActionEvent = eventsMap.get(AppType.COORDINATOR_ACTION);
+            assertNotNull("There should be a Coordinator action", coordActionEvent);
+            assertEquals(EventStatus.FAILURE, coordActionEvent.getEventStatus());
+            assertEquals(action.getId(), coordActionEvent.getId());
+            assertEquals(AppType.COORDINATOR_ACTION, coordActionEvent.getAppType());
+        }
         queue.clear();
     }
 
