@@ -60,8 +60,11 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             : "ls -ltr\necho $1 $2\nexit 1";
     private static final String PERL_SCRIPT_CONTENT = "print \"MY_VAR=TESTING\";";
     private static final String SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT = Shell.WINDOWS
-            ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho HADOOP_CONF_DIR=%HADOOP_CONF_DIR%"
-            : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho HADOOP_CONF_DIR=$HADOOP_CONF_DIR";
+            ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho HADOOP_CONF_DIR=%HADOOP_CONF_DIR%\n"
+            : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho HADOOP_CONF_DIR=$HADOOP_CONF_DIR\n";
+    private static final String SHELL_SCRIPT_YARN_CONF_DIR_CONTENT = Shell.WINDOWS
+            ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho YARN_CONF_DIR=%YARN_CONF_DIR%\n"
+            : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho YARN_CONF_DIR=$YARN_CONF_DIR\n";
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
@@ -128,6 +131,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
         Writer w = new OutputStreamWriter(fs.create(script));
         w.write(SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT);
+        w.write(SHELL_SCRIPT_YARN_CONF_DIR_CONTENT);
         w.close();
 
         // Create sample Shell action xml
@@ -141,10 +145,12 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         WorkflowAction action = _testSubmit(actionXml, true, "");
         String oozieActionConfXml = PropertiesUtils.stringToProperties(action.getData()).getProperty("OOZIE_ACTION_CONF_XML");
         String hadoopConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("HADOOP_CONF_DIR");
+        String yarnConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("YARN_CONF_DIR");
         assertNotNull(oozieActionConfXml);
         assertNotNull(hadoopConfDir);
         String s = new File(oozieActionConfXml).getParent() + File.separator + "oozie-hadoop-conf-";
         Assert.assertTrue("Expected HADOOP_CONF_DIR to start with " + s + " but was " + hadoopConfDir, hadoopConfDir.startsWith(s));
+        Assert.assertTrue("Expected YARN_CONF_DIR to start with " + s + " but was " + yarnConfDir, yarnConfDir.startsWith(s));
     }
 
     /**

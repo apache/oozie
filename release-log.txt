@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2481 Add YARN_CONF_DIR in the Shell action (harsh)
 OOZIE-2492 JSON security issue in js code (fdenes via rkanter)
 OOZIE-2429 TestEventGeneration test is flakey (fdenes via rkanter)
 OOZIE-2466 Repeated failure of TestMetricsInstrumentation.testSamplers (fdenes via rkanter)

@@ -41,6 +41,7 @@ public class ShellMain extends LauncherMain {
     public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR = "oozie.action.shell.setup.hadoop.conf.dir";
     public static final String OOZIE_ACTION_CONF_XML = "OOZIE_ACTION_CONF_XML";
     private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
+    private static final String YARN_CONF_DIR = "YARN_CONF_DIR";
 
     private static String[] HADOOP_SITE_FILES = new String[] {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
@@ -117,9 +118,9 @@ public class ShellMain extends LauncherMain {
 
     /**
      * This method takes the OOZIE_ACTION_CONF_XML and copies it to Hadoop *-site files in a new directory; it then sets the
-     * HADOOP_CONF_DIR to point there.  This should allow most Hadoop ecosystem CLI programs to have the proper configuration,
+     * HADOOP/YARN_CONF_DIR to point there.  This should allow most Hadoop ecosystem CLI programs to have the proper configuration,
      * propagated from Oozie's copy and including anything set in the Workflow's configuration section as well.  Otherwise,
-     * HADOOP_CONF_DIR points to the NodeManager's *-site files, which are likely not suitable for client programs.
+     * HADOOP/YARN_CONF_DIR points to the NodeManager's *-site files, which are likely not suitable for client programs.
      * It will only do this if {@link CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} is set to true.
      *
      * @param actionConf The action configuration
@@ -140,8 +141,10 @@ public class ShellMain extends LauncherMain {
                     dstFiles[i] = new File(confDir, HADOOP_SITE_FILES[i]);
                 }
                 copyFileMultiplex(actionXmlFile, dstFiles);
-                System.out.println("Setting " + HADOOP_CONF_DIR + " to " + confDir.getAbsolutePath());
+                System.out.println("Setting " + HADOOP_CONF_DIR + " and " + YARN_CONF_DIR
+                    + " to " + confDir.getAbsolutePath());
                 envp.put(HADOOP_CONF_DIR, confDir.getAbsolutePath());
+                envp.put(YARN_CONF_DIR, confDir.getAbsolutePath());
             }
         }
     }

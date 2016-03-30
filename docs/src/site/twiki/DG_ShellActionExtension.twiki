@@ -219,6 +219,10 @@ nameNode=hdfs://localhost:8020
 queueName=default
 </verbatim>
 
+---+++ Shell Action Configuration
+
+=oozie.action.shell.setup.hadoop.conf.dir= - Generates a config directory with various core/hdfs/yarn/mapred-site.xml files and points =HADOOP_CONF_DIR= and =YARN_CONF_DIR= env-vars to it, before the Script is invoked. XML is sourced from the action configuration. Useful when the Shell script passed uses various =hadoop= commands. Default is false.
+
 ---+++ Shell Action Logging
 
 Shell action's stdout and stderr output are redirected to the Oozie Launcher map-reduce job task STDOUT that runs the shell command.
