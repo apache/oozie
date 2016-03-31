@@ -87,6 +87,7 @@ public class TestSLAEventsGetForFilterJPAExecutor extends XDataTestCase {
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
+        // Use -1 instead of 0 because HSQLDB starts the event_id generator at 0 instead of 1
         SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(-1, 100,
                 filterListJob1, new long[1]);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
@@ -98,7 +99,8 @@ public class TestSLAEventsGetForFilterJPAExecutor extends XDataTestCase {
         Map<String, List<String>> filterListAction1 = createFilterList("jobid", coordActionId1);
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(0, 100,
+        // Use -1 instead of 0 because HSQLDB starts the event_id generator at 0 instead of 1
+        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(-1, 100,
                 filterListAction1, new long[1]);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
@@ -120,7 +122,8 @@ public class TestSLAEventsGetForFilterJPAExecutor extends XDataTestCase {
         Map<String, List<String>> filterList = createFilterList("jobid", coordId1, coordActionId1);
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(0, 100, filterList,
+        // Use -1 instead of 0 because HSQLDB starts the event_id generator at 0 instead of 1
+        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(-1, 100, filterList,
                 new long[1]);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
@@ -134,7 +137,8 @@ public class TestSLAEventsGetForFilterJPAExecutor extends XDataTestCase {
         assertNotNull(jpaService);
         long[] lastSeqId = new long[1];
         lastSeqId[0] = -1;
-        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(0, 100, filterList,
+        // Use -1 instead of 0 because HSQLDB starts the event_id generator at 0 instead of 1
+        SLAEventsGetForFilterJPAExecutor slaEventsGetCmd = new SLAEventsGetForFilterJPAExecutor(-1, 100, filterList,
                 lastSeqId);
         List<SLAEventBean> list = jpaService.execute(slaEventsGetCmd);
         assertNotNull(list);
