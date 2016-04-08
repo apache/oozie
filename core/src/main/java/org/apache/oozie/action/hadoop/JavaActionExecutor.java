@@ -234,7 +234,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return createBaseHadoopConf(context, actionXml);
     }
 
-    private void injectLauncherProperties(Configuration srcConf, Configuration launcherConf) {
+    private static void injectLauncherProperties(Configuration srcConf, Configuration launcherConf) {
         for (Map.Entry<String, String> entry : srcConf) {
             if (entry.getKey().startsWith("oozie.launcher.")) {
                 String name = entry.getKey().substring("oozie.launcher.".length());
@@ -257,18 +257,20 @@ public class JavaActionExecutor extends ActionExecutor {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
             injectLauncherProperties(actionDefaultConf, launcherConf);
-            // Inject <configuration> for launcher
-            Element e = actionXml.getChild("configuration", ns);
-            if (e != null) {
-                String strConf = XmlUtils.prettyPrint(e).toString();
-                XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-                injectLauncherProperties(inlineConf, launcherConf);
+            // Inject <job-xml> and <configuration> for launcher
+            try {
+                parseJobXmlAndConfiguration(context, actionXml, appPath, conf, true);
+            } catch (HadoopAccessorException ex) {
+                throw convertException(ex);
+            } catch (URISyntaxException ex) {
+                throw convertException(ex);
             }
             // Inject use uber mode for launcher
             injectLauncherUseUberMode(launcherConf);
             XConfiguration.copy(launcherConf, conf);
             checkForDisallowedProps(launcherConf, "launcher configuration");
-            e = actionXml.getChild("config-class", actionXml.getNamespace());
+            // Inject config-class for launcher to use for action
+            Element e = actionXml.getChild("config-class", ns);
             if (e != null) {
                 conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
             }
@@ -456,6 +458,11 @@ public class JavaActionExecutor extends ActionExecutor {
 
     public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf)
             throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
+        parseJobXmlAndConfiguration(context, element, appPath, conf, false);
+    }
+
+    public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf,
+            boolean isLauncher) throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
         Namespace ns = element.getNamespace();
         Iterator<Element> it = element.getChildren("job-xml", ns).iterator();
         HashMap<String, FileSystem> filesystemsMap = new HashMap<String, FileSystem>();
@@ -494,14 +501,22 @@ public class JavaActionExecutor extends ActionExecutor {
                 context.setErrorInfo("EL_ERROR", ex.getMessage());
             }
             checkForDisallowedProps(jobXmlConf, "job-xml");
-            XConfiguration.copy(jobXmlConf, conf);
+            if (isLauncher) {
+                injectLauncherProperties(jobXmlConf, conf);
+            } else {
+                XConfiguration.copy(jobXmlConf, conf);
+            }
         }
         Element e = element.getChild("configuration", ns);
         if (e != null) {
             String strConf = XmlUtils.prettyPrint(e).toString();
             XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
             checkForDisallowedProps(inlineConf, "inline configuration");
-            XConfiguration.copy(inlineConf, conf);
+            if (isLauncher) {
+                injectLauncherProperties(inlineConf, conf);
+            } else {
+                XConfiguration.copy(inlineConf, conf);
+            }
         }
     }
 
