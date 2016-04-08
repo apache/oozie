@@ -35,12 +35,15 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.JobUtils;
+import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -163,6 +166,51 @@ public class HadoopAccessorService implements Service {
                     allSchemesSupported = true;
                 }
                 supportedSchemes.add(scheme);
+            }
+        }
+
+        setConfigForHadoopSecurityUtil(conf);
+    }
+
+    private void setConfigForHadoopSecurityUtil(Configuration conf) {
+        // Prior to HADOOP-12954 (2.9.0+), Hadoop sets hadoop.security.token.service.use_ip on startup in a static block with no
+        // way for Oozie to change it because Oozie doesn't load *-site.xml files on the classpath.  HADOOP-12954 added a way to
+        // set this property via a setConfiguration method.  Ideally, this would be part of JobClient so Oozie wouldn't have to
+        // worry about it and we could have different values for different clusters, but we can't; so we have to use the same value
+        // for every cluster Oozie is configured for.  To that end, we'll use the default NN's configs.  If that's not defined,
+        // we'll use the wildcard's configs.  And if that's not defined, we'll use an arbitrary cluster's configs.  In any case,
+        // if the version of Hadoop we're using doesn't include HADOOP-12954, we'll do nothing (there's no workaround), and
+        // hadoop.security.token.service.use_ip will have the default value.
+        String nameNode = conf.get(LiteWorkflowAppParser.DEFAULT_NAME_NODE);
+        if (nameNode != null) {
+            nameNode = nameNode.trim();
+            if (nameNode.isEmpty()) {
+                nameNode = null;
+            }
+        }
+        if (nameNode == null && hadoopConfigs.containsKey("*")) {
+            nameNode = "*";
+        }
+        if (nameNode == null) {
+            for (String nn : hadoopConfigs.keySet()) {
+                nn = nn.trim();
+                if (!nn.isEmpty()) {
+                    nameNode = nn;
+                    break;
+                }
+            }
+        }
+        if (nameNode != null) {
+            Configuration hConf = getConfiguration(nameNode);
+            try {
+                Method setConfigurationMethod = SecurityUtil.class.getMethod("setConfiguration", Configuration.class);
+                setConfigurationMethod.invoke(null, hConf);
+                LOG.debug("Setting Hadoop SecurityUtil Configuration to that of {0}", nameNode);
+            } catch (NoSuchMethodException e) {
+                LOG.debug("Not setting Hadoop SecurityUtil Configuration because this version of Hadoop doesn't support it");
+            } catch (Exception e) {
+                LOG.error("An Exception occurred while trying to call setConfiguration on {0} via Reflection.  It won't be called.",
+                        SecurityUtil.class.getName(), e);
             }
         }
     }
