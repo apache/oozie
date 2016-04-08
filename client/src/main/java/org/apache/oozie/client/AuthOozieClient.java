@@ -103,46 +103,104 @@ public class AuthOozieClient extends XOozieClient {
     @Override
     protected HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
         boolean useAuthFile = System.getProperty(USE_AUTH_TOKEN_CACHE_SYS_PROP, "false").equalsIgnoreCase("true");
-        AuthenticatedURL.Token readToken = new AuthenticatedURL.Token();
-        AuthenticatedURL.Token currentToken = new AuthenticatedURL.Token();
+        AuthenticatedURL.Token readToken = null;
+        AuthenticatedURL.Token currentToken = null;
 
+        // Read the token in from the file
         if (useAuthFile) {
             readToken = readAuthToken();
-            if (readToken != null) {
-                currentToken = new AuthenticatedURL.Token(readToken.toString());
-            }
+        }
+        if (readToken == null) {
+            currentToken = new AuthenticatedURL.Token();
+        } else {
+            currentToken = new AuthenticatedURL.Token(readToken.toString());
         }
 
+        // To prevent rare race conditions and to save a call to the Server, lets check the token's expiration time locally, and
+        // consider it expired if its expiration time has passed or will pass in the next 5 minutes (or if there's a problem parsing
+        // it)
         if (currentToken.isSet()) {
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("OPTIONS");
-            AuthenticatedURL.injectToken(conn, currentToken);
-            if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                AUTH_TOKEN_CACHE_FILE.delete();
+            long expires = getExpirationTime(currentToken);
+            if (expires < System.currentTimeMillis() + 300000) {
+                if (useAuthFile) {
+                    AUTH_TOKEN_CACHE_FILE.delete();
+                }
                 currentToken = new AuthenticatedURL.Token();
             }
         }
 
+        // If we have a token, double check with the Server to make sure it hasn't expired yet
+        if (currentToken.isSet()) {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("OPTIONS");
+            AuthenticatedURL.injectToken(conn, currentToken);
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED
+                    || conn.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+                if (useAuthFile) {
+                    AUTH_TOKEN_CACHE_FILE.delete();
+                }
+                currentToken = new AuthenticatedURL.Token();
+            } else {
+                // After HADOOP-10301, with Kerberos the above token expiration check will now send 200 even with an expired token
+                // if you still have valid Kerberos credentials.  Previously, it would send 401 so the client knows that it needs to
+                // use the KerberosAuthenticator to get a new token.  Now, it may even provide a token back from this call, so we
+                // need to check for a new token and update ours.  If no new token was given and we got a 20X code, this will do a
+                // no-op.
+                // With Pseudo, the above token expiration check will now send 403 instead of the 401; we're now checking for either
+                // response code above.  However, unlike with Kerberos, Pseudo doesn't give us a new token here; we'll have to get
+                // one later.
+                try {
+                    AuthenticatedURL.extractToken(conn, currentToken);
+                } catch (AuthenticationException ex) {
+                    if (useAuthFile) {
+                        AUTH_TOKEN_CACHE_FILE.delete();
+                    }
+                    currentToken = new AuthenticatedURL.Token();
+                }
+            }
+        }
+
+        // If we didn't have a token, or it had expired, let's get a new one from the Server using the configured Authenticator
         if (!currentToken.isSet()) {
             Authenticator authenticator = getAuthenticator();
             try {
-                new AuthenticatedURL(authenticator).openConnection(url, currentToken);
+                authenticator.authenticate(url, currentToken);
             }
             catch (AuthenticationException ex) {
-                AUTH_TOKEN_CACHE_FILE.delete();
+                if (useAuthFile) {
+                    AUTH_TOKEN_CACHE_FILE.delete();
+                }
                 throw new OozieClientException(OozieClientException.AUTHENTICATION,
                                                "Could not authenticate, " + ex.getMessage(), ex);
             }
         }
+
+        // If we got a new token, save it to the cache file
         if (useAuthFile && currentToken.isSet() && !currentToken.equals(readToken)) {
             writeAuthToken(currentToken);
         }
+
+        // Now create a connection using the token and return it to the caller
         HttpURLConnection conn = super.createConnection(url, method);
         AuthenticatedURL.injectToken(conn, currentToken);
-
         return conn;
     }
 
+    private static long getExpirationTime(AuthenticatedURL.Token token) {
+        long expires = 0L;
+        String[] splits = token.toString().split("&");
+        for (String split : splits) {
+            if (split.startsWith("e=")) {
+                try {
+                    expires = Long.parseLong(split.substring(2));
+                } catch (Exception e) {
+                    // token is somehow invalid, assume it expired already
+                    break;
+                }
+            }
+        }
+        return expires;
+    }
 
     /**
      * Read a authentication token cached in the user home directory.

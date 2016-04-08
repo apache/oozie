@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2485 Oozie client keeps trying to use expired auth token (rkanter)
 OOZIE-2490 Oozie can't set hadoop.security.token.service.use_ip (rkanter)
 OOZIE-2474 <job-xml> is not being applied to the launcher job (rkanter)
 OOZIE-2486 TestSLAEventsGetForFilterJPAExecutor is flakey (rkanter)
