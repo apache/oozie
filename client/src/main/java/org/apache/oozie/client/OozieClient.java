@@ -650,6 +650,7 @@ public class OozieClient {
             DOMSource source = new DOMSource(doc);
             StreamResult result = new StreamResult(out);
             TransformerFactory transFactory = TransformerFactory.newInstance();
+            transFactory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
             Transformer transformer = transFactory.newTransformer();
             transformer.transform(source, result);
             if (getDebugMode() > 0) {

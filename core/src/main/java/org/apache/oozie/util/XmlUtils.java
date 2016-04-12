@@ -350,6 +350,7 @@ public class XmlUtils {
             StringWriter stringWriter = new StringWriter();
             Result result = new StreamResult(stringWriter);
             TransformerFactory factory = TransformerFactory.newInstance();
+            factory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
             Transformer transformer = factory.newTransformer();
             transformer.transform(source, result);
 

@@ -752,6 +752,8 @@ public class OozieCLI {
             docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
+            docBuilderFactory.setExpandEntityReferences(false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             Document doc = builder.parse(is);
             return parseDocument(doc, conf);

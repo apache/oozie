@@ -103,6 +103,8 @@ public class PrepareActionsDriver {
         docBuilderFactory.setXIncludeAware(true);
         // ignore all comments inside the xml file
         docBuilderFactory.setIgnoringComments(true);
+        docBuilderFactory.setExpandEntityReferences(false);
+        docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
         InputStream is = new ByteArrayInputStream(prepareXML.getBytes("UTF-8"));
         return docBuilder.parse(is);

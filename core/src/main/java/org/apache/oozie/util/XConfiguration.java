@@ -259,6 +259,8 @@ public class XConfiguration extends Configuration {
             docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
+            docBuilderFactory.setExpandEntityReferences(false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             Document doc = builder.parse(is);
             parseDocument(doc);
@@ -281,6 +283,8 @@ public class XConfiguration extends Configuration {
             docBuilderFactory.setXIncludeAware(true);
             // ignore all comments inside the xml file
             docBuilderFactory.setIgnoringComments(true);
+            docBuilderFactory.setExpandEntityReferences(false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             Document doc = builder.parse(new InputSource(reader));
             parseDocument(doc);
