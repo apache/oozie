@@ -99,7 +99,7 @@ The =jar= element indicates a comma separated list of jars or python files.
 
 The =spark-opts= element if present, contains a list of spark options that can be passed to spark driver. Spark configuration
 options can be passed by specifying '--conf key=value' here, or from =oozie.service.SparkConfigurationService.spark.configurations=
-in oozie-site.xml.  The =spark-opts= configs have priority.
+in oozie-site.xml. Values containing whitespaces should be enclosed by double quotes. The =spark-opts= configs have priority.
 
 The =arg= element if present, contains arguments that can be passed to spark application.
 
@@ -129,7 +129,8 @@ expressions.
             <name>Spark Example</name>
             <class>org.apache.spark.examples.mllib.JavaALS</class>
             <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
-            <spark-opts>--executor-memory 20G --num-executors 50</spark-opts>
+            <spark-opts>--executor-memory 20G --num-executors 50
+             --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"</spark-opts>
             <arg>inputpath=hdfs://localhost/input/file.txt</arg>
             <arg>value=2</arg>
         </spark>

@@ -37,7 +37,6 @@ public class SparkMain extends LauncherMain {
     private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
     private static final String DIST_FILES = "spark.yarn.dist.files=";
     private static final String JARS_OPTION = "--jars";
-    private static final String DELIM = "\\s+";
 
     private String sparkJars = null;
     private String sparkClasspath = null;
@@ -107,16 +106,20 @@ public class SparkMain extends LauncherMain {
         boolean addedJars = false;
         String sparkOpts = actionConf.get(SparkActionExecutor.SPARK_OPTS);
         if (StringUtils.isNotEmpty(sparkOpts)) {
-            String[] sparkOptions = sparkOpts.split(DELIM);
-            for (int i = 0; i < sparkOptions.length; i++) {
-                String opt = sparkOptions[i];
+            List<String> sparkOptions = splitSparkOpts(sparkOpts);
+            for (int i = 0; i < sparkOptions.size(); i++) {
+                String opt = sparkOptions.get(i);
                 if (sparkJars != null) {
                     if (opt.equals(JARS_OPTION)) {
                         sparkArgs.add(opt);
                         i++;
-                        opt = sparkOptions[i];
-                        opt = opt + "," + sparkJars;
-                        addedJars = true;
+                        if(i < sparkOptions.size()) {
+                            opt = sparkOptions.get(i);
+                            opt = opt + "," + sparkJars;
+                            addedJars = true;
+                        } else {
+                            throw new OozieActionConfiguratorException(JARS_OPTION + " missing a parameter.");
+                        }
                     } else if (yarnClientMode && opt.startsWith(DIST_FILES)) {
                         opt = opt + "," + sparkJars;
                         addedDistFiles = true;
@@ -226,5 +229,38 @@ public class SparkMain extends LauncherMain {
             jars.setLength(jars.length() - 1);
             sparkJars = jars.toString();
         }
+    }
+
+    /**
+     * Converts the options to be Spark-compatible.
+     * <ul>
+     *     <li>Parameters are separated by whitespace and can be groupped using double quotes</li>
+     *     <li>Quotes should be removed</li>
+     *     <li>Adjacent whitespace separators are treated as one</li>
+     * </ul>
+     * @param sparkOpts the options for Spark
+     * @return the options parsed into a list
+     */
+    static List<String> splitSparkOpts(String sparkOpts){
+        List<String> result = new ArrayList<String>();
+        StringBuilder currentWord = new StringBuilder();
+        boolean insideQuote = false;
+        for (int i = 0; i < sparkOpts.length(); i++) {
+            char c = sparkOpts.charAt(i);
+            if (c == '"') {
+                insideQuote = !insideQuote;
+            } else if (Character.isWhitespace(c) && !insideQuote) {
+                if (currentWord.length() > 0) {
+                    result.add(currentWord.toString());
+                    currentWord.setLength(0);
+                }
+            } else {
+                currentWord.append(c);
+            }
+        }
+        if(currentWord.length()>0) {
+            result.add(currentWord.toString());
+        }
+        return result;
     }
 }

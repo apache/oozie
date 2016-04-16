@@ -58,7 +58,9 @@ public class TestSparkMain extends MainTestCase {
         jobConf.set(SparkActionExecutor.SPARK_MODE, "client");
         jobConf.set(SparkActionExecutor.SPARK_CLASS, "org.apache.oozie.example.SparkFileCopy");
         jobConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark Copy File");
-        jobConf.set(SparkActionExecutor.SPARK_OPTS, "--driver-memory 1024M");
+        jobConf.set(SparkActionExecutor.SPARK_OPTS, "--driver-memory  1042M " +
+                "--conf spark.executor.extraJavaOptions=\"-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp\"");
+
         jobConf.set(SparkActionExecutor.SPARK_JAR, getFsTestCaseDir() + "/lib/test.jar");
 
 
