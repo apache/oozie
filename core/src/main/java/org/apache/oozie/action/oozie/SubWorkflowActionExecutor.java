@@ -179,7 +179,11 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 String appPath = eConf.getChild("app-path", ns).getTextTrim();
 
                 XConfiguration subWorkflowConf = new XConfiguration();
+
+                injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
+
                 Configuration parentConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+
                 if (eConf.getChild(("propagate-configuration"), ns) != null) {
                     XConfiguration.copy(parentConf, subWorkflowConf);
                 }
@@ -205,7 +209,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 if(group != null) {
                     subWorkflowConf.set(OozieClient.GROUP_NAME, group);
                 }
-                injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
+
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
                 injectParent(context.getWorkflow().getId(), subWorkflowConf);
