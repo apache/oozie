@@ -31,10 +31,12 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
@@ -96,8 +98,21 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
             assertEquals(readContent[offset], content[offset]);
             offset++;
         }
-    }
 
+        // Check for external ids
+        DistcpActionExecutor ae = new DistcpActionExecutor();
+        WorkflowAction wfAction = context.getAction();
+        ae.check(context, wfAction);
+        ae.end(context, wfAction);
+
+        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        String externalIds = wfAction.getExternalChildIDs();
+        assertNotNull(externalIds);
+        assertNotSame("", externalIds);
+        // check for the expected prefix of hadoop jobIDs
+        assertTrue(externalIds.contains("job_"));
+
+    }
 
     protected Context createContext(String actionXml) throws Exception {
         DistcpActionExecutor ae = new DistcpActionExecutor();
@@ -148,4 +163,5 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         assertNotNull(runningJob);
         return runningJob;
     }
+
 }

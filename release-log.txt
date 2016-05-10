@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2471 Show child job url tab for distcp (satishsaley via puru)
 OOZIE-2511 SubWorkflow missing variable set from option if config-default is present in parent workflow (asasvari via rkanter)
 OOZIE-2391 spark-opts value in workflow.xml is not parsed properly (gezapeti via rkanter)
 OOZIE-2489 XML parsing is vulnerable (fdenes via rkanter)
