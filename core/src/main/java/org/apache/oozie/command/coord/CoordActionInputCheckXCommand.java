@@ -71,11 +71,12 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL = Service.CONF_PREFIX
             + "coord.input.check.requeue.interval";
+    public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_INCREASE = Service.CONF_PREFIX
+            + "coord.input.check.requeue.interval.increase";
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
     private String jobId = null;
-
     public CoordActionInputCheckXCommand(String actionId, String jobId) {
         super("coord_action_input", "coord_action_input", 1);
         this.actionId = ParamChecker.notEmpty(actionId, "actionId");
@@ -191,8 +192,10 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
             else if (!isTimeout(currentTime)) {
                 if (status == false) {
+                    long increase = ConfigurationService.getInt(CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_INCREASE)
+                            * 1000L;
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
-                            getCoordInputCheckRequeueInterval());
+                            increase + getCoordInputCheckRequeueInterval());
                 }
                 updateCoordAction(coordAction, isChangeInDependency);
             }

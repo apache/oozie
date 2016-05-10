@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-1402 Increase retry interval for non-progressing coordinator action with fix value (satishsaley via puru)
 OOZIE-2512 ShareLibservice returns incorrect path for jar (satishsaley via puru)
 OOZIE-2471 Show child job url tab for distcp (satishsaley via puru)
 OOZIE-2511 SubWorkflow missing variable set from option if config-default is present in parent workflow (asasvari via rkanter)
