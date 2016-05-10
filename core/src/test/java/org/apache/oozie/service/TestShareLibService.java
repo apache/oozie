@@ -494,6 +494,12 @@ public class TestShareLibService extends XFsTestCase {
             ShareLibService shareLibService = Services.get().get(ShareLibService.class);
             assertTrue(shareLibService.getShareLibJars("something_new").get(0).getName().endsWith("somethingNew.jar"));
             assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
+            assertTrue(shareLibService.getShareLibJars("directjar").get(0).getName().endsWith("direct.jar"));
+            assertTrue(shareLibService.getShareLibJars("linkFile").get(0).getName().endsWith("#renamedLinkFile.xml"));
+            List<Path> listOfPaths = shareLibService.getShareLibJars("directjar");
+            for (Path p : listOfPaths) {
+                assertTrue(p.toString().startsWith("hdfs"));
+            }
             fs.delete(new Path("shareLibPath/"), true);
         }
         finally {
@@ -755,16 +761,28 @@ public class TestShareLibService extends XFsTestCase {
             String testPath = "shareLibPath/";
 
             Path basePath = new Path(testPath + Path.SEPARATOR + "testPath");
-
             Path somethingNew = new Path(testPath + Path.SEPARATOR + "something_new");
+            Path directJarDir = new Path(testPath + Path.SEPARATOR + "directJarDir");
+            Path linkDir = new Path(testPath + Path.SEPARATOR + "linkDir");
+
             fs.mkdirs(basePath);
             fs.mkdirs(somethingNew);
+            fs.mkdirs(directJarDir);
+            fs.mkdirs(linkDir);
 
             createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
             createFile(somethingNew.toString() + Path.SEPARATOR + "somethingNew" + Path.SEPARATOR + "somethingNew.jar");
+            String directJarPath = directJarDir.toString() + Path.SEPARATOR + "direct.jar";
+            String linkFilePath = linkDir.toString() + Path.SEPARATOR + "linkFile.xml";
+            createFile(directJarPath);
+            createFile(linkFilePath);
 
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".directjar",
+                    "/user/test/" + directJarPath.toString());
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".linkFile",
+                    "/user/test/" + linkFilePath.toString() + "#renamedLinkFile.xml");
             createTestShareLibMetaFile(fs, prop);
 
         }
