@@ -1164,6 +1164,19 @@ public class JavaActionExecutor extends ActionExecutor {
                         LOG.debug("ADDING TOKEN: " + fauxAlias);
                         launcherJobConf.getCredentials().addToken(fauxAlias, tk);
                     }
+                    if (credentialsConf.getCredentials().numberOfSecretKeys() > 0) {
+                        for (Entry<String, CredentialsProperties> entry : credentialsProperties.entrySet()) {
+                            CredentialsProperties credProps = entry.getValue();
+                            if (credProps != null) {
+                                Text credName = new Text(credProps.getName());
+                                byte[] secKey = credentialsConf.getCredentials().getSecretKey(credName);
+                                if (secKey != null) {
+                                    LOG.debug("ADDING CREDENTIAL: " + credProps.getName());
+                                    launcherJobConf.getCredentials().addSecretKey(credName, secKey);
+                                }
+                            }
+                        }
+                    }
                 }
                 else {
                     LOG.info("No need to inject credentials.");

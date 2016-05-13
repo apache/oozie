@@ -27,6 +27,7 @@ import org.apache.oozie.util.XLog;
 
 
 public class InsertTestToken extends Credentials{
+    public static String DUMMY_SECRET_KEY = "DummySecretKey";
     public InsertTestToken() {
     }
 
@@ -39,6 +40,9 @@ public class InsertTestToken extends Credentials{
             Token<DelegationTokenIdentifier> abctoken = new Token<DelegationTokenIdentifier>();
             jobconf.getCredentials().addToken(new Text("ABC Token"), abctoken);
             XLog.getLog(getClass()).debug("Added the ABC token in job conf");
+
+            jobconf.getCredentials().addSecretKey(new Text(DUMMY_SECRET_KEY), DUMMY_SECRET_KEY.getBytes("UTF-8"));
+            XLog.getLog(getClass()).debug("Added the " + DUMMY_SECRET_KEY + " in job conf");
         }
         catch (Exception e) {
             XLog.getLog(getClass()).warn("Exception in addtoJobConf", e);

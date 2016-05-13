@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2529 Support adding secret keys to Credentials of Launcher (satishsaley via rohini)
 OOZIE-1402 Increase retry interval for non-progressing coordinator action with fix value (satishsaley via puru)
 OOZIE-2512 ShareLibservice returns incorrect path for jar (satishsaley via puru)
 OOZIE-2471 Show child job url tab for distcp (satishsaley via puru)

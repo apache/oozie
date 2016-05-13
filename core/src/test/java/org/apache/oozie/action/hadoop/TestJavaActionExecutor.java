@@ -980,6 +980,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ae.setCredentialTokens(credentialsConf, context, action, credProperties);
         Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
         assertNotNull(tk);
+
+        byte[] secKey = credentialsConf.getCredentials().getSecretKey(new Text(InsertTestToken.DUMMY_SECRET_KEY));
+        assertNotNull(secKey);
+        assertEquals(InsertTestToken.DUMMY_SECRET_KEY, new String(secKey, "UTF-8"));
     }
 
     public void testCredentialsInvalid() throws Exception {
