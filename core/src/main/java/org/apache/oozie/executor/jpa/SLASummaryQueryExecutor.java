@@ -37,7 +37,6 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
 
     public enum SLASummaryQuery {
         UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES,
-        UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES,
         UPDATE_SLA_SUMMARY_ALL,
         UPDATE_SLA_SUMMARY_EVENTPROCESSED,
         UPDATE_SLA_SUMMARY_FOR_EXPECTED_TIMES,
@@ -71,14 +70,6 @@ public class SLASummaryQueryExecutor extends QueryExecutor<SLASummaryBean, SLASu
                 query.setParameter("actualStartTS", bean.getActualStartTimestamp());
                 query.setParameter("actualEndTS", bean.getActualEndTimestamp());
                 query.setParameter("actualDuration", bean.getActualDuration());
-                break;
-            case UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES:
-                query.setParameter("jobId", bean.getId());
-                query.setParameter("eventProcessed", bean.getEventProcessed());
-                query.setParameter("actualStartTS", bean.getActualStartTimestamp());
-                query.setParameter("actualEndTS", bean.getActualEndTimestamp());
-                query.setParameter("actualDuration", bean.getActualDuration());
-                query.setParameter("lastModifiedTS", bean.getLastModifiedTimestamp());
                 break;
             case UPDATE_SLA_SUMMARY_ALL:
                 query.setParameter("appName", bean.getAppName());

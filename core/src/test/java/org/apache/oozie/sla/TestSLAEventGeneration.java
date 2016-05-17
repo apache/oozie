@@ -513,6 +513,7 @@ public class TestSLAEventGeneration extends XDataTestCase {
         wf.setId(action.getExternalId());
         wf.setStatus(WorkflowJob.Status.KILLED);
         wf.setParentId(action.getId());
+        wf.setEndTime(new Date());
         jpa.execute(new WorkflowJobInsertJPAExecutor(wf));
         new CoordActionUpdateXCommand(wf).call();
         assertEquals(1, ehs.getEventQueue().size());

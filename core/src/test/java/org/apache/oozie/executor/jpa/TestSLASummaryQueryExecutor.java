@@ -131,7 +131,7 @@ public class TestSLASummaryQueryExecutor extends XDataTestCase {
         bean.setActualDuration(endTime.getTime() - startTime.getTime());
         bean.setLastModifiedTime(new Date());
         bean.setEventProcessed(8);
-        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_ACTUAL_TIMES, bean);
+        SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_STATUS_ACTUAL_TIMES, bean);
         retBean = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, bean.getId());
         assertEquals(bean.getActualStartTimestamp(), retBean.getActualStartTimestamp());
         assertEquals(bean.getActualEndTimestamp(), retBean.getActualEndTimestamp());

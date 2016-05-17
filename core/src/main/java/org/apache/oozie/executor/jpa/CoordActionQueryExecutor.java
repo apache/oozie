@@ -59,7 +59,8 @@ public class CoordActionQueryExecutor extends
         GET_TERMINATED_ACTION_IDS_FOR_DATES,
         GET_ACTIVE_ACTIONS_FOR_DATES,
         GET_COORD_ACTIONS_WAITING_READY_SUBMITTED_OLDER_THAN,
-        GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN
+        GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN,
+        GET_COORD_ACTION_FOR_SLA
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
@@ -177,6 +178,7 @@ public class CoordActionQueryExecutor extends
         switch (caQuery) {
             case GET_COORD_ACTION:
             case GET_COORD_ACTION_STATUS:
+            case GET_COORD_ACTION_FOR_SLA:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
@@ -329,6 +331,15 @@ public class CoordActionQueryExecutor extends
                 bean.setStatusStr((String) arr[2]);
                 bean.setExternalId((String) arr[3]);
                 bean.setPushMissingDependenciesBlob((StringBlob) arr[4]);
+                break;
+            case GET_COORD_ACTION_FOR_SLA:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setId((String) arr[0]);
+                bean.setJobId((String) arr[1]);
+                bean.setStatusStr((String) arr[2]);
+                bean.setExternalId((String) arr[3]);
+                bean.setLastModifiedTime((Timestamp) arr[4]);
                 break;
 
             default:

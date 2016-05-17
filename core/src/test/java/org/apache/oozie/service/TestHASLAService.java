@@ -101,17 +101,18 @@ public class TestHASLAService extends ZKXTestCase {
 
             // Case 1 workflow job submitted to dummy server,
             // but before start running, the dummy server is down
-            createWorkflow("job-1");
-            SLARegistrationBean sla1 = TestSLAService._createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+            WorkflowJobBean wfJob1 = createWorkflow("job-1-W");
+            SLARegistrationBean sla1 = TestSLAService._createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
             sla1.setExpectedStart(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); // 2 hr before
             sla1.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 3600 * 1000)); // 1 hr before
             sla1.setExpectedDuration(10 * 60 * 1000); // 10 mins
             dummyCalc.addRegistration(sla1.getId(), sla1);
+            dummyCalc.updateAllSlaStatus();
 
             // Case 2. workflow job submitted to dummy server, start running,
             // then the dummy server is down
-            createWorkflow("job-2");
-            SLARegistrationBean sla2 = TestSLAService._createSLARegistration("job-2", AppType.WORKFLOW_JOB);
+            WorkflowJobBean wfJob2 = createWorkflow("job-2-W");
+            SLARegistrationBean sla2 = TestSLAService._createSLARegistration("job-2-W", AppType.WORKFLOW_JOB);
             sla2.setExpectedStart(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); // 2hr before
             sla2.setExpectedEnd(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); // 1hr ahead
             sla2.setExpectedDuration(10 * 60 * 1000); // 10 mins
@@ -138,12 +139,24 @@ public class TestHASLAService extends ZKXTestCase {
             ehs.new EventWorker().run();
             assertTrue(output.toString().contains(sla1.getId() + " Sla START - MISS!!!"));
 
+            wfJob1.setStatus(WorkflowJob.Status.SUCCEEDED);
+            wfJob1.setEndTime(new Date());
+            wfJob1.setStartTime(new Date());
+            WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                    WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob1);
+
             // Job 1 succeeded on the living server --> duration met and end miss
             slaCalcMem.addJobStatus(sla1.getId(), WorkflowJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, new Date(),
                     new Date());
             ehs.new EventWorker().run();
             assertTrue(output.toString().contains(sla1.getId() + " Sla DURATION - MET!!!"));
             assertTrue(output.toString().contains(sla1.getId() + " Sla END - MISS!!!"));
+
+            wfJob2.setStatus(WorkflowJob.Status.SUCCEEDED);
+            wfJob2.setEndTime(new Date());
+            wfJob2.setStartTime(new Date());
+            WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                    WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob2);
 
             // Job 2 succeeded on the living server --> duration met and end met
             slaCalcMem.addJobStatus(sla2.getId(), WorkflowJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, new Date(),
@@ -161,13 +174,14 @@ public class TestHASLAService extends ZKXTestCase {
         }
     }
 
-    public void updateCoordAction(String id, String status) throws JPAExecutorException {
+    public CoordinatorActionBean updateCoordAction(String id, String status) throws JPAExecutorException {
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setId(id);
         action.setStatusStr(status);
         action.setLastModifiedTime(new Date());
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME,
                 action);
+        return action;
     }
 
     public void testSLAUpdateWithHA() throws Exception {
@@ -187,8 +201,8 @@ public class TestHASLAService extends ZKXTestCase {
         createDBEntry(id3, expectedStartTS, expectedEndTS1);
         createDBEntry(id4, expectedStartTS, expectedEndTS1);
         // Coord Action of jobs 5-6 already started and currently running (to test history set)
-        createDBEntryForStarted(id5, expectedStartTS, expectedEndTS2);
-        createDBEntryForStarted(id6, expectedStartTS, expectedEndTS2);
+        createDBEntryForStarted(id5, expectedStartTS, expectedEndTS2, 1);
+        createDBEntryForStarted(id6, expectedStartTS, expectedEndTS2, 1);
 
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
@@ -198,7 +212,10 @@ public class TestHASLAService extends ZKXTestCase {
         while (itr.hasNext()) {
             slaMapKeys.add(itr.next());
         }
-        assertEquals(6, slaMapKeys.size());
+        //4 jobs expected end is not yet reached
+        //2 jobs has end miss, waiting for job to complete
+        assertEquals(4, slaMapKeys.size());
+        assertEquals(2, slaCalcMem.getHistorySet().size());
 
         DummyZKOozie dummyOozie_1 = null;
         try {
@@ -214,8 +231,8 @@ public class TestHASLAService extends ZKXTestCase {
             while (itr.hasNext()) {
                 slaMapKeys.add(itr.next());
             }
-            assertEquals(6, slaMapKeys.size());
-
+            assertEquals(4, slaMapKeys.size());
+            assertEquals(2, dummySlaCalcMem.getHistorySet().size());
             // Coord Action 1,3 run and update status on *non-dummy* server
             updateCoordAction(id1, "RUNNING");
             slaCalcMem
@@ -314,13 +331,11 @@ public class TestHASLAService extends ZKXTestCase {
 
     public void testNoDuplicateEventsInHA() throws Exception {
         String id1 = "0000001-130521183438837-oozie-test-C@1";
-        Date expectedStartTS = new Date(System.currentTimeMillis() - 2 * 3600 * 1000); // get MISS
-        Date expectedEndTS = new Date(System.currentTimeMillis() - 1 * 3600 * 1000); // get MISS
-        createDBEntry(id1, expectedStartTS, expectedEndTS);
 
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
         slaCalcMem.init(Services.get().getConf()); // loads the job in sla map
+
 
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         EventQueue ehs_q = ehs.getEventQueue();
@@ -336,20 +351,30 @@ public class TestHASLAService extends ZKXTestCase {
             dummyEhs.init(Services.get());
             EventQueue dummyEhs_q = dummyEhs.getEventQueue();
 
+            Date expectedStartTS = new Date(System.currentTimeMillis() + 2 * 3600 * 1000); // get MISS
+            Date expectedEndTS = new Date(System.currentTimeMillis() + 1 * 3600 * 1000); // get MISS
+            SLASummaryBean sla = createDBEntryForStarted(id1, expectedStartTS, expectedEndTS, 0);
+            sla.setExpectedDuration(-1);
+            sla.setLastModifiedTime(new Date());
+            SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_FOR_EXPECTED_TIMES,
+                    sla);
+
             // Action started on Server 1
             updateCoordAction(id1, "RUNNING");
+
             slaCalcMem
                     .addJobStatus(id1, CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(), null);
+            assertEquals(1, ehs_q.size());
             SLACalcStatus s1 = (SLACalcStatus) ehs_q.poll();
-            assertEquals(SLAStatus.IN_PROCESS, s1.getSLAStatus());
 
+            assertEquals(SLAStatus.IN_PROCESS, s1.getSLAStatus());
             // Action ended on Server 2
             updateCoordAction(id1, "FAILED");
             dummySlaCalcMem.addJobStatus(id1, CoordinatorAction.Status.FAILED.name(), EventStatus.FAILURE, new Date(
                     System.currentTimeMillis() - 1800 * 1000),
                     new Date());
-            dummyEhs_q.poll(); // getting rid of the duration_miss event
             SLACalcStatus s2 = (SLACalcStatus) dummyEhs_q.poll();
+
             assertEquals(SLAStatus.MISS, s2.getSLAStatus());
 
             slaCalcMem.updateAllSlaStatus();
@@ -464,7 +489,8 @@ public class TestHASLAService extends ZKXTestCase {
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
     }
 
-    private void createDBEntryForStarted(String actionId, Date expectedStartTS, Date expectedEndTS) throws Exception {
+    private SLASummaryBean createDBEntryForStarted(String actionId, Date expectedStartTS, Date expectedEndTS,
+            int eventProcessed) throws Exception {
         ArrayList<JsonBean> insertList = new ArrayList<JsonBean>();
         Date modTime = new Date();
         WorkflowJobBean wf = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
@@ -494,7 +520,7 @@ public class TestHASLAService extends ZKXTestCase {
         sla.setAppType(AppType.COORDINATOR_ACTION);
         sla.setJobStatus("RUNNING");
         sla.setSLAStatus(SLAStatus.IN_PROCESS);
-        sla.setEventProcessed(1);
+        sla.setEventProcessed(eventProcessed);
         sla.setLastModifiedTime(modTime);
         sla.setExpectedStart(expectedStartTS);
         sla.setActualStart(expectedStartTS);
@@ -508,9 +534,10 @@ public class TestHASLAService extends ZKXTestCase {
         insertList.add(sla);
         insertList.add(reg);
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
+        return sla;
     }
 
-    private void createWorkflow(String id) throws Exception {
+    private WorkflowJobBean createWorkflow(String id) throws Exception {
         List<JsonBean> insertList = new ArrayList<JsonBean>();
         WorkflowJobBean workflow = new WorkflowJobBean();
         workflow.setId(id);
@@ -519,6 +546,7 @@ public class TestHASLAService extends ZKXTestCase {
         workflow.setSlaXml("<sla></sla>");
         insertList.add(workflow);
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
+        return workflow;
     }
 
     public static class DummySLAEventListener extends SLAEventListener {

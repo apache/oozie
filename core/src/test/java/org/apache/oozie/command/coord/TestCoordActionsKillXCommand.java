@@ -19,6 +19,7 @@
 package org.apache.oozie.command.coord;
 
 import java.util.Date;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -28,9 +29,10 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobGetForSLAJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
@@ -84,7 +86,9 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 
         sleep(100);
-        WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(ids[3]));
+        WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_FOR_SLA,
+                ids[3]);
+
         assertEquals(WorkflowJob.Status.KILLED, wf.getStatus());
 
         CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(ids[0]));
@@ -118,7 +122,8 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 
         sleep(100);
-        WorkflowJobBean wf = jpaService.execute(new WorkflowJobGetForSLAJPAExecutor(ids[3]));
+        WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_FOR_SLA,
+                ids[3]);
         assertEquals(WorkflowJob.Status.KILLED, wf.getStatus());
 
         CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(ids[0]));

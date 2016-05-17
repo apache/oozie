@@ -28,7 +28,6 @@ import javax.persistence.Query;
 import org.apache.oozie.BinaryBlob;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -60,7 +59,8 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
         GET_WORKFLOW_RESUME,
         GET_WORKFLOW_STATUS,
         GET_WORKFLOWS_PARENT_COORD_RERUN,
-        GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN
+        GET_COMPLETED_COORD_WORKFLOWS_OLDER_THAN,
+        GET_WORKFLOW_FOR_SLA
     };
 
     private static WorkflowJobQueryExecutor instance = new WorkflowJobQueryExecutor();
@@ -171,6 +171,7 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
             case GET_WORKFLOW_KILL:
             case GET_WORKFLOW_RESUME:
             case GET_WORKFLOW_STATUS:
+            case GET_WORKFLOW_FOR_SLA:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_WORKFLOWS_PARENT_COORD_RERUN:
@@ -329,6 +330,14 @@ public class WorkflowJobQueryExecutor extends QueryExecutor<WorkflowJobBean, Wor
                 arr = (Object[]) ret;
                 bean.setId((String) arr[0]);
                 bean.setParentId((String) arr[1]);
+                break;
+            case GET_WORKFLOW_FOR_SLA:
+                bean = new WorkflowJobBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStatusStr((String) arr[1]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[2]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
                 break;
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct job bean for "

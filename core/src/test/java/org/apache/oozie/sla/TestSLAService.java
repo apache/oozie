@@ -25,16 +25,17 @@ import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.SLAStatus;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
@@ -100,7 +101,9 @@ public class TestSLAService extends XDataTestCase {
 
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         // test start-miss
-        SLARegistrationBean sla1 = _createSLARegistration("job-1", AppType.WORKFLOW_JOB);
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+
+        SLARegistrationBean sla1 = _createSLARegistration(wfJob.getId(), AppType.WORKFLOW_JOB);
         sla1.setExpectedStart(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); //1 hour back
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000)); //1 hour back
         sla1.setExpectedDuration(10 * 60 * 1000); //10 mins
@@ -113,22 +116,48 @@ public class TestSLAService extends XDataTestCase {
         output.setLength(0);
 
         // test different jobs and events start-met and end-miss
-        sla1 = _createSLARegistration("job-2", AppType.WORKFLOW_JOB);
+        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+
+        sla1 = _createSLARegistration(wfJob2.getId(), AppType.WORKFLOW_JOB);
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
+
+        wfJob2.setStatusStr("RUNNING");
+        wfJob2.setLastModifiedTime(new Date());
+        wfJob2.setStartTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob2);
+
         slas.addStatusEvent(sla1.getId(), WorkflowJob.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
                 new Date());
-        SLARegistrationBean sla2 = _createSLARegistration("job-3", AppType.COORDINATOR_JOB);
+        CoordinatorActionBean action = addRecordToCoordActionTable("coord_id-C", 1,
+                CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml", 0);
+
+        SLARegistrationBean sla2 = _createSLARegistration(action.getId(), AppType.COORDINATOR_ACTION);
         sla2.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead only for testing
         sla2.setExpectedEnd(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); //2 hours back
         sla2.setExpectedDuration(10); //to process duration too
         slas.addRegistrationEvent(sla2);
         assertEquals(3, slas.getSLACalculator().size());
+
         Date startTime = new Date();
-        slas.addStatusEvent(sla2.getId(), CoordinatorJob.Status.RUNNING.name(), EventStatus.STARTED, startTime,
-                null);
-        slas.addStatusEvent(sla2.getId(), CoordinatorJob.Status.SUCCEEDED.name(), EventStatus.SUCCESS, startTime,
+        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        wfJob3.setStatusStr("SUCCEEDED");
+        wfJob3.setLastModifiedTime(new Date());
+        wfJob3.setStartTime(startTime);
+        wfJob3.setEndTime(startTime);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob3);
+
+        action.setCreatedTime(startTime);
+        action.setStatus(CoordinatorAction.Status.SUCCEEDED);
+        action.setLastModifiedTime(new Date());
+        action.setExternalId(wfJob3.getId());
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, action);
+        slas.addStatusEvent(sla1.getId(), CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
+                new Date());
+        slas.addStatusEvent(sla2.getId(), CoordinatorAction.Status.SUCCEEDED.name(), EventStatus.SUCCESS, startTime,
                 new Date());
         slas.runSLAWorker();
         ehs.new EventWorker().run();
@@ -139,6 +168,11 @@ public class TestSLAService extends XDataTestCase {
 
         // test same job multiple events (start-miss, end-miss) through regular check
         WorkflowJobBean job4 = addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        job4.setLastModifiedTime(new Date());
+        job4.setEndTime(new Date());
+        job4.setStartTime(new Date());
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, job4);
         sla2 = _createSLARegistration(job4.getId(), AppType.WORKFLOW_JOB);
         sla2.setExpectedStart(new Date(System.currentTimeMillis() - 2 * 3600 * 1000)); //2 hours back
         sla2.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 3600 * 1000)); //1 hour back
@@ -151,14 +185,13 @@ public class TestSLAService extends XDataTestCase {
         output.setLength(0);
         // As expected duration is not set, duration shall be processed and job removed from map
         assertEquals(2, slas.getSLACalculator().size());
+
         // test same job multiple events (start-met, end-met) through job status event
-        sla1 = _createSLARegistration("action@1", AppType.COORDINATOR_ACTION);
+        sla1 = _createCoordActionSLARegistration(CoordinatorAction.Status.SUCCEEDED.name());
         sla1.setExpectedStart(new Date(System.currentTimeMillis() + 1 * 3600 * 1000)); //1 hour ahead
         sla1.setExpectedEnd(new Date(System.currentTimeMillis() + 2 * 3600 * 1000)); //2 hours ahead
         slas.addRegistrationEvent(sla1);
         assertEquals(3, slas.getSLACalculator().size());
-        slas.addStatusEvent(sla1.getId(), CoordinatorAction.Status.RUNNING.name(), EventStatus.STARTED, new Date(),
-                new Date());
         slas.addStatusEvent(sla1.getId(), CoordinatorAction.Status.SUCCEEDED.name(), EventStatus.SUCCESS,
                 new Date(), new Date());
         slas.runSLAWorker();
@@ -174,39 +207,40 @@ public class TestSLAService extends XDataTestCase {
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
         JPAService jpaService = Services.get().get(JPAService.class);
 
+        Date date = new Date();
         // CASE 1: positive test WF job
         WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         SLARegistrationBean sla = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
-        sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1800 * 1000)); // half hour back
+        sla.setExpectedEnd(new Date(date.getTime() - 1 * 1800 * 1000)); // half hour back
         slas.addRegistrationEvent(sla);
 
         // CASE 2: negative test WF job
         WorkflowJobBean job2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        job2.setEndTime(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
-        job2.setStartTime(new Date(System.currentTimeMillis() - 1 * 2000 * 1000));
+        job2.setEndTime(new Date(date.getTime()  - 1 * 1800 * 1000));
+        job2.setStartTime(new Date(date.getTime()  - 1 * 2000 * 1000));
         job2.setLastModifiedTime(new Date());
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, job2);
         sla = _createSLARegistration(job2.getId(), AppType.WORKFLOW_JOB);
-        sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1500 * 1000)); // in past but > actual end
+        sla.setExpectedEnd(new Date(date.getTime()  - 1 * 1500 * 1000)); // in past but > actual end
         sla.setExpectedDuration(100); //unreasonable to cause MISS
         slas.addRegistrationEvent(sla);
 
+        slas.runSLAWorker();
+
         // CASE 3: positive test Coord action
-        CoordinatorActionBean action1 = addRecordToCoordActionTable("coord-action-1", 1,
+        CoordinatorActionBean action1 = addRecordToCoordActionTable("coord-action-C@1", 1,
                 CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
-        WorkflowJobBean extWf = new WorkflowJobBean();
-        extWf.setId(action1.getExternalId());
-        extWf.setEndTime(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
-        extWf.setStartTime(new Date(System.currentTimeMillis() - 1 * 2100 * 1000));
-        jpaService.execute(new WorkflowJobInsertJPAExecutor(extWf));
+        action1.setExternalId(null);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, action1);
+
         sla = _createSLARegistration(action1.getId(), AppType.COORDINATOR_ACTION);
         sla.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 2000 * 1000)); // past
         slas.addRegistrationEvent(sla);
 
         // CASE 4: positive test coord action
-        CoordinatorActionBean action2 = addRecordToCoordActionTable("coord-action-2", 1,
+        CoordinatorActionBean action2 = addRecordToCoordActionTable("coord-action-C@2", 1,
                 CoordinatorAction.Status.FAILED, "coord-action-get.xml", 0);
-        extWf = new WorkflowJobBean();
+        WorkflowJobBean extWf = new WorkflowJobBean();
         extWf.setId(action2.getExternalId());
         // actual end before expected. but action is failed
         extWf.setEndTime(new Date(System.currentTimeMillis() - 1 * 1800 * 1000));
@@ -217,7 +251,7 @@ public class TestSLAService extends XDataTestCase {
         slas.addRegistrationEvent(sla);
 
         // CASE 5: negative test coord action
-        CoordinatorActionBean action3 = addRecordToCoordActionTable("coord-action-3", 1,
+        CoordinatorActionBean action3 = addRecordToCoordActionTable("coord-action-C@3", 1,
                 CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", 0);
         extWf = new WorkflowJobBean();
         extWf.setId(action3.getExternalId());
@@ -271,16 +305,25 @@ public class TestSLAService extends XDataTestCase {
         assertNull(slas.getSLACalculator().get(action2.getId())); //removed from memory
 
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, action1.getId());
-        extWf = jpaService.execute(new WorkflowJobGetJPAExecutor(action1.getExternalId()));
-        assertEquals(extWf.getStartTime(), slaSummary.getActualStart());
-        assertEquals(extWf.getEndTime(), slaSummary.getActualEnd());
-        assertEquals(extWf.getEndTime().getTime() - extWf.getStartTime().getTime(), slaSummary.getActualDuration());
+        assertNull(slaSummary.getActualStart());
+        assertNull(slaSummary.getActualEnd());
         assertEquals(action1.getStatusStr(), slaSummary.getJobStatus());
         assertEquals(SLAEvent.EventStatus.END_MISS, slaSummary.getEventStatus());
         assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
-        assertEquals(8, slaSummary.getEventProcessed());
-        assertNull(slas.getSLACalculator().get(action1.getId())); //removed from memory
+        assertEquals(7, slaSummary.getEventProcessed());
+        assertNotNull(slas.getSLACalculator().get(action1.getId()));
 
+        //From waiting to TIMEOUT with wf jobid
+        action1.setStatus(CoordinatorAction.Status.TIMEDOUT);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, action1);
+        slas.getSLACalculator().addJobStatus(action1.getId(), null, null, null, null);
+        slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, action1.getId());
+        assertNull(slaSummary.getActualStart());
+        assertNotNull(slaSummary.getActualEnd());
+        assertEquals("TIMEDOUT", slaSummary.getJobStatus());
+        assertEquals(SLAEvent.EventStatus.END_MISS, slaSummary.getEventStatus());
+        assertEquals(SLAStatus.MISS, slaSummary.getSLAStatus());
+        assertEquals(8, slaSummary.getEventProcessed());
     }
 
     /**
@@ -306,6 +349,28 @@ public class TestSLAService extends XDataTestCase {
         bean.setAppType(appType);
         return bean;
     }
+
+    public SLARegistrationBean _createCoordActionSLARegistration(String status) throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        wfJob.setLastModifiedTime(new Date());
+        wfJob.setStartTime(new Date());
+        wfJob.setEndTime(new Date());
+        wfJob.setStatusStr(status);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(
+                WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_START_END, wfJob);
+
+        CoordinatorActionBean action = addRecordToCoordActionTable(new Date().getTime() + "-C", 1,
+                CoordinatorAction.Status.TIMEDOUT, "coord-action-get.xml", 0);
+        action.setExternalId(wfJob.getId());
+        action.setStatusStr(status);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_RERUN, action);
+
+        SLARegistrationBean bean = new SLARegistrationBean();
+        bean.setId(action.getId());
+        bean.setAppType(AppType.COORDINATOR_ACTION);
+        return bean;
+    }
+
 
     public static void assertEventNoDuplicates(String outputStr, String eventMsg) {
         int index = outputStr.indexOf(eventMsg);

@@ -544,12 +544,19 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static long getLong(String name) {
+        return getLong(name, ConfigUtils.LONG_DEFAULT);
+    }
+
+    public static long getLong(String name, long defultValue) {
         Configuration conf = Services.get().getConf();
-        return getLong(conf, name);
+        return getLong(conf, name, defultValue);
     }
 
     public static long getLong(Configuration conf, String name) {
-        return conf.getLong(name, ConfigUtils.LONG_DEFAULT);
+        return getLong(conf, name, ConfigUtils.LONG_DEFAULT);
+    }
+    public static long getLong(Configuration conf, String name, long defultValue) {
+        return conf.getLong(name, defultValue);
     }
 
     public static Class<?>[] getClasses(String name) {
@@ -590,4 +597,5 @@ public class ConfigurationService implements Service, Instrumentable {
         Configuration conf = Services.get().getConf();
         return getPassword(conf, name, defaultValue);
     }
+
 }

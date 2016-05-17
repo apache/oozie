@@ -57,7 +57,8 @@ public class WorkflowActionQueryExecutor extends
         GET_ACTION_COMPLETED,
         GET_RUNNING_ACTIONS,
         GET_PENDING_ACTIONS,
-        GET_ACTIONS_FOR_WORKFLOW_RERUN
+        GET_ACTIONS_FOR_WORKFLOW_RERUN,
+        GET_ACTION_FOR_SLA
     };
 
     private static WorkflowActionQueryExecutor instance = new WorkflowActionQueryExecutor();
@@ -202,6 +203,7 @@ public class WorkflowActionQueryExecutor extends
             case GET_ACTION_CHECK:
             case GET_ACTION_END:
             case GET_ACTION_COMPLETED:
+            case GET_ACTION_FOR_SLA:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_RUNNING_ACTIONS:
@@ -363,6 +365,15 @@ public class WorkflowActionQueryExecutor extends
                 bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
                 bean.setType((String) arr[4]);
                 break;
+            case GET_ACTION_FOR_SLA:
+                bean = new WorkflowActionBean();
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setStatusStr((String) arr[1]);
+                bean.setStartTime(DateUtils.toDate((Timestamp) arr[2]));
+                bean.setEndTime(DateUtils.toDate((Timestamp) arr[3]));
+                break;
+
             default:
                 throw new JPAExecutorException(ErrorCode.E0603, "QueryExecutor cannot construct action bean for "
                         + namedQuery.name());
