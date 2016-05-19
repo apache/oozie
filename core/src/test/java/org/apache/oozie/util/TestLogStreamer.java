@@ -149,7 +149,9 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, DateUtils.parseDateOozieTZ("2009-06-24T02:43Z"), new Date(currTime - 5 * 3600000), 4096);
+        Calendar cal = Calendar.getInstance();
+        cal.set(2009, Calendar.JUNE, 24, 2, 43, 0);
+        str.streamLog(sw, cal.getTime(), new Date(currTime - 5 * 3600000), 4096);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
