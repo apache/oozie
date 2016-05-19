@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2531 Prevent Spark trying for token which is already available (satishsaley via rkanter)
 OOZIE-2509 SLA job status can stuck in running state (puru)
 OOZIE-2529 Support adding secret keys to Credentials of Launcher (satishsaley via rohini)
 OOZIE-1402 Increase retry interval for non-progressing coordinator action with fix value (satishsaley via puru)

@@ -37,6 +37,8 @@ public class SparkMain extends LauncherMain {
     private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
     private static final String DIST_FILES = "spark.yarn.dist.files=";
     private static final String JARS_OPTION = "--jars";
+    private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
+    private static final String HBASE_SECURITY_TOKEN = "spark.yarn.security.tokens.hbase.enabled";
 
     private String sparkJars = null;
     private String sparkClasspath = null;
@@ -104,6 +106,8 @@ public class SparkMain extends LauncherMain {
         boolean addedDriverClasspath = false;
         boolean addedDistFiles = false;
         boolean addedJars = false;
+        boolean addedHiveSecurityToken = false;
+        boolean addedHBaseSecurityToken = false;
         String sparkOpts = actionConf.get(SparkActionExecutor.SPARK_OPTS);
         if (StringUtils.isNotEmpty(sparkOpts)) {
             List<String> sparkOptions = splitSparkOpts(sparkOpts);
@@ -135,6 +139,12 @@ public class SparkMain extends LauncherMain {
                         addedDriverClasspath = true;
                     }
                 }
+                if (opt.startsWith(HIVE_SECURITY_TOKEN)) {
+                    addedHiveSecurityToken = true;
+                }
+                if (opt.startsWith(HBASE_SECURITY_TOKEN)) {
+                    addedHBaseSecurityToken = true;
+                }
                 sparkArgs.add(opt);
             }
         }
@@ -156,7 +166,14 @@ public class SparkMain extends LauncherMain {
             sparkArgs.add("--conf");
             sparkArgs.add(DIST_FILES + sparkJars);
         }
-
+        if (!addedHiveSecurityToken) {
+            sparkArgs.add("--conf");
+            sparkArgs.add(HIVE_SECURITY_TOKEN + "=false");
+        }
+        if (!addedHBaseSecurityToken) {
+            sparkArgs.add("--conf");
+            sparkArgs.add(HBASE_SECURITY_TOKEN + "=false");
+        }
         if (!sparkArgs.contains(VERBOSE_OPTION)) {
             sparkArgs.add(VERBOSE_OPTION);
         }
