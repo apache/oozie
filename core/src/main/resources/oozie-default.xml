@@ -1505,7 +1505,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             distcp-action-0.1.xsd,distcp-action-0.2.xsd,
             oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,
             hive2-action-0.1.xsd, hive2-action-0.2.xsd,
-            spark-action-0.1.xsd
+            spark-action-0.1.xsd,spark-action-0.2.xsd
         </value>
         <description>
             List of schemas for workflows (separated by commas).
