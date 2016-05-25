@@ -271,21 +271,33 @@ downloadPatch () {
 applyPatch() {
   echo "Applying patch" >> $STDOUT
   echo "" >> $STDOUT
-  patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
+  git apply --check -v -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
         >> $STDOUT
-  if [[  ${PIPESTATUS[0]} != 0 ]] ; then
-    echo "Patch failed to apply to head of branch"
-    echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
-    echo "" >> ${SUMMARYFILE}
-    echo "----------------------------" >> ${SUMMARYFILE}
-    echo
-    cleanupAndExit 1
-  fi
-  patch -f -E -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
-  if [[ $? != 0 ]] ; then
-    echo "ODD!, dry run passed, but patch failed to apply to head of branch"
-    echo
-    cleanupAndExit 1
+  if [[  ${PIPESTATUS[0]} == 0 ]] ; then
+    git apply -v -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+    if [[ $? != 0 ]] ; then
+      echo "ODD!, git apply --check -p0 passed, but patch failed to apply to head of branch"
+      echo
+      cleanupAndExit 1
+    fi
+  else
+    git apply --check -v < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
+        >> $STDOUT
+    if [[  ${PIPESTATUS[0]} == 0 ]] ; then
+      git apply -v < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+      if [[ $? != 0 ]] ; then
+        echo "ODD!, git apply --check passed, but patch failed to apply to head of branch"
+        echo
+        cleanupAndExit 1
+      fi
+    else
+      echo "Patch failed to apply to head of branch"
+      echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
+      echo "" >> ${SUMMARYFILE}
+      echo "----------------------------" >> ${SUMMARYFILE}
+      echo
+      cleanupAndExit 1
+    fi
   fi
   echo "" >> $STDOUT
   echo "Patch applied"

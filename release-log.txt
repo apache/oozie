@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2532 patch apply does not handle binary files (gezapeti via rkanter)
 OOZIE-2330 Spark action should take the global jobTracker and nameNode configs by default and allow file and archive elements (satishsaley via rkanter)
 OOZIE-2510 TestLogStreamer.testStreamLog() fails in other timezones (pbacsko via rkanter)
 OOZIE-2531 Prevent Spark trying for token which is already available (satishsaley via rkanter)
