@@ -24,7 +24,6 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ZKUtils;
 
 /**
  * ZKConnectionListener listens on ZK connection status.
@@ -47,8 +46,7 @@ public class ZKConnectionListener implements ConnectionStateListener {
         // ZK connected
         // }
         if (newState == ConnectionState.SUSPENDED) {
-            LOG.warn("ZK connection is suspended, waiting for reconnect. If connection doesn't reconnect before "
-                    + ZKUtils.getZKConnectionTimeout() + " (sec) Oozie server will shutdown itself");
+            LOG.warn("ZK connection is suspended, waiting to reconnect.");
         }
 
         if (newState == ConnectionState.RECONNECTED) {
@@ -57,7 +55,7 @@ public class ZKConnectionListener implements ConnectionStateListener {
         }
 
         if (newState == ConnectionState.LOST) {
-            LOG.fatal("ZK is not reconnected in " + ZKUtils.getZKConnectionTimeout());
+            LOG.fatal("ZK is not reconnected");
             if (ConfigurationService.getBoolean(CONF_SHUTDOWN_ON_TIMEOUT)) {
                 LOG.fatal("Shutting down Oozie server");
                 Services.get().destroy();

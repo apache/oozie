@@ -534,6 +534,11 @@ public class ConfigurationService implements Service, Instrumentable {
         return getInt(conf, name);
     }
 
+    public static int getInt(String name, int defaultValue) {
+        Configuration conf = Services.get().getConf();
+        return conf.getInt(name, defaultValue);
+    }
+
     public static int getInt(Configuration conf, String name) {
         return conf.getInt(name, ConfigUtils.INT_DEFAULT);
     }

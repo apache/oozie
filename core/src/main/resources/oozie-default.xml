@@ -2381,8 +2381,22 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.zookeeper.connection.timeout</name>
         <value>180</value>
         <description>
-        Default ZK connection timeout (in sec). If connection is lost for more than timeout, then Oozie server will shutdown
-        itself if oozie.zookeeper.server.shutdown.ontimeout is true.
+        Default ZK connection timeout (in sec).
+        </description>
+    </property>
+    <property>
+        <name>oozie.zookeeper.session.timeout</name>
+        <value>300</value>
+        <description>
+            Default ZK session timeout (in sec). If connection is lost even after retry, then Oozie server will shutdown
+            itself if oozie.zookeeper.server.shutdown.ontimeout is true.
+        </description>
+    </property>
+    <property>
+        <name>oozie.zookeeper.max.retries</name>
+        <value>10</value>
+        <description>
+            Maximum number of times to retry.
         </description>
     </property>
 

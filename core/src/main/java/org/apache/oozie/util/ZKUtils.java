@@ -94,9 +94,19 @@ public class ZKUtils {
     public static final String ZK_NAMESPACE = "oozie.zookeeper.namespace";
 
     /**
-     *Default ZK connection timeout ( in sec). If connection is lost for more than timeout, then Oozie server will shutdown itself.
+     *Default ZK connection timeout ( in sec).
      */
     public static final String ZK_CONNECTION_TIMEOUT = "oozie.zookeeper.connection.timeout";
+
+    /**
+     *Default ZK session timeout ( in sec). If connection is lost after retry, then Oozie server will shutdown itself.
+     */
+    public static final String ZK_SESSION_TIMEOUT = "oozie.zookeeper.session.timeout";
+
+    /**
+     * Maximum number of times to retry.
+     */
+    public static final String ZK_MAX_RETRIES = "oozie.zookeeper.max.retries";
 
     /**
      * oozie-env environment variable for specifying the Oozie instance ID
@@ -124,7 +134,7 @@ public class ZKUtils {
     private XLog log;
 
     private static ZKUtils zk = null;
-    private static int zkConnectionTimeout;
+
 
     /**
      * Private Constructor for the singleton; it connects to ZooKeeper and advertises this Oozie Server.
@@ -179,7 +189,8 @@ public class ZKUtils {
         RetryPolicy retryPolicy = ZKUtils.getRetryPolicy();
         String zkConnectionString = ConfigurationService.get(ZK_CONNECTION_STRING);
         String zkNamespace = getZKNameSpace();
-        zkConnectionTimeout = ConfigurationService.getInt(ZK_CONNECTION_TIMEOUT);
+        int zkConnectionTimeout = ConfigurationService.getInt(ZK_CONNECTION_TIMEOUT);
+        int zkSessionTimeout = ConfigurationService.getInt(ZK_SESSION_TIMEOUT, 300);
 
         ACLProvider aclProvider;
         if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
@@ -199,6 +210,7 @@ public class ZKUtils {
                                             .retryPolicy(retryPolicy)
                                             .aclProvider(aclProvider)
                                             .connectionTimeoutMs(zkConnectionTimeout * 1000) // in ms
+                                            .sessionTimeoutMs(zkSessionTimeout * 1000) //in ms
                                             .build();
         client.start();
         client.getConnectionStateListenable().addListener(new ZKConnectionListener());
@@ -409,7 +421,7 @@ public class ZKUtils {
      * @return RetryPolicy
      */
     public static RetryPolicy getRetryPolicy() {
-        return new ExponentialBackoffRetry(1000, 3);
+        return new ExponentialBackoffRetry(1000, ConfigurationService.getInt(ZK_MAX_RETRIES, 10));
     }
 
     /**
@@ -418,12 +430,5 @@ public class ZKUtils {
      */
     public static String getZKNameSpace() {
         return ConfigurationService.get(ZK_NAMESPACE);
-    }
-    /**
-     * Return ZK connection timeout
-     * @return
-     */
-    public static int getZKConnectionTimeout(){
-        return zkConnectionTimeout;
     }
 }
