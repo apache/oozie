@@ -43,6 +43,7 @@ public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_JOB_NAME = "oozie.spark.name";
     public static final String SPARK_CLASS = "oozie.spark.class";
     public static final String SPARK_JAR = "oozie.spark.jar";
+    public static final String MAPRED_CHILD_ENV = "mapred.child.env";
 
     public SparkActionExecutor() {
         super("spark");
@@ -104,6 +105,26 @@ public class SparkActionExecutor extends JavaActionExecutor {
             launcherJobConf.set(TASK_USER_CLASSPATH_PRECEDENCE, "true");
         }
         return launcherJobConf;
+    }
+
+    @Override
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
+            throws ActionExecutorException {
+        super.setupLauncherConf(conf, actionXml, appPath, context);
+
+        // Set SPARK_HOME environment variable on launcher job
+        // It is needed since pyspark client checks for it.
+        String sparkHome = "SPARK_HOME=.";
+        String mapredChildEnv = conf.get("oozie.launcher." + MAPRED_CHILD_ENV);
+
+        if (mapredChildEnv == null) {
+            conf.set(MAPRED_CHILD_ENV, sparkHome);
+            conf.set("oozie.launcher." + MAPRED_CHILD_ENV, sparkHome);
+        } else if (!mapredChildEnv.contains("SPARK_HOME")) {
+            conf.set(MAPRED_CHILD_ENV, mapredChildEnv + "," + sparkHome);
+            conf.set("oozie.launcher." + MAPRED_CHILD_ENV, mapredChildEnv + "," + sparkHome);
+        }
+        return conf;
     }
 
     @Override

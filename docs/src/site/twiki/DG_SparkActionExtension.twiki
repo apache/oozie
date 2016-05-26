@@ -159,6 +159,47 @@ either in =spark-opts= with =--conf= or from =oozie.service.SparkConfigurationSe
 
 3. spark.eventLog.enabled=true
 
+---+++ PySpark with Spark Action
+
+To submit PySpark scripts with Spark Action, pyspark dependencies must be available in sharelib or in workflow's lib/ directory.
+For more information, please refer to [[AG_Install#Oozie_Share_Lib][installation document.]]
+
+*Example:*
+
+<verbatim>
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+    ....
+    <action name="myfirstpysparkjob">
+        <spark xmlns="uri:oozie:spark-action:0.1">
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
+            <prepare>
+                <delete path="${jobOutput}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <master>yarn-cluster</master>
+            <name>Spark Example</name>
+            <jar>pi.py</jar>
+            <spark-opts>--executor-memory 20G --num-executors 50
+            --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"</spark-opts>
+            <arg>100</arg>
+        </spark>
+        <ok to="myotherjob"/>
+        <error to="errorcleanup"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+The =jar= element indicates python file. Refer to the file by it's localized name, because only local files are allowed
+in PySpark. The py file should be in the lib/ folder next to the workflow.xml or added using the =file= element so that
+it's localized to the working directory with just its name.
+
 ---++ Appendix, Spark XML-Schema
 
 ---+++ AE.A Appendix A, Spark XML-Schema

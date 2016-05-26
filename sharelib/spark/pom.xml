@@ -50,6 +50,11 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-sharelib-oozie</artifactId>
             <scope>provided</scope>
@@ -63,6 +68,38 @@
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-beeline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-exec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-jdbc</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-metastore</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-serde</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-service</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-shims</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -97,6 +134,38 @@
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-beeline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-exec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-jdbc</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-metastore</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-serde</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-service</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spark-project.hive</groupId>
+                    <artifactId>hive-shims</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -317,6 +386,38 @@
                         <exclusion>
                             <groupId>org.apache.hadoop</groupId>
                             <artifactId>hadoop-client</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-beeline</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-common</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-exec</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-jdbc</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-metastore</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-serde</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-service</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.spark-project.hive</groupId>
+                            <artifactId>hive-shims</artifactId>
                         </exclusion>
                     </exclusions>
                 </dependency>

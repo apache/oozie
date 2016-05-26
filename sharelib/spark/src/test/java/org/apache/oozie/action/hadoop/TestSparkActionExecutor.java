@@ -59,7 +59,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
     private static final String SPARK_FILENAME = "file.txt";
     private static final String OUTPUT = "output";
     private static Pattern SPARK_OPTS_PATTERN = Pattern.compile("([^= ]+)=([^= ]+)");
-
+    public static String SPARK_TESTING_MEMORY = "spark.testing.memory=512000000"; // 512MB
     @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
@@ -159,6 +159,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
                 "<jar>" + getAppPath() +"/lib/test.jar</jar>" +
                 "<arg>" + getAppPath() + "/" + SPARK_FILENAME + "</arg>" +
                 "<arg>" + getAppPath() + "/" + OUTPUT + "</arg>" +
+                "<spark-opts>--conf " +SPARK_TESTING_MEMORY+"</spark-opts>"+
                 "</spark>";
         return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
     }
