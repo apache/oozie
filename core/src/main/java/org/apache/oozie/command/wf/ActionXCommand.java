@@ -97,11 +97,14 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             action.setPendingAge(new Date(System.currentTimeMillis() + retryDelayMillis));
             LOG.info("Next Retry, Attempt Number [{0}] in [{1}] milliseconds", actionRetryCount + 1, retryDelayMillis);
             this.resetUsed();
-            queue(this, retryDelayMillis);
+            queueCommandForTransientFailure(retryDelayMillis);
             return true;
         }
     }
 
+    protected void queueCommandForTransientFailure(long retryDelayMillis){
+        queue(this, retryDelayMillis);
+    }
     /**
      * Takes care of non transient failures. The job is suspended, and the state of the action is changed to *MANUAL and
      * set pending flag of action to false
