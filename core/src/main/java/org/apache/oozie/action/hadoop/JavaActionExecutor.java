@@ -259,7 +259,7 @@ public class JavaActionExecutor extends ActionExecutor {
             injectLauncherProperties(actionDefaultConf, launcherConf);
             // Inject <job-xml> and <configuration> for launcher
             try {
-                parseJobXmlAndConfiguration(context, actionXml, appPath, conf, true);
+                parseJobXmlAndConfiguration(context, actionXml, appPath, launcherConf, true);
             } catch (HadoopAccessorException ex) {
                 throw convertException(ex);
             } catch (URISyntaxException ex) {

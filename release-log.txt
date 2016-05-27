@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2535 User can't disable uber mode (puru)
 OOZIE-2482 Pyspark job fails with Oozie (satishsaley and gezapeti via rkanter)
 OOZIE-2467 Oozie can shutdown itself on long GC pause (puru)
 OOZIE-2537 SqoopMain does not set up log4j properly (pbacsko via rkanter)

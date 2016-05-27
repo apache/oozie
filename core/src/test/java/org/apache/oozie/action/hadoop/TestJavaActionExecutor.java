@@ -2330,6 +2330,29 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
     }
 
+    public void testDisableUberForUserProperties() throws Exception {
+        Element actionXml1 = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                + "<name-node>" + getNameNodeUri() + "</name-node>"
+                + "<configuration>"
+                + "<property><name>oozie.launcher.mapreduce.job.ubertask.enable</name>"
+                + "<value>false</value></property>"
+                + "</configuration>"
+                + "<main-class>MAIN-CLASS</main-class>" + "</java>");
+        JavaActionExecutor ae = new JavaActionExecutor();
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+
+        Context context = new Context(wf, action);
+        JobConf launcherConf = new JobConf();
+        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml1, launcherConf);
+        // uber mode should be disabled since oozie.launcher.mapreduce.job.classloader=true
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_UBER_MODE));
+    }
+
     public void testUpdateConfForTimeLineServiceEnabled() throws Exception {
         Element actionXml = XmlUtils
                 .parseXml("<java>"
