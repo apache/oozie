@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
@@ -34,6 +35,7 @@ import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.coord.input.dependency.AbstractCoordInputDependency;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.coord.input.dependency.CoordInputInstance;
+import org.apache.oozie.coord.input.dependency.CoordPullInputDependency;
 import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorResult.STATUS;
 import org.apache.oozie.dependency.URIHandlerException;
 import org.apache.oozie.util.LogUtils;
@@ -83,8 +85,7 @@ public class CoordInputLogicEvaluatorPhaseOne implements CoordInputLogicEvaluato
         List<String> availableList = new ArrayList<String>();
         if (coordInputDependency.getDependencyMap().get(dataSet) == null) {
             CoordInputLogicEvaluatorResult retData = new CoordInputLogicEvaluatorResult();
-            if (coordInputDependency.getAvailableDependencies(dataSet) == null
-                    || coordInputDependency.getAvailableDependencies(dataSet).isEmpty()) {
+            if (((CoordPullInputDependency) coordAction.getPullInputDependencies()).getUnResolvedDependency(dataSet) != null) {
                 log.debug("Data set [{0}] is unresolved set, will get resolved in phasetwo", dataSet);
                 retData.setStatus(CoordInputLogicEvaluatorResult.STATUS.PHASE_TWO_EVALUATION);
             }

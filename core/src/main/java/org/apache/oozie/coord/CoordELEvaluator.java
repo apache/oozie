@@ -219,7 +219,8 @@ public class CoordELEvaluator {
                     // check
                     // null
                 }
-                Element doneFlagElement = data.getChild("done-flag", data.getNamespace());
+                Element doneFlagElement = data.getChild("dataset", data.getNamespace()).getChild("done-flag",
+                        data.getNamespace());
                 String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
                 e.setVariable(".datain." + data.getAttributeValue("name") + ".doneFlag", doneFlag);
             }

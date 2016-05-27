@@ -24,6 +24,7 @@ import org.apache.commons.jexl2.JexlEngine;
 import org.apache.commons.jexl2.parser.ASTAndNode;
 import org.apache.commons.jexl2.parser.ASTOrNode;
 import org.apache.commons.jexl2.parser.JexlNode;
+import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorResult.STATUS;
 
 /**
  * Oozie implementation of jexl Interpreter
@@ -58,15 +59,22 @@ public class OozieJexlInterpreter extends Interpreter {
         CoordInputLogicEvaluatorResult left = (CoordInputLogicEvaluatorResult) node.jjtGetChild(0)
                 .jjtAccept(this, data);
 
-        if (!left.isTrue()) {
+        if(left.isWaiting() || !left.isTrue()){
             return left;
         }
+
         CoordInputLogicEvaluatorResult right = (CoordInputLogicEvaluatorResult) node.jjtGetChild(1).jjtAccept(this,
                 data);
+        if(right.isWaiting()){
+            return right;
+        }
+        if(left.isPhaseTwoEvaluation() || right.isPhaseTwoEvaluation()){
+            return new CoordInputLogicEvaluatorResult(STATUS.PHASE_TWO_EVALUATION);
+        }
+
         if (right.isTrue()) {
             right.appendDataSets(left.getDataSets());
         }
-
         return right;
     }
 

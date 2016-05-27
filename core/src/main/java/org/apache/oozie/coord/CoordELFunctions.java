@@ -503,7 +503,8 @@ public class CoordELFunctions {
         String uris = "";
         ELEvaluator eval = ELEvaluator.getCurrent();
         if (eval.getVariable(".datain." + dataInName) == null
-                && !StringUtils.isEmpty(eval.getVariable(".actionInputLogic").toString())) {
+                && (eval.getVariable(".actionInputLogic") != null && !StringUtils.isEmpty(eval.getVariable(
+                        ".actionInputLogic").toString()))) {
             try {
                 return new CoordInputLogicEvaluatorUtil().getInputDependencies(dataInName,
                         (SyncCoordAction) eval.getVariable(COORD_ACTION));

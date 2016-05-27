@@ -29,6 +29,7 @@
             initial-instance="${initial_instance_a}" timezone="UTC">
             <uri-template>${data_set_a}/${YEAR}/${MONTH}/${DAY}/${HOUR}
             </uri-template>
+            <done-flag>${A_done_flag}</done-flag>
         </dataset>
         <dataset name="b" frequency="${coord:hours(1)}"
             initial-instance="${initial_instance_b}" timezone="UTC">

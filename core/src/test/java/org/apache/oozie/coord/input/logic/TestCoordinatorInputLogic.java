@@ -202,9 +202,10 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
          "</and>";
         //@formatter:on
         conf.set("partitionName", "test");
+        conf.set("A_done_flag", "done");
         final String jobId = _testCoordSubmit("coord-inputlogic.xml", conf, inputLogic);
 
-        String input1 = createTestCaseSubDir("input-data/a/2014/10/08/00/_SUCCESS".split("/"));
+        String input1 = createTestCaseSubDir("input-data/a/2014/10/08/00/done".split("/"));
         String input2 = createTestCaseSubDir("input-data/b/2014/10/08/00/_SUCCESS".split("/"));
         String input3 = createTestCaseSubDir("input-data/e/2014/10/08/00/_SUCCESS".split("/"));
         String input4 = createTestCaseSubDir("input-data/f/2014/10/08/00/_SUCCESS".split("/"));
@@ -216,7 +217,7 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
         XConfiguration runConf = new XConfiguration(new StringReader(actionBean.getRunConf()));
         String dataSets = runConf.get("inputLogicData");
         assertEquals(dataSets.split(",").length, 4);
-        checkDataSets(dataSets, input1, input2, input3, input4);
+        checkDataSets(dataSets, input1.replace("/done", ""), input2, input3, input4);
 
     }
 
@@ -239,9 +240,10 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
          "</or>";
         //@formatter:on
         conf.set("partitionName", "test");
+        conf.set("A_done_flag", "done");
         final String jobId = _testCoordSubmit("coord-inputlogic.xml", conf, inputLogic);
 
-        String input1 = createTestCaseSubDir("input-data/a/2014/10/08/00/_SUCCESS".split("/"));
+        String input1 = createTestCaseSubDir("input-data/a/2014/10/08/00/done".split("/"));
         String input2 = createTestCaseSubDir("input-data/b/2014/10/08/00/_SUCCESS".split("/"));
         String input3 = createTestCaseSubDir("input-data/c/2014/10/08/00/_SUCCESS".split("/"));
         String input4 = createTestCaseSubDir("input-data/e/2014/10/08/00/_SUCCESS".split("/"));
@@ -872,6 +874,9 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
         conf.set("queueName", "default");
         conf.set("jobTracker", "localhost:9001");
         conf.set("examplesRoot", "examples");
+        if (conf.get("A_done_flag") == null) {
+            conf.set("A_done_flag", "_SUCCESS");
+        }
 
         return new CoordSubmitXCommand(dryRun, conf).call();
     }

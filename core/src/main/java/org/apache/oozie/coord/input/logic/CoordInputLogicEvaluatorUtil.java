@@ -71,7 +71,7 @@ public class CoordInputLogicEvaluatorUtil {
         JexlContext jc = new OozieJexlParser(jexl, new CoordInputLogicBuilder(new CoordInputLogicEvaluatorPhaseOne(
                 coordAction, coordAction.getPullInputDependencies())));
         CoordInputLogicEvaluatorResult result = (CoordInputLogicEvaluatorResult) e.evaluate(jc);
-        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.isTrue());
+        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.getStatus());
 
         if (result.isWaiting()) {
             return false;
@@ -134,13 +134,16 @@ public class CoordInputLogicEvaluatorUtil {
         JexlContext jc = new OozieJexlParser(jexl, new CoordInputLogicBuilder(new CoordInputLogicEvaluatorPhaseThree(
                 coordAction, eval)));
         CoordInputLogicEvaluatorResult result = (CoordInputLogicEvaluatorResult) e.evaluate(jc);
-        log.debug("Input logic expression for [{0}] is [{1}] and evaluate result is [{2}]", name, expression,
-                result.isTrue());
 
-        if (!result.isTrue()) {
-            return name + " is not resolved";
+        if (result == null || !result.isTrue()) {
+            log.debug("Input logic expression for [{0}] is [{1}] and it is not resolved", name, expression);
+            return "${coord:dataIn('" + name + "')}";
         }
-        return result.getDataSets();
+        else {
+            log.debug("Input logic expression for [{0}] is [{1}] and evaluate result is [{2}]", name, expression,
+                    result.getStatus());
+            return result.getDataSets();
+        }
 
     }
 
@@ -162,7 +165,7 @@ public class CoordInputLogicEvaluatorUtil {
         JexlContext jc = new OozieJexlParser(jexl, new CoordInputLogicBuilder(new CoordInputLogicEvaluatorPhaseOne(
                 coordAction, coordAction.getPushInputDependencies())));
         CoordInputLogicEvaluatorResult result = (CoordInputLogicEvaluatorResult) e.evaluate(jc);
-        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.isTrue());
+        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.getStatus());
 
         if (result.isWaiting()) {
             return false;
@@ -189,7 +192,7 @@ public class CoordInputLogicEvaluatorUtil {
         JexlContext jc = new OozieJexlParser(jexl, new CoordInputLogicBuilder(new CoordInputLogicEvaluatorPhaseTwo(
                 coordAction, actualTime)));
         CoordInputLogicEvaluatorResult result = (CoordInputLogicEvaluatorResult) e.evaluate(jc);
-        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.isTrue());
+        log.debug("Input logic expression for [{0}] and evaluate result is [{1}]", expression, result.getStatus());
 
         if (result.isWaiting()) {
             return false;

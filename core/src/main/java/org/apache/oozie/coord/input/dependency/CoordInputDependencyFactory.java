@@ -72,18 +72,14 @@ public class CoordInputDependencyFactory {
      */
     public static CoordInputDependency getPullInputDependencies(StringBlob missingDependencies) {
         if (missingDependencies == null) {
-            return new CoordPullInputDependency();
+            return new CoordOldInputDependency();
         }
         return getPullInputDependencies(missingDependencies.getString());
     }
 
     public static CoordInputDependency getPullInputDependencies(String dependencies) {
 
-        if (StringUtils.isEmpty(dependencies)) {
-            return new CoordPullInputDependency();
-        }
-
-        if (!hasInputLogic(dependencies)) {
+        if (StringUtils.isEmpty(dependencies) || !hasInputLogic(dependencies)) {
             return new CoordOldInputDependency(dependencies);
         }
         else
@@ -105,7 +101,7 @@ public class CoordInputDependencyFactory {
     public static CoordInputDependency getPushInputDependencies(StringBlob pushMissingDependencies) {
 
         if (pushMissingDependencies == null) {
-            return new CoordPushInputDependency();
+            return new CoordOldInputDependency();
         }
         return getPushInputDependencies(pushMissingDependencies.getString());
 
@@ -113,11 +109,7 @@ public class CoordInputDependencyFactory {
 
     public static CoordInputDependency getPushInputDependencies(String dependencies) {
 
-
-        if (StringUtils.isEmpty(dependencies)) {
-            return new CoordPushInputDependency();
-        }
-        if (!hasInputLogic(dependencies)) {
+        if (StringUtils.isEmpty(dependencies) || !hasInputLogic(dependencies)) {
             return new CoordOldInputDependency(dependencies);
         }
 

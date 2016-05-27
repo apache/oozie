@@ -36,6 +36,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.dependency.ActionDependency;
+import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
@@ -147,8 +148,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                     isChangeInDependency = false;
                 }
                 else {
-                    coordPushInputDependency.setMissingDependencies(StringUtils.join(
-                            actionDependency.getMissingDependencies(), CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR));
+                    String stillMissingDeps = DependencyChecker.dependenciesAsString(actionDependency.getMissingDependencies());
+                    coordPushInputDependency.setMissingDependencies(stillMissingDeps);
                 }
 
                 if (coordPushInputDependency.isDependencyMet()) {

@@ -258,49 +258,55 @@ public class CoordOldInputDependency implements CoordInputDependency {
         String actualTimeStr = eAction.getAttributeValue("action-actual-time");
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
 
+        if(inputList==null){
+            return true;
+        }
+
         List<Element> eDataEvents = inputList.getChildren("data-in", eAction.getNamespace());
         Configuration actionConf = new XConfiguration(new StringReader(coordAction.getRunConf()));
 
-        Date actualTime = null;
-        if (actualTimeStr == null) {
-            actualTime = new Date();
-        }
-        else {
-            actualTime = DateUtils.parseDateOozieTZ(actualTimeStr);
-        }
-
-        for (Element dEvent : eDataEvents) {
-            if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace()) == null) {
-                continue;
+        if (eDataEvents != null) {
+            Date actualTime = null;
+            if (actualTimeStr == null) {
+                actualTime = new Date();
             }
-            ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, actionConf);
-            String unResolvedInstance = dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG,
-                    dEvent.getNamespace()).getTextTrim();
-            String unresolvedList[] = unResolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
-            StringBuffer resolvedTmp = new StringBuffer();
-            for (int i = 0; i < unresolvedList.length; i++) {
-                String returnData = CoordELFunctions.evalAndWrap(eval, unresolvedList[i]);
-                Boolean isResolved = (Boolean) eval.getVariable(CoordELConstants.IS_RESOLVED);
-                if (isResolved == false) {
-                    log.info("[" + coordAction.getId() + "] :: Cannot resolve : " + returnData);
-                    return false;
+            else {
+                actualTime = DateUtils.parseDateOozieTZ(actualTimeStr);
+            }
+
+            for (Element dEvent : eDataEvents) {
+                if (dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace()) == null) {
+                    continue;
+                }
+                ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, actionConf);
+                String unResolvedInstance = dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG,
+                        dEvent.getNamespace()).getTextTrim();
+                String unresolvedList[] = unResolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
+                StringBuffer resolvedTmp = new StringBuffer();
+                for (int i = 0; i < unresolvedList.length; i++) {
+                    String returnData = CoordELFunctions.evalAndWrap(eval, unresolvedList[i]);
+                    Boolean isResolved = (Boolean) eval.getVariable(CoordELConstants.IS_RESOLVED);
+                    if (isResolved == false) {
+                        log.info("[" + coordAction.getId() + "] :: Cannot resolve : " + returnData);
+                        return false;
+                    }
+                    if (resolvedTmp.length() > 0) {
+                        resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                    }
+                    resolvedTmp.append((String) eval.getVariable(CoordELConstants.RESOLVED_PATH));
                 }
                 if (resolvedTmp.length() > 0) {
-                    resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR);
+                    if (dEvent.getChild("uris", dEvent.getNamespace()) != null) {
+                        resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR).append(
+                                dEvent.getChild("uris", dEvent.getNamespace()).getTextTrim());
+                        dEvent.removeChild("uris", dEvent.getNamespace());
+                    }
+                    Element uriInstance = new Element("uris", dEvent.getNamespace());
+                    uriInstance.addContent(resolvedTmp.toString());
+                    dEvent.getContent().add(1, uriInstance);
                 }
-                resolvedTmp.append((String) eval.getVariable(CoordELConstants.RESOLVED_PATH));
+                dEvent.removeChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace());
             }
-            if (resolvedTmp.length() > 0) {
-                if (dEvent.getChild("uris", dEvent.getNamespace()) != null) {
-                    resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR).append(
-                            dEvent.getChild("uris", dEvent.getNamespace()).getTextTrim());
-                    dEvent.removeChild("uris", dEvent.getNamespace());
-                }
-                Element uriInstance = new Element("uris", dEvent.getNamespace());
-                uriInstance.addContent(resolvedTmp.toString());
-                dEvent.getContent().add(1, uriInstance);
-            }
-            dEvent.removeChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace());
         }
 
         return true;

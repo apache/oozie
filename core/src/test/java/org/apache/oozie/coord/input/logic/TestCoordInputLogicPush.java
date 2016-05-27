@@ -356,6 +356,10 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         String input1 = createTestCaseSubDir("input-data/b/2014/10/08/_SUCCESS".split("/"));
         String input2 = addPartition("db_a", "table1", "dt=20141008;country=usa");
 
+        new CoordMaterializeTransitionXCommand(jobId, 3600).call();
+        new CoordPushDependencyCheckXCommand(jobId + "@1").call();
+        new CoordActionInputCheckXCommand(jobId + "@1", jobId).call();
+
         startCoordAction(jobId);
 
         CoordinatorActionBean actionBean = CoordActionQueryExecutor.getInstance().get(
@@ -546,7 +550,6 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
 
     private void startCoordAction(final String jobId) throws CommandException, JPAExecutorException {
         new CoordMaterializeTransitionXCommand(jobId, 3600).call();
-
         new CoordActionInputCheckXCommand(jobId + "@1", jobId).call();
         new CoordPushDependencyCheckXCommand(jobId + "@1").call();
         new CoordActionInputCheckXCommand(jobId + "@1", jobId).call();
