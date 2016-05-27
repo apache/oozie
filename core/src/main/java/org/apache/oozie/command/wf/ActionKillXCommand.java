@@ -22,33 +22,37 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.ActionExecutor.Context;
+import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.control.ControlNodeActionExecutor;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.LogUtils;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
 
 /**
@@ -129,10 +133,11 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
         if (wfAction.isPending()) {
             ActionExecutor executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
             if (executor != null) {
+                ActionExecutorContext context = null;
                 try {
                     boolean isRetry = false;
                     boolean isUserRetry = false;
-                    ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
+                    context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction,
                             isRetry, isUserRetry);
                     incrActionCounter(wfAction.getType(), 1);
 
@@ -179,6 +184,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                 }
                 finally {
                     try {
+                        cleanupActionDir(context);
                         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, updateList, null);
                         if (!(executor instanceof ControlNodeActionExecutor) && EventHandlerService.isEnabled()) {
                             generateEvent(wfAction, wfJob.getUser());
@@ -192,6 +198,30 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
         }
         LOG.debug("ENDED WorkflowActionKillXCommand for action " + actionId);
         return null;
+    }
+
+    /*
+     * Cleans up the action directory
+     */
+    private void cleanupActionDir(Context context) {
+        try {
+            FileSystem actionFs = context.getAppFileSystem();
+            Path actionDir = context.getActionDir();
+            Path jobDir = actionDir.getParent();
+            if (!context.getProtoActionConf().getBoolean("oozie.action.keep.action.dir", false)
+                    && actionFs.exists(actionDir)) {
+                actionFs.delete(actionDir, true);
+            }
+            if (actionFs.exists(jobDir) && actionFs.getFileStatus(jobDir).isDir()) {
+                FileStatus[] statuses = actionFs.listStatus(jobDir);
+                if (statuses == null || statuses.length == 0) {
+                    actionFs.delete(jobDir, true);
+                }
+            }
+        }
+        catch (Exception e) {
+            LOG.warn("Exception while cleaning up action dir. Message[{1}]", e.getMessage(), e);
+        }
     }
 
 }
