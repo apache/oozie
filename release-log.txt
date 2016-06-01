@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2546 Improperly closed resources in OozieDBCLI (pbacsko via rkanter)
 OOZIE-2476 When one of the action from fork fails with transient error, WF never joins (puru)
 OOZIE-2475 Oozie does not cleanup action dir of killed actions (satishsaley via rohini)
 OOZIE-2535 User can't disable uber mode (puru)

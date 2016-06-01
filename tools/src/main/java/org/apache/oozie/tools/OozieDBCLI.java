@@ -568,41 +568,50 @@ public class OozieDBCLI {
 
     private void convertClobToBlobInPostgres(String sqlFile, Connection conn, String startingVersion) throws Exception {
         System.out.println("Converting text columns to bytea for all tables");
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
-        writer.println();
-        Statement statement = conn != null ? conn.createStatement() : null;
-        for (Map.Entry<String, List<String>> tableClobColumnMap : getTableClobColumnMap().entrySet()) {
-            String tableName = tableClobColumnMap.getKey();
-            List<String> columnNames = tableClobColumnMap.getValue();
-            for (String column : columnNames) {
-                if (startingVersion.equals(DB_VERSION_PRE_4_0)
-                        && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
-                    // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're going to convert it to
-                    // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                    // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
-                    // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
-                    continue;
-                }
-                String addQuery = getAddColumnQuery(tableName, TEMP_COLUMN_PREFIX + column, "bytea");
-                writer.println(addQuery + ";");
-                String updateQuery = "update " + tableName + " set " + TEMP_COLUMN_PREFIX + column + "=(decode(replace("
-                        + column + ", E'\\\\', E'\\\\\\\\'), 'escape'))";
-                writer.println(updateQuery + ";");
-                String dropQuery = getDropColumnQuery(tableName, column);
-                writer.println(dropQuery + ";");
-                String renameQuery = getRenameColumnQuery(tableName, TEMP_COLUMN_PREFIX + column, column);
-                writer.println(renameQuery + ";");
-                if (statement != null) {
-                    statement.executeUpdate(addQuery);
-                    statement.executeUpdate(updateQuery);
-                    statement.executeUpdate(dropQuery);
-                    statement.executeUpdate(renameQuery);
+        Statement statement = null;
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(new FileWriter(sqlFile, true));
+            writer.println();
+            statement = conn != null ? conn.createStatement() : null;
+
+            for (Map.Entry<String, List<String>> tableClobColumnMap : getTableClobColumnMap().entrySet()) {
+                String tableName = tableClobColumnMap.getKey();
+                List<String> columnNames = tableClobColumnMap.getValue();
+                for (String column : columnNames) {
+                    if (startingVersion.equals(DB_VERSION_PRE_4_0)
+                            && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
+                        // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're going to convert it to
+                        // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
+                        continue;
+                    }
+                    String addQuery = getAddColumnQuery(tableName, TEMP_COLUMN_PREFIX + column, "bytea");
+                    writer.println(addQuery + ";");
+                    String updateQuery = "update " + tableName + " set " + TEMP_COLUMN_PREFIX + column + "=(decode(replace("
+                            + column + ", E'\\\\', E'\\\\\\\\'), 'escape'))";
+                    writer.println(updateQuery + ";");
+                    String dropQuery = getDropColumnQuery(tableName, column);
+                    writer.println(dropQuery + ";");
+                    String renameQuery = getRenameColumnQuery(tableName, TEMP_COLUMN_PREFIX + column, column);
+                    writer.println(renameQuery + ";");
+                    if (statement != null) {
+                        statement.executeUpdate(addQuery);
+                        statement.executeUpdate(updateQuery);
+                        statement.executeUpdate(dropQuery);
+                        statement.executeUpdate(renameQuery);
+                    }
                 }
             }
-        }
-        writer.close();
-        if (statement != null) {
-            statement.close();
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
+
+            if (statement != null) {
+                statement.close();
+            }
         }
         System.out.println("DONE");
     }
@@ -978,8 +987,9 @@ public class OozieDBCLI {
         writer.close();
         System.out.println("Create OOZIE_SYS table");
         if (run) {
-            Connection conn = createConnection();
+            Connection conn = null;
             try {
+                conn = createConnection();
                 conn.setAutoCommit(true);
                 Statement st = conn.createStatement();
                 st.executeUpdate(CREATE_OOZIE_SYS);
@@ -994,7 +1004,9 @@ public class OozieDBCLI {
                 throw new Exception("Could not create OOZIE_SYS table: " + ex.toString(), ex);
             }
             finally {
-                conn.close();
+                if (conn != null) {
+                    conn.close();
+                }
             }
         }
         System.out.println("DONE");
