@@ -489,11 +489,18 @@ public class TestZKLocksService extends ZKXTestCase {
             for (int i = 0; i < 10; ++i) {
                 LockToken l = zkls.getReadLock(String.valueOf(i), 1);
                 l.release();
-
             }
-            sleep(2000);
+
+            waitFor(10000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    Stat stat = getClient().checkExists().forPath(ZKLocksService.LOCKS_NODE);
+                    return stat.getNumChildren() == 0;
+                }
+            });
+
             Stat stat = getClient().checkExists().forPath(ZKLocksService.LOCKS_NODE);
-            assertEquals(stat.getNumChildren(), 0);
+            assertEquals(0, stat.getNumChildren());
         }
         finally {
             zkls.destroy();
