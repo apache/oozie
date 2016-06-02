@@ -24,8 +24,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -237,9 +240,15 @@ public class AuthOozieClient extends XOozieClient {
      */
     protected void writeAuthToken(AuthenticatedURL.Token authToken) {
         try {
-            Writer writer = new FileWriter(AUTH_TOKEN_CACHE_FILE);
+            String jvmName = ManagementFactory.getRuntimeMXBean().getName();
+            File tmpTokenFile = File.createTempFile(".oozie-auth-token", jvmName + "tmp",
+                    new File(System.getProperty("user.home")));
+            // just to be safe, if something goes wrong delete tmp file eventually
+            tmpTokenFile.deleteOnExit();
+            Writer writer = new FileWriter(tmpTokenFile);
             writer.write(authToken.toString());
             writer.close();
+            Files.move(tmpTokenFile.toPath(), AUTH_TOKEN_CACHE_FILE.toPath(), StandardCopyOption.ATOMIC_MOVE);
             // sets read-write permissions to owner only
             AUTH_TOKEN_CACHE_FILE.setReadable(false, false);
             AUTH_TOKEN_CACHE_FILE.setReadable(true, true);
@@ -250,6 +259,7 @@ public class AuthOozieClient extends XOozieClient {
             // write permissions are not properly set a security exception
             // is thrown and the file will be deleted.
             AUTH_TOKEN_CACHE_FILE.delete();
+
         }
     }
 

@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2447 Illegal character 0x0 oozie client (satishsaley via puru)
 OOZIE-2548 Flaky test TestZKLocksService.testLockReaper (pbacsko via puru)
 OOZIE-2546 Improperly closed resources in OozieDBCLI (pbacsko via rkanter)
 OOZIE-2476 When one of the action from fork fails with transient error, WF never joins (puru)
