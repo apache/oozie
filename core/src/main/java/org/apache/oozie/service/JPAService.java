@@ -32,6 +32,7 @@ import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
 import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
@@ -77,6 +78,8 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_VALIDATE_DB_CONN = CONF_PREFIX + "validate.db.connection";
     public static final String CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL = CONF_PREFIX + "validate.db.connection.eviction.interval";
     public static final String CONF_VALIDATE_DB_CONN_EVICTION_NUM = CONF_PREFIX + "validate.db.connection.eviction.num";
+    public static final String CONF_OPENJPA_BROKER_IMPL = CONF_PREFIX + "openjpa.BrokerImpl";
+
 
 
     private EntityManagerFactory factory;
@@ -145,6 +148,7 @@ public class JPAService implements Service, Instrumentable {
         String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
         String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
         String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
+        String brokerImplConfig = ConfigurationService.get(conf, CONF_OPENJPA_BROKER_IMPL);
         boolean autoSchemaCreation = ConfigurationService.getBoolean(conf, CONF_CREATE_DB_SCHEMA);
         boolean validateDbConn = ConfigurationService.getBoolean(conf, CONF_VALIDATE_DB_CONN);
         String evictionInterval = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim();
@@ -195,6 +199,10 @@ public class JPAService implements Service, Instrumentable {
         props.setProperty("openjpa.ConnectionProperties", connProps);
 
         props.setProperty("openjpa.ConnectionDriverName", dataSource);
+        if (!StringUtils.isEmpty(brokerImplConfig)) {
+            props.setProperty("openjpa.BrokerImpl", brokerImplConfig);
+            LOG.info("Setting openjpa.BrokerImpl to {0}", brokerImplConfig);
+        }
 
         factory = Persistence.createEntityManagerFactory(persistentUnit, props);
 

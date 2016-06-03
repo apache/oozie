@@ -1490,6 +1490,19 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.JPAService.openjpa.BrokerImpl</name>
+        <value>non-finalizing</value>
+        <description>
+          The default OpenJPAEntityManager implementation automatically closes itself during instance finalization.
+          This guards against accidental resource leaks that may occur if a developer fails to explicitly close
+          EntityManagers when finished with them, but it also incurs a scalability bottleneck, since the JVM must
+          perform synchronization during instance creation, and since the finalizer thread will have more instances to monitor.
+          To avoid this overhead, set the openjpa.BrokerImpl configuration property to non-finalizing.
+          To use default implementation set it to empty space.
+       </description>
+    </property>
+
    <!-- SchemaService -->
 
     <property>
