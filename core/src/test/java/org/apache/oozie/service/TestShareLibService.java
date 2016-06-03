@@ -495,7 +495,11 @@ public class TestShareLibService extends XFsTestCase {
             assertTrue(shareLibService.getShareLibJars("something_new").get(0).getName().endsWith("somethingNew.jar"));
             assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
             assertTrue(shareLibService.getShareLibJars("directjar").get(0).getName().endsWith("direct.jar"));
-            assertTrue(shareLibService.getShareLibJars("linkFile").get(0).getName().endsWith("#renamedLinkFile.xml"));
+            // Skipping for hadoop - 1.x because symlink is not supported
+            if (HadoopShims.isSymlinkSupported()) {
+                assertTrue(
+                        shareLibService.getShareLibJars("linkFile").get(0).getName().endsWith("targetOfLinkFile.xml"));
+            }
             List<Path> listOfPaths = shareLibService.getShareLibJars("directjar");
             for (Path p : listOfPaths) {
                 assertTrue(p.toString().startsWith("hdfs"));
@@ -759,6 +763,7 @@ public class TestShareLibService extends XFsTestCase {
         try {
 
             String testPath = "shareLibPath/";
+            String symlink = "/user/test/linkFile.xml";
 
             Path basePath = new Path(testPath + Path.SEPARATOR + "testPath");
             Path somethingNew = new Path(testPath + Path.SEPARATOR + "something_new");
@@ -773,16 +778,18 @@ public class TestShareLibService extends XFsTestCase {
             createFile(basePath.toString() + Path.SEPARATOR + "pig" + Path.SEPARATOR + "pig.jar");
             createFile(somethingNew.toString() + Path.SEPARATOR + "somethingNew" + Path.SEPARATOR + "somethingNew.jar");
             String directJarPath = directJarDir.toString() + Path.SEPARATOR + "direct.jar";
-            String linkFilePath = linkDir.toString() + Path.SEPARATOR + "linkFile.xml";
+            String symlinkTarget = linkDir.toString() + Path.SEPARATOR + "targetOfLinkFile.xml";
             createFile(directJarPath);
-            createFile(linkFilePath);
+            createFile(symlinkTarget);
+            HadoopShims fsShim = new HadoopShims(fs);
+            fsShim.createSymlink(new Path(symlinkTarget), new Path(symlink), true);
 
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".directjar",
                     "/user/test/" + directJarPath.toString());
-            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".linkFile",
-                    "/user/test/" + linkFilePath.toString() + "#renamedLinkFile.xml");
+            prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".linkFile", symlink + "#targetOfLinkFile.xml");
+
             createTestShareLibMetaFile(fs, prop);
 
         }
@@ -887,6 +894,20 @@ public class TestShareLibService extends XFsTestCase {
             jobConf.set("oozie.action.sharelib.for.hive", "hive_conf");
             ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
             assertEquals(jobConf.get("oozie.hive_conf-sharelib-test"), "test");
+
+            // Test hive-site.xml property in jobconf with linkname
+            // and with hdfs path
+            prop = new Properties();
+            jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            actionConf = ae.createBaseHadoopConf(context, eActionXml);
+            prop.put("oozie.hive_conf", "hdfs:///user/test/" + sharelibPath + "/hive-site.xml#hive-site.xml");
+            setupSharelibConf("hive-site.xml", "oozie.hive_conf", prop);
+            jobConf.set("oozie.action.sharelib.for.hive", "hive_conf,linkFile");
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+            assertEquals(jobConf.get("oozie.hive_conf-sharelib-test"), "test");
+            cacheFiles = DistributedCache.getCacheFiles(actionConf);
+            cacheFilesStr = Arrays.toString(cacheFiles);
+            assertFalse(cacheFilesStr.contains("hive-site.xml"));
 
         }
         finally {
