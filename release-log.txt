@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2551 Feature request: epoch timestamp generation (jtolar via puru)
 OOZIE-2542 Option to disable OpenJPA BrokerImpl finalization (puru)
 OOZIE-2447 Illegal character 0x0 oozie client (satishsaley via puru)
 OOZIE-2548 Flaky test TestZKLocksService.testLockReaper (pbacsko via puru)

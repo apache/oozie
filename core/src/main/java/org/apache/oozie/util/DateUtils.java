@@ -205,6 +205,24 @@ public class DateUtils {
     }
 
     /**
+     * Formats a {@link Date} as a string containing the seconds (or millis) since the Unix epoch (Jan 1, 1970).
+     * <p/>
+     * The format mask must be a {@link SimpleDateFormat} valid format mask
+     *
+     * @param d {@link Date} to format.
+     * @param millis true to include milliseconds
+     * @return the number of seconds or millis between the given date and Jan 1, 1970,
+     * <code>NULL</code> if the {@link Date} instance was <code>NULL</code>
+     */
+    public static String formatDateEpoch(Date d, Boolean millis) {
+        if (d == null) {
+            return "NULL";
+        } else {
+            return Long.toString(millis ? d.getTime() : d.getTime() / 1000);
+        }
+    }
+
+    /**
      * Formats a {@link Calendar} as a string in ISO8601 format using Oozie processing timezone.
      *
      * @param c {@link Calendar} to format.

@@ -3156,6 +3156,17 @@ The format string should be in Java's [[http://download.oracle.com/javase/6/docs
 
 For example, if timeStamp is '2009-01-01T00:00Z' and format is 'yyyy', the returned date string will be '2009'.
 
+---++++ 6.9.4. coord:epochTime(String ts, String millis) EL Function (since Oozie 4.3)
+
+The =${coord:epochTime(String timeStamp, String millis)}= function allows transformation of the standard ISO8601 timestamp
+strings into Unix epoch time (seconds or milliseconds since January 1, 1970).
+
+If millis is 'false', the returned time string will be the number of seconds since the epoch. If 'true', the returned time string
+will be the number of milliseconds since the epoch.
+
+For example, if timeStamp is '2009-01-01T00:00Z' and millis is 'false', the returned date string will be '1230768000'. If millis
+is 'true', the returned date string will be '1230768000000'.
+
 ---++ 7. Handling Timezones and Daylight Saving Time
 
 As mentioned in section #4.1.1 'Timezones and Daylight-Saving', the coordinator engine works exclusively in UTC, and dataset and application definitions are always expressed in UTC.

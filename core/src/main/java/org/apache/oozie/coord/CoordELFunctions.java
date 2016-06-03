@@ -439,6 +439,25 @@ public class CoordELFunctions {
     }
 
     /**
+     * Convert from standard date-time formatting to a Unix epoch time.
+     * <p/>
+     * @param dateTimeStr - A timestamp in standard (ISO8601) format.
+     * @param millis - "true" to include millis; otherwise will only include seconds
+     * @return coordinator action creation or materialization date time
+     * @throws Exception if unable to format the Date object to String
+     */
+    public static String ph2_coord_epochTime(String dateTimeStr, String millis)
+            throws Exception {
+        Date dateTime = DateUtils.parseDateOozieTZ(dateTimeStr);
+        return DateUtils.formatDateEpoch(dateTime, Boolean.valueOf(millis));
+    }
+
+    public static String ph3_coord_epochTime(String dateTimeStr, String millis)
+            throws Exception {
+        return  ph2_coord_epochTime(dateTimeStr, millis);
+    }
+
+    /**
      * Return Action Id. <p>
      *
      * @return coordinator action Id
@@ -817,6 +836,11 @@ public class CoordELFunctions {
 
     public static String ph1_coord_dateTzOffset_echo(String n, String timezone) {
         return echoUnResolved("dateTzOffset", n + " , " + timezone);
+    }
+
+    public static String ph1_coord_epochTime_echo(String dateTime, String millis) {
+        // Quote the dateTime value since it would contain a ':'.
+        return echoUnResolved("epochTime", "'"+dateTime+"'" + " , " + millis);
     }
 
     public static String ph1_coord_formatTime_echo(String dateTime, String format) {

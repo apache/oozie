@@ -889,6 +889,33 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
     }
 
+    public void testEpochTime() throws Exception {
+        String expr1 = "${coord:epochTime(\"2009-09-08T23:59Z\", \"false\")}";
+        String expr2 = "${coord:epochTime(\"2009-09-08T23:59Z\", \"true\")}";
+        init("coord-action-create");
+        assertEquals("1252454340", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("1252454340000", CoordELFunctions.evalAndWrap(eval, expr2));
+        init("coord-action-create-inst");
+        assertEquals("1252454340", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("1252454340000", CoordELFunctions.evalAndWrap(eval, expr2));
+        init("coord-action-start");
+        assertEquals("1252454340", CoordELFunctions.evalAndWrap(eval, expr1));
+        assertEquals("1252454340000", CoordELFunctions.evalAndWrap(eval, expr2));
+
+        String utcDate = "2009-09-08T23:59Z";
+        String expr3 = "${coord:epochTime(date, \"true\")}";
+        String expr3_eval = "${coord:epochTime('" + utcDate + "' , " + "true)}";
+        init("coord-job-submit-instances");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+        init("coord-job-submit-data");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+        init("coord-sla-submit");
+        eval.setVariable("date", utcDate);
+        assertEquals(expr3_eval, CoordELFunctions.evalAndWrap(eval, expr3));
+    }
+
     public void testFuture() throws Exception {
         init("coord-job-submit-instances");
         String expr = "${coord:future(1, 20)}";
