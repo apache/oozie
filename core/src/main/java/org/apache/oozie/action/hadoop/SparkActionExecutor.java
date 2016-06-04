@@ -18,20 +18,25 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.SparkConfigurationService;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.Namespace;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SparkMain";
@@ -155,4 +160,15 @@ public class SparkActionExecutor extends JavaActionExecutor {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SPARK_MAIN_CLASS_NAME);
     }
 
+    @Override
+    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
+        super.getActionData(actionFs, runningJob, action, context);
+        readExternalChildIDs(action, context);
+    }
+
+    @Override
+    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
+        return true;
+    }
 }

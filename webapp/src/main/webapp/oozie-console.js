@@ -765,7 +765,8 @@ function jobDetailsPopup(response, request) {
                 items : urlUnit
             };
             if (actionStatus.type == "pig" || actionStatus.type == "hive" || actionStatus.type == "map-reduce"
-                    || actionStatus.type == "hive2" || actionStatus.type == "sqoop" || actionStatus.type == "distcp") {
+                    || actionStatus.type == "hive2" || actionStatus.type == "sqoop" || actionStatus.type == "distcp"
+                    || actionStatus.type == "spark") {
                 var tabPanel = win.items.get(0);
                 tabPanel.add(childJobsItem);
             }
