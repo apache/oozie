@@ -173,7 +173,8 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
             }
         }
         catch (Exception ex) {
-            throw new RuntimeException(ex);
+            //Not throwing exception. Should return null, so that command can be requeued
+            LOG.error("Error while acquiring lock", ex);
         }
         return token;
     }

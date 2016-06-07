@@ -38,7 +38,6 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.StartTransitionXCommand;
-import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
@@ -266,7 +265,7 @@ public class BundleStartXCommand extends StartTransitionXCommand {
                         throw new CommandException(ErrorCode.E1321, e.getMessage(), e);
 
                     }
-                    queue(new CoordSubmitXCommand(coordConf, bundleJob.getId(), name.getValue()));
+                    queue(new BundleCoordSubmitXCommand(coordConf, bundleJob.getId(), name.getValue()));
 
                 }
                 updateBundleAction();

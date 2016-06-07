@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2522 There can be multiple coord submit from bundle in case of ZK glitch (puru)
 OOZIE-2553 Cred tag is required for all actions in the workflow even if an action does not require it (me.venkatr via rohini)
 OOZIE-2503 show ChildJobURLs to spark action (satishsaley via puru)
 OOZIE-2551 Feature request: epoch timestamp generation (jtolar via puru)

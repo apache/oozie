@@ -100,8 +100,8 @@ import org.xml.sax.SAXException;
 public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     protected Configuration conf;
-    private final String bundleId;
-    private final String coordName;
+    protected final String bundleId;
+    protected final String coordName;
     protected boolean dryrun;
     protected JPAService jpaService = null;
     private CoordinatorJob.Status prevStatus = CoordinatorJob.Status.PREP;
@@ -179,7 +179,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @param bundleId : bundle id
      * @param coordName : coord name
      */
-    public CoordSubmitXCommand(Configuration conf, String bundleId, String coordName) {
+    protected CoordSubmitXCommand(Configuration conf, String bundleId, String coordName) {
         super("coord_submit", "coord_submit", 1);
         this.conf = ParamChecker.notNull(conf, "conf");
         this.bundleId = ParamChecker.notEmpty(bundleId, "bundleId");

@@ -37,13 +37,14 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.bundle.BundleCoordSubmitXCommand;
+import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordActionReadyXCommand;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
 import org.apache.oozie.command.coord.CoordPushDependencyCheckXCommand;
 import org.apache.oozie.command.coord.CoordResumeXCommand;
-import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.wf.ActionEndXCommand;
 import org.apache.oozie.command.wf.ActionStartXCommand;
@@ -195,29 +196,49 @@ public class RecoveryService implements Service {
                     }
                     if (Services.get().get(JobsConcurrencyService.class).isJobIdForThisServer(baction.getBundleId())) {
                         if (baction.getStatus() == Job.Status.PREP && baction.getCoordId() == null) {
-                            BundleJobBean bundleJob = null;
-                            if (jpaService != null) {
-                                bundleJob = BundleJobQueryExecutor.getInstance().get(
-                                        BundleJobQuery.GET_BUNDLE_JOB_ID_JOBXML_CONF, baction.getBundleId());
+
+                            CoordinatorJobBean coordJobs = CoordJobQueryExecutor.getInstance().getIfExist(
+                                    CoordJobQuery.GET_COORD_JOBS_FOR_BUNDLE_BY_APPNAME_ID, baction.getCoordName(),
+                                    baction.getBundleId());
+
+                            if (coordJobs == null) {
+                                log.debug("Coord [{0}] for bundle [{1}] is not yet submitted , submitting new one",
+                                        baction.getCoordName(), baction.getBundleId());
+
+                                BundleJobBean bundleJob = null;
+                                if (jpaService != null) {
+                                    bundleJob = BundleJobQueryExecutor.getInstance().get(
+                                            BundleJobQuery.GET_BUNDLE_JOB_ID_JOBXML_CONF, baction.getBundleId());
+                                }
+                                Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
+                                @SuppressWarnings("unchecked")
+                                List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
+                                for (Element coordElem : coordElems) {
+                                    Attribute name = coordElem.getAttribute("name");
+                                    String coordName = name.getValue();
+                                    Configuration coordConf = mergeConfig(coordElem, bundleJob);
+                                    try {
+                                        coordName = ELUtils.resolveAppName(coordName, coordConf);
+                                    }
+                                    catch (Exception e) {
+                                        log.error("Error evaluating coord name " + e.getMessage(), e);
+                                        continue;
+                                    }
+                                    if (coordName.equals(baction.getCoordName())) {
+                                        coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
+                                        queueCallable(new BundleCoordSubmitXCommand(coordConf, bundleJob.getId(),
+                                                coordName));
+                                    }
+                                }
                             }
-                            Element bAppXml = XmlUtils.parseXml(bundleJob.getJobXml());
-                            List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
-                            for (Element coordElem : coordElems) {
-                                Attribute name = coordElem.getAttribute("name");
-                                String coordName=name.getValue();
-                                Configuration coordConf = mergeConfig(coordElem, bundleJob);
-                                try {
-                                    coordName = ELUtils.resolveAppName(coordName, coordConf);
-                                }
-                                catch (Exception e) {
-                                    log.error("Error evaluating coord name " + e.getMessage(), e);
-                                    continue;
-                                }
-                                if (coordName.equals(baction.getCoordName())) {
-                                    coordConf.set(OozieClient.BUNDLE_ID, baction.getBundleId());
-                                    queueCallable(new CoordSubmitXCommand(coordConf,
-                                            bundleJob.getId(), coordName));
-                                }
+                            else {
+                                log.debug(
+                                        "Coord [{0}] for bundle [{1}] is submitted , but bundle action is not updated.",
+                                        baction.getCoordName(), baction.getBundleId());
+                                coordJobs = CoordJobQueryExecutor.getInstance().getIfExist(
+                                        CoordJobQuery.GET_COORD_JOB_SUSPEND_KILL, baction.getCoordName(),
+                                        coordJobs.getId());
+                                queueCallable(new BundleStatusUpdateXCommand(coordJobs, baction.getStatus()));
                             }
                         }
                         else if (baction.getStatus() == Job.Status.KILLED) {

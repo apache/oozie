@@ -99,7 +99,7 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         final XConfiguration jobConf = setUpBundle();
         jobConf.set("coordName1", "coord1");
         jobConf.set("coordName2", "coord2");
-        jobConf.set("coord1.starttime","2009-02-01T00:00Z");
+        jobConf.set("coord1.starttime", "2009-02-01T00:00Z");
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
         final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
@@ -141,6 +141,47 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         }
     }
 
+    public void testMultipleCoordSubmit() throws Exception {
+        final XConfiguration jobConf = setUpBundle();
+        jobConf.set("coordName1", "coord1");
+        jobConf.set("coordName2", "coord2");
+        jobConf.set("coord1.starttime", "2009-02-01T00:00Z");
+
+        BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
+        final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
+        bundleBean.setStartTime(new Date());
+        bundleBean.setEndTime(new Date());
+        final String jobId = command.call();
+        sleep(2000);
+        new BundleStartXCommand(jobId).call();
+        waitFor(2000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                        BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+                return actions.get(0).getStatus().equals(Job.Status.RUNNING);
+            }
+        });
+
+        List<BundleActionBean> actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+        assertEquals(actions.size(), 2);
+        assertEquals(actions.get(0).getCoordName(), "coord1");
+        assertEquals(actions.get(1).getCoordName(), "coord2");
+        try {
+            new BundleCoordSubmitXCommand(jobConf, jobId, "coord1").call();
+            fail("Should fail. Coord job is already created");
+        }
+        catch (CommandException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.E1304);
+        }
+        actions = BundleActionQueryExecutor.getInstance().getList(
+                BundleActionQuery.GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE, jobId);
+        assertEquals(actions.size(), 2);
+        assertEquals(actions.get(0).getStatusStr(), "RUNNING");
+        assertEquals(actions.get(1).getStatusStr(), "RUNNING");
+
+    }
+
     private XConfiguration setUpBundle() throws UnsupportedEncodingException, IOException {
         XConfiguration jobConf = new XConfiguration();
 
@@ -168,4 +209,5 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         return jobConf;
 
     }
+
 }
