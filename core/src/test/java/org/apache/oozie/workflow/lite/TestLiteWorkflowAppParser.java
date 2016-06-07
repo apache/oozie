@@ -61,7 +61,6 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     private String cleanupXml(String xml) {
         xml = xml.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         xml = xml.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        xml = xml.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
         return xml;
     }
 

@@ -41,7 +41,6 @@ import org.jdom.Namespace;
 public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SparkMain";
     public static final String TASK_USER_PRECEDENCE = "mapreduce.task.classpath.user.precedence"; // hadoop-2
-    public static final String TASK_USER_CLASSPATH_PRECEDENCE = "mapreduce.user.classpath.first";  // hadoop-1
     public static final String SPARK_MASTER = "oozie.spark.master";
     public static final String SPARK_MODE = "oozie.spark.mode";
     public static final String SPARK_OPTS = "oozie.spark.spark-opts";
@@ -105,9 +104,6 @@ public class SparkActionExecutor extends JavaActionExecutor {
         JobConf launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
         if (launcherJobConf.get("oozie.launcher." + TASK_USER_PRECEDENCE) == null) {
             launcherJobConf.set(TASK_USER_PRECEDENCE, "true");
-        }
-        if (launcherJobConf.get("oozie.launcher." + TASK_USER_CLASSPATH_PRECEDENCE) == null) {
-            launcherJobConf.set(TASK_USER_CLASSPATH_PRECEDENCE, "true");
         }
         return launcherJobConf;
     }
