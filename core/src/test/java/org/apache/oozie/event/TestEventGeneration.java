@@ -686,7 +686,6 @@ public class TestEventGeneration extends XDataTestCase {
         action.setStartTime(new Date());
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
-        action.setCred("null");
         action.setPendingOnly();
 
         String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"

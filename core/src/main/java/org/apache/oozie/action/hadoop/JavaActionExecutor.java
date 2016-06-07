@@ -1307,11 +1307,13 @@ public class JavaActionExecutor extends ActionExecutor {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
-            LOG.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
-            String[] credNames = credsInAction.split(",");
-            for (String credName : credNames) {
-                CredentialsProperties credProps = getCredProperties(context, credName);
-                props.put(credName, credProps);
+            if (credsInAction != null) {
+                LOG.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
+                String[] credNames = credsInAction.split(",");
+                for (String credName : credNames) {
+                    CredentialsProperties credProps = getCredProperties(context, credName);
+                    props.put(credName, credProps);
+                }
             }
         }
         else {

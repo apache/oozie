@@ -40,7 +40,7 @@ public class NodeDef implements Writable {
     private Class<? extends NodeHandler> handlerClass;
     private String conf = null;
     private List<String> transitions = new ArrayList<String>();
-    private String cred = "null";
+    private String cred = null;
     private String userRetryMax = "null";
     private String userRetryInterval = "null";
 
@@ -154,6 +154,9 @@ public class NodeDef implements Writable {
         nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_1;
         name = dataInput.readUTF();
         cred = dataInput.readUTF();
+        if (cred.equals("null")) {
+            cred = null;
+        }
         String handlerClassName = dataInput.readUTF();
         if ((handlerClassName != null) && (handlerClassName.length() > 0)) {
             try {

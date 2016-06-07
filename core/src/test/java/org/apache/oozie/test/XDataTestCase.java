@@ -1417,7 +1417,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setStartTime(currDate);
         action.setEndTime(currDate);
         action.setLastCheckTime(currDate);
-        action.setCred("null");
         action.setStats("dummyStats");
         if (pending) {
             action.setPending();
