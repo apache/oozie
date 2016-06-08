@@ -50,6 +50,8 @@ public class SparkMain extends LauncherMain {
 
     private static final Pattern[] PYSPARK_DEP_FILE_PATTERN = { Pattern.compile("py4\\S*src.zip"),
             Pattern.compile("pyspark.zip") };
+    private static final Pattern SPARK_DEFAULTS_FILE_PATTERN = Pattern.compile("spark-defaults.conf");
+
     private String sparkJars = null;
     private String sparkClasspath = null;
 
@@ -198,6 +200,11 @@ public class SparkMain extends LauncherMain {
             sparkArgs.add("--conf");
             sparkArgs.add(HBASE_SECURITY_TOKEN + "=false");
         }
+        File defaultConfFile = getMatchingFile(SPARK_DEFAULTS_FILE_PATTERN);
+        if (defaultConfFile != null) {
+            sparkArgs.add("--properties-file");
+            sparkArgs.add(SPARK_DEFAULTS_FILE_PATTERN.toString());
+        }
         if (!sparkArgs.contains(VERBOSE_OPTION)) {
             sparkArgs.add(VERBOSE_OPTION);
         }
@@ -242,7 +249,7 @@ public class SparkMain extends LauncherMain {
         }
 
         for(Pattern fileNamePattern : PYSPARK_DEP_FILE_PATTERN) {
-            File file = getMatchingFile(fileNamePattern);
+            File file = getMatchingPyFile(fileNamePattern);
             File destination = new File(pythonLibDir, file.getName());
             FileUtils.copyFile(file, destination);
             System.out.println("Copied " + file + " to " + destination.getAbsolutePath());
@@ -256,6 +263,23 @@ public class SparkMain extends LauncherMain {
      * @return the file if there is one
      * @throws OozieActionConfiguratorException if there is are no files matching the pattern
      */
+    private File getMatchingPyFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
+        File f = getMatchingFile(fileNamePattern);
+        if (f != null) {
+            return f;
+        }
+        throw new OozieActionConfiguratorException("Missing py4j and/or pyspark zip files. Please add them to "
+                + "the lib folder or to the Spark sharelib.");
+    }
+
+    /**
+     * Searches for a file in the current directory that matches the given
+     * pattern. If there are multiple files matching the pattern returns one of
+     * them.
+     *
+     * @param fileNamePattern the pattern to look for
+     * @return the file if there is one else it returns null
+     */
     private File getMatchingFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
         File localDir = new File(".");
         for(String fileName : localDir.list()){
@@ -263,8 +287,7 @@ public class SparkMain extends LauncherMain {
                 return new File(fileName);
             }
         }
-        throw new OozieActionConfiguratorException("Missing py4j and/or pyspark zip files. Please add them to " +
-                "the lib folder or to the Spark sharelib.");
+        return null;
     }
 
     private void runSpark(String[] args) throws Exception {
