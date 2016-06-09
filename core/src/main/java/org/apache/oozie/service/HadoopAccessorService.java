@@ -82,8 +82,6 @@ public class HadoopAccessorService implements Service {
     protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
     /** The Kerberos principal for the resource manager.*/
     protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
-    protected static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    protected static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
     protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
 
@@ -491,7 +489,7 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
-        String jobTracker = conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER);
+        String jobTracker = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
         validateJobTracker(jobTracker);
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -606,10 +604,7 @@ public class HadoopAccessorService implements Service {
             renewer = mrTokenRenewers.get(servicePrincipal);
             if (renewer == null) {
                 // Mimic org.apache.hadoop.mapred.Master.getMasterPrincipal()
-                String target = jobConf.get(HADOOP_YARN_RM, jobConf.get(HADOOP_JOB_TRACKER_2));
-                if (target == null) {
-                    target = jobConf.get(HADOOP_JOB_TRACKER);
-                }
+                String target = jobConf.get(HADOOP_YARN_RM);
                 try {
                     String addr = NetUtils.createSocketAddr(target).getHostName();
                     renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
