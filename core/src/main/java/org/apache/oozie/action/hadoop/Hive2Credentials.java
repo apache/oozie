@@ -60,12 +60,19 @@ public class Hive2Credentials extends Credentials {
                         HIVE2_SERVER_PRINCIPAL + " is required to get hive server 2 credential");
             }
             url = url + ";principal=" + principal;
-            Connection con = DriverManager.getConnection(url);
-            XLog.getLog(getClass()).debug("Connected successfully to " + url);
-            // get delegation token for the given proxy user
-            String tokenStr = ((HiveConnection)con).getDelegationToken(jobconf.get(USER_NAME), principal);
+            Connection con = null;
+            String tokenStr = null;
+            try {
+                con = DriverManager.getConnection(url);
+                XLog.getLog(getClass()).debug("Connected successfully to " + url);
+                // get delegation token for the given proxy user
+                tokenStr = ((HiveConnection)con).getDelegationToken(jobconf.get(USER_NAME), principal);
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
             XLog.getLog(getClass()).debug("Got token");
-            con.close();
 
             Token<DelegationTokenIdentifier> hive2Token = new Token<DelegationTokenIdentifier>();
             hive2Token.decodeFromUrlString(tokenStr);

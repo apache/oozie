@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2541 Possible resource leak in Hive2Credentials (pbacsko via rkanter)
 OOZIE-2563 Pass spark-defaults.conf to spark action (satishsaley via rohini)
 OOZIE-2556 TestAbandonedCoordChecker.testCatchupJob is flaky (puru)
 OOZIE-2522 There can be multiple coord submit from bundle in case of ZK glitch (puru)
