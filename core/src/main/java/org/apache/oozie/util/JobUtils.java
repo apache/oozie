@@ -147,7 +147,7 @@ public class JobUtils {
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
         if (fs == null) {
             Configuration defaultConf = Services.get().get(HadoopAccessorService.class)
-                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER));
+                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_YARN_RM));
             XConfiguration.copy(conf, defaultConf);
             // it fails with conf, therefore we pass defaultConf instead
             fs = file.getFileSystem(defaultConf);

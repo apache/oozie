@@ -80,7 +80,7 @@ public class SparkActionExecutor extends JavaActionExecutor {
 
         StringBuilder sparkOptsSb = new StringBuilder();
         if (master.startsWith("yarn")) {
-            String resourceManager = actionConf.get(HADOOP_JOB_TRACKER);
+            String resourceManager = actionConf.get(HADOOP_YARN_RM);
             Map<String, String> sparkConfig = Services.get().get(SparkConfigurationService.class).getSparkConfig(resourceManager);
             for (Map.Entry<String, String> entry : sparkConfig.entrySet()) {
                 sparkOptsSb.append("--conf ").append(entry.getKey()).append("=").append(entry.getValue()).append(" ");

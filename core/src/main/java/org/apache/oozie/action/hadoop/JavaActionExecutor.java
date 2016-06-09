@@ -86,8 +86,6 @@ import org.jdom.Namespace;
 public class JavaActionExecutor extends ActionExecutor {
 
     protected static final String HADOOP_USER = "user.name";
-    public static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    public static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
     public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     public static final String HADOOP_NAME_NODE = "fs.default.name";
     private static final String HADOOP_JOB_NAME = "mapred.job.name";
@@ -127,9 +125,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
-        DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
-        DISALLOWED_PROPERTIES.add(HADOOP_JOB_TRACKER_2);
         DISALLOWED_PROPERTIES.add(HADOOP_YARN_RM);
     }
 
@@ -222,7 +218,6 @@ public class JavaActionExecutor extends ActionExecutor {
             conf = new JobConf(false);
         }
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
-        conf.set(HADOOP_JOB_TRACKER_2, jobTracker);
         conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
@@ -254,7 +249,7 @@ public class JavaActionExecutor extends ActionExecutor {
             XConfiguration launcherConf = new XConfiguration();
             // Inject action defaults for launcher
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_JOB_TRACKER), getType());
+            XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_YARN_RM), getType());
             injectLauncherProperties(actionDefaultConf, launcherConf);
             // Inject <job-xml> and <configuration> for launcher
             try {
@@ -523,7 +518,7 @@ public class JavaActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
+            XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_YARN_RM), getType());
             XConfiguration.injectDefaults(actionDefaults, actionConf);
             has.checkSupportedFilesystem(appPath.toUri());
 
@@ -1142,7 +1137,7 @@ public class JavaActionExecutor extends ActionExecutor {
             if (alreadyRunning && !isUserRetry) {
                 runningJob = jobClient.getJob(JobID.forName(launcherId));
                 if (runningJob == null) {
-                    String jobTracker = launcherJobConf.get(HADOOP_JOB_TRACKER);
+                    String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
                             "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
                 }
@@ -1189,7 +1184,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 LOG.debug("After submission get the launcherId " + launcherId);
             }
 
-            String jobTracker = launcherJobConf.get(HADOOP_JOB_TRACKER);
+            String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
             String consoleUrl = runningJob.getTrackingURL();
             context.setStartData(launcherId, jobTracker, consoleUrl);
         }
