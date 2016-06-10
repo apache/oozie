@@ -52,8 +52,9 @@ public class HCatCredentialHelper {
      * @throws Exception
      */
     public void set(JobConf launcherJobConf, String principal, String server) throws Exception {
+        HCatClient client = null;
         try {
-            HCatClient client = getHCatClient(launcherJobConf, principal, server);
+            client = getHCatClient(launcherJobConf, principal, server);
             XLog.getLog(getClass()).debug(
                     "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
                             + launcherJobConf.get(USER_NAME));
@@ -67,6 +68,11 @@ public class HCatCredentialHelper {
         catch (Exception ex) {
             XLog.getLog(getClass()).debug("set Exception" + ex.getMessage());
             throw ex;
+        }
+        finally {
+            if (client != null) {
+                client.close();
+            }
         }
     }
 
