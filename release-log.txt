@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2547 Add mapreduce.job.cache.files to spark action (satishsaley via rohini)
 OOZIE-2550 Flaky tests in TestZKUUIDService.java (pbacsko via rkanter)
 OOZIE-2445 Doc for - Specifying coordinator input datasets in more logical ways (puru)
 OOZIE-2541 Possible resource leak in Hive2Credentials (pbacsko via rkanter)

@@ -153,7 +153,7 @@ to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tr
 To ensure that your Spark job shows up in the Spark History Server, make sure to specify these three Spark configuration properties
 either in =spark-opts= with =--conf= or from =oozie.service.SparkConfigurationService.spark.configurations= in oozie-site.xml.
 
-1. spark.yarn.historyServer.address=http://SPH-HOST:18088
+1. spark.yarn.historyServer.address=SPH-HOST:18088
 
 2. spark.eventLog.dir=hdfs://NN:8020/user/spark/applicationHistory
 
@@ -261,6 +261,64 @@ it's localized to the working directory with just its name.
 </xs:schema>
 </verbatim>
 
+---++++ Spark Action Schema Version 0.2
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:spark="uri:oozie:spark-action:0.2" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:spark-action:0.2">
+
+    <xs:element name="spark" type="spark:ACTION"/>
+
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="spark:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="spark:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="master" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="mode" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="class" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="jar" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="spark-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="spark:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="spark:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+</xs:schema>
+</verbatim>
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>
