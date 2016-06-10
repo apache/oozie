@@ -212,7 +212,7 @@ public class ZKUUIDService extends UUIDService {
     }
 
     @VisibleForTesting
-    public void setMaxSequence(long sequence) {
+    static void setMaxSequence(long sequence) {
         maxSequence = sequence;
     }
 
