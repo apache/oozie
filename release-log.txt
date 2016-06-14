@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2504 Create a log4j.properties under HADOOP_CONF_DIR in Shell Action (harsh)
 OOZIE-2567 HCat connection is not closed while getting hcat cred (puru)
 OOZIE-2547 Add mapreduce.job.cache.files to spark action (satishsaley via rohini)
 OOZIE-2550 Flaky tests in TestZKUUIDService.java (pbacsko via rkanter)

@@ -74,6 +74,16 @@ public class ShellActionExecutor extends JavaActionExecutor {
         boolean setupHadoopConfDir = actionConf.getBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR,
                 ConfigurationService.getBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR));
         actionConf.setBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, setupHadoopConfDir);
+        // Setting to control if ShellMain should write log4j.properties
+        boolean writeL4J = actionConf.getBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES,
+                ConfigurationService.getBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES));
+        actionConf.setBoolean(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES, writeL4J);
+        // Setting of content of log4j.properties, if to be written
+        if (writeL4J) {
+            String l4jContent = actionConf.get(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT,
+                    ConfigurationService.get(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT));
+            actionConf.set(ShellMain.CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT, l4jContent);
+        }
 
         return actionConf;
     }

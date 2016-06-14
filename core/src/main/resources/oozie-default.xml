@@ -1821,6 +1821,36 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties</name>
+        <value>true</value>
+        <description>
+            Toggle to control if a log4j.properties file should be written into the configuration directory prepared when
+            oozie.action.shell.setup.hadoop.conf.dir is enabled. This is used to control logging behavior of log4j using commands
+            run within the shell action script, and to ensure logging does not impact output data capture if leaked to stdout.
+            Content of the written file is determined by the value of oozie.action.shell.setup.hadoop.conf.dir.log4j.content.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.shell.setup.hadoop.conf.dir.log4j.content</name>
+        <value>
+            log4j.rootLogger=${hadoop.root.logger}
+            hadoop.root.logger=INFO,console
+            log4j.appender.console=org.apache.log4j.ConsoleAppender
+            log4j.appender.console.target=System.err
+            log4j.appender.console.layout=org.apache.log4j.PatternLayout
+            log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n
+        </value>
+        <description>
+            The value to write into a log4j.properties file under the config directory created when
+            oozie.action.shell.setup.hadoop.conf.dir and oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties
+            properties are both enabled. The values must be properly newline separated and in format expected by Log4J.
+            Trailing and preceding whitespaces will be trimmed when reading this property.
+            This is used to control logging behavior of log4j using commands run within the shell action script.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.launcher.yarn.timeline-service.enabled</name>
         <value>false</value>
         <description>
