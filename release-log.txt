@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2577 Flaky tests TestCoordActionInputCheckXCommand.testTimeout and testTimeoutWithException (pbacsko via rkanter)
 OOZIE-2570 remove -PtestPatchCompile from patch testing as there is no such profile (gezapeti via rkanter)
 OOZIE-2504 Create a log4j.properties under HADOOP_CONF_DIR in Shell Action (harsh)
 OOZIE-2567 HCat connection is not closed while getting hcat cred (puru)
