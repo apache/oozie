@@ -39,8 +39,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-hadoop-distcp</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-distcp</artifactId>
             <scope>compile</scope>
         </dependency>
 

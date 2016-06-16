@@ -74,8 +74,8 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-hadoop-auth</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

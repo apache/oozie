@@ -46,7 +46,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
     public void testWFXmlGeneration1() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         conf.set(OozieClient.LIBPATH, "libpath");
 
@@ -118,7 +118,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
     public void testWFXmlGeneration2() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         conf.set(OozieClient.LIBPATH, "libpath");
 
@@ -169,7 +169,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
     public void testWFXmlGenerationNegative1() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         // conf.set(XOozieClient.LIBPATH, "libpath");
 

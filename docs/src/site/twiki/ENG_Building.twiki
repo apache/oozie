@@ -112,9 +112,9 @@ Except for the options marked with =(*)=, the options can be specified in the =t
 of the Oozie project. The options marked with =(*)= are used in Maven POMs, thus they don't take effect if
 specified in the =test.properties= file (which is loaded by the =XTestCase= class at class initialization time).
 
-*hadoop.version* =(*)=: indicates the Hadoop version(Hadoop-1 or Hadoop-2) you wish to build Oozie against specifically. It will
-substitute this value in the Oozie POM properties and pull the corresponding Hadoop artifacts from Maven. Default version is 1.2.1
-for Hadoop-1 (the most common case). For Hadoop-2, the version you can pass is *2.3.0*.
+*hadoop.version* =(*)=: indicates the Hadoop version(Hadoop-2) you wish to build Oozie against specifically. It will
+substitute this value in the Oozie POM properties and pull the corresponding Hadoop artifacts from Maven.
+For Hadoop 2.x, the default (and minimum) version is 2.4.0.
 
 *generateSite* (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
@@ -212,10 +212,7 @@ $ bin/mkdistro.sh [-DskipTests]
 Running =mkdistro.sh= will create the binary distribution of Oozie. The following options are available to customise
 the versions of the dependencies:
 -Puber - Bundle required hadoop and hcatalog libraries in oozie war
--P<profile> - default hadoop-1. Valid are hadoop-1, hadoop-0.23, hadoop-2 or hadoop-3. Choose the correct hadoop
-profile depending on the hadoop version used.
--Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 0.23.5 for hadoop-0.23, 2.3.0 for hadoop-2 and 3.0
-.0-SNAPSHOT for hadoop-3
+-Dhadoop.version=<version> - default 2.4.0
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.12.1

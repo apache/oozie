@@ -37,8 +37,8 @@
             <artifactId>oozie-client</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.oozie</groupId>
-                    <artifactId>oozie-hadoop-auth</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-auth</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -271,8 +271,8 @@
                     <scope>compile</scope>
                 </dependency>
                 <dependency>
-                    <groupId>org.apache.oozie</groupId>
-                    <artifactId>oozie-hadoop-auth</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-auth</artifactId>
                     <scope>compile</scope>
                 </dependency>
                 <dependency>

@@ -51,7 +51,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
     public void testWFXmlGeneration() throws Exception {
         Configuration conf = new Configuration(false);
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         conf.set(OozieClient.LIBPATH, "libpath");
 
@@ -97,7 +97,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
     public void testWFXmlGenerationNegative1() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         // conf.set(XOozieClient.LIBPATH, "libpath");
 
@@ -118,8 +118,8 @@ public class TestSubmitMRXCommand extends XFsTestCase {
     public void testWFXmlGenerationNewConfigProps() throws Exception {
         try {
             Configuration conf = new Configuration(false);
-            conf.set(XOozieClient.NN_2, "new_NN");
-            conf.set(XOozieClient.JT_2, "new_JT");
+            conf.set(XOozieClient.NN, "new_NN");
+            conf.set(XOozieClient.RM, "new_JT");
             conf.set("mapred.mapper.class", "TestMapper");
             conf.set("mapred.reducer.class", "TestReducer");
             conf.set("mapred.input.dir", "testInput");

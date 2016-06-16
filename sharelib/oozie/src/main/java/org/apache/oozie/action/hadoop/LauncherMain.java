@@ -28,8 +28,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,11 +42,22 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 
 public abstract class LauncherMain {
 
     public static final String HADOOP_JOBS = "hadoopJobs";
     public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
+    public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
+    public static final String OOZIE_JOB_LAUNCH_TIME = "oozie.job.launch.time";
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
@@ -101,6 +116,77 @@ public abstract class LauncherMain {
         catch (Exception e) {
             System.out.println("WARN: Error getting Hadoop Job IDs executed by " + name);
             e.printStackTrace(System.out);
+        }
+    }
+
+    private static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
+        System.out.println("Fetching child yarn jobs");
+        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        if (tag == null) {
+            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return childYarnJobs;
+        }
+        System.out.println("tag id : " + tag);
+        long startTime = 0L;
+        try {
+            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+        } catch(NumberFormatException nfe) {
+            throw new RuntimeException("Could not find Oozie job launch time", nfe);
+        }
+
+        GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+        gar.setScope(ApplicationsRequestScope.OWN);
+        gar.setApplicationTags(Collections.singleton(tag));
+        long endTime = System.currentTimeMillis();
+        if (startTime > endTime) {
+            System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
+                    "Attempting to work around...");
+            // We don't know which one is wrong (relative to the RM), so to be safe, let's assume they're both wrong and add an
+            // offset in both directions
+            long diff = 2 * (startTime - endTime);
+            startTime = startTime - diff;
+            endTime = endTime + diff;
+        }
+        gar.setStartRange(startTime, endTime);
+        try {
+            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
+            GetApplicationsResponse apps = proxy.getApplications(gar);
+            List<ApplicationReport> appsList = apps.getApplicationList();
+            for(ApplicationReport appReport : appsList) {
+                childYarnJobs.add(appReport.getApplicationId());
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+        } catch (YarnException ye) {
+            throw new RuntimeException("Exception occurred while finding child jobs", ye);
+        }
+
+        System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
+        return childYarnJobs;
+    }
+
+    public static void killChildYarnJobs(Configuration actionConf) {
+        try {
+            Set<ApplicationId> childYarnJobs = getChildYarnJobs(actionConf);
+            if (!childYarnJobs.isEmpty()) {
+                System.out.println();
+                System.out.println("Found [" + childYarnJobs.size() + "] Map-Reduce jobs from this launcher");
+                System.out.println("Killing existing jobs and starting over:");
+                YarnClient yarnClient = YarnClient.createYarnClient();
+                yarnClient.init(actionConf);
+                yarnClient.start();
+                for (ApplicationId app : childYarnJobs) {
+                    System.out.print("Killing job [" + app + "] ... ");
+                    yarnClient.killApplication(app);
+                    System.out.println("Done");
+                }
+                System.out.println();
+            }
+        } catch (YarnException ye) {
+            throw new RuntimeException("Exception occurred while killing child job(s)", ye);
+        } catch (IOException ioe) {
+            throw new RuntimeException("Exception occurred while killing child job(s)", ioe);
         }
     }
 
@@ -202,13 +288,13 @@ public abstract class LauncherMain {
     }
 
     protected static void setYarnTag(Configuration actionConf) {
-        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+        if(actionConf.get(CHILD_MAPREDUCE_JOB_TAGS) != null) {
             // in case the user set their own tags, appending the launcher tag.
             if(actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
                 actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(MAPREDUCE_JOB_TAGS) + ","
-                        + actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                        + actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
             } else {
-                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
             }
         }
     }

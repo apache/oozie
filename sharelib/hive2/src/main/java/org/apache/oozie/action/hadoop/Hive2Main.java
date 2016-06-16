@@ -228,7 +228,7 @@ public class Hive2Main extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();

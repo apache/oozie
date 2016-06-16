@@ -28,8 +28,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
@@ -349,9 +347,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         // loading action conf prepared by Oozie
         Configuration actionConf = LauncherMain.loadActionConf();
 
-        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+        if(actionConf.get(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS) != null) {
             propagationConf.set(LauncherMain.MAPREDUCE_JOB_TAGS,
-                    actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                    actionConf.get(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS));
         }
 
         propagationConf.writeXml(new FileWriter(PROPAGATION_CONF_XML));
@@ -470,9 +468,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
-        if (getJobConf().get(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME) != null) {
-            System.setProperty(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME,
-                    getJobConf().get(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME));
+        if (getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME) != null) {
+            System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME,
+                    getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME));
         }
 
         String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);

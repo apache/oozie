@@ -50,7 +50,7 @@ public class SubmitSqoopXCommand extends SubmitHttpXCommand {
         String name = "sqoop";
         Element ele = new Element(name, ns);
         Element jt = new Element("job-tracker", ns);
-        jt.addContent(conf.get(XOozieClient.JT));
+        jt.addContent(conf.get(XOozieClient.RM));
         ele.addContent(jt);
         Element nn = new Element("name-node", ns);
         nn.addContent(conf.get(XOozieClient.NN));

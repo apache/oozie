@@ -44,7 +44,6 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -165,12 +164,12 @@ public class LauncherMapperHelper {
     public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String launcherTag,
                                                 long launcherTime)
             throws NoSuchAlgorithmException {
-        launcherJobConf.setLong(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME, launcherTime);
+        launcherJobConf.setLong(LauncherMain.OOZIE_JOB_LAUNCH_TIME, launcherTime);
         // Tags are limited to 100 chars so we need to hash them to make sure (the actionId otherwise doesn't have a max length)
         String tag = getTag(launcherTag);
         // keeping the oozie.child.mapreduce.job.tags instead of mapreduce.job.tags to avoid killing launcher itself.
         // mapreduce.job.tags should only go to child job launch by launcher.
-        actionConf.set(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS, tag);
+        actionConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, tag);
     }
 
     private static String getTag(String launcherTag) throws NoSuchAlgorithmException {

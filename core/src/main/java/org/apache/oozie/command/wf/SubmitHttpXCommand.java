@@ -58,7 +58,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     protected static final Set<String> OPTIONAL_OOZIE_CONFS = new HashSet<String>();
 
     static {
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.JT);
+        MANDATORY_OOZIE_CONFS.add(XOozieClient.RM);
         MANDATORY_OOZIE_CONFS.add(XOozieClient.NN);
         MANDATORY_OOZIE_CONFS.add(OozieClient.LIBPATH);
 

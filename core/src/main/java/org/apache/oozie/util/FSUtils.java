@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.hadoop.utils;
+package org.apache.oozie.util;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -24,18 +24,8 @@ import org.apache.hadoop.fs.Path;
 import java.io.IOException;
 import java.net.URI;
 
-public class HadoopShims {
-    FileSystem fs;
-
-    public HadoopShims(FileSystem fs) {
-        this.fs = fs;
-    }
-
-    public static boolean isSymlinkSupported() {
-        return true;
-    }
-
-    public Path getSymLinkTarget(Path p) throws IOException {
+public final class FSUtils {
+    public static Path getSymLinkTarget(FileSystem fs, Path p) throws IOException {
         try {
             //getSymlink doesn't work with fragment name, need to remove fragment before calling getSymlink
             Path tempPath = new URI(p.toString()).getFragment() == null ? p : new Path(new URI(p.toString()).getPath());
@@ -46,7 +36,7 @@ public class HadoopShims {
         }
     }
 
-    public boolean isSymlink(Path p) throws IOException {
+    public static boolean isSymlink(FileSystem fs, Path p) throws IOException {
         try {
             //isSymlink doesn't work with fragment name, need to remove fragment before checking for symlink
             Path tempPath = new URI(p.toString()).getFragment() == null ? p : new Path(new URI(p.toString()).getPath());
@@ -57,12 +47,7 @@ public class HadoopShims {
         }
     }
 
-    public void createSymlink(Path target, Path link, boolean createParent) throws IOException {
+    public static void createSymlink(FileSystem fs, Path target, Path link, boolean createParent) throws IOException {
         fs.createSymlink(target, link, createParent);
     }
-
-    public static boolean isYARN() {
-        return true;
-    }
-
 }

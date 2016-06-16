@@ -31,7 +31,6 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.cli.OozieCLI;
@@ -136,7 +135,7 @@ public class TestOozieCLI extends DagServletTestCase {
         Properties props = new Properties();
         props.setProperty(OozieClient.USER_NAME, getTestUser());
         props.setProperty(XOozieClient.NN, "localhost:9000");
-        props.setProperty(XOozieClient.JT, "localhost:9001");
+        props.setProperty(XOozieClient.RM, "localhost:9001");
         props.setProperty("oozie.libpath", appPath);
         props.setProperty("mapred.output.dir", appPath);
         props.setProperty("a", "A");
@@ -155,7 +154,7 @@ public class TestOozieCLI extends DagServletTestCase {
         props.setProperty(OozieClient.APP_PATH, appPath);
         props.setProperty(OozieClient.RERUN_SKIP_NODES, "node");
         props.setProperty(XOozieClient.NN, "localhost:9000");
-        props.setProperty(XOozieClient.JT, "localhost:9001");
+        props.setProperty(XOozieClient.RM, "localhost:9001");
         if (useNewAPI) {
             props.setProperty("mapreduce.map.class", "mapper.class");
             props.setProperty("mapreduce.reduce.class", "reducer.class");

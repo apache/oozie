@@ -182,7 +182,7 @@ public class TestHadoopAccessorService extends XTestCase {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf jobConf = new JobConf(false);
         assertEquals(new Text("oozie mr token"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf.set("mapred.job.tracker", "localhost:50300");
+        jobConf.set("yarn.resourcemanager.address", "localhost:50300");
         jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
         assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
         jobConf = new JobConf(false);

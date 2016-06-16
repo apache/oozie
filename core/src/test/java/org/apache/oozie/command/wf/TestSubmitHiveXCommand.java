@@ -45,7 +45,7 @@ public class TestSubmitHiveXCommand extends XFsTestCase {
     public void testWFXmlGeneration() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         conf.set(OozieClient.LIBPATH, "libpath");
 

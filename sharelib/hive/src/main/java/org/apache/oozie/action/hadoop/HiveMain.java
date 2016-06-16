@@ -294,7 +294,7 @@ public class HiveMain extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(hiveConf);
+        LauncherMain.killChildYarnJobs(hiveConf);
 
         System.out.println("=================================================================");
         System.out.println();
