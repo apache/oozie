@@ -30,6 +30,8 @@
                     <value>${queueName}</value>
                 </property>
             </configuration>
+            <arg>-update</arg>
+            <arg>-skipcrccheck</arg>
             <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/input-data/text/data.txt</arg>
             <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}/data.txt</arg>
             </distcp>
