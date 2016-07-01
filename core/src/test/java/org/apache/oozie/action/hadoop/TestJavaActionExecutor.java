@@ -1256,6 +1256,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                + "<value>java-job-conf</value>" + "</property>"
                + "</configuration>";
         wfBean.setConf(jobConf);
+        ae = new JavaActionExecutor() {
+            @Override
+            protected String getDefaultShareLibName(Element actionXml) {
+                return "java-action-executor";
+            }
+        };
         Assert.assertArrayEquals(new String[] { "java-job-conf" },
                 ae.getShareLibNames(context, new Element("java"), actionConf));
 

@@ -56,6 +56,9 @@ public abstract class ActionExecutor {
 
     public static final String ACTION_RETRY_POLICY = CONF_PREFIX + "retry.policy";
 
+    public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
+
+
     /**
      * Error code used by {@link #convertException} when there is not register error information for an exception.
      */
@@ -580,5 +583,28 @@ public abstract class ActionExecutor {
      */
     public boolean supportsConfigurationJobXML() {
         return false;
+    }
+
+    /**
+     * Creating and forwarding the tag, It will be useful during repeat attempts of Launcher, to ensure only
+     * one child job is running. Tag is formed as follows:
+     * For workflow job, tag = action-id
+     * For Coord job, tag = coord-action-id@action-name (if not part of sub flow), else
+     * coord-action-id@subflow-action-name@action-name.
+     * @param conf the conf
+     * @param wfJob the wf job
+     * @param action the action
+     * @return the action yarn tag
+     */
+    public String getActionYarnTag(Configuration conf, WorkflowJob wfJob, WorkflowAction action) {
+        if (conf.get(OOZIE_ACTION_YARN_TAG) != null) {
+            return conf.get(OOZIE_ACTION_YARN_TAG) + "@" + action.getName();
+        }
+        else if (wfJob.getParentId() != null) {
+            return wfJob.getParentId() + "@" + action.getName();
+        }
+        else {
+            return action.getId();
+        }
     }
 }

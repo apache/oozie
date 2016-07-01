@@ -67,11 +67,10 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
     public static final String COULD_NOT_START = "COULD_NOT_START";
     public static final String START_DATA_MISSING = "START_DATA_MISSING";
     public static final String EXEC_DATA_MISSING = "EXEC_DATA_MISSING";
-    public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
     private String jobId = null;
     protected String actionId = null;
-    private WorkflowJobBean wfJob = null;
+    protected WorkflowJobBean wfJob = null;
     protected WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
@@ -185,7 +184,7 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 isUserRetry = true;
                 prepareForRetry(wfAction);
             }
-            context = new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
+            context = getContext(isRetry, isUserRetry);
             boolean caught = false;
             try {
                 if (!(executor instanceof ControlNodeActionExecutor)) {
@@ -230,21 +229,6 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 Instrumentation.Cron cron = new Instrumentation.Cron();
                 cron.start();
                 context.setStartTime();
-                /*
-                Creating and forwarding the tag, It will be useful during repeat attempts of Launcher, to ensure only
-                one child job is running. Tag is formed as follows:
-                For workflow job, tag = action-id
-                For Coord job, tag = coord-action-id@action-name (if not part of sub flow), else
-                coord-action-id@subflow-action-name@action-name.
-                 */
-                if (conf.get(OOZIE_ACTION_YARN_TAG) != null) {
-                    context.setVar(OOZIE_ACTION_YARN_TAG, conf.get(OOZIE_ACTION_YARN_TAG) + "@" + wfAction.getName());
-                } else if (wfJob.getParentId() != null) {
-                    context.setVar(OOZIE_ACTION_YARN_TAG, wfJob.getParentId() + "@" + wfAction.getName());
-                } else {
-                    context.setVar(OOZIE_ACTION_YARN_TAG, wfAction.getId());
-                }
-
                 executor.start(context, wfAction);
                 cron.stop();
                 FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
@@ -354,6 +338,16 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     protected void callActionEnd() throws CommandException {
         new ActionEndXCommand(wfAction.getId(), wfAction.getType()).call();
+    }
+
+    /**
+     * Get action executor context
+     * @param isRetry
+     * @param isUserRetry
+     * @return
+     */
+    protected ActionExecutorContext getContext(boolean isRetry, boolean isUserRetry) {
+        return new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
     }
 
     protected void updateJobLastModified(){

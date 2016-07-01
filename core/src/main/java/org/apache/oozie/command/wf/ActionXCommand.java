@@ -23,6 +23,8 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -277,9 +279,9 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      *
      */
     public static class ActionExecutorContext implements ActionExecutor.Context {
-        private final WorkflowJobBean workflow;
+        protected final WorkflowJobBean workflow;
         private Configuration protoConf;
-        private final WorkflowActionBean action;
+        protected final WorkflowActionBean action;
         private final boolean isRetry;
         private final boolean isUserRetry;
         private boolean started;
@@ -353,6 +355,15 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
          * @see org.apache.oozie.action.ActionExecutor.Context#setVar(java.lang.String, java.lang.String)
          */
         public void setVar(String name, String value) {
+            setVarToWorkflow(name, value);
+        }
+
+        /**
+         * This is not thread safe, don't use if workflowjob is shared among multiple actions command
+         * @param name
+         * @param value
+         */
+        public void setVarToWorkflow(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             WorkflowInstance wfInstance = workflow.getWorkflowInstance();
             wfInstance.setVar(name, value);
@@ -520,7 +531,32 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         public void setJobStatus(Job.Status jobStatus) {
             this.jobStatus = jobStatus;
         }
+    }
 
+    public static class ForkedActionExecutorContext extends ActionExecutorContext {
+        private Map<String, String> contextVariableMap = new HashMap<String, String>();
+
+        public ForkedActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry,
+                boolean isUserRetry) {
+            super(workflow, action, isRetry, isUserRetry);
+        }
+
+        public void setVar(String name, String value) {
+            if (value != null) {
+                contextVariableMap.remove(name);
+            }
+            else {
+                contextVariableMap.put(name, value);
+            }
+        }
+
+        public String getVar(String name) {
+            return contextVariableMap.get(name);
+        }
+
+        public Map<String, String> getContextMap() {
+            return contextVariableMap;
+        }
     }
 
 }

@@ -58,6 +58,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    public XLog LOG = XLog.getLog(getClass());
+
 
     static {
         String[] badUserProps = {PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
@@ -220,11 +222,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),
                                           subWorkflowConf);
 
-                // pushing the tag to conf for using by Launcher.
-                if(context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG) != null) {
-                    subWorkflowConf.set(ActionStartXCommand.OOZIE_ACTION_YARN_TAG,
-                            context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG));
-                }
+                subWorkflowConf.set(OOZIE_ACTION_YARN_TAG, getActionYarnTag(parentConf, context.getWorkflow(), action));
 
                 // if the rerun failed node option is provided during the time of rerun command, old subworkflow will
                 // rerun again.
@@ -247,6 +245,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             }
         }
         catch (Exception ex) {
+            LOG.error(ex);
             throw convertException(ex);
         }
     }

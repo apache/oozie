@@ -19,6 +19,7 @@
 package org.apache.oozie.workflow.lite;
 
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowException;
 
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ import java.util.List;
 public abstract class ControlNodeHandler extends NodeHandler {
 
     public static final String FORK_COUNT_PREFIX = "workflow.fork.";
+    public XLog LOG = XLog.getLog(getClass());
+
 
     /**
      * Called by {@link #enter(Context)} when returning TRUE.
@@ -62,6 +65,7 @@ public abstract class ControlNodeHandler extends NodeHandler {
         else if (nodeClass.equals(JoinNodeDef.class)) {
             String parentExecutionPath = context.getParentExecutionPath(context.getExecutionPath());
             String forkCount = context.getVar(FORK_COUNT_PREFIX + parentExecutionPath);
+
             if (forkCount == null) {
                 throw new WorkflowException(ErrorCode.E0720, context.getNodeDef().getName());
             }
@@ -73,6 +77,8 @@ public abstract class ControlNodeHandler extends NodeHandler {
             else {
                 context.setVar(FORK_COUNT_PREFIX + parentExecutionPath, null);
             }
+            LOG.debug("count = " + count + " for parent execution path " + parentExecutionPath);
+
             doTouch = (count == 0);
         }
         else {

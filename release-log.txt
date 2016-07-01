@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2436 Fork/join workflow fails with "oozie.action.yarn.tag must not be null" (puru)
 OOZIE-2578 Oozie example distcp job fails to run within an encrypted zone with checksum match error (pbacsko via rkanter)
 OOZIE-2362 SQL injection in BulkJPAExecutor (pbacsko via rkanter)
 OOZIE-2577 Flaky tests TestCoordActionInputCheckXCommand.testTimeout and testTimeoutWithException (pbacsko via rkanter)
