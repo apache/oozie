@@ -21,12 +21,24 @@ package org.apache.oozie.util;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
+
+import java.io.File;
+import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import com.sun.tools.attach.spi.AttachProvider;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 // Most tests adpated from TestInstrumentation
 public class TestMetricsInstrumentation extends XTestCase {
@@ -42,8 +54,17 @@ public class TestMetricsInstrumentation extends XTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        setSystemProperty("oozie.jmx_monitoring.enable", "true");
         super.setUp();
         new Services().init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if (null != Services.get()) {
+            Services.get().destroy();
+        }
+        super.tearDown();
     }
 
     public void testInstrumentationCounter() throws Exception {
@@ -198,5 +219,49 @@ public class TestMetricsInstrumentation extends XTestCase {
             fail();
         } catch (UnsupportedOperationException uoe) {
         }
+    }
+
+    public void testJMXInstrumentation() throws Exception {
+        final AttachProvider attachProvider = AttachProvider.providers().get(0);
+
+        VirtualMachineDescriptor descriptor = null;
+
+        //Setting the id of the VM unique, so we can find it.
+        String uniqueId = UUID.randomUUID().toString();
+        System.setProperty("process.unique.id", uniqueId);
+
+        //Finding our own VM by the id.
+        for(VirtualMachineDescriptor d : VirtualMachine.list()) {
+            String remoteUniqueId = VirtualMachine.attach(d).getSystemProperties().getProperty("process.unique.id");
+            if(remoteUniqueId != null && remoteUniqueId.equals(uniqueId))
+            {
+                descriptor = d;
+                break;
+            }
+        }
+
+        assertNotNull("Could not find own virtual machine", descriptor);
+
+        //Attaching JMX agent to our own VM
+        final VirtualMachine virtualMachine = attachProvider.attachVirtualMachine(descriptor);
+        String agent = virtualMachine.getSystemProperties().getProperty("java.home") +
+                File.separator + "lib" + File.separator + "management-agent.jar";
+        virtualMachine.loadAgent(agent);
+        final Object portObject = virtualMachine.getAgentProperties().
+                get("com.sun.management.jmxremote.localConnectorAddress");
+
+        final JMXServiceURL target = new JMXServiceURL(portObject + "");
+
+        JMXConnector jmxc = JMXConnectorFactory.connect(target);
+        MBeanServerConnection conn = jmxc.getMBeanServerConnection();
+
+        //Query a value through JMX from our own VM
+        Object value = null;
+        try {
+            value = conn.getAttribute(new ObjectName("metrics:name=jvm.memory.heap.committed"),"Value");
+        } catch (Exception e) {
+            fail("Could not fetch metric");
+        }
+        assertNotNull("JMX service error", value);
     }
 }

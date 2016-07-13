@@ -70,6 +70,14 @@
     </property>
 
     <property>
+        <name>oozie.jmx_monitoring.enable</name>
+        <value>false</value>
+        <description>
+            If the oozie functional metrics needs to be exposed via JMX interface, set it to true.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.mapreduce.uber.jar.enable</name>
         <value>false</value>
         <description>

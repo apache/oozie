@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2507 Expose monitoring via JMX beans in Oozie (fdenes via rkanter)
 OOZIE-2581 Oozie should reset SecurityManager in finally block (satishsaley via rohini)
 OOZIE-2579 Bulk kill tests in TestBulkWorkflowXCommand might fail because of a race condition (pbacsko via rkanter)
 OOZIE-2587 Disable SchedulerService on certain tests (pbacsko via rkanter)

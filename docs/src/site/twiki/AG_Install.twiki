@@ -818,6 +818,18 @@ properties should be specified in oozie-site.xml :
     </property>
     </verbatim>
 
+We can also publish the instrumentation metrics via JMX interface. For this the following property should be specified
+in oozie-site.xml :
+    <verbatim>
+    <property>
+         <name>oozie.jmx_monitoring.enable</name>
+         <value>false</value>
+         <description>
+             If the oozie functional metrics needs to be exposed via JMX interface, set it to true.
+         </description>
+     </property>>
+    </verbatim>
+
 #HA
 ---+++ High Availability (HA)
 
