@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2579 Bulk kill tests in TestBulkWorkflowXCommand might fail because of a race condition (pbacsko via rkanter)
 OOZIE-2587 Disable SchedulerService on certain tests (pbacsko via rkanter)
 OOZIE-2603 Give thread pools a meaningful name in CallableQueueService and SchedulerService (pbacsko via rkanter)
 OOZIE-2436 Fork/join workflow fails with "oozie.action.yarn.tag must not be null" (puru)
