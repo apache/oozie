@@ -26,9 +26,10 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.service.AbandonedCoordCheckerService.AbandonedCoordCheckerRunnable;
+import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.service.AbandonedCoordCheckerService.AbandonedCoordCheckerRunnable;
 
 public class TestAbandonedCoordChecker extends XDataTestCase {
     private Services services;
@@ -38,6 +39,7 @@ public class TestAbandonedCoordChecker extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
+        services.get(SchedulerService.class).destroy();
     }
 
     @Override
