@@ -61,7 +61,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.10</artifactId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
             <exclusions>
@@ -105,13 +105,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
+            <artifactId>spark-graphx_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_2.10</artifactId>
+            <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
             <exclusions>
@@ -171,43 +171,43 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.10</artifactId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-repl_2.10</artifactId>
+            <artifactId>spark-repl_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.10</artifactId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-flume_2.10</artifactId>
+            <artifactId>spark-streaming-flume_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka_2.10</artifactId>
+            <artifactId>spark-streaming-kafka_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-bagel_2.10</artifactId>
+            <artifactId>spark-bagel_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
         </dependency>
@@ -327,7 +327,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-yarn_2.10</artifactId>
+                    <artifactId>spark-yarn_${scala.binary.version}</artifactId>
                     <version>${spark.version}</version>
                     <scope>compile</scope>
                     <exclusions>
