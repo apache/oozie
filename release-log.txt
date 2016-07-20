@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2390 Rerun with failed option removing completed output data (jaydeepvishwakarma)
 OOZIE-2462 When calling ParamChecker.notNull() in CoordActionsIgnoreXCommand.java, "Action" should be passed instead of "Action cannot be null" (mballur via jaydeepvishwakarma)
 OOZIE-2507 Expose monitoring via JMX beans in Oozie (fdenes via rkanter)
 OOZIE-2581 Oozie should reset SecurityManager in finally block (satishsaley via rohini)
