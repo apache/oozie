@@ -427,22 +427,6 @@ Valid value names are:
 
 Repeated value names are not allowed. An empty string "" can be used to reset pause time to none. New end time should not be before job's kickoff time.
 
----+++ Changing endtime/pausetime of a Bundle Job
-
-Example:
-
-<verbatim>
-$ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value pausetime=2011-12-01T05:00Z
-</verbatim>
-
-The =change= option changes a bundle job that is not in =KILLED= status.
-
-Valid value names are:
-   * pausetime: the pause time of the bundle job.
-   * endtime: the end time of the bundle job.
-
-Repeated value names are not allowed. An empty string "" can be used to reset pause time to none. New end time should not be before job's kickoff time.
-
 Bundle will execute pause/end date change command on each coordinator job. Refer conditions and usage section of coordinator change command for more details [[DG_CommandLineTool#Changing_endtimeconcurrencypausetimestatus_of_a_Coordinator_Job][Coordinator job change command]].
 
 ---+++ Rerunning a Workflow Job
