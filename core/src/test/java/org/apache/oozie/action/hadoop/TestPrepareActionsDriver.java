@@ -24,6 +24,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 public class TestPrepareActionsDriver extends XFsTestCase {
 
@@ -40,7 +43,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
     }
 
     // Test to check if prepare action is performed as expected when the prepare XML block is a valid one
-    public void testDoOperationsWithValidXML() throws LauncherException, IOException {
+    public void testDoOperationsWithValidXML() throws LauncherException, IOException, ParserConfigurationException, SAXException {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path newDir = new Path(actionDir, "newDir");
@@ -57,7 +60,7 @@ public class TestPrepareActionsDriver extends XFsTestCase {
         assertTrue(fs.exists(actionDir));
     }
 
-    // Test to check if LauncherException is thrown when the prepare XML block is invalid
+    // Test to check if Exception is thrown when the prepare XML block is invalid
     public void testDoOperationsWithInvalidXML() throws LauncherException, IOException {
         Path actionDir = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
@@ -75,11 +78,9 @@ public class TestPrepareActionsDriver extends XFsTestCase {
             LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (LauncherException le) {
-            assertEquals(le.getCause().getClass(), org.xml.sax.SAXParseException.class);
-            assertEquals(le.getMessage(), "Content is not allowed in prolog.");
-        } catch(Exception ex){
-            fail("Expected a LauncherException but received an Exception");
+        } catch (Exception ex) {
+            assertEquals(ex.getClass(), org.xml.sax.SAXParseException.class);
+            assertEquals(ex.getMessage(), "Content is not allowed in prolog.");
         }
     }
 }

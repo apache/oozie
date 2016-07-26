@@ -46,35 +46,26 @@ public class PrepareActionsDriver {
      * @param prepareXML Prepare XML block in string format
      * @throws LauncherException
      */
-    static void doOperations(String prepareXML, Configuration conf) throws LauncherException {
-        try {
-            Document doc = getDocumentFromXML(prepareXML);
-            doc.getDocumentElement().normalize();
+    static void doOperations(String prepareXML, Configuration conf)
+            throws IOException, SAXException, ParserConfigurationException, LauncherException {
+        Document doc = getDocumentFromXML(prepareXML);
+        doc.getDocumentElement().normalize();
 
-            // Get the list of child nodes, basically, each one corresponding to a separate action
-            NodeList nl = doc.getDocumentElement().getChildNodes();
-            LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
+        // Get the list of child nodes, basically, each one corresponding to a separate action
+        NodeList nl = doc.getDocumentElement().getChildNodes();
+        LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
 
-            for (int i = 0; i < nl.getLength(); ++i) {
-                Node n = nl.item(i);
-                String operation = n.getNodeName();
-                if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
-                    continue;
-                }
-                String pathStr = n.getAttributes().getNamedItem("path").getNodeValue().trim();
-                // use Path to avoid URIsyntax error caused by square bracket in glob
-                URI uri = new Path(pathStr).toUri();
-                LauncherURIHandler handler = factory.getURIHandler(uri);
-                execute(operation, uri, handler, conf);
+        for (int i = 0; i < nl.getLength(); ++i) {
+            Node n = nl.item(i);
+            String operation = n.getNodeName();
+            if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
+                continue;
             }
-        } catch (IOException ioe) {
-            throw new LauncherException(ioe.getMessage(), ioe);
-        } catch (SAXException saxe) {
-            throw new LauncherException(saxe.getMessage(), saxe);
-        } catch (ParserConfigurationException pce) {
-            throw new LauncherException(pce.getMessage(), pce);
-        } catch (IllegalArgumentException use) {
-            throw new LauncherException(use.getMessage(), use);
+            String pathStr = n.getAttributes().getNamedItem("path").getNodeValue().trim();
+            // use Path to avoid URIsyntax error caused by square bracket in glob
+            URI uri = new Path(pathStr).toUri();
+            LauncherURIHandler handler = factory.getURIHandler(uri);
+            execute(operation, uri, handler, conf);
         }
     }
 

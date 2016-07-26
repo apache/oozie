@@ -49,7 +49,11 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+// TODO: OYA: Delete :)
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
     static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
@@ -480,7 +484,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     // Method to execute the prepare actions
-    private void executePrepare() throws IOException, LauncherException {
+    private void executePrepare() throws IOException, LauncherException, ParserConfigurationException, SAXException {
         String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {

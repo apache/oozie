@@ -18,42 +18,38 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
+import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
+import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
+import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.Priority;
+import org.apache.hadoop.yarn.api.records.Resource;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.client.api.YarnClientApplication;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -69,17 +65,40 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.ELEvaluator;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PropertiesUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class JavaActionExecutor extends ActionExecutor {
@@ -94,7 +113,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     public static final String HADOOP_YARN_TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
-    public static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
     public static final String HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART = "oozie.action.launcher.am.restart.kill.childjobs";
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
@@ -117,7 +135,6 @@ public class JavaActionExecutor extends ActionExecutor {
     protected XLog LOG = XLog.getLog(getClass());
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
-    public static final String CONF_HADOOP_YARN_UBER_MODE = "oozie.action.launcher." + HADOOP_YARN_UBER_MODE;
     public static final String HADOOP_JOB_CLASSLOADER = "mapreduce.job.classloader";
     public static final String HADOOP_USER_CLASSPATH_FIRST = "mapreduce.user.classpath.first";
     public static final String OOZIE_CREDENTIALS_SKIP = "oozie.credentials.skip";
@@ -138,10 +155,11 @@ public class JavaActionExecutor extends ActionExecutor {
 
     public static List<Class> getCommonLauncherClasses() {
         List<Class> classes = new ArrayList<Class>();
-        classes.add(LauncherMapper.class);
         classes.add(OozieLauncherInputFormat.class);
         classes.add(LauncherMain.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
+        classes.add(LauncherAM.class);
+        classes.add(LauncherAMCallbackNotifier.class);
         return classes;
     }
 
@@ -159,7 +177,7 @@ public class JavaActionExecutor extends ActionExecutor {
     @Override
     public void initActionType() {
         super.initActionType();
-        maxActionOutputLen = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA);
+        maxActionOutputLen = ConfigurationService.getInt(LauncherAM.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA);
         //Get the limit for the maximum allowed size of action stats
         maxExternalStatsSize = ConfigurationService.getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
@@ -257,8 +275,6 @@ public class JavaActionExecutor extends ActionExecutor {
             } catch (URISyntaxException ex) {
                 throw convertException(ex);
             }
-            // Inject use uber mode for launcher
-            injectLauncherUseUberMode(launcherConf);
             XConfiguration.copy(launcherConf, conf);
             checkForDisallowedProps(launcherConf, "launcher configuration");
             // Inject config-class for launcher to use for action
@@ -273,25 +289,6 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    void injectLauncherUseUberMode(Configuration launcherConf) {
-        // Set Uber Mode for the launcher (YARN only, ignored by MR1)
-        // Priority:
-        // 1. action's <configuration>
-        // 2. oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable
-        // 3. oozie.action.launcher.mapreduce.job.ubertask.enable
-        if (launcherConf.get(HADOOP_YARN_UBER_MODE) == null) {
-            if (ConfigurationService.get("oozie.action." + getType() + ".launcher." + HADOOP_YARN_UBER_MODE).length() > 0) {
-                if (ConfigurationService.getBoolean("oozie.action." + getType() + ".launcher." + HADOOP_YARN_UBER_MODE)) {
-                    launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
-                }
-            } else {
-                if (ConfigurationService.getBoolean("oozie.action.launcher." + HADOOP_YARN_UBER_MODE)) {
-                    launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, true);
-                }
-            }
-        }
-    }
-
     void injectLauncherTimelineServiceEnabled(Configuration launcherConf, Configuration actionConf) {
         // Getting delegation token for ATS. If tez-site.xml is present in distributed cache, turn on timeline service.
         if (actionConf.get("oozie.launcher." + HADOOP_YARN_TIMELINE_SERVICE_ENABLED) == null
@@ -300,104 +297,6 @@ public class JavaActionExecutor extends ActionExecutor {
             if (cacheFiles != null && cacheFiles.contains("tez-site.xml")) {
                 launcherConf.setBoolean(HADOOP_YARN_TIMELINE_SERVICE_ENABLED, true);
             }
-        }
-    }
-
-    void updateConfForUberMode(Configuration launcherConf) {
-
-        // child.env
-        boolean hasConflictEnv = false;
-        String launcherMapEnv = launcherConf.get(HADOOP_MAP_JAVA_ENV);
-        if (launcherMapEnv == null) {
-            launcherMapEnv = launcherConf.get(HADOOP_CHILD_JAVA_ENV);
-        }
-        String amEnv = launcherConf.get(YARN_AM_ENV);
-        StringBuffer envStr = new StringBuffer();
-        HashMap<String, List<String>> amEnvMap = null;
-        HashMap<String, List<String>> launcherMapEnvMap = null;
-        if (amEnv != null) {
-            envStr.append(amEnv);
-            amEnvMap = populateEnvMap(amEnv);
-        }
-        if (launcherMapEnv != null) {
-            launcherMapEnvMap = populateEnvMap(launcherMapEnv);
-            if (amEnvMap != null) {
-                Iterator<String> envKeyItr = launcherMapEnvMap.keySet().iterator();
-                while (envKeyItr.hasNext()) {
-                    String envKey = envKeyItr.next();
-                    if (amEnvMap.containsKey(envKey)) {
-                        List<String> amValList = amEnvMap.get(envKey);
-                        List<String> launcherValList = launcherMapEnvMap.get(envKey);
-                        Iterator<String> valItr = launcherValList.iterator();
-                        while (valItr.hasNext()) {
-                            String val = valItr.next();
-                            if (!amValList.contains(val)) {
-                                hasConflictEnv = true;
-                                break;
-                            }
-                            else {
-                                valItr.remove();
-                            }
-                        }
-                        if (launcherValList.isEmpty()) {
-                            envKeyItr.remove();
-                        }
-                    }
-                }
-            }
-        }
-        if (hasConflictEnv) {
-            launcherConf.setBoolean(HADOOP_YARN_UBER_MODE, false);
-        }
-        else {
-            if (launcherMapEnvMap != null) {
-                for (String key : launcherMapEnvMap.keySet()) {
-                    List<String> launcherValList = launcherMapEnvMap.get(key);
-                    for (String val : launcherValList) {
-                        if (envStr.length() > 0) {
-                            envStr.append(",");
-                        }
-                        envStr.append(key).append("=").append(val);
-                    }
-                }
-            }
-
-            launcherConf.set(YARN_AM_ENV, envStr.toString());
-
-            // memory.mb
-            int launcherMapMemoryMB = launcherConf.getInt(HADOOP_MAP_MEMORY_MB, 1536);
-            int amMemoryMB = launcherConf.getInt(YARN_AM_RESOURCE_MB, 1536);
-            // YARN_MEMORY_MB_MIN to provide buffer.
-            // suppose launcher map aggressively use high memory, need some
-            // headroom for AM
-            int memoryMB = Math.max(launcherMapMemoryMB, amMemoryMB) + YARN_MEMORY_MB_MIN;
-            // limit to 4096 in case of 32 bit
-            if (launcherMapMemoryMB < 4096 && amMemoryMB < 4096 && memoryMB > 4096) {
-                memoryMB = 4096;
-            }
-            launcherConf.setInt(YARN_AM_RESOURCE_MB, memoryMB);
-
-            // We already made mapred.child.java.opts and
-            // mapreduce.map.java.opts equal, so just start with one of them
-            String launcherMapOpts = launcherConf.get(HADOOP_MAP_JAVA_OPTS, "");
-            String amChildOpts = launcherConf.get(YARN_AM_COMMAND_OPTS);
-            StringBuilder optsStr = new StringBuilder();
-            int heapSizeForMap = extractHeapSizeMB(launcherMapOpts);
-            int heapSizeForAm = extractHeapSizeMB(amChildOpts);
-            int heapSize = Math.max(heapSizeForMap, heapSizeForAm) + YARN_MEMORY_MB_MIN;
-            // limit to 3584 in case of 32 bit
-            if (heapSizeForMap < 4096 && heapSizeForAm < 4096 && heapSize > 3584) {
-                heapSize = 3584;
-            }
-            if (amChildOpts != null) {
-                optsStr.append(amChildOpts);
-            }
-            optsStr.append(" ").append(launcherMapOpts.trim());
-            if (heapSize > 0) {
-                // append calculated total heap size to the end
-                optsStr.append(" ").append("-Xmx").append(heapSize).append("m");
-            }
-            launcherConf.set(YARN_AM_COMMAND_OPTS, optsStr.toString().trim());
         }
     }
 
@@ -868,7 +767,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
 
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, JavaMain.class.getName());
+        return launcherConf.get(LauncherAM.CONF_OOZIE_ACTION_MAIN_CLASS, JavaMain.class.getName());
     }
 
     private void setJavaMain(Configuration actionConf, Element actionXml) {
@@ -1004,15 +903,6 @@ public class JavaActionExecutor extends ActionExecutor {
             launcherJobConf.set(HADOOP_CHILD_JAVA_OPTS, opts.toString().trim());
             launcherJobConf.set(HADOOP_MAP_JAVA_OPTS, opts.toString().trim());
 
-            // setting for uber mode
-            if (launcherJobConf.getBoolean(HADOOP_YARN_UBER_MODE, false)) {
-                if (checkPropertiesToDisableUber(launcherJobConf)) {
-                    launcherJobConf.setBoolean(HADOOP_YARN_UBER_MODE, false);
-                }
-                else {
-                    updateConfForUberMode(launcherJobConf);
-                }
-            }
             updateConfForJavaTmpDir(launcherJobConf);
             injectLauncherTimelineServiceEnabled(launcherJobConf, actionConf);
 
@@ -1027,23 +917,9 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    private boolean checkPropertiesToDisableUber(Configuration launcherConf) {
-        boolean disable = false;
-        if (launcherConf.getBoolean(HADOOP_JOB_CLASSLOADER, false)) {
-            disable = true;
-        }
-        else if (launcherConf.getBoolean(HADOOP_USER_CLASSPATH_FIRST, false)) {
-            disable = true;
-        }
-        return disable;
-    }
-
     private void injectCallback(Context context, Configuration conf) {
-        String callback = context.getCallbackUrl("$jobStatus");
-        if (conf.get("job.end.notification.url") != null) {
-            LOG.warn("Overriding the action job end notification URI");
-        }
-        conf.set("job.end.notification.url", callback);
+        String callback = context.getCallbackUrl(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN);
+        conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_URL, callback);
     }
 
     void injectActionCallback(Context context, Configuration actionConf) {
@@ -1062,7 +938,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    public void submitLauncher(FileSystem actionFs, Context context, WorkflowAction action) throws ActionExecutorException {
+    public void submitLauncher(FileSystem actionFs, final Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
         boolean exception = false;
         try {
@@ -1119,14 +995,17 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                 }
             }
-
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
-            LOG.debug("Creating Job Client for action " + action.getId());
-            jobClient = createJobClient(context, launcherJobConf);
-            String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
-                    .getRecoveryId());
-            boolean alreadyRunning = launcherId != null;
+            boolean alreadyRunning = false;
+            String launcherId = null;
+            String consoleUrl = null;
+            // TODO: OYA: equivalent of this? (recovery, alreadyRunning)  When does this happen?
+//            LOG.debug("Creating Job Client for action " + action.getId());
+//            jobClient = createJobClient(context, launcherJobConf);
+//            launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
+//                    .getRecoveryId());
+//            alreadyRunning = launcherId != null;
             RunningJob runningJob;
 
             // if user-retry is on, always submit new launcher
@@ -1141,13 +1020,13 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
             else {
-                LOG.debug("Submitting the job through Job Client for action " + action.getId());
-
-                // setting up propagation of the delegation token.
-                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-                Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(has
-                        .getMRDelegationTokenRenewer(launcherJobConf));
-                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
+                // TODO: OYA: do we actually need an MR token?  IIRC, it's issued by the JHS
+//                // setting up propagation of the delegation token.
+//                Token<DelegationTokenIdentifier> mrdt = null;
+//                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+//                mrdt = jobClient.getDelegationToken(has
+//                        .getMRDelegationTokenRenewer(launcherJobConf));
+//                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
 
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials() && credentialsConf != null) {
@@ -1173,17 +1052,36 @@ public class JavaActionExecutor extends ActionExecutor {
                 else {
                     LOG.info("No need to inject credentials.");
                 }
-                runningJob = jobClient.submitJob(launcherJobConf);
-                if (runningJob == null) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
-                            "Error submitting launcher for action [{0}]", action.getId());
+
+                YarnClient yarnClient = null;
+                try {
+                    String user = context.getWorkflow().getUser();
+
+                    // Create application
+                    yarnClient = createYarnClient(context, launcherJobConf);
+                    YarnClientApplication newApp = yarnClient.createApplication();
+                    ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
+
+                    // Create launch context for app master
+                    ApplicationSubmissionContext appContext =
+                            createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf);
+
+                    // Submit the launcher AM
+                    yarnClient.submitApplication(appContext);
+
+                    launcherId = appId.toString();
+                    LOG.debug("After submission get the launcherId [{0}]", launcherId);
+                    ApplicationReport appReport = yarnClient.getApplicationReport(appId);
+                    consoleUrl = appReport.getTrackingUrl();
+                } finally {
+                    if (yarnClient != null) {
+                        yarnClient.close();
+                        yarnClient = null;
+                    }
                 }
-                launcherId = runningJob.getID().toString();
-                LOG.debug("After submission get the launcherId " + launcherId);
             }
 
             String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
-            String consoleUrl = runningJob.getTrackingURL();
             context.setStartData(launcherId, jobTracker, consoleUrl);
         }
         catch (Exception ex) {
@@ -1206,6 +1104,91 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
     }
+
+    private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, JobConf launcherJobConf, String user,
+                                                                    Context context, Configuration actionConf)
+            throws IOException, HadoopAccessorException, URISyntaxException {
+        // Create launch context for app master
+        ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
+
+        // set the application id
+        appContext.setApplicationId(appId);
+
+        // set the application name
+        appContext.setApplicationName(launcherJobConf.getJobName());
+        appContext.setApplicationType("Oozie Launcher");
+
+        // Set the priority for the application master
+        Priority pri = Records.newRecord(Priority.class);
+        int priority = 0; // TODO: OYA: Add a constant or a config
+        pri.setPriority(priority);
+        appContext.setPriority(pri);
+
+        // Set the queue to which this application is to be submitted in the RM
+        appContext.setQueue(launcherJobConf.getQueueName());
+
+        // Set up the container launch context for the application master
+        ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
+
+        // Set the resources to localize
+        Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
+        ClientDistributedCacheManager.determineTimestampsAndCacheVisibilities(launcherJobConf);
+        MRApps.setupDistributedCache(launcherJobConf, localResources);
+        // Add the Launcher and Action configs as Resources
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        LocalResource launcherJobConfLR = has.createLocalResourceForConfigurationFile(LauncherAM.LAUNCHER_JOB_CONF_XML, user,
+                launcherJobConf, context.getAppFileSystem().getUri(), context.getActionDir());
+        localResources.put(LauncherAM.LAUNCHER_JOB_CONF_XML, launcherJobConfLR);
+        LocalResource actionConfLR = has.createLocalResourceForConfigurationFile(LauncherAM.ACTION_CONF_XML, user, actionConf,
+                context.getAppFileSystem().getUri(), context.getActionDir());
+        localResources.put(LauncherAM.ACTION_CONF_XML, actionConfLR);
+        amContainer.setLocalResources(localResources);
+
+        // Set the environment variables
+        Map<String, String> env = new HashMap<String, String>();
+        // This adds the Hadoop jars to the classpath in the Launcher JVM
+        ClasspathUtils.setupClasspath(env, launcherJobConf);
+        if (false) {        // TODO: OYA: config to add MR jars?  Probably also needed for MR Action
+            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        }
+        amContainer.setEnvironment(env);
+
+        // Set the command
+        List<String> vargs = new ArrayList<String>(6);
+        vargs.add(MRApps.crossPlatformifyMREnv(launcherJobConf, ApplicationConstants.Environment.JAVA_HOME)
+                + "/bin/java");
+        // TODO: OYA: remove attach debugger to AM; useful for debugging
+//                    vargs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+        MRApps.addLog4jSystemProperties("INFO", 1024 * 1024, 0, vargs);
+        vargs.add(LauncherAM.class.getName());
+        vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
+                Path.SEPARATOR + ApplicationConstants.STDOUT);
+        vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
+                Path.SEPARATOR + ApplicationConstants.STDERR);
+        List<String> vargsFinal = new ArrayList<String>(6);
+        StringBuilder mergedCommand = new StringBuilder();
+        for (CharSequence str : vargs) {
+            mergedCommand.append(str).append(" ");
+        }
+        vargsFinal.add(mergedCommand.toString());
+        LOG.debug("Command to launch container for ApplicationMaster is : "
+                + mergedCommand);
+        amContainer.setCommands(vargsFinal);
+        appContext.setAMContainerSpec(amContainer);
+
+        // Set tokens
+        DataOutputBuffer dob = new DataOutputBuffer();
+        launcherJobConf.getCredentials().writeTokenStorageToStream(dob);
+        amContainer.setTokens(ByteBuffer.wrap(dob.getData(), 0, dob.getLength()));
+
+        // Set Resources
+        // TODO: OYA: make resources allocated for the AM configurable and choose good defaults (memory MB, vcores)
+        Resource resource = Resource.newInstance(2048, 1);
+        appContext.setResource(resource);
+
+        return appContext;
+    }
+
     private boolean needInjectCredentials() {
         boolean methodExists = true;
 
@@ -1409,6 +1392,19 @@ public class JavaActionExecutor extends ActionExecutor {
         return Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
     }
 
+    /**
+     * Create yarn client object
+     *
+     * @param context
+     * @param jobConf
+     * @return YarnClient
+     * @throws HadoopAccessorException
+     */
+    protected YarnClient createYarnClient(Context context, JobConf jobConf) throws HadoopAccessorException {
+        String user = context.getWorkflow().getUser();
+        return Services.get().get(HadoopAccessorService.class).createYarnClient(user, jobConf);
+    }
+
     protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
         RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
         return runningJob;
@@ -1425,129 +1421,112 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
-        JobClient jobClient = null;
-        boolean exception = false;
+        boolean fallback = false;
+        LOG = XLog.resetPrefix(LOG);
         LogUtils.setLogInfo(action);
+        YarnClient yarnClient = null;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            FileSystem actionFs = context.getAppFileSystem();
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
-            jobClient = createJobClient(context, jobConf);
-            RunningJob runningJob = getRunningJob(context, action, jobClient);
-            if (runningJob == null) {
-                context.setExecutionData(FAILED, null);
-                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                        "Could not lookup launched hadoop Job ID [{0}] which was associated with " +
-                        " action [{1}].  Failing this action!", getActualExternalId(action), action.getId());
+            FileSystem actionFs = context.getAppFileSystem();
+            yarnClient = createYarnClient(context, jobConf);
+            FinalApplicationStatus appStatus = null;
+            try {
+                ApplicationReport appReport =
+                        yarnClient.getApplicationReport(ConverterUtils.toApplicationId(action.getExternalId()));
+                YarnApplicationState appState = appReport.getYarnApplicationState();
+                if (appState == YarnApplicationState.FAILED || appState == YarnApplicationState.FINISHED
+                        || appState == YarnApplicationState.KILLED) {
+                    appStatus = appReport.getFinalApplicationStatus();
+                }
+
+            } catch (Exception ye) {
+                LOG.debug("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
+                // Fallback to action data file if we can't find the Launcher AM (maybe it got purged)
+                fallback = true;
             }
-            if (runningJob.isComplete()) {
+            if (appStatus != null || fallback) {
                 Path actionDir = context.getActionDir();
                 String newId = null;
                 // load sequence file into object
                 Map<String, String> actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
-                if (actionData.containsKey(LauncherMapper.ACTION_DATA_NEW_ID)) {
-                    newId = actionData.get(LauncherMapper.ACTION_DATA_NEW_ID);
-                    String launcherId = action.getExternalId();
-                    runningJob = jobClient.getJob(JobID.forName(newId));
-                    if (runningJob == null) {
-                        context.setExternalStatus(FAILED);
+                if (fallback) {
+                    String finalStatus = actionData.get(LauncherAM.ACTION_DATA_FINAL_STATUS);
+                    if (finalStatus != null) {
+                        appStatus = FinalApplicationStatus.valueOf(finalStatus);
+                    } else {
+                        context.setExecutionData(FAILED, null);
                         throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                                "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
-                                action.getId());
-                    }
-                    context.setExternalChildIDs(newId);
-                    LOG.info(XLog.STD, "External ID swap, old ID [{0}] new ID [{1}]", launcherId,
-                            newId);
-                }
-                else {
-                    String externalIDs = actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS);
-                    if (externalIDs != null) {
-                        context.setExternalChildIDs(externalIDs);
-                        LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                                "Unknown hadoop job [{0}] associated with action [{1}] and couldn't determine status from" +
+                                        " action data.  Failing this action!", action.getExternalId(), action.getId());
                     }
                 }
-                if (runningJob.isComplete()) {
-                    // fetching action output and stats for the Map-Reduce action.
-                    if (newId != null) {
-                        actionData = LauncherMapperHelper.getActionData(actionFs, context.getActionDir(), jobConf);
-                    }
-                    LOG.info(XLog.STD, "action completed, external ID [{0}]",
-                            action.getExternalId());
-                    if (LauncherMapperHelper.isMainSuccessful(runningJob)) {
-                        if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {
-                            context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
-                                    .get(LauncherMapper.ACTION_DATA_OUTPUT_PROPS)));
-                            LOG.info(XLog.STD, "action produced output");
-                        }
-                        else {
-                            context.setExecutionData(SUCCEEDED, null);
-                        }
-                        if (LauncherMapperHelper.hasStatsData(actionData)) {
-                            context.setExecutionStats(actionData.get(LauncherMapper.ACTION_DATA_STATS));
-                            LOG.info(XLog.STD, "action produced stats");
-                        }
-                        getActionData(actionFs, runningJob, action, context);
+                String externalIDs = actionData.get(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS);
+                if (externalIDs != null) {
+                    context.setExternalChildIDs(externalIDs);
+                    LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                }
+                LOG.info(XLog.STD, "action completed, external ID [{0}]",
+                        action.getExternalId());
+                context.setExecutionData(appStatus.toString(), null);
+                if (appStatus == FinalApplicationStatus.SUCCEEDED) {
+                    if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {
+                        context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
+                                .get(LauncherAM.ACTION_DATA_OUTPUT_PROPS)));
+                        LOG.info(XLog.STD, "action produced output");
                     }
                     else {
-                        String errorReason;
-                        if (actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
-                            Properties props = PropertiesUtils.stringToProperties(actionData
-                                    .get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
-                            String errorCode = props.getProperty("error.code");
-                            if ("0".equals(errorCode)) {
-                                errorCode = "JA018";
-                            }
-                            if ("-1".equals(errorCode)) {
-                                errorCode = "JA019";
-                            }
-                            errorReason = props.getProperty("error.reason");
-                            LOG.warn("Launcher ERROR, reason: {0}", errorReason);
-                            String exMsg = props.getProperty("exception.message");
-                            String errorInfo = (exMsg != null) ? exMsg : errorReason;
-                            context.setErrorInfo(errorCode, errorInfo);
-                            String exStackTrace = props.getProperty("exception.stacktrace");
-                            if (exMsg != null) {
-                                LOG.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
-                            }
-                        }
-                        else {
-                            errorReason = XLog.format("LauncherMapper died, check Hadoop LOG for job [{0}:{1}]", action
-                                    .getTrackerUri(), action.getExternalId());
-                            LOG.warn(errorReason);
-                        }
-                        context.setExecutionData(FAILED_KILLED, null);
+                        context.setExecutionData(SUCCEEDED, null);
                     }
+                    if (LauncherMapperHelper.hasStatsData(actionData)) {
+                        context.setExecutionStats(actionData.get(LauncherAM.ACTION_DATA_STATS));
+                        LOG.info(XLog.STD, "action produced stats");
+                    }
+                    getActionData(actionFs, action, context);
                 }
                 else {
-                    context.setExternalStatus("RUNNING");
-                    LOG.info(XLog.STD, "checking action, hadoop job ID [{0}] status [RUNNING]",
-                            runningJob.getID());
+                    String errorReason;
+                    if (actionData.containsKey(LauncherAM.ACTION_DATA_ERROR_PROPS)) {
+                        Properties props = PropertiesUtils.stringToProperties(actionData
+                                .get(LauncherAM.ACTION_DATA_ERROR_PROPS));
+                        String errorCode = props.getProperty("error.code");
+                        if ("0".equals(errorCode)) {
+                            errorCode = "JA018";
+                        }
+                        if ("-1".equals(errorCode)) {
+                            errorCode = "JA019";
+                        }
+                        errorReason = props.getProperty("error.reason");
+                        LOG.warn("Launcher ERROR, reason: {0}", errorReason);
+                        String exMsg = props.getProperty("exception.message");
+                        String errorInfo = (exMsg != null) ? exMsg : errorReason;
+                        context.setErrorInfo(errorCode, errorInfo);
+                        String exStackTrace = props.getProperty("exception.stacktrace");
+                        if (exMsg != null) {
+                            LOG.warn("Launcher exception: {0}{E}{1}", exMsg, exStackTrace);
+                        }
+                    }
+                    else {
+                        errorReason = XLog.format("Launcher AM died, check Hadoop LOG for job [{0}:{1}]", action
+                                .getTrackerUri(), action.getExternalId());
+                        LOG.warn(errorReason);
+                    }
+                    context.setExecutionData(FAILED_KILLED, null);
                 }
             }
             else {
-                context.setExternalStatus("RUNNING");
+                context.setExternalStatus(YarnApplicationState.RUNNING.toString());
                 LOG.info(XLog.STD, "checking action, hadoop job ID [{0}] status [RUNNING]",
-                        runningJob.getID());
+                        action.getExternalId());
             }
         }
         catch (Exception ex) {
             LOG.warn("Exception in check(). Message[{0}]", ex.getMessage(), ex);
-            exception = true;
             throw convertException(ex);
         }
         finally {
-            if (jobClient != null) {
-                try {
-                    jobClient.close();
-                }
-                catch (Exception e) {
-                    if (exception) {
-                        LOG.error("JobClient error: ", e);
-                    }
-                    else {
-                        throw convertException(e);
-                    }
-                }
+            if (yarnClient != null) {
+                IOUtils.closeQuietly(yarnClient);
             }
         }
     }
@@ -1555,14 +1534,12 @@ public class JavaActionExecutor extends ActionExecutor {
     /**
      * Get the output data of an action. Subclasses should override this method
      * to get action specific output data.
-     *
      * @param actionFs the FileSystem object
-     * @param runningJob the runningJob
      * @param action the Workflow action
      * @param context executor context
      *
      */
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+    protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
     }
 
@@ -1585,38 +1562,28 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
-        JobClient jobClient = null;
-        boolean exception = false;
+        YarnClient yarnClient = null;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
+            String user = context.getWorkflow().getUser();
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
-            jobClient = createJobClient(context, jobConf);
-            RunningJob runningJob = getRunningJob(context, action, jobClient);
-            if (runningJob != null) {
-                runningJob.killJob();
-            }
+            yarnClient = createYarnClient(context, jobConf);
+            yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
             context.setExternalStatus(KILLED);
             context.setExecutionData(KILLED, null);
-        }
-        catch (Exception ex) {
-            exception = true;
+        } catch (Exception ex) {
+            LOG.error("Error: ", ex);
             throw convertException(ex);
-        }
-        finally {
+        } finally {
             try {
                 FileSystem actionFs = context.getAppFileSystem();
                 cleanUpActionDir(actionFs, context);
-                if (jobClient != null) {
-                    jobClient.close();
+                if (yarnClient != null) {
+                    yarnClient.close();
                 }
-            }
-            catch (Exception ex) {
-                if (exception) {
-                    LOG.error("Error: ", ex);
-                }
-                else {
-                    throw convertException(ex);
-                }
+            } catch (Exception ex) {
+                LOG.error("Error: ", ex);
+                throw convertException(ex);
             }
         }
     }

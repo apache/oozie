@@ -29,7 +29,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
@@ -125,9 +124,9 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+    protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-        super.getActionData(actionFs, runningJob, action, context);
+        super.getActionData(actionFs, action, context);
         readExternalChildIDs(action, context);
     }
 

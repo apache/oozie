@@ -23,7 +23,6 @@ import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
@@ -232,17 +231,15 @@ public class SqoopActionExecutor extends JavaActionExecutor {
 
     /**
      * Get the stats and external child IDs
-     *
-     * @param actionFs the FileSystem object
-     * @param runningJob the runningJob
+     *  @param actionFs the FileSystem object
      * @param action the Workflow action
      * @param context executor context
      *
      */
     @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
+    protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException{
-        super.getActionData(actionFs, runningJob, action, context);
+        super.getActionData(actionFs, action, context);
         readExternalChildIDs(action, context);
     }
 

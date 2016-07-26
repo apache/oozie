@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2590 OYA: Create basic Oozie Launcher Application Master (rkanter)
 OOZIE-2316 Drop support for Hadoop 1 and 0.23 (asasvari via rkanter)
 OOZIE-2503 show ChildJobURLs to spark action (satishsaley via puru)
 OOZIE-2551 Feature request: epoch timestamp generation (jtolar via puru)

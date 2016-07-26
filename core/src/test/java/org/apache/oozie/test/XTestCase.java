@@ -82,6 +82,7 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.test.hive.MiniHS2;
+import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -877,6 +878,7 @@ public abstract class XTestCase extends TestCase {
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniDFSCluster dfsCluster2 = null;
+    // TODO: OYA: replace with MiniYarnCluster or MiniMRYarnCluster
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
     private static MiniHS2 hiveserver2 = null;
@@ -886,6 +888,8 @@ public abstract class XTestCase extends TestCase {
 			if (System.getProperty("hadoop.log.dir") == null) {
 				System.setProperty("hadoop.log.dir", testCaseDir);
 			}
+            // Tell the ClasspathUtils that we're using a mini cluster
+            ClasspathUtils.setUsingMiniYarnCluster(true);
             int taskTrackers = 2;
             int dataNodes = 2;
             String oozieUser = getOozieUser();

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
@@ -29,7 +30,14 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -39,6 +47,7 @@ import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -511,9 +520,43 @@ public class HadoopAccessorService implements Service {
     }
 
     /**
+     * Return a YarnClient created with the provided user and configuration.
+     *
+     * @param user The username to impersonate
+     * @param conf The conf
+     * @return a YarnClient with the provided user and configuration
+     * @throws HadoopAccessorException if the client could not be created.
+     */
+    public YarnClient createYarnClient(String user, final Configuration conf) throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
+        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+            throw new HadoopAccessorException(ErrorCode.E0903);
+        }
+        String rm = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
+        validateJobTracker(rm);
+        try {
+            UserGroupInformation ugi = getUGI(user);
+            YarnClient yarnClient = ugi.doAs(new PrivilegedExceptionAction<YarnClient>() {
+                @Override
+                public YarnClient run() throws Exception {
+                    YarnClient yarnClient = YarnClient.createYarnClient();
+                    yarnClient.init(conf);
+                    yarnClient.start();
+                    return yarnClient;
+                }
+            });
+            return yarnClient;
+        } catch (InterruptedException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
+        } catch (IOException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
+        }
+    }
+
+    /**
      * Return a FileSystem created with the provided user for the specified URI.
      *
-     *
+     * @param user The username to impersonate
      * @param uri file system URI.
      * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
@@ -665,6 +708,58 @@ public class HadoopAccessorService implements Service {
 
     public Set<String> getSupportedSchemes() {
         return supportedSchemes;
+    }
+
+    /**
+     * Creates a {@link LocalResource} for the Configuration to localize it for a Yarn Container.  This involves also writing it
+     * to HDFS.
+     * Example usage:
+     * * <pre>
+     * {@code
+     * LocalResource res1 = createLocalResourceForConfigurationFile(filename1, user, conf, uri, dir);
+     * LocalResource res2 = createLocalResourceForConfigurationFile(filename2, user, conf, uri, dir);
+     * ...
+     * Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
+     * localResources.put(filename1, res1);
+     * localResources.put(filename2, res2);
+     * ...
+     * containerLaunchContext.setLocalResources(localResources);
+     * }
+     * </pre>
+     *
+     * @param filename The filename to use on the remote filesystem and once it has been localized.
+     * @param user The user
+     * @param conf The configuration to process
+     * @param uri The URI of the remote filesystem (e.g. HDFS)
+     * @param dir The directory on the remote filesystem to write the file to
+     * @return
+     * @throws IOException A problem occurred writing the file
+     * @throws HadoopAccessorException A problem occured with Hadoop
+     * @throws URISyntaxException A problem occurred parsing the URI
+     */
+    public LocalResource createLocalResourceForConfigurationFile(String filename, String user, Configuration conf, URI uri,
+                                                                 Path dir)
+            throws IOException, HadoopAccessorException, URISyntaxException {
+        File f = File.createTempFile(filename, ".tmp");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(f);
+            conf.writeXml(fos);
+        } finally {
+            if (fos != null) {
+                fos.close();
+            }
+        }
+        FileSystem fs = createFileSystem(user, uri, conf);
+        Path dst = new Path(dir, filename);
+        fs.copyFromLocalFile(new Path(f.getAbsolutePath()), dst);
+        LocalResource localResource = Records.newRecord(LocalResource.class);
+        localResource.setType(LocalResourceType.FILE); localResource.setVisibility(LocalResourceVisibility.APPLICATION);
+        localResource.setResource(ConverterUtils.getYarnUrlFromPath(dst));
+        FileStatus destStatus = fs.getFileStatus(dst);
+        localResource.setTimestamp(destStatus.getModificationTime());
+        localResource.setSize(destStatus.getLen());
+        return localResource;
     }
 
 }

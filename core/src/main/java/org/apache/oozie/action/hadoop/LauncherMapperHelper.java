@@ -145,18 +145,6 @@ public class LauncherMapperHelper {
           launcherConf.setBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", true);
         }
 
-        FileSystem fs =
-          Services.get().get(HadoopAccessorService.class).createFileSystem(launcherConf.get("user.name"),
-                                                                           actionDir.toUri(), launcherConf);
-        fs.mkdirs(actionDir);
-
-        OutputStream os = fs.create(new Path(actionDir, LauncherMapper.ACTION_CONF_XML));
-        try {
-            actionConf.writeXml(os);
-        } finally {
-            IOUtils.closeSafely(os);
-        }
-
         launcherConf.setInputFormat(OozieLauncherInputFormat.class);
         launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
     }
