@@ -610,6 +610,7 @@ public class CoordinatorEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_ID);
         FILTER_NAMES.add(OozieClient.FILTER_FREQUENCY);
         FILTER_NAMES.add(OozieClient.FILTER_UNIT);
+        FILTER_NAMES.add(OozieClient.FILTER_SORT_BY);
     }
 
     /**

@@ -100,7 +100,8 @@ usage:
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
                  -doas <arg>          doAs user, impersonates as the specified user.
-                 -filter <arg>        user=<U>\;name=<N>\;group=<G>\;status=<S>\;frequency=<F>\;unit=<M>\;startcreatedtime=<SC>\;endcreatedtime=<EC>
+                 -filter <arg>        user=<U>\;name=<N>\;group=<G>\;status=<S>\;frequency=<F>\;unit=<M>\;startcreatedtime=<SC>\;
+                                      endcreatedtime=<EC>\;sortby=<SB>
                  -jobtype <arg>       job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))
                  -len <arg>           number of jobs (default '100')
                  -localtime           use local time (same as passing your time zone to -timezone). Overrides -timezone option
@@ -962,6 +963,7 @@ Valid filter names are:
    * status: the status of the job.
    * startcreatedtime: the start of time window in specifying createdtime range filter.
    * endcreatedtime: the end of time window in specifying createdtime range filter
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
 name. Multiple values must be specified as different name value pairs.
@@ -995,6 +997,7 @@ Valid filter names are:
    * status: the status of the job.
    * frequency: the frequency of the Coordinator job.
    * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 ---+++ Checking the Status of multiple Bundle Jobs
 
@@ -1055,6 +1058,7 @@ Valid filter names are:
    * status: the status of the job.
    * frequency: the frequency of the Coordinator job.
    * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
 name. Multiple values must be specified as different name value pairs.

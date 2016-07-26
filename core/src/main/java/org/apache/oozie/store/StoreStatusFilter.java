@@ -21,7 +21,9 @@ package org.apache.oozie.store;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.XLog;
 
 public class StoreStatusFilter {
@@ -251,5 +253,24 @@ public class StoreStatusFilter {
                 }
             }
         }
+    }
+
+    public static String getSortBy(Map<String, List<String>> filter, String sortByStr) throws JPAExecutorException {
+        if (filter.containsKey(OozieClient.FILTER_SORT_BY)) {
+            List<String> values = filter.get(OozieClient.FILTER_SORT_BY);
+            if (values.size() > 1) {
+                throw new JPAExecutorException(ErrorCode.E0302,
+                        "cannot specify multiple sortby parameter");
+            }
+            String value = values.get(0);
+            for (OozieClient.SORT_BY sortBy : OozieClient.SORT_BY.values()) {
+                if (sortBy.toString().equalsIgnoreCase(value)) {
+                    value = sortBy.getFullname();
+                    sortByStr = " order by w.".concat(value).concat(" desc ");
+                    break;
+                }
+            }
+        }
+        return sortByStr;
     }
 }

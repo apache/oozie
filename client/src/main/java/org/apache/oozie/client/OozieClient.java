@@ -186,6 +186,21 @@ public class OozieClient {
 
     public static final String OOZIE_SUSPEND_ON_NODES = "oozie.suspend.on.nodes";
 
+    public static final String FILTER_SORT_BY = "sortby";
+
+    public enum SORT_BY {
+        createdTime("createdTimestamp"), lastModifiedTime("lastModifiedTimestamp");
+        private final String fullname;
+
+        SORT_BY(String fullname) {
+            this.fullname = fullname;
+        }
+
+        public String getFullname() {
+            return fullname;
+        }
+    }
+
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
     }

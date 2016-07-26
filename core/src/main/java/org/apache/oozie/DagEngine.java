@@ -474,6 +474,7 @@ public class DagEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_ID);
         FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_START);
         FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_END);
+        FILTER_NAMES.add(OozieClient.FILTER_SORT_BY);
     }
 
     /**

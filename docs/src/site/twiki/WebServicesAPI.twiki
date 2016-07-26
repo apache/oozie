@@ -1663,6 +1663,7 @@ Valid filter names are:
    * status: the status of the job
    * startCreatedTime : the start of the window about workflow job's created time
    * endCreatedTime : the end of above window
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names.
 

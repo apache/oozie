@@ -93,6 +93,10 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         assertNotNull(wfInfo);
         assertEquals(wfInfo.getWorkflows().size(), 1);
         WorkflowJobBean retBean = wfInfo.getWorkflows().get(0);
+        compareWf(wfBean, retBean);
+    }
+
+    private void compareWf(WorkflowJobBean wfBean, WorkflowJobBean retBean) {
         assertEquals(wfBean.getId(), retBean.getId());
         assertEquals(wfBean.getAppName(), retBean.getAppName());
         assertEquals(wfBean.getStatusStr(), retBean.getStatusStr());
@@ -105,6 +109,43 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         assertEquals(wfBean.getEndTime(), retBean.getEndTime());
         assertEquals(wfBean.getExternalId(), retBean.getExternalId());
         assertEquals(wfBean.getParentId(), retBean.getParentId());
+    }
+
+    public void testWfJobsSortBy() throws Exception {
+        WorkflowJobBean workflowJob1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowJobBean workflowJob2 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        workflowJob1.setAppName("update-app-name-1");
+        workflowJob1.setLastModifiedTime(DateUtils.parseDateUTC("2012-01-04T10:00Z"));
+        workflowJob1.setCreatedTime(DateUtils.parseDateUTC("2012-01-03T10:00Z"));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob1);
+        workflowJob2.setAppName("update-app-name-2");
+        workflowJob2.setLastModifiedTime(DateUtils.parseDateUTC("2012-01-05T10:00Z"));
+        workflowJob2.setCreatedTime(DateUtils.parseDateUTC("2012-01-02T10:00Z"));
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> list = new ArrayList<String>();
+        list.add("lastModifiedTime");
+        filter.put(OozieClient.FILTER_SORT_BY, list);
+        WorkflowsJobGetJPAExecutor wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        WorkflowsInfo wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(2, wfInfo.getWorkflows().size());
+        WorkflowJobBean retBean = wfInfo.getWorkflows().get(0);
+        compareWf(workflowJob2, retBean);
+        // test default behavior
+        filter.clear();
+        list.clear();
+        list.add("dummyField");
+        filter.put(OozieClient.FILTER_SORT_BY, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(2, wfInfo.getWorkflows().size());
+        retBean = wfInfo.getWorkflows().get(0);
+        compareWf(workflowJob1, retBean);
     }
 
     public void testWfJobsGetWithCreatedTime() throws Exception {

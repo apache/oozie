@@ -44,6 +44,7 @@ import org.apache.openjpa.persistence.jdbc.ResultSetType;
  */
 public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInfo> {
 
+    public static final String DEFAULT_ORDER_BY = " order by w.createdTimestamp desc ";
     private Map<String, List<String>> filter;
     private int start = 1;
     private int len = 50;
@@ -67,27 +68,30 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
         List<String> colArray = new ArrayList<String>();
         List<String> valArray = new ArrayList<String>();
         StringBuilder sb = new StringBuilder("");
+        String orderBy = DEFAULT_ORDER_BY;
 
         StoreStatusFilter.filter(filter, orArray, colArray, valArray, sb, StoreStatusFilter.coordSeletStr,
                                  StoreStatusFilter.coordCountStr);
 
+        orderBy = StoreStatusFilter.getSortBy(filter, orderBy);
         int realLen = 0;
 
         Query q = null;
         Query qTotal = null;
-        if (orArray.size() == 0) {
+        if (orArray.size() == 0 && orderBy.equals(DEFAULT_ORDER_BY)) {
             q = em.createNamedQuery("GET_COORD_JOBS_COLUMNS");
             q.setFirstResult(start - 1);
             q.setMaxResults(len);
             qTotal = em.createNamedQuery("GET_COORD_JOBS_COUNT");
         }
         else {
-            StringBuilder sbTotal = new StringBuilder(sb);
-            sb.append(" order by w.createdTimestamp desc ");
+            sb = sb.toString().trim().length() == 0 ? sb.append(StoreStatusFilter.coordSeletStr) : sb;
+            String sbTotal = sb.toString();
+            sb.append(orderBy);
             q = em.createQuery(sb.toString());
             q.setFirstResult(start - 1);
             q.setMaxResults(len);
-            qTotal = em.createQuery(sbTotal.toString().replace(StoreStatusFilter.coordSeletStr,
+            qTotal = em.createQuery(sbTotal.replace(StoreStatusFilter.coordSeletStr,
                                                                           StoreStatusFilter.coordCountStr));
         }
 

@@ -905,6 +905,21 @@ public class TestOozieCLI extends DagServletTestCase {
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
 
+                args = new String[] { "jobs", "-filter",
+                        "sortby=lastmodifiedtime", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+
+                args = new String[] { "jobs", "-filter",
+                        "sortby=lastmodifiedtime", "-jobtype", "coord", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+
+                args = new String[] { "jobs", "-filter",
+                        "sortby=lastmodifiedtime", "-jobtype", "bundle", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOBS_FILTER_PARAM, MockDagEngineService.did);
+
                 return null;
             }
         });

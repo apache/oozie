@@ -65,7 +65,7 @@ public class TestBundleJobQueryExecutor extends XDataTestCase {
         assertEquals(query.getParameterValue("origJobXml"), bean.getOrigJobXmlBlob());
         assertEquals(query.getParameterValue("startTime"), bean.getstartTimestamp());
         assertEquals(query.getParameterValue("status"), bean.getStatus().toString());
-        assertEquals(query.getParameterValue("timeUnit"), bean.getTimeUnit());
+        assertEquals(query.getParameterValue("timeUnit"), bean.getTimeUnitStr());
         assertEquals(query.getParameterValue("pending"), bean.getPending());
         assertEquals(query.getParameterValue("id"), bean.getId());
 

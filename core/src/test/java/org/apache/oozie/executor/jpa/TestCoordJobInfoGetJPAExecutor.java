@@ -27,10 +27,10 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 
 public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
     Services services;
@@ -210,5 +210,44 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         ret = jpaService.execute(coordInfoGetCmd);
         assertNotNull(ret);
         assertEquals(ret.getCoordJobs().size(), 3);
+    }
+
+    public void testCoordGetJobsSortBy() throws Exception {
+        CoordinatorJobBean coordinatorJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, false, false);
+        CoordinatorJobBean coordinatorJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+
+        coordinatorJob1.setLastModifiedTime(DateUtils.parseDateUTC("2012-01-04T10:00Z"));
+        coordinatorJob1.setCreatedTime(DateUtils.parseDateUTC("2012-01-03T10:00Z"));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob1);
+
+        coordinatorJob2.setLastModifiedTime(DateUtils.parseDateUTC("2012-01-05T10:00Z"));
+        coordinatorJob2.setCreatedTime(DateUtils.parseDateUTC("2012-01-02T10:00Z"));
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> list = new ArrayList<String>();
+        list.add("lastmodifiedtime");
+        filter.put(OozieClient.FILTER_SORT_BY, list);
+        CoordJobInfoGetJPAExecutor coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        CoordinatorJobInfo ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getCoordJobs().size());
+        compareCoordJobs(coordinatorJob2, ret.getCoordJobs().get(0));
+        //test default behavior
+        filter.clear();
+        list.clear();
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getCoordJobs().size());
+        compareCoordJobs(coordinatorJob1, ret.getCoordJobs().get(0));
+    }
+
+    private void compareCoordJobs(CoordinatorJobBean coordBean, CoordinatorJobBean retCoordBean) {
+        assertEquals(coordBean.getId(), retCoordBean.getId());
+        assertEquals(coordBean.getStatusStr(), retCoordBean.getStatusStr());
+        assertEquals(coordBean.getCreatedTime(), retCoordBean.getCreatedTime());
     }
 }
