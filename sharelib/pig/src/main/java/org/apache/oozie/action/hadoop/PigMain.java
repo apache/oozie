@@ -165,7 +165,7 @@ public class PigMain extends LauncherMain {
         if (log4jFile != null) {
 
             String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
-            String rootLogLevel = actionConf.get("oozie.action ." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+            String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
             // append required PIG properties to the default hadoop log4j file
             Properties hadoopProps = new Properties();
