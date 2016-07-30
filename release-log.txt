@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2565 [Oozie web Console] Make the timezones in settings tab to be sorted by default (meetchandan via jaydeepvishwakarma)
 OOZIE-2520 SortBy filter for ordering the jobs query results (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2506 Add logs into RecoverService for logging information about queued commands (abhishekbafna via jaydeepvishwakarma) 
 OOZIE-2515 Duplicate information for "Changing endtime/pausetime of a Bundle Job" in CommandLineTool wiki (abhishekbafna via jaydeepvishwakarma)
