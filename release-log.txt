@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2172 ZooKeeper Security Tests failed with JVM IBM JAVA (GauravPande via rkanter)
 OOZIE-2555 Oozie SSL enable setup does not return port for admin -servers (abhishekbafna via rkanter)
 OOZIE-2440 Exponential re-try policy for workflow action (satishsaley via jaydeepvishwakarma)
 OOZIE-2539 Incorrect property key is used for 'hive log4j configuration file for execution mode' (abhishekbafna via jaydeepvishwakarma)

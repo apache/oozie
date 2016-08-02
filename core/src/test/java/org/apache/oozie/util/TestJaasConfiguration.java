@@ -72,11 +72,18 @@ public class TestJaasConfiguration extends XTestCase {
         assertEquals(loginModuleName, entry.getLoginModuleName());
         assertEquals(AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, entry.getControlFlag());
         Map<String, ?> options = entry.getOptions();
-        assertEquals(keytab, options.get("keyTab"));
-        assertEquals(principal, options.get("principal"));
-        assertEquals("true", options.get("useKeyTab"));
-        assertEquals("true", options.get("storeKey"));
-        assertEquals("false", options.get("useTicketCache"));
-        assertEquals(5, options.size());
+	assertEquals(principal, options.get("principal"));
+	if (loginModuleName.equals("com.ibm.security.auth.module.Krb5LoginModule")){
+			assertEquals(keytab.startsWith("file://") ? keytab : "file://" + keytab, options.get("useKeytab"));
+			assertEquals("both",options.get("credsType"));
+			assertEquals(3, options.size());
+        }
+        else{
+			assertEquals("true", options.get("useKeyTab"));
+			assertEquals(keytab, options.get("keyTab"));
+			assertEquals("true", options.get("storeKey"));
+			assertEquals("false", options.get("useTicketCache"));
+			assertEquals(5, options.size());
+        }
     }
 }
