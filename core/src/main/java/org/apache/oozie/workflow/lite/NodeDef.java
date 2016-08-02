@@ -43,6 +43,7 @@ public class NodeDef implements Writable {
     private String cred = null;
     private String userRetryMax = "null";
     private String userRetryInterval = "null";
+    private String userRetryPolicy = "null";
 
     NodeDef() {
     }
@@ -62,13 +63,16 @@ public class NodeDef implements Writable {
     }
 
     NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions, String cred,
-            String userRetryMax, String userRetryInterval) {
+            String userRetryMax, String userRetryInterval, String userRetryPolicy) {
         this(name, conf, handlerClass, transitions, cred);
         if (userRetryMax != null) {
             this.userRetryMax = userRetryMax;
         }
         if (userRetryInterval != null) {
             this.userRetryInterval = userRetryInterval;
+        }
+        if (userRetryPolicy != null) {
+            this.userRetryPolicy = userRetryPolicy;
         }
     }
 
@@ -115,10 +119,18 @@ public class NodeDef implements Writable {
                 nodeDefVersion = LiteWorkflowStoreService.getNodeDefDefaultVersion();
             }
             catch (WorkflowException e) {
-                nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_1;
+                nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_2;
             }
         }
         return nodeDefVersion;
+    }
+
+    public String getUserRetryPolicy() {
+        return userRetryPolicy;
+    }
+
+    public void setUserRetryPolicy(String userRetryPolicy) {
+        this.userRetryPolicy = userRetryPolicy;
     }
 
     @SuppressWarnings("unchecked")
@@ -151,7 +163,24 @@ public class NodeDef implements Writable {
     }
     @SuppressWarnings("unchecked")
     private void readVersionOne(DataInput dataInput, String firstField) throws IOException {
-        nodeDefVersion = LiteWorkflowStoreService.NODE_DEF_VERSION_1;
+        readCommon(dataInput, firstField, LiteWorkflowStoreService.NODE_DEF_VERSION_1);
+    }
+
+    /*
+     * Reads according to version 2
+     */
+    @SuppressWarnings("unchecked")
+    private void readVersionTwo(DataInput dataInput, String firstField) throws IOException {
+        readCommon(dataInput, firstField, LiteWorkflowStoreService.NODE_DEF_VERSION_2);
+        userRetryPolicy = dataInput.readUTF();
+    }
+
+    /*
+     * Reads common part
+     */
+    @SuppressWarnings("unchecked")
+    private void readCommon(DataInput dataInput, String firstField, String nodeDefVer) throws IOException {
+        nodeDefVersion = nodeDefVer;
         name = dataInput.readUTF();
         cred = dataInput.readUTF();
         if (cred.equals("null")) {
@@ -185,11 +214,15 @@ public class NodeDef implements Writable {
     @Override
     public void readFields(DataInput dataInput) throws IOException {
         String firstField = dataInput.readUTF();
-        if (!firstField.equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
-            readVersionZero(dataInput, firstField);
-        } else {
-            //since oozie version 3.1
+        if (firstField.equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
+            // since oozie version 3.1
             readVersionOne(dataInput, firstField);
+        }
+        else if (firstField.equals(LiteWorkflowStoreService.NODE_DEF_VERSION_2)) {
+            readVersionTwo(dataInput, firstField);
+        }
+        else {
+            readVersionZero(dataInput, firstField);
         }
     }
 
@@ -222,6 +255,29 @@ public class NodeDef implements Writable {
      * @throws IOException thrown if fail to write
      */
     private void writeVersionOne(DataOutput dataOutput) throws IOException {
+        writeCommon(dataOutput);
+    }
+
+    /**
+     * Write as version two format, this version was since 4.4.4.1.
+     *
+     * @param dataOutput data output to serialize node def
+     * @throws IOException thrown if fail to write
+     */
+    private void writeVersionTwo(DataOutput dataOutput) throws IOException {
+        writeCommon(dataOutput);
+        if (userRetryPolicy != null) {
+            dataOutput.writeUTF(userRetryPolicy);
+        }
+        else {
+            dataOutput.writeUTF("null");
+        }
+    }
+
+    /*
+     * Write the common part
+     */
+    private void writeCommon(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(nodeDefVersion);
         dataOutput.writeUTF(name);
         if (cred != null) {
@@ -260,11 +316,15 @@ public class NodeDef implements Writable {
      */
     @Override
     public void write(DataOutput dataOutput) throws IOException {
-        if (!getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
-            writeVersionZero(dataOutput);
-        } else {
-            //since oozie version 3.1
+        if (getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {
+            // since oozie version 3.1
             writeVersionOne(dataOutput);
+        }
+        else if (getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_2)) {
+            writeVersionTwo(dataOutput);
+        }
+        else {
+            writeVersionZero(dataOutput);
         }
     }
 

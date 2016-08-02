@@ -2116,6 +2116,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.policy</name>
+        <value>periodic</value>
+        <description>
+            Automatic retry policy for workflow action. Possible values are periodic or exponential, periodic being the default.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code</name>
         <value>JA008,JA009,JA017,JA018,JA019,FS009,FS008,FS014</value>
         <description>
@@ -2142,9 +2150,9 @@ will be the requeue interval for the actions which are waiting for a long time w
     
     <property>
         <name>oozie.service.LiteWorkflowStoreService.node.def.version</name>
-        <value>_oozie_inst_v_1</value>
+        <value>_oozie_inst_v_2</value>
         <description>
-            NodeDef default version, _oozie_inst_v_0 or _oozie_inst_v_1
+            NodeDef default version, _oozie_inst_v_0, _oozie_inst_v_1 or _oozie_inst_v_2
         </description>
     </property>
 

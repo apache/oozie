@@ -21,6 +21,8 @@ package org.apache.oozie.workflow.lite;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.action.hadoop.FsActionExecutor;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.ELUtils;
@@ -90,6 +92,7 @@ public class LiteWorkflowAppParser {
     private static final String USER_RETRY_MAX_A = "retry-max";
     private static final String USER_RETRY_INTERVAL_A = "retry-interval";
     private static final String TO_A = "to";
+    private static final String USER_RETRY_POLICY_A = "retry-policy";
 
     private static final String FORK_PATH_E = "path";
     private static final String FORK_START_A = "start";
@@ -485,12 +488,16 @@ public class LiteWorkflowAppParser {
                 String credStr = eNode.getAttributeValue(CRED_A);
                 String userRetryMaxStr = eNode.getAttributeValue(USER_RETRY_MAX_A);
                 String userRetryIntervalStr = eNode.getAttributeValue(USER_RETRY_INTERVAL_A);
+                String userRetryPolicyStr = eNode.getAttributeValue(USER_RETRY_POLICY_A);
                 try {
                     if (!StringUtils.isEmpty(userRetryMaxStr)) {
                         userRetryMaxStr = ELUtils.resolveAppName(userRetryMaxStr, jobConf);
                     }
                     if (!StringUtils.isEmpty(userRetryIntervalStr)) {
                         userRetryIntervalStr = ELUtils.resolveAppName(userRetryIntervalStr, jobConf);
+                    }
+                    if (!StringUtils.isEmpty(userRetryPolicyStr)) {
+                        userRetryPolicyStr = ELUtils.resolveAppName(userRetryPolicyStr, jobConf);
                     }
                 }
                 catch (Exception e) {
@@ -499,8 +506,8 @@ public class LiteWorkflowAppParser {
 
                 String actionConf = XmlUtils.prettyPrint(eActionConf).toString();
                 def.addNode(new ActionNodeDef(eNode.getAttributeValue(NAME_A), actionConf, actionHandlerClass,
-                                              transitions[0], transitions[1], credStr,
-                                              userRetryMaxStr, userRetryIntervalStr));
+                        transitions[0], transitions[1], credStr, userRetryMaxStr, userRetryIntervalStr,
+                        userRetryPolicyStr));
             } else if (SLA_INFO.equals(eNode.getName()) || CREDENTIALS.equals(eNode.getName())) {
                 // No operation is required
             } else if (eNode.getName().equals(GLOBAL)) {
