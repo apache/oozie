@@ -108,7 +108,7 @@ public class TestSignalXCommand extends XDataTestCase {
         final DagEngine engine = new DagEngine("u");
 
         XConfiguration conf = new XConfiguration();
-        conf.set(OozieClient.APP_PATH, appPath.toString() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
 
         final String jobId = engine.submitJob(conf, false);

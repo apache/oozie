@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2497 Some tests fail on windows due to hard coded URIs (abhishekbafna via rkanter)
 OOZIE-2349 Method getCoordJobInfo(String jobId, String filter, int offset, int length, boolean desc) is not present in LocalOozieClientCoord (nperiwal via rkanter)
 OOZIE-2172 ZooKeeper Security Tests failed with JVM IBM JAVA (GauravPande via rkanter)
 OOZIE-2555 Oozie SSL enable setup does not return port for admin -servers (abhishekbafna via rkanter)

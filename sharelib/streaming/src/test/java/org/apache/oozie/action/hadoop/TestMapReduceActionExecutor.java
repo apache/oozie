@@ -124,7 +124,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         conf.set("nameNode", getNameNodeUri());
         conf.set("jobTracker", getJobTrackerUri());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+        conf.set(OozieClient.APP_PATH, new File(getTestCaseDir(), "workflow.xml").toURI().toString());
         conf.set(OozieClient.LOG_TOKEN, "t");
 
         OutputStream os = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
