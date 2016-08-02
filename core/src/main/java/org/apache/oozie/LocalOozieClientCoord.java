@@ -396,6 +396,31 @@ public class LocalOozieClientCoord extends OozieClient {
     }
 
     /**
+     * Get the info of a coordinator job.
+     *
+     * @param jobId job Id.
+     * @param filter filter the status filter
+     * @param start starting index in the list of actions belonging to the job
+     * @param len number of actions to be returned
+     * @return the job info.
+     * @throws org.apache.oozie.client.OozieClientException thrown if the job
+     *         info could not be retrieved.
+     */
+    @Override
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len)
+            throws OozieClientException {
+        try {
+            return coordEngine.getCoordJob(jobId, filter, start, len, false);
+        }
+        catch (CoordinatorEngineException ex) {
+            throw new OozieClientException(ex.getErrorCode().toString(), ex);
+        }
+        catch (BaseEngineException bex) {
+            throw new OozieClientException(bex.getErrorCode().toString(), bex);
+        }
+    }
+
+    /**
      * Get the info of a coordinator action.
      *
      * @param actionId Id.
