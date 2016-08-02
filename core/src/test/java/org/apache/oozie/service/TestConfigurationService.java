@@ -274,6 +274,8 @@ public class TestConfigurationService extends XTestCase {
 
         assertEquals(7, ConfigurationService.getInt(ShareLibService.LAUNCHERJAR_LIB_RETENTION));
         assertEquals(5000, ConfigurationService.getInt(SLAService.CONF_CAPACITY));
+        assertEquals(11000, ConfigurationService.getInt("oozie.http.port"));
+        assertEquals(11443, ConfigurationService.getInt("oozie.https.port"));
 
         cl.destroy();
     }

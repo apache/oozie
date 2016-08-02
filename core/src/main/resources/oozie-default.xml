@@ -2492,6 +2492,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.https.port</name>
+        <value>11443</value>
+        <description>
+            Oozie ssl server port.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.instance.id</name>
         <value>${oozie.http.hostname}</value>
         <description>
