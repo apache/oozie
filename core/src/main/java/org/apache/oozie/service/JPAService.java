@@ -174,6 +174,12 @@ public class JPAService implements Service, Instrumentable {
             throw new ServiceException(ErrorCode.E0609, dbType, ormFile);
         }
 
+        // support for mysql replication urls "jdbc:mysql:replication://master:port,slave:port[,slave:port]/db"
+        if (url.startsWith("jdbc:mysql:replication")) {
+            url = "\"".concat(url).concat("\"");
+            LOG.info("A jdbc replication url is provided. Url: [{0}]", url);
+        }
+
         String connProps = "DriverClassName={0},Url={1},Username={2},Password={3},MaxActive={4}";
         connProps = MessageFormat.format(connProps, driver, url, user, password, maxConn);
         Properties props = new Properties();
