@@ -112,6 +112,7 @@ public abstract class XTestCase extends TestCase {
 
     protected static File OOZIE_SRC_DIR = null;
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
+    protected static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
     protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
