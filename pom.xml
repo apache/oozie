@@ -82,7 +82,7 @@
         <oozie.hadoop-utils.version>hadoop-${hadoop.majorversion}-${project.version}</oozie.hadoop-utils.version>
         <hbase.version>0.94.27</hbase.version>
 
-        <dropwizard.metrics.version>3.1.0</dropwizard.metrics.version>
+        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
 
