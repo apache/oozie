@@ -163,11 +163,7 @@ public class SqoopMain extends LauncherMain {
             throw new RuntimeException("Action Configuration does not have [" + SqoopActionExecutor.SQOOP_ARGS + "] property");
         }
 
-        System.out.println("Sqoop command arguments :");
-        for (String arg : sqoopArgs) {
-            System.out.println("             " + arg);
-        }
-
+        LauncherMapper.printArgs("Sqoop command arguments :", sqoopArgs);
         LauncherMainHadoopUtils.killChildYarnJobs(sqoopConf);
 
         System.out.println("=================================================================");

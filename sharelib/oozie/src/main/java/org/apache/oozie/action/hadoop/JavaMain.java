@@ -46,10 +46,7 @@ public class JavaMain extends LauncherMain {
 
         Class<?> klass = actionConf.getClass(JAVA_MAIN_CLASS, Object.class);
         System.out.println("Main class        : " + klass.getName());
-        System.out.println("Arguments         :");
-        for (String arg : args) {
-            System.out.println("                    " + arg);
-        }
+        LauncherMapper.printArgs("Arguments         :", args);
         System.out.println();
         Method mainMethod = klass.getMethod("main", String[].class);
         try {
