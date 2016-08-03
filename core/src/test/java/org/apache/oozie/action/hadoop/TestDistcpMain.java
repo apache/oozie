@@ -82,7 +82,7 @@ public class TestDistcpMain extends MainTestCase {
 
         // test -D option
         jobConf.set("mapred.job.queue.name", "non-exist");
-        fs.delete(new Path(getTestCaseDir(), "action.xml"), true);
+        new File(getTestCaseDir(), "action.xml").delete();
         os = new FileOutputStream(actionXml);
         jobConf.writeXml(os);
 
@@ -90,7 +90,7 @@ public class TestDistcpMain extends MainTestCase {
         String option = "-Dmapred.job.queue.name=default"; // overwrite queue setting
         DistcpMain.main(new String[] { option, inputDir.toString(), outputDir.toString() });
         assertTrue(getFileSystem().exists(outputDir));
-
+        new File(getTestCaseDir(), "action.xml").delete();
         return null;
     }
 }

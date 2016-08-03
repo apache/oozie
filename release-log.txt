@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2493 TestDistcpMain deletes action.xml from wrong filesystem (abhishekbafna via rkanter)
 OOZIE-2496 Testcase failure due to environment specific line.separator value (abhishekbafna via rkanter)
 OOZIE-2574 Oozie to support replication-enabled mysql urls (abhishekbafna via rkanter)
 OOZIE-2433 oozie restart required if oozie metrics to graphing tool broken (nperiwal via jaydeepvishwakarma)
