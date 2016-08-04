@@ -217,13 +217,6 @@ else
       extjsHome=${libext}/ext-2.2.zip
       addExtjs=true
     fi
-  # find war files (e.g., workflowgenerator) under /libext and deploy
-    if [ `ls ${libext} | grep \.war\$ | wc -c` != 0 ]; then
-      for i in "${libext}/"*.war; do
-        echo "INFO: Deploying extention: $i"
-        cp $i ${CATALINA_BASE}/webapps/
-      done
-    fi
   fi
 
   prepare
