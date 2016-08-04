@@ -218,7 +218,7 @@ profile depending on the hadoop version used.
 .0-SNAPSHOT for hadoop-3
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
--Dpig.version=<version> - default 0.12.1
+-Dpig.version=<version> - default 0.16.0
 -Dpig.classifier=<classifier> - default none
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
