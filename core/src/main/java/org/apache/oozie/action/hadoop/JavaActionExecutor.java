@@ -146,6 +146,8 @@ public class JavaActionExecutor extends ActionExecutor {
         List<Class> classes = new ArrayList<Class>();
         classes.add(LauncherMapper.class);
         classes.add(OozieLauncherInputFormat.class);
+        classes.add(OozieLauncherOutputFormat.class);
+        classes.add(OozieLauncherOutputCommitter.class);
         classes.add(LauncherMainHadoopUtils.class);
         classes.add(HadoopShims.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
