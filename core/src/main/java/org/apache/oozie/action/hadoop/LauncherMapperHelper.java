@@ -159,7 +159,8 @@ public class LauncherMapperHelper {
         }
 
         launcherConf.setInputFormat(OozieLauncherInputFormat.class);
-        launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
+        launcherConf.setOutputFormat(OozieLauncherOutputFormat.class);
+        launcherConf.setOutputCommitter(OozieLauncherOutputCommitter.class);
     }
 
     public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String launcherTag)
