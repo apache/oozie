@@ -546,7 +546,7 @@
 	</property>
 
     <property>
-        <name>oozie.service.coord.input.check.requeue.interval.increase</name>
+        <name>oozie.service.coord.input.check.requeue.interval.additional.delay</name>
         <value>0</value>
         <description>This value (in seconds) will be added into oozie.service.coord.input.check.requeue.interval and resulting value
 will be the requeue interval for the actions which are waiting for a long time without any input.
