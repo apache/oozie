@@ -289,7 +289,7 @@ public class ShareLibService implements Service, Instrumentable {
                 Path filePath = new Path(new URI(rootDir.toString()).getPath());
                 Path qualifiedRootDirPath = fs.makeQualified(rootDir);
                 if (isFilePartOfConfList(rootDir)) {
-                    cachePropertyFile(filePath, shareLibKey, shareLibConfigMap);
+                    cachePropertyFile(qualifiedRootDirPath, filePath, shareLibKey, shareLibConfigMap);
                 }
                 listOfPaths.add(qualifiedRootDirPath);
                 return;
@@ -307,7 +307,7 @@ public class ShareLibService implements Service, Instrumentable {
                 }
                 else {
                     if (isFilePartOfConfList(file.getPath())) {
-                        cachePropertyFile(file.getPath(), shareLibKey, shareLibConfigMap);
+                        cachePropertyFile(file.getPath(), file.getPath(), shareLibKey, shareLibConfigMap);
                     }
                     listOfPaths.add(file.getPath());
                 }
@@ -642,7 +642,7 @@ public class ShareLibService implements Service, Instrumentable {
             Path path = new Path(dfsPath);
             getPathRecursively(fs, new Path(dfsPath), listOfPaths, shareLibKey, shareLibConfigMap);
             if (HadoopShims.isSymlinkSupported() && fileSystem.isSymlink(path)) {
-                symlinkMappingforAction.put(path, fileSystem.getSymLinkTarget(path));
+                symlinkMappingforAction.put(fs.makeQualified(path), fileSystem.getSymLinkTarget(path));
             }
         }
         if (HadoopShims.isSymlinkSupported()) {
@@ -834,7 +834,7 @@ public class ShareLibService implements Service, Instrumentable {
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws JDOMException
      */
-    private void cachePropertyFile(Path hdfsPath, String shareLibKey,
+    private void cachePropertyFile(Path qualifiedHdfsPath, Path hdfsPath, String shareLibKey,
             Map<String, Map<Path, Configuration>> shareLibConfigMap) throws IOException, JDOMException {
         Map<Path, Configuration> confMap = shareLibConfigMap.get(shareLibKey);
         if (confMap == null) {
@@ -842,7 +842,7 @@ public class ShareLibService implements Service, Instrumentable {
             shareLibConfigMap.put(shareLibKey, confMap);
         }
         Configuration xmlConf = new XConfiguration(fs.open(hdfsPath));
-        confMap.put(hdfsPath, xmlConf);
+        confMap.put(qualifiedHdfsPath, xmlConf);
 
     }
 

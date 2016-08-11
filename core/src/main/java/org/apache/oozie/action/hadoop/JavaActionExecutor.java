@@ -683,12 +683,10 @@ public class JavaActionExecutor extends ActionExecutor {
                         if (listOfPaths != null && !listOfPaths.isEmpty()) {
                             for (Path actionLibPath : listOfPaths) {
                                 String fragmentName = new URI(actionLibPath.toString()).getFragment();
-                                Path pathWithFragment = fragmentName == null ? actionLibPath : new Path(new URI(
-                                        actionLibPath.toString()).getPath());
                                 String fileName = fragmentName == null ? actionLibPath.getName() : fragmentName;
                                 if (confSet.contains(fileName)) {
                                     Configuration jobXmlConf = shareLibService.getShareLibConf(actionShareLibName,
-                                            pathWithFragment);
+                                            actionLibPath);
                                     if (jobXmlConf != null) {
                                         checkForDisallowedProps(jobXmlConf, actionLibPath.getName());
                                         XConfiguration.injectDefaults(jobXmlConf, conf);
