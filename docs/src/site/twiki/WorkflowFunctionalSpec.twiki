@@ -1883,17 +1883,17 @@ This function is only applicable to action nodes that produce output data on com
 
 The output data is in a Java Properties format and via this EL function it is available as a =Map<String, String>=.
 
-*int wf:actionExternalId(String node)*
+*String wf:actionExternalId(String node)*
 
 It returns the external Id for an action node, or an empty string if the action has not being executed or it has not
 completed yet.
 
-*int wf:actionTrackerUri(String node)*
+*String wf:actionTrackerUri(String node)*
 
 It returns the tracker URI for an action node, or an empty string if the action has not being executed or it has not
 completed yet.
 
-*int wf:actionExternalStatus(String node)*
+*String wf:actionExternalStatus(String node)*
 
 It returns the external status for an action node, or an empty string if the action has not being executed or it has
 not completed yet.
