@@ -9,7 +9,7 @@
 ---++ Pre-Conditions
 
    * Rerun coordinator action must be in TIMEDOUT/SUCCEEDED/KILLED/FAILED.
-   * Coordinator actions cannot be rerun if the coordinator job is in the KILLED or FAILED state.
+   * Coordinator actions cannot be rerun if the coordinator job is in the PREP or IGNORED state.
    * Rerun a PAUSED coordinator job, the status and pause time and pending flag will not be reset.
    * Rerun a SUSPENDED coordinator job, the status will reset to RUNNING.
    * All rerun actions must exist already.

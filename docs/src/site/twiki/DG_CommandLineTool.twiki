@@ -592,7 +592,7 @@ Example:
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -definition 14-20090525161321-oozie-joe
-
+.
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-2413">
 	<start to="p0"/>
     <action name="p0">
@@ -813,11 +813,15 @@ Update command also verifies coordinator definition like submit command, if ther
 Update command with -dryrun will show coordinator definition and properties differences.
 Config option is optional, if not specified existing coordinator property is used to find coordinator path.
 
-Update command doesn't allow update of coordinator name, frequency, start time, end time and timezone and will fail on an attempt to change any of them. To change end time of coordinator use the =-change= command
+Update command doesn't allow update of coordinator name, frequency, start time, end time and timezone and will fail on an attempt to change any of them. To change end time of coordinator use the =-change= command.
+
+To change the entire XML for a running coordinator, hdfs path for the new XML can be specified
+as =oozie.coord.application.path= in job.properties. Then, use <code>-config job.properties</code> in the update command.
+
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0000005-140402104721140-oozie-puru-C -dryrun
-
+.
 **********Job definition changes**********
 @@ -3,8 +3,8 @@
      <concurrency>1</concurrency>
@@ -856,6 +860,7 @@ $ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0
    </property>
 **********************************
 </verbatim>
+
 
 ---+++ Ignore a Coordinator Job
 
@@ -1179,11 +1184,12 @@ Example:
 
 <verbatim>
 $ oozie admin -oozie http://localhost:11000/oozie -queuedump
-
+.
 [Server Queue Dump]:
 (coord_action_start,1),(coord_action_start,1),(coord_action_start,1)
 (coord_action_ready,1)
 (action.check,2)
+
 </verbatim>
 
 It returns the Oozie server current queued commands.
