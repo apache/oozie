@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2036 Drop support for Java 1.6 (gezapeti via jaydeepvishwakarma)
 OOZIE-2512 ShareLibservice returns incorrect path for jar (satishsaley via puru)
 OOZIE-2508 Documentation change for Coord action rerun [OOZIE-1735] (satishsaley via puru)
 OOZIE-2628 Fix Workflow EL function return types in Documentation (abhishekbafna via jaydeepvishwakarma)

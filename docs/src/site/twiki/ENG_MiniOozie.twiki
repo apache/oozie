@@ -9,7 +9,7 @@
 ---++ System Requirements
 
    * Unix box (tested on Mac OS X and Linux)
-   * Java JDK 1.6+
+   * Java JDK 1.7+
    * Eclipse (tested on 3.5 and 3.6)
    * [[http://maven.apache.org/][Maven 3.0.1+]]
 
