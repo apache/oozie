@@ -2275,6 +2275,7 @@ the notification:
 
    * =$jobId= : The workflow job ID
    * =$status= : the workflow current state
+   * =$parentId= : The parent ID of the workflow job. If there is no parent ID, it will be replaced with an empty string.
 
 ---+++ 5.2 Node Start and End Notifications
 
