@@ -80,7 +80,7 @@ public class BundleJobInfoGetJPAExecutor implements JPAExecutor<BundleJobInfo> {
     public BundleJobInfo execute(EntityManager em) throws JPAExecutorException {
         List<String> orArray = new ArrayList<String>();
         List<String> colArray = new ArrayList<String>();
-        List<String> valArray = new ArrayList<String>();
+        List<Object> valArray = new ArrayList<Object>();
         StringBuilder sb = new StringBuilder("");
         String orderBy = DEFAULT_ORDER_BY;
 

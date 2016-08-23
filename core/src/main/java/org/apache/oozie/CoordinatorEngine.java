@@ -611,6 +611,8 @@ public class CoordinatorEngine extends BaseEngine {
         FILTER_NAMES.add(OozieClient.FILTER_FREQUENCY);
         FILTER_NAMES.add(OozieClient.FILTER_UNIT);
         FILTER_NAMES.add(OozieClient.FILTER_SORT_BY);
+        FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_START);
+        FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_END);
     }
 
     /**
@@ -722,7 +724,8 @@ public class CoordinatorEngine extends BaseEngine {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter,
                                 "elements must be semicolon-separated name=value pairs");
                     }
-                    if (!FILTER_NAMES.contains(pair[0].toLowerCase())) {
+                    pair[0] = pair[0].toLowerCase();
+                    if (!FILTER_NAMES.contains(pair[0])) {
                         throw new CoordinatorEngineException(ErrorCode.E0420, filter, XLog.format("invalid name [{0}]",
                                 pair[0]));
                     }

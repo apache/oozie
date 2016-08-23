@@ -19,12 +19,15 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.BundleJobInfo;
+import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.JPAService;
@@ -59,6 +62,73 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
         _testGetJobInfoForUser();
         _testGetJobInfoForUserAndStatus();
         _testGetJobInfoForId(bundleJob1.getId());
+    }
+
+    public void testGetJobInfoForStartCreatedTime() throws Exception {
+        BundleJobBean bundleJob1 = addRecordToBundleJobTable(BundleJob.Status.PREP, false);
+        BundleJobBean bundleJob2 = addRecordToBundleJobTable(BundleJob.Status.KILLED, false);
+        Date createTime1 = DateUtils.parseDateUTC("2012-01-01T10:00Z");
+        Date createTime2 = DateUtils.parseDateUTC("2012-01-05T10:00Z");
+        bundleJob1.setCreatedTime(createTime1);
+        bundleJob2.setCreatedTime(createTime2);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        BundleJobInfoGetJPAExecutor BundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        BundleJobInfo ret = jpaService.execute(BundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getBundleJobs().size());
+        filter.clear();
+
+        filter.put(OozieClient.FILTER_CREATED_TIME_START, Arrays.asList("2012-01-02T10:00Z"));
+        BundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(BundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(1, ret.getBundleJobs().size());
+        BundleJobBean jobBean = ret.getBundleJobs().get(0);
+        assertEquals(bundleJob2.getStatus(), jobBean.getStatus());
+        assertEquals(bundleJob2.getCreatedTime(), jobBean.getCreatedTime());
+    }
+
+    public void testGetJobInfoForEndCreatedTime() throws Exception {
+        BundleJobBean bundleJob1 = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
+        BundleJobBean bundleJob2 = addRecordToBundleJobTable(BundleJob.Status.KILLED, false);
+        BundleJobBean bundleJob3 = addRecordToBundleJobTable(BundleJob.Status.FAILED, false);
+        Date createTime1 = DateUtils.parseDateUTC("2012-01-03T10:00Z");
+        Date createTime2 = DateUtils.parseDateUTC("2012-01-05T10:00Z");
+        Date createTime3 = DateUtils.parseDateUTC("2012-01-010T10:00Z");
+        bundleJob1.setCreatedTime(createTime1);
+        bundleJob2.setCreatedTime(createTime2);
+        bundleJob3.setCreatedTime(createTime3);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob2);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob3);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        BundleJobInfoGetJPAExecutor bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        BundleJobInfo ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(3, ret.getBundleJobs().size());
+        filter.clear();
+
+        filter.put(OozieClient.FILTER_CREATED_TIME_START, Arrays.asList("2012-01-02T10:00Z"));
+        filter.put(OozieClient.FILTER_CREATED_TIME_END, Arrays.asList("2012-01-07T10:00Z"));
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getBundleJobs().size());
+        // default, expected order of results is by createTime DESC
+        BundleJobBean jobBean = ret.getBundleJobs().get(0);
+        assertEquals(bundleJob2.getStatus(), jobBean.getStatus());
+        assertEquals(bundleJob2.getCreatedTime(), jobBean.getCreatedTime());
+        BundleJobBean jobBean1 = ret.getBundleJobs().get(1);
+        assertEquals(bundleJob1.getStatus(), jobBean1.getStatus());
+        assertEquals(bundleJob1.getCreatedTime(), jobBean1.getCreatedTime());
     }
 
     private void _testGetJobInfoForStatus() throws Exception {

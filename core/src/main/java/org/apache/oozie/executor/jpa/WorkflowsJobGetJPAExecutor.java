@@ -18,9 +18,7 @@
 
 package org.apache.oozie.executor.jpa;
 
-import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -343,21 +341,21 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                 case 'd':
                     offset = Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
                     break;
                 case 'h':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
                     break;
                 case 'm':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
                     break;
@@ -365,13 +363,14 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                     createdTime = DateUtils.parseDateUTC(time);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unsupported time format " + time);
+                    throw new IllegalArgumentException("Unsupported time format: " + time + StoreStatusFilter.TIME_FORMAT);
             }
         } else {
-            throw new IllegalArgumentException("the format of createdTime is wrong: " + time);
+            throw new IllegalArgumentException("The format of time is wrong: " + time + StoreStatusFilter.TIME_FORMAT);
         }
         return createdTime;
     }
+
     private WorkflowJobBean getBeanForWorkflowFromArray(Object[] arr) {
 
         WorkflowJobBean wfBean = new WorkflowJobBean();
