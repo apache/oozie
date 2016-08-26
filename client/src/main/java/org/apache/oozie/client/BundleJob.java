@@ -29,7 +29,7 @@ public interface BundleJob extends Job {
     /**
      * Defines the possible frequency unit of all Oozie applications in Bundle.
      */
-    public static enum Timeunit {
+    enum Timeunit {
         MINUTE, HOUR, DAY, WEEK, MONTH, END_OF_DAY, END_OF_MONTH, NONE
     }
 
@@ -66,6 +66,6 @@ public interface BundleJob extends Job {
      *
      * @return createdTime
      */
-    public Date getCreatedTime();
+    Date getCreatedTime();
 
 }

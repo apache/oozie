@@ -31,57 +31,57 @@ public interface SLAEvent {
     /**
      * Defines the possible status of an SLA events or Job status for SLA events.
      */
-    public static enum Status {
+    enum Status {
         CREATED, STARTED, SUCCEEDED, KILLED, FAILED
     }
 
     /**
      * Defines the possible status of an SLA events.
      */
-    public static enum SlaAppType {
+    enum SlaAppType {
         COORDINATOR_ACTION, COORDINATOR_JOB, WORKFLOW_JOB, WORKFLOW_ACTION
     }
 
-    public long getEvent_id();
+    long getEvent_id();
 
-    public String getSlaId();
+    String getSlaId();
 
-    public SlaAppType getAppType();
+    SlaAppType getAppType();
 
-    public String getAppName();
+    String getAppName();
 
-    public String getUser();
+    String getUser();
 
-    public String getGroupName();
+    String getGroupName();
 
-    public String getParentClientId();
+    String getParentClientId();
 
-    public String getParentSlaId();
+    String getParentSlaId();
 
-    public Date getExpectedStart();
+    Date getExpectedStart();
 
-    public Date getExpectedEnd();
+    Date getExpectedEnd();
 
-    public Date getStatusTimestamp();
+    Date getStatusTimestamp();
 
-    public String getNotificationMsg();
+    String getNotificationMsg();
 
-    public String getAlertContact();
+    String getAlertContact();
 
-    public String getDevContact();
+    String getDevContact();
 
-    public String getQaContact();
+    String getQaContact();
 
-    public String getSeContact();
+    String getSeContact();
 
-    public String getAlertFrequency();
+    String getAlertFrequency();
 
-    public String getAlertPercentage();
+    String getAlertPercentage();
 
-    public String getUpstreamApps();
+    String getUpstreamApps();
 
-    public Status getJobStatus();
+    Status getJobStatus();
 
-    public String getJobData();
+    String getJobData();
 
 }

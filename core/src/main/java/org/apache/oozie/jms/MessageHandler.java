@@ -26,5 +26,5 @@ public interface MessageHandler {
      *
      * @param msg : to be processed
      */
-    public void process(Message msg);
+    void process(Message msg);
 }

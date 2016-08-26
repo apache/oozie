@@ -39,7 +39,7 @@ public interface WorkflowLib {
      * @return the parse workflow application.
      * @throws WorkflowException thrown if the definition could not be parsed.
      */
-    public WorkflowApp parseDef(String wfXml, Configuration jobConf, Configuration configDefault)
+    WorkflowApp parseDef(String wfXml, Configuration jobConf, Configuration configDefault)
             throws WorkflowException;
 
     /**
@@ -50,7 +50,7 @@ public interface WorkflowLib {
      * @return the newly created workflow instance.
      * @throws WorkflowException thrown if the instance could not be created.
      */
-    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf) throws WorkflowException;
+    WorkflowInstance createInstance(WorkflowApp app, Configuration conf) throws WorkflowException;
 
     /**
      * Create a workflow instance with the given wfId and actions endtime map. This will be used for re-running workflows.
@@ -61,7 +61,7 @@ public interface WorkflowLib {
      * @return the newly created workflow instance.
      * @throws WorkflowException thrown if the instance could not be created.
      */
-    public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId)
+    WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId)
             throws WorkflowException;
 
     /**
@@ -70,7 +70,7 @@ public interface WorkflowLib {
      * @param instance of the workflow instance to insert.
      * @throws WorkflowException thrown if the instance could not be inserted.
      */
-    public void insert(WorkflowInstance instance) throws WorkflowException;
+    void insert(WorkflowInstance instance) throws WorkflowException;
 
     /**
      * Load a workflow instance from storage.
@@ -79,7 +79,7 @@ public interface WorkflowLib {
      * @return the loaded workflow instance.
      * @throws WorkflowException thrown if the instance could not be loaded.
      */
-    public WorkflowInstance get(String id) throws WorkflowException;
+    WorkflowInstance get(String id) throws WorkflowException;
 
     /**
      * Update a workflow instance in storage.
@@ -87,7 +87,7 @@ public interface WorkflowLib {
      * @param instance workflow instance to update.
      * @throws WorkflowException thrown if the instance could not be loaded.
      */
-    public void update(WorkflowInstance instance) throws WorkflowException;
+    void update(WorkflowInstance instance) throws WorkflowException;
 
     /**
      * Delete a workflow instance from storage.
@@ -95,7 +95,7 @@ public interface WorkflowLib {
      * @param id ID of the workflow instance to delete.
      * @throws WorkflowException thrown if the instance could not be deleted.
      */
-    public void delete(String id) throws WorkflowException;
+    void delete(String id) throws WorkflowException;
 
 
     /**
@@ -103,13 +103,13 @@ public interface WorkflowLib {
      *
      * @throws WorkflowException thrown if the commit could not be done.
      */
-    public void commit() throws WorkflowException;
+    void commit() throws WorkflowException;
 
     /**
      * Close store. It rollbacks if there was no commit.
      *
      * @throws WorkflowException thrown if the close could not be done.
      */
-    public void close() throws WorkflowException;
+    void close() throws WorkflowException;
 
 }

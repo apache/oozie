@@ -33,5 +33,5 @@ public interface OozieActionConfigurator {
      * @param actionConf The action configuration
      * @throws OozieActionConfiguratorException
      */
-    public void configure(JobConf actionConf) throws OozieActionConfiguratorException;
+    void configure(JobConf actionConf) throws OozieActionConfiguratorException;
 }

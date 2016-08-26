@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2657 Clean up redundant access modifiers from oozie interfaces (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2517 Add support for startCreatedTime and endCreatedTime filters for coord and bundles (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2589 CompletedActionXCommand is hardcoded to wrong priority (tm_linfly via rkanter)
 OOZIE-2081 WorkflowJob notification to include coordinator action id (seoeun25 via rkanter)

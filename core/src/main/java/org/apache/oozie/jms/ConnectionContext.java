@@ -38,21 +38,21 @@ public interface ConnectionContext {
      * @param props the properties used for creating jndi context
      * @throws JMSException
      */
-    public void createConnection(Properties props) throws NamingException, JMSException;
+    void createConnection(Properties props) throws NamingException, JMSException;
 
     /**
      * Set the exception Listener
      *
      * @param exceptionListener
      */
-    public void setExceptionListener(ExceptionListener exceptionListener) throws JMSException;
+    void setExceptionListener(ExceptionListener exceptionListener) throws JMSException;
 
     /**
      * Checks whether connection is initialized or not
      *
      * @return
      */
-    public boolean isConnectionInitialized();
+    boolean isConnectionInitialized();
 
     /**
      * Creates session using the specified session opts
@@ -61,7 +61,7 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public Session createSession(int sessionOpts) throws JMSException;
+    Session createSession(int sessionOpts) throws JMSException;
 
     /**
      * Creates consumer using session and topic name
@@ -71,7 +71,7 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public MessageConsumer createConsumer(Session session, String topicName) throws JMSException;
+    MessageConsumer createConsumer(Session session, String topicName) throws JMSException;
 
     /**
      * Creates consumer using session, topic name and selector
@@ -81,7 +81,7 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public MessageConsumer createConsumer(Session session, String topicName, String selector) throws JMSException;
+    MessageConsumer createConsumer(Session session, String topicName, String selector) throws JMSException;
 
     /**
      * Creates producer using session and topic
@@ -91,7 +91,7 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public MessageProducer createProducer(Session session, String topicName) throws JMSException;
+    MessageProducer createProducer(Session session, String topicName) throws JMSException;
 
     /**
      * Creates a threadlocal session using session opts
@@ -100,11 +100,11 @@ public interface ConnectionContext {
      * @return
      * @throws JMSException
      */
-    public Session createThreadLocalSession(final int sessionOpts) throws JMSException;
+    Session createThreadLocalSession(final int sessionOpts) throws JMSException;
 
     /**
      * Closes the connection
      */
-    public void close();
+    void close();
 
 }

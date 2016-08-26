@@ -28,7 +28,7 @@ public interface WorkflowAction {
     /**
      * Defines the possible stati of a action.
      */
-    public static enum Status {
+    enum Status {
         PREP,
         RUNNING,
         OK,

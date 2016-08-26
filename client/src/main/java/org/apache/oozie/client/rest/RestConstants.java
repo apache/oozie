@@ -23,196 +23,196 @@ package org.apache.oozie.client.rest;
  */
 public interface RestConstants {
 
-    public static final String VERSIONS = "versions";
+    String VERSIONS = "versions";
 
-    public static final String JOB = "job";
+    String JOB = "job";
 
-    public static final String JOBS = "jobs";
+    String JOBS = "jobs";
 
-    public static final String ADMIN = "admin";
+    String ADMIN = "admin";
 
-    public static final String JSON_CONTENT_TYPE = "application/json";
+    String JSON_CONTENT_TYPE = "application/json";
 
-    public static final String XML_CONTENT_TYPE = "application/xml";
+    String XML_CONTENT_TYPE = "application/xml";
 
-    public static final String FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+    String FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 
-    public static final String TEXT_CONTENT_TYPE = "text/plain";
+    String TEXT_CONTENT_TYPE = "text/plain";
 
-    public static final String PNG_IMAGE_CONTENT_TYPE = "image/png";
+    String PNG_IMAGE_CONTENT_TYPE = "image/png";
 
-    public static final String ACTION_PARAM = "action";
+    String ACTION_PARAM = "action";
 
-    public static final String OFFSET_PARAM = "offset";
+    String OFFSET_PARAM = "offset";
 
-    public static final String LEN_PARAM = "len";
+    String LEN_PARAM = "len";
 
-    public static final String ORDER_PARAM = "order";
+    String ORDER_PARAM = "order";
 
-    public static final String JOB_FILTER_PARAM = "filter";
+    String JOB_FILTER_PARAM = "filter";
 
-    public static final String JOB_RESOURCE = "/job";
+    String JOB_RESOURCE = "/job";
 
-    public static final String JOB_ACTION_START = "start";
+    String JOB_ACTION_START = "start";
 
-    public static final String JOB_ACTION_DRYRUN = "dryrun";
+    String JOB_ACTION_DRYRUN = "dryrun";
 
-    public static final String JOB_ACTION_SHOWDIFF = "diff";
+    String JOB_ACTION_SHOWDIFF = "diff";
 
-    public static final String JOB_ACTION_SUSPEND = "suspend";
+    String JOB_ACTION_SUSPEND = "suspend";
 
-    public static final String JOB_ACTION_RESUME = "resume";
+    String JOB_ACTION_RESUME = "resume";
 
-    public static final String JOB_ACTION_KILL = "kill";
+    String JOB_ACTION_KILL = "kill";
 
-    public static final String JOB_ACTION_CHANGE = "change";
+    String JOB_ACTION_CHANGE = "change";
 
-    public static final String JOB_CHANGE_VALUE = "value";
+    String JOB_CHANGE_VALUE = "value";
 
-    public static final String JOB_ACTION_RERUN = "rerun";
+    String JOB_ACTION_RERUN = "rerun";
 
-    public static final String JOB_ACTION_IGNORE = "ignore";
+    String JOB_ACTION_IGNORE = "ignore";
 
-    public static final String JOB_COORD_ACTION_RERUN = "coord-rerun";
+    String JOB_COORD_ACTION_RERUN = "coord-rerun";
 
-    public static final String JOB_COORD_UPDATE = "update";
+    String JOB_COORD_UPDATE = "update";
 
-    public static final String JOB_BUNDLE_ACTION_RERUN = "bundle-rerun";
+    String JOB_BUNDLE_ACTION_RERUN = "bundle-rerun";
 
-    public static final String JOB_SHOW_PARAM = "show";
+    String JOB_SHOW_PARAM = "show";
 
-    public static final String JOB_SHOW_CONFIG = "config";
+    String JOB_SHOW_CONFIG = "config";
 
-    public static final String JOB_SHOW_INFO = "info";
+    String JOB_SHOW_INFO = "info";
 
-    public static final String JOB_SHOW_LOG = "log";
+    String JOB_SHOW_LOG = "log";
 
-    public static final String JOB_SHOW_ERROR_LOG = "errorlog";
+    String JOB_SHOW_ERROR_LOG = "errorlog";
 
-    public static final String JOB_SHOW_AUDIT_LOG = "auditlog";
+    String JOB_SHOW_AUDIT_LOG = "auditlog";
 
-    public static final String JOB_SHOW_DEFINITION = "definition";
+    String JOB_SHOW_DEFINITION = "definition";
 
-    public static final String JOB_SHOW_GRAPH = "graph";
+    String JOB_SHOW_GRAPH = "graph";
 
-    public static final String JOB_SHOW_KILL_PARAM = "show-kill";
+    String JOB_SHOW_KILL_PARAM = "show-kill";
 
-    public static final String JOB_SHOW_STATUS = "status";
+    String JOB_SHOW_STATUS = "status";
 
-    public static final String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
+    String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 
-    public static final String JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM = "date-scope";
+    String JOB_BUNDLE_RERUN_DATE_SCOPE_PARAM = "date-scope";
 
-    public static final String JOB_COORD_RANGE_TYPE_PARAM = "type";
+    String JOB_COORD_RANGE_TYPE_PARAM = "type";
 
-    public static final String JOB_COORD_SCOPE_DATE = "date";
+    String JOB_COORD_SCOPE_DATE = "date";
 
-    public static final String JOB_COORD_SCOPE_ACTION = "action";
+    String JOB_COORD_SCOPE_ACTION = "action";
 
-    public static final String JOB_COORD_SCOPE_PARAM = "scope";
+    String JOB_COORD_SCOPE_PARAM = "scope";
 
-    public static final String JOB_COORD_RERUN_REFRESH_PARAM = "refresh";
+    String JOB_COORD_RERUN_REFRESH_PARAM = "refresh";
 
-    public static final String JOB_COORD_RERUN_NOCLEANUP_PARAM = "nocleanup";
+    String JOB_COORD_RERUN_NOCLEANUP_PARAM = "nocleanup";
 
-    public static final String JOB_LOG_ACTION = "action";
+    String JOB_LOG_ACTION = "action";
 
-    public static final String JOB_LOG_DATE = "date";
+    String JOB_LOG_DATE = "date";
 
-    public static final String JOB_LOG_SCOPE_PARAM = "scope";
+    String JOB_LOG_SCOPE_PARAM = "scope";
 
-    public static final String JOB_LOG_TYPE_PARAM = "type";
+    String JOB_LOG_TYPE_PARAM = "type";
 
-    public static final String JOBS_FILTER_PARAM = "filter";
+    String JOBS_FILTER_PARAM = "filter";
 
-    public static final String JOBS_BULK_PARAM = "bulk";
+    String JOBS_BULK_PARAM = "bulk";
 
-    public static final String JOBS_EXTERNAL_ID_PARAM = "external-id";
+    String JOBS_EXTERNAL_ID_PARAM = "external-id";
 
-    public static final String ADMIN_STATUS_RESOURCE = "status";
+    String ADMIN_STATUS_RESOURCE = "status";
 
-    public static final String ADMIN_SAFE_MODE_PARAM = "safemode";
+    String ADMIN_SAFE_MODE_PARAM = "safemode";
 
-    public static final String ADMIN_SYSTEM_MODE_PARAM = "systemmode";
+    String ADMIN_SYSTEM_MODE_PARAM = "systemmode";
 
-    public static final String ADMIN_LOG_RESOURCE = "log";
+    String ADMIN_LOG_RESOURCE = "log";
 
-    public static final String ADMIN_OS_ENV_RESOURCE = "os-env";
+    String ADMIN_OS_ENV_RESOURCE = "os-env";
 
-    public static final String ADMIN_JAVA_SYS_PROPS_RESOURCE = "java-sys-properties";
+    String ADMIN_JAVA_SYS_PROPS_RESOURCE = "java-sys-properties";
 
-    public static final String ADMIN_CONFIG_RESOURCE = "configuration";
+    String ADMIN_CONFIG_RESOURCE = "configuration";
 
-    public static final String ADMIN_INSTRUMENTATION_RESOURCE = "instrumentation";
+    String ADMIN_INSTRUMENTATION_RESOURCE = "instrumentation";
 
-    public static final String ADMIN_BUILD_VERSION_RESOURCE = "build-version";
+    String ADMIN_BUILD_VERSION_RESOURCE = "build-version";
 
-    public static final String ADMIN_QUEUE_DUMP_RESOURCE = "queue-dump";
+    String ADMIN_QUEUE_DUMP_RESOURCE = "queue-dump";
 
-    public static final String ADMIN_METRICS_RESOURCE = "metrics";
+    String ADMIN_METRICS_RESOURCE = "metrics";
 
-    public static final String OOZIE_ERROR_CODE = "oozie-error-code";
+    String OOZIE_ERROR_CODE = "oozie-error-code";
 
-    public static final String OOZIE_ERROR_MESSAGE = "oozie-error-message";
+    String OOZIE_ERROR_MESSAGE = "oozie-error-message";
 
-    public static final String JOBTYPE_PARAM = "jobtype";
+    String JOBTYPE_PARAM = "jobtype";
 
-    public static final String SLA_GT_SEQUENCE_ID = "gt-sequence-id";
+    String SLA_GT_SEQUENCE_ID = "gt-sequence-id";
 
-    public static final String MAX_EVENTS = "max-events";
+    String MAX_EVENTS = "max-events";
 
-    public static final String SLA = "sla";
+    String SLA = "sla";
 
-    public static final String DO_AS_PARAM = "doAs";
+    String DO_AS_PARAM = "doAs";
 
-    public static final String TIME_ZONE_PARAM = "timezone";
+    String TIME_ZONE_PARAM = "timezone";
 
-    public static final String ADMIN_TIME_ZONES_RESOURCE = "available-timezones";
+    String ADMIN_TIME_ZONES_RESOURCE = "available-timezones";
 
-    public static final String ADMIN_JMS_INFO = "jmsinfo";
+    String ADMIN_JMS_INFO = "jmsinfo";
 
-    public static final String JOB_SHOW_JMS_TOPIC = "jmstopic";
+    String JOB_SHOW_JMS_TOPIC = "jmstopic";
 
-    public static final String ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE = "available-oozie-servers";
+    String ADMIN_AVAILABLE_OOZIE_SERVERS_RESOURCE = "available-oozie-servers";
 
-    public static final String ADMIN_UPDATE_SHARELIB = "update_sharelib";
+    String ADMIN_UPDATE_SHARELIB = "update_sharelib";
 
-    public static final String ADMIN_LIST_SHARELIB = "list_sharelib";
+    String ADMIN_LIST_SHARELIB = "list_sharelib";
 
-    public static final String SHARE_LIB_REQUEST_KEY = "lib";
+    String SHARE_LIB_REQUEST_KEY = "lib";
 
-    public static final String ALL_SERVER_REQUEST = "allservers";
+    String ALL_SERVER_REQUEST = "allservers";
 
-    public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+    String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
 
-    public static final String LOG_FILTER_OPTION = "logfilter";
+    String LOG_FILTER_OPTION = "logfilter";
 
-    public static final String JOB_COORD_RERUN_FAILED_PARAM = "failed";
+    String JOB_COORD_RERUN_FAILED_PARAM = "failed";
 
-    public static final String SLA_DISABLE_ALERT = "sla-disable";
+    String SLA_DISABLE_ALERT = "sla-disable";
 
-    public static final String SLA_ENABLE_ALERT = "sla-enable";
+    String SLA_ENABLE_ALERT = "sla-enable";
 
-    public static final String SLA_CHANGE = "sla-change";
+    String SLA_CHANGE = "sla-change";
 
-    public static final String SLA_ALERT_RANGE = "sla-alert-range";
+    String SLA_ALERT_RANGE = "sla-alert-range";
 
-    public static final String COORDINATORS_PARAM = "coordinators";
+    String COORDINATORS_PARAM = "coordinators";
 
-    public static final String SLA_NOMINAL_TIME = "sla-nominal-time";
+    String SLA_NOMINAL_TIME = "sla-nominal-time";
 
-    public static final String SLA_SHOULD_START = "sla-should-start";
+    String SLA_SHOULD_START = "sla-should-start";
 
-    public static final String SLA_SHOULD_END = "sla-should-end";
+    String SLA_SHOULD_END = "sla-should-end";
 
-    public static final String SLA_MAX_DURATION = "sla-max-duration";
+    String SLA_MAX_DURATION = "sla-max-duration";
 
-    public static final String JOB_COORD_SCOPE_ACTION_LIST = "action-list";
+    String JOB_COORD_SCOPE_ACTION_LIST = "action-list";
 
-    public static final String VALIDATE = "validate";
+    String VALIDATE = "validate";
 
-    public static final String FILE_PARAM = "file";
+    String FILE_PARAM = "file";
 
-    public static final String USER_PARAM = "user";
+    String USER_PARAM = "user";
 
 }

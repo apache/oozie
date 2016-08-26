@@ -32,7 +32,7 @@ public interface HCatDependencyCache {
      *
      * @param conf configuration
      */
-    public void init(Configuration conf);
+    void init(Configuration conf);
 
     /**
      * Add a missing partition dependency and the actionID waiting on it
@@ -40,7 +40,7 @@ public interface HCatDependencyCache {
      * @param hcatURI dependency URI
      * @param actionID ID of action which is waiting for the dependency
      */
-    public void addMissingDependency(HCatURI hcatURI, String actionID);
+    void addMissingDependency(HCatURI hcatURI, String actionID);
 
     /**
      * Remove a missing partition dependency associated with a actionID
@@ -49,7 +49,7 @@ public interface HCatDependencyCache {
      * @param actionID ID of action which is waiting for the dependency
      * @return true if successful, else false
      */
-    public boolean removeMissingDependency(HCatURI hcatURI, String actionID);
+    boolean removeMissingDependency(HCatURI hcatURI, String actionID);
 
     /**
      * Get the list of actionIDs waiting for a partition
@@ -57,7 +57,7 @@ public interface HCatDependencyCache {
      * @param hcatURI dependency URI
      * @return list of actionIDs
      */
-    public Collection<String> getWaitingActions(HCatURI hcatURI);
+    Collection<String> getWaitingActions(HCatURI hcatURI);
 
     /**
      * Mark a partition dependency as available
@@ -68,7 +68,7 @@ public interface HCatDependencyCache {
      * @param partitions list of available partitions
      * @return list of actionIDs for which the dependency is now available
      */
-    public Collection<String> markDependencyAvailable(String server, String db, String table, Map<String, String> partitions);
+    Collection<String> markDependencyAvailable(String server, String db, String table, Map<String, String> partitions);
 
     /**
      * Get a list of available dependency URIs for a actionID
@@ -76,7 +76,7 @@ public interface HCatDependencyCache {
      * @param actionID action id
      * @return list of available dependency URIs
      */
-    public Collection<String> getAvailableDependencyURIs(String actionID);
+    Collection<String> getAvailableDependencyURIs(String actionID);
 
     /**
      * Remove the list of available dependency URIs for a actionID once the missing dependencies are processed.
@@ -85,21 +85,21 @@ public interface HCatDependencyCache {
      * @param dependencyURIs set of dependency URIs
      * @return true if successful, else false
      */
-    public boolean removeAvailableDependencyURIs(String actionID, Collection<String> dependencyURIs);
+    boolean removeAvailableDependencyURIs(String actionID, Collection<String> dependencyURIs);
 
     /**
      * Destroy the cache
      */
-    public void destroy();
+    void destroy();
 
     /**
      * Purge stale actions
      */
-    public void removeNonWaitingCoordActions(Set<String> coordActions);
+    void removeNonWaitingCoordActions(Set<String> coordActions);
 
     /**
      * Remove coordAction when all dependencies met
      */
-    public void removeCoordActionWithDependenciesAvailable(String coordAction);
+    void removeCoordActionWithDependenciesAvailable(String coordAction);
 
 }

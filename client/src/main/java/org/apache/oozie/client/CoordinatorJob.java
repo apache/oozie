@@ -29,14 +29,14 @@ public interface CoordinatorJob extends Job {
     /**
      * Defines the possible execution order of an Oozie application.
      */
-    public static enum Execution {
+    enum Execution {
         FIFO, LIFO, LAST_ONLY, NONE
     }
 
     /**
      * Defines the possible frequency unit of an Oozie application.
      */
-    public static enum Timeunit {
+    enum Timeunit {
         MINUTE, HOUR, DAY, WEEK, MONTH, END_OF_DAY, END_OF_MONTH, CRON, NONE
     }
 

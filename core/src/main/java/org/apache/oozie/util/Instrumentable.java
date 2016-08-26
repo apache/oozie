@@ -29,6 +29,6 @@ public interface Instrumentable {
      *
      * @param instr system instrumentation.
      */
-    public void instrument(Instrumentation instr);
+    void instrument(Instrumentation instr);
 
 }

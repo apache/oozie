@@ -29,7 +29,7 @@ public interface WorkflowJob {
     /**
      * Defines the possible stati of a workflow.
      */
-    public static enum Status {
+    enum Status {
         PREP, RUNNING, SUCCEEDED, KILLED, FAILED, SUSPENDED
     }
 

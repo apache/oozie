@@ -23,11 +23,11 @@ import java.io.IOException;
 
 public interface CompressionCodec {
 
-    public byte[] compressBytes(byte[] header, byte[] data) throws IOException;
+    byte[] compressBytes(byte[] header, byte[] data) throws IOException;
 
-    public byte[] compressString(byte[] header, String data) throws IOException;
+    byte[] compressString(byte[] header, String data) throws IOException;
 
-    public String decompressToString(DataInputStream dais) throws IOException;
+    String decompressToString(DataInputStream dais) throws IOException;
 
-    public byte[] decompressToBytes(DataInputStream dais) throws IOException;
+    byte[] decompressToBytes(DataInputStream dais) throws IOException;
 }

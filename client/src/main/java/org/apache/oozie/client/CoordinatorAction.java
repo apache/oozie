@@ -28,7 +28,7 @@ public interface CoordinatorAction {
     /**
      * Defines the possible status of an application instance.
      */
-    public static enum Status {
+    enum Status {
         WAITING,
         READY,
         SUBMITTED,
