@@ -218,7 +218,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                     wc.addFile(configuration, null);
                 }
                 catch (IllegalArgumentException e) {
-                    assertEquals("file cannot be null or empty", e.getMessage());
+                    assertEquals("file cannot be null", e.getMessage());
                 }
                 wc.addFile(configuration, "file1");
                 wc.addFile(configuration, "file2");
@@ -228,7 +228,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                     wc.addArchive(configuration, null);
                 }
                 catch (IllegalArgumentException e) {
-                    assertEquals("file cannot be null or empty", e.getMessage());
+                    assertEquals("file cannot be null", e.getMessage());
                 }
                 wc.addArchive(configuration, "archive1");
                 wc.addArchive(configuration, "archive2");

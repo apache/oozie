@@ -1252,9 +1252,7 @@ public class OozieClient {
          * @throws IOException
          */
         private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
-            if (reader == null) {
-                throw new IllegalArgumentException("reader cannot be null");
-            }
+            notNull(reader, "reader");
             StringBuilder sb = new StringBuilder();
             char[] buffer = new char[2048];
             int read;
@@ -1284,9 +1282,7 @@ public class OozieClient {
          * @throws IOException thrown if the resource could not be read.
          */
         private String getReaderAsString(Reader reader, int maxLen) throws IOException {
-            if (reader == null) {
-                throw new IllegalArgumentException("reader cannot be null");
-            }
+            notNull(reader, "reader");
             StringBuffer sb = new StringBuffer();
             char[] buffer = new char[2048];
             int read;
