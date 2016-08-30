@@ -194,6 +194,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         String defaultConf = workflow.getConf();
         XConfiguration newConf = new XConfiguration(new StringReader(defaultConf));
         newConf.set("abc", "xyz");
+        newConf.set("job_prop", "job_prop_val");
         workflow.setConf(newConf.toXmlString());
 
         final WorkflowActionBean action = (WorkflowActionBean) workflow.getActions().get(0);
@@ -204,6 +205,10 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "        <property>" +
                 "          <name>a</name>" +
                 "          <value>A</value>" +
+                "        </property>" +
+                "        <property>" +
+                "          <name>job_prop</name>" +
+                "          <value>sub_prop_val</value>" +
                 "        </property>" +
                 "      </configuration>" +
                 "</sub-workflow>");
@@ -232,6 +237,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         WorkflowJob wf = oozieClient.getJobInfo(action.getExternalId());
         Configuration childConf = getWorkflowConfig(wf);
         assertEquals("xyz", childConf.get("abc"));
+        assertEquals("A", childConf.get("a"));
+        assertEquals("sub_prop_val", childConf.get("job_prop"));
     }
 
     public void testGetGroupFromParent() throws Exception {
@@ -363,6 +370,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         WorkflowJob wf = oozieClient.getJobInfo(action.getExternalId());
         Configuration childConf = getWorkflowConfig(wf);
         assertNull(childConf.get("abc"));
+        assertEquals("A", childConf.get("a"));
     }
 
     public void testSubworkflowLib() throws Exception {
@@ -684,7 +692,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             Path subWorkflowAppPath = createSubWorkflowXml();
 
             createConfigDefaultXml();
-
+            createSubWorkflowConfigDefaultXml();
             String workflowUri = createTestWorkflowXml(subWorkflowAppPath);
 
             LocalOozie.start();
@@ -722,7 +730,10 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             assertEquals("foo3", actionConf.get("foo3"));
             // Checking the action conf configuration.
             assertEquals("actionconf", subWorkflowConf.get("foo3"));
-
+            assertEquals("subactionconf", actionConf.get("foo4"));
+            // config defaults are present
+            assertEquals("default", subWorkflowConf.get("parentConfigDefault"));
+            assertEquals("default", actionConf.get("subwfConfigDefault"));
         } finally {
             LocalOozie.stop();
         }
@@ -744,6 +755,10 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "        <property>" +
                 "            <name>foo3</name>" +
                 "            <value>foo3</value>" +
+                "        </property>" +
+                "        <property>" +
+                "            <name>foo4</name>" +
+                "            <value>actionconf</value>" +
                 "        </property>" +
                 "    </configuration>" +
                 "</global>" +
@@ -773,25 +788,49 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     }
 
     private Path createSubWorkflowXml() throws IOException {
-        Path subWorkflowAppPath = getFsTestCaseDir();
-        FileSystem fs = getFileSystem();
-        Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
-        writer.write(getWorkflow());
-        writer.close();
-        return subWorkflowAppPath;
+        return createSubWorkflowFile(getWorkflow(), "workflow.xml");
     }
 
     private void createConfigDefaultXml() throws IOException {
-        String config_defaultUri=getTestCaseFileUri("config-default.xml");
-        String config_default="<configuration>\n" +
-                "<property>\n" +
-                "<name>foo</name>\n" +
-                "<value>default</value>\n" +
-                "</property>\n" +
+        String config_defaultUri = getTestCaseFileUri("config-default.xml");
+        String config_default =
+                "<configuration>" +
+                "    <property>" +
+                "      <name>foo</name>" +
+                "      <value>default</value>" +
+                "    </property>" +
+                "    <property>" +
+                "      <name>parentConfigDefault</name>" +
+                "      <value>default</value>" +
+                "    </property>" +
                 "</configuration>";
 
         writeToFile(config_default, config_defaultUri);
+    }
+
+    private void createSubWorkflowConfigDefaultXml() throws IOException {
+        String config_default = "<configuration>" +
+                        "    <property>" +
+                        "      <name>subwfConfigDefault</name>" +
+                        "      <value>default</value>" +
+                        "    </property>" +
+                        "    <property>" +
+                        "      <name>foo4</name>" +
+                        "      <value>default</value>" +
+                        "    </property>" +
+                        "</configuration>";
+        createSubWorkflowFile(config_default, "config-default.xml");
+    }
+
+    private Path createSubWorkflowFile(String content, String fileName) throws IOException
+    {
+        Path subWorkflowAppPath = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        Path subWorkflowPath = new Path(subWorkflowAppPath, fileName);
+        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
+        writer.write(content);
+        writer.close();
+        return subWorkflowAppPath;
     }
 
     public String getWorkflow() {
@@ -811,10 +850,16 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "<start to='java' />" +
                 "<action name='java'>" +
                 "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
-                "<arg>exit0</arg>" +
+                "    <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "    <name-node>" + getNameNodeUri() + "</name-node>" +
+                "        <configuration>" +
+                "            <property>" +
+                "                <name>foo4</name>" +
+                "                <value>subactionconf</value>" +
+                "            </property>" +
+                "        </configuration>" +
+                "    <main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "    <arg>exit0</arg>" +
                 "</java>"
                 + "<ok to='end' />"
                 + "<error to='fail' />"

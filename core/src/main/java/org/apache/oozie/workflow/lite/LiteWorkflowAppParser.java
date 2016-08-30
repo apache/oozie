@@ -104,6 +104,8 @@ public class LiteWorkflowAppParser {
     private static final String DECISION_CASE_E = "case";
     private static final String DECISION_DEFAULT_E = "default";
 
+    private static final String SUBWORKFLOW_E = "sub-workflow";
+
     private static final String KILL_MESSAGE_E = "message";
     public static final String VALIDATE_FORK_JOIN = "oozie.validate.ForkJoin";
     public static final String WF_VALIDATE_FORK_JOIN = "oozie.wf.validate.ForkJoin";
@@ -481,7 +483,12 @@ public class LiteWorkflowAppParser {
                             jobConf.set(OOZIE_GLOBAL, getGlobalString(gData));
                         }
                         eActionConf = elem;
-                        handleDefaultsAndGlobal(gData, configDefault, elem);
+                        if (SUBWORKFLOW_E.equals(elem.getName())) {
+                            handleDefaultsAndGlobal(gData, null, elem);
+                        }
+                        else {
+                            handleDefaultsAndGlobal(gData, configDefault, elem);
+                        }
                     }
                 }
 
