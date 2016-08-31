@@ -56,7 +56,12 @@ public class LauncherMainHadoopUtils {
         System.out.println("tag id : " + tag);
         long startTime = 0L;
         try {
-            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+            if(actionConf.get(OOZIE_JOB_LAUNCH_TIME) != null) {
+                startTime = Long.parseLong(actionConf.get(OOZIE_JOB_LAUNCH_TIME));
+            }
+            else {
+                startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+            }
         } catch(NumberFormatException nfe) {
             throw new RuntimeException("Could not find Oozie job launch time", nfe);
         }
@@ -114,5 +119,13 @@ public class LauncherMainHadoopUtils {
         } catch (IOException ioe) {
             throw new RuntimeException("Exception occurred while killing child job(s)", ioe);
         }
+    }
+
+    public static Set<String> getChildJobs(Configuration actionConf) {
+        Set<String> jobList = new HashSet<String>();
+        for(ApplicationId applicationId :getChildYarnJobs(actionConf)) {
+            jobList.add(applicationId.toString().replace("application", "job"));
+        }
+        return jobList;
     }
 }

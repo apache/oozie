@@ -163,7 +163,9 @@ public class SleepJob extends Configured implements Tool,
   }
 
   public static void main(String[] args) throws Exception{
-    int res = ToolRunner.run(new Configuration(), new SleepJob(), args);
+    Configuration conf = new Configuration();
+    conf.addResource("core-site.xml");
+    int res = ToolRunner.run(conf, new SleepJob(), args);
     System.exit(res);
   }
 

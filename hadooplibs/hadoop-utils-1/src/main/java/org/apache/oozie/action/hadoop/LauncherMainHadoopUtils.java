@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
+import java.util.Set;
 
 
 public class LauncherMainHadoopUtils {
@@ -31,5 +32,9 @@ public class LauncherMainHadoopUtils {
 
     public static void killChildYarnJobs(Configuration actionConf) {
         // no-op
+    }
+
+    public static Set<String> getChildJobs(Configuration actionConf) {
+        return null;
     }
 }

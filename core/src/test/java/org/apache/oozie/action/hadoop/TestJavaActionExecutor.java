@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,9 +35,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,6 +48,8 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.JobStatus;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.oozie.WorkflowActionBean;
@@ -64,6 +68,7 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -353,6 +358,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         jobConf.set("mapred.job.tracker", jobTracker);
 
+
         JobClient jobClient =
             Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
         final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
@@ -535,6 +541,72 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+    }
+
+    public void testChildKill() throws Exception {
+        if (HadoopShims.isYARN()) {
+            final JobConf clusterConf = createJobConf();
+            FileSystem fileSystem = FileSystem.get(clusterConf);
+            Path confFile = new Path("/tmp/cluster-conf.xml");
+            OutputStream out = fileSystem.create(confFile);
+            clusterConf.writeXml(out);
+            out.close();
+            String confFileName = fileSystem.makeQualified(confFile).toString() + "#core-site.xml";
+            final String actionXml = "<java>" +
+                    "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "<main-class> " + SleepJob.class.getName() + " </main-class>" +
+                    "<arg>-mt</arg>" +
+                    "<arg>300000</arg>" +
+                    "<archive>" + confFileName + "</archive>" +
+                    "</java>";
+            final Context context = createContext(actionXml, null);
+            final RunningJob runningJob = submitAction(context);
+            waitFor(60 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    return runningJob.getJobStatus().getRunState() == 1;
+                }
+            });
+            assertFalse(runningJob.isComplete());
+            Thread.sleep(15000);
+            UserGroupInformationService ugiService = Services.get().
+                    get(UserGroupInformationService.class);
+
+            UserGroupInformation ugi = ugiService.getProxyUser(getTestUser());
+            ugi.doAs(new PrivilegedExceptionAction<Object>() {
+                @Override
+                public Void run() throws Exception {
+                    JavaActionExecutor ae = new JavaActionExecutor();
+                    ae.kill(context, context.getAction());
+
+                    WorkflowJob wfJob = context.getWorkflow();
+                    Configuration conf = null;
+                    if (wfJob.getConf() != null) {
+                        conf = new XConfiguration(new StringReader(wfJob.getConf()));
+                    }
+                    String launcherTag = LauncherMapperHelper.getActionYarnTag(conf, wfJob.getParentId(), context.getAction());
+                    Configuration jobConf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+                    jobConf.set(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS, LauncherMapperHelper.getTag(launcherTag));
+                    jobConf.setLong(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME,
+                            context.getAction().getStartTime().getTime());
+                    Set<String> childSet = LauncherMainHadoopUtils.getChildJobs(jobConf);
+                    assertEquals(1, childSet.size());
+
+                    JobClient jobClient = new JobClient(clusterConf);
+                    for (String jobId : childSet) {
+                        RunningJob childJob = jobClient.getJob(jobId);
+                        assertEquals(JobStatus.State.KILLED.getValue(), childJob.getJobStatus().getRunState());
+                    }
+                    assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
+                    return null;
+                }
+            });
+
+            assertEquals(WorkflowAction.Status.DONE, context.getAction().getStatus());
+            assertEquals("KILLED", context.getAction().getExternalStatus());
+            assertFalse(runningJob.isSuccessful());
+        }
     }
 
         public void testExceptionSubmitException() throws Exception {

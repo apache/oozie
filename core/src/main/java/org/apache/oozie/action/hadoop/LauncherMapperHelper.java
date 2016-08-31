@@ -55,6 +55,8 @@ import org.apache.oozie.util.PropertiesUtils;
 
 public class LauncherMapperHelper {
 
+    public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
+
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
             throws HadoopAccessorException, IOException {
         String jobId = null;
@@ -174,7 +176,7 @@ public class LauncherMapperHelper {
         actionConf.set(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS, tag);
     }
 
-    private static String getTag(String launcherTag) throws NoSuchAlgorithmException {
+    public static String getTag(String launcherTag) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("MD5");
         digest.update(launcherTag.getBytes(), 0, launcherTag.length());
         String md5 = "oozie-" + new BigInteger(1, digest.digest()).toString(16);
@@ -325,4 +327,17 @@ public class LauncherMapperHelper {
             }
         });
     }
+
+    public static String getActionYarnTag(Configuration conf, String parentId, WorkflowAction wfAction) {
+        String tag;
+        if ( conf != null && conf.get(OOZIE_ACTION_YARN_TAG) != null) {
+            tag = conf.get(OOZIE_ACTION_YARN_TAG) + "@" + wfAction.getName();
+        } else if (parentId != null) {
+            tag = parentId + "@" + wfAction.getName();
+        } else {
+            tag = wfAction.getId();
+        }
+        return tag;
+    }
+
 }

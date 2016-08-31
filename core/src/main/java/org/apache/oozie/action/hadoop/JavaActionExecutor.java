@@ -61,6 +61,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -1589,6 +1590,15 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
+            WorkflowJob wfJob = context.getWorkflow();
+            Configuration conf = null;
+            if ( wfJob.getConf() != null ) {
+                conf = new XConfiguration(new StringReader(wfJob.getConf()));
+            }
+            String launcherTag = LauncherMapperHelper.getActionYarnTag(conf, wfJob.getParentId(), action);
+            jobConf.set(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS, LauncherMapperHelper.getTag(launcherTag));
+            jobConf.set(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME, Long.toString(action.getStartTime().getTime()));
+            LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
             jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = getRunningJob(context, action, jobClient);
             if (runningJob != null) {
