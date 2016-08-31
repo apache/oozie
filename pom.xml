@@ -1470,7 +1470,11 @@
                 <artifactId>joda-time</artifactId>
                 <version>2.1</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.7</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1727,6 +1731,7 @@
                         <exclude>test-patch/**</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>*.patch</exclude>
+                        <exclude>tools/src/test/resources/dumpData/ooziedb*.json</exclude>
                     </excludes>
                 </configuration>
             </plugin>

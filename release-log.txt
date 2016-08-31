@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2632 Provide database dump/load functionality to make database migration easier (gezapeti, rjustice via rkanter)
 OOZIE-2243 Kill Command does not kill the child job for java action (jaydeepvishwakarma)
 OOZIE-2649 Can't override sub-workflow configuration property if defined in parent workflow XML (asasvari via rkanter)
 OOZIE-2656 OozieShareLibCLI uses op system username instead of Kerberos to upload jars (gezapeti via rkanter)

@@ -581,7 +581,8 @@ public class OozieDBCLI {
                 for (String column : columnNames) {
                     if (startingVersion.equals(DB_VERSION_PRE_4_0)
                             && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
-                        // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're going to convert it to
+                        // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're
+                        // going to convert it to
                         // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
                         // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
                         // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.

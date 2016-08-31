@@ -84,7 +84,7 @@ if ($env:JAVA_HOME) {
     $JAVA_BIN = "java.exe"
 }
 
-if (($Command -eq "sharelib") -Or ($Command -eq "db")) {
+if (($Command -eq "sharelib") -Or ($Command -eq "db") -Or ($Command -eq "import") -Or ($Command -eq "export")) {
           $OOZIE_OPTS="-Doozie.home.dir=$OOZIE_HOME";
           $OOZIE_OPTS="$OOZIE_OPTS -Doozie.config.dir=$OOZIE_HOME\conf";
           $OOZIE_OPTS="$OOZIE_OPTS -Doozie.log.dir=$OOZIE_HOME\log";
@@ -100,6 +100,10 @@ if (($Command -eq "sharelib") -Or ($Command -eq "db")) {
             Start-Process $JAVA_BIN -ArgumentList "$OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieSharelibCLI $COMMAND_OPTS" -Wait -NoNewWindow
           } elseif ($Command -eq "db") {
             Start-Process $JAVA_BIN -ArgumentList "$OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieDBCLI $COMMAND_OPTS" -Wait -NoNewWindow
+          } elseif ($Command -eq "export"){
+            Start-Process $JAVA_BIN -ArgumentList "$OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieDBExportCLI $COMMAND_OPTS" -Wait -NoNewWindow
+          } elseif ($Command -eq "import"){
+            Start-Process $JAVA_BIN -ArgumentList "$OOZIE_OPTS -cp $OOZIECPPATH org.apache.oozie.tools.OozieDBImportCLI $COMMAND_OPTS" -Wait -NoNewWindow
           }
           exit 0
 }elseif ($Command -eq "prepare-war"){
