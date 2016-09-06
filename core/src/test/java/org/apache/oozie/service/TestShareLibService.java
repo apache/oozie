@@ -51,6 +51,8 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
+
 public class TestShareLibService extends XFsTestCase {
 
     Services services;
@@ -87,7 +89,7 @@ public class TestShareLibService extends XFsTestCase {
 
     public static class DummyShareLibService extends ShareLibService {
         @Override
-        public String findContainingJar(Class clazz) {
+        public String findContainingJar(Class<?> clazz) {
             if (JavaActionExecutor.getCommonLauncherClasses().contains(clazz)) {
                 return testCaseDirPath + "/" + MyOozie.class.getName() + ".jar";
             }
@@ -100,8 +102,8 @@ public class TestShareLibService extends XFsTestCase {
         }
 
         @Override
-        public List<Class> getLauncherClasses() {
-            return Arrays.asList((Class) MyPig.class);
+        public List<Class<?>> getLauncherClasses() {
+            return Lists.<Class<?>>newArrayList(MyPig.class);
         }
     }
 
@@ -110,8 +112,8 @@ public class TestShareLibService extends XFsTestCase {
         }
 
         @Override
-        public List<Class> getLauncherClasses() {
-            return Arrays.asList((Class) TestHive.class);
+        public List<Class<?>> getLauncherClasses() {
+            return Lists.<Class<?>>newArrayList(TestHive.class);
         }
     }
 

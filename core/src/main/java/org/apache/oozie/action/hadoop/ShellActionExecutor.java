@@ -40,9 +40,8 @@ public class ShellActionExecutor extends JavaActionExecutor {
         super("shell");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
+    public List<Class<?>> getLauncherClasses() {
         return null;
     }
 
@@ -51,7 +50,6 @@ public class ShellActionExecutor extends JavaActionExecutor {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, ShellMain.class.getName());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
@@ -93,6 +91,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
             boolean checkKeyValue) throws ActionExecutorException {
         String[] strTagValue = null;
         Namespace ns = actionXml.getNamespace();
+        @SuppressWarnings("unchecked")
         List<Element> eTags = actionXml.getChildren(tag, ns);
         if (eTags != null && eTags.size() > 0) {
             strTagValue = new String[eTags.size()];

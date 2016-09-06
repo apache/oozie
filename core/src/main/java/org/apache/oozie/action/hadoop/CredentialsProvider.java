@@ -18,14 +18,12 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
+import java.io.IOException;
+
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
-
-import java.io.IOException;
 
 public class CredentialsProvider {
     Credentials cred;

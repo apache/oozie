@@ -29,6 +29,7 @@ import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.client.api.AMRMClient;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.codehaus.jackson.map.Module.SetupContext;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,6 +43,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +58,7 @@ public class LauncherAM {
     static final String ACTION_PREFIX = "oozie.action.";
     public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = ACTION_PREFIX + "max.output.data";
     static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
-    static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = ACTION_PREFIX + CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + "count";
+    static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + "count";
     static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
 
     static final String OOZIE_ACTION_DIR_PATH = ACTION_PREFIX + "dir.path";
@@ -121,24 +123,6 @@ public class LauncherAM {
         System.out.flush();
     }
 
-    // TODO: OYA: delete me when making real Action Mains
-    public static class DummyMain {
-        public static void main(String[] args) throws Exception {
-            System.out.println("Hello World!");
-            if (launcherJobConf.get("foo", "0").equals("1")) {
-                throw new IOException("foo 1");
-            } else if (launcherJobConf.get("foo", "0").equals("2")) {
-                throw new JavaMainException(new IOException("foo 2"));
-            } else if (launcherJobConf.get("foo", "0").equals("3")) {
-                throw new LauncherMainException(3);
-            } else if (launcherJobConf.get("foo", "0").equals("4")) {
-                System.exit(0);
-            } else if (launcherJobConf.get("foo", "0").equals("5")) {
-                System.exit(1);
-            }
-        }
-    }
-
     // TODO: OYA: rethink all print messages and formatting
     public static void main(String[] AMargs) throws Exception {
         ErrorHolder eHolder = new ErrorHolder();
@@ -174,8 +158,11 @@ public class LauncherAM {
             if (launcherJobConf.getBoolean("oozie.launcher.print.debug.info", true)) {
                 printDebugInfo(mainArgs);
             }
+
+            setupMainConfiguration();
+
             finalStatus = runActionMain(mainArgs, eHolder);
-            if (finalStatus != FinalApplicationStatus.SUCCEEDED) {
+            if (finalStatus == FinalApplicationStatus.SUCCEEDED) {
                 handleActionData();
                 if (actionData.get(ACTION_DATA_OUTPUT_PROPS) != null) {
                     System.out.println();
@@ -195,6 +182,10 @@ public class LauncherAM {
                     System.out.println();
                 }
             }
+        } catch (Exception e) {
+            System.err.println("Launcher AM execution failed");
+            e.printStackTrace(System.err);
+            throw e;
         } finally {
             try {
                 // Store final status in case Launcher AM falls off the RM
@@ -221,7 +212,7 @@ public class LauncherAM {
         // TODO: OYA: make heartbeat interval configurable
         // TODO: OYA: make heartbeat interval higher to put less load on RM, but lower than timeout
         amRmClientAsync = AMRMClientAsync.createAMRMClientAsync(amRmClient, 60000, callBackHandler);
-        amRmClientAsync.init(launcherJobConf);
+        amRmClientAsync.init(new Configuration(launcherJobConf));
         amRmClientAsync.start();
 
         // hostname and tracking url are determined automatically
@@ -262,16 +253,45 @@ public class LauncherAM {
         }
     }
 
+    // FIXME - figure out what is actually needed here
+    private static void setupMainConfiguration() throws IOException {
+//        Path pathNew = new Path(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
+//        FileSystem fs = FileSystem.get(pathNew.toUri(), getJobConf());
+//        fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
+
+        System.setProperty("oozie.launcher.job.id", launcherJobConf.get("oozie.job.id"));
+//        System.setProperty(OOZIE_JOB_ID, launcherJobConf.get(OOZIE_JOB_ID));
+//        System.setProperty(OOZIE_ACTION_ID, launcherJobConf.get(OOZIE_ACTION_ID));
+        System.setProperty("oozie.action.conf.xml", new File(ACTION_CONF_XML).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, new File(ACTION_DATA_EXTERNAL_CHILD_IDS).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_STATS, new File(ACTION_DATA_STATS).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
+
+        // FIXME - make sure it's always set
+        if (launcherJobConf.get("oozie.job.launch.time") != null) {
+            System.setProperty("oozie.job.launch.time", launcherJobConf.get("oozie.job.launch.time"));
+        } else {
+            System.setProperty("oozie.job.launch.time", String.valueOf(System.currentTimeMillis()));
+        }
+
+//        String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
+//        if (actionConfigClass != null) {
+//            System.setProperty(OOZIE_ACTION_CONFIG_CLASS, actionConfigClass);
+//        }
+    }
+
     private static FinalApplicationStatus runActionMain(String[] mainArgs, ErrorHolder eHolder) {
         FinalApplicationStatus finalStatus = FinalApplicationStatus.FAILED;
         LauncherSecurityManager secMan = new LauncherSecurityManager();
         try {
             Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
+            System.out.println("Launcher class: " + klass.toString());
+            System.out.flush();
             Method mainMethod = klass.getMethod("main", String[].class);
             // Enable LauncherSecurityManager to catch System.exit calls
             secMan.set();
-            // TODO: OYA: remove this line to actually run the Main class instead of this dummy
-            mainMethod = DummyMain.class.getMethod("main", String[].class);
             mainMethod.invoke(null, (Object) mainArgs);
 
             System.out.println();
@@ -279,6 +299,7 @@ public class LauncherAM {
             System.out.println();
             finalStatus = FinalApplicationStatus.SUCCEEDED;
         } catch (InvocationTargetException ex) {
+            ex.printStackTrace(System.out);
             // Get what actually caused the exception
             Throwable cause = ex.getCause();
             // If we got a JavaMainException from JavaMain, then we need to unwrap it
@@ -310,9 +331,12 @@ public class LauncherAM {
                 eHolder.setErrorCause(cause);
             }
         } catch (Throwable t) {
+            t.printStackTrace(System.out);
             eHolder.setErrorMessage(t.getMessage());
             eHolder.setErrorCause(t);
         } finally {
+            System.out.flush();
+            System.err.flush();
             // Disable LauncherSecurityManager
             secMan.unset();
         }
@@ -388,6 +412,7 @@ public class LauncherAM {
 
     private static void uploadActionDataToHDFS() throws IOException {
         Path finalPath = new Path(actionDir, ACTION_DATA_SEQUENCE_FILE);
+        // unused ??
         FileSystem fs = FileSystem.get(finalPath.toUri(), launcherJobConf);
         // upload into sequence file
         System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
@@ -507,6 +532,7 @@ public class LauncherAM {
 
     public static String[] getMainArguments(Configuration conf) {
         String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
+
         for (int i = 0; i < args.length; i++) {
             args[i] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
         }

@@ -284,10 +284,10 @@ public class Services {
     private void loadServices() throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         try {
-            Map<Class, Service> map = new LinkedHashMap<Class, Service>();
-            Class[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
+            Map<Class<?>, Service> map = new LinkedHashMap<Class<?>, Service>();
+            Class<?>[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_CLASSES + "'");
-            Class[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
+            Class<?>[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_EXT_CLASSES + "'");
             List<Service> list = new ArrayList<Service>();
             loadServices(classes, list);
@@ -301,10 +301,11 @@ public class Services {
                 }
                 map.put(service.getInterface(), service);
             }
-            for (Map.Entry<Class, Service> entry : map.entrySet()) {
+            for (Map.Entry<Class<?>, Service> entry : map.entrySet()) {
                 setService(entry.getValue().getClass());
             }
         } catch (RuntimeException rex) {
+            rex.printStackTrace();
             log.fatal("Runtime Exception during Services Load. Check your list of '" + CONF_SERVICE_CLASSES + "' or '" + CONF_SERVICE_EXT_CLASSES + "'");
             throw new ServiceException(ErrorCode.E0103, rex.getMessage(), rex);
         }

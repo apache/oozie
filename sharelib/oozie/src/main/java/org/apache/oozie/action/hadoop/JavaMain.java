@@ -45,8 +45,8 @@ public class JavaMain extends LauncherMain {
         LauncherMain.killChildYarnJobs(actionConf);
 
         Class<?> klass = actionConf.getClass(JAVA_MAIN_CLASS, Object.class);
-        System.out.println("Main class        : " + klass.getName());
-        System.out.println("Arguments         :");
+        System.out.println("Java action main class        : " + klass.getName());
+        System.out.println("Java action arguments         :");
         for (String arg : args) {
             System.out.println("                    " + arg);
         }

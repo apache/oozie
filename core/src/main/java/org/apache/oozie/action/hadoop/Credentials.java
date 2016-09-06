@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutor.Context;
 
-@SuppressWarnings("deprecation")
 public abstract class Credentials {
 
     /**

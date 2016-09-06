@@ -29,6 +29,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -265,24 +266,21 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         String launcherId = action.getExternalId();
 
-        final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
+        waitUntilYarnAppCompletes(launcherId);
+        YarnApplicationState appState = getYarnApplicationState(launcherId);
+        assertEquals("YarnApplicationState", YarnApplicationState.FINISHED, appState);
 
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
         assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
-        String mapperId = action.getExternalId();
+        String externalId = action.getExternalId();
         String childId = action.getExternalChildIDs();
 
-        assertTrue(launcherId.equals(mapperId));
+        assertEquals("LauncherId", launcherId, externalId);
+        assertNotNull(childId);
 
         final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
 
@@ -297,7 +295,6 @@ public class TestActionCheckXCommand extends XDataTestCase {
         action = jpaService.execute(wfActionGetCmd);
 
         assertEquals("SUCCEEDED", action.getExternalStatus());
-
     }
 
     private static class ErrorCheckActionExecutor extends ActionExecutor {

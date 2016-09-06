@@ -128,8 +128,8 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(SPARK_MAIN_CLASS_NAME));
         } catch (ClassNotFoundException e) {

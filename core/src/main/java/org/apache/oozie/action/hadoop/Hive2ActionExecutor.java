@@ -53,8 +53,8 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(HIVE2_MAIN_CLASS_NAME));
         }

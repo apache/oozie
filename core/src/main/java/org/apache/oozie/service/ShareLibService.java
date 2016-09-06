@@ -193,7 +193,7 @@ public class ShareLibService implements Service, Instrumentable {
     private void setupLauncherLibPath(FileSystem fs, Path tmpLauncherLibPath) throws IOException {
 
         ActionService actionService = Services.get().get(ActionService.class);
-        List<Class> classes = JavaActionExecutor.getCommonLauncherClasses();
+        List<Class<?>> classes = JavaActionExecutor.getCommonLauncherClasses();
         Path baseDir = new Path(tmpLauncherLibPath, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
         copyJarContainingClasses(classes, fs, baseDir, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
         Set<String> actionTypes = actionService.getActionTypes();
@@ -224,7 +224,7 @@ public class ShareLibService implements Service, Instrumentable {
         FileStatus[] filesStatus = fs.listStatus(path);
         for (int i = 0; i < filesStatus.length; i++) {
             Path p = filesStatus[i].getPath();
-            if (filesStatus[i].isDir()) {
+            if (filesStatus[i].isDirectory()) {
                 recursiveChangePermissions(fs, p, fsPerm);
             }
             else {
@@ -242,11 +242,11 @@ public class ShareLibService implements Service, Instrumentable {
      * @param type is sharelib key
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private void copyJarContainingClasses(List<Class> classes, FileSystem fs, Path executorDir, String type)
+    private void copyJarContainingClasses(List<Class<?>> classes, FileSystem fs, Path executorDir, String type)
             throws IOException {
         fs.mkdirs(executorDir);
         Set<String> localJarSet = new HashSet<String>();
-        for (Class c : classes) {
+        for (Class<?> c : classes) {
             String localJar = findContainingJar(c);
             if (localJar != null) {
                 localJarSet.add(localJar);
@@ -301,7 +301,7 @@ public class ShareLibService implements Service, Instrumentable {
             }
 
             for (FileStatus file : status) {
-                if (file.isDir()) {
+                if (file.isDirectory()) {
                     getPathRecursively(fs, file.getPath(), listOfPaths, shareLibKey, shareLibConfigMap);
                 }
                 else {
@@ -420,12 +420,12 @@ public class ShareLibService implements Service, Instrumentable {
      * @return the string
      */
     @VisibleForTesting
-    protected String findContainingJar(Class clazz) {
+    protected String findContainingJar(Class<?> clazz) {
         ClassLoader loader = clazz.getClassLoader();
         String classFile = clazz.getName().replaceAll("\\.", "/") + ".class";
         try {
-            for (Enumeration itr = loader.getResources(classFile); itr.hasMoreElements();) {
-                URL url = (URL) itr.nextElement();
+            for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements();) {
+                URL url = itr.nextElement();
                 if ("jar".equals(url.getProtocol())) {
                     String toReturn = url.getPath();
                     if (toReturn.startsWith("file:")) {
@@ -584,7 +584,7 @@ public class ShareLibService implements Service, Instrumentable {
         }
 
         for (FileStatus dir : dirList) {
-            if (!dir.isDir()) {
+            if (!dir.isDirectory()) {
                 continue;
             }
             List<Path> listOfPaths = new ArrayList<Path>();

@@ -39,7 +39,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.json.simple.JSONObject;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
@@ -53,10 +52,9 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         super("map-reduce");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(STREAMING_MAIN_CLASS_NAME));
         }
@@ -265,26 +263,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         catch (IOException ex) {
             throw convertException(ex);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private JSONObject counterstoJson(Counters counters) {
-
-        if (counters == null) {
-            return null;
-        }
-
-        JSONObject groups = new JSONObject();
-        for (String gName : counters.getGroupNames()) {
-            JSONObject group = new JSONObject();
-            for (Counters.Counter counter : counters.getGroup(gName)) {
-                String cName = counter.getName();
-                Long cValue = counter.getCounter();
-                group.put(cName, cValue);
-            }
-            groups.put(gName, group);
-        }
-        return groups;
     }
 
     /**

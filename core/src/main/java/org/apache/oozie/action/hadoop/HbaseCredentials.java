@@ -28,13 +28,10 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenIdentifier;
 import org.apache.hadoop.hbase.security.token.TokenUtil;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.action.hadoop.Credentials;
-import org.apache.oozie.action.hadoop.CredentialsProperties;
-import org.apache.oozie.util.XLog;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.oozie.action.ActionExecutor.Context;
+import org.apache.oozie.util.XLog;
 
 
 /**

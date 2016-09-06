@@ -54,8 +54,8 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }
@@ -71,7 +71,6 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         super.setupActionConf(actionConf, context, actionXml, appPath);
@@ -100,6 +99,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             args = l.toArray(new String[l.size()]);
         }
         else {
+            @SuppressWarnings("unchecked")
             List<Element> eArgs = (List<Element>) actionXml.getChildren("arg", ns);
             args = new String[eArgs.size()];
             for (int i = 0; i < eArgs.size(); i++) {

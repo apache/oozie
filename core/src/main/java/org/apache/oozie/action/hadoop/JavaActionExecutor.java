@@ -153,8 +153,8 @@ public class JavaActionExecutor extends ActionExecutor {
         super(type);
     }
 
-    public static List<Class> getCommonLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public static List<Class<?>> getCommonLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         classes.add(OozieLauncherInputFormat.class);
         classes.add(LauncherMain.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
@@ -163,8 +163,8 @@ public class JavaActionExecutor extends ActionExecutor {
         return classes;
     }
 
-    public List<Class> getLauncherClasses() {
-       List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+       List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(JAVA_MAIN_CLASS_NAME));
         }
@@ -355,6 +355,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf,
             boolean isLauncher) throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
         Namespace ns = element.getNamespace();
+        @SuppressWarnings("unchecked")
         Iterator<Element> it = element.getChildren("job-xml", ns).iterator();
         HashMap<String, FileSystem> filesystemsMap = new HashMap<String, FileSystem>();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
@@ -1192,7 +1193,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private boolean needInjectCredentials() {
         boolean methodExists = true;
 
-        Class klass;
+        Class<?> klass;
         try {
             klass = Class.forName("org.apache.hadoop.mapred.JobConf");
             klass.getMethod("getCredentials");
@@ -1388,7 +1389,6 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected JobClient createJobClient(Context context, JobConf jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
-        String group = context.getWorkflow().getGroup();
         return Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
     }
 
@@ -1447,7 +1447,6 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             if (appStatus != null || fallback) {
                 Path actionDir = context.getActionDir();
-                String newId = null;
                 // load sequence file into object
                 Map<String, String> actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
                 if (fallback) {
@@ -1461,7 +1460,7 @@ public class JavaActionExecutor extends ActionExecutor {
                                         " action data.  Failing this action!", action.getExternalId(), action.getId());
                     }
                 }
-                String externalIDs = actionData.get(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS);
+                String externalIDs = actionData.get(LauncherAM.ACTION_DATA_NEW_ID);  // MapReduce was launched
                 if (externalIDs != null) {
                     context.setExternalChildIDs(externalIDs);
                     LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
@@ -1565,7 +1564,6 @@ public class JavaActionExecutor extends ActionExecutor {
         YarnClient yarnClient = null;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            String user = context.getWorkflow().getUser();
             JobConf jobConf = createBaseHadoopConf(context, actionXml);
             yarnClient = createYarnClient(context, jobConf);
             yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));

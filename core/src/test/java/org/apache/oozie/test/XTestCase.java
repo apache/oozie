@@ -28,12 +28,14 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,8 +44,11 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 
 import junit.framework.TestCase;
-import org.apache.commons.io.FilenameUtils;
+import net.sf.ehcache.store.compound.ImmutableValueElementCopyStrategy;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
@@ -56,6 +61,11 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.Shell;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.BundleActionBean;
@@ -69,6 +79,7 @@ import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JPAService;
@@ -81,12 +92,18 @@ import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
+import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.test.hive.MiniHS2;
 import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+
+import com.google.common.base.Enums;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -1173,6 +1190,61 @@ public abstract class XTestCase extends TestCase {
     protected Services setupServicesForHCatalog(Services services) throws ServiceException {
         setupServicesForHCataLogImpl(services);
         return services;
+    }
+
+    protected void waitUntilYarnAppState(String externalId, final YarnApplicationState... acceptedStates)
+            throws HadoopAccessorException, IOException, YarnException {
+        final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
+        final Set<YarnApplicationState> states = Sets.immutableEnumSet(Lists.newArrayList(acceptedStates));
+        final MutableBoolean endStateOK = new MutableBoolean(false);
+
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
+        // This is needed here because we need a mutable final YarnClient
+        final MutableObject<YarnClient> yarnClientMO = new MutableObject<YarnClient>(null);
+        try {
+            yarnClientMO.setValue(Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), jobConf));
+            waitFor(60 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                     YarnApplicationState state = yarnClientMO.getValue().getApplicationReport(appId).getYarnApplicationState();
+
+                     if (states.contains(state)) {
+                         endStateOK.setValue(true);
+                         return true;
+                     } else {
+                         return false;
+                     }
+                }
+            });
+        } finally {
+            if (yarnClientMO.getValue() != null) {
+                yarnClientMO.getValue().close();
+            }
+        }
+
+        assertTrue(endStateOK.isTrue());
+    }
+
+    protected void waitUntilYarnAppCompletes(String externalId) throws HadoopAccessorException, IOException, YarnException {
+        waitUntilYarnAppState(externalId, YarnApplicationState.FAILED, YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+    }
+
+    protected YarnApplicationState getYarnApplicationState(String externalId) throws HadoopAccessorException, IOException, YarnException {
+        final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
+        YarnApplicationState state = null;
+        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
+        // This is needed here because we need a mutable final YarnClient
+        final MutableObject<YarnClient> yarnClientMO = new MutableObject<YarnClient>(null);
+        try {
+            yarnClientMO.setValue(Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), jobConf));
+            state = yarnClientMO.getValue().getApplicationReport(appId).getYarnApplicationState();
+        } finally {
+            if (yarnClientMO.getValue() != null) {
+                yarnClientMO.getValue().close();
+            }
+        }
+
+        return state;
     }
 
     protected class TestLogAppender extends AppenderSkeleton {

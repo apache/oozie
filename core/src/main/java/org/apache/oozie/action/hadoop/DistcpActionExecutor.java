@@ -49,18 +49,13 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         actionConf = super.setupActionConf(actionConf, context, actionXml, appPath);
-        String classNameDistcp = CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS;
-        String name = getClassNamebyType(DISTCP_TYPE);
-        if(name != null){
-            classNameDistcp = name;
-        }
         actionConf.set(JavaMain.JAVA_MAIN_CLASS, DISTCP_MAIN_CLASS_NAME);
         return actionConf;
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS));
         }

@@ -18,24 +18,21 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.WorkflowAppService;
 import org.jdom.Element;
-import org.jdom.Namespace;
 import org.jdom.JDOMException;
+import org.jdom.Namespace;
 import org.json.simple.parser.JSONParser;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
@@ -48,10 +45,9 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
         super("pig");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(PIG_MAIN_CLASS_NAME));
             classes.add(JSONParser.class);
@@ -73,7 +69,6 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         super.setupActionConf(actionConf, context, actionXml, appPath);
@@ -82,12 +77,14 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
         String script = actionXml.getChild("script", ns).getTextTrim();
         String pigName = new Path(script).getName();
 
-        List<Element> params = (List<Element>) actionXml.getChildren("param", ns);
+        @SuppressWarnings("unchecked")
+        List<Element> params = actionXml.getChildren("param", ns);
         String[] strParams = new String[params.size()];
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
         String[] strArgs = null;
+        @SuppressWarnings("unchecked")
         List<Element> eArgs = actionXml.getChildren("argument", ns);
         if (eArgs != null && eArgs.size() > 0) {
             strArgs = new String[eArgs.size()];
