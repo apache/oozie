@@ -145,7 +145,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    private String submitAction(Context context) throws Exception {
         PigActionExecutor ae = new PigActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -160,34 +160,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf =
-                new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration")).toString()));
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
-        conf.set("mapreduce.framework.name", "yarn");
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+        return jobId;
     }
 
     private void _testSubmit(String actionXml, boolean checkForSuccess) throws Exception {
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
-
-        sleep(2000);
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         ae.check(context, context.getAction());
@@ -223,9 +203,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to true
         String actionXml = setPigActionXml(PIG_SCRIPT, true);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
@@ -276,9 +255,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to false
         String actionXml = setPigActionXml(PIG_SCRIPT, false);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -306,9 +284,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to true
         String actionXml = setPigActionXml(PIG_SCRIPT, true);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -328,9 +305,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to false
         String actionXml = setPigActionXml(PIG_SCRIPT, false);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
@@ -345,16 +321,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         assertEquals("SUCCEEDED", wfAction.getExternalStatus());
         assertNotNull(wfAction.getExternalChildIDs());
-    }
-
-    private void evaluateLauncherJob(final RunningJob launcherJob) throws Exception{
-        waitFor(180 * 1000, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        sleep(2000);
     }
 
     protected XConfiguration setPigConfig(boolean writeStats) {

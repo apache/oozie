@@ -25,6 +25,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -175,13 +176,8 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         scriptWriter.close();
 
         Context context = createContext(getActionXml());
-        final RunningJob launcherJob = submitAction(context);
-        waitFor(200 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherID = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherID);
 
         SparkActionExecutor ae = new SparkActionExecutor();
         ae.check(context, context.getAction());
@@ -212,7 +208,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    protected RunningJob submitAction(Context context) throws Exception {
+    protected String submitAction(Context context) throws Exception {
         SparkActionExecutor ae = new SparkActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -227,14 +223,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        jobConf.set("mapred.job.tracker", jobTracker);
-
-        JobClient jobClient =
-                Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+        return jobId;
     }
 
 

@@ -123,7 +123,6 @@ public class MapReduceMain extends LauncherMain {
         return runJob;
     }
 
-    @SuppressWarnings("unchecked")
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
         return new JobClient(jobConf);
     }

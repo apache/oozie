@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.EnumSet;
 
 // Adapted from org.apache.hadoop.mapreduce.v2.app.JobEndNotifier
 /**
@@ -34,9 +35,11 @@ import java.net.URL;
  */
 public class LauncherAMCallbackNotifier {
     private static final String OOZIE_LAUNCHER_CALLBACK = "oozie.launcher.callback.";
+    private static final int OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL_MAX = 5000;
+    private static final EnumSet<FinalApplicationStatus> FAILED_APPLICATION_STATES = EnumSet.of(FinalApplicationStatus.KILLED, FinalApplicationStatus.FAILED);
+
     public static final String OOZIE_LAUNCHER_CALLBACK_RETRY_ATTEMPTS = OOZIE_LAUNCHER_CALLBACK + "retry.attempts";
     public static final String OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL = OOZIE_LAUNCHER_CALLBACK + "retry.interval";
-    static final int OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL_MAX = 5000;
     public static final String OOZIE_LAUNCHER_CALLBACK_MAX_ATTEMPTS = OOZIE_LAUNCHER_CALLBACK + "max.attempts";
     public static final String OOZIE_LAUNCHER_CALLBACK_TIMEOUT = OOZIE_LAUNCHER_CALLBACK + "timeout";
     public static final String OOZIE_LAUNCHER_CALLBACK_URL = OOZIE_LAUNCHER_CALLBACK + "url";
@@ -50,6 +53,7 @@ public class LauncherAMCallbackNotifier {
     protected int timeout; // Timeout (ms) on the connection and notification
     protected URL urlToNotify; //URL to notify read from the config
     protected Proxy proxyToUse = Proxy.NO_PROXY; //Proxy to use for notification
+
 
     /**
      * Parse the URL that needs to be notified of the end of the job, along
@@ -136,7 +140,7 @@ public class LauncherAMCallbackNotifier {
      *
      * @throws InterruptedException
      */
-    public void notifyURL(FinalApplicationStatus finalStatus) throws InterruptedException {
+    public void notifyURL(FinalApplicationStatus finalStatus, boolean backgroundAction) throws InterruptedException {
         // Do we need job-end notification?
         if (userUrl == null) {
             System.out.println("Callback notification URL not set, skipping.");
@@ -145,7 +149,12 @@ public class LauncherAMCallbackNotifier {
 
         //Do string replacements for final status
         if (userUrl.contains(OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN)) {
-            userUrl = userUrl.replace(OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN, finalStatus.toString());
+            // only send back "RUNNING" if the submission was successful
+            if (backgroundAction && !FAILED_APPLICATION_STATES.contains(finalStatus)) {
+                userUrl = userUrl.replace(OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN, "RUNNING");
+            } else {
+                userUrl = userUrl.replace(OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN, finalStatus.toString());
+            }
         }
 
         // Create the URL, ensure sanity

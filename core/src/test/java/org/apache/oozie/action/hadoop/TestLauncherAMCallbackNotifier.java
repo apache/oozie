@@ -33,6 +33,22 @@ import java.util.Map;
 
 // A lot of this adapted from org.apache.hadoop.mapreduce.v2.app.TestJobEndNotifier and org.apache.hadoop.mapred.TestJobEndNotifier
 public class TestLauncherAMCallbackNotifier extends XTestCase {
+    private EmbeddedServletContainer container;
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        QueryServlet.lastQueryString = null;
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        if (container != null) {
+            container.stop();
+        }
+
+        super.tearDown();
+    }
 
     public void testConfiguration() throws Exception {
         Configuration conf = new Configuration(false);
@@ -91,8 +107,9 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL, "5000");
 
         LauncherAMCallbackNotifier cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
+
         long start = System.currentTimeMillis();
-        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED);
+        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
         long end = System.currentTimeMillis();
         Mockito.verify(cnSpy, Mockito.times(1)).notifyURLOnce();
         Assert.assertTrue("Should have taken more than 5 seconds but it only took " + (end - start), end - start >= 5000);
@@ -103,68 +120,93 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
 
         cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
         start = System.currentTimeMillis();
-        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED);
+        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
         end = System.currentTimeMillis();
         Mockito.verify(cnSpy, Mockito.times(3)).notifyURLOnce();
         Assert.assertTrue("Should have taken more than 9 seconds but it only took " + (end - start), end - start >= 9000);
     }
 
     public void testNotifyTimeout() throws Exception {
-        EmbeddedServletContainer container = null;
-        try {
-            container = new EmbeddedServletContainer("blah");
-            Map<String, String> params = new HashMap<String, String>();
-            params.put(HangServlet.SLEEP_TIME_MS, "1000000");
-            container.addServletEndpoint("/hang/*", HangServlet.class, params);
-            container.start();
+        Map<String, String> params = new HashMap<String, String>();
+        params.put(HangServlet.SLEEP_TIME_MS, "1000000");
+        Configuration conf = setupEmbeddedContainer(HangServlet.class, "/hang/*", "/hang/*", params);
 
-            Configuration conf = new Configuration(false);
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_ATTEMPTS, "0");
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_MAX_ATTEMPTS, "1");
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_URL, container.getServletURL("/hang/*"));
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL, "5000");
-
-            LauncherAMCallbackNotifier cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
-            long start = System.currentTimeMillis();
-            cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED);
-            long end = System.currentTimeMillis();
-            Mockito.verify(cnSpy, Mockito.times(1)).notifyURLOnce();
-            Assert.assertTrue("Should have taken more than 5 seconds but it only took " + (end - start), end - start >= 5000);
-        } finally {
-            if (container != null) {
-                container.stop();
-            }
-        }
+        LauncherAMCallbackNotifier cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
+        long start = System.currentTimeMillis();
+        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        long end = System.currentTimeMillis();
+        Mockito.verify(cnSpy, Mockito.times(1)).notifyURLOnce();
+        Assert.assertTrue("Should have taken more than 5 seconds but it only took " + (end - start), end - start >= 5000);
     }
 
     public void testNotify() throws Exception {
-        EmbeddedServletContainer container = null;
-        try {
-            container = new EmbeddedServletContainer("blah");
-            container.addServletEndpoint("/count/*", QueryServlet.class);
-            container.start();
+        Configuration conf = setupEmbeddedContainer(QueryServlet.class, "/count/*", "/count/?status=$jobStatus", null);
 
-            Configuration conf = new Configuration(false);
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_ATTEMPTS, "0");
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_MAX_ATTEMPTS, "1");
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_URL, container.getServletURL("/count/?status=$jobStatus"));
-            conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL, "5000");
+        LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
 
-            LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
-            QueryServlet.lastQueryString = null;
-            assertNull(QueryServlet.lastQueryString);
-            cn.notifyURL(FinalApplicationStatus.SUCCEEDED);
-            waitFor(5000, new Predicate() {
-                @Override
-                public boolean evaluate() throws Exception {
-                    return "status=SUCCEEDED".equals(QueryServlet.lastQueryString);
-                }
-            });
-            assertEquals("status=SUCCEEDED", QueryServlet.lastQueryString);
-        } finally {
-            if (container != null) {
-                container.stop();
+        assertNull(QueryServlet.lastQueryString);
+        cn.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        waitForCallbackAndCheckResult(FinalApplicationStatus.SUCCEEDED.toString());
+    }
+
+    public void testNotifyBackgroundActionWhenSubmitSucceeds() throws Exception {
+        Configuration conf = setupEmbeddedContainer(QueryServlet.class, "/count/*", "/count/?status=$jobStatus", null);
+
+        LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
+
+        assertNull(QueryServlet.lastQueryString);
+        cn.notifyURL(FinalApplicationStatus.SUCCEEDED, true);
+        waitForCallbackAndCheckResult("RUNNING");
+    }
+
+    public void testNotifyBackgroundActionWhenSubmitFailsWithKilled() throws Exception {
+        Configuration conf = setupEmbeddedContainer(QueryServlet.class, "/count/*", "/count/?status=$jobStatus", null);
+
+        LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
+
+        assertNull(QueryServlet.lastQueryString);
+        cn.notifyURL(FinalApplicationStatus.KILLED, true);
+        waitForCallbackAndCheckResult(FinalApplicationStatus.KILLED.toString());
+    }
+
+    public void testNotifyBackgroundActionWhenSubmitFailsWithFailed() throws Exception {
+        Configuration conf = setupEmbeddedContainer(QueryServlet.class, "/count/*", "/count/?status=$jobStatus", null);
+
+        LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
+
+        assertNull(QueryServlet.lastQueryString);
+        cn.notifyURL(FinalApplicationStatus.FAILED, true);
+        waitForCallbackAndCheckResult(FinalApplicationStatus.FAILED.toString());
+    }
+
+    private Configuration setupEmbeddedContainer(Class<?> servletClass, String servletEndPoint, String servletUrl, Map<String, String> params) throws Exception {
+        container = new EmbeddedServletContainer("test");
+        if (servletEndPoint != null) {
+            if (params != null) {
+                container.addServletEndpoint(servletEndPoint, servletClass, params);
+            } else {
+                container.addServletEndpoint(servletEndPoint, servletClass);
             }
         }
+        container.start();
+
+        Configuration conf = new Configuration(false);
+        conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_ATTEMPTS, "0");
+        conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_MAX_ATTEMPTS, "1");
+        conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_URL, container.getServletURL(servletUrl));
+        conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_RETRY_INTERVAL, "5000");
+
+        return conf;
+    }
+
+    private void waitForCallbackAndCheckResult(final String expectedResult) {
+        waitFor(5000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return ("status=" + expectedResult).equals(QueryServlet.lastQueryString);
+            }
+        });
+
+        assertEquals("status="  + expectedResult, QueryServlet.lastQueryString);
     }
 }

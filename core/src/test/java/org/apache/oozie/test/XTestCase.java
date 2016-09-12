@@ -1192,11 +1192,12 @@ public abstract class XTestCase extends TestCase {
         return services;
     }
 
-    protected void waitUntilYarnAppState(String externalId, final YarnApplicationState... acceptedStates)
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final YarnApplicationState... acceptedStates)
             throws HadoopAccessorException, IOException, YarnException {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
         final Set<YarnApplicationState> states = Sets.immutableEnumSet(Lists.newArrayList(acceptedStates));
         final MutableBoolean endStateOK = new MutableBoolean(false);
+        final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
 
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
         // This is needed here because we need a mutable final YarnClient
@@ -1207,6 +1208,7 @@ public abstract class XTestCase extends TestCase {
                 @Override
                 public boolean evaluate() throws Exception {
                      YarnApplicationState state = yarnClientMO.getValue().getApplicationReport(appId).getYarnApplicationState();
+                     finalState.setValue(state);
 
                      if (states.contains(state)) {
                          endStateOK.setValue(true);
@@ -1223,10 +1225,12 @@ public abstract class XTestCase extends TestCase {
         }
 
         assertTrue(endStateOK.isTrue());
+        return finalState.getValue();
     }
 
-    protected void waitUntilYarnAppCompletes(String externalId) throws HadoopAccessorException, IOException, YarnException {
-        waitUntilYarnAppState(externalId, YarnApplicationState.FAILED, YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+    protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId) throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YarnApplicationState.FAILED, YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+        assertEquals("YARN App state", YarnApplicationState.FINISHED, state);
     }
 
     protected YarnApplicationState getYarnApplicationState(String externalId) throws HadoopAccessorException, IOException, YarnException {

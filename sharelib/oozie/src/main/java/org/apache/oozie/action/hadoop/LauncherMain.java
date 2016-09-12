@@ -201,12 +201,12 @@ public abstract class LauncherMain {
      * @param conf Configuration/Properties object to dump to STDOUT
      * @throws IOException thrown if an IO error ocurred.
      */
-    @SuppressWarnings("unchecked")
-    protected static void logMasking(String header, Collection<String> maskSet, Iterable conf) throws IOException {
+
+    protected static void logMasking(String header, Collection<String> maskSet, Iterable<Map.Entry<String,String>> conf) throws IOException {
         StringWriter writer = new StringWriter();
         writer.write(header + "\n");
         writer.write("--------------------\n");
-        for (Map.Entry entry : (Iterable<Map.Entry>) conf) {
+        for (Map.Entry<String, String> entry : conf) {
             String name = (String) entry.getKey();
             String value = (String) entry.getValue();
             for (String mask : maskSet) {
@@ -247,7 +247,7 @@ public abstract class LauncherMain {
      * @throws OozieActionConfiguratorException
      */
     protected static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
-        String configClass = System.getProperty(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
+        String configClass = actionConf.get(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
         if (configClass != null) {
             try {
                 Class<?> klass = Class.forName(configClass);

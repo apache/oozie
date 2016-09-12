@@ -164,14 +164,8 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             dataWriter.close();
             Context context = createContext(getActionScriptXml());
             Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
-            final RunningJob launcherJob = submitAction(context, ns);
-            String launcherId = context.getAction().getExternalId();
-            waitFor(200 * 1000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return launcherJob.isComplete();
-                }
-            });
-            assertTrue(launcherJob.isSuccessful());
+            final String launcherId = submitAction(context, ns);
+            waitUntilYarnAppDoneAndAssertSuccess(launcherId);
             Configuration conf = new XConfiguration();
             conf.set("user.name", getTestUser());
             Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
@@ -198,14 +192,8 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         {
             Context context = createContext(getActionQueryXml(hiveScript));
             Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.6");
-            final RunningJob launcherJob = submitAction(context, ns);
-            String launcherId = context.getAction().getExternalId();
-            waitFor(200 * 1000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return launcherJob.isComplete();
-                }
-            });
-            assertTrue(launcherJob.isSuccessful());
+            final String launcherId = submitAction(context, ns);
+            waitUntilYarnAppDoneAndAssertSuccess(launcherId);
             Configuration conf = new XConfiguration();
             conf.set("user.name", getTestUser());
             Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
@@ -231,7 +219,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         }
     }
 
-    private RunningJob submitAction(Context context, Namespace ns) throws Exception {
+    private String submitAction(Context context, Namespace ns) throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -245,22 +233,9 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobId);
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf =
-                new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration", ns)).toString()));
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker", ns));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node", ns));
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
 
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+
+        return jobId;
     }
 
     private String copyJar(String targetFile, Class<?> anyContainedClass)

@@ -121,7 +121,7 @@ public class PigMain extends LauncherMain {
         pigProperties.store(os, "");
         os.close();
 
-        logMasking("pig.properties:", Arrays.asList("password"), pigProperties.entrySet());
+        logMasking("pig.properties:", Arrays.asList("password"), (Iterable<Map.Entry<String, String>>)(Iterable<?>) pigProperties.entrySet());
 
         List<String> arguments = new ArrayList<String>();
         String script = actionConf.get(PigActionExecutor.PIG_SCRIPT);

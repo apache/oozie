@@ -29,8 +29,6 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.yarn.api.records.YarnApplicationState;
-import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -46,7 +44,6 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
-import org.apache.oozie.service.ActionCheckerService;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -266,9 +263,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         String launcherId = action.getExternalId();
 
-        waitUntilYarnAppCompletes(launcherId);
-        YarnApplicationState appState = getYarnApplicationState(launcherId);
-        assertEquals("YarnApplicationState", YarnApplicationState.FINISHED, appState);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);

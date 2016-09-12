@@ -21,7 +21,9 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -312,13 +314,80 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
+    protected void injectCallback(Context context, Configuration conf) {
+        // add callback for the MapReduce job
+        String callback = context.getCallbackUrl("$jobStatus");
+        if (conf.get("job.end.notification.url") != null) {
+            LOG.warn("Overriding the action job end notification URI");
+        }
+        conf.set("job.end.notification.url", callback);
 
-        RunningJob runningJob;
-        String jobId = getActualExternalId(action);
+        super.injectCallback(context, conf);
+    }
 
-        runningJob = jobClient.getJob(JobID.forName(jobId));
+    @Override
+    public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+        Map<String, String> actionData = Collections.emptyMap();
+        JobConf jobConf = null;
 
-        return runningJob;
+        try {
+            FileSystem actionFs = context.getAppFileSystem();
+            Element actionXml = XmlUtils.parseXml(action.getConf());
+            jobConf = createBaseHadoopConf(context, actionXml);
+            Path actionDir = context.getActionDir();
+            actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
+        } catch (Exception e) {
+            LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
+            throw convertException(e);
+        }
+
+        final String newId = actionData.get(LauncherMapper.ACTION_DATA_NEW_ID);
+
+        // check the Hadoop job if newID is defined (which should be the case here) - otherwise perform the normal check()
+        if (newId != null) {
+            boolean jobCompleted;
+            JobClient jobClient = null;
+            boolean exception = false;
+
+            try {
+                jobClient = createJobClient(context, jobConf);
+                RunningJob runningJob = jobClient.getJob(JobID.forName(newId));
+
+                if (runningJob == null) {
+                    context.setExternalStatus(FAILED);
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
+                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
+                            action.getId());
+                }
+
+                jobCompleted = runningJob.isComplete();
+            } catch (Exception e) {
+                LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
+                exception = true;
+                throw convertException(e);
+            } finally {
+                if (jobClient != null) {
+                    try {
+                        jobClient.close();
+                    } catch (Exception e) {
+                        if (exception) {
+                            LOG.error("JobClient error (not re-throwing due to a previous error): ", e);
+                        } else {
+                            throw convertException(e);
+                        }
+                    }
+                }
+            }
+
+            // run original check() if the MR action is completed or there are errors - otherwise mark it as RUNNING
+            if (jobCompleted || (!jobCompleted && actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS))) {
+                super.check(context, action);
+            } else {
+                context.setExternalStatus(RUNNING);
+                context.setExternalChildIDs(newId);
+            }
+        } else {
+            super.check(context, action);
+        }
     }
 }

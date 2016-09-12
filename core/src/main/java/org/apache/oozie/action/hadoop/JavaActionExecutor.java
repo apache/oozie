@@ -18,6 +18,28 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -31,6 +53,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.token.Token;
@@ -48,6 +71,7 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.WorkflowActionBean;
@@ -78,38 +102,21 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.common.collect.ImmutableList;
 
 
 public class JavaActionExecutor extends ActionExecutor {
 
-    protected static final String HADOOP_USER = "user.name";
+    public static final String RUNNING = "RUNNING";
+    public static final String SUCCEEDED = "SUCCEEDED";
+    public static final String KILLED = "KILLED";
+    public static final String FAILED = "FAILED";
+    public static final String FAILED_KILLED = "FAILED/KILLED";
     public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     public static final String HADOOP_NAME_NODE = "fs.default.name";
-    private static final String HADOOP_JOB_NAME = "mapred.job.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
-    private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
-    public final static String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
+
+    public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     public static final String HADOOP_YARN_TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
@@ -120,24 +127,27 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String HADOOP_REDUCE_JAVA_OPTS = "mapreduce.reduce.java.opts";
     public static final String HADOOP_CHILD_JAVA_ENV = "mapred.child.env";
     public static final String HADOOP_MAP_JAVA_ENV = "mapreduce.map.env";
-    public static final String YARN_AM_RESOURCE_MB = "yarn.app.mapreduce.am.resource.mb";
-    public static final String YARN_AM_COMMAND_OPTS = "yarn.app.mapreduce.am.command-opts";
-    public static final String YARN_AM_ENV = "yarn.app.mapreduce.am.env";
-    private static final String JAVA_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.JavaMain";
-    public static final int YARN_MEMORY_MB_MIN = 512;
-    private static int maxActionOutputLen;
-    private static int maxExternalStatsSize;
-    private static int maxFSGlobMax;
-    private static final String SUCCEEDED = "SUCCEEDED";
-    private static final String KILLED = "KILLED";
-    private static final String FAILED = "FAILED";
-    private static final String FAILED_KILLED = "FAILED/KILLED";
-    protected XLog LOG = XLog.getLog(getClass());
-    private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
-    private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
     public static final String HADOOP_JOB_CLASSLOADER = "mapreduce.job.classloader";
     public static final String HADOOP_USER_CLASSPATH_FIRST = "mapreduce.user.classpath.first";
     public static final String OOZIE_CREDENTIALS_SKIP = "oozie.credentials.skip";
+    public static final String YARN_AM_RESOURCE_MB = "yarn.app.mapreduce.am.resource.mb";
+    public static final String YARN_AM_COMMAND_OPTS = "yarn.app.mapreduce.am.command-opts";
+    public static final String YARN_AM_ENV = "yarn.app.mapreduce.am.env";
+    public static final int YARN_MEMORY_MB_MIN = 512;
+
+    private static final String JAVA_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.JavaMain";
+    private static final String HADOOP_JOB_NAME = "mapred.job.name";
+    private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
+
+    private static int maxActionOutputLen;
+    private static int maxExternalStatsSize;
+    private static int maxFSGlobMax;
+
+    protected static final String HADOOP_USER = "user.name";
+
+    protected XLog LOG = XLog.getLog(getClass());
+    private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
+    private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
 
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
@@ -237,6 +247,13 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
+
+        // FIXME - think about this!
+        Element e = actionXml.getChild("config-class", ns);
+        if (e != null) {
+            conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
+        }
+
         return conf;
     }
 
@@ -308,6 +325,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    // FIXME: is this needed?
     private HashMap<String, List<String>> populateEnvMap(String input) {
         HashMap<String, List<String>> envMaps = new HashMap<String, List<String>>();
         String[] envEntries = input.split(",");
@@ -918,7 +936,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    private void injectCallback(Context context, Configuration conf) {
+    protected void injectCallback(Context context, Configuration conf) {
         String callback = context.getCallbackUrl(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_JOBSTATUS_TOKEN);
         conf.set(LauncherAMCallbackNotifier.OOZIE_LAUNCHER_CALLBACK_URL, callback);
     }
@@ -1109,6 +1127,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, JobConf launcherJobConf, String user,
                                                                     Context context, Configuration actionConf)
             throws IOException, HadoopAccessorException, URISyntaxException {
+
         // Create launch context for app master
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
 
@@ -1149,9 +1168,10 @@ public class JavaActionExecutor extends ActionExecutor {
         Map<String, String> env = new HashMap<String, String>();
         // This adds the Hadoop jars to the classpath in the Launcher JVM
         ClasspathUtils.setupClasspath(env, launcherJobConf);
-        if (false) {        // TODO: OYA: config to add MR jars?  Probably also needed for MR Action
-            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
-        }
+
+        // FIXME: move this to specific places where it's actually needed - keeping it here for now
+        ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+
         amContainer.setEnvironment(env);
 
         // Set the command
@@ -1160,18 +1180,28 @@ public class JavaActionExecutor extends ActionExecutor {
                 + "/bin/java");
         // TODO: OYA: remove attach debugger to AM; useful for debugging
 //                    vargs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
-        MRApps.addLog4jSystemProperties("INFO", 1024 * 1024, 0, vargs);
-        vargs.add(LauncherAM.class.getName());
+
+        // FIXME: decide what to do with this method call - signature keeps changing
+        // MRApps.addLog4jSystemProperties("INFO", 1024 * 1024, 0, vargs, null);
+
+        vargs.add("-Dlog4j.configuration=container-log4j.properties");
+        vargs.add("-Dlog4j.debug=true");
+        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_DIR + "=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 1024 * 1024);
+        vargs.add("-Dhadoop.root.logger=INFO,CLA");
+        vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
+        vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
+        vargs.add("org.apache.oozie.action.hadoop.LauncherAM");  // note: using string temporarily so we don't have to depend on sharelib-oozie
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
                 Path.SEPARATOR + ApplicationConstants.STDOUT);
         vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
                 Path.SEPARATOR + ApplicationConstants.STDERR);
-        List<String> vargsFinal = new ArrayList<String>(6);
         StringBuilder mergedCommand = new StringBuilder();
         for (CharSequence str : vargs) {
             mergedCommand.append(str).append(" ");
         }
-        vargsFinal.add(mergedCommand.toString());
+
+        List<String> vargsFinal = ImmutableList.of(mergedCommand.toString());
         LOG.debug("Command to launch container for ApplicationMaster is : "
                 + mergedCommand);
         amContainer.setCommands(vargsFinal);
@@ -1403,11 +1433,6 @@ public class JavaActionExecutor extends ActionExecutor {
     protected YarnClient createYarnClient(Context context, JobConf jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         return Services.get().get(HadoopAccessorService.class).createYarnClient(user, jobConf);
-    }
-
-    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
-        RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
-        return runningJob;
     }
 
     /**

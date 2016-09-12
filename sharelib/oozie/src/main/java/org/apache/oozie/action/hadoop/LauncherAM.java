@@ -17,22 +17,6 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.yarn.api.records.Container;
-import org.apache.hadoop.yarn.api.records.ContainerStatus;
-import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
-import org.apache.hadoop.yarn.api.records.NodeReport;
-import org.apache.hadoop.yarn.client.api.AMRMClient;
-import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
-import org.apache.hadoop.yarn.exceptions.YarnException;
-import org.codehaus.jackson.map.Module.SetupContext;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -43,13 +27,29 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
-import java.util.Date;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.records.Container;
+import org.apache.hadoop.yarn.api.records.ContainerStatus;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.NodeReport;
+import org.apache.hadoop.yarn.client.api.AMRMClient;
+import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+
+import com.google.common.base.Preconditions;
 
 public class LauncherAM {
 
@@ -125,8 +125,14 @@ public class LauncherAM {
 
     // TODO: OYA: rethink all print messages and formatting
     public static void main(String[] AMargs) throws Exception {
-        ErrorHolder eHolder = new ErrorHolder();
+        final ErrorHolder eHolder = new ErrorHolder();
         FinalApplicationStatus finalStatus = FinalApplicationStatus.FAILED;
+        String submitterUser = System.getProperty("submitter.user", "").trim();
+        Preconditions.checkArgument(!submitterUser.isEmpty(), "Submitter user is undefined");
+        System.out.println("Submitter user is: " + submitterUser);
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(submitterUser);
+        boolean backgroundAction = false;
+
         try {
             try {
                 launcherJobConf = readLauncherConf();
@@ -143,7 +149,7 @@ public class LauncherAM {
 
             try {
                 System.out.println("\nStarting the execution of prepare actions");
-                executePrepare();
+                executePrepare(ugi);
                 System.out.println("Completed the execution of prepare actions successfully");
             } catch (Exception ex) {
                 eHolder.setErrorMessage("Prepare execution in the Launcher AM has failed");
@@ -151,7 +157,7 @@ public class LauncherAM {
                 throw ex;
             }
 
-            String[] mainArgs = getMainArguments(launcherJobConf);
+            final String[] mainArgs = getMainArguments(launcherJobConf);
 
             // TODO: OYA: should we allow turning this off?
             // TODO: OYA: what should default be?
@@ -161,7 +167,8 @@ public class LauncherAM {
 
             setupMainConfiguration();
 
-            finalStatus = runActionMain(mainArgs, eHolder);
+            finalStatus = runActionMain(mainArgs, eHolder, ugi);
+
             if (finalStatus == FinalApplicationStatus.SUCCEEDED) {
                 handleActionData();
                 if (actionData.get(ACTION_DATA_OUTPUT_PROPS) != null) {
@@ -180,6 +187,7 @@ public class LauncherAM {
                     System.out.println(actionData.get(ACTION_DATA_NEW_ID));
                     System.out.println("=======================");
                     System.out.println();
+                    backgroundAction = true;
                 }
             }
         } catch (Exception e) {
@@ -193,13 +201,13 @@ public class LauncherAM {
                 if (finalStatus != FinalApplicationStatus.SUCCEEDED) {
                     failLauncher(eHolder);
                 }
-                uploadActionDataToHDFS();
+                uploadActionDataToHDFS(ugi);
             } finally {
                 try {
                     unregisterWithRM(finalStatus, eHolder.getErrorMessage());
                 } finally {
                     LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(launcherJobConf);
-                    cn.notifyURL(finalStatus);
+                    cn.notifyURL(finalStatus, backgroundAction);
                 }
             }
         }
@@ -240,16 +248,31 @@ public class LauncherAM {
     }
 
     // Method to execute the prepare actions
-    private static void executePrepare() throws IOException, LauncherException, ParserConfigurationException, SAXException {
-        String prepareXML = launcherJobConf.get(ACTION_PREPARE_XML);
-        if (prepareXML != null) {
-            if (prepareXML.length() != 0) {
-                Configuration actionConf = new Configuration(launcherJobConf);
-                actionConf.addResource(ACTION_CONF_XML);
-                PrepareActionsDriver.doOperations(prepareXML, actionConf);
-            } else {
-                System.out.println("There are no prepare actions to execute.");
+    private static void executePrepare(UserGroupInformation ugi) throws Exception {
+        Exception e = ugi.doAs(new PrivilegedAction<Exception>() {
+            @Override
+            public Exception run() {
+                try {
+                    String prepareXML = launcherJobConf.get(ACTION_PREPARE_XML);
+                    if (prepareXML != null) {
+                        if (prepareXML.length() != 0) {
+                            Configuration actionConf = new Configuration(launcherJobConf);
+                            actionConf.addResource(ACTION_CONF_XML);
+                            PrepareActionsDriver.doOperations(prepareXML, actionConf);
+                        } else {
+                            System.out.println("There are no prepare actions to execute.");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return e;
+                }
+                return null;
             }
+        });
+
+        if (e != null) {
+            throw e;
         }
     }
 
@@ -282,65 +305,74 @@ public class LauncherAM {
 //        }
     }
 
-    private static FinalApplicationStatus runActionMain(String[] mainArgs, ErrorHolder eHolder) {
-        FinalApplicationStatus finalStatus = FinalApplicationStatus.FAILED;
-        LauncherSecurityManager secMan = new LauncherSecurityManager();
-        try {
-            Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
-            System.out.println("Launcher class: " + klass.toString());
-            System.out.flush();
-            Method mainMethod = klass.getMethod("main", String[].class);
-            // Enable LauncherSecurityManager to catch System.exit calls
-            secMan.set();
-            mainMethod.invoke(null, (Object) mainArgs);
+    private static FinalApplicationStatus runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) {
+        final AtomicReference<FinalApplicationStatus> finalStatus = new AtomicReference<FinalApplicationStatus>(FinalApplicationStatus.FAILED);
 
-            System.out.println();
-            System.out.println("<<< Invocation of Main class completed <<<");
-            System.out.println();
-            finalStatus = FinalApplicationStatus.SUCCEEDED;
-        } catch (InvocationTargetException ex) {
-            ex.printStackTrace(System.out);
-            // Get what actually caused the exception
-            Throwable cause = ex.getCause();
-            // If we got a JavaMainException from JavaMain, then we need to unwrap it
-            if (JavaMainException.class.isInstance(cause)) {
-                cause = cause.getCause();
-            }
-            if (LauncherMainException.class.isInstance(cause)) {
-                String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" +
-                        ((LauncherMainException) ex.getCause()).getErrorCode() + "]");
-            } else if (SecurityException.class.isInstance(cause)) {
-                if (secMan.getExitInvoked()) {
-                    System.out.println("Intercepting System.exit(" + secMan.getExitCode()
-                            + ")");
-                    System.err.println("Intercepting System.exit(" + secMan.getExitCode()
-                            + ")");
-                    // if 0 main() method finished successfully
-                    // ignoring
-                    eHolder.setErrorCode(secMan.getExitCode());
-                    if (eHolder.getErrorCode() != 0) {
-                        String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                        eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" + eHolder.getErrorCode() + "]");
-                    } else {
-                        finalStatus = FinalApplicationStatus.SUCCEEDED;
+        ugi.doAs(new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                LauncherSecurityManager secMan = new LauncherSecurityManager();
+                try {
+                    Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
+                    System.out.println("Launcher class: " + klass.toString());
+                    System.out.flush();
+                    Method mainMethod = klass.getMethod("main", String[].class);
+                    // Enable LauncherSecurityManager to catch System.exit calls
+                    secMan.set();
+                    mainMethod.invoke(null, (Object) mainArgs);
+
+                    System.out.println();
+                    System.out.println("<<< Invocation of Main class completed <<<");
+                    System.out.println();
+                    finalStatus.set(FinalApplicationStatus.SUCCEEDED);
+                } catch (InvocationTargetException ex) {
+                    ex.printStackTrace(System.out);
+                    // Get what actually caused the exception
+                    Throwable cause = ex.getCause();
+                    // If we got a JavaMainException from JavaMain, then we need to unwrap it
+                    if (JavaMainException.class.isInstance(cause)) {
+                        cause = cause.getCause();
                     }
+                    if (LauncherMainException.class.isInstance(cause)) {
+                        String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
+                        eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" +
+                                ((LauncherMainException) ex.getCause()).getErrorCode() + "]");
+                    } else if (SecurityException.class.isInstance(cause)) {
+                        if (secMan.getExitInvoked()) {
+                            System.out.println("Intercepting System.exit(" + secMan.getExitCode()
+                                    + ")");
+                            System.err.println("Intercepting System.exit(" + secMan.getExitCode()
+                                    + ")");
+                            // if 0 main() method finished successfully
+                            // ignoring
+                            eHolder.setErrorCode(secMan.getExitCode());
+                            if (eHolder.getErrorCode() != 0) {
+                                String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
+                                eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" + eHolder.getErrorCode() + "]");
+                            } else {
+                                finalStatus.set(FinalApplicationStatus.SUCCEEDED);
+                            }
+                        }
+                    } else {
+                        eHolder.setErrorMessage(cause.getMessage());
+                        eHolder.setErrorCause(cause);
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    eHolder.setErrorMessage(t.getMessage());
+                    eHolder.setErrorCause(t);
+                } finally {
+                    System.out.flush();
+                    System.err.flush();
+                    // Disable LauncherSecurityManager
+                    secMan.unset();
                 }
-            } else {
-                eHolder.setErrorMessage(cause.getMessage());
-                eHolder.setErrorCause(cause);
+
+                return null;
             }
-        } catch (Throwable t) {
-            t.printStackTrace(System.out);
-            eHolder.setErrorMessage(t.getMessage());
-            eHolder.setErrorCause(t);
-        } finally {
-            System.out.flush();
-            System.err.flush();
-            // Disable LauncherSecurityManager
-            secMan.unset();
-        }
-        return finalStatus;
+        });
+
+        return finalStatus.get();
     }
 
     private static void handleActionData() throws IOException {
@@ -410,40 +442,52 @@ public class LauncherAM {
         return sb.toString();
     }
 
-    private static void uploadActionDataToHDFS() throws IOException {
-        Path finalPath = new Path(actionDir, ACTION_DATA_SEQUENCE_FILE);
-        // unused ??
-        FileSystem fs = FileSystem.get(finalPath.toUri(), launcherJobConf);
-        // upload into sequence file
-        System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
-                + new Path(actionDir, ACTION_DATA_SEQUENCE_FILE).toUri());
+    private static void uploadActionDataToHDFS(UserGroupInformation ugi) throws IOException {
+        IOException ioe = ugi.doAs(new PrivilegedAction<IOException>() {
+            @Override
+            public IOException run() {
+                Path finalPath = new Path(actionDir, ACTION_DATA_SEQUENCE_FILE);
+                // upload into sequence file
+                System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
+                        + new Path(actionDir, ACTION_DATA_SEQUENCE_FILE).toUri());
 
-        SequenceFile.Writer wr = null;
-        try {
-            wr = SequenceFile.createWriter(launcherJobConf,
-                    SequenceFile.Writer.file(finalPath),
-                    SequenceFile.Writer.keyClass(Text.class),
-                    SequenceFile.Writer.valueClass(Text.class));
-            if (wr != null) {
-                Set<String> keys = actionData.keySet();
-                for (String propsKey : keys) {
-                    wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                SequenceFile.Writer wr = null;
+                try {
+                    wr = SequenceFile.createWriter(launcherJobConf,
+                            SequenceFile.Writer.file(finalPath),
+                            SequenceFile.Writer.keyClass(Text.class),
+                            SequenceFile.Writer.valueClass(Text.class));
+                    if (wr != null) {
+                        Set<String> keys = actionData.keySet();
+                        for (String propsKey : keys) {
+                            wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                        }
+                    } else {
+                        throw new IOException("SequenceFile.Writer is null for " + finalPath);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return e;
+                } finally {
+                    if (wr != null) {
+                        try {
+                            wr.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return e;
+                        }
+                    }
                 }
+
+                return null;
             }
-            else {
-                throw new IOException("SequenceFile.Writer is null for " + finalPath);
-            }
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-        finally {
-            if (wr != null) {
-                wr.close();
-            }
+        });
+
+        if (ioe != null) {
+            throw ioe;
         }
     }
+
     private static void failLauncher(int errorCode, String message, Throwable ex) {
         ErrorHolder eHolder = new ErrorHolder();
         eHolder.setErrorCode(errorCode);
