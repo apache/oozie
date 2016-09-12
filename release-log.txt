@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2617 Read properties files in action configurations (wutaklon via jaydeepvishwakarma)
 OOZIE-2615 Flaky tests TestCoordActionsKillXCommand.testActionKillCommandActionNumbers and testActionKillCommandDate (pbacsko via rkanter)
 OOZIE-2632 Provide database dump/load functionality to make database migration easier (gezapeti, rjustice via rkanter)
 OOZIE-2243 Kill Command does not kill the child job for java action (jaydeepvishwakarma)
