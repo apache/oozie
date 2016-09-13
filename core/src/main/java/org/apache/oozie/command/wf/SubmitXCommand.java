@@ -160,6 +160,9 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                     throw new IOException("default configuration file, " + ex.getMessage(), ex);
                 }
             }
+            if (defaultConf != null) {
+                defaultConf = resolveDefaultConfVariables(defaultConf);
+            }
 
             WorkflowApp app = wps.parseDef(conf, defaultConf);
             XConfiguration protoActionConf = wps.createProtoActionConf(conf, true);
@@ -276,6 +279,27 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         catch (Exception ex) {
             throw new CommandException(ErrorCode.E0803, ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Resolving variables from config-default, which might be referencing into conf/defaultConf
+     * @param defaultConf config-default.xml
+     * @return resolved config-default configuration.
+     */
+    private Configuration resolveDefaultConfVariables(Configuration defaultConf) {
+        XConfiguration resolveDefaultConf = new XConfiguration();
+        for (Map.Entry<String, String> entry : defaultConf) {
+            String defaultConfKey = entry.getKey();
+            String defaultConfValue = entry.getValue();
+            // if value is referencing some other key, first check within the default config to resolve,
+            // then job.properties (conf)
+            if (defaultConfValue.contains("$") && defaultConf.get(defaultConfKey).contains("$")) {
+                resolveDefaultConf.set(defaultConfKey, conf.get(defaultConfKey));
+            } else {
+                resolveDefaultConf.set(defaultConfKey, defaultConf.get(defaultConfKey));
+            }
+        }
+        return resolveDefaultConf;
     }
 
     private void removeSlaElements(Element eWfJob) {
