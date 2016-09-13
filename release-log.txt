@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2584 Eliminate Thread.sleep() calls in TestMemoryLocks (pbacsko via rkanter)
 OOZIE-2635 TimeZone.getTimeZone has performance issue. (satishsaley via rkanter)
 OOZIE-2583 oozie throws EL Exception when reference variable name containing dot (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2653 Close active connection to hcat server in fs action (satishsaley via puru)
