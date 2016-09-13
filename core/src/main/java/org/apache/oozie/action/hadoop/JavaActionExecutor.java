@@ -1042,7 +1042,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return disable;
     }
 
-    private void injectCallback(Context context, Configuration conf) {
+    protected void injectCallback(Context context, Configuration conf) {
         String callback = context.getCallbackUrl("$jobStatus");
         if (conf.get("job.end.notification.url") != null) {
             LOG.warn("Overriding the action job end notification URI");
@@ -1051,7 +1051,7 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     void injectActionCallback(Context context, Configuration actionConf) {
-        injectCallback(context, actionConf);
+        // action callback needs to be injected only for mapreduce actions.
     }
 
     void injectLauncherCallback(Context context, Configuration launcherConf) {
