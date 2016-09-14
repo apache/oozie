@@ -65,28 +65,32 @@ The =oozie-setup.sh= script prepares the embedded Tomcat server to run Oozie.
 The =oozie-setup.sh= script options are:
 
 <verbatim>
-Usage  : oozie-setup.sh <OPTIONS>"
-         prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
-                                              -secure will configure the war file to use HTTPS (SSL))"
-         sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] [-concurrency CONCURRENCY]"
-                                                               (create sharelib for oozie,"
-                                                               FS_URI is the fs.default.name"
-                                                               for hdfs uri; SHARED_LIBRARY, path to the"
-                                                               Oozie sharelib to install, it can be a tarball"
-                                                               or an expanded version of it. If omitted,"
-                                                               the Oozie sharelib tarball from the Oozie"
-                                                               installation directory will be used."
-                                                               CONCURRENCY is a number of threads to be used"
-                                                               for copy operations."
-                                                               By default 1 thread will be used)"
-                                                               (action fails if sharelib is already installed"
-                                                               in HDFS)"
-         sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated][use create command to create new version]
-                                                                 upgrade existing sharelib, fails if there"
-                                                                 is no existing sharelib installed in HDFS)"
-         db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an"
-                                                               optional sql file)"
-         (without options prints usage information)"
+Usage  : oozie-setup.sh <Command and OPTIONS>
+          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars
+                                                -secure will configure the war file to use HTTPS (SSL))
+          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] [-concurrency CONCURRENCY]
+                                                                (create sharelib for oozie,
+                                                                FS_URI is the fs.default.name
+                                                                for hdfs uri; SHARED_LIBRARY, path to the
+                                                                Oozie sharelib to install, it can be a tarball
+                                                                or an expanded version of it. If omitted,
+                                                                the Oozie sharelib tarball from the Oozie
+                                                                installation directory will be used.
+                                                                CONCURRENCY is a number of threads to be used
+                                                                for copy operations.
+                                                                By default 1 thread will be used)
+                                                                (action fails if sharelib is already installed
+                                                                in HDFS)
+          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated][use create command to create new version]
+                                                                  upgrade existing sharelib, fails if there
+                                                                  is no existing sharelib installed in HDFS)
+          db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an
+                                                                optional sql File)
+          export <file>                                         exports the oozie database to the specified
+                                                                file in zip format
+          import <file>                                         imports the oozie database from the zip file
+                                                                created by export
+          (without options prints this usage information)
 </verbatim>
 
 If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script
@@ -214,6 +218,50 @@ following configuration properties in the oozie-site.xml:
   oozie.service.JPAService.jdbc.password=
   oozie.service.JPAService.pool.max.active.conn=10
 </verbatim>
+
+---++ Database Migration
+
+Oozie provides an easy way to switch between databases without losing any data. Oozie servers should be stopped during the
+database migraition process.
+The export of the database can be done using the following command:
+<verbatim>
+$ bin/oozie-setup.sh export /tmp/oozie_db.zip
+1 rows exported from OOZIE_SYS
+50 rows exported from WF_JOBS
+340 rows exported from WF_ACTIONS
+10 rows exported from COORD_JOBS
+70 rows exported from COORD_ACTIONS
+0 rows exported from BUNDLE_JOBS
+0 rows exported from BUNDLE_ACTIONS
+0 rows exported from SLA_REGISTRATION
+0 rows exported from SLA_SUMMARY
+</verbatim>
+
+The database configuration is read from =oozie-site.xml=. After updating the configuration to point to the new database,
+the tables have to be created with ooziedb.sh in the [[AG_Install#Database_Configuration][Database configuration]]
+section above.
+Once the tables are created, they can be filled with data using the following command:
+
+<verbatim>
+$ bin/oozie-setup.sh import /tmp/oozie_db.zip
+Loading to Oozie database version 3
+50 rows imported to WF_JOBS
+340 rows imported to WF_ACTIONS
+10 rows imported to COORD_JOBS
+70 rows imported to COORD_ACTIONS
+0 rows imported to BUNDLE_JOBS
+0 rows imported to BUNDLE_ACTIONS
+0 rows imported to SLA_REGISTRATION
+0 rows imported to SLA_SUMMARY
+</verbatim>
+
+NOTE: The database version of the zip must match the version of the Oozie database it's imported to.
+
+After starting the Oozie server, the history and the currently running workflows should be available.
+
+*IMPORTANT:* The tool was primarily developed to make the migration from embedded databases (e.g. Derby) to standalone databases
+ (e.g. MySQL, Posgresql, Oracle, MS SQL Server), though it will work between any supported databases.
+It is *not* optimized to handle databases over 1 Gb. If the database size is larger, it should be purged before migration.
 
 ---++ Oozie Configuration
 
