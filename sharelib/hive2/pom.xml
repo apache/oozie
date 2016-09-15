@@ -131,6 +131,11 @@
             <artifactId>commons-io</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>${hive.jline.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2530 Allow Hive to use a different jline version (poeppt via rkanter)
 OOZIE-2660 Create documentation for DB Dump/Load functionality (gezapeti via rkanter)
 OOZIE-2659 TestPauseTransitService is flaky (gezapeti via rkanter)
 OOZIE-2488 Upgrade to latest OpenJPA version (abhishekbafna via jaydeepvishwakarma)

@@ -154,6 +154,11 @@
             <artifactId>oozie-hadoop-utils</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>${hive.jline.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

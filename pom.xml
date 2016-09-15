@@ -90,6 +90,7 @@
 
          <!-- Sharelib component versions -->
          <hive.version>0.13.1</hive.version>
+         <hive.jline.version>0.9.94</hive.jline.version>
          <pig.version>0.16.0</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
