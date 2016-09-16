@@ -86,7 +86,7 @@
     <Connector port="${oozie.https.port}" protocol="HTTP/1.1" SSLEnabled="true"
                maxThreads="150" scheme="https" secure="true"
                maxHttpHeaderSize="65536"
-               clientAuth="false" sslEnabledProtocols="TLSv1,SSLv2Hello"
+               clientAuth="false" sslEnabledProtocols="TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2"
                keystoreFile="${oozie.https.keystore.file}"
                keystorePass="${oozie.https.keystore.pass}" />
 
