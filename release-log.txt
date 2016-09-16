@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2500 -DtestJarSimple option mentioned in minioozie doc does not work (abhishekbafna via rkanter)
 OOZIE-2552 Update ActiveMQ version for security and other fixes (asasvari via rkanter)
 OOZIE-2571 Add spark.scala.binary.version Maven property so that Scala 2.11 can be used (jonathak via rkanter)
 OOZIE-2530 Allow Hive to use a different jline version (poeppt via rkanter)

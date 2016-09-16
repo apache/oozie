@@ -662,6 +662,17 @@
                                         <include>**/XFsTestCase.class</include>
                                         <include>**/MiniOozieTestCase.class</include>
                                         <include>**/XTestCase$*.class</include>
+                                        <include>**/MainTestCase.class</include>
+                                        <include>**/ActionExecutorTestCase*.class</include>
+                                        <include>**/XHCatTestCase.class</include>
+                                        <include>**/MapperReducerForTest.class</include>
+                                        <include>**/MapperReducerCredentialsForTest.class</include>
+                                        <include>**/MapperReducerUberJarForTest.class</include>
+                                        <include>**/SharelibUtils.class</include>
+                                        <include>**/MiniHCatServer.class</include>
+                                        <include>**/LauncherMainTester.class</include>
+                                        <include>**/ZKXTestCase*.class</include>
+                                        <include>**/XDataTestCase.class</include>
                                     </includes>
                                 </configuration>
                             </execution>
