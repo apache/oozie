@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2538 Update HttpClient versions to close security vulnerabilities (abhishekbafna via rkanter)
 OOZIE-2037 Add TLSv1.1,TLSv1.2 (rkanter)
 OOZIE-2500 -DtestJarSimple option mentioned in minioozie doc does not work (abhishekbafna via rkanter)
 OOZIE-2552 Update ActiveMQ version for security and other fixes (asasvari via rkanter)

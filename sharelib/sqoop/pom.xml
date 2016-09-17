@@ -73,8 +73,8 @@
                     <artifactId>thrift</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>commons-httpclient</groupId>
-                    <artifactId>commons-httpclient</artifactId>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
