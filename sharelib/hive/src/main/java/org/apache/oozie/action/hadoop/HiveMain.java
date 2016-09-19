@@ -224,6 +224,11 @@ public class HiveMain extends LauncherMain {
         arguments.add("--hiveconf");
         arguments.add("hive.exec.log4j.file=" + new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath());
 
+        //setting oozie workflow id as caller context id for hive
+        String callerId = "oozie:" + System.getProperty("oozie.job.id");
+        arguments.add("--hiveconf");
+        arguments.add("hive.log.trace.id=" + callerId);
+
         String scriptPath = hiveConf.get(HiveActionExecutor.HIVE_SCRIPT);
         String query = hiveConf.get(HiveActionExecutor.HIVE_QUERY);
         if (scriptPath != null) {

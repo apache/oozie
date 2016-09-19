@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2498 Oozie CallerId configuration for downstream components (abhishekbafna via rohini)
 OOZIE-2491 oozie acl cannot specify group,it does`t work (abhishekbafna via rohini)
 OOZIE-2569 Adding yarn-site, core-site, hdfs-site and mapred-site into spark launcher (abhishekbafna via rohini)
 OOZIE-2675 Drop support for hadoop 0.23 (abhishekbafna via rohini)
