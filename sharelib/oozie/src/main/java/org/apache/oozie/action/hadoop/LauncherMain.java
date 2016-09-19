@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
@@ -43,6 +44,8 @@ public abstract class LauncherMain {
 
     public static final String HADOOP_JOBS = "hadoopJobs";
     public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
+    protected static String[] HADOOP_SITE_FILES = new String[]
+            {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
@@ -246,6 +249,17 @@ public abstract class LauncherMain {
                 }
             }
         }
+    }
+
+    protected void writeHadoopConfig(String actionXml, File basrDir) throws IOException {
+        File actionXmlFile = new File(actionXml);
+        System.out.println("Copying " + actionXml + " to " + basrDir + "/" + Arrays.toString(HADOOP_SITE_FILES));
+        basrDir.mkdirs();
+        File[] dstFiles = new File[HADOOP_SITE_FILES.length];
+        for (int i = 0; i < dstFiles.length; i++) {
+            dstFiles[i] = new File(basrDir, HADOOP_SITE_FILES[i]);
+        }
+        copyFileMultiplex(actionXmlFile, dstFiles);
     }
 }
 

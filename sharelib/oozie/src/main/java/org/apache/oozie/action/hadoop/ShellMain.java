@@ -29,7 +29,6 @@ import java.io.StringReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +49,6 @@ public class ShellMain extends LauncherMain {
     private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
     private static final String YARN_CONF_DIR = "YARN_CONF_DIR";
 
-    private static String[] HADOOP_SITE_FILES = new String[] {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
     private static String LOG4J_PROPERTIES = "log4j.properties";
 
     /**
@@ -88,7 +86,7 @@ public class ShellMain extends LauncherMain {
         ProcessBuilder builder = new ProcessBuilder(cmdArray);
         Map<String, String> envp = getEnvMap(builder.environment(), actionConf);
 
-        // Getting the Ccurrent working dir and setting it to processbuilder
+        // Getting the Current working dir and setting it to processbuilder
         File currDir = new File("dummy").getAbsoluteFile().getParentFile();
         System.out.println("Current working dir " + currDir);
         builder.directory(currDir);
@@ -140,15 +138,8 @@ public class ShellMain extends LauncherMain {
         if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {
             String actionXml = envp.get(OOZIE_ACTION_CONF_XML);
             if (actionXml != null) {
-                File actionXmlFile = new File(actionXml);
                 File confDir = new File(currDir, "oozie-hadoop-conf-" + System.currentTimeMillis());
-                System.out.println("Copying " + actionXml + " to " + confDir + "/" + Arrays.toString(HADOOP_SITE_FILES));
-                confDir.mkdirs();
-                File[] dstFiles = new File[HADOOP_SITE_FILES.length];
-                for (int i = 0; i < dstFiles.length; i++) {
-                    dstFiles[i] = new File(confDir, HADOOP_SITE_FILES[i]);
-                }
-                copyFileMultiplex(actionXmlFile, dstFiles);
+                writeHadoopConfig(actionXml, confDir);
                 if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES, true)) {
                     System.out.println("Writing " + LOG4J_PROPERTIES + " to " + confDir);
                     writeLoggerProperties(actionConf, confDir);

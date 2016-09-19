@@ -48,6 +48,7 @@ public class SparkMain extends LauncherMain {
     private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
     private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
     private static final String HBASE_SECURITY_TOKEN = "spark.yarn.security.tokens.hbase.enabled";
+    private static final String CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR = "oozie.action.spark.setup.hadoop.conf.dir";
     private static final String PWD = "$PWD" + File.separator + "*";
     private static final Pattern[] PYSPARK_DEP_FILE_PATTERN = { Pattern.compile("py4\\S*src.zip"),
             Pattern.compile("pyspark.zip") };
@@ -63,6 +64,7 @@ public class SparkMain extends LauncherMain {
     protected void run(String[] args) throws Exception {
         boolean isPyspark = false;
         Configuration actionConf = loadActionConf();
+        prepareHadoopConfig(actionConf);
 
         setYarnTag(actionConf);
         LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
@@ -211,6 +213,17 @@ public class SparkMain extends LauncherMain {
         }
         finally {
             writeExternalChildIDs(logFile, SPARK_JOB_IDS_PATTERNS, "Spark");
+        }
+    }
+
+    private void prepareHadoopConfig(Configuration actionConf) throws IOException {
+        // Copying oozie.action.conf.xml into hadoop configuration *-site files.
+        if (actionConf.getBoolean(CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR, false)) {
+            String actionXml = System.getProperty("oozie.action.conf.xml");
+            if (actionXml != null) {
+                File currentDir = new File(actionXml).getParentFile();
+                writeHadoopConfig(actionXml, currentDir);
+            }
         }
     }
 

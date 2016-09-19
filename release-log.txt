@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2569 Adding yarn-site, core-site, hdfs-site and mapred-site into spark launcher (abhishekbafna via rohini)
 OOZIE-2675 Drop support for hadoop 0.23 (abhishekbafna via rohini)
 OOZIE-2588 Support getting credentials for same cluster hcat when credentials config is empty (satishsaley via rohini)
 OOZIE-2538 Update HttpClient versions to close security vulnerabilities (abhishekbafna via rkanter)

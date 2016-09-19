@@ -1815,6 +1815,17 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.spark.setup.hadoop.conf.dir</name>
+        <value>false</value>
+        <description>
+            Oozie action.xml (oozie.action.conf.xml) contains all the hadoop configuration and user provided configurations.
+            This property will allow users to copy Oozie action.xml as hadoop *-site configurations files. The advantage is,
+            user need not to manage these files into spark sharelib. If user wants to manage the hadoop configurations
+            themselves, it should should disable it.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.shell.setup.hadoop.conf.dir</name>
         <value>false</value>
         <description>
