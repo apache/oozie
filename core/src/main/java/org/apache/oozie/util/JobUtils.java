@@ -162,7 +162,7 @@ public class JobUtils {
             URI uri = fs.makeQualified(file).toUri();
             DistributedCache.addCacheFile(uri, conf);
         }
-        else { // Hadoop 0.23/2.x
+        else { // Hadoop 2.x
             DistributedCache.addFileToClassPath(file, conf, fs);
         }
     }

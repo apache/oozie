@@ -967,9 +967,7 @@ public abstract class XTestCase extends TestCase {
       conf.set("dfs.permissions", "true");
       conf.set("hadoop.security.authentication", "simple");
 
-      //Doing this because Hadoop 1.x does not support '*' and
-      //Hadoop 0.23.x does not process wildcard if the value is
-      // '*,127.0.0.1'
+      //Doing this because Hadoop 1.x does not support '*' if the value is '*,127.0.0.1'
       StringBuilder sb = new StringBuilder();
       sb.append("127.0.0.1,localhost");
       for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {

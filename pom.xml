@@ -1797,18 +1797,6 @@
             </properties>
         </profile>
         <profile>
-            <id>hadoop-0.23</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <hadoop.version>0.23.5</hadoop.version>
-                <hadoop.majorversion>0.23</hadoop.majorversion>
-                <pig.classifier>h2</pig.classifier>
-                <sqoop.classifier>hadoop23</sqoop.classifier>
-            </properties>
-        </profile>
-        <profile>
             <id>hadoop-2</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
