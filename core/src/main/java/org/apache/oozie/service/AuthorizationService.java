@@ -295,7 +295,7 @@ public class AuthorizationService implements Service {
      *
      * @param user user name.
      * @param write indicates if the check is for read or write admin tasks (in this implementation this is ignored)
-     * @throws AuthorizationException thrown if user does not have admin priviledges.
+     * @throws AuthorizationException thrown if user does not have admin privileges.
      */
     public void authorizeForAdmin(String user, boolean write) throws AuthorizationException {
         if (authorizationEnabled && write && !isAdmin(user)) {
@@ -417,7 +417,7 @@ public class AuthorizationService implements Service {
             String[] acl = aclStr.split(",");
             for (int i = 0; !userInAcl && i < acl.length; i++) {
                 String aclItem = acl[i].trim();
-                userInAcl = aclItem.equals(user) || groupsService.getGroups(user).equals(aclItem);
+                userInAcl = aclItem.equals(user) || groupsService.getGroups(user).contains(aclItem);
             }
         }
         return userInAcl;
@@ -515,7 +515,7 @@ public class AuthorizationService implements Service {
      * @param user user name.
      * @param filter filter used to select jobs
      * @param start starting index of the jobs in DB
-     * @param len maximum amount of jbos to select
+     * @param len maximum amount of jobs to select
      * @param write indicates if the check is for read or write job tasks.
      * @throws AuthorizationException thrown if the user is not authorized for the job.
      */
