@@ -40,6 +40,7 @@ public abstract class XHCatTestCase extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        super.setupHCatalogServer();
         hcatServer = super.getHCatalogServer();
     }
 

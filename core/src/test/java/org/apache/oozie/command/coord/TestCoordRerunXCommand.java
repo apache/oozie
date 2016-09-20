@@ -569,7 +569,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordRerunCleanupForHCat() throws Exception {
-
+        super.setupHCatalogServer();
         services = super.setupServicesForHCatalog();
         services.init();
 

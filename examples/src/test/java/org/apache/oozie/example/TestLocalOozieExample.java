@@ -34,7 +34,6 @@ public class TestLocalOozieExample extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        System.setProperty("oozie.test.metastore.server", "false");
         super.setUp();
         oozieLocalLog = System.getProperty("oozielocal.log");
         System.setProperty("oozielocal.log", getTestCaseDir()+"/oozielocal.log");
