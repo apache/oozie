@@ -102,28 +102,12 @@ function drawTable(jsonData) {
         slaSummary.nominalTimeTZ = new Date(slaSummary.nominalTime).toUTCString();
         if (slaSummary.expectedStart) {
             slaSummary.expectedStartTZ = new Date(slaSummary.expectedStart).toUTCString();
-            if (slaSummary.actualStart) {
-                if (slaSummary.actualStart > slaSummary.expectedStart) {
-                    slaMisses = "START_MISS, ";
-                }
-            }
-            else if (currentTime > slaSummary.expectedStart) {
-                slaMisses = "START_MISS, ";
-            }
         }
         if (slaSummary.actualStart) {
             slaSummary.actualStartTZ = new Date(slaSummary.actualStart).toUTCString();
         }
         if (slaSummary.expectedEnd) {
             slaSummary.expectedEndTZ = new Date(slaSummary.expectedEnd).toUTCString();
-            if (slaSummary.actualEnd) {
-                if (slaSummary.actualEnd > slaSummary.expectedEnd) {
-                    slaMisses += "END_MISS, ";
-                }
-            }
-            else if (currentTime > slaSummary.expectedEnd) {
-                slaMisses += "END_MISS, ";
-            }
         }
         if (slaSummary.actualEnd) {
             slaSummary.actualEndTZ = new Date(slaSummary.actualEnd).toUTCString();
@@ -137,11 +121,8 @@ function drawTable(jsonData) {
         }
         if (slaSummary.actualDuration != -1 && slaSummary.expectedDuration != -1) {
             slaSummary.durDiff = slaSummary.actualDuration - slaSummary.expectedDuration;
-            if (slaSummary.actualDuration > slaSummary.expectedDuration) {
-                slaMisses += "DURATION_MISS, ";
-            }
         }
-        slaSummary.slaMisses = slaMisses.length > 2 ? slaMisses.substring(0, slaMisses.length - 2) : "";
+        slaSummary.slaMisses = slaSummary.eventStatus;
     }
     oTable = $('#sla_table').dataTable(
             {

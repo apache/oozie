@@ -193,7 +193,7 @@ public class TestV2SLAServlet extends DagServletTestCase {
                     String id = (String)json.get(JsonTags.SLA_SUMMARY_ID);
                     if(id.equals(cjBean1.getId() + "@1")) {
                         assertEquals(-2L, json.get(JsonTags.SLA_SUMMARY_START_DELAY));
-                        assertEquals(-1L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
+                        assertEquals(0L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
                         assertEquals(-1L, json.get(JsonTags.SLA_SUMMARY_END_DELAY));
                     }
                 }
@@ -232,7 +232,7 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 parentId = (String) json.get(JsonTags.SLA_SUMMARY_PARENT_ID);
                 assertTrue(parentId.equals(cjBean1.getId()));
                 assertEquals(1L, json.get(JsonTags.SLA_SUMMARY_START_DELAY));
-                assertEquals(1L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
+                assertEquals(0L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
                 assertEquals(2L, json.get(JsonTags.SLA_SUMMARY_END_DELAY));
 
                 //test filter bundleName + Multiple EventStatus
@@ -265,7 +265,7 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 assertFalse(eventStatus.contains("END_MISS") || eventStatus.contains("END_MET"));
                 // actualDuration is null on DB while job is running, populates it in API call
                 assertEquals(9L, json.get(JsonTags.SLA_SUMMARY_ACTUAL_DURATION));
-                assertEquals(1L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
+                assertEquals(0L, json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
                 return null;
             }
         });
