@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-1793 Improve find bugs reporting for Oozie (rkanter)
 OOZIE-2572 SLA DURATION miss not shown when job is running for longer than expected time (satishsaley via puru)
 OOZIE-2525 SchemaChecker fails with NPE (rkanter)
 OOZIE-2672 SLA periodic update does not remove job from map if job is removed from database (satishsaley via puru)

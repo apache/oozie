@@ -1603,6 +1603,16 @@
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>2.4.0</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>xml-maven-plugin</artifactId>
+                    <version>1.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -1620,17 +1630,70 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- findbugs plugin. Execute 'mvn verify' and look for target/findbugs/findbugsXml.html under each module -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
                     <xmlOutput>true</xmlOutput>
                     <findbugsXmlOutput>true</findbugsXmlOutput>
                     <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                    <effort>Max</effort>
+                    <failOnError>false</failOnError>
+                    <threshold>Low</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
                 </configuration>
+                <executions>
+                 <execution>
+                    <id>findbug</id>
+                    <phase>verify</phase>
+                    <goals>
+                        <goal>check</goal>
+                    </goals>
+                 </execution>
+             </executions>
+            </plugin>
+            <!-- xml plugin is used for transforming the findbugs xml output into a friendlier html page -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>xml-maven-plugin</artifactId>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <transformationSets>
+                        <transformationSet>
+                            <dir>${project.build.directory}/findbugs</dir>
+                            <outputDir>${project.build.directory}/findbugs</outputDir>
+                            <stylesheet>fancy-hist.xsl</stylesheet>
+                            <fileMappers>
+                                <fileMapper
+                                       implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                    <targetExtension>.html</targetExtension>
+                                </fileMapper>
+                            </fileMappers>
+                        </transformationSet>
+                    </transformationSets>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>findbugs</artifactId>
+                        <version>2.0.3</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
-            <!-- checkstyle plugin. Execute 'mvn verify' and look for checkstyle-result.xml under target folder -->
+            <!-- checkstyle plugin. Execute 'mvn verify' and look for target/checkstyle-result.xml under each module -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
