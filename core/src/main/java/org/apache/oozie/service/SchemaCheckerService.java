@@ -45,7 +45,7 @@ public class SchemaCheckerService implements Service, Instrumentable {
         int interval = ConfigurationService.getInt(CONF_INTERVAL);
         if (dbType.equals("derby") || dbType.equals("hsqldb") || dbType.equals("sqlserver") || interval <= 0) {
             LOG.debug("SchemaCheckerService is disabled: not supported for {0}", dbType);
-            status = "DISABLED (" + dbType + " no supported)";
+            status = "DISABLED (" + dbType + " not supported)";
         } else {
             String driver = ConfigurationService.get(JPAService.CONF_DRIVER);
             String user = ConfigurationService.get(JPAService.CONF_USERNAME);
@@ -96,7 +96,7 @@ public class SchemaCheckerService implements Service, Instrumentable {
         lastCheck = time.toString();
     }
 
-    static class SchemaCheckerRunnable implements Runnable {
+    private class SchemaCheckerRunnable implements Runnable {
         private String dbType;
         private String url;
         private String user;
@@ -117,8 +117,8 @@ public class SchemaCheckerService implements Service, Instrumentable {
                 Services.get().get(CallableQueueService.class).queue(
                         new SchemaCheckXCommand(dbType, url, user, pass, ignoreExtras));
             } else {
-                Services.get().get(SchemaCheckerService.class).status = "DISABLED (not leader in HA)";
-                Services.get().get(SchemaCheckerService.class).lastCheck = "N/A";
+                status = "DISABLED (not leader in HA)";
+                lastCheck = "N/A";
             }
         }
     }
