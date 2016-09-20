@@ -35,10 +35,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -64,6 +60,16 @@ public class OozieDBExportCLI {
     public static final String OOZIEDB_SLAREG_JSON = "ooziedb_slareg.json";
     public static final String OOZIEDB_SLASUM_JSON = "ooziedb_slasum.json";
     public static final String OOZIEDB_SYS_INFO_JSON = "ooziedb_sysinfo.json";
+
+    private static final String GET_DB_VERSION = "select name, data from OOZIE_SYS where name = 'db.version'";
+    private static final String GET_WORKFLOW_JOBS = "select OBJECT(w) from WorkflowJobBean w";
+    private static final String GET_WORKFLOW_ACTIONS = "select OBJECT(a) from WorkflowActionBean a";
+    private static final String GET_COORD_JOBS = "select OBJECT(w) from CoordinatorJobBean w";
+    private static final String GET_COORD_ACTIONS = "select OBJECT(w) from CoordinatorActionBean w";
+    private static final String GET_BUNDLE_JOBS = "select OBJECT(w) from BundleJobBean w";
+    private static final String GET_BUNDLE_ACIONS = "select OBJECT(w) from BundleActionBean w";
+    private static final String GET_SLA_REGISTRATIONS = "select OBJECT(w) from SLARegistrationBean w";
+    private static final String GET_SLA_SUMMARYS = "select OBJECT(w) from SLASummaryBean w";
 
     private static final int LIMIT = 1000;
     private static final String[] HELP_INFO = {
@@ -126,33 +132,31 @@ public class OozieDBExportCLI {
             manager = Services.get().get(JPAService.class).getEntityManager();
             manager.setFlushMode(FlushModeType.COMMIT);
 
-            int infoSize = exportTableToJSON(manager.createNativeQuery("select name, data from OOZIE_SYS where name = 'db.version'"), zos, OOZIEDB_SYS_INFO_JSON);
+            int infoSize = exportTableToJSON(manager.createNativeQuery(GET_DB_VERSION), zos, OOZIEDB_SYS_INFO_JSON);
             System.out.println(infoSize + " rows exported from OOZIE_SYS");
 
-            int wfjSize = exportTableToJSON(manager.createNamedQuery("GET_WORKFLOWS"), zos, OOZIEDB_WF_JSON);
+            int wfjSize = exportTableToJSON(manager.createQuery(GET_WORKFLOW_JOBS), zos, OOZIEDB_WF_JSON);
             System.out.println(wfjSize + " rows exported from WF_JOBS");
 
-            int wfaSize = exportTableToJSON(manager.createNamedQuery("GET_ACTIONS"), zos, OOZIEDB_AC_JSON);
+            int wfaSize = exportTableToJSON(manager.createQuery(GET_WORKFLOW_ACTIONS), zos, OOZIEDB_AC_JSON);
             System.out.println(wfaSize + " rows exported from WF_ACTIONS");
 
-            int cojSize = exportTableToJSON(manager.createNamedQuery("GET_COORD_JOBS"), zos, OOZIEDB_CJ_JSON);
+            int cojSize = exportTableToJSON(manager.createQuery(GET_COORD_JOBS), zos, OOZIEDB_CJ_JSON);
             System.out.println(cojSize + " rows exported from COORD_JOBS");
 
-            int coaSize = exportTableToJSON(manager.createNamedQuery("GET_COORD_ACTIONS"), zos, OOZIEDB_CA_JSON);
+            int coaSize = exportTableToJSON(manager.createQuery(GET_COORD_ACTIONS), zos, OOZIEDB_CA_JSON);
             System.out.println(coaSize + " rows exported from COORD_ACTIONS");
 
-            int bnjSize = exportTableToJSON(manager.createNamedQuery("GET_BUNDLE_JOBS"), zos, OOZIEDB_BNJ_JSON);
+            int bnjSize = exportTableToJSON(manager.createQuery(GET_BUNDLE_JOBS), zos, OOZIEDB_BNJ_JSON);
             System.out.println(bnjSize + " rows exported from BUNDLE_JOBS");
 
-            int bnaSize = exportTableToJSON(manager.createNamedQuery("GET_BUNDLE_ACTIONS"), zos, OOZIEDB_BNA_JSON);
+            int bnaSize = exportTableToJSON(manager.createQuery(GET_BUNDLE_ACIONS), zos, OOZIEDB_BNA_JSON);
             System.out.println(bnaSize + " rows exported from BUNDLE_ACTIONS");
 
-            int slaRegSize = exportTableToJSON(
-                    manager.createQuery("select OBJECT(w) from SLARegistrationBean w"), zos, OOZIEDB_SLAREG_JSON);
+            int slaRegSize = exportTableToJSON(manager.createQuery(GET_SLA_REGISTRATIONS), zos, OOZIEDB_SLAREG_JSON);
             System.out.println(slaRegSize + " rows exported from SLA_REGISTRATION");
 
-            int ssSize = exportTableToJSON(
-                    manager.createQuery("select OBJECT(w) from SLASummaryBean w"), zos, OOZIEDB_SLASUM_JSON);
+            int ssSize = exportTableToJSON(manager.createQuery(GET_SLA_SUMMARYS), zos, OOZIEDB_SLASUM_JSON);
             System.out.println(ssSize + " rows exported from SLA_SUMMARY");
 
         } catch (Exception e){

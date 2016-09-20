@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2667 Optimize queries for DB export (gezapeti via rkanter)
 OOZIE-1793 Improve find bugs reporting for Oozie (rkanter)
 OOZIE-2572 SLA DURATION miss not shown when job is running for longer than expected time (satishsaley via puru)
 OOZIE-2525 SchemaChecker fails with NPE (rkanter)
