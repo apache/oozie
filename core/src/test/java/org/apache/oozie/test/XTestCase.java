@@ -1224,6 +1224,7 @@ public abstract class XTestCase extends TestCase {
             }
         }
 
+        log.info("Final state is: {0}", finalState.getValue());
         assertTrue(endStateOK.isTrue());
         return finalState.getValue();
     }

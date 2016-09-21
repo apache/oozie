@@ -148,5 +148,27 @@ public class MapReduceMain extends LauncherMain {
         }
         return values;
     }
-
+    /**
+     * Will run the user specified OozieActionConfigurator subclass (if one is provided) to update the action configuration.
+     *
+     * @param actionConf The action configuration to update
+     * @throws OozieActionConfiguratorException
+     */
+    private static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
+        String configClass = actionConf.get(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
+        if (configClass != null) {
+            try {
+                Class<?> klass = Class.forName(configClass);
+                Class<? extends OozieActionConfigurator> actionConfiguratorKlass = klass.asSubclass(OozieActionConfigurator.class);
+                OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
+                actionConfigurator.configure(actionConf);
+            } catch (ClassNotFoundException e) {
+                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+            } catch (InstantiationException e) {
+                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+            } catch (IllegalAccessException e) {
+                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+            }
+        }
+    }
 }
