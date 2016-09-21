@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2661 Coordinator Action status not updated when workflow job SUSPENDED (satishsaley via puru)
 OOZIE-2273 MiniOozie does not work outside of Oozie (rkanter)
 OOZIE-2667 Optimize queries for DB export (gezapeti via rkanter)
 OOZIE-1793 Improve find bugs reporting for Oozie (rkanter)

@@ -107,6 +107,12 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
                         // set pending to false as the status is KILLED
                         coordAction.setPending(0);
                     }
+                    else if (workflowJob.getStatus() == WorkflowJob.Status.SUSPENDED) {
+                        coordAction.setStatus(CoordinatorAction.Status.SUSPENDED);
+                        slaStatus = Status.FAILED;
+                        // set pending to false as the status is SUSPENDED
+                        coordAction.setPending(0);
+                    }
                     else {
                         LOG.warn("Unexpected workflow " + workflowJob.getId() + " STATUS " + workflowJob.getStatus());
                         coordAction.setLastModifiedTime(new Date());
@@ -150,7 +156,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
      */
     @Override
     public String getEntityKey() {
-        return actionId;
+        return actionId.substring(0, actionId.indexOf("@"));
     }
 
     @Override
