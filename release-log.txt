@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release (trunk - unreleased)
 
+OOZIE-2682 Oozie test-patch script is not updating Jira with jenkins test report (abhishekbafna via rkanter)
 OOZIE-2679 Decrease HttpClient library versions due to Hadoop incompatibility (abhishekbafna via rkanter)
 OOZIE-2661 Coordinator Action status not updated when workflow job SUSPENDED (satishsaley via puru)
 OOZIE-2273 MiniOozie does not work outside of Oozie (rkanter)
