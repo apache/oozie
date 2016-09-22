@@ -47,7 +47,7 @@
         <profile>
             <id>hadoop-1</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
                 <module>hadoop-utils-1</module>
@@ -58,7 +58,7 @@
         <profile>
             <id>hadoop-2</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
                 <module>hadoop-utils-2</module>

@@ -41,9 +41,9 @@ suitable when same oozie package needs to be used in multiple set-ups with diffe
 
 2. Build with -Puber which will bundle the required libraries in the oozie war. Further, the following options are
 available to customise the versions of the dependencies:
--P<profile> - default hadoop-1. Valid are hadoop-1, hadoop-2 or hadoop-3. Choose the correct hadoop
+-P<profile> - default hadoop-2. Valid are hadoop-1, hadoop-2 or hadoop-3. Choose the correct hadoop
 profile depending on the hadoop version used.
--Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 2.3.0 for hadoop-2 and 3.0.0-SNAPSHOT for hadoop-3
+-Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 2.4.0 for hadoop-2 and 3.0.0-SNAPSHOT for hadoop-3
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.16.0
