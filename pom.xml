@@ -1543,7 +1543,8 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>2.10.3</version>
                     <configuration>
-                            <additionalparam>${maven.javadoc.opts}</additionalparam>
+                        <additionalparam>${maven.javadoc.opts}</additionalparam>
+                        <failOnError>false</failOnError>
                     </configuration>
                 </plugin>
                 <plugin>
