@@ -215,7 +215,7 @@ public class TestSubmitXCommand extends XDataTestCase {
             fail("Should have gotten E0707 because the XML has a loop");
         } catch (CommandException ce) {
             assertEquals(ErrorCode.E0707, ce.getErrorCode());
-            assertEquals("E0707: Loop detected at parsing, node [a]", ce.getMessage());
+            assertEquals("E0707: Loop detected at parsing, node [a], path [:start:->a->c->a]", ce.getMessage());
         }
 
         conf = new XConfiguration();
