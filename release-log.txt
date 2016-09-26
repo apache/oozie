@@ -1,4 +1,4 @@
--- Oozie 4.3.0 release (trunk - unreleased)
+-- Oozie 4.3.0 release
 
 OOZIE-2676 Make hadoop-2 as the default profile (gezapeti via rkanter)
 OOZIE-2487 Temporary workaround for Java 8 Javadoc errors (abhishekbafna via rkanter)
