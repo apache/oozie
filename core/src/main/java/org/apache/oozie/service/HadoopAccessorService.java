@@ -86,17 +86,16 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
     public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
 
-    protected static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     /** The Kerberos principal for the job tracker.*/
     protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
     /** The Kerberos principal for the resource manager.*/
     protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
     protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
+
+    private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
-
-    private static Configuration cachedConf;
-
     private static final String DEFAULT_ACTIONNAME = "default";
+    private static Configuration cachedConf;
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
@@ -564,8 +563,14 @@ public class HadoopAccessorService implements Service {
      */
     public FileSystem createFileSystem(String user, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
+       return createFileSystem(user, uri, conf, true);
+    }
+
+    private FileSystem createFileSystem(String user, final URI uri, final Configuration conf, boolean checkAccessorProperty)
+            throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+
+        if (checkAccessorProperty && !conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
 
@@ -750,7 +755,7 @@ public class HadoopAccessorService implements Service {
                 fos.close();
             }
         }
-        FileSystem fs = createFileSystem(user, uri, conf);
+        FileSystem fs = createFileSystem(user, uri, conf, false);
         Path dst = new Path(dir, filename);
         fs.copyFromLocalFile(new Path(f.getAbsolutePath()), dst);
         LocalResource localResource = Records.newRecord(LocalResource.class);

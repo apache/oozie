@@ -18,43 +18,35 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.IOUtils;
-import org.codehaus.jackson.JsonParser;
-import org.jdom.Element;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.FileInputStream;
-import java.io.Writer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
+import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 public class TestPigActionExecutor extends ActionExecutorTestCase {
 
@@ -147,18 +139,10 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
     private String submitAction(Context context) throws Exception {
         PigActionExecutor ae = new PigActionExecutor();
-
         WorkflowAction action = context.getAction();
-
         ae.prepareActionDir(getFileSystem(), context);
         ae.submitLauncher(getFileSystem(), context, action);
-
         String jobId = action.getExternalId();
-        String jobTracker = action.getTrackerUri();
-        String consoleUrl = action.getConsoleUrl();
-        assertNotNull(jobId);
-        assertNotNull(jobTracker);
-        assertNotNull(consoleUrl);
 
         return jobId;
     }
@@ -217,11 +201,11 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         ae.check(context, wfAction);
         ae.end(context, wfAction);
 
-        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        assertEquals(JavaActionExecutor.SUCCEEDED, wfAction.getExternalStatus());
         String stats = wfAction.getStats();
         assertNotNull(stats);
         // check for some of the expected key values in the stats
-        Map m = (Map)JSONValue.parse(stats);
+        Map m = (Map) JSONValue.parse(stats);
         // check for expected 1st level JSON keys
         assertTrue(m.containsKey("PIG_VERSION"));
 
@@ -229,7 +213,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String[] childIDs = expectedChildIDs.split(",");
         assertTrue(m.containsKey(childIDs[0]));
 
-        Map q = (Map)m.get(childIDs[0]);
+        Map q = (Map) m.get(childIDs[0]);
         // check for expected 2nd level JSON keys
         assertTrue(q.containsKey("HADOOP_COUNTERS"));
     }

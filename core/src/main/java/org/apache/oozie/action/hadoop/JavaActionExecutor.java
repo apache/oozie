@@ -242,7 +242,9 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         else {
             conf = new JobConf(false);
+            // conf.set(HadoopAccessorService.OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, "true");
         }
+
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
         conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
@@ -1485,13 +1487,21 @@ public class JavaActionExecutor extends ActionExecutor {
                                         " action data.  Failing this action!", action.getExternalId(), action.getId());
                     }
                 }
-                String externalIDs = actionData.get(LauncherAM.ACTION_DATA_NEW_ID);  // MapReduce was launched
+
+                String externalID = actionData.get(LauncherAM.ACTION_DATA_NEW_ID);  // MapReduce was launched
+                if (externalID != null) {
+                    context.setExternalChildIDs(externalID);
+                    LOG.info(XLog.STD, "Hadoop Job was launched : [{0}]", externalID);
+                }
+
+               // Multiple child IDs - Pig or Hive action
+                String externalIDs = actionData.get(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS);
                 if (externalIDs != null) {
                     context.setExternalChildIDs(externalIDs);
-                    LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                    LOG.info(XLog.STD, "External Child IDs  : [{0}]", externalIDs);
                 }
-                LOG.info(XLog.STD, "action completed, external ID [{0}]",
-                        action.getExternalId());
+
+                LOG.info(XLog.STD, "action completed, external ID [{0}]", action.getExternalId());
                 context.setExecutionData(appStatus.toString(), null);
                 if (appStatus == FinalApplicationStatus.SUCCEEDED) {
                     if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {

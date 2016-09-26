@@ -45,6 +45,7 @@ import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ContainerStatus;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.api.records.NodeReport;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.AMRMClient;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
@@ -191,8 +192,13 @@ public class LauncherAM {
                 }
             }
         } catch (Exception e) {
+            System.out.println("Launcher AM execution failed");
             System.err.println("Launcher AM execution failed");
+            e.printStackTrace(System.out);
             e.printStackTrace(System.err);
+            finalStatus = FinalApplicationStatus.FAILED;
+            eHolder.setErrorCause(e);
+            eHolder.setErrorMessage(e.getMessage());
             throw e;
         } finally {
             try {

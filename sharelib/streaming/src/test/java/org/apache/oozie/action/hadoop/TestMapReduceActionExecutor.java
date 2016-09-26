@@ -395,26 +395,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.prepareActionDir(getFileSystem(), context);
         ae.submitLauncher(getFileSystem(), context, action);
 
-        String jobId = action.getExternalId();
-        String jobTracker = action.getTrackerUri();
-        String consoleUrl = action.getConsoleUrl();
-        assertNotNull(jobId);
-        assertNotNull(jobTracker);
-        assertNotNull(consoleUrl);
-
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration"))
-                .toString()));
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
-        conf.set("mapreduce.framework.name", "yarn");
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-
-        ae.submitLauncher(getFileSystem(), context, context.getAction());
         return context.getAction().getExternalId();
     }
 
