@@ -1173,6 +1173,9 @@ public class JavaActionExecutor extends ActionExecutor {
 
         // FIXME: move this to specific places where it's actually needed - keeping it here for now
         ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        // FIXME: Pyspark fix
+        // FIXME: Do we want to support mapred.child.env?
+        env.put("SPARK_HOME", ".");
 
         amContainer.setEnvironment(env);
 
