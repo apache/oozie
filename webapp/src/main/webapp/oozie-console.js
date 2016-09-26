@@ -2945,8 +2945,38 @@ function initConsole() {
         tabs.add(metricsArea);
     }
     tabs.add(settingsArea);
-    tabs.setActiveTab(jobs_grid);
-    // showing Workflow Jobs active tab as default
+    var selected_tab = getReqParam("tab");
+    if (selected_tab != "") {
+        if (selected_tab == "workflow") {
+            tabs.setActiveTab(jobs_grid);
+        }
+        else if (selected_tab == "coordinator") {
+            tabs.setActiveTab(coordJobArea);
+        }
+        else if (selected_tab == "bundle") {
+            tabs.setActiveTab(bundleJobArea);
+        }
+        else if (selected_tab == "sla" && isSLAServiceEnabled == "true") {
+            tabs.setActiveTab(slaDashboard);
+        }
+        else if (selected_tab == "admin") {
+            tabs.setActiveTab(adminGrid);
+        }
+        else if (selected_tab == "instrumentation" && isInstrumentationServiceEnabled == "true") {
+            tabs.setActiveTab(instrumentationArea);
+        }
+        else if (selected_tab == "metrics" && isMetricsInstrumentationServiceEnabled == "true") {
+            tabs.setActiveTab(metricsArea);
+        }
+        else if (selected_tab == "settings") {
+            tabs.setActiveTab(settingsArea);
+        }
+        else {
+            tabs.setActiveTab(jobs_grid);
+        }
+    } else {
+        tabs.setActiveTab(jobs_grid);
+    }    // showing Workflow Jobs active tab as default
     // and loading coord,bundle only when tab opened
     Ext.getCmp('jobs_active').setIconClass('job-filter');
     var isFirstLoadCoord = 0;
