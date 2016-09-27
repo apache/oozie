@@ -42,6 +42,7 @@ public class JavaMain extends LauncherMain {
 
         setYarnTag(actionConf);
         setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
+        setApplicationTags(actionConf, SPARK_YARN_TAGS);
 
         LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
 
