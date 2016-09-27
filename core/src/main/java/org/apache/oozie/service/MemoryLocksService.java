@@ -29,6 +29,11 @@ import com.google.common.annotations.VisibleForTesting;
  * Service that provides in-memory locks.  Assumes no other Oozie servers are using the database.
  */
 public class MemoryLocksService implements Service, Instrumentable {
+
+    public static enum Type {
+        READ, WRITE
+    }
+
     protected static final String INSTRUMENTATION_GROUP = "locks";
     private MemoryLocks locks;
 
@@ -83,7 +88,7 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
     public LockToken getReadLock(String resource, long wait) throws InterruptedException {
-        return locks.getReadLock(resource, wait);
+        return locks.getLock(resource, Type.READ, wait);
     }
 
     /**
@@ -95,7 +100,7 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
     public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
-        return locks.getWriteLock(resource, wait);
+        return locks.getLock(resource, Type.WRITE, wait);
     }
 
     @VisibleForTesting

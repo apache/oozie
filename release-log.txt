@@ -3,6 +3,7 @@
 
 -- Oozie 4.3.0 release
 
+OOZIE-2501 ZK reentrant lock doesn't work for few cases (puru)
 OOZIE-2582 Populating external child Ids for action failures (abhishekbafna via rohini)
 OOZIE-2678 Oozie job -kill doesn't work with tez jobs (abhishekbafna via rohini)
 OOZIE-2676 Make hadoop-2 as the default profile (gezapeti via rkanter)
