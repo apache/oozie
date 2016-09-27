@@ -21,6 +21,7 @@ package org.apache.oozie.service;
 import java.util.UUID;
 
 import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.lock.TestMemoryLocks;
 import org.apache.oozie.service.ZKLocksService.ZKLockToken;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.XLog;
@@ -132,7 +133,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testWaitWriteLock(zkls, zkls);
+            checkWaitWriteLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -146,7 +147,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testWaitWriteLock(zkls1, zkls2);
+            checkWaitWriteLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -154,7 +155,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testWaitWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkWaitWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, -1, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
@@ -174,7 +175,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testNoWaitWriteLock(zkls, zkls);
+            checkNoWaitWriteLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -188,7 +189,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testNoWaitWriteLock(zkls1, zkls2);
+            checkNoWaitWriteLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -196,7 +197,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testNoWaitWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkNoWaitWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, 0, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, 0, sb, zkls2);
@@ -216,7 +217,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testTimeoutWaitingWriteLock(zkls, zkls);
+            checkTimeoutWaitingWriteLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -230,7 +231,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testTimeoutWaitingWriteLock(zkls1, zkls2);
+            checkTimeoutWaitingWriteLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -238,7 +239,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testTimeoutWaitingWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkTimeoutWaitingWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, 0, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, (long) (WAITFOR_RATIO * 2000), sb, zkls2);
@@ -258,7 +259,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testTimeoutTimingOutWriteLock(zkls, zkls);
+            checkTimeoutTimingOutWriteLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -272,7 +273,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testTimeoutTimingOutWriteLock(zkls1, zkls2);
+            checkTimeoutTimingOutWriteLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -280,7 +281,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testTimeoutTimingOutWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkTimeoutTimingOutWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, 0, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, 50, sb, zkls2);
@@ -300,7 +301,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testReadLock(zkls, zkls);
+            checkReadLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -314,7 +315,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testReadLock(zkls1, zkls2);
+            checkReadLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -322,7 +323,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testReadLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkReadLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new ReadLocker("a", 1, -1, sb, zkls1);
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
@@ -342,7 +343,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testReadWriteLock(zkls, zkls);
+            checkReadWriteLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -356,7 +357,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testReadWriteLock(zkls1, zkls2);
+            checkReadWriteLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -364,7 +365,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testReadWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkReadWriteLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new ReadLocker("a", 1, -1, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
@@ -384,7 +385,7 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            _testWriteReadLock(zkls, zkls);
+            checkWriteReadLock(zkls, zkls);
         }
         finally {
             zkls.destroy();
@@ -398,7 +399,7 @@ public class TestZKLocksService extends ZKXTestCase {
         try {
             zkls1.init(Services.get());
             zkls2.init(Services.get());
-            _testWriteReadLock(zkls1, zkls2);
+            checkWriteReadLock(zkls1, zkls2);
         }
         finally {
             zkls1.destroy();
@@ -406,7 +407,7 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public void _testWriteReadLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
+    public void checkWriteReadLock(ZKLocksService zkls1, ZKLocksService zkls2) throws Exception {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, -1, sb, zkls1);
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
@@ -427,10 +428,10 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
             assertTrue(zkls.getLocks().containsKey(path));
             lock.release();
-            assertFalse(zkls.getLocks().containsKey(path));
+            checkLockRelease(path, zkls);
         }
         finally {
             zkls.destroy();
@@ -442,16 +443,16 @@ public class TestZKLocksService extends ZKXTestCase {
         ZKLocksService zkls = new ZKLocksService();
         try {
             zkls.init(Services.get());
-            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
-            lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
-            lock = (ZKLockToken) zkls.getWriteLock(path, 5000);
+            ZKLockToken lock = (ZKLockToken) zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            lock = (ZKLockToken) zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            lock = (ZKLockToken) zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
             assertTrue(zkls.getLocks().containsKey(path));
             lock.release();
             assertTrue(zkls.getLocks().containsKey(path));
             lock.release();
             assertTrue(zkls.getLocks().containsKey(path));
             lock.release();
-            assertFalse(zkls.getLocks().containsKey(path));
+            checkLockRelease(path, zkls);
         }
         catch (Exception e) {
             fail("Reentrant property, it should have acquired lock");
@@ -470,10 +471,10 @@ public class TestZKLocksService extends ZKXTestCase {
             ThreadLock t2 = new ThreadLock(zkls, path);
             t1.start();
             t1.join();
-            assertFalse(zkls.getLocks().containsKey(path));
+            checkLockRelease(path, zkls);
             t2.start();
             t2.join();
-            assertFalse(zkls.getLocks().containsKey(path));
+            checkLockRelease(path, zkls);
         }
         finally {
             zkls.destroy();
@@ -507,6 +508,58 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
+    public void testLocksAreGarbageCollected() throws ServiceException, InterruptedException {
+        String path = new String("a");
+        String path1 = new String("a");
+        ZKLocksService lockService = new ZKLocksService();
+        try {
+            lockService.init(Services.get());
+            LockToken lock = lockService.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            lock.release();
+            assertEquals(lockService.getLocks().size(), 1);
+            int oldHash = lockService.getLocks().get(path).hashCode();
+            lock = lockService.getWriteLock(path1, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            int newHash = lockService.getLocks().get(path1).hashCode();
+            assertTrue(oldHash == newHash);
+            lock = null;
+            System.gc();
+            lock = lockService.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            newHash = lockService.getLocks().get(path).hashCode();
+            assertFalse(oldHash == newHash);
+        }
+        finally {
+            lockService.destroy();
+        }
+    }
+
+    public void testLocksAreReused() throws ServiceException, InterruptedException {
+        String path = "a";
+        ZKLocksService lockService = new ZKLocksService();
+        try {
+            lockService.init(Services.get());
+            LockToken lock = lockService.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            int oldHash = System.identityHashCode(lockService.getLocks().get(path));
+            System.gc();
+            lock.release();
+            lock = lockService.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
+            assertEquals(lockService.getLocks().size(), 1);
+            int newHash = System.identityHashCode(lockService.getLocks().get(path));
+            assertTrue(oldHash == newHash);
+        }
+        finally {
+            lockService.destroy();
+        }
+    }
+
+    private void checkLockRelease(String path, ZKLocksService zkls) {
+        if (zkls.getLocks().get(path) == null) {
+            // good, lock is removed from memory after gc.
+        }
+        else {
+            assertFalse(zkls.getLocks().get(path).writeLock().isAcquiredInThisProcess());
+        }
+    }
+
     static class ThreadLock extends Thread {
         ZKLocksService zkls;
         String path;
@@ -520,9 +573,9 @@ public class TestZKLocksService extends ZKXTestCase {
 
         public void run() {
             try {
-                lock = zkls.getWriteLock(path, 5000);
+                lock = zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
                 if (lock != null) {
-                    lock = zkls.getWriteLock(path, 5000);
+                    lock = zkls.getWriteLock(path, TestMemoryLocks.DEFAULT_LOCK_TIMEOUT);
                     Thread.sleep(1000);
                     lock.release();
                     Thread.sleep(1000);

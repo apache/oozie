@@ -21,6 +21,7 @@ package org.apache.oozie.command.wf;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.servlet.jsp.el.ELException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +42,7 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -399,4 +401,12 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
         queue(new ActionStartXCommand(wfAction.getId(), wfAction.getType()), retryDelayMillis);
     }
 
+    protected void queue(XCommand<?> command, long msDelay) {
+        // ActionStartXCommand is synchronously called from SignalXCommand passing wfJob so that it doesn't have to
+        //reload wfJob again. We need set wfJob to null, so that it get reloaded when the requeued command executes.
+        if (command instanceof ActionStartXCommand) {
+            ((ActionStartXCommand)command).wfJob = null;
+        }
+        super.queue(command, msDelay);
+    }
 }
