@@ -159,6 +159,11 @@ public class SparkMain extends LauncherMain {
         sparkArgs.add("--conf");
         sparkArgs.add("spark.driver.extraJavaOptions=-Dlog4j.configuration=" + SPARK_LOG4J_PROPS);
 
+        if (actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
+            sparkArgs.add("--conf");
+            sparkArgs.add("spark.yarn.tags=" + actionConf.get(MAPREDUCE_JOB_TAGS));
+        }
+
         if (!addedHiveSecurityToken) {
             sparkArgs.add("--conf");
             sparkArgs.add(HIVE_SECURITY_TOKEN + "=false");

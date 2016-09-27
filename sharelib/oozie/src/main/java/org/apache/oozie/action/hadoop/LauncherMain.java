@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,6 +51,7 @@ public abstract class LauncherMain {
     public static final String HADOOP_JOBS = "hadoopJobs";
     public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
     public static final String TEZ_APPLICATION_TAGS = "tez.application.tags";
+    public static final String SPARK_YARN_TAGS = "spark.yarn.tags";
     protected static String[] HADOOP_SITE_FILES = new String[]
             {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
