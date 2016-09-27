@@ -41,6 +41,7 @@ public class JavaMain extends LauncherMain {
         Configuration actionConf = loadActionConf();
 
         setYarnTag(actionConf);
+        setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
 
         LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
 
