@@ -260,7 +260,7 @@ public class ShellMain extends LauncherMain {
 
             try {
                 if (needCaptured) {
-                    File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
+                    File file = new File(System.getProperty(OUTPUT_PROPERTIES));
                     os = new BufferedWriter(new FileWriter(file));
                 }
                 while ((line = reader.readLine()) != null) {

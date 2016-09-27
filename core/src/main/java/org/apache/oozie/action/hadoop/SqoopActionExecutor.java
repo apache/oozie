@@ -18,16 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
@@ -36,13 +27,17 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Namespace;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 public class SqoopActionExecutor extends JavaActionExecutor {
 
@@ -229,28 +224,6 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             throw convertException(ex);
         }
     }
-
-    /**
-     * Get the stats and external child IDs
-     *
-     * @param actionFs the FileSystem object
-     * @param runningJob the runningJob
-     * @param action the Workflow action
-     * @param context executor context
-     *
-     */
-    @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
-            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException{
-        super.getActionData(actionFs, runningJob, action, context);
-        readExternalChildIDs(action, context);
-    }
-
-    @Override
-    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
-        return true;
-    }
-
 
     /**
      * Return the sharelib name for the action.

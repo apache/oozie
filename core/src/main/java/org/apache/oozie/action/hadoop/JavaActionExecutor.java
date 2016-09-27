@@ -1465,6 +1465,17 @@ public class JavaActionExecutor extends ActionExecutor {
                         context.setExternalChildIDs(externalIDs);
                         LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
                     }
+                    else if (LauncherMapperHelper.hasOutputData(actionData)) {
+                        // Load stored Hadoop jobs ids and promote them as external child ids
+                        // This is for jobs launched with older release during upgrade to Oozie 4.3
+                        Properties props = PropertiesUtils.stringToProperties(actionData
+                                .get(LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
+                        if (props.get(LauncherMain.HADOOP_JOBS) != null) {
+                            externalIDs = (String) props.get(LauncherMain.HADOOP_JOBS);
+                            context.setExternalChildIDs(externalIDs);
+                            LOG.info(XLog.STD, "Hadoop Jobs launched : [{0}]", externalIDs);
+                        }
+                    }
                 }
                 if (runningJob.isComplete()) {
                     // fetching action output and stats for the Map-Reduce action.
@@ -1564,16 +1575,6 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-    }
-
-    protected final void readExternalChildIDs(WorkflowAction action, Context context) throws IOException {
-        if (action.getData() != null) {
-            // Load stored Hadoop jobs ids and promote them as external child ids
-            // See LauncherMain#writeExternalChildIDs for how they are written
-            Properties props = new Properties();
-            props.load(new StringReader(action.getData()));
-            context.setExternalChildIDs((String) props.get(LauncherMain.HADOOP_JOBS));
-        }
     }
 
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {

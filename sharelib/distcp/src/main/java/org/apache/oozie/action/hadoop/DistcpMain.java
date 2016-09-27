@@ -38,8 +38,11 @@ public class DistcpMain extends JavaMain {
     private Constructor<?> construct;
     private Object[] constArgs;
     private static final String DISTCP_LOG4J_PROPS = "distcp-log4j.properties";
-    private static final Pattern[] DISTCP_JOB_IDS_PATTERNS = { Pattern.compile("Job complete: (job_\\S*)"),
-            Pattern.compile("Job (job_\\S*) completed successfully") };
+    private static final Pattern[] DISTCP_JOB_IDS_PATTERNS = {
+            Pattern.compile("Job complete: (job_\\S*)"),
+            Pattern.compile("Job (job_\\S*) completed successfully"),
+            Pattern.compile("Submitted application (application[0-9_]*)")
+    };
     public static void main(String[] args) throws Exception {
         run(DistcpMain.class, args);
     }
@@ -81,6 +84,7 @@ public class DistcpMain extends JavaMain {
             throw new JavaMainException(ex.getCause());
         }
         finally {
+            System.out.println("\n<<< Invocation of DistCp command completed <<<\n");
             writeExternalChildIDs(logFile, DISTCP_JOB_IDS_PATTERNS, "Distcp");
         }
     }
@@ -143,6 +147,7 @@ public class DistcpMain extends JavaMain {
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapred", "INFO, jobid");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapreduce.Job", "INFO, jobid");
+        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
 
         String localProps = new File(DISTCP_LOG4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);

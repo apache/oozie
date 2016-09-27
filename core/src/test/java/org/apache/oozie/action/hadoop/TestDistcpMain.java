@@ -71,6 +71,8 @@ public class TestDistcpMain extends MainTestCase {
         // Check normal execution
         DistcpMain.main(new String[]{inputDir.toString(), outputDir.toString()});
         assertTrue(getFileSystem().exists(outputDir));
+        assertTrue(hadoopIdsFile.exists());
+        assertNotNull(LauncherMapper.getLocalFileContentStr(hadoopIdsFile, "", -1));
         fs.delete(outputDir,true);
 
         // Check exception handling

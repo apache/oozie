@@ -212,6 +212,7 @@ public class SparkMain extends LauncherMain {
             runSpark(sparkArgs.toArray(new String[sparkArgs.size()]));
         }
         finally {
+            System.out.println("\n<<< Invocation of Spark command completed <<<\n");
             writeExternalChildIDs(logFile, SPARK_JOB_IDS_PATTERNS, "Spark");
         }
     }

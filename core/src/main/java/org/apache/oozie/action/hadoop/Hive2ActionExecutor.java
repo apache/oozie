@@ -18,23 +18,16 @@
 
 package org.apache.oozie.action.hadoop;
 
-import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.action.ActionExecutorException;
+import org.jdom.Element;
+import org.jdom.Namespace;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorException;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
 
 public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
 
@@ -126,18 +119,6 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
         MapReduceMain.setStrings(conf, HIVE2_ARGS, strArgs);
 
         return conf;
-    }
-
-    @Override
-    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
-        return true;
-    }
-
-    @Override
-    protected void getActionData(FileSystem actionFs, RunningJob runningJob, WorkflowAction action, Context context)
-            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-        super.getActionData(actionFs, runningJob, action, context);
-        readExternalChildIDs(action, context);
     }
 
     /**
