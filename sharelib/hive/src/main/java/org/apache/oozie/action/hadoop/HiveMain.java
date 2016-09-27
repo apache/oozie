@@ -42,8 +42,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 
 public class HiveMain extends LauncherMain {
     private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
-      Pattern.compile("Ended Job = (job_\\S*)"),
-      Pattern.compile("Executing on YARN cluster with App id (application[0-9_]*)")
+            Pattern.compile("Ended Job = (job_\\S*)"),
+            Pattern.compile("Submitted application (application[0-9_]*)")
     };
     private static final Set<String> DISALLOWED_HIVE_OPTIONS = new HashSet<String>();
 
@@ -167,6 +167,7 @@ public class HiveMain extends LauncherMain {
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
         hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
+        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
 
         String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);

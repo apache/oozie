@@ -195,7 +195,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertNotNull(context.getAction().getData());
         assertNotNull(context.getAction().getExternalChildIDs());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
@@ -215,12 +214,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         }
         br.close();
         assertEquals(3, count);
-
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
     }
 
     public void testSqoopEval() throws Exception {
@@ -243,20 +236,13 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-        assertNotNull(context.getAction().getExternalChildIDs());
-        assertEquals(0, context.getAction().getExternalChildIDs().length());
+        assertNull(context.getAction().getExternalChildIDs());
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
         String hadoopCounters = context.getVar(MapReduceActionExecutor.HADOOP_COUNTERS);
         assertNotNull(hadoopCounters);
         assertTrue(hadoopCounters.isEmpty());
-
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertEquals(0, outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length());
     }
 
     public void testSqoopActionFreeFormQuery() throws Exception {
@@ -306,12 +292,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             br.close();
         }
         assertEquals(3, count);
-
-        assertNotNull(context.getAction().getData());
-        Properties outputData = new Properties();
-        outputData.load(new StringReader(context.getAction().getData()));
-        assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-        assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
     }
 
 
