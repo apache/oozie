@@ -3,6 +3,7 @@
 
 -- Oozie 4.3.0 release
 
+OOZIE-2678 Oozie job -kill doesn't work with tez jobs (abhishekbafna via rohini)
 OOZIE-2676 Make hadoop-2 as the default profile (gezapeti via rkanter)
 OOZIE-2487 Temporary workaround for Java 8 Javadoc errors (abhishekbafna via rkanter)
 OOZIE-1978 Forkjoin validation code is ridiculously slow in some cases (pbacsko via rkanter)
