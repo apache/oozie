@@ -145,7 +145,6 @@ public class LauncherAM {
         System.out.println("Login: " + login.getUserName());
         System.out.println("SecurityEnabled:" + UserGroupInformation.isSecurityEnabled());
         System.out.println("Login keytab based:" + UserGroupInformation.isLoginKeytabBased());
-        System.out.println("Login ticket based:" + UserGroupInformation.isLoginTicketBased());
         System.out.println("Login from keytab: " + login.isFromKeytab());
         System.out.println("Login has kerberos credentials: " + login.hasKerberosCredentials());
         System.out.println("Login authMethod: " + login.getAuthenticationMethod());
