@@ -18,11 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XConfiguration;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,6 +25,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
 
 public class TestSparkMain extends MainTestCase {
 
@@ -89,5 +91,33 @@ public class TestSparkMain extends MainTestCase {
         SparkMain.main(args);
         assertTrue(getFileSystem().exists(new Path(getFsTestCaseDir() + "/" + OUTPUT)));
         return null;
+    }
+
+    public void testPatterns() {
+        patternHelper("spark-yarn", SparkMain.SPARK_YARN_JAR_PATTERN);
+        patternHelper("spark-assembly", SparkMain.SPARK_ASSEMBLY_JAR_PATTERN);
+    }
+
+    private void patternHelper(String jarName, Pattern pattern) {
+        ArrayList<String> jarList = new ArrayList<String>();
+        jarList.add(jarName + "-1.2.jar");
+        jarList.add(jarName + "-1.2.4.jar");
+        jarList.add(jarName + "1.2.4.jar");
+        jarList.add(jarName + "-1.2.4_1.2.3.4.jar");
+        jarList.add(jarName + ".jar");
+
+        // all should pass
+        for (String s : jarList) {
+            assertTrue(pattern.matcher(s).find());
+        }
+
+        jarList.clear();
+        jarList.add(jarName + "-1.2.3-sources.jar");
+        jarList.add(jarName + "-sources-1.2.3.jar");
+        jarList.add(jarName + "-sources.jar");
+        // all should not pass
+        for (String s : jarList) {
+            assertFalse(pattern.matcher(s).find());
+        }
     }
 }

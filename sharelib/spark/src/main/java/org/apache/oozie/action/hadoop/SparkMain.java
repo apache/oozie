@@ -18,14 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.spark.deploy.SparkSubmit;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,9 +26,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.spark.deploy.SparkSubmit;
 
 public class SparkMain extends LauncherMain {
     private static final String MASTER_OPTION = "--master";
@@ -56,6 +61,15 @@ public class SparkMain extends LauncherMain {
     private static final String SPARK_LOG4J_PROPS = "spark-log4j.properties";
     private static final Pattern[] SPARK_JOB_IDS_PATTERNS = {
             Pattern.compile("Submitted application (application[0-9_]*)") };
+    public static final Pattern SPARK_ASSEMBLY_JAR_PATTERN = Pattern
+            .compile("^spark-assembly((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+    public static final Pattern SPARK_YARN_JAR_PATTERN = Pattern
+            .compile("^spark-yarn((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+    private static final Pattern SPARK_VERSION_1 = Pattern.compile("^1.*");
+    private static final String SPARK_YARN_JAR = "spark.yarn.jar";
+    private static final String SPARK_YARN_JARS = "spark.yarn.jars";
+    private String sparkYarnJar = null;
+    private String sparkVersion = "1.X.X";
     public static void main(String[] args) throws Exception {
         run(SparkMain.class, args);
     }
@@ -179,16 +193,19 @@ public class SparkMain extends LauncherMain {
         }
 
         if ((yarnClusterMode || yarnClientMode)) {
-            String cachedFiles = fixFsDefaultUris(DistributedCache.getCacheFiles(actionConf), jarPath);
+            LinkedList<URI> fixedUris = fixFsDefaultUris(DistributedCache.getCacheFiles(actionConf), jarPath);
+            String cachedFiles = filterSparkYarnJar(fixedUris);
             if (cachedFiles != null && !cachedFiles.isEmpty()) {
                 sparkArgs.add("--files");
                 sparkArgs.add(cachedFiles);
             }
-            String cachedArchives = fixFsDefaultUris(DistributedCache.getCacheArchives(actionConf), jarPath);
+            fixedUris = fixFsDefaultUris(DistributedCache.getCacheArchives(actionConf), jarPath);
+            String cachedArchives = StringUtils.join(fixedUris, ",");
             if (cachedArchives != null && !cachedArchives.isEmpty()) {
                 sparkArgs.add("--archives");
                 sparkArgs.add(cachedArchives);
             }
+            setSparkYarnJarsConf(sparkArgs);
         }
 
         if (!sparkArgs.contains(VERBOSE_OPTION)) {
@@ -384,11 +401,11 @@ public class SparkMain extends LauncherMain {
      * @throws IOException
      * @throws URISyntaxException
      */
-    private String fixFsDefaultUris(URI[] files, String jarPath) throws IOException, URISyntaxException {
+    private LinkedList<URI> fixFsDefaultUris(URI[] files, String jarPath) throws IOException, URISyntaxException {
         if (files == null) {
             return null;
         }
-        ArrayList<URI> listUris = new ArrayList<URI>();
+        LinkedList<URI> listUris = new LinkedList<URI>();
         FileSystem fs = FileSystem.get(new Configuration(true));
         for (int i = 0; i < files.length; i++) {
             URI fileUri = files[i];
@@ -411,6 +428,68 @@ public class SparkMain extends LauncherMain {
                 }
             }
         }
+        return listUris;
+    }
+
+    /**
+     * Filters out the Spark yarn jar and records its version
+     *
+     * @param listUris string containing uris separated by comma
+     * @return
+     * @throws OozieActionConfiguratorException
+     */
+    private String filterSparkYarnJar(LinkedList<URI> listUris) throws OozieActionConfiguratorException {
+        Iterator<URI> iterator = listUris.iterator();
+        File matchedFile = null;
+        while (iterator.hasNext()) {
+            URI uri = iterator.next();
+            Path p = new Path(uri);
+            if (SPARK_YARN_JAR_PATTERN.matcher(p.getName()).find()) {
+                matchedFile = getMatchingFile(SPARK_YARN_JAR_PATTERN);
+            }
+            else if (SPARK_ASSEMBLY_JAR_PATTERN.matcher(p.getName()).find()) {
+                matchedFile = getMatchingFile(SPARK_ASSEMBLY_JAR_PATTERN);
+            }
+            if (matchedFile != null) {
+                sparkYarnJar = uri.toString();
+                try {
+                    sparkVersion = getJarVersion(matchedFile);
+                    System.out.println("Spark Version " + sparkVersion);
+                }
+                catch (IOException io) {
+                    System.out.println(
+                            "Unable to open " + matchedFile.getPath() + ". Default Spark Version " + sparkVersion);
+                }
+                iterator.remove();
+                break;
+            }
+        }
         return StringUtils.join(listUris, ",");
     }
+
+    /**
+     * Sets spark.yarn.jars for Spark 2.X. Sets spark.yarn.jar for Spark 1.X.
+     *
+     * @param sparkArgs
+     */
+    private void setSparkYarnJarsConf(List<String> sparkArgs) {
+        if (SPARK_VERSION_1.matcher(sparkVersion).find()) {
+            // In Spark 1.X.X, set spark.yarn.jar to avoid
+            // multiple distribution
+            sparkArgs.add("--conf");
+            sparkArgs.add(SPARK_YARN_JAR + "=" + sparkYarnJar);
+                }
+        else {
+            // In Spark 2.X.X, set spark.yarn.jars
+            sparkArgs.add("--conf");
+            sparkArgs.add(SPARK_YARN_JARS + "=" + sparkYarnJar);
+        }
+    }
+
+    private String getJarVersion(File jarFile) throws IOException {
+        @SuppressWarnings("resource")
+        Manifest manifest = new JarFile(jarFile).getManifest();
+        return manifest.getMainAttributes().getValue("Specification-Version");
+    }
+
 }
