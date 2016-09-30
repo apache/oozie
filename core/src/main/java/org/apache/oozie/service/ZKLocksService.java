@@ -17,7 +17,7 @@
  */
 package org.apache.oozie.service;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -39,6 +39,7 @@ import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.utils.ThreadUtils;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.MapMaker;
 
 /**
  * Service that provides distributed locks via ZooKeeper.  Requires that a ZooKeeper ensemble is available.  The locks will be
@@ -51,7 +52,8 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
     private static XLog LOG = XLog.getLog(ZKLocksService.class);
     public static final String LOCKS_NODE = "/locks";
 
-    final private HashMap<String, InterProcessReadWriteLock> zkLocks = new HashMap<String, InterProcessReadWriteLock>();
+    private ConcurrentMap<String, InterProcessReadWriteLock> zkLocks = new MapMaker().weakValues().makeMap();
+
 
     private static final String REAPING_LEADER_PATH = ZKUtils.ZK_BASE_SERVICES_PATH + "/locksChildReaperLeaderPath";
     public static final String REAPING_THRESHOLD = CONF_PREFIX + "ZKLocksService.locks.reaper.threshold";
@@ -123,18 +125,7 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
      */
     @Override
     public LockToken getReadLock(String resource, long wait) throws InterruptedException {
-        InterProcessReadWriteLock lockEntry;
-        synchronized (zkLocks) {
-            if (zkLocks.containsKey(resource)) {
-                lockEntry = zkLocks.get(resource);
-            }
-            else {
-                lockEntry = new InterProcessReadWriteLock(zk.getClient(), LOCKS_NODE + "/" + resource);
-                zkLocks.put(resource, lockEntry);
-            }
-        }
-        InterProcessMutex readLock = lockEntry.readLock();
-        return acquireLock(wait, readLock, resource);
+        return acquireLock(resource, Type.READ, wait);
     }
 
     /**
@@ -147,33 +138,32 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
      */
     @Override
     public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
-        InterProcessReadWriteLock lockEntry;
-        synchronized (zkLocks) {
-            if (zkLocks.containsKey(resource)) {
-                lockEntry = zkLocks.get(resource);
-            }
-            else {
-                lockEntry = new InterProcessReadWriteLock(zk.getClient(), LOCKS_NODE + "/" + resource);
-                zkLocks.put(resource, lockEntry);
-            }
-        }
-        InterProcessMutex writeLock = lockEntry.writeLock();
-        return acquireLock(wait, writeLock, resource);
+        return acquireLock(resource, Type.WRITE, wait);
     }
 
-    private LockToken acquireLock(long wait, InterProcessMutex lock, String resource) {
+    private LockToken acquireLock(final String resource, Type type, long wait) throws InterruptedException {
+        InterProcessReadWriteLock lockEntry = zkLocks.get(resource);
+        if (lockEntry == null) {
+            InterProcessReadWriteLock newLock = new InterProcessReadWriteLock(zk.getClient(), LOCKS_NODE + "/" + resource);
+            lockEntry = zkLocks.putIfAbsent(resource, newLock);
+            if (lockEntry == null) {
+                lockEntry = newLock;
+            }
+        }
+        InterProcessMutex lock = (type.equals(Type.READ)) ? lockEntry.readLock() : lockEntry.writeLock();
         ZKLockToken token = null;
         try {
             if (wait == -1) {
                 lock.acquire();
-                token = new ZKLockToken(lock, resource);
+                token = new ZKLockToken(lockEntry, type);
             }
             else if (lock.acquire(wait, TimeUnit.MILLISECONDS)) {
-                token = new ZKLockToken(lock, resource);
+                token = new ZKLockToken(lockEntry, type);
             }
         }
         catch (Exception ex) {
-            throw new RuntimeException(ex);
+            //Not throwing exception. Should return null, so that command can be requeued
+            LOG.error("Error while acquiring lock", ex);
         }
         return token;
     }
@@ -182,12 +172,12 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
      * Implementation of {@link LockToken} for zookeeper locks.
      */
     class ZKLockToken implements LockToken {
-        private final InterProcessMutex lock;
-        private final String resource;
+        private final InterProcessReadWriteLock lockEntry;
+        private final Type type;
 
-        private ZKLockToken(InterProcessMutex lock, String resource) {
-            this.lock = lock;
-            this.resource = resource;
+        private ZKLockToken(InterProcessReadWriteLock lockEntry, Type type) {
+            this.lockEntry = lockEntry;
+            this.type = type;
         }
 
         /**
@@ -196,35 +186,23 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         @Override
         public void release() {
             try {
-                lock.release();
-                if (zkLocks.get(resource) == null) {
-                    return;
-                }
-                if (!isLockHeld()) {
-                    synchronized (zkLocks) {
-                        if (zkLocks.get(resource) != null) {
-                            if (!isLockHeld()) {
-                                zkLocks.remove(resource);
-                            }
-                        }
-                    }
+                switch (type) {
+                    case WRITE:
+                        lockEntry.writeLock().release();
+                        break;
+                    case READ:
+                        lockEntry.readLock().release();
+                        break;
                 }
             }
             catch (Exception ex) {
                 LOG.warn("Could not release lock: " + ex.getMessage(), ex);
             }
-
         }
-
-        private boolean isLockHeld() {
-            return zkLocks.get(resource).readLock().isAcquiredInThisProcess()
-                    || zkLocks.get(resource).writeLock().isAcquiredInThisProcess();
-        }
-
     }
 
     @VisibleForTesting
-    public HashMap<String, InterProcessReadWriteLock> getLocks(){
+    public ConcurrentMap<String, InterProcessReadWriteLock> getLocks(){
         return zkLocks;
     }
 

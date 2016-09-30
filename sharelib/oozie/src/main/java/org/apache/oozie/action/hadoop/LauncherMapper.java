@@ -152,6 +152,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     @Override
     public void map(K1 key, V1 value, OutputCollector<K2, V2> collector, Reporter reporter) throws IOException {
+        SecurityManager initialSecurityManager = System.getSecurityManager();
         try {
             if (configFailure) {
                 throw configureFailureEx;
@@ -165,7 +166,6 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 int errorCode = 0;
                 Throwable errorCause = null;
                 String errorMessage = null;
-
                 try {
                     new LauncherSecurityManager();
                 }
@@ -214,10 +214,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.println("Maximum output    : "
                             + getJobConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024));
                     System.out.println();
-                    System.out.println("Arguments         :");
-                    for (String arg : args) {
-                        System.out.println("                    " + arg);
-                    }
+                    printArgs("Arguments         :", args);
 
                     System.out.println();
                     System.out.println("Java System Properties:");
@@ -323,6 +320,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
         finally {
             uploadActionDataToHDFS();
+            resetSecurityManager(initialSecurityManager);
         }
     }
 
@@ -603,6 +601,40 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
+    private void resetSecurityManager(SecurityManager initialSecurityManager) {
+        try {
+            SecurityManager prev = System.getSecurityManager();
+            System.setSecurityManager(initialSecurityManager);
+            System.out
+                    .println("Successfully reset security manager from " + prev + " to " + System.getSecurityManager());
+        }
+        catch (Throwable t) {
+            System.err.println("Failed to reset security manager: " + t.getMessage());
+            t.printStackTrace(System.err);
+        }
+    }
+
+    /**
+     * Print arguments to standard output stream. Mask out argument values to option with name 'password' in them.
+     * @param banner source banner
+     * @param args arguments to be printed
+     */
+    public static void printArgs(String banner, String[] args) {
+        System.out.println(banner);
+        boolean maskNextArg = false;
+        for (String arg : args) {
+            if (maskNextArg) {
+                System.out.println("             " + "********");
+                maskNextArg = false;
+            }
+            else {
+                System.out.println("             " + arg);
+                if (arg.toLowerCase().contains("password")) {
+                    maskNextArg = true;
+                }
+            }
+        }
+    }
 }
 
 class LauncherSecurityManager extends SecurityManager {

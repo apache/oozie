@@ -81,6 +81,10 @@ public class TestHadoopAccessorService extends XFsTestCase {
         os = new FileOutputStream(new File(actConfXDir + "/default", "z-conf.xml"));
         IOUtils.copyStream(is, os);
 
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-custom-log4j.properties");
+        os = new FileOutputStream(new File(actConfXDir + "/action", "test-custom-log4j.properties"));
+        IOUtils.copyStream(is, os);
+
         setSystemProperty("oozie.service.HadoopAccessorService.hadoop.configurations",
                           "*=hadoop-conf,jt=hadoop-confx");
         setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",

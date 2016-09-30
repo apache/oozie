@@ -44,7 +44,8 @@ public class ActionNodeDef extends NodeDef {
     }
     
     public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
-            String onError, String cred, String userRetryMax, String userRetryInterval) {
-        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred, userRetryMax, userRetryInterval);
+            String onError, String cred, String userRetryMax, String userRetryInterval, String userRetryPolicy) {
+        super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred,
+                userRetryMax, userRetryInterval, userRetryPolicy);
     }
 }

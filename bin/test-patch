@@ -108,7 +108,7 @@ updateJira() {
     if [[ "$JIRAPASSWORD" != "" ]] ; then
       JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
       if [ ! -e "${JIRACLI}" ] ; then
-        curl https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
+        curl -L https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
         if [ $? != 0 ] ; then
          echo
          echo "Could not download jira-cli tool, thus no JIRA updating"

@@ -210,7 +210,7 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
             switch (ex.getErrorType()) {
                 case ERROR:
                     // If allowed to retry, this will handle it; otherwise, we should fall through to FAILED
-                    if (handleUserRetry(wfAction)) {
+                    if (handleUserRetry(wfAction, wfJob)) {
                         break;
                     }
                 case FAILED:

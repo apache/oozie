@@ -186,6 +186,21 @@ public class OozieClient {
 
     public static final String OOZIE_SUSPEND_ON_NODES = "oozie.suspend.on.nodes";
 
+    public static final String FILTER_SORT_BY = "sortby";
+
+    public enum SORT_BY {
+        createdTime("createdTimestamp"), lastModifiedTime("lastModifiedTimestamp");
+        private final String fullname;
+
+        SORT_BY(String fullname) {
+            this.fullname = fullname;
+        }
+
+        public String getFullname() {
+            return fullname;
+        }
+    }
+
     public static enum SYSTEM_MODE {
         NORMAL, NOWEBSERVICE, SAFEMODE
     }
@@ -1237,9 +1252,7 @@ public class OozieClient {
          * @throws IOException
          */
         private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
-            if (reader == null) {
-                throw new IllegalArgumentException("reader cannot be null");
-            }
+            notNull(reader, "reader");
             StringBuilder sb = new StringBuilder();
             char[] buffer = new char[2048];
             int read;
@@ -1269,9 +1282,7 @@ public class OozieClient {
          * @throws IOException thrown if the resource could not be read.
          */
         private String getReaderAsString(Reader reader, int maxLen) throws IOException {
-            if (reader == null) {
-                throw new IllegalArgumentException("reader cannot be null");
-            }
+            notNull(reader, "reader");
             StringBuffer sb = new StringBuffer();
             char[] buffer = new char[2048];
             int read;

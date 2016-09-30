@@ -30,7 +30,7 @@ import org.jdom.JDOMException;
 
 public interface CoordInputDependency {
 
-    public static final String INTERNAL_VERSION_ID = "V=1";
+    String INTERNAL_VERSION_ID = "V=1";
 
     /**
      * Adds the input instance list.
@@ -38,35 +38,35 @@ public interface CoordInputDependency {
      * @param inputEventName the input event name
      * @param inputInstanceList the input instance list
      */
-    public void addInputInstanceList(String inputEventName, List<CoordInputInstance> inputInstanceList);
+    void addInputInstanceList(String inputEventName, List<CoordInputInstance> inputInstanceList);
 
     /**
      * Gets the missing dependencies.
      *
      * @return the missing dependencies
      */
-    public String getMissingDependencies();
+    String getMissingDependencies();
 
     /**
      * Checks if dependencies are meet.
      *
      * @return true, if dependencies are meet
      */
-    public boolean isDependencyMet();
+    boolean isDependencyMet();
 
     /**
      * Checks if is unresolved dependencies met.
      *
      * @return true, if unresolved dependencies are met
      */
-    public boolean isUnResolvedDependencyMet();
+    boolean isUnResolvedDependencyMet();
 
     /**
      * Sets the dependency meet.
      *
      * @param isMissingDependenciesMet the new dependency met
      */
-    public void setDependencyMet(boolean isMissingDependenciesMet);
+    void setDependencyMet(boolean isMissingDependenciesMet);
 
     /**
      * Serialize.
@@ -74,28 +74,28 @@ public interface CoordInputDependency {
      * @return the string
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public String serialize() throws IOException;
+    String serialize() throws IOException;
 
     /**
      * Gets the missing dependencies as list.
      *
      * @return the missing dependencies as list
      */
-    public List<String> getMissingDependenciesAsList();
+    List<String> getMissingDependenciesAsList();
 
     /**
      * Gets the available dependencies as list.
      *
      * @return the available dependencies as list
      */
-    public List<String> getAvailableDependenciesAsList();
+    List<String> getAvailableDependenciesAsList();
 
     /**
      * Sets the missing dependencies.
      *
      * @param missingDependencies the new missing dependencies
      */
-    public void setMissingDependencies(String missingDependencies);
+    void setMissingDependencies(String missingDependencies);
 
     /**
      * Adds the un resolved list.
@@ -103,7 +103,7 @@ public interface CoordInputDependency {
      * @param name the name
      * @param tmpUnresolved the tmp unresolved
      */
-    public void addUnResolvedList(String name, String tmpUnresolved);
+    void addUnResolvedList(String name, String tmpUnresolved);
 
     /**
      * Gets the available dependencies.
@@ -111,14 +111,14 @@ public interface CoordInputDependency {
      * @param dataSet the data set
      * @return the available dependencies
      */
-    public List<String> getAvailableDependencies(String dataSet);
+    List<String> getAvailableDependencies(String dataSet);
 
     /**
      * Adds the to available dependencies.
      *
      * @param availDepList the avail dep list
      */
-    public void addToAvailableDependencies(Collection<String> availDepList);
+    void addToAvailableDependencies(Collection<String> availDepList);
 
     /**
      * Check push missing dependencies.
@@ -130,7 +130,7 @@ public interface CoordInputDependency {
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws JDOMException the JDOM exception
      */
-    public ActionDependency checkPushMissingDependencies(CoordinatorActionBean coordAction,
+    ActionDependency checkPushMissingDependencies(CoordinatorActionBean coordAction,
             boolean registerForNotification) throws CommandException, IOException, JDOMException;
 
     /**
@@ -143,7 +143,7 @@ public interface CoordInputDependency {
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws JDOMException the JDOM exception
      */
-    public boolean checkPullMissingDependencies(CoordinatorActionBean coordAction, StringBuilder existList,
+    boolean checkPullMissingDependencies(CoordinatorActionBean coordAction, StringBuilder existList,
             StringBuilder nonExistList) throws IOException, JDOMException;
 
     /**
@@ -155,7 +155,7 @@ public interface CoordInputDependency {
      * @param status the status
      * @return true, if is change in dependency
      */
-    public boolean isChangeInDependency(StringBuilder nonExistList, String missingDependencies,
+    boolean isChangeInDependency(StringBuilder nonExistList, String missingDependencies,
             StringBuilder nonResolvedList, boolean status);
 
     /**
@@ -166,7 +166,7 @@ public interface CoordInputDependency {
      * @return true, if successful
      * @throws Exception the exception
      */
-    public boolean checkUnresolved(CoordinatorActionBean coordAction, Element eAction)
+    boolean checkUnresolved(CoordinatorActionBean coordAction, Element eAction)
             throws Exception;
 
 }

@@ -41,6 +41,8 @@ public class JavaMain extends LauncherMain {
         Configuration actionConf = loadActionConf();
 
         setYarnTag(actionConf);
+        setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
+        setApplicationTags(actionConf, SPARK_YARN_TAGS);
 
         LauncherMain.killChildYarnJobs(actionConf);
 

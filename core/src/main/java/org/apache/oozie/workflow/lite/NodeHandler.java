@@ -30,36 +30,36 @@ public abstract class NodeHandler {
 
     public interface Context {
 
-        public NodeDef getNodeDef();
+        NodeDef getNodeDef();
 
-        public String getExecutionPath();
+        String getExecutionPath();
 
-        public String getParentExecutionPath(String executionPath);
+        String getParentExecutionPath(String executionPath);
 
-        public String getSignalValue();
+        String getSignalValue();
 
-        public void setVar(String name, String value);
+        void setVar(String name, String value);
 
-        public String getVar(String name);
+        String getVar(String name);
 
-        public void setTransientVar(String name, Object value);
+        void setTransientVar(String name, Object value);
 
-        public Object getTransientVar(String name);
+        Object getTransientVar(String name);
 
-        public String createExecutionPath(String name);
+        String createExecutionPath(String name);
 
         //can be called only from exit(), creation of execPaths is automatic
         //when a handler returns more than one transition.
-        public void deleteExecutionPath();
+        void deleteExecutionPath();
 
         //must be used by multiExit
-        public String createFullTransition(String executionPath, String transition);
+        String createFullTransition(String executionPath, String transition);
 
-        public void killJob();
+        void killJob();
 
-        public void completeJob();
+        void completeJob();
 
-        public LiteWorkflowInstance getProcessInstance();
+        LiteWorkflowInstance getProcessInstance();
     }
 
     private static final String VISITED = "visited";

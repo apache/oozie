@@ -50,11 +50,15 @@ import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.executor.jpa.BundleActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
+import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
@@ -304,6 +308,36 @@ public class TestRecoveryService extends XDataTestCase {
             e.printStackTrace();
             fail("Expected coord " + mybundleAction.getCoordId() + " to be created");
         }
+    }
+
+    public void testCoordCreateNotifyParentFailed() throws Exception {
+        final BundleActionBean bundleAction;
+        final BundleJobBean bundle;
+        bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        bundleAction = addRecordToBundleActionTable(bundle.getId(), "coord1", 1, Job.Status.PREP);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, new Date(), new Date(),
+                false, false, 1);
+        coordJob.setBundleId(bundle.getId());
+        coordJob.setAppName("coord1");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob);
+
+        assertNull(bundleAction.getCoordId());
+        sleep(3000);
+        Runnable recoveryRunnable = new RecoveryRunnable(0, 1, 1);
+        recoveryRunnable.run();
+
+        waitFor(10000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                BundleActionBean mybundleAction = BundleActionQueryExecutor.getInstance().get(
+                        BundleActionQuery.GET_BUNDLE_ACTION, bundle.getId() + "_coord1");
+                return mybundleAction.getCoordId() != null;
+            }
+        });
+
+        BundleActionBean mybundleAction = BundleActionQueryExecutor.getInstance().get(
+                BundleActionQuery.GET_BUNDLE_ACTION, bundle.getId() + "_coord1");
+        assertNotNull(mybundleAction.getCoordId());
     }
 
     /**
@@ -864,7 +898,6 @@ public class TestRecoveryService extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");

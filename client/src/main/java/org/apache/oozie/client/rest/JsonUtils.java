@@ -35,6 +35,11 @@ import org.json.simple.JSONObject;
  */
 public class JsonUtils {
 
+    /*
+     * GMT is the most commonly used timezone; we can save on parsing and
+     * creating a TimeZone by creating a GMT TimeZone once
+     */
+    private static TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
     /**
      * Format a Date in RFC822 with the given time zone.
      *
@@ -44,7 +49,7 @@ public class JsonUtils {
      */
     public static String formatDateRfc822(Date date, String timeZoneId) {
         if (date != null) {
-            TimeZone tZone = TimeZone.getTimeZone(timeZoneId);
+            TimeZone tZone = "GMT".equals(timeZoneId) ? GMT_TZ : TimeZone.getTimeZone(timeZoneId);
             SimpleDateFormat dateFormater = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
             dateFormater.setTimeZone(tZone);
             return dateFormater.format(date);
@@ -72,7 +77,7 @@ public class JsonUtils {
         if (str != null) {
             try {
                 SimpleDateFormat dateFormater = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-                dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
+                dateFormater.setTimeZone(GMT_TZ);
                 return dateFormater.parse(str);
             }
             catch (ParseException ex) {

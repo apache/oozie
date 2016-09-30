@@ -18,21 +18,15 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
-import org.jdom.JDOMException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DistcpActionExecutor extends JavaActionExecutor{
     public static final String CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS = "org.apache.oozie.action.hadoop.DistcpMain";
@@ -115,17 +109,5 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS);
-    }
-
-    @Override
-    protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
-            throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-        super.getActionData(actionFs, action, context);
-        readExternalChildIDs(action, context);
-    }
-
-    @Override
-    protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
-        return true;
     }
 }

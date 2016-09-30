@@ -56,6 +56,9 @@ public abstract class ActionExecutor {
 
     public static final String ACTION_RETRY_POLICY = CONF_PREFIX + "retry.policy";
 
+    public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
+
+
     /**
      * Error code used by {@link #convertException} when there is not register error information for an exception.
      */
@@ -91,28 +94,28 @@ public abstract class ActionExecutor {
          * @param externalStatusVar variable for the caller to inject the external status.
          * @return the callback URL.
          */
-        public String getCallbackUrl(String externalStatusVar);
+        String getCallbackUrl(String externalStatusVar);
 
         /**
          * Return a proto configuration for actions with auth properties already set.
          *
          * @return a proto configuration for actions with auth properties already set.
          */
-        public Configuration getProtoActionConf();
+        Configuration getProtoActionConf();
 
         /**
          * Return the workflow job.
          *
          * @return the workflow job.
          */
-        public WorkflowJob getWorkflow();
+        WorkflowJob getWorkflow();
 
         /**
          * Return an ELEvaluator with the context injected.
          *
          * @return configured ELEvaluator.
          */
-        public ELEvaluator getELEvaluator();
+        ELEvaluator getELEvaluator();
 
         /**
          * Set a workflow action variable. <p> Convenience method that prefixes the variable name with the action name
@@ -121,7 +124,7 @@ public abstract class ActionExecutor {
          * @param name variable name.
          * @param value variable value, <code>null</code> removes the variable.
          */
-        public void setVar(String name, String value);
+        void setVar(String name, String value);
 
         /**
          * Get a workflow action variable. <p> Convenience method that prefixes the variable name with the action name
@@ -130,7 +133,7 @@ public abstract class ActionExecutor {
          * @param name variable name.
          * @return the variable value, <code>null</code> if not set.
          */
-        public String getVar(String name);
+        String getVar(String name);
 
         /**
          * Set the action tracking information for an successfully started action.
@@ -200,7 +203,7 @@ public abstract class ActionExecutor {
          * @return the path that will be used to store action specific data
          * @throws IOException @throws URISyntaxException @throws HadoopAccessorException
          */
-        public Path getActionDir() throws HadoopAccessorException, IOException, URISyntaxException;
+        Path getActionDir() throws HadoopAccessorException, IOException, URISyntaxException;
 
         /**
          * @return filesystem handle for the application deployment fs.
@@ -208,9 +211,9 @@ public abstract class ActionExecutor {
          * @throws URISyntaxException
          * @throws HadoopAccessorException
          */
-        public FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException;
+        FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException;
 
-        public void setErrorInfo(String str, String exMsg);
+        void setErrorInfo(String str, String exMsg);
     }
 
 
@@ -326,7 +329,7 @@ public abstract class ActionExecutor {
     /**
      * Register error handling information for an exception.
      *
-     * @param exClass excpetion class name (to work in case of a particular exception not being in the classpath, needed
+     * @param exClass exception class name (to work in case of a particular exception not being in the classpath, needed
      * to be able to handle multiple version of Hadoop  or other JARs used by executors with the same codebase).
      * @param errorType error type for the exception.
      * @param errorCode error code for the exception.
@@ -580,5 +583,28 @@ public abstract class ActionExecutor {
      */
     public boolean supportsConfigurationJobXML() {
         return false;
+    }
+
+    /**
+     * Creating and forwarding the tag, It will be useful during repeat attempts of Launcher, to ensure only
+     * one child job is running. Tag is formed as follows:
+     * For workflow job, tag = action-id
+     * For Coord job, tag = coord-action-id@action-name (if not part of sub flow), else
+     * coord-action-id@subflow-action-name@action-name.
+     * @param conf the conf
+     * @param wfJob the wf job
+     * @param action the action
+     * @return the action yarn tag
+     */
+    public String getActionYarnTag(Configuration conf, WorkflowJob wfJob, WorkflowAction action) {
+        if (conf.get(OOZIE_ACTION_YARN_TAG) != null) {
+            return conf.get(OOZIE_ACTION_YARN_TAG) + "@" + action.getName();
+        }
+        else if (wfJob.getParentId() != null) {
+            return wfJob.getParentId() + "@" + action.getName();
+        }
+        else {
+            return action.getId();
+        }
     }
 }

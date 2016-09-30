@@ -381,6 +381,7 @@ public class FsActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         URI uri = path.toUri();
         URIHandler handler;
+        org.apache.oozie.dependency.URIHandler.Context hcatContext = null;
         try {
             handler = Services.get().get(URIHandlerService.class).getURIHandler(uri);
             if (handler instanceof FSURIHandler) {
@@ -416,11 +417,17 @@ public class FsActionExecutor extends ActionExecutor {
                     }
                 }
             } else {
-                handler.delete(uri, handler.getContext(uri, fsConf, context.getWorkflow().getUser(), false));
+                hcatContext = handler.getContext(uri, fsConf, context.getWorkflow().getUser(), false);
+                handler.delete(uri, hcatContext);
             }
         }
         catch (Exception ex) {
             throw convertException(ex);
+        }
+        finally{
+            if (hcatContext != null) {
+                hcatContext.destroy();
+            }
         }
     }
 

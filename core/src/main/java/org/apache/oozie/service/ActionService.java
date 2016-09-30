@@ -138,6 +138,11 @@ public class ActionService implements Service, Instrumentable {
         return (executorClass != null) ? (ActionExecutor) ReflectionUtils.newInstance(executorClass, null) : null;
     }
 
+    public boolean hasActionType(String actionType) {
+        ParamChecker.notEmpty(actionType, "actionType");
+        return executors.containsKey(actionType);
+    }
+
     Set<String> getActionTypes() {
         return executors.keySet();
     }

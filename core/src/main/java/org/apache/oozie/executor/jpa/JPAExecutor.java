@@ -32,7 +32,7 @@ public interface JPAExecutor<T> {
      *
      * @return the name of the JPA executor.
      */
-    public String getName();
+    String getName();
 
     /**
      * Method that encapsulates JPA access operations.
@@ -45,6 +45,6 @@ public interface JPAExecutor<T> {
      * @return a return value if any.
      * @throws JPAExecutorException thrown if a jpa executor failed
      */
-    public T execute(EntityManager em) throws JPAExecutorException;
+    T execute(EntityManager em) throws JPAExecutorException;
 
 }

@@ -38,8 +38,9 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.PauseTransitService.PauseTransitRunnable;
+import org.apache.oozie.service.SchedulerService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 
@@ -51,6 +52,7 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         super.setUp();
         services = new Services();
         services.init();
+        services.get(SchedulerService.class).destroy();
     }
 
     @Override
@@ -403,4 +405,5 @@ public class TestBundleChangeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.RUNNING, action3.getStatus());
         assertEquals(action3.getPending(), 1);
     }
+
 }

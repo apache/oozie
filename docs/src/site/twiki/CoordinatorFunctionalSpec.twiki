@@ -3167,6 +3167,155 @@ will be the number of milliseconds since the epoch.
 For example, if timeStamp is '2009-01-01T00:00Z' and millis is 'false', the returned date string will be '1230768000'. If millis
 is 'true', the returned date string will be '1230768000000'.
 
+---+++ 6.10. Conditional coordinator input logic
+By default, all input dependencies are "AND", which means all dependencies has to be available before the action starts running.
+
+With conditional input logic, one should able to specify conditional operations among multiple datasets.
+
+Supported operators are OR, AND, COMBINE. OR and AND operators are nested, one can form multiple nested expressions using them.
+   * OR: Logical OR, where an expression will evaluate to true if one of the datasets is available.
+   * AND: Logical AND, where an expression will evaluate to true when all of the datasets are available.
+   * COMBINE :  With combine, instances of A and B can be interleaved to get the final "combined" set of total instances. All datasets in combine should have the same range defined with the current EL function. Combine does not support latest and future EL functions. Combine cannot also be nested.
+
+Additional options
+   * *%BLUE% MIN: %ENDCOLOR%* Minimum number of input instances that should be available.
+   * *%BLUE% WAIT (in minutes): %ENDCOLOR%* If all dependencies are not met, and MIN dependencies are met,  then Oozie will keep on waiting for more instances till wait time elapses or all dependent data are available.
+
+
+The conditional logic can be specified using the <input-logic> tag in the coordinator.xml using the [[CoordinatorFunctionalSpec#Oozie_Coordinator_Schema_0.5][Oozie Coordinator Schema 0.5]] and above. If not specified, the default behavior of "AND" of all defined input dependencies is applied.
+
+Order of definition of the dataset matters. Availability of inputs is checked in that order. Only if input instances of the first dataset is not available, then the input instances of the second dataset will be checked and so on. In the case of AND or OR, the second dataset is picked only if the first dataset does not meet all the input dependencies first. In the case of COMBINE, only the input instances missing on the first dataset are checked for availability on the other datasets in order and then included.
+
+coord:dataIn() function can be used to get the comma separated list of evaluated hdfs paths given the name of the conditional operator.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <or name="AorB">
+        <data-in dataset="A"/>
+        <data-in dataset="B"/>
+    </or>
+</input-logic>
+</verbatim>
+With above expression one can specify the dataset as AorB. Action will start running as soon dataset A or B is available. Dataset "A" has higher precedence over "B" because it is defined first. Oozie will first check for availability of dataset A and only if A is not available, availability of dataset B will be checked.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<datasets>
+       <dataset name="dataset_a" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
+            <uri-template>${nameNode}/user/${coord:user()}/${examplesRoot}/input-data/rawLogs/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}</uri-template>
+       </dataset>
+       <dataset name="dataset_b" frequency="${coord:minutes(20)}" initial-instance="2010-01-01T00:00Z" timezone="UTC">
+            <uri-template>${nameNode}/user/${coord:user()}/${examplesRoot}/input-data/rawLogs-2/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}</uri-template>
+       </dataset>
+</datasets>
+<data-in name="A" dataset="dataset_a">
+       <start-instance>${coord:current(-5)}</start-instance>
+       <end-instance>${coord:current(-1)}</end-instance>
+</data-in>
+<data-in name="B" dataset="dataset_b">
+       <start-instance>${coord:current(-5)}</start-instance>
+       <end-instance>${coord:current(-1)}</end-instance>
+</data-in>
+<input-logic>
+    <or>
+        <and name="AorB">
+              <data-in dataset="A"/>
+              <data-in dataset="B"/>
+        </and>
+        <and name="CorD">
+              <data-in dataset="C"/>
+              <data-in dataset="D"/>
+        </and>
+    </or>
+</input-logic>
+</verbatim>
+Action will start running as soon as dependency A and B or C and D are available.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+       <combine name="AorB">
+            <data-in dataset="A"/>
+            <data-in dataset="B"/>
+       </combine>
+</input-logic>
+</verbatim>
+Combine function will first check instances from A and whatever is missing it will check from B.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <data-in dataset="A" min=2/>
+</input-logic>
+</verbatim>
+Action will start running if available dependencies >= 2.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <or name="AorB" min=2>
+         <data-in dataset="A"/>
+         <data-in dataset="B"/>
+    </or>
+</input-logic>
+</verbatim>
+Action will start running if A has available dependencies >= 2 or B has available dependencies >= 2
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <or name="AorB" min="2">
+        <data-in dataset="A" wait="10"/>
+        <data-in dataset="B"/>
+    </or>
+</input-logic>
+</verbatim>
+After the mininum two dependencies are available, processing will wait for additional 10 minutes to include any dependencies that become available during that period.
+
+<verbatim>
+<input-logic>
+    <or name="AorB" min="5" wait="10">
+        <data-in dataset="A"/>
+        <data-in dataset="B"/>
+    </or>
+</input-logic>
+</verbatim>
+MIN and WAIT can be used at parent level, which will get propagated to child node. Above expression is equivalent to dataset A with min = 2 and wait = 10 minutes and dataset B with min = 2 and wait = 10 minutes.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <or>
+         <and name="AorB">
+              <data-in dataset="A"/>
+              <data-in dataset="B"/>
+         </and>
+         <and name="CorD">
+              <data-in dataset="C"/>
+              <data-in dataset="D"/>
+         </and>
+    </or>
+</input-logic>
+<action>
+        <workflow>
+            <app-path>hdfs:///tmp/workflows</app-path>
+            <configuration>
+            <property>
+                    <name>inputCheckDataAorB</name>
+                    <value>${coord:dataIn(AorB)}</value>
+            </property>
+            <property>
+                    <name>inputCheckDataCorD</name>
+                    <value>${coord:dataIn(CorD)}</value>
+            </property>
+            </configuration>
+        </workflow>
+</action>
+</verbatim>
+Each nested operation can be named and passed into the workflow using coord:dataIn().
+
+
 ---++ 7. Handling Timezones and Daylight Saving Time
 
 As mentioned in section #4.1.1 'Timezones and Daylight-Saving', the coordinator engine works exclusively in UTC, and dataset and application definitions are always expressed in UTC.
@@ -3598,6 +3747,188 @@ the notification:
 ---++ Appendixes
 
 ---+++ Appendix A, Oozie Coordinator XML-Schema
+
+
+---++++ Oozie Coordinator Schema 0.5
+
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:coordinator="uri:oozie:coordinator:0.5"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:coordinator:0.5">
+
+    <xs:element name="coordinator-app" type="coordinator:COORDINATOR-APP"/>
+    <xs:element name="datasets" type="coordinator:DATASETS"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="COORDINATOR-APP">
+        <xs:sequence>
+            <xs:element name="parameters" type="coordinator:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="controls" type="coordinator:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="datasets" type="coordinator:DATASETS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="input-events" type="coordinator:INPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="input-logic" type="coordinator:INPUTLOGIC" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="output-events" type="coordinator:OUTPUTEVENTS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="action" type="coordinator:ACTION" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="start" type="xs:string" use="required"/>
+        <xs:attribute name="end" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="timeout" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="concurrency" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="execution" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="throttle" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATASETS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="include" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="dataset" type="coordinator:SYNCDATASET" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="async-dataset" type="coordinator:ASYNCDATASET" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SYNCDATASET">
+        <xs:sequence>
+            <xs:element name="uri-template" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="done-flag" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="frequency" type="xs:string" use="required"/>
+        <xs:attribute name="initial-instance" type="xs:string" use="required"/>
+        <xs:attribute name="timezone" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ASYNCDATASET">
+        <xs:sequence>
+            <xs:element name="uri-template" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="sequence-type" type="xs:string" use="required"/>
+        <xs:attribute name="initial-version" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="INPUTEVENTS">
+        <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element name="and" type="coordinator:LOGICALAND" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="or" type="coordinator:LOGICALOR" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="data-in" type="coordinator:DATAIN" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="INPUTLOGIC">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="and" type="coordinator:LOGICALAND" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="or" type="coordinator:LOGICALOR" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="combine" type="coordinator:COMBINE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="data-in" type="coordinator:LOGICALDATAIN" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="LOGICALAND">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="and" type="coordinator:LOGICALAND" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="or" type="coordinator:LOGICALOR" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="data-in" type="coordinator:LOGICALDATAIN" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="combine" type="coordinator:COMBINE" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:choice>
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="min" type="xs:string" use="optional"/>
+        <xs:attribute name="wait" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="LOGICALOR">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="and" type="coordinator:LOGICALAND" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="or" type="coordinator:LOGICALOR" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="data-in" type="coordinator:LOGICALDATAIN" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="combine" type="coordinator:COMBINE" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:choice>
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="min" type="xs:string" use="optional"/>
+        <xs:attribute name="wait" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="COMBINE">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="data-in" type="coordinator:LOGICALDATAIN" minOccurs="2" maxOccurs="unbounded"/>
+        </xs:choice>
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="min" type="xs:string" use="optional"/>
+        <xs:attribute name="wait" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="LOGICALDATAIN">
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="min" type="xs:string" use="optional"/>
+        <xs:attribute name="wait" type="xs:string" use="optional"/>
+        <xs:attribute name="dataset" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="DATAIN">
+        <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:element name="start-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="end-instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:choice>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="OUTPUTEVENTS">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="data-out" type="coordinator:DATAOUT" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DATAOUT">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="instance" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="coordinator:IDENTIFIER" use="required"/>
+        <xs:attribute name="dataset" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ACTION">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="workflow" type="coordinator:WORKFLOW" minOccurs="1" maxOccurs="1"/>
+            <xs:any namespace="uri:oozie:sla:0.1 uri:oozie:sla:0.2" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="WORKFLOW">
+        <xs:sequence>
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="coordinator:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FLAG"/>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+</verbatim>
 
 ---++++ Oozie Coordinator Schema 0.4
 

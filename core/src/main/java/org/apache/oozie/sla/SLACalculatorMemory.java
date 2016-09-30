@@ -237,8 +237,19 @@ public class SLACalculatorMemory implements SLACalculator {
         }
         synchronized (slaCalc) {
             // get eventProcessed on DB for validation in HA
-            SLASummaryBean summaryBean = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance()).get(
+            SLASummaryBean summaryBean = null;
+            try {
+                summaryBean = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance()).get(
                     SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED, jobId);
+            }
+            catch (JPAExecutorException e) {
+                if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
+                    LOG.debug("job [{0}] is is not in DB, removing from Memory", jobId);
+                    slaMap.remove(jobId);
+                    return;
+                }
+                throw e;
+            }
             byte eventProc = summaryBean.getEventProcessed();
             slaCalc.setEventProcessed(eventProc);
             if (eventProc >= 7) {

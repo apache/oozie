@@ -27,18 +27,23 @@ function printUsage() {
   echo "                                                                FS_URI is the fs.default.name"
   echo "                                                                for hdfs uri; SHARED_LIBRARY, path to the"
   echo "                                                                Oozie sharelib to install, it can be a tarball"
-  echo "                                                                or an expanded version of it. If ommited,"
+  echo "                                                                or an expanded version of it. If omitted,"
   echo "                                                                the Oozie sharelib tarball from the Oozie"
   echo "                                                                installation directory will be used."
   echo "                                                                CONCURRENCY is a number of threads to be used"
   echo "                                                                for copy operations."
   echo "                                                                By default 1 thread will be used)"
-  echo "                                                                (action failes if sharelib is already installed"
+  echo "                                                                (action fails if sharelib is already installed"
   echo "                                                                in HDFS)"
-  echo "          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] (upgrade existing sharelib, fails if there"
+  echo "          sharelib upgrade -fs FS_URI [-locallib SHARED_LIBRARY] ([deprecated][use create command to create new version]"
+  echo "                                                                  upgrade existing sharelib, fails if there"
   echo "                                                                  is no existing sharelib installed in HDFS)"
   echo "          db create|upgrade|postupgrade -run [-sqlfile <FILE>] (create, upgrade or postupgrade oozie db with an"
   echo "                                                                optional sql File)"
+  echo "          export <file>                                         exports the oozie database to the specified"
+  echo "                                                                file in zip format"
+  echo "          import <file>                                         imports the oozie database from the zip file"
+  echo "                                                                created by export"
   echo "          (without options prints this usage information)"
   echo
   echo " EXTJS can be downloaded from http://www.extjs.com/learn/Ext_Version_Archives"
@@ -130,7 +135,7 @@ secureConfigsDir="${CATALINA_BASE}/conf/ssl"
 
 while [ $# -gt 0 ]
 do
-  if [ "$1" = "sharelib" ] || [ "$1" = "db" ]; then
+  if [ "$1" = "sharelib" ] || [ "$1" = "db" ] || [ "$1" = "export" ] || [ "$1" = "import" ]; then
     OOZIE_OPTS="-Doozie.home.dir=${OOZIE_HOME}";
     OOZIE_OPTS="${OOZIE_OPTS} -Doozie.config.dir=${OOZIE_CONFIG}";
     OOZIE_OPTS="${OOZIE_OPTS} -Doozie.log.dir=${OOZIE_LOG}";
@@ -158,9 +163,13 @@ do
     if [ "$1" = "sharelib" ]; then
       shift
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieSharelibCLI "${@}"
-    else
+    elif [ "$1" = "db" ]; then
       shift
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBCLI "${@}"
+    elif [ "$1" = "export" ]; then
+      ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBExportCLI "${@}"
+    elif [ "$1" = "import" ]; then
+      ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBImportCLI "${@}"
     fi
     exit $?
   elif [ "$1" = "-secure" ]; then
@@ -216,13 +225,6 @@ else
     if [ -f "${libext}/ext-2.2.zip" ]; then
       extjsHome=${libext}/ext-2.2.zip
       addExtjs=true
-    fi
-  # find war files (e.g., workflowgenerator) under /libext and deploy
-    if [ `ls ${libext} | grep \.war\$ | wc -c` != 0 ]; then
-      for i in "${libext}/"*.war; do
-        echo "INFO: Deploying extention: $i"
-        cp $i ${CATALINA_BASE}/webapps/
-      done
     fi
   fi
 

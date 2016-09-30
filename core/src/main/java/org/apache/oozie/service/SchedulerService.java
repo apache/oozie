@@ -18,14 +18,15 @@
 
 package org.apache.oozie.service;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.util.XLog;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.util.NamedThreadFactory;
+import org.apache.oozie.util.XLog;
 
 /**
  * This service executes scheduled Runnables and Callables at regular intervals. <p> It uses a
@@ -49,7 +50,7 @@ public class SchedulerService implements Service {
      */
     @Override
     public void init(Services services) {
-        scheduler = new ScheduledThreadPoolExecutor(getSchedulableThreads(services.getConf()));
+        scheduler = new ScheduledThreadPoolExecutor(getSchedulableThreads(services.getConf()), new NamedThreadFactory("Scheduler"));
     }
 
     /**

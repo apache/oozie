@@ -52,11 +52,6 @@ public class HadoopELFunctions {
         Map<String, Map<String, Long>> counters = (Map<String, Map<String, Long>>) obj;
         if (counters == null) {
             counters = getCounters(nodeName);
-            // In Hadoop 0.23 they deprecated 'org.apache.hadoop.mapred.Task$Counter' and they REMOVED IT
-            // Here we are getting the new Name and inserting it using the old name if the old name is not found
-            if (counters.get(RECORDS) == null) {
-                counters.put(RECORDS, counters.get(RECORDS_023));
-            }
             instance.setTransientVar(nodeName + WorkflowInstance.NODE_VAR_SEPARATOR + HADOOP_COUNTERS, counters);
         }
         return counters;

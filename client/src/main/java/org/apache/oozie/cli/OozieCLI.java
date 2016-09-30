@@ -455,9 +455,10 @@ public class OozieCLI {
         Option len = new Option(LEN_OPTION, true, "number of jobs (default '100')");
         Option filter = new Option(FILTER_OPTION, true,
                 "user=<U>\\;name=<N>\\;group=<G>\\;status=<S>\\;frequency=<F>\\;unit=<M>" +
-                        "\\;startcreatedtime=<SC>\\;endcreatedtime=<EC> " +
+                        "\\;startcreatedtime=<SC>\\;endcreatedtime=<EC> \\;sortBy=<SB>" +
                         "(valid unit values are 'months', 'days', 'hours' or 'minutes'. " +
-                        "startcreatedtime, endcreatedtime: time of format yyyy-MM-dd'T'HH:mm'Z')");
+                        "startcreatedtime, endcreatedtime: time of format yyyy-MM-dd'T'HH:mm'Z'. " +
+                        "valid values for sortBy are 'createdTime' or 'lastModifiedTime'.)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
         Option kill = new Option(KILL_OPTION, false, "bulk kill operation");

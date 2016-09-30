@@ -423,7 +423,7 @@ public class SLASummaryBean implements JsonBean {
         }
         json.put(JsonTags.SLA_SUMMARY_EXPECTED_DURATION, expectedDuration);
         if (actualDuration == -1 && expectedDuration != -1 && actualStartTS != null) {
-            long currentDur = (new Date().getTime() - actualStartTS.getTime()) / (1000 * 60);
+            long currentDur = new Date().getTime() - actualStartTS.getTime();
             json.put(JsonTags.SLA_SUMMARY_ACTUAL_DURATION, currentDur);
         }
         else {
@@ -432,7 +432,7 @@ public class SLASummaryBean implements JsonBean {
         Long durationDelay = eventMap.get(EventStatus.DURATION_MET) != null ? eventMap.get(EventStatus.DURATION_MET)
                 : eventMap.get(EventStatus.DURATION_MISS);
         if (durationDelay != null) {
-            json.put(JsonTags.SLA_SUMMARY_DURATION_DELAY, durationDelay);
+            json.put(JsonTags.SLA_SUMMARY_DURATION_DELAY, durationDelay / (1000 * 60));
         }
         json.put(JsonTags.SLA_SUMMARY_JOB_STATUS, jobStatus);
         json.put(JsonTags.SLA_SUMMARY_SLA_STATUS, slaStatus);
@@ -482,9 +482,9 @@ public class SLASummaryBean implements JsonBean {
             }
             else {
                 if (actualStartTS != null) {
-                    long currentDur = (new Date().getTime() - actualStartTS.getTime()) / (1000 * 60);
+                    long currentDur = new Date().getTime() - actualStartTS.getTime();
                     if (expectedDuration < currentDur) {
-                        events.put(EventStatus.DURATION_MISS, (currentDur - expectedDuration));
+                        events.put(EventStatus.DURATION_MISS, currentDur - expectedDuration);
                     }
                 }
             }

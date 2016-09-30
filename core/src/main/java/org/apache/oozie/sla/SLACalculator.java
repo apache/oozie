@@ -103,6 +103,6 @@ public interface SLACalculator {
      * @throws JPAExecutorException the JPA executor exception
      * @throws ServiceException the service exception
      */
-    public boolean changeDefinition(List<Pair<String, Map<String,String>>> jobIdsSLAPair ) throws JPAExecutorException,
+    boolean changeDefinition(List<Pair<String, Map<String,String>>> jobIdsSLAPair ) throws JPAExecutorException,
             ServiceException;
 }

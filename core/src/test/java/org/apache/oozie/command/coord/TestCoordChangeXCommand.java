@@ -46,6 +46,7 @@ import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
@@ -90,6 +91,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         services = new Services();
         services.init();
         services.setService(FakeCallableQueueService.class);
+        services.get(SchedulerService.class).destroy();
     }
 
     @Override
@@ -594,6 +596,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
         services = new Services();
         services.init();
+        services.get(SchedulerService.class).destroy();
         Date startTime = new Date();
         Date endTime = new Date(startTime.getTime() + (20 * 60 * 1000));
 

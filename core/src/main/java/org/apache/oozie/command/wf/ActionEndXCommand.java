@@ -216,7 +216,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                         shouldHandleUserRetry = true;
                         break;
                 }
-                if (!shouldHandleUserRetry || !handleUserRetry(wfAction)) {
+                if (!shouldHandleUserRetry || !handleUserRetry(wfAction, wfJob)) {
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
                     if(slaEvent != null) {
                         insertList.add(slaEvent);

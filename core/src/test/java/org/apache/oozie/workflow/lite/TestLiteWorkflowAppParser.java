@@ -20,27 +20,20 @@ package org.apache.oozie.workflow.lite;
 
 
 import java.io.StringReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.oozie.service.ActionService;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.TestLiteWorkflowAppService;
+import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
-import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.action.hadoop.DistcpActionExecutor;
-import org.apache.oozie.action.hadoop.HiveActionExecutor;
-import org.apache.hadoop.conf.Configuration;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
     public static String dummyConf = "<java></java>";
@@ -398,7 +391,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         // No default NN is set
         try {
-            LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
                     new Configuration());
             fail();
         } catch (WorkflowException e) {
@@ -500,7 +493,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
         // No default NN is set
         try {
-            LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
+            parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
                     new Configuration());
             fail();
         } catch (WorkflowException e) {
@@ -779,8 +772,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0737, we.getErrorCode());
             // Make sure the message contains the nodes involved in the invalid transition to end
             assertTrue(we.getMessage().contains("node [three]"));
@@ -825,8 +817,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0742, we.getErrorCode());
             assertTrue(we.getMessage().contains("[j2]"));
         }
@@ -860,13 +851,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0743, we.getErrorCode());
             // Make sure the message contains the node involved in the invalid transition
             assertTrue(we.getMessage().contains("three"));
         }
-
     }
 
     /*
@@ -1116,8 +1105,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0743, we.getErrorCode());
             // Make sure the message contains the node involved in the invalid transition
             assertTrue(we.getMessage().contains("three"));
@@ -1154,8 +1142,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0737, we.getErrorCode());
             // Make sure the message contains the nodes involved in the invalid transition to end
             assertTrue(we.getMessage().contains("node [two]"));
@@ -1269,8 +1256,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0743, we.getErrorCode());
             // Make sure the message contains the node involved in the invalid transition
             assertTrue(we.getMessage().contains("four"));
@@ -1313,8 +1299,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0743, we.getErrorCode());
             // Make sure the message contains the node involved in the invalid transition
             assertTrue(we.getMessage().contains("four"));
@@ -1390,12 +1375,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
-            assertEquals(ErrorCode.E0732, we.getErrorCode());
-            assertTrue(we.getMessage().contains("Fork [f]"));
-            assertTrue(we.getMessage().contains("Join [j1]") && we.getMessage().contains("been [j2]")
-                    || we.getMessage().contains("Join [j2]") && we.getMessage().contains("been [j1]"));
+        } catch (WorkflowException we) {
+            assertEquals(ErrorCode.E0757, we.getErrorCode());
+            assertTrue(we.getMessage().contains("Fork node [f]"));
+            assertTrue(we.getMessage().contains("[j2,j1]"));
         }
     }
 
@@ -1424,29 +1407,54 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         try {
             invokeForkJoin(parser, def);
             fail("Expected to catch an exception but did not encounter any");
-        } catch (Exception ex) {
-            WorkflowException we = (WorkflowException) ex.getCause();
+        } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0744, we.getErrorCode());
             assertTrue(we.getMessage().contains("fork, [f],"));
             assertTrue(we.getMessage().contains("node, [two]"));
         }
     }
 
-    // Invoke private validateForkJoin method using Reflection API
-    private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws Exception {
-        Class<? extends LiteWorkflowAppParser> c = parser.getClass();
-        Class<?> d = Class.forName("org.apache.oozie.workflow.lite.LiteWorkflowAppParser$VisitStatus");
-        Field f = d.getField("VISITING");
-        Map traversed = new HashMap();
-        traversed.put(def.getNode(StartNodeDef.START).getName(), f);
-        Method validate = c.getDeclaredMethod("validate", LiteWorkflowApp.class, NodeDef.class, Map.class);
-        validate.setAccessible(true);
-        // invoke validate method to populate the fork and join list
-        validate.invoke(parser, def, def.getNode(StartNodeDef.START), traversed);
-        Method validateForkJoin = c.getDeclaredMethod("validateForkJoin", LiteWorkflowApp.class);
-        validateForkJoin.setAccessible(true);
-        // invoke validateForkJoin
-        validateForkJoin.invoke(parser, def);
+    @SuppressWarnings("deprecation")
+    public void testForkJoinValidationTime() throws Exception {
+        final LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        final LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-long.xml", -1),
+                new Configuration());
+
+        final AtomicBoolean failure = new AtomicBoolean(false);
+        final AtomicBoolean finished = new AtomicBoolean(false);
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    invokeForkJoin(parser, app);
+                    finished.set(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    failure.set(true);
+                }
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
+        t.join((long) (2000 * XTestCase.WAITFOR_RATIO));
+
+        if (!finished.get()) {
+            t.stop();  // don't let the validation keep running in the background which causes high CPU load
+            fail("Workflow validation did not finish in time");
+        }
+
+        assertFalse("Workflow validation failed", failure.get());
+    }
+
+    private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws WorkflowException {
+        LiteWorkflowValidator validator = new LiteWorkflowValidator();
+        validator.validateWorkflow(def, true);
     }
 
     // If Xerces 2.10.0 is not explicitly listed as a dependency in the poms, then Java will revert to an older version that has

@@ -63,8 +63,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho HADOOP_CONF_DIR=%HADOOP_CONF_DIR%\n"
             : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho HADOOP_CONF_DIR=$HADOOP_CONF_DIR\n";
     private static final String SHELL_SCRIPT_YARN_CONF_DIR_CONTENT = Shell.WINDOWS
-            ? "echo OOZIE_ACTION_CONF_XML=%OOZIE_ACTION_CONF_XML%\necho YARN_CONF_DIR=%YARN_CONF_DIR%\n"
-            : "echo OOZIE_ACTION_CONF_XML=$OOZIE_ACTION_CONF_XML\necho YARN_CONF_DIR=$YARN_CONF_DIR\n";
+            ? "echo YARN_CONF_DIR=%YARN_CONF_DIR%\n"
+            : "echo YARN_CONF_DIR=$YARN_CONF_DIR\n";
+    private static final String SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER = Shell.WINDOWS
+            ? "IF EXIST %HADOOP_CONF_DIR%\\log4j.properties echo L4J_EXISTS=yes\n"
+            : "if [ -f $HADOOP_CONF_DIR/log4j.properties ]; then echo L4J_EXISTS=yes; fi\n";
+    private static final String SHELL_SCRIPT_LOG4J_CONTENT_COUNTER = Shell.WINDOWS
+            ? "SET COMMAND=\"type %HADOOP_CONF_DIR%\\log4j.properties | FIND /c /v \"~DOESNOTMATCH~\"\"\n" +
+              "FOR /f %%i IN (' %COMMAND% ') DO SET L4J_LC=%%i\necho L4J_WC=%L4J_LC%\n"
+            : "echo L4J_LC=$(cat $HADOOP_CONF_DIR/log4j.properties | wc -l)\n";
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
@@ -94,7 +101,12 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertEquals("2", conf.get("oozie.shell.args.size"));
         assertEquals("a=A", conf.get("oozie.shell.args.0"));
         assertEquals("b=B", conf.get("oozie.shell.args.1"));
-        assertEquals("false", conf.get("oozie.action.shell.setup.hadoop.conf.dir"));
+        assertEquals("Expected HADOOP_CONF_DIR setup switch to be disabled",
+                "false", conf.get("oozie.action.shell.setup.hadoop.conf.dir"));
+        assertEquals("Expected log4j.properties write switch to be enabled",
+                "true", conf.get("oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties"));
+        assertNotNull("Expected a default config to exist for log4j.properties",
+                conf.get("oozie.action.shell.setup.hadoop.conf.dir.log4j.content"));
     }
 
     /**
@@ -121,7 +133,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     }
 
     /**
-     * test if a sample shell script could run successfully
+     * Test if a shell script could run successfully with {@link ShellMain#CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} enabled.
      *
      * @throws Exception
      */
@@ -132,6 +144,8 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         Writer w = new OutputStreamWriter(fs.create(script));
         w.write(SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT);
         w.write(SHELL_SCRIPT_YARN_CONF_DIR_CONTENT);
+        w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
+        w.write(SHELL_SCRIPT_LOG4J_CONTENT_COUNTER);
         w.close();
 
         // Create sample Shell action xml
@@ -146,11 +160,52 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         String oozieActionConfXml = PropertiesUtils.stringToProperties(action.getData()).getProperty("OOZIE_ACTION_CONF_XML");
         String hadoopConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("HADOOP_CONF_DIR");
         String yarnConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("YARN_CONF_DIR");
+        String log4jExists = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_EXISTS");
+        String log4jFileLineCount = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_LC");
         assertNotNull(oozieActionConfXml);
         assertNotNull(hadoopConfDir);
         String s = new File(oozieActionConfXml).getParent() + File.separator + "oozie-hadoop-conf-";
-        Assert.assertTrue("Expected HADOOP_CONF_DIR to start with " + s + " but was " + hadoopConfDir, hadoopConfDir.startsWith(s));
-        Assert.assertTrue("Expected YARN_CONF_DIR to start with " + s + " but was " + yarnConfDir, yarnConfDir.startsWith(s));
+        Assert.assertTrue(
+                "Expected HADOOP_CONF_DIR to start with " + s + " but was " + hadoopConfDir,
+                hadoopConfDir.startsWith(s));
+        Assert.assertTrue(
+                "Expected YARN_CONF_DIR to start with " + s + " but was " + yarnConfDir,
+                yarnConfDir.startsWith(s));
+        Assert.assertEquals(
+                "Expected log4j.properties file to exist", log4jExists, "yes");
+        Assert.assertTrue(
+                "Expected log4j.properties to have non-zero line count, but has: " + log4jFileLineCount,
+                Integer.parseInt(log4jFileLineCount) > 0);
+    }
+
+    /**
+     * Test if a shell script could run successfully with {@link ShellMain#CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} enabled.
+     * Run with {@link ShellMain#CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES} disabled.
+     *
+     * @throws Exception
+     */
+    public void testShellScriptHadoopConfDirWithNoL4J() throws Exception {
+        FileSystem fs = getFileSystem();
+        // Create the script file with canned shell command
+        Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
+        Writer w = new OutputStreamWriter(fs.create(script));
+        w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
+        w.close();
+
+        // Create sample Shell action xml
+        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>" + "<configuration>"
+                + "<property><name>oozie.action.shell.setup.hadoop.conf.dir</name><value>true</value></property>"
+                + "<property><name>oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties"
+                + "</name><value>false</value></property>"
+                + "</configuration>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
+                + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<file>" + script.toString()
+                + "#" + script.getName() + "</file>" + "<capture-output/>" + "</shell>";
+        // Submit and verify the job's status
+        WorkflowAction action = _testSubmit(actionXml, true, "");
+        String log4jExists = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_EXISTS");
+        Assert.assertNull(
+                "Expected no log4j.properties file to exist", log4jExists);
     }
 
     /**

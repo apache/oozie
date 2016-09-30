@@ -894,7 +894,34 @@ public class TestShareLibService extends XFsTestCase {
             actionConf = ae.createBaseHadoopConf(context, eActionXml);
             prop.put("oozie.hive_conf", "hdfs:///user/test/" + sharelibPath + "/hive-site.xml#hive-site.xml");
             setupSharelibConf("hive-site.xml", "oozie.hive_conf", prop);
-            jobConf.set("oozie.action.sharelib.for.hive", "hive_conf,linkFile");
+            jobConf.set("oozie.action.sharelib.for.hive", "hive_conf");
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+            assertEquals(jobConf.get("oozie.hive_conf-sharelib-test"), "test");
+            cacheFiles = DistributedCache.getCacheFiles(actionConf);
+            cacheFilesStr = Arrays.toString(cacheFiles);
+            assertFalse(cacheFilesStr.contains("hive-site.xml"));
+
+            // Test hive-site.xml property in jobconf with non hdfs path
+            prop = new Properties();
+            jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            actionConf = ae.createBaseHadoopConf(context, eActionXml);
+            prop.put("oozie.hive_conf", "/user/test/" + sharelibPath + "/hive-site.xml");
+            setupSharelibConf("hive-site.xml", "oozie.hive_conf", prop);
+            jobConf.set("oozie.action.sharelib.for.hive", "hive_conf");
+            ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
+            assertEquals(jobConf.get("oozie.hive_conf-sharelib-test"), "test");
+            cacheFiles = DistributedCache.getCacheFiles(actionConf);
+            cacheFilesStr = Arrays.toString(cacheFiles);
+            assertFalse(cacheFilesStr.contains("hive-site.xml"));
+
+            // Test hive-site.xml property in jobconf with non hdfs path with
+            // link name
+            prop = new Properties();
+            jobConf = ae.createBaseHadoopConf(context, eActionXml);
+            actionConf = ae.createBaseHadoopConf(context, eActionXml);
+            prop.put("oozie.hive_conf", "/user/test/" + sharelibPath + "/hive-site.xml#hive-site.xml");
+            setupSharelibConf("hive-site.xml", "oozie.hive_conf", prop);
+            jobConf.set("oozie.action.sharelib.for.hive", "hive_conf");
             ae.setLibFilesArchives(context, eActionXml, new Path("hdfs://dummyAppPath"), jobConf);
             assertEquals(jobConf.get("oozie.hive_conf-sharelib-test"), "test");
             cacheFiles = DistributedCache.getCacheFiles(actionConf);

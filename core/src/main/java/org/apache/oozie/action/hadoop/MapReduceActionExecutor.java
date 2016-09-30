@@ -390,4 +390,10 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             super.check(context, action);
         }
     }
+
+    @Override
+    void injectActionCallback(Context context, Configuration actionConf) {
+        injectCallback(context, actionConf);
+    }
+
 }

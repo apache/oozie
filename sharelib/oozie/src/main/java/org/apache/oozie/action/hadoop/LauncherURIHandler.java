@@ -36,7 +36,7 @@ public interface LauncherURIHandler {
      *
      * @throws LauncherException
      */
-    public boolean create(URI uri, Configuration conf) throws LauncherException;
+    boolean create(URI uri, Configuration conf) throws LauncherException;
 
     /**
      * Delete the resource identified by the URI
@@ -48,7 +48,7 @@ public interface LauncherURIHandler {
      *         <code>false</code> if the URI does not exist
      * @throws LauncherException
      */
-    public boolean delete(URI uri, Configuration conf) throws LauncherException;
+    boolean delete(URI uri, Configuration conf) throws LauncherException;
 
 
     /**
@@ -56,6 +56,6 @@ public interface LauncherURIHandler {
      *
      * @return list of classes to ship to launcher
      */
-    public List<Class<?>> getClassesForLauncher();
+    List<Class<?>> getClassesForLauncher();
 
 }

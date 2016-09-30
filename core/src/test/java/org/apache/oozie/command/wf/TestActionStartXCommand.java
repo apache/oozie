@@ -312,7 +312,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");
@@ -399,7 +398,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");
@@ -507,7 +505,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("map-reduce");
@@ -546,7 +543,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         WorkflowActionBean action = new WorkflowActionBean();
         String actionname = "testAction";
         action.setName(actionname);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
         action.setJobId(wfId);
         action.setType("fs");

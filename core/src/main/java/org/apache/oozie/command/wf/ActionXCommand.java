@@ -23,6 +23,8 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -39,6 +41,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.ELService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -51,7 +54,9 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
+import org.apache.oozie.workflow.lite.NodeDef;
 
 /**
  * Base class for Action execution commands. Provides common functionality to handle different types of errors while
@@ -152,8 +157,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         LOG.warn("Setting Action Status to [{0}]", status);
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
-
-        if (!handleUserRetry(action)) {
+        WorkflowJobBean wfJob = (WorkflowJobBean) context.getWorkflow();
+        if (!handleUserRetry(action, wfJob)) {
             incrActionErrorCounter(action.getType(), "error", 1);
             action.setPending();
             if (isStart) {
@@ -187,7 +192,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      */
     public void failJob(ActionExecutor.Context context, WorkflowActionBean action) throws CommandException {
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
-        if (!handleUserRetry(action)) {
+        if (!handleUserRetry(action, workflow)) {
             incrActionErrorCounter(action.getType(), "failed", 1);
             LOG.warn("Failing Job due to failed action [{0}]", action.getName());
             try {
@@ -215,7 +220,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      * @return true if user-retry has to be handled for this action
      * @throws CommandException thrown if unable to fail job
      */
-    public boolean handleUserRetry(WorkflowActionBean action) throws CommandException {
+    public boolean handleUserRetry(WorkflowActionBean action, WorkflowJobBean wfJob) throws CommandException {
         String errorCode = action.getErrorCode();
         Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
 
@@ -224,7 +229,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             LOG.info("Preparing retry this action [{0}], errorCode [{1}], userRetryCount [{2}], "
                     + "userRetryMax [{3}], userRetryInterval [{4}]", action.getId(), errorCode, action
                     .getUserRetryCount(), action.getUserRetryMax(), action.getUserRetryInterval());
-            int interval = action.getUserRetryInterval() * 60 * 1000;
+            ActionExecutor.RETRYPOLICY retryPolicy = getUserRetryPolicy(action, wfJob);
+            long interval = getRetryDelay(action.getUserRetryCount(), action.getUserRetryInterval() * 60, retryPolicy);
             action.setStatus(WorkflowAction.Status.USER_RETRY);
             action.incrmentUserRetryCount();
             action.setPending();
@@ -277,9 +283,9 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      *
      */
     public static class ActionExecutorContext implements ActionExecutor.Context {
-        private final WorkflowJobBean workflow;
+        protected final WorkflowJobBean workflow;
         private Configuration protoConf;
-        private final WorkflowActionBean action;
+        protected final WorkflowActionBean action;
         private final boolean isRetry;
         private final boolean isUserRetry;
         private boolean started;
@@ -353,6 +359,15 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
          * @see org.apache.oozie.action.ActionExecutor.Context#setVar(java.lang.String, java.lang.String)
          */
         public void setVar(String name, String value) {
+            setVarToWorkflow(name, value);
+        }
+
+        /**
+         * This is not thread safe, don't use if workflowjob is shared among multiple actions command
+         * @param name
+         * @param value
+         */
+        public void setVarToWorkflow(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             WorkflowInstance wfInstance = workflow.getWorkflowInstance();
             wfInstance.setVar(name, value);
@@ -520,7 +535,70 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         public void setJobStatus(Job.Status jobStatus) {
             this.jobStatus = jobStatus;
         }
+    }
 
+    public static class ForkedActionExecutorContext extends ActionExecutorContext {
+        private Map<String, String> contextVariableMap = new HashMap<String, String>();
+
+        public ForkedActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry,
+                boolean isUserRetry) {
+            super(workflow, action, isRetry, isUserRetry);
+        }
+
+        public void setVar(String name, String value) {
+            if (value != null) {
+                contextVariableMap.remove(name);
+            }
+            else {
+                contextVariableMap.put(name, value);
+            }
+        }
+
+        public String getVar(String name) {
+            return contextVariableMap.get(name);
+        }
+
+        public Map<String, String> getContextMap() {
+            return contextVariableMap;
+        }
+    }
+
+    /*
+     * Returns user retry policy
+     */
+    private ActionExecutor.RETRYPOLICY getUserRetryPolicy(WorkflowActionBean wfAction, WorkflowJobBean wfJob) {
+        WorkflowInstance wfInstance = wfJob.getWorkflowInstance();
+        LiteWorkflowApp wfApp = (LiteWorkflowApp) wfInstance.getApp();
+        NodeDef nodeDef = wfApp.getNode(wfAction.getName());
+        if (nodeDef == null) {
+            return ActionExecutor.RETRYPOLICY.valueOf(LiteWorkflowStoreService.DEFAULT_USER_RETRY_POLICY);
+        }
+        String userRetryPolicy = nodeDef.getUserRetryPolicy().toUpperCase();
+        String userRetryPolicyInSysConfig = ConfigurationService.get(LiteWorkflowStoreService.CONF_USER_RETRY_POLICY)
+                .toUpperCase();
+        if (isValidRetryPolicy(userRetryPolicy)) {
+            return ActionExecutor.RETRYPOLICY.valueOf(userRetryPolicy);
+        }
+        else if (isValidRetryPolicy(userRetryPolicyInSysConfig)) {
+            return ActionExecutor.RETRYPOLICY.valueOf(userRetryPolicyInSysConfig);
+        }
+        else {
+            return ActionExecutor.RETRYPOLICY.valueOf(LiteWorkflowStoreService.DEFAULT_USER_RETRY_POLICY);
+        }
+    }
+
+    /*
+     * Returns true if policy is valid, otherwise false
+     */
+    private static boolean isValidRetryPolicy(String policy) {
+        try {
+            ActionExecutor.RETRYPOLICY.valueOf(policy.toUpperCase().trim());
+        }
+        catch (IllegalArgumentException e) {
+            // Invalid Policy
+            return false;
+        }
+        return true;
     }
 
 }

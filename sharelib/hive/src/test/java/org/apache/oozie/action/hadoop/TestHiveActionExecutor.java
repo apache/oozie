@@ -27,7 +27,6 @@ import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -175,14 +174,9 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             ae.check(context, context.getAction());
             assertTrue(launcherId.equals(context.getAction().getExternalId()));
             assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-            assertNotNull(context.getAction().getData());
             ae.end(context, context.getAction());
             assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-            assertNotNull(context.getAction().getData());
-            Properties outputData = new Properties();
-            outputData.load(new StringReader(context.getAction().getData()));
-            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            assertNotNull(context.getExternalChildIDs());
             //while this works in a real cluster, it does not with miniMR
             //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
             //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
@@ -203,14 +197,9 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             ae.check(context, context.getAction());
             assertTrue(launcherId.equals(context.getAction().getExternalId()));
             assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
-            assertNotNull(context.getAction().getData());
             ae.end(context, context.getAction());
             assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-            assertNotNull(context.getAction().getData());
-            Properties outputData = new Properties();
-            outputData.load(new StringReader(context.getAction().getData()));
-            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            assertNotNull(context.getAction().getExternalChildIDs());
             //while this works in a real cluster, it does not with miniMR
             //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
             //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());

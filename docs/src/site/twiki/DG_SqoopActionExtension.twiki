@@ -10,7 +10,7 @@
 
 ---++ Sqoop Action
 
-*IMPORTANT:* The Sqoop action requires Apache Hadoop 0.23.
+*IMPORTANT:* The Sqoop action requires Apache Hadoop 1.x or 2.x.
 
 The =sqoop= action runs a Sqoop job.
 

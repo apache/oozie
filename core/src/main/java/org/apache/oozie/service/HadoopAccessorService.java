@@ -39,6 +39,7 @@ import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -61,6 +62,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -373,64 +375,76 @@ public class HadoopAccessorService implements Service {
         File dir = actionConfigDirs.get(hostPort);
         XConfiguration actionConf = new XConfiguration();
         if (dir != null) {
-            // See if a dir with the action name exists.   If so, load all the xml files in the dir
+            // See if a dir with the action name exists.   If so, load all the supported conf files in the dir
             File actionConfDir = new File(dir, action);
 
             if (actionConfDir.exists() && actionConfDir.isDirectory()) {
                 LOG.info("Processing configuration files under [{0}]"
                                 + " for action [{1}] and hostPort [{2}]",
                         actionConfDir.getAbsolutePath(), action, hostPort);
-                File[] xmlFiles = actionConfDir.listFiles(
-                        new FilenameFilter() {
-                            @Override
-                            public boolean accept(File dir, String name) {
-                                return name.endsWith(".xml");
-                            }});
-                Arrays.sort(xmlFiles, new Comparator<File>() {
-                    @Override
-                    public int compare(File o1, File o2) {
-                        return o1.getName().compareTo(o2.getName());
-                    }
-                });
-                for (File f : xmlFiles) {
-                    if (f.isFile() && f.canRead()) {
-                        LOG.info("Processing configuration file [{0}]", f.getName());
-                        FileInputStream fis = null;
-                        try {
-                            fis = new FileInputStream(f);
-                            XConfiguration conf = new XConfiguration(fis);
-                            XConfiguration.copy(conf, actionConf);
-                        }
-                        catch (IOException ex) {
-                            LOG
-                                .warn("Could not read file [{0}] for action [{1}] configuration and hostPort [{2}]",
-                                        f.getAbsolutePath(), action, hostPort);
-                        }
-                        finally {
-                            if (fis != null) {
-                                try { fis.close(); } catch(IOException ioe) { }
-                            }
-                        }
-                    }
-                }
+                updateActionConfigWithDir(actionConf, actionConfDir);
             }
         }
 
         // Now check for <action.xml>   This way <action.xml> has priority over <action-dir>/*.xml
-
         File actionConfFile = new File(dir, action + ".xml");
+        LOG.info("Processing configuration file [{0}] for action [{1}] and hostPort [{2}]",
+            actionConfFile.getAbsolutePath(), action, hostPort);
         if (actionConfFile.exists()) {
-            try {
-                XConfiguration conf = new XConfiguration(new FileInputStream(actionConfFile));
-                XConfiguration.copy(conf, actionConf);
-            }
-            catch (IOException ex) {
-                LOG.warn("Could not read file [{0}] for action [{1}] configuration for hostPort [{2}]",
-                        actionConfFile.getAbsolutePath(), action, hostPort);
-            }
+            updateActionConfigWithFile(actionConf, actionConfFile);
         }
 
         return actionConf;
+    }
+
+    private void updateActionConfigWithFile(Configuration actionConf, File actionConfFile)  {
+        try {
+            Configuration conf = readActionConfFile(actionConfFile);
+            XConfiguration.copy(conf, actionConf);
+        } catch (IOException e) {
+            LOG.warn("Could not read file [{0}].", actionConfFile.getAbsolutePath());
+        }
+    }
+
+    private void updateActionConfigWithDir(Configuration actionConf, File actionConfDir) {
+        File[] actionConfFiles = actionConfDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return ActionConfFileType.isSupportedFileType(name);
+            }});
+        Arrays.sort(actionConfFiles, new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        for (File f : actionConfFiles) {
+            if (f.isFile() && f.canRead()) {
+                updateActionConfigWithFile(actionConf, f);
+            }
+        }
+
+    }
+
+    private Configuration readActionConfFile(File file) throws IOException {
+        InputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            ActionConfFileType fileTyple = ActionConfFileType.getFileType(file.getName());
+            switch (fileTyple) {
+                case XML:
+                    return new XConfiguration(fis);
+                case PROPERTIES:
+                    Properties properties = new Properties();
+                    properties.load(fis);
+                    return new XConfiguration(properties);
+                default:
+                    throw new UnsupportedOperationException(
+                        String.format("Unable to parse action conf file of type %s", fileTyple));
+            }
+        } finally {
+            IOUtils.closeSafely(fis);
+        }
     }
 
     /**

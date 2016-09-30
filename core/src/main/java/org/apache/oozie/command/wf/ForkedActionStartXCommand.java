@@ -25,6 +25,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 
 public class ForkedActionStartXCommand extends ActionStartXCommand {
 
@@ -96,4 +97,10 @@ public class ForkedActionStartXCommand extends ActionStartXCommand {
     protected void callActionEnd() {
         queue(new ActionEndXCommand(wfAction.getId(), wfAction.getType()));
     }
+
+    @Override
+    protected ActionExecutorContext  getContext(boolean isRetry, boolean isUserRetry){
+        return  new ActionXCommand.ForkedActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
+    }
+
 }

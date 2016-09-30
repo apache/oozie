@@ -570,7 +570,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
     public void testELdataIO_xsd_4() throws Exception {
         Configuration conf = new XConfiguration();
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        String appPath = new File(getTestCaseDir(), "coordinator.xml").toURI().toString();
 
 
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);

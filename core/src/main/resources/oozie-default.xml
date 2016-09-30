@@ -70,6 +70,14 @@
     </property>
 
     <property>
+        <name>oozie.jmx_monitoring.enable</name>
+        <value>false</value>
+        <description>
+            If the oozie functional metrics needs to be exposed via JMX interface, set it to true.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.mapreduce.uber.jar.enable</name>
         <value>false</value>
         <description>
@@ -538,7 +546,7 @@
 	</property>
 
     <property>
-        <name>oozie.service.coord.input.check.requeue.interval.increase</name>
+        <name>oozie.service.coord.input.check.requeue.interval.additional.delay</name>
         <value>0</value>
         <description>This value (in seconds) will be added into oozie.service.coord.input.check.requeue.interval and resulting value
 will be the requeue interval for the actions which are waiting for a long time without any input.
@@ -1782,6 +1790,17 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.spark.setup.hadoop.conf.dir</name>
+        <value>false</value>
+        <description>
+            Oozie action.xml (oozie.action.conf.xml) contains all the hadoop configuration and user provided configurations.
+            This property will allow users to copy Oozie action.xml as hadoop *-site configurations files. The advantage is,
+            user need not to manage these files into spark sharelib. If user wants to manage the hadoop configurations
+            themselves, it should should disable it.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.shell.setup.hadoop.conf.dir</name>
         <value>false</value>
         <description>
@@ -1792,6 +1811,36 @@ will be the requeue interval for the actions which are waiting for a long time w
             based on the correct config and set HADOOP_CONF_DIR to point to it.  Setting it to false will make Oozie leave
             HADOOP_CONF_DIR alone.  This can also be set at the Action level by putting it in the Shell Action's configuration
             section, which also has priorty.  That all said, it's recommended to use the appropriate action type when possible.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties</name>
+        <value>true</value>
+        <description>
+            Toggle to control if a log4j.properties file should be written into the configuration directory prepared when
+            oozie.action.shell.setup.hadoop.conf.dir is enabled. This is used to control logging behavior of log4j using commands
+            run within the shell action script, and to ensure logging does not impact output data capture if leaked to stdout.
+            Content of the written file is determined by the value of oozie.action.shell.setup.hadoop.conf.dir.log4j.content.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.shell.setup.hadoop.conf.dir.log4j.content</name>
+        <value>
+            log4j.rootLogger=${hadoop.root.logger}
+            hadoop.root.logger=INFO,console
+            log4j.appender.console=org.apache.log4j.ConsoleAppender
+            log4j.appender.console.target=System.err
+            log4j.appender.console.layout=org.apache.log4j.PatternLayout
+            log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n
+        </value>
+        <description>
+            The value to write into a log4j.properties file under the config directory created when
+            oozie.action.shell.setup.hadoop.conf.dir and oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties
+            properties are both enabled. The values must be properly newline separated and in format expected by Log4J.
+            Trailing and preceding whitespaces will be trimmed when reading this property.
+            This is used to control logging behavior of log4j using commands run within the shell action script.
         </description>
     </property>
 
@@ -2053,6 +2102,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.policy</name>
+        <value>periodic</value>
+        <description>
+            Automatic retry policy for workflow action. Possible values are periodic or exponential, periodic being the default.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code</name>
         <value>JA008,JA009,JA017,JA018,JA019,FS009,FS008,FS014</value>
         <description>
@@ -2079,9 +2136,9 @@ will be the requeue interval for the actions which are waiting for a long time w
     
     <property>
         <name>oozie.service.LiteWorkflowStoreService.node.def.version</name>
-        <value>_oozie_inst_v_1</value>
+        <value>_oozie_inst_v_2</value>
         <description>
-            NodeDef default version, _oozie_inst_v_0 or _oozie_inst_v_1
+            NodeDef default version, _oozie_inst_v_0, _oozie_inst_v_1 or _oozie_inst_v_2
         </description>
     </property>
 
@@ -2417,6 +2474,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <value>11000</value>
         <description>
             Oozie server port.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.port</name>
+        <value>11443</value>
+        <description>
+            Oozie ssl server port.
         </description>
     </property>
 

@@ -222,6 +222,16 @@ queueName=default
 ---+++ Shell Action Configuration
 
 =oozie.action.shell.setup.hadoop.conf.dir= - Generates a config directory with various core/hdfs/yarn/mapred-site.xml files and points =HADOOP_CONF_DIR= and =YARN_CONF_DIR= env-vars to it, before the Script is invoked. XML is sourced from the action configuration. Useful when the Shell script passed uses various =hadoop= commands. Default is false.
+=oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties= - When =oozie.action.shell.setup.hadoop.conf.dir= is enabled, toggle if a log4j.properties file should also be written under the configuration files directory. Default is true.
+=oozie.action.shell.setup.hadoop.conf.dir.log4j.content= - When =oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties= is enabled, the content to write into the log4j.properties file under the configuration files directory. Default is a simple console based stderr logger, as presented below:
+<verbatim>
+log4j.rootLogger=${hadoop.root.logger}
+hadoop.root.logger=INFO,console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.target=System.err
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n
+</verbatim>
 
 ---+++ Shell Action Logging
 
@@ -240,6 +250,64 @@ Although Shell action can execute any shell command, there are some limitations.
 ---++ Appendix, Shell XML-Schema
 
 ---+++ AE.A Appendix A, Shell XML-Schema
+
+---++++ Shell Action Schema Version 0.3
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:shell="uri:oozie:shell-action:0.3" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:shell-action:0.3">
+
+    <xs:element name="shell" type="shell:ACTION"/>
+
+    <xs:complexType name="ACTION">
+      <xs:sequence>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="shell:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="shell:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="exec" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="argument" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="env-var" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="capture-output" type="shell:FLAG" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FLAG"/>
+
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PREPARE">
+        <xs:sequence>
+            <xs:element name="delete" type="shell:DELETE" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="mkdir" type="shell:MKDIR" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DELETE">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="MKDIR">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+    </xs:complexType>
+
+</xs:schema>
+</verbatim>
 
 ---++++ Shell Action Schema Version 0.2
 <verbatim>

@@ -27,9 +27,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -53,68 +55,73 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 
 public abstract class LauncherMain {
 
+    public static final String ACTION_PREFIX = "oozie.action.";
+    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs";
+    public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
+    public static final String EXTERNAL_STATS_WRITE = ACTION_PREFIX + "external.stats.write";
+    public static final String OUTPUT_PROPERTIES = ACTION_PREFIX + "output.properties";
     public static final String HADOOP_JOBS = "hadoopJobs";
     public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
+
     public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
     public static final String OOZIE_JOB_LAUNCH_TIME = "oozie.job.launch.time";
+
+    public static final String TEZ_APPLICATION_TAGS = "tez.application.tags";
+    public static final String SPARK_YARN_TAGS = "spark.yarn.tags";
+    protected static String[] HADOOP_SITE_FILES = new String[]
+            {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
         main.run(args);
     }
 
-    protected static Properties getHadoopJobIds(String logFile, Pattern[] patterns) throws IOException {
-        Properties props = new Properties();
-        StringBuffer sb = new StringBuffer(100);
+    protected static String getHadoopJobIds(String logFile, Pattern[] patterns) {
+        Set<String> jobIds = new LinkedHashSet<String>();
         if (!new File(logFile).exists()) {
-            System.err.println("Log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
-            props.setProperty(HADOOP_JOBS, "");
+            System.err.println("Log file: " + logFile + "  not present. Therefore no Hadoop job IDs found.");
         }
         else {
-            BufferedReader br = new BufferedReader(new FileReader(logFile));
-            String line = br.readLine();
-            String separator = "";
-            while (line != null) {
-                for (Pattern pattern : patterns) {
-                    Matcher matcher = pattern.matcher(line);
-                    if (matcher.find()) {
-                        String jobId = matcher.group(1);
-                        if (StringUtils.isEmpty(jobId) || jobId.equalsIgnoreCase("NULL")) {
-                            continue;
+            try (BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+                String line = br.readLine();
+                while (line != null) {
+                    for (Pattern pattern : patterns) {
+                        Matcher matcher = pattern.matcher(line);
+                        if (matcher.find()) {
+                            String jobId = matcher.group(1);
+                            if (StringUtils.isEmpty(jobId) || jobId.equalsIgnoreCase("NULL")) {
+                                continue;
+                            }
+                            jobId = jobId.replaceAll("application", "job");
+                            jobIds.add(jobId);
                         }
-                        jobId = jobId.replaceAll("application","job");
-                        sb.append(separator).append(jobId);
-                        separator = ",";
                     }
+                    line = br.readLine();
                 }
-                line = br.readLine();
+            } catch (IOException e) {
+                System.out.println("WARN: Error getting Hadoop Job IDs. logFile: " + logFile);
+                e.printStackTrace(System.out);
             }
-            br.close();
-            props.setProperty(HADOOP_JOBS, sb.toString());
         }
-        return props;
+        return jobIds.isEmpty() ? null : StringUtils.join(jobIds, ",");
     }
 
     protected static void writeExternalChildIDs(String logFile, Pattern[] patterns, String name) {
         // Harvesting and recording Hadoop Job IDs
-        // See JavaActionExecutor#readExternalChildIDs for how they are read
-        try {
-            Properties jobIds = getHadoopJobIds(logFile, patterns);
-            File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX
-                    + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
-            OutputStream os = new FileOutputStream(file);
-            try {
-                jobIds.store(os, "");
+        String jobIds = getHadoopJobIds(logFile, patterns);
+        if (jobIds != null) {
+            File externalChildIdsFile = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+            try (OutputStream externalChildIdsStream = new FileOutputStream(externalChildIdsFile)) {
+                externalChildIdsStream.write(jobIds.getBytes());
+                System.out.println("Hadoop Job IDs executed by " + name + ": " + jobIds);
+                System.out.println();
+            } catch (IOException e) {
+                System.out.println("WARN: Error while writing to external child ids file: " +
+                        System.getProperty(EXTERNAL_CHILD_IDS));
+                e.printStackTrace(System.out);
             }
-            finally {
-                os.close();
-            }
-            System.out.println(" Hadoop Job IDs executed by " + name + ": " + jobIds.getProperty(HADOOP_JOBS));
-            System.out.println();
-        }
-        catch (Exception e) {
-            System.out.println("WARN: Error getting Hadoop Job IDs executed by " + name);
-            e.printStackTrace(System.out);
+        } else {
+            System.out.println("No child hadoop job is executed.");
         }
     }
 
@@ -274,6 +281,13 @@ public abstract class LauncherMain {
         }
     }
 
+    protected static void setApplicationTags(Configuration configName, String tagConfigName) {
+        if (configName.get(MAPREDUCE_JOB_TAGS) != null) {
+            System.out.println("Setting [" + tagConfigName + "] tag: " + configName.get(MAPREDUCE_JOB_TAGS));
+            configName.set(tagConfigName, configName.get(MAPREDUCE_JOB_TAGS));
+        }
+    }
+
     /**
      * Utility method that copies the contents of the src file into all of the dst file(s).
      * It only requires reading the src file once.
@@ -307,6 +321,17 @@ public abstract class LauncherMain {
                 }
             }
         }
+    }
+
+    protected void writeHadoopConfig(String actionXml, File basrDir) throws IOException {
+        File actionXmlFile = new File(actionXml);
+        System.out.println("Copying " + actionXml + " to " + basrDir + "/" + Arrays.toString(HADOOP_SITE_FILES));
+        basrDir.mkdirs();
+        File[] dstFiles = new File[HADOOP_SITE_FILES.length];
+        for (int i = 0; i < dstFiles.length; i++) {
+            dstFiles[i] = new File(basrDir, HADOOP_SITE_FILES[i]);
+        }
+        copyFileMultiplex(actionXmlFile, dstFiles);
     }
 }
 

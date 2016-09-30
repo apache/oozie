@@ -31,7 +31,7 @@ public interface URIHandler {
      * Type of the dependency. PULL dependencies are those whose availability is determined by
      * polling and PUSH dependencies are those whose availability is known from notifications
      */
-    public enum DependencyType {
+    enum DependencyType {
         PULL,
         PUSH;
     }
@@ -41,28 +41,28 @@ public interface URIHandler {
      *
      * @param conf Configuration for initialization
      */
-    public void init(Configuration conf);
+    void init(Configuration conf);
 
     /**
      * Get the list of uri schemes supported by this URIHandler
      *
      * @return supported list of uri schemes
      */
-    public Set<String> getSupportedSchemes();
+    Set<String> getSupportedSchemes();
 
     /**
      * Get the URIHandler that will be used to handle the supported schemes in launcher
      *
      * @return LauncherURIHandler that handles URI in the launcher
      */
-    public Class<? extends LauncherURIHandler> getLauncherURIHandlerClass();
+    Class<? extends LauncherURIHandler> getLauncherURIHandlerClass();
 
     /**
      * Get list of classes to ship to launcher for LauncherURIHandler
      *
      * @return list of classes to ship to launcher
      */
-    public List<Class<?>> getClassesForLauncher();
+    List<Class<?>> getClassesForLauncher();
 
     /**
      * Get the dependency type of the URI. When the availability of the
@@ -72,7 +72,7 @@ public interface URIHandler {
      *
      * @return dependency type of URI
      */
-    public DependencyType getDependencyType(URI uri) throws URIHandlerException;
+    DependencyType getDependencyType(URI uri) throws URIHandlerException;
 
     /**
      * Register for notifications in case of a push dependency
@@ -84,7 +84,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public void registerForNotification(URI uri, Configuration conf, String user, String actionID)
+    void registerForNotification(URI uri, Configuration conf, String user, String actionID)
             throws URIHandlerException;
 
     /**
@@ -93,7 +93,7 @@ public interface URIHandler {
      * @param uri The URI to be removed from missing dependency
      * @param actionID The id of action which was dependent on the uri.
      */
-    public boolean unregisterFromNotification(URI uri, String actionID);
+    boolean unregisterFromNotification(URI uri, String actionID);
 
     /**
      * Get the Context which can be used to access URI of the same scheme and
@@ -107,7 +107,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException;
+    Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -120,7 +120,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public boolean exists(URI uri, Context context) throws URIHandlerException;
+    boolean exists(URI uri, Context context) throws URIHandlerException;
 
     /**
      * Check if the dependency identified by the URI is available
@@ -135,7 +135,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
+    boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Delete a URI
@@ -144,7 +144,7 @@ public interface URIHandler {
      * @param context Context to access the URI
      * @throws URIHandlerException
      */
-    public void delete(URI uri, Context context) throws URIHandlerException;
+    void delete(URI uri, Context context) throws URIHandlerException;
 
     /**
      * Delete a URI
@@ -154,7 +154,7 @@ public interface URIHandler {
      * @param user name of the user the URI should be accessed as
      * @throws URIHandlerException
      */
-    public void delete(URI uri, Configuration conf, String user) throws URIHandlerException;
+    void delete(URI uri, Configuration conf, String user) throws URIHandlerException;
 
     /**
      * Get the URI based on the done flag
@@ -166,7 +166,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
+    String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
     /**
      * Get the URI path from path which has done flag
@@ -178,7 +178,7 @@ public interface URIHandler {
      *
      * @throws URIHandlerException
      */
-    public String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException;
+    String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
 
     /**
@@ -186,12 +186,12 @@ public interface URIHandler {
      * @param uri
      * @throws URIHandlerException
      */
-    public void validate(String uri) throws URIHandlerException;
+    void validate(String uri) throws URIHandlerException;
 
     /**
      * Destroy the URIHandler
      */
-    public void destroy();
+    void destroy();
 
     public static abstract class Context {
 

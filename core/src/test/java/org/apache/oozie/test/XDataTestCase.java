@@ -1417,7 +1417,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setStartTime(currDate);
         action.setEndTime(currDate);
         action.setLastCheckTime(currDate);
-        action.setCred("null");
         action.setStats("dummyStats");
         if (pending) {
             action.setPending();
@@ -1447,7 +1446,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setSlaXml("<sla></sla>");
         action.setData("dummy data");
         action.setStats("dummy stats");
-        action.setExternalChildIDs("00000001-dummy-oozie-wrkf-W");
+        action.setExternalChildIDs("job_201601011800_0001");
         action.setRetries(2);
         action.setUserRetryCount(1);
         action.setUserRetryMax(2);

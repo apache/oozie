@@ -35,7 +35,6 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -58,6 +57,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
     private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    public XLog LOG = XLog.getLog(getClass());
+
 
     static {
         String[] badUserProps = {PropertiesUtils.DAYS, PropertiesUtils.HOURS, PropertiesUtils.MINUTES,
@@ -180,8 +181,6 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
 
                 XConfiguration subWorkflowConf = new XConfiguration();
 
-                injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
-
                 Configuration parentConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
 
                 if (eConf.getChild(("propagate-configuration"), ns) != null) {
@@ -210,6 +209,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                     subWorkflowConf.set(OozieClient.GROUP_NAME, group);
                 }
 
+                injectInline(eConf.getChild("configuration", ns), subWorkflowConf);
                 injectCallback(context, subWorkflowConf);
                 injectRecovery(extId, subWorkflowConf);
                 injectParent(context.getWorkflow().getId(), subWorkflowConf);
@@ -220,11 +220,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 JobUtils.normalizeAppPath(context.getWorkflow().getUser(), context.getWorkflow().getGroup(),
                                           subWorkflowConf);
 
-                // pushing the tag to conf for using by Launcher.
-                if(context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG) != null) {
-                    subWorkflowConf.set(ActionStartXCommand.OOZIE_ACTION_YARN_TAG,
-                            context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG));
-                }
+                subWorkflowConf.set(OOZIE_ACTION_YARN_TAG, getActionYarnTag(parentConf, context.getWorkflow(), action));
 
                 // if the rerun failed node option is provided during the time of rerun command, old subworkflow will
                 // rerun again.
@@ -247,6 +243,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             }
         }
         catch (Exception ex) {
+            LOG.error(ex);
             throw convertException(ex);
         }
     }

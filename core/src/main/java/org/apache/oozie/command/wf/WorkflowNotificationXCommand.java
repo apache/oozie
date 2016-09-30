@@ -31,6 +31,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
 
     private static final String STATUS_PATTERN = "\\$status";
     private static final String JOB_ID_PATTERN = "\\$jobId";
+    private static final String PARENT_ID_PATTERN = "\\$parentId";
     private static final String NODE_NAME_PATTERN = "\\$nodeName";
 
     public WorkflowNotificationXCommand(WorkflowJobBean workflow) {
@@ -41,6 +42,11 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
             url = url.replaceAll(STATUS_PATTERN, workflow.getStatus().toString());
+            if (workflow.getParentId() == null) {
+                url = url.replaceAll(PARENT_ID_PATTERN, "");
+            } else {
+                url = url.replaceAll(PARENT_ID_PATTERN, workflow.getParentId());
+            }
             proxyConf = workflow.getWorkflowInstance().getConf()
                     .get(OozieClient.WORKFLOW_NOTIFICATION_PROXY, ConfigurationService.get(NOTIFICATION_PROXY_KEY));
             LOG.debug("Proxy :" + proxyConf);

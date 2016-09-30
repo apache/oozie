@@ -37,6 +37,7 @@ import org.apache.oozie.service.XLogStreamingService;
  */
 public class TimestampedMessageParser {
 
+    static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
     protected BufferedReader reader;
     private String nextLine = null;
     private String lastTimestamp = null;
@@ -85,7 +86,7 @@ public class TimestampedMessageParser {
         lastTimestamp = parseTimestamp(nextLine);
         String nextTimestamp = null;
         while (nextTimestamp == null) {
-            message.append(nextLine).append("\n");
+            message.append(nextLine).append(SYSTEM_LINE_SEPARATOR);
             nextLine = parseNextLine();
             if (nextLine != null) {
                 nextTimestamp = parseTimestamp(nextLine);   // exit loop if we have a timestamp, continue if not

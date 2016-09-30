@@ -1635,7 +1635,7 @@ Content-Type: application/json;charset=UTF-8
       info: "nextAction=5",
     },
     {
-**    jobType: "bindle"
+**    jobType: "bundle"
       id: "0-200905191240-oozie-B",
       appName: "logprocessor-bundle",
       appPath: "hdfs://user/bansalm/myapp/logprocessor-bundle.xml",
@@ -1658,11 +1658,13 @@ The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
 Valid filter names are:
 
    * name: the application name from the workflow/coordinator/bundle definition
-   * user: the user that submitted the job
-   * group: the group for the job
+   * user: the user who submitted the job
+   * group: the group for the job (support for the group filter is discontinued. version: 3.2.0 OOZIE-228).
+   * id: the id of the workflow/coordinator/bundle job
    * status: the status of the job
    * startCreatedTime : the start of the window about workflow job's created time
    * endCreatedTime : the end of above window
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names.
 
@@ -1674,7 +1676,9 @@ Additionally the =offset= and =len= parameters can be used for pagination. The s
 Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
 The valid values of job type are: =wf=, =coordinator= or =bundle=.
 
-startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format (*yyyy-MM-dd'T'HH:mm'Z'*) or a offset value in days or hours from the current time. For example, -2d means the current time - 2 days. -3h means the current time - 3 hours. -5m means the current time - 5 minutes
+startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format *(yyyy-MM-dd'T'HH:mm'Z')* or
+a offset value in days or hours or minutes from the current time. For example, -2d means the (current time - 2 days),
+-3h means the (current time - 3 hours), -5m means the (current time - 5 minutes).
 
 ---++++ Bulk modify jobs
 

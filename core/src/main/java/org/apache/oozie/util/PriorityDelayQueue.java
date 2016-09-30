@@ -79,9 +79,6 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
          */
         public QueueElement(XCallable<E> element, int priority, long delay, TimeUnit unit) {
             super(element);
-            if (element == null) {
-                throw new IllegalArgumentException("element cannot be null");
-            }
             if (priority < 0) {
                 throw new IllegalArgumentException("priority cannot be negative, [" + element + "]");
             }
@@ -331,9 +328,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      * @throws NullPointerException if the specified element is null
      */
     boolean offer(QueueElement<E> queueElement, boolean ignoreSize) {
-        if (queueElement == null) {
-            throw new NullPointerException("queueElement is NULL");
-        }
+        ParamChecker.notNull(queueElement, "queueElement");
         if (queueElement.getPriority() < 0 || queueElement.getPriority() >= priorities) {
             throw new IllegalArgumentException("priority out of range: " + queueElement);
         }

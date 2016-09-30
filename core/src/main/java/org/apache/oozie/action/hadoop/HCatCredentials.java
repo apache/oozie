@@ -18,10 +18,18 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.util.HashMap;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor.Context;
+import org.apache.oozie.service.HCatAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Credentials implementation to store in jobConf, HCat-specific properties such as Principal and Uri
@@ -37,6 +45,10 @@ public class HCatCredentials extends Credentials {
     private static final String HCAT_METASTORE_URI = "hcat.metastore.uri";
     private static final String HIVE_METASTORE_PRINCIPAL = "hive.metastore.kerberos.principal";
     private static final String HIVE_METASTORE_URI = "hive.metastore.uris";
+    private final static Configuration hiveConf = new Configuration(false);
+    static {
+        hiveConf.addResource("hive-site.xml");
+    }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
@@ -44,15 +56,14 @@ public class HCatCredentials extends Credentials {
     @Override
     public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
         try {
-            String principal = props.getProperties().get(HCAT_METASTORE_PRINCIPAL) == null
-                    ? props.getProperties().get(HIVE_METASTORE_PRINCIPAL)
-                    : props.getProperties().get(HCAT_METASTORE_PRINCIPAL);
+
+            String principal = getProperty(props.getProperties(), HCAT_METASTORE_PRINCIPAL, HIVE_METASTORE_PRINCIPAL);
             if (principal == null || principal.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_PRINCIPAL + " is required to get hcat credential");
             }
-            String server = props.getProperties().get(HCAT_METASTORE_URI) == null
-                    ? props.getProperties().get(HIVE_METASTORE_URI) : props.getProperties().get(HCAT_METASTORE_URI);
+
+            String server = getProperty(props.getProperties(), HCAT_METASTORE_URI, HIVE_METASTORE_URI);
             if (server == null || server.isEmpty()) {
                 throw new CredentialException(ErrorCode.E0510,
                         HCAT_METASTORE_URI + " is required to get hcat credential");
@@ -64,5 +75,31 @@ public class HCatCredentials extends Credentials {
             XLog.getLog(getClass()).warn("Exception in addtoJobConf", e);
             throw e;
         }
+    }
+
+    /**
+     * Returns the value for the oozieConfName if its present in prop map else
+     * value of hiveConfName. It will also check HCatAccessorService and
+     * HiveConf for hiveConfName.
+     *
+     * @param prop
+     * @param oozieConfName
+     * @param hiveConfName
+     * @return value for the oozieConfName if its present else value of
+     *         hiveConfName. If both are absent then returns null.
+     */
+    private String getProperty(HashMap<String, String> prop, String oozieConfName, String hiveConfName) {
+        String value = prop.get(oozieConfName) == null ? prop.get(hiveConfName) : prop.get(oozieConfName);
+        if (value == null || value.isEmpty()) {
+            HCatAccessorService hCatService = Services.get().get(HCatAccessorService.class);
+            Configuration hCatConf = hCatService.getHCatConf();
+            if (hCatConf != null) {
+                value = hCatConf.get(hiveConfName);
+            }
+        }
+        if (value == null || value.isEmpty()) {
+            value = hiveConf.get(hiveConfName);
+        }
+        return value;
     }
 }

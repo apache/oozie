@@ -18,33 +18,32 @@
 
 package org.apache.oozie.lock;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.Lock;
+import org.apache.oozie.service.MemoryLocksService.Type;
+
+import com.google.common.collect.MapMaker;
 
 /**
  * In memory resource locking that provides READ/WRITE lock capabilities.
  */
 public class MemoryLocks {
-    final private HashMap<String, ReentrantReadWriteLock> locks = new HashMap<String, ReentrantReadWriteLock>();
 
-    private static enum Type {
-        READ, WRITE
-    }
+    final private ConcurrentMap<String, ReentrantReadWriteLock> locks = new MapMaker().weakValues().makeMap();
 
     /**
      * Implementation of {@link LockToken} for in memory locks.
      */
     class MemoryLockToken implements LockToken {
-        private final ReentrantReadWriteLock rwLock;
-        private final java.util.concurrent.locks.Lock lock;
-        private final String resource;
+        private final ReentrantReadWriteLock lockEntry;
+        private final Type type;
 
-        private MemoryLockToken(ReentrantReadWriteLock rwLock, java.util.concurrent.locks.Lock lock, String resource) {
-            this.rwLock = rwLock;
-            this.lock = lock;
-            this.resource = resource;
+        public MemoryLockToken(ReentrantReadWriteLock lockEntry, Type type) {
+            this.lockEntry = lockEntry;
+            this.type = type;
+
         }
 
         /**
@@ -52,17 +51,14 @@ public class MemoryLocks {
          */
         @Override
         public void release() {
-            lock.unlock();
-            if (!isLockHeld()) {
-                synchronized (locks) {
-                    if (!isLockHeld()) {
-                        locks.remove(resource);
-                    }
-                }
+            switch (type) {
+                case WRITE:
+                    lockEntry.writeLock().unlock();
+                    break;
+                case READ:
+                    lockEntry.readLock().unlock();
+                    break;
             }
-        }
-        private boolean isLockHeld(){
-            return rwLock.hasQueuedThreads() || rwLock.isWriteLocked() || rwLock.getReadLockCount() > 0;
         }
     }
 
@@ -76,41 +72,23 @@ public class MemoryLocks {
     }
 
     /**
-     * Obtain a READ lock for a source.
+     * Obtain a lock for a source.
      *
      * @param resource resource name.
+     * @param type lock type.
      * @param wait time out in milliseconds to wait for the lock, -1 means no timeout and 0 no wait.
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public MemoryLockToken getReadLock(String resource, long wait) throws InterruptedException {
-        return getLock(resource, Type.READ, wait);
-    }
-
-    /**
-     * Obtain a WRITE lock for a source.
-     *
-     * @param resource resource name.
-     * @param wait time out in milliseconds to wait for the lock, -1 means no timeout and 0 no wait.
-     * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
-     * @throws InterruptedException thrown if the thread was interrupted while waiting.
-     */
-    public MemoryLockToken getWriteLock(String resource, long wait) throws InterruptedException {
-        return getLock(resource, Type.WRITE, wait);
-    }
-
-    private MemoryLockToken getLock(String resource, Type type, long wait) throws InterruptedException {
-        ReentrantReadWriteLock lockEntry;
-        synchronized (locks) {
-            if (locks.containsKey(resource)) {
-                lockEntry = locks.get(resource);
-            }
-            else {
-                lockEntry = new ReentrantReadWriteLock(true);
-                locks.put(resource, lockEntry);
+    public MemoryLockToken getLock(final String resource, Type type, long wait) throws InterruptedException {
+        ReentrantReadWriteLock lockEntry = locks.get(resource);
+        if (lockEntry == null) {
+            ReentrantReadWriteLock newLock = new ReentrantReadWriteLock(true);
+            lockEntry = locks.putIfAbsent(resource, newLock);
+            if (lockEntry == null) {
+                lockEntry = newLock;
             }
         }
-
         Lock lock = (type.equals(Type.READ)) ? lockEntry.readLock() : lockEntry.writeLock();
 
         if (wait == -1) {
@@ -133,6 +111,10 @@ public class MemoryLocks {
                 locks.put(resource, lockEntry);
             }
         }
-        return new MemoryLockToken(lockEntry, lock, resource);
+        return new MemoryLockToken(lockEntry, type);
+    }
+
+    public ConcurrentMap<String, ReentrantReadWriteLock> getLockMap(){
+        return locks;
     }
 }

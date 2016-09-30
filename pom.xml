@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
     <description>Apache Oozie Main</description>
     <name>Apache Oozie Main</name>
     <packaging>pom</packaging>
@@ -45,7 +45,9 @@
     </organization>
 
     <properties>
-        <targetJavaVersion>1.6</targetJavaVersion>
+        <targetJavaVersion>1.7</targetJavaVersion>
+        <sourceJavaVersion>1.7</sourceJavaVersion>
+        <minJavaVersion>1.7</minJavaVersion>
 
         <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
         <distMgmtSnapshotsUrl>https://repository.apache.org/content/repositories/snapshots</distMgmtSnapshotsUrl>
@@ -79,18 +81,20 @@
         <hadoop.version>2.4.0</hadoop.version>
         <hbase.version>0.94.27</hbase.version>
 
-        <dropwizard.metrics.version>3.1.0</dropwizard.metrics.version>
+        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
 
 
          <!-- Sharelib component versions -->
          <hive.version>0.13.1</hive.version>
+         <hive.jline.version>0.9.94</hive.jline.version>
          <pig.version>0.12.1</pig.version>
          <pig.classifier>h2</pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
          <spark.version>1.6.1</spark.version>
          <spark.guava.version>14.0.1</spark.guava.version>
+         <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop200</sqoop.classifier>
          <streaming.version>${hadoop.version}</streaming.version>
          <hadoop.auth.version>${hadoop.version}</hadoop.auth.version>
@@ -98,11 +102,14 @@
          <!-- Tomcat version -->
          <tomcat.version>6.0.44</tomcat.version>
 
-         <openjpa.version>2.2.2</openjpa.version>
+         <openjpa.version>2.4.1</openjpa.version>
          <xerces.version>2.10.0</xerces.version>
          <curator.version>2.5.0</curator.version>
          <jackson.version>1.9.13</jackson.version>
          <log4j.version>1.2.17</log4j.version>
+         <activemq.version>5.13.3</activemq.version>
+         <httpcore.version>4.3.3</httpcore.version>
+         <httpclient.version>4.3.6</httpclient.version>
     </properties>
 
     <modules>
@@ -354,8 +361,8 @@
                         <artifactId>commons-io</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>commons-httpclient</groupId>
-                        <artifactId>commons-httpclient</artifactId>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.apache.commons</groupId>
@@ -519,8 +526,8 @@
                         <artifactId>commons-cli</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>commons-httpclient</groupId>
-                        <artifactId>commons-httpclient</artifactId>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>commons-lang</groupId>
@@ -790,8 +797,8 @@
                         <artifactId>hadoop-core</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>commons-httpclient</groupId>
-                        <artifactId>commons-httpclient</artifactId>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.mortbay.jetty</groupId>
@@ -1112,19 +1119,19 @@
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-client</artifactId>
-                <version>5.10.2</version>
+		<version>${activemq.version}</version>
            </dependency>
 
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-broker</artifactId>
-                <version>5.10.2</version>
+		<version>${activemq.version}</version>
            </dependency>
 
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-kahadb-store</artifactId>
-                <version>5.10.2</version>
+		<version>${activemq.version}</version>
            </dependency>
 
             <dependency>
@@ -1307,7 +1314,28 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
-                <version>1.8.5</version>
+                <version>1.10.19</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-core</artifactId>
+                <version>1.6.4</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito</artifactId>
+                <version>1.6.4</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>1.6.4</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -1330,9 +1358,15 @@
 
             <!-- examples -->
             <dependency>
-                <groupId>commons-httpclient</groupId>
-                <artifactId>commons-httpclient</artifactId>
-                <version>3.1</version>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>${httpcore.version}</version>
             </dependency>
 
             <dependency>
@@ -1444,7 +1478,11 @@
                 <artifactId>joda-time</artifactId>
                 <version>2.1</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.7</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1481,7 +1519,8 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>2.10.3</version>
                     <configuration>
-                            <additionalparam>${maven.javadoc.opts}</additionalparam>
+                        <additionalparam>${maven.javadoc.opts}</additionalparam>
+                        <failOnError>false</failOnError>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -1541,6 +1580,16 @@
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>2.4.0</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>xml-maven-plugin</artifactId>
+                    <version>1.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -1559,18 +1608,71 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- findbugs plugin. Execute 'mvn verify' and look for target/findbugs/findbugsXml.html under each module -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
                     <xmlOutput>true</xmlOutput>
                     <findbugsXmlOutput>true</findbugsXmlOutput>
                     <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                    <effort>Max</effort>
+                    <failOnError>false</failOnError>
+                    <threshold>Low</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
                 </configuration>
+                <executions>
+                 <execution>
+                    <id>findbug</id>
+                    <phase>verify</phase>
+                    <goals>
+                        <goal>check</goal>
+                    </goals>
+                 </execution>
+             </executions>
+            </plugin>
+            <!-- xml plugin is used for transforming the findbugs xml output into a friendlier html page -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>xml-maven-plugin</artifactId>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <transformationSets>
+                        <transformationSet>
+                            <dir>${project.build.directory}/findbugs</dir>
+                            <outputDir>${project.build.directory}/findbugs</outputDir>
+                            <stylesheet>fancy-hist.xsl</stylesheet>
+                            <fileMappers>
+                                <fileMapper
+                                       implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                    <targetExtension>.html</targetExtension>
+                                </fileMapper>
+                            </fileMappers>
+                        </transformationSet>
+                    </transformationSets>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>findbugs</artifactId>
+                        <version>2.0.3</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
-            <!-- checkstyle plugin. Execute 'mvn verify' and look for checkstyle-result.xml under target folder -->
+            <!-- checkstyle plugin. Execute 'mvn verify' and look for target/checkstyle-result.xml under each module -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -1600,7 +1702,7 @@
                             <version>[3.0.0,)</version>
                         </requireMavenVersion>
                         <requireJavaVersion>
-                            <version>1.6</version>
+                            <version>${minJavaVersion}</version>
                         </requireJavaVersion>
                     </rules>
                 </configuration>
@@ -1632,7 +1734,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
+                    <source>${sourceJavaVersion}</source>
                     <target>${targetJavaVersion}</target>
                 </configuration>
             </plugin>
@@ -1703,6 +1805,7 @@
                         <exclude>test-patch/**</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>*.patch</exclude>
+                        <exclude>tools/src/test/resources/dumpData/ooziedb*.json</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -1748,9 +1851,7 @@
                     </plugin>
                 </plugins>
             </build>
-
         </profile>
-
         <profile>
             <id>loginServerExample</id>
             <activation>

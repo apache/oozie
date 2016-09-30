@@ -160,6 +160,7 @@
         <xs:attribute name="cred" type="xs:string"/>
         <xs:attribute name="retry-max" type="xs:string"/>
         <xs:attribute name="retry-interval" type="xs:string"/>
+        <xs:attribute name="retry-policy" type="xs:string"/>
     </xs:complexType>
 
     <xs:complexType name="MAP-REDUCE">

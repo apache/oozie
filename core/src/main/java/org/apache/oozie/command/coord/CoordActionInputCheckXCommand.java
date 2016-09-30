@@ -71,8 +71,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
      */
     public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL = Service.CONF_PREFIX
             + "coord.input.check.requeue.interval";
-    public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_INCREASE = Service.CONF_PREFIX
-            + "coord.input.check.requeue.interval.increase";
+    public static final String CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_ADDITIONAL_DELAY = Service.CONF_PREFIX
+            + "coord.input.check.requeue.interval.additional.delay";
     private CoordinatorActionBean coordAction = null;
     private CoordinatorJobBean coordJob = null;
     private JPAService jpaService = null;
@@ -191,11 +191,12 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 new CoordActionReadyXCommand(coordAction.getJobId()).call();
             }
             else if (!isTimeout(currentTime)) {
-                if (status == false) {
-                    long increase = ConfigurationService.getInt(CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_INCREASE)
-                            * 1000L;
+                if (!status) {
+                    long addtionalDelay = isChangeInDependency ? 0
+                            : ConfigurationService.getInt(CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL_ADDITIONAL_DELAY)
+                                    * 1000L;
                     queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()),
-                            increase + getCoordInputCheckRequeueInterval());
+                            addtionalDelay + getCoordInputCheckRequeueInterval());
                 }
                 updateCoordAction(coordAction, isChangeInDependency);
             }

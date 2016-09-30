@@ -80,8 +80,8 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
-import org.apache.oozie.command.wf.ActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -149,6 +149,8 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
 
+    public XConfiguration workflowConf = null;
+
     static {
         DISALLOWED_PROPERTIES.add(HADOOP_USER);
         DISALLOWED_PROPERTIES.add(HADOOP_NAME_NODE);
@@ -167,6 +169,8 @@ public class JavaActionExecutor extends ActionExecutor {
         List<Class<?>> classes = new ArrayList<Class<?>>();
         classes.add(OozieLauncherInputFormat.class);
         classes.add(LauncherMain.class);
+        classes.add(OozieLauncherOutputFormat.class);
+        classes.add(OozieLauncherOutputCommitter.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         classes.add(LauncherAM.class);
         classes.add(LauncherAMCallbackNotifier.class);
@@ -592,12 +596,10 @@ public class JavaActionExecutor extends ActionExecutor {
                         if (listOfPaths != null && !listOfPaths.isEmpty()) {
                             for (Path actionLibPath : listOfPaths) {
                                 String fragmentName = new URI(actionLibPath.toString()).getFragment();
-                                Path pathWithFragment = fragmentName == null ? actionLibPath : new Path(new URI(
-                                        actionLibPath.toString()).getPath());
                                 String fileName = fragmentName == null ? actionLibPath.getName() : fragmentName;
                                 if (confSet.contains(fileName)) {
                                     Configuration jobXmlConf = shareLibService.getShareLibConf(actionShareLibName,
-                                            pathWithFragment);
+                                            actionLibPath);
                                     if (jobXmlConf != null) {
                                         checkForDisallowedProps(jobXmlConf, actionLibPath.getName());
                                         XConfiguration.injectDefaults(jobXmlConf, conf);
@@ -764,7 +766,7 @@ public class JavaActionExecutor extends ActionExecutor {
             throws ActionExecutorException {
         XConfiguration wfJobConf = null;
         try {
-            wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+            wfJobConf = getWorkflowConf(context);
         }
         catch (IOException ioe) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
@@ -827,14 +829,6 @@ public class JavaActionExecutor extends ActionExecutor {
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
             setupLauncherConf(launcherJobConf, actionXml, appPathRoot, context);
 
-            String launcherTag = null;
-            // Extracting tag and appending action name to maintain the uniqueness.
-            if (context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG) != null) {
-                launcherTag = context.getVar(ActionStartXCommand.OOZIE_ACTION_YARN_TAG);
-            } else { //Keeping it to maintain backward compatibly with test cases.
-                launcherTag = action.getId();
-            }
-
             // Properties for when a launcher job's AM gets restarted
             if (ConfigurationService.getBoolean(HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART)) {
                 // launcher time filter is required to prune the search of launcher tag.
@@ -842,14 +836,16 @@ public class JavaActionExecutor extends ActionExecutor {
                 // time. Workflow created time is good enough when workflow is running independently or workflow is
                 // rerunning from failed node.
                 long launcherTime = System.currentTimeMillis();
-                String coordActionNominalTime = context.getProtoActionConf()
-                        .get(CoordActionStartXCommand.OOZIE_COORD_ACTION_NOMINAL_TIME);
+                String coordActionNominalTime = context.getProtoActionConf().get(
+                        CoordActionStartXCommand.OOZIE_COORD_ACTION_NOMINAL_TIME);
                 if (coordActionNominalTime != null) {
                     launcherTime = Long.parseLong(coordActionNominalTime);
-                } else if (context.getWorkflow().getCreatedTime() != null) {
+                }
+                else if (context.getWorkflow().getCreatedTime() != null) {
                     launcherTime = context.getWorkflow().getCreatedTime().getTime();
                 }
-                LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, launcherTag, launcherTime);
+                String actionYarnTag = getActionYarnTag(getWorkflowConf(context), context.getWorkflow(), action);
+                LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, actionYarnTag, launcherTime);
             }
             else {
                 LOG.info(MessageFormat.format("{0} is set to false, not setting YARN restart properties",
@@ -944,7 +940,7 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     void injectActionCallback(Context context, Configuration actionConf) {
-        injectCallback(context, actionConf);
+        // action callback needs to be injected only for mapreduce actions.
     }
 
     void injectLauncherCallback(Context context, Configuration launcherConf) {
@@ -1248,13 +1244,7 @@ public class JavaActionExecutor extends ActionExecutor {
         HashMap<String, CredentialsProperties> credPropertiesMap = null;
         if (context != null && action != null) {
             if (!"true".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP))) {
-                XConfiguration wfJobConf = null;
-                try {
-                    wfJobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
-                } catch (IOException ioe) {
-                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
-                            ioe.getMessage());
-                }
+                XConfiguration wfJobConf = getWorkflowConf(context);
                 if ("false".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) ||
                     !wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))) {
                     credPropertiesMap = getActionCredentialsProperties(context, action);
@@ -1318,11 +1308,13 @@ public class JavaActionExecutor extends ActionExecutor {
         HashMap<String, CredentialsProperties> props = new HashMap<String, CredentialsProperties>();
         if (context != null && action != null) {
             String credsInAction = action.getCred();
-            LOG.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
-            String[] credNames = credsInAction.split(",");
-            for (String credName : credNames) {
-                CredentialsProperties credProps = getCredProperties(context, credName);
-                props.put(credName, credProps);
+            if (credsInAction != null) {
+                LOG.debug("Get credential '" + credsInAction + "' properties for action : " + action.getId());
+                String[] credNames = credsInAction.split(",");
+                for (String credName : credNames) {
+                    CredentialsProperties credProps = getCredProperties(context, credName);
+                    props.put(credName, credProps);
+                }
             }
         }
         else {
@@ -1336,7 +1328,7 @@ public class JavaActionExecutor extends ActionExecutor {
             throws Exception {
         CredentialsProperties credProp = null;
         String workflowXml = ((WorkflowJobBean) context.getWorkflow()).getWorkflowInstance().getApp().getDefinition();
-        XConfiguration wfjobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+        XConfiguration wfjobConf = getWorkflowConf(context);
         Element elementJob = XmlUtils.parseXml(workflowXml);
         Element credentials = elementJob.getChild("credentials", elementJob.getNamespace());
         if (credentials != null) {
@@ -1502,6 +1494,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 if (externalIDs != null) {
                     context.setExternalChildIDs(externalIDs);
                     LOG.info(XLog.STD, "External Child IDs  : [{0}]", externalIDs);
+
                 }
 
                 LOG.info(XLog.STD, "action completed, external ID [{0}]", action.getExternalId());
@@ -1578,16 +1571,6 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
             throws HadoopAccessorException, JDOMException, IOException, URISyntaxException {
-    }
-
-    protected final void readExternalChildIDs(WorkflowAction action, Context context) throws IOException {
-        if (action.getData() != null) {
-            // Load stored Hadoop jobs ids and promote them as external child ids
-            // See LauncherMain#writeExternalChildIDs for how they are written
-            Properties props = new Properties();
-            props.load(new StringReader(action.getData()));
-            context.setExternalChildIDs((String) props.get(LauncherMain.HADOOP_JOBS));
-        }
     }
 
     protected boolean getCaptureOutput(WorkflowAction action) throws JDOMException {
@@ -1668,7 +1651,7 @@ public class JavaActionExecutor extends ActionExecutor {
         String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
         if (names == null || names.length == 0) {
             try {
-                XConfiguration jobConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+                XConfiguration jobConf = getWorkflowConf(context);
                 names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
                 if (names == null || names.length == 0) {
                     names = Services.get().getConf().getStrings(ACTION_SHARELIB_FOR + getType());
@@ -1737,5 +1720,13 @@ public class JavaActionExecutor extends ActionExecutor {
     @Override
     public boolean supportsConfigurationJobXML() {
         return true;
+    }
+
+    private XConfiguration getWorkflowConf(Context context) throws IOException {
+        if (workflowConf == null) {
+            workflowConf = new XConfiguration(new StringReader(context.getWorkflow().getConf()));
+        }
+        return workflowConf;
+
     }
 }

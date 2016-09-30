@@ -51,9 +51,7 @@ public class JobUtils {
      * @throws IOException thrown if normalization can not be done properly.
      */
     public static void normalizeAppPath(String user, String group, Configuration conf) throws IOException {
-        if (user == null) {
-            throw new IllegalArgumentException("user cannot be null");
-        }
+        ParamChecker.notNull(user, "user");
 
         if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) != null) { // do nothing for proxy submission job;
             return;

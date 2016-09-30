@@ -1883,17 +1883,17 @@ This function is only applicable to action nodes that produce output data on com
 
 The output data is in a Java Properties format and via this EL function it is available as a =Map<String, String>=.
 
-*int wf:actionExternalId(String node)*
+*String wf:actionExternalId(String node)*
 
 It returns the external Id for an action node, or an empty string if the action has not being executed or it has not
 completed yet.
 
-*int wf:actionTrackerUri(String node)*
+*String wf:actionTrackerUri(String node)*
 
 It returns the tracker URI for an action node, or an empty string if the action has not being executed or it has not
 completed yet.
 
-*int wf:actionExternalStatus(String node)*
+*String wf:actionExternalStatus(String node)*
 
 It returns the external status for an action node, or an empty string if the action has not being executed or it has
 not completed yet.
@@ -2275,6 +2275,7 @@ the notification:
 
    * =$jobId= : The workflow job ID
    * =$status= : the workflow current state
+   * =$parentId= : The parent ID of the workflow job. If there is no parent ID, it will be replaced with an empty string.
 
 ---+++ 5.2 Node Start and End Notifications
 
@@ -2550,11 +2551,17 @@ Oozie adminstrator can allow more error codes to be handled for User-Retry. By a
 =oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext= to =oozie.site.xml=
 and error codes as value, these error codes will be considered as User-Retry after system restart.
 
+Since Oozie 4.3, User-retry allows user to mention retry policy. The value for policy can be =periodic=
+or =exponential=, =periodic= being the default. Oozie administrator can define user retry policy for all workflow
+actions by adding this configuration =oozie.service.LiteWorkflowStoreService.user.retry.policy= to =oozie.site.xml=.
+This value will be considered as user retry policy after system restart. This value can be overridden while defining
+actions in workflow xml if needed. The =retry-interval= should be specified in minutes.
+
 Examples of User-Retry in a workflow action is :
 
 <verbatim>
-<workflow-app xmlns="uri:oozie:workflow:0.3" name="wf-name">
-<action name="a" retry-max="2" retry-interval="1">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="wf-name">
+<action name="a" retry-max="2" retry-interval="1" retry-policy="exponential">
 </action>
 </verbatim>
 
@@ -2750,6 +2757,7 @@ to be executed.
         <xs:attribute name="cred" type="xs:string"/>
         <xs:attribute name="retry-max" type="xs:string"/>
         <xs:attribute name="retry-interval" type="xs:string"/>
+        <xs:attribute name="retry-policy" type="xs:string"/>
     </xs:complexType>
 
     <xs:complexType name="MAP-REDUCE">

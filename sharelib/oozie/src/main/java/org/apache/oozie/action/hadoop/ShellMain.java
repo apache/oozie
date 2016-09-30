@@ -22,11 +22,13 @@ package org.apache.oozie.action.hadoop;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -39,11 +41,15 @@ public class ShellMain extends LauncherMain {
     public static final String CONF_OOZIE_SHELL_ENVS = "oozie.shell.envs";
     public static final String CONF_OOZIE_SHELL_CAPTURE_OUTPUT = "oozie.shell.capture-output";
     public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR = "oozie.action.shell.setup.hadoop.conf.dir";
+    public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES =
+            "oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties";
+    public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT =
+            "oozie.action.shell.setup.hadoop.conf.dir.log4j.content";
     public static final String OOZIE_ACTION_CONF_XML = "OOZIE_ACTION_CONF_XML";
     private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
     private static final String YARN_CONF_DIR = "YARN_CONF_DIR";
 
-    private static String[] HADOOP_SITE_FILES = new String[] {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
+    private static String LOG4J_PROPERTIES = "log4j.properties";
 
     /**
      * @param args Invoked from LauncherMapper:map()
@@ -57,6 +63,9 @@ public class ShellMain extends LauncherMain {
     protected void run(String[] args) throws Exception {
 
         Configuration actionConf = loadActionConf();
+        setYarnTag(actionConf);
+        setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
+        setApplicationTags(actionConf, SPARK_YARN_TAGS);
 
         int exitCode = execute(actionConf);
         if (exitCode != 0) {
@@ -80,7 +89,7 @@ public class ShellMain extends LauncherMain {
         ProcessBuilder builder = new ProcessBuilder(cmdArray);
         Map<String, String> envp = getEnvMap(builder.environment(), actionConf);
 
-        // Getting the Ccurrent working dir and setting it to processbuilder
+        // Getting the Current working dir and setting it to processbuilder
         File currDir = new File("dummy").getAbsoluteFile().getParentFile();
         System.out.println("Current working dir " + currDir);
         builder.directory(currDir);
@@ -121,7 +130,7 @@ public class ShellMain extends LauncherMain {
      * HADOOP/YARN_CONF_DIR to point there.  This should allow most Hadoop ecosystem CLI programs to have the proper configuration,
      * propagated from Oozie's copy and including anything set in the Workflow's configuration section as well.  Otherwise,
      * HADOOP/YARN_CONF_DIR points to the NodeManager's *-site files, which are likely not suitable for client programs.
-     * It will only do this if {@link CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} is set to true.
+     * It will only do this if {@link #CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR} is set to true.
      *
      * @param actionConf The action configuration
      * @param envp The environment for the Shell process
@@ -132,21 +141,43 @@ public class ShellMain extends LauncherMain {
         if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {
             String actionXml = envp.get(OOZIE_ACTION_CONF_XML);
             if (actionXml != null) {
-                File actionXmlFile = new File(actionXml);
                 File confDir = new File(currDir, "oozie-hadoop-conf-" + System.currentTimeMillis());
-                System.out.println("Copying " + actionXml + " to " + confDir + "/" + Arrays.toString(HADOOP_SITE_FILES));
-                confDir.mkdirs();
-                File[] dstFiles = new File[HADOOP_SITE_FILES.length];
-                for (int i = 0; i < dstFiles.length; i++) {
-                    dstFiles[i] = new File(confDir, HADOOP_SITE_FILES[i]);
+                writeHadoopConfig(actionXml, confDir);
+                if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_WRITE_LOG4J_PROPERTIES, true)) {
+                    System.out.println("Writing " + LOG4J_PROPERTIES + " to " + confDir);
+                    writeLoggerProperties(actionConf, confDir);
                 }
-                copyFileMultiplex(actionXmlFile, dstFiles);
                 System.out.println("Setting " + HADOOP_CONF_DIR + " and " + YARN_CONF_DIR
                     + " to " + confDir.getAbsolutePath());
                 envp.put(HADOOP_CONF_DIR, confDir.getAbsolutePath());
                 envp.put(YARN_CONF_DIR, confDir.getAbsolutePath());
             }
         }
+    }
+
+    /**
+     * Write a {@link #LOG4J_PROPERTIES} file into the provided directory.
+     * Content of the log4j.properties sourced from the default value of property
+     * {@link #CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT}, defined in oozie-default.xml.
+     * This is required for properly redirecting command outputs to stderr.
+     * Otherwise, logging from commands may go into stdout and make it to the Shell's captured output.
+     * @param actionConf the action's configuration, to source log4j contents from
+     * @param confDir the directory to write a {@link #LOG4J_PROPERTIES} file under
+     */
+    private static void writeLoggerProperties(Configuration actionConf, File confDir) throws IOException {
+        String log4jContents = actionConf.get(
+                CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT);
+        File log4jPropertiesFile = new File(confDir, LOG4J_PROPERTIES);
+        FileOutputStream log4jFileOutputStream = new FileOutputStream(log4jPropertiesFile, false);
+        PrintWriter log4jWriter = new PrintWriter(log4jFileOutputStream);
+        BufferedReader lineReader = new BufferedReader(new StringReader(log4jContents));
+        String line = lineReader.readLine();
+        while (line != null) {
+            // Trim the line (both preceding and trailing whitespaces) before writing it as a line in file
+            log4jWriter.println(line.trim());
+            line = lineReader.readLine();
+        }
+        log4jWriter.close();
     }
 
     /**
@@ -230,7 +261,7 @@ public class ShellMain extends LauncherMain {
 
             try {
                 if (needCaptured) {
-                    File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
+                    File file = new File(System.getProperty(OUTPUT_PROPERTIES));
                     os = new BufferedWriter(new FileWriter(file));
                 }
                 while ((line = reader.readLine()) != null) {

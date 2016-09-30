@@ -75,11 +75,19 @@ public class JaasConfiguration extends Configuration {
      */
     public static void addEntry(String name, String principal, String keytab) {
         Map<String, String> options = new HashMap<String, String>();
-        options.put("keyTab", keytab);
         options.put("principal", principal);
-        options.put("useKeyTab", "true");
-        options.put("storeKey", "true");
-        options.put("useTicketCache", "false");
+        if (System.getProperty("java.vendor").contains("IBM")) {
+            // IBM JAVA's UseKeytab covers both keyTab and useKeyTab options
+            options.put("useKeytab",keytab.startsWith("file://") ? keytab : "file://" + keytab);
+
+            // Both "initiator" and "acceptor"
+            options.put("credsType", "both");
+        } else {
+            options.put("keyTab", keytab);
+            options.put("useKeyTab", "true");
+            options.put("storeKey", "true");
+            options.put("useTicketCache", "false");
+        }
         AppConfigurationEntry entry = new AppConfigurationEntry(krb5LoginModuleName,
                 AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
         entries.put(name, entry);

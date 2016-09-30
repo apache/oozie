@@ -197,9 +197,9 @@ public class TestTimestampedMessageParser extends XTestCase {
         XLogFilter.reset();
         XLogFilter xf = new XLogFilter();
         String str1 = "2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
-                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change\n";
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change" + SYSTEM_LINE_SEPARATOR;
         String str2 = "2009-06-24 02:43:13,961  INFO _L2_:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
-                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-]\n";
+                + "JOB[14-200904160239--example-forkjoinwf] ACTION[-]" + SYSTEM_LINE_SEPARATOR;
         BufferedReader reader = new BufferedReader(new StringReader(str1 + str2));
         TimestampedMessageParser parser = new TimestampedMessageParser(reader, xf);
         assertNull(parser.getLastMessage());

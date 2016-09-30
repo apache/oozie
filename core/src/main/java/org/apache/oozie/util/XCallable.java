@@ -32,14 +32,14 @@ public interface XCallable<T> extends Callable<T> {
      *
      * @return the callable name.
      */
-    public String getName();
+    String getName();
 
     /**
      * Return the priority of the callable.
      *
      * @return the callable priority.
      */
-    public int getPriority();
+    int getPriority();
 
     /**
      * Return the callable type. <p> The callable type is used for concurrency throttling in the {@link
@@ -47,39 +47,39 @@ public interface XCallable<T> extends Callable<T> {
      *
      * @return the callable type.
      */
-    public String getType();
+    String getType();
 
     /**
      * Returns the createdTime of the callable in milliseconds
      *
      * @return the callable createdTime
      */
-    public long getCreatedTime();
+    long getCreatedTime();
 
     /**
      * Return the key of the callable
      *
      * @return the callable key
      */
-    public String getKey();
+    String getKey();
 
     /**
      * Return the lock key of the callable
      *
      * @return the callable Lock key
      */
-    public String getEntityKey();
+    String getEntityKey();
 
     /**
      * set the mode of execution for the callable. True if in interrupt, false
      * if not
      */
-    public void setInterruptMode(boolean mode);
+    void setInterruptMode(boolean mode);
 
     /**
      * @return the mode of execution. true if it is executed as an Interrupt,
      *         false otherwise
      */
-    public boolean inInterruptMode();
+    boolean inInterruptMode();
 
 }

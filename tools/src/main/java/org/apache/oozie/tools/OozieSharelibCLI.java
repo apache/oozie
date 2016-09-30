@@ -169,7 +169,7 @@ public class OozieSharelibCLI {
 
             URI uri = new Path(hdfsUri).toUri();
             Configuration fsConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(System.getProperty("user.name"), uri, fsConf);
+            FileSystem fs = FileSystem.get(uri, fsConf);
 
 
             if (!srcFile.exists()){

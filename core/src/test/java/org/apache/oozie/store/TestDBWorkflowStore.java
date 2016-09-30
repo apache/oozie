@@ -477,7 +477,6 @@ public class TestDBWorkflowStore extends XTestCase {
         a31.setId(str.toString());
         a31.setJobId(wfBean3.getId());
         a31.setStatus(WorkflowAction.Status.PREP);
-        a31.setCred("null");
         store.beginTrx();
         store.insertAction(a31);
         store.commitTrx();

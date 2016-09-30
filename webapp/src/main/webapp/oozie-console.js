@@ -2532,7 +2532,8 @@ var timeZones_store = new Ext.data.JsonStore({
     fields: ['timezoneDisplayName','timezoneId'],
     proxy: new Ext.data.HttpProxy({
         url: getOozieBase() + 'admin' + "/available-timezones"
-    })
+    }),
+    sortInfo : {field: "timezoneDisplayName", direction: "ASC"}
 });
 timeZones_store.proxy.conn.timeout = 300000;
 timeZones_store.proxy.conn.method = "GET";

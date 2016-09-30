@@ -47,14 +47,11 @@ import java.util.regex.Pattern;
 
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
-    public static final String ACTION_PREFIX = "oozie.action.";
-    public static final String EXTERNAL_CHILD_IDS = ACTION_PREFIX + "externalChildIDs";
-    public static final String EXTERNAL_ACTION_STATS = ACTION_PREFIX + "stats.properties";
-    public static final String EXTERNAL_STATS_WRITE = ACTION_PREFIX + "external.stats.write";
     public static final int STRING_BUFFER_SIZE = 100;
 
     private static final Pattern[] PIG_JOB_IDS_PATTERNS = {
-      Pattern.compile("HadoopJobId: (job_\\S*)")
+            Pattern.compile("HadoopJobId: (job_\\S*)"),
+            Pattern.compile("Submitted application (application[0-9_]*)")
     };
 
     static {
@@ -96,6 +93,7 @@ public class PigMain extends LauncherMain {
 
         actionConf.addResource(new Path("file:///", actionXml));
         setYarnTag(actionConf);
+        setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
 
         Properties pigProperties = new Properties();
         for (Map.Entry<String, String> entry : actionConf) {
@@ -116,6 +114,10 @@ public class PigMain extends LauncherMain {
         else {
             System.out.println("Non-kerberoes execution");
         }
+
+        //setting oozie workflow id as caller context id for pig
+        String callerId = "oozie:" + System.getProperty("oozie.job.id");
+        pigProperties.setProperty("pig.log.trace.id", callerId);
 
         OutputStream os = new FileOutputStream("pig.properties");
         pigProperties.store(os, "");
@@ -165,7 +167,7 @@ public class PigMain extends LauncherMain {
         if (log4jFile != null) {
 
             String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
-            String rootLogLevel = actionConf.get("oozie.action ." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+            String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
             // append required PIG properties to the default hadoop log4j file
             Properties hadoopProps = new Properties();
@@ -180,6 +182,7 @@ public class PigMain extends LauncherMain {
             hadoopProps.setProperty("log4j.appender.B.file", logFile);
             hadoopProps.setProperty("log4j.appender.B.layout", "org.apache.log4j.PatternLayout");
             hadoopProps.setProperty("log4j.appender.B.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+            hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, B");
 
             String localProps = new File("piglog4j.properties").getAbsolutePath();
             OutputStream os1 = new FileOutputStream(localProps);

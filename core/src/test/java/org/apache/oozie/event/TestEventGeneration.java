@@ -314,6 +314,25 @@ public class TestEventGeneration extends XDataTestCase {
         assertEquals(coord.getUser(), event.getUser());
         assertEquals(coord.getAppName(), event.getAppName());
 
+        // Action Suspended
+        wfJob.setStatus(WorkflowJob.Status.SUSPENDED);
+        action.setStatus(CoordinatorAction.Status.RUNNING);
+        CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME,
+                action);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob);
+        new CoordActionCheckXCommand(action.getId(), 0).call();
+        action = jpaService.execute(coordGetCmd);
+        assertEquals(CoordinatorAction.Status.SUSPENDED, action.getStatus());
+        event = (JobEvent) queue.poll();
+        assertEquals(EventStatus.SUSPEND, event.getEventStatus());
+        assertEquals(AppType.COORDINATOR_ACTION, event.getAppType());
+        assertEquals(action.getId(), event.getId());
+        assertEquals(action.getJobId(), event.getParentId());
+        assertEquals(action.getNominalTime(), ((CoordinatorActionEvent) event).getNominalTime());
+        assertEquals(wfJob.getStartTime(), event.getStartTime());
+        assertEquals(coord.getUser(), event.getUser());
+        assertEquals(coord.getAppName(), event.getAppName());
+
         // Action start on Coord Resume
         coord.setStatus(CoordinatorJobBean.Status.SUSPENDED);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_STATUS, coord);
@@ -686,7 +705,6 @@ public class TestEventGeneration extends XDataTestCase {
         action.setStartTime(new Date());
         action.setEndTime(new Date());
         action.setLastCheckTime(new Date());
-        action.setCred("null");
         action.setPendingOnly();
 
         String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"

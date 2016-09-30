@@ -28,12 +28,12 @@ public interface WorkflowApp {
      *
      * @return the name of teh workflow application.
      */
-    public String getName();
+    String getName();
 
     /**
      * Return the original workflow definition (normally XML).
      *
      * @return the original workflow definition (normally XML).
      */
-    public String getDefinition();
+    String getDefinition();
 }

@@ -130,6 +130,7 @@ public abstract class XTestCase extends TestCase {
 
     protected static File OOZIE_SRC_DIR = null;
     private static final String OOZIE_TEST_PROPERTIES = "oozie.test.properties";
+    protected static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
     protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
@@ -147,12 +148,12 @@ public abstract class XTestCase extends TestCase {
                 OOZIE_SRC_DIR = new File(OOZIE_SRC_DIR, "core");
             }
             if (!OOZIE_SRC_DIR.exists()) {
-                System.err.println();
-                System.err.println("Could not determine project root directory");
-                System.err.println();
-                System.exit(-1);
+                // We're probably being run from outside of Oozie (e.g. MiniOozie), so just use a dummy location here.
+                // Anything that uses this location should have a fallback anyway.
+                OOZIE_SRC_DIR = new File(".");
+            } else {
+                OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile();
             }
-            OOZIE_SRC_DIR = OOZIE_SRC_DIR.getParentFile();
 
             String testPropsFile = System.getProperty(OOZIE_TEST_PROPERTIES, "test.properties");
             File file = new File(testPropsFile).isAbsolute()
@@ -360,7 +361,7 @@ public abstract class XTestCase extends TestCase {
             else {
                 // If we still can't find it, then exit
                 System.err.println();
-                System.err.println(XLog.format("Custom configuration file for testing does no exist [{0}]",
+                System.err.println(XLog.format("Custom configuration file for testing does not exist [{0}]",
                                                source.getAbsolutePath()));
                 System.err.println();
                 System.exit(-1);
@@ -386,8 +387,26 @@ public abstract class XTestCase extends TestCase {
         File actionConfDir = new File(testCaseConfDir, "action-conf");
         actionConfDir.mkdir();
         source = new File(OOZIE_SRC_DIR, "core/src/test/resources/hadoop-config.xml");
+        InputStream hadoopConfigResourceStream = null;
+        if (!source.exists()) {
+            // If we can't find it, try using the class loader (useful if we're using XTestCase from outside core)
+            URL sourceURL = getClass().getClassLoader().getResource("hadoop-config.xml");
+            if (sourceURL != null) {
+                hadoopConfigResourceStream = sourceURL.openStream();
+            }
+            else {
+                // If we still can't find it, then exit
+                System.err.println();
+                System.err.println(XLog.format("hadoop-config.xml configuration file for testing does not exist [{0}]",
+                        source.getAbsolutePath()));
+                System.err.println();
+                System.exit(-1);
+            }
+        } else {
+            hadoopConfigResourceStream = new FileInputStream(source);
+        }
         target = new File(hadoopConfDir, "hadoop-site.xml");
-        IOUtils.copyStream(new FileInputStream(source), new FileOutputStream(target));
+        IOUtils.copyStream(hadoopConfigResourceStream, new FileOutputStream(target));
 
         if (System.getProperty("oozielocal.log") == null) {
             setSystemProperty("oozielocal.log", "/tmp/oozielocal.log");
@@ -417,8 +436,12 @@ public abstract class XTestCase extends TestCase {
             os.close();
         }
 
-        if (System.getProperty("oozie.test.metastore.server", "true").equals("true")) {
+        if (System.getProperty("oozie.test.metastore.server", "false").equals("true")) {
             setupHCatalogServer();
+        }
+
+        if (System.getProperty("oozie.test.hive.server.2", "false").equals("true")) {
+            setupHiveServer2();
         }
 
         // Cleanup any leftover database data to make sure we start each test with an empty database
@@ -432,10 +455,8 @@ public abstract class XTestCase extends TestCase {
      */
     @Override
     protected void tearDown() throws Exception {
-        if (hiveserver2 != null && hiveserver2.isStarted()) {
-            hiveserver2.stop();
-            hiveserver2 = null;
-        }
+        tearDownHiveServer2();
+        tearDownHCatalogServer();
         resetSystemProperties();
         sysProps = null;
         testCaseDir = null;
@@ -899,6 +920,7 @@ public abstract class XTestCase extends TestCase {
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
     private static MiniHS2 hiveserver2 = null;
+    private static HiveConf hs2Config = null;
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
@@ -987,9 +1009,7 @@ public abstract class XTestCase extends TestCase {
       conf.set("dfs.permissions", "true");
       conf.set("hadoop.security.authentication", "simple");
 
-      //Doing this because Hadoop 1.x does not support '*' and
-      //Hadoop 0.23.x does not process wildcard if the value is
-      // '*,127.0.0.1'
+      //Doing this because Hadoop 1.x does not support '*' if the value is '*,127.0.0.1'
       StringBuilder sb = new StringBuilder();
       sb.append("127.0.0.1,localhost");
       for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
@@ -1011,7 +1031,7 @@ public abstract class XTestCase extends TestCase {
       return conf;
     }
 
-    private void setupHCatalogServer() throws Exception {
+    protected void setupHCatalogServer() throws Exception {
         if (hcatServer == null) {
             hcatServer = new MiniHCatServer(RUNMODE.SERVER, createJobConf());
             hcatServer.start();
@@ -1019,17 +1039,38 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    protected void tearDownHCatalogServer() throws Exception {
+        // TODO: This doesn't properly shutdown the metastore.  For now, just keep the current one running once it's been started
+//        if (hcatServer != null) {
+//            hcatServer.shutdown();
+//            hcatServer = null;
+//            log.info("Metastore server shutdown");
+//        }
+    }
+
     protected void setupHiveServer2() throws Exception {
         if (hiveserver2 == null) {
             setSystemProperty("test.tmp.dir", getTestCaseDir());
-            // Make HS2 use our Mini cluster by copying all configs to HiveConf; also had to hack MiniHS2
-            HiveConf hconf = new HiveConf();
-            Configuration jobConf = createJobConf();
-            for (Map.Entry<String, String> pair: jobConf) {
-                hconf.set(pair.getKey(), pair.getValue());
+            // We cache the HS2 config because it's expensive to build
+            if (hs2Config == null) {
+                // Make HS2 use our Mini cluster by copying all configs to HiveConf; also had to hack MiniHS2
+                hs2Config = new HiveConf();
+                Configuration jobConf = createJobConf();
+                for (Map.Entry<String, String> pair : jobConf) {
+                    hs2Config.set(pair.getKey(), pair.getValue());
+                }
             }
-            hiveserver2 = new MiniHS2(hconf, dfsCluster.getFileSystem());
+            hiveserver2 = new MiniHS2(hs2Config, dfsCluster.getFileSystem());
             hiveserver2.start(new HashMap<String, String>());
+            log.info("Hive Server 2 started at " + hiveserver2.getJdbcURL());
+        }
+    }
+
+    protected void tearDownHiveServer2() {
+        if (hiveserver2 != null && hiveserver2.isStarted()) {
+            hiveserver2.stop();
+            hiveserver2 = null;
+            log.info("Hive Server 2 shutdown");
         }
     }
 
@@ -1058,6 +1099,8 @@ public abstract class XTestCase extends TestCase {
         catch (Exception ex) {
             System.out.println(ex);
         }
+        // This is tied to the MiniCluster because it inherits configs from there
+        hs2Config = null;
     }
 
     private static void shutdownMiniCluster2() {

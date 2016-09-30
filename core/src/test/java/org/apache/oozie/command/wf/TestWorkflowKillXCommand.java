@@ -159,6 +159,25 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
         wfInstance = job.getWorkflowInstance();
         assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+
+        services.destroy();
+
+        sleep(5000);
+
+        setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_2);
+        services = new Services();
+        services.init();
+
+        sleep(5000);
+
+        jpaService = Services.get().get(JPAService.class);
+        job = jpaService.execute(wfJobGetCmd);
+        action = jpaService.execute(wfActionGetCmd);
+        assertEquals(job.getStatus(), WorkflowJob.Status.KILLED);
+        assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
+        wfInstance = job.getWorkflowInstance();
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+
     }
 
 

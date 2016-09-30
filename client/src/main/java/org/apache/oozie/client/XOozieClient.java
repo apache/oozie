@@ -190,13 +190,8 @@ public class XOozieClient extends OozieClient {
      */
     public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String[] params, String jobType)
             throws IOException, OozieClientException {
-        if (conf == null) {
-            throw new IllegalArgumentException("conf cannot be null");
-        }
-        if (scriptFile == null) {
-            throw new IllegalArgumentException("scriptFile cannot be null");
-        }
-
+        OozieClient.notNull(conf, "conf");
+        OozieClient.notNull(scriptFile, "scriptFile");
         validateHttpSubmitConf(conf);
 
         String script = "";
@@ -235,13 +230,8 @@ public class XOozieClient extends OozieClient {
      */
     public String submitSqoop(Properties conf, String[] command, String[] args)
             throws OozieClientException {
-        if (conf == null) {
-            throw new IllegalArgumentException("conf cannot be null");
-        }
-        if (command == null) {
-            throw new IllegalArgumentException("command cannot be null");
-        }
-
+        OozieClient.notNull(conf, "conf");
+        OozieClient.notNull(command, "command");
         validateHttpSubmitConf(conf);
 
         conf.setProperty(XOozieClient.SQOOP_COMMAND, serializeSqoopCommand(command));
@@ -258,10 +248,7 @@ public class XOozieClient extends OozieClient {
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     public String submitMapReduce(Properties conf) throws OozieClientException {
-        if (conf == null) {
-            throw new IllegalArgumentException("conf cannot be null");
-        }
-
+        OozieClient.notNull(conf, "conf");
         validateHttpSubmitConf(conf);
 
         return (new HttpJobSubmit(conf, "mapreduce")).call();
@@ -309,9 +296,7 @@ public class XOozieClient extends OozieClient {
      *             symbolic link name.
      */
     public void addFile(Properties conf, String file) {
-        if (file == null || file.length() == 0) {
-            throw new IllegalArgumentException("file cannot be null or empty");
-        }
+        OozieClient.notEmpty(file, "file");
         String files = conf.getProperty(FILES);
         conf.setProperty(FILES, files == null ? file : files + "," + file);
     }
@@ -325,9 +310,7 @@ public class XOozieClient extends OozieClient {
      *             symbolic link name.
      */
     public void addArchive(Properties conf, String file) {
-        if (file == null || file.length() == 0) {
-            throw new IllegalArgumentException("file cannot be null or empty");
-        }
+        OozieClient.notEmpty(file, "file");
         String files = conf.getProperty(ARCHIVES);
         conf.setProperty(ARCHIVES, files == null ? file : files + "," + file);
     }

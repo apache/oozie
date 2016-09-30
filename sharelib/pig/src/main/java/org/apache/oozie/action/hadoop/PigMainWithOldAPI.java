@@ -162,11 +162,11 @@ public class PigMainWithOldAPI extends LauncherMain {
             hadoopProps.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A, B");
             hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
             hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-            hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+            hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
             hadoopProps.setProperty("log4j.appender.B", "org.apache.log4j.FileAppender");
             hadoopProps.setProperty("log4j.appender.B.file", logFile);
             hadoopProps.setProperty("log4j.appender.B.layout", "org.apache.log4j.PatternLayout");
-            hadoopProps.setProperty("log4j.appender.B.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+            hadoopProps.setProperty("log4j.appender.B.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
 
             String localProps = new File("piglog4j.properties").getAbsolutePath();
             OutputStream os1 = new FileOutputStream(localProps);
@@ -248,7 +248,7 @@ public class PigMainWithOldAPI extends LauncherMain {
 
         // harvesting and recording Hadoop Job IDs
         Properties jobIds = getHadoopJobIds(logFile);
-        File file = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_OUTPUT_PROPS));
+        File file = new File(System.getProperty(OUTPUT_PROPERTIES));
         os = new FileOutputStream(file);
         jobIds.store(os, "");
         os.close();

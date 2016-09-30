@@ -18,9 +18,7 @@
 
 package org.apache.oozie.executor.jpa;
 
-import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,12 +27,12 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob.Status;
+import org.apache.oozie.store.StoreStatusFilter;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
@@ -49,6 +47,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
     private static final String seletStr = "Select w.id, w.appName, w.statusStr, w.run, w.user, w.group, w.createdTimestamp, "
             + "w.startTimestamp, w.lastModifiedTimestamp, w.endTimestamp, w.externalId, w.parentId from WorkflowJobBean w";
     private static final String countStr = "Select count(w) from WorkflowJobBean w";
+    public static final String DEFAULT_ORDER_BY = " order by w.createdTimestamp desc ";
 
     private final Map<String, List<String>> filter;
     private final int start;
@@ -77,6 +76,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         List<String> colArray = new ArrayList<String>();
         List<Object> valArray = new ArrayList<Object>();
         StringBuilder sb = new StringBuilder("");
+        String orderBy = DEFAULT_ORDER_BY;
         boolean isStatus = false;
         boolean isAppName = false;
         boolean isUser = false;
@@ -278,29 +278,30 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                 }
             }
         }
+
+        orderBy = StoreStatusFilter.getSortBy(filter, orderBy);
         int realLen = 0;
 
         Query q = null;
         Query qTotal = null;
-        if (orArray.size() == 0) {
+        if (orArray.size() == 0 && orderBy.equals(DEFAULT_ORDER_BY)) {
             q = em.createNamedQuery("GET_WORKFLOWS_COLUMNS");
             q.setFirstResult(start - 1);
             q.setMaxResults(len);
             qTotal = em.createNamedQuery("GET_WORKFLOWS_COUNT");
         }
         else {
-            if (orArray.size() > 0) {
-                StringBuilder sbTotal = new StringBuilder(sb);
-                sb.append(" order by w.createdTimestamp desc ");
-                q = em.createQuery(sb.toString());
-                q.setFirstResult(start - 1);
-                q.setMaxResults(len);
-                qTotal = em.createQuery(sbTotal.toString().replace(seletStr, countStr));
+            sb = sb.toString().trim().length() == 0 ? sb.append(seletStr) : sb;
+            String sbTotal = sb.toString();
+            sb.append(orderBy);
+            q = em.createQuery(sb.toString());
+            q.setFirstResult(start - 1);
+            q.setMaxResults(len);
+            qTotal = em.createQuery(sbTotal.replace(seletStr, countStr));
 
-                for (int i = 0; i < orArray.size(); i++) {
-                    q.setParameter(colArray.get(i), valArray.get(i));
-                    qTotal.setParameter(colArray.get(i), valArray.get(i));
-                }
+            for (int i = 0; i < orArray.size(); i++) {
+                q.setParameter(colArray.get(i), valArray.get(i));
+                qTotal.setParameter(colArray.get(i), valArray.get(i));
             }
         }
 
@@ -340,21 +341,21 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                 case 'd':
                     offset = Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
                     break;
                 case 'h':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
                     break;
                 case 'm':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
-                        throw new IllegalArgumentException("offset must be minus from currentTime");
+                        throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
                     createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
                     break;
@@ -362,13 +363,14 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                     createdTime = DateUtils.parseDateUTC(time);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unsupported time format " + time);
+                    throw new IllegalArgumentException("Unsupported time format: " + time + StoreStatusFilter.TIME_FORMAT);
             }
         } else {
-            throw new IllegalArgumentException("the format of createdTime is wrong: " + time);
+            throw new IllegalArgumentException("The format of time is wrong: " + time + StoreStatusFilter.TIME_FORMAT);
         }
         return createdTime;
     }
+
     private WorkflowJobBean getBeanForWorkflowFromArray(Object[] arr) {
 
         WorkflowJobBean wfBean = new WorkflowJobBean();

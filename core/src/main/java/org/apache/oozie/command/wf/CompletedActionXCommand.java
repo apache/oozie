@@ -51,7 +51,7 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
     }
 
     public CompletedActionXCommand(String actionId, String externalStatus, Properties actionData, int priority) {
-        this(actionId, externalStatus, actionData, 1, 0);
+        this(actionId, externalStatus, actionData, priority, 0);
     }
 
     public CompletedActionXCommand(String actionId, String externalStatus, Properties actionData) {

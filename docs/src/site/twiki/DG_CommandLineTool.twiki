@@ -100,7 +100,8 @@ usage:
       oozie jobs <OPTIONS> : jobs status
                  -auth <arg>          select authentication type [SIMPLE|KERBEROS]
                  -doas <arg>          doAs user, impersonates as the specified user.
-                 -filter <arg>        user=<U>\;name=<N>\;group=<G>\;status=<S>\;frequency=<F>\;unit=<M>\;startcreatedtime=<SC>\;endcreatedtime=<EC>
+                 -filter <arg>        user=<U>\;name=<N>\;group=<G>\;status=<S>\;frequency=<F>\;unit=<M>\;startcreatedtime=<SC>\;
+                                      endcreatedtime=<EC>\;sortby=<SB>
                  -jobtype <arg>       job type ('Supported in Oozie-2.0 or later versions ONLY - coordinator' or 'wf' (default))
                  -len <arg>           number of jobs (default '100')
                  -localtime           use local time (same as passing your time zone to -timezone). Overrides -timezone option
@@ -427,22 +428,6 @@ Valid value names are:
 
 Repeated value names are not allowed. An empty string "" can be used to reset pause time to none. New end time should not be before job's kickoff time.
 
----+++ Changing endtime/pausetime of a Bundle Job
-
-Example:
-
-<verbatim>
-$ oozie job -oozie http://localhost:11000/oozie -change 14-20090525161321-oozie-joe -value pausetime=2011-12-01T05:00Z
-</verbatim>
-
-The =change= option changes a bundle job that is not in =KILLED= status.
-
-Valid value names are:
-   * pausetime: the pause time of the bundle job.
-   * endtime: the end time of the bundle job.
-
-Repeated value names are not allowed. An empty string "" can be used to reset pause time to none. New end time should not be before job's kickoff time.
-
 Bundle will execute pause/end date change command on each coordinator job. Refer conditions and usage section of coordinator change command for more details [[DG_CommandLineTool#Changing_endtimeconcurrencypausetimestatus_of_a_Coordinator_Job][Coordinator job change command]].
 
 ---+++ Rerunning a Workflow Job
@@ -607,7 +592,7 @@ Example:
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -definition 14-20090525161321-oozie-joe
-
+.
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-2413">
 	<start to="p0"/>
     <action name="p0">
@@ -828,11 +813,15 @@ Update command also verifies coordinator definition like submit command, if ther
 Update command with -dryrun will show coordinator definition and properties differences.
 Config option is optional, if not specified existing coordinator property is used to find coordinator path.
 
-Update command doesn't allow update of coordinator name, frequency, start time, end time and timezone and will fail on an attempt to change any of them. To change end time of coordinator use the =-change= command
+Update command doesn't allow update of coordinator name, frequency, start time, end time and timezone and will fail on an attempt to change any of them. To change end time of coordinator use the =-change= command.
+
+To change the entire XML for a running coordinator, hdfs path for the new XML can be specified
+as =oozie.coord.application.path= in job.properties. Then, use <code>-config job.properties</code> in the update command.
+
 
 <verbatim>
 $ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0000005-140402104721140-oozie-puru-C -dryrun
-
+.
 **********Job definition changes**********
 @@ -3,8 +3,8 @@
      <concurrency>1</concurrency>
@@ -871,6 +860,7 @@ $ oozie job -oozie http://localhost:11000/oozie -config job.properties -update 0
    </property>
 **********************************
 </verbatim>
+
 
 ---+++ Ignore a Coordinator Job
 
@@ -978,6 +968,7 @@ Valid filter names are:
    * status: the status of the job.
    * startcreatedtime: the start of time window in specifying createdtime range filter.
    * endcreatedtime: the end of time window in specifying createdtime range filter
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
 name. Multiple values must be specified as different name value pairs.
@@ -1011,6 +1002,7 @@ Valid filter names are:
    * status: the status of the job.
    * frequency: the frequency of the Coordinator job.
    * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 ---+++ Checking the Status of multiple Bundle Jobs
 
@@ -1071,6 +1063,7 @@ Valid filter names are:
    * status: the status of the job.
    * frequency: the frequency of the Coordinator job.
    * unit: the time unit. It can take one of the following four values: months, days, hours or minutes. Time unit should be added only when frequency is specified.
+   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
 
 The query will do an AND among all the filter names. The query will do an OR among all the filter values for the same
 name. Multiple values must be specified as different name value pairs.
@@ -1191,11 +1184,12 @@ Example:
 
 <verbatim>
 $ oozie admin -oozie http://localhost:11000/oozie -queuedump
-
+.
 [Server Queue Dump]:
 (coord_action_start,1),(coord_action_start,1),(coord_action_start,1)
 (coord_action_ready,1)
 (action.check,2)
+
 </verbatim>
 
 It returns the Oozie server current queued commands.

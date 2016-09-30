@@ -113,6 +113,7 @@ public class ConfigurationService implements Service, Instrumentable {
 
         CONF_SYS_PROPS.add("oozie.http.hostname");
         CONF_SYS_PROPS.add("oozie.http.port");
+        CONF_SYS_PROPS.add("oozie.https.port");
         CONF_SYS_PROPS.add(ZKUtils.OOZIE_INSTANCE_ID);
 
         // These properties should be masked when displayed because they contain sensitive info (e.g. password)

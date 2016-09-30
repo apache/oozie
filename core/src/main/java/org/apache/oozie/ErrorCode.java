@@ -113,7 +113,7 @@ public enum ErrorCode {
     E0704(XLog.STD, "Definition already complete, application [{0}]"),
     E0705(XLog.STD, "Nnode already defined, node [{0}]"),
     E0706(XLog.STD, "Node cannot transition to itself node [{0}]"),
-    E0707(XLog.STD, "Loop detected at parsing, node [{0}]"),
+    E0707(XLog.STD, "Loop detected at parsing, node [{0}], path [{1}]"),
     E0708(XLog.STD, "Invalid transition, node [{0}] transition [{1}]"),
     E0709(XLog.STD, "Loop detected at runtime, node [{0}]"),
     E0710(XLog.STD, "Could not read the workflow definition, {0}"),
@@ -153,6 +153,8 @@ public enum ErrorCode {
     E0744(XLog.STD, "A fork, [{0}], is not allowed to have multiple transitions to the same node, [{1}]"),
     E0755(XLog.STD, "Workflow Job Rerun Error: {0}"),
     E0756(XLog.STD, "Exception parsing Kill node message [{0}]"),
+    E0757(XLog.STD, "Fork node [{0}] has multiple joins: [{1}]"),
+    E0758(XLog.STD, "Join node [{0}] has multiple forks: [{1}]"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),

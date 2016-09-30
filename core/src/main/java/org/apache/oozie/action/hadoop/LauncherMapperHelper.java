@@ -43,6 +43,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -53,6 +54,8 @@ import org.apache.oozie.util.PropertiesUtils;
 
 // TODO: we're no longer using Launcher Mapper -- give this class a better name
 public class LauncherMapperHelper {
+
+    public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
             throws HadoopAccessorException, IOException {
@@ -146,7 +149,8 @@ public class LauncherMapperHelper {
         }
 
         launcherConf.setInputFormat(OozieLauncherInputFormat.class);
-        launcherConf.set("mapred.output.dir", new Path(actionDir, "output").toString());
+        launcherConf.setOutputFormat(OozieLauncherOutputFormat.class);
+        launcherConf.setOutputCommitter(OozieLauncherOutputCommitter.class);
     }
 
     public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String launcherTag,
@@ -160,7 +164,7 @@ public class LauncherMapperHelper {
         actionConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, tag);
     }
 
-    private static String getTag(String launcherTag) throws NoSuchAlgorithmException {
+    public static String getTag(String launcherTag) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("MD5");
         digest.update(launcherTag.getBytes(), 0, launcherTag.length());
         String md5 = "oozie-" + new BigInteger(1, digest.digest()).toString(16);
@@ -311,4 +315,17 @@ public class LauncherMapperHelper {
             }
         });
     }
+
+    public static String getActionYarnTag(Configuration conf, String parentId, WorkflowAction wfAction) {
+        String tag;
+        if ( conf != null && conf.get(OOZIE_ACTION_YARN_TAG) != null) {
+            tag = conf.get(OOZIE_ACTION_YARN_TAG) + "@" + wfAction.getName();
+        } else if (parentId != null) {
+            tag = parentId + "@" + wfAction.getName();
+        } else {
+            tag = wfAction.getId();
+        }
+        return tag;
+    }
+
 }

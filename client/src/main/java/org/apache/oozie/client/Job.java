@@ -27,7 +27,7 @@ public interface Job {
     /**
      * Defines the possible status of an Oozie JOB.
      */
-    public static enum Status {
+    enum Status {
         PREMATER, PREP, RUNNING, SUSPENDED, SUCCEEDED, KILLED, FAILED, PAUSED,PREPPAUSED,
         PREPSUSPENDED, RUNNINGWITHERROR, SUSPENDEDWITHERROR, PAUSEDWITHERROR, DONEWITHERROR, IGNORED
     }
@@ -132,13 +132,13 @@ public interface Job {
      *
      * @return pauseTime
      */
-    public Date getPauseTime();
+    Date getPauseTime();
 
         /**
      * Return externalId
      *
      * @return externalId
      */
-    public String getExternalId();
+    String getExternalId();
 
 }

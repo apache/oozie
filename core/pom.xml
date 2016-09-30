@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-core</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
     <description>Apache Oozie Core</description>
     <name>Apache Oozie Core</name>
     <packaging>jar</packaging>
@@ -161,6 +161,14 @@
         </dependency>
 
         <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>${targetJavaVersion}</version>
+            <systemPath>${java.home}/../lib/tools.jar</systemPath>
+            <scope>system</scope>
+        </dependency>
+
+        <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
             <scope>provided</scope>
@@ -216,8 +224,8 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
             <scope>compile</scope>
         </dependency>
 
@@ -309,6 +317,24 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -637,6 +663,17 @@
                                         <include>**/XFsTestCase.class</include>
                                         <include>**/MiniOozieTestCase.class</include>
                                         <include>**/XTestCase$*.class</include>
+                                        <include>**/MainTestCase.class</include>
+                                        <include>**/ActionExecutorTestCase*.class</include>
+                                        <include>**/XHCatTestCase.class</include>
+                                        <include>**/MapperReducerForTest.class</include>
+                                        <include>**/MapperReducerCredentialsForTest.class</include>
+                                        <include>**/MapperReducerUberJarForTest.class</include>
+                                        <include>**/SharelibUtils.class</include>
+                                        <include>**/MiniHCatServer.class</include>
+                                        <include>**/LauncherMainTester.class</include>
+                                        <include>**/ZKXTestCase*.class</include>
+                                        <include>**/XDataTestCase.class</include>
                                     </includes>
                                 </configuration>
                             </execution>

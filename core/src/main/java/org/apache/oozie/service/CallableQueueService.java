@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,11 +41,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.NamedThreadFactory;
 import org.apache.oozie.util.PollablePriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue;
+import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 
 /**
  * The callable queue service queues {@link XCallable}s for asynchronous execution.
@@ -503,7 +504,8 @@ public class CallableQueueService implements Service, Instrumentable {
         // minimum size equals to the maximum size (thus threads are keep always
         // running) and we are warming up
         // all those threads (the for loop that runs dummy runnables).
-        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue){
+        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue,
+                new NamedThreadFactory("CallableQueue")) {
             protected void beforeExecute(Thread t, Runnable r) {
                 super.beforeExecute(t,r);
                 XLog.Info.get().clear();

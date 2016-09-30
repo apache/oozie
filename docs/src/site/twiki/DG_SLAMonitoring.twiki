@@ -200,8 +200,8 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-1
     actualStartTime: "2013-16-22T05:30Z" <-- (20 min late relative to expected start)
     expectedEndTime: "2013-16-22T05:40Z" <-- (should end by this time)
     actualEndTime: null
-    expectedDuration: 15
-    actualDuration: null
+    expectedDuration: 900000 <-- (expected duration in milliseconds)
+    actualDuration: 120000 <-- (actual duration in milliseconds)
     notificationMessage: "My Job has encountered an SLA event!"
     upstreamApps: "dependent-app-1, dependent-app-2"
 
@@ -231,8 +231,8 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=parent_id=000056-123879
     actualStartTime: "2013-16-22T05:05Z"
     expectedEndTime: "2013-16-22T05:40Z" <-- (should end by this time)
     actualEndTime: "2013-16-22T06:00Z" <-- (20 min late relative to expected end)
-    expectedDuration: 60
-    actualDuration: 55
+    expectedDuration: 3600000 <-- (expected duration in milliseconds)
+    actualDuration: 3300000 <-- (actual duration in milliseconds)
     notificationMessage: "My Job has encountered an SLA event!"
     upstreamApps: "dependent-app-1, dependent-app-2"
 
@@ -262,8 +262,8 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=id=000001-1238791320234
     actualStartTime: "2013-16-22T05:05Z"
     expectedEndTime: "2013-16-22T05:40Z"
     actualEndTime: "2013-16-22T05:30Z"
-    expectedDuration: 15 <-- (expected duration in minutes)
-    actualDuration: 25
+    expectedDuration: 900000 <-- (expected duration in milliseconds)
+    actualDuration: 1500000 <- (actual duration in milliseconds)
     notificationMessage: "My Job has encountered an SLA event!"
     upstreamApps: "dependent-app-1, dependent-app-2"
 
@@ -297,9 +297,9 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-15013022
     expectedEndTime: "2014-01-10T13:00Z"
     actualEndTime: "2014-01-10T13:05Z"
     endDelay: 5
-    expectedDuration: 60
-    actualDuration: 66
-    durationDelay: 6
+    expectedDuration: 3600000 <-- (expected duration in milliseconds)
+    actualDuration: 3960000 <-- (actual duration in milliseconds)
+    durationDelay: 6 <-- (duration delay in minutes)
 }
 {
     id : "000001-1238791320234-oozie-joe-C@2"
@@ -317,9 +317,9 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-15013022
     expectedEndTime: "2014-01-11T13:00Z"
     actualEndTime: "2014-01-11T13:01Z"
     endDelay: 1
-    expectedDuration: 60
-    actualDuration: 56
-    durationDelay: -4
+    expectedDuration: 3600000 <-- (expected duration in milliseconds)
+    actualDuration: 3360000 <-- (actual duration in milliseconds)
+    durationDelay: -4 <-- (duration delay in minutes)
 }
 </verbatim>
 
@@ -349,7 +349,7 @@ SLA Details:
   Expected Start Time - Mon Jun 10 23:35:00 UTC 2013
   Actual Start Time - Mon Jun 10 23:34:04 UTC 2013
   Expected End Time - Mon Jun 10 23:38:00 UTC 2013
-  Expected Duration (in mins) - 300000
+  Expected Duration (in mins) - 5
   Actual Duration (in mins) - -1
 </verbatim>
 

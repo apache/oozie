@@ -42,7 +42,6 @@ public class WorkflowTest extends MiniOozieTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        System.setProperty("oozie.test.metastore.server", "false");
         System.setProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         super.setUp();
     }

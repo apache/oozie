@@ -18,9 +18,8 @@
 package org.apache.oozie.service;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.oozie.BulkResponseInfo;
@@ -39,6 +38,7 @@ public class TestZKUUIDService extends ZKXTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        ZKUUIDService.setMaxSequence(9999990L);
     }
 
     @Override
@@ -102,7 +102,10 @@ public class TestZKUUIDService extends ZKXTestCase {
     }
 
     public void testMultipleIDGeneration_withMultiThread() throws Exception {
-        final List<Boolean> result = new ArrayList<Boolean>(10000);
+        final int size = 10000;
+        final boolean[] result = new boolean[size];
+        Arrays.fill(result, false);
+
         final ZKUUIDService uuid1 = new ZKUUIDService();
         final ZKUUIDService uuid2 = new ZKUUIDService();
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
@@ -112,17 +115,21 @@ public class TestZKUUIDService extends ZKXTestCase {
         try {
             Thread t1 = new Thread() {
                 public void run() {
-                    for (int i = 0; i < 5000; i++) {
+                    for (int i = 0; i < size / 2; i++) {
                         String id = uuid1.generateId(ApplicationType.WORKFLOW);
-                        result.add(Integer.parseInt(id.substring(0, 7)), true);
+                        log.info("[Thread-1] Generated id: {0}", id);
+                        int index = Integer.parseInt(id.substring(0, 7));
+                        result[index] = true;
                     }
                 }
             };
             Thread t2 = new Thread() {
                 public void run() {
-                    for (int i = 0; i < 5000; i++) {
+                    for (int i = 0; i < size / 2; i++) {
                         String id = uuid2.generateId(ApplicationType.WORKFLOW);
-                        result.add(Integer.parseInt(id.substring(0, 7)), true);
+                        log.info("[Thread-2] Generated id: {0}", id);
+                        int index = Integer.parseInt(id.substring(0, 7));
+                        result[index] = true;
                     }
                 }
             };
@@ -130,8 +137,8 @@ public class TestZKUUIDService extends ZKXTestCase {
             t2.start();
             t1.join();
             t2.join();
-            for (int i = 0; i < 10000; i++) {
-                assertTrue(result.get(i));
+            for (int i = 0; i < size; i++) {
+                assertTrue("Array index " + i + " is not set to true", result[i]);
             }
         }
         finally {
@@ -147,7 +154,7 @@ public class TestZKUUIDService extends ZKXTestCase {
         ZKUUIDService uuid = new ZKUUIDService();
         try {
             setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
-            uuid.setMaxSequence(900);
+            ZKUUIDService.setMaxSequence(900);
             uuid.init(service);
             String id = uuid.generateId(ApplicationType.WORKFLOW);
             Date d = dateFormat.parse(id.split("-")[1]);
@@ -174,8 +181,7 @@ public class TestZKUUIDService extends ZKXTestCase {
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
         uuid1.init(service);
         uuid2.init(service);
-        uuid1.setMaxSequence(5000);
-        uuid2.setMaxSequence(5000);
+        ZKUUIDService.setMaxSequence(5000);
 
         for (int i = 0; i < 5000; i++) {
             result[i]=new AtomicInteger(0);

@@ -39,7 +39,8 @@ import org.apache.hive.beeline.BeeLine;
 
 public class Hive2Main extends LauncherMain {
     private static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
-            Pattern.compile("Ended Job = (job_\\S*)")
+            Pattern.compile("Ended Job = (job_\\S*)"),
+            Pattern.compile("Submitted application (application[0-9_]*)")
     };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
 

@@ -43,53 +43,53 @@ public interface EventQueue {
      * Initialize the event queue
      * @param conf
      */
-    public void init(Configuration conf);
+    void init(Configuration conf);
 
     /**
      * Add event to queue
      * @param e
      */
-    public void add(Event e);
+    void add(Event e);
 
     /**
      * Fetch events from queue in batch
      * @return events set
      */
-    public List<Event> pollBatch();
+    List<Event> pollBatch();
 
     /**
     * Fetch single event from queue
     * @return event
     */
-   public Event poll();
+   Event poll();
 
     /**
      * Find out if queue is empty
      * @return boolean
      */
-    public boolean isEmpty();
+    boolean isEmpty();
 
     /**
      * Get current queue size
      * @return size
      */
-    public int size();
+    int size();
 
     /**
      * Read topmost event from queue but do not pop from it
      * @return event
      */
-    public Event peek();
+    Event peek();
 
     /**
      * Get the batch size used during polling events
      * @return batchSize
      */
-    public int getBatchSize();
+    int getBatchSize();
 
     /**
      * Clear the events queue
      */
-    public void clear();
+    void clear();
 
 }

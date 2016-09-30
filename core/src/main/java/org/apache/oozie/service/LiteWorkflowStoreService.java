@@ -60,11 +60,14 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     public static final String CONF_PREFIX_USER_RETRY = CONF_PREFIX + "user.retry.";
     public static final String CONF_USER_RETRY_MAX = CONF_PREFIX_USER_RETRY + "max";
     public static final String CONF_USER_RETRY_INTEVAL = CONF_PREFIX_USER_RETRY + "inteval";
+    public static final String CONF_USER_RETRY_POLICY = CONF_PREFIX_USER_RETRY + "policy";
     public static final String CONF_USER_RETRY_ERROR_CODE = CONF_PREFIX_USER_RETRY + "error.code";
     public static final String CONF_USER_RETRY_ERROR_CODE_EXT = CONF_PREFIX_USER_RETRY + "error.code.ext";
+    public static final String DEFAULT_USER_RETRY_POLICY = "PERIODIC";
 
     public static final String NODE_DEF_VERSION_0 = "_oozie_inst_v_0";
     public static final String NODE_DEF_VERSION_1 = "_oozie_inst_v_1";
+    public static final String NODE_DEF_VERSION_2 = "_oozie_inst_v_2";
     public static final String CONF_NODE_DEF_VERSION = CONF_PREFIX + "node.def.version";
 
     public static final String USER_ERROR_CODE_ALL = "ALL";
@@ -195,15 +198,17 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     }
 
     /**
-     * Get NodeDef default version, _oozie_inst_v_0 or _oozie_inst_v_1
+     * Get NodeDef default version, _oozie_inst_v_0, _oozie_inst_v_1 or
+     * _oozie_inst_v_2
      *
      * @return nodedef default version
-     * @throws WorkflowException thrown if there was an error parsing the action configuration.
-    */
+     * @throws WorkflowException thrown if there was an error parsing the action
+     *         configuration.
+     */
     public static String getNodeDefDefaultVersion() throws WorkflowException {
         String ret = ConfigurationService.get(CONF_NODE_DEF_VERSION);
         if (ret == null) {
-            ret = NODE_DEF_VERSION_1;
+            ret = NODE_DEF_VERSION_2;
         }
         return ret;
     }

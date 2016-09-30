@@ -202,7 +202,8 @@ public class TestPauseTransitService extends XDataTestCase {
         waitFor(10 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean cJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId1));
-                return cJob1.getStatus() == Job.Status.PAUSED;
+                CoordinatorJobBean cJob2 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId2));
+                return cJob1.getStatus() == Job.Status.PAUSED && cJob2.getStatus() == Job.Status.PAUSED;
             }
         });
 
@@ -275,7 +276,8 @@ public class TestPauseTransitService extends XDataTestCase {
         waitFor(10 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorJobBean cJob1 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId1));
-                return cJob1.getStatus() == Job.Status.RUNNING;
+                CoordinatorJobBean cJob2 = jpaService.execute(new CoordJobGetJPAExecutor(coordJobId2));
+                return cJob1.getStatus() == Job.Status.RUNNING && cJob2.getStatus() == Job.Status.RUNNING;
             }
         });
 

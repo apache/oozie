@@ -262,7 +262,6 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(workflow.getId(), actionName));
         workflow.getActions().add(action);
         return workflow;
@@ -296,7 +295,6 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName(actionName);
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(workflow.getId(), actionName));
         workflow.getActions().add(action);
         return workflow;

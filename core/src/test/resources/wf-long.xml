@@ -1,0 +1,1456 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns="uri:oozie:workflow:0.4" name="forks">
+    <global>
+        <job-tracker>${jobTracker}</job-tracker>
+        <name-node>${nameNode}</name-node>
+        <configuration>
+            <property>
+                <name>mapred.job.queue.name</name>
+                <value>${queueName}</value>
+            </property>
+        </configuration>
+    </global>
+
+    <start to="fork1"/>
+
+    <fork name="fork1">
+        <path start="shell1A"/>
+        <path start="shell1B"/>
+        <path start="shell1C"/>
+        <path start="shell1D"/>
+        <path start="shell1E"/>
+        <path start="shell1F"/>
+    </fork>
+
+    <action name="shell1A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell1B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell1C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell1D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell1E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell1F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join1"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join1" to="fork2"/>
+
+    <fork name="fork2">
+        <path start="shell2A"/>
+        <path start="shell2B"/>
+        <path start="shell2C"/>
+        <path start="shell2D"/>
+        <path start="shell2E"/>
+        <path start="shell2F"/>
+    </fork>
+
+    <action name="shell2A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell2B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell2C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell2D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell2E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell2F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join2"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join2" to="fork3"/>
+
+    <fork name="fork3">
+        <path start="shell3A"/>
+        <path start="shell3B"/>
+        <path start="shell3C"/>
+        <path start="shell3D"/>
+        <path start="shell3E"/>
+        <path start="shell3F"/>
+    </fork>
+
+    <action name="shell3A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell3B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell3C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell3D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell3E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell3F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join3"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join3" to="fork4"/>
+
+    <fork name="fork4">
+        <path start="shell4A"/>
+        <path start="shell4B"/>
+        <path start="shell4C"/>
+        <path start="shell4D"/>
+        <path start="shell4E"/>
+        <path start="shell4F"/>
+    </fork>
+
+    <action name="shell4A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell4B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell4C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell4D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell4E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell4F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join4"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join4" to="fork5"/>
+
+    <fork name="fork5">
+        <path start="shell5A"/>
+        <path start="shell5B"/>
+        <path start="shell5C"/>
+        <path start="shell5D"/>
+        <path start="shell5E"/>
+        <path start="shell5F"/>
+    </fork>
+
+    <action name="shell5A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell5B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell5C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell5D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell5E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell5F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join5"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join5" to="fork6"/>
+
+    <fork name="fork6">
+        <path start="shell6A"/>
+        <path start="shell6B"/>
+        <path start="shell6C"/>
+        <path start="shell6D"/>
+        <path start="shell6E"/>
+        <path start="shell6F"/>
+    </fork>
+
+    <action name="shell6A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell6B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell6C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell6D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell6E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell6F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join6"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join6" to="fork7"/>
+
+    <fork name="fork7">
+        <path start="shell7A"/>
+        <path start="shell7B"/>
+        <path start="shell7C"/>
+        <path start="shell7D"/>
+        <path start="shell7E"/>
+        <path start="shell7F"/>
+    </fork>
+
+    <action name="shell7A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell7B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell7C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell7D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell7E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell7F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join7"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join7" to="fork8"/>
+
+    <fork name="fork8">
+        <path start="shell8A"/>
+        <path start="shell8B"/>
+        <path start="shell8C"/>
+        <path start="shell8D"/>
+        <path start="shell8E"/>
+        <path start="shell8F"/>
+    </fork>
+
+    <action name="shell8A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell8B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell8C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell8D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell8E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell8F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join8"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join8" to="fork9"/>
+
+    <fork name="fork9">
+        <path start="shell9A"/>
+        <path start="shell9B"/>
+        <path start="shell9C"/>
+        <path start="shell9D"/>
+        <path start="shell9E"/>
+        <path start="shell9F"/>
+    </fork>
+
+    <action name="shell9A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell9B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell9C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell9D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell9E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell9F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join9"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join9" to="fork10"/>
+
+    <fork name="fork10">
+        <path start="shell10A"/>
+        <path start="shell10B"/>
+        <path start="shell10C"/>
+        <path start="shell10D"/>
+        <path start="shell10E"/>
+        <path start="shell10F"/>
+    </fork>
+
+    <action name="shell10A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell10B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell10C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell10D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell10E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell10F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join10"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join10" to="fork11"/>
+
+    <fork name="fork11">
+        <path start="shell11A"/>
+        <path start="shell11B"/>
+        <path start="shell11C"/>
+        <path start="shell11D"/>
+        <path start="shell11E"/>
+        <path start="shell11F"/>
+    </fork>
+
+    <action name="shell11A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell11B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell11C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell11D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell11E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell11F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join11"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join11" to="fork12"/>
+
+    <fork name="fork12">
+        <path start="shell12A"/>
+        <path start="shell12B"/>
+        <path start="shell12C"/>
+        <path start="shell12D"/>
+        <path start="shell12E"/>
+        <path start="shell12F"/>
+    </fork>
+
+    <action name="shell12A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell12B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell12C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell12D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell12E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell12F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join12"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join12" to="fork13"/>
+
+    <fork name="fork13">
+        <path start="shell13A"/>
+        <path start="shell13B"/>
+        <path start="shell13C"/>
+        <path start="shell13D"/>
+        <path start="shell13E"/>
+        <path start="shell13F"/>
+    </fork>
+
+    <action name="shell13A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell13B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell13C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell13D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell13E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell13F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join13"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join13" to="fork14"/>
+
+    <fork name="fork14">
+        <path start="shell14A"/>
+        <path start="shell14B"/>
+        <path start="shell14C"/>
+        <path start="shell14D"/>
+        <path start="shell14E"/>
+        <path start="shell14F"/>
+    </fork>
+
+    <action name="shell14A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell14B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell14C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell14D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell14E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell14F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join14"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join14" to="fork15"/>
+
+    <fork name="fork15">
+        <path start="shell15A"/>
+        <path start="shell15B"/>
+        <path start="shell15C"/>
+        <path start="shell15D"/>
+        <path start="shell15E"/>
+        <path start="shell15F"/>
+    </fork>
+
+    <action name="shell15A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell15B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell15C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell15D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell15E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell15F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join15"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join15" to="fork16"/>
+
+    <fork name="fork16">
+        <path start="shell16A"/>
+        <path start="shell16B"/>
+        <path start="shell16C"/>
+        <path start="shell16D"/>
+        <path start="shell16E"/>
+        <path start="shell16F"/>
+    </fork>
+
+    <action name="shell16A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell16B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell16C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell16D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell16E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell16F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join16"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join16" to="fork17"/>
+
+    <fork name="fork17">
+        <path start="shell17A"/>
+        <path start="shell17B"/>
+        <path start="shell17C"/>
+        <path start="shell17D"/>
+        <path start="shell17E"/>
+        <path start="shell17F"/>
+    </fork>
+
+    <action name="shell17A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell17B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell17C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell17D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell17E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell17F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join17"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join17" to="fork18"/>
+
+    <fork name="fork18">
+        <path start="shell18A"/>
+        <path start="shell18B"/>
+        <path start="shell18C"/>
+        <path start="shell18D"/>
+        <path start="shell18E"/>
+        <path start="shell18F"/>
+    </fork>
+
+    <action name="shell18A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell18B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell18C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell18D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell18E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell18F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join18"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join18" to="fork19"/>
+
+    <fork name="fork19">
+        <path start="shell19A"/>
+        <path start="shell19B"/>
+        <path start="shell19C"/>
+        <path start="shell19D"/>
+        <path start="shell19E"/>
+        <path start="shell19F"/>
+    </fork>
+
+    <action name="shell19A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell19B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell19C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell19D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell19E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell19F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join19"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join19" to="fork20"/>
+
+    <fork name="fork20">
+        <path start="shell20A"/>
+        <path start="shell20B"/>
+        <path start="shell20C"/>
+        <path start="shell20D"/>
+        <path start="shell20E"/>
+        <path start="shell20F"/>
+    </fork>
+
+    <action name="shell20A">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell20B">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell20C">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell20D">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell20E">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell20F">
+        <shell xmlns="uri:oozie:shell-action:0.3">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join20"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="join20" to="end"/>
+
+    <kill name="fail">
+        <message>Shell action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

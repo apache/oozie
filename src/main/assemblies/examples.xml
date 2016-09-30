@@ -93,6 +93,10 @@
         </file>
         <file>
             <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
+            <outputDirectory>/examples/apps/coord-input-logic/lib</outputDirectory>
+        </file>
+        <file>
+            <source>${basedir}/target/${artifact.artifactId}-${artifact.version}.jar</source>
             <outputDirectory>/examples/apps/custom-main/lib</outputDirectory>
         </file>
         <file>

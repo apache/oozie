@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,8 +35,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -60,6 +63,7 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -490,7 +494,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
     }
 
-        public void testExceptionSubmitException() throws Exception {
+    public void testExceptionSubmitException() throws Exception {
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
@@ -946,6 +950,42 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         }
     }
 
+
+    public void testCredentialsWithoutCredTag() throws Exception {
+        // create a workflow with credentials
+        // add a pig action without cred tag
+        String workflowXml = "<workflow-app xmlns='uri:oozie:workflow:0.2.5' name='pig-wf'>" + "<credentials>"
+                + "<credential name='abcname' type='abc'>" + "<property>" + "<name>property1</name>"
+                + "<value>value1</value>" + "</property>" + "<property>" + "<name>property2</name>"
+                + "<value>value2</value>" + "</property>" + "<property>" + "<name>${property3}</name>"
+                + "<value>${value3}</value>" + "</property>" + "</credential>" + "</credentials>"
+                + "<start to='pig1' />" + "<action name='pig1'>" + "<pig>" + "</pig>"
+                + "<ok to='end' />" + "<error to='fail' />" + "</action>" + "<kill name='fail'>"
+                + "<message>Pig failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" + "</kill>"
+                + "<end name='end' />" + "</workflow-app>";
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+        WorkflowJobBean wfBean = addRecordToWfJobTable("test1", workflowXml);
+        WorkflowActionBean action = (WorkflowActionBean) wfBean.getActions().get(0);
+        action.setType(ae.getType());
+        String actionXml = "<pig>" + "<job-tracker>${jobTracker}</job-tracker>" + "<name-node>${nameNode}</name-node>"
+                + "<prepare>" + "<delete path='outputdir' />" + "</prepare>" + "<configuration>" + "<property>"
+                + "<name>mapred.compress.map.output</name>" + "<value>true</value>" + "</property>" + "<property>"
+                + "<name>mapred.job.queue.name</name>" + "<value>${queueName}</value>" + "</property>"
+                + "</configuration>" + "<script>org/apache/oozie/examples/pig/id.pig</script>"
+                + "<param>INPUT=${inputDir}</param>" + "<param>OUTPUT=${outputDir}/pig-output</param>" + "</pig>";
+        action.setConf(actionXml);
+        Context context = new Context(wfBean, action);
+
+        Element actionXmlconf = XmlUtils.parseXml(action.getConf());
+        // action job configuration
+        Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
+
+        // should not throw JA021 exception
+        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context, action,
+                    actionConf);
+    }
+
     public void testCredentialsSkip() throws Exception {
         // Try setting oozie.credentials.skip at different levels, and verifying the correct behavior
         // oozie-site: false -- job-level: null -- action-level: null
@@ -1084,7 +1124,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         wfBean.setStatus(WorkflowJob.Status.SUCCEEDED);
         WorkflowActionBean action = new WorkflowActionBean();
         action.setName("test");
-        action.setCred("null");
         action.setId(Services.get().get(UUIDService.class).generateChildId(wfBean.getId(), "test"));
         wfBean.getActions().add(action);
         return wfBean;
@@ -1141,6 +1180,12 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                + "<value>java-job-conf</value>" + "</property>"
                + "</configuration>";
         wfBean.setConf(jobConf);
+        ae = new JavaActionExecutor() {
+            @Override
+            protected String getDefaultShareLibName(Element actionXml) {
+                return "java-action-executor";
+            }
+        };
         Assert.assertArrayEquals(new String[] { "java-job-conf" },
                 ae.getShareLibNames(context, new Element("java"), actionConf));
 

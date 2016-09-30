@@ -19,7 +19,7 @@
 package org.apache.oozie.coord.input.logic;
 
 public interface CoordInputLogicEvaluator {
-    public static final String INPUT_LOGIC = "input-logic";
+    String INPUT_LOGIC = "input-logic";
 
 
     /**
@@ -30,7 +30,7 @@ public interface CoordInputLogicEvaluator {
      * @param wait the wait
      * @return the coord input logic evaluator result
      */
-    public CoordInputLogicEvaluatorResult evalInput(String inputDataSet, int min, int wait);
+    CoordInputLogicEvaluatorResult evalInput(String inputDataSet, int min, int wait);
 
     /**
      * Eval combine input.
@@ -40,5 +40,5 @@ public interface CoordInputLogicEvaluator {
      * @param wait the wait
      * @return the coord input logic evaluator result
      */
-    public CoordInputLogicEvaluatorResult evalCombineInput(String[] combineDatasets, int min, int wait);
+    CoordInputLogicEvaluatorResult evalCombineInput(String[] combineDatasets, int min, int wait);
 }

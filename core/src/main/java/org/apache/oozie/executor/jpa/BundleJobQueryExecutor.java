@@ -79,7 +79,7 @@ public class BundleJobQueryExecutor extends QueryExecutor<BundleJobBean, BundleJ
                 query.setParameter("origJobXml", bjBean.getOrigJobXmlBlob());
                 query.setParameter("startTime", bjBean.getstartTimestamp());
                 query.setParameter("status", bjBean.getStatus().toString());
-                query.setParameter("timeUnit", bjBean.getTimeUnit());
+                query.setParameter("timeUnit", bjBean.getTimeUnitStr());
                 query.setParameter("pending", bjBean.isPending() ? 1 : 0);
                 query.setParameter("id", bjBean.getId());
                 break;

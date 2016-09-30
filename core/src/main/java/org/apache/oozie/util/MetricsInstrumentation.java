@@ -23,6 +23,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ganglia.GangliaReporter;
@@ -79,6 +80,7 @@ public class MetricsInstrumentation extends Instrumentation {
     public static final String EXTERNAL_MONITORING_ADDRESS = "oozie.external_monitoring.address";
     public static final String EXTERNAL_MONITORING_PREFIX = "oozie.external_monitoring.metricPrefix";
     public static final String EXTERNAL_MONITORING_INTERVAL = "oozie.external_monitoring.reporterIntervalSecs";
+    public static final String JMX_MONITORING_ENABLE = "oozie.jmx_monitoring.enable";
     public static final String GRAPHITE="graphite";
     public static final String GANGLIA="ganglia";
     private String metricsAddress;
@@ -88,8 +90,10 @@ public class MetricsInstrumentation extends Instrumentation {
     private int metricsPort;
     private GraphiteReporter graphiteReporter = null;
     private GangliaReporter gangliaReporter = null;
+    private JmxReporter jmxReporter = null;
     private long metricsReportIntervalSec;
     private boolean isExternalMonitoringEnabled;
+    private boolean isJMXMonitoringEnabled;
 
     private static final TimeUnit RATE_UNIT = TimeUnit.MILLISECONDS;
     private static final TimeUnit DURATION_UNIT = TimeUnit.MILLISECONDS;
@@ -191,6 +195,11 @@ public class MetricsInstrumentation extends Instrumentation {
         );
         gauges = new ConcurrentHashMap<String, Gauge>();
         histograms = new ConcurrentHashMap<String, Histogram>();
+        isJMXMonitoringEnabled = ConfigurationService.getBoolean(JMX_MONITORING_ENABLE);
+        if (isJMXMonitoringEnabled) {
+            jmxReporter  = JmxReporter.forRegistry(metricRegistry).build();
+            jmxReporter.start();
+        }
     }
 
     /**
@@ -213,6 +222,10 @@ public class MetricsInstrumentation extends Instrumentation {
             } finally {
                 gangliaReporter.stop();
             }
+        }
+
+        if (jmxReporter != null) {
+            jmxReporter.stop();
         }
     }
 

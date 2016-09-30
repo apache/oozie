@@ -25,7 +25,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -192,7 +191,6 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             "<query>" + query + "</query>" + "</hive2>";
     }
 
-    @SuppressWarnings("deprecation")
     public void testHive2Action() throws Exception {
         setupHiveServer2();
         Path inputDir = new Path(getFsTestCaseDir(), INPUT_DIRNAME);
@@ -219,11 +217,8 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
             ae.end(context, context.getAction());
             assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-            assertNotNull(context.getAction().getData());
-            Properties outputData = new Properties();
-            outputData.load(new StringReader(context.getAction().getData()));
-            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            // Disabled external child id check until Hive version is upgraded to 0.14+
+            //assertNotNull(context.getExternalChildIDs());
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
@@ -251,14 +246,46 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
             ae.end(context, context.getAction());
             assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-            assertNotNull(context.getAction().getData());
-            Properties outputData = new Properties();
-            outputData.load(new StringReader(context.getAction().getData()));
-            assertTrue(outputData.containsKey(LauncherMain.HADOOP_JOBS));
-            assertEquals(outputData.get(LauncherMain.HADOOP_JOBS), context.getExternalChildIDs());
+            // Disabled external child id check until Hive version is upgraded to 0.14+
+            //assertNotNull(context.getExternalChildIDs());
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
+        // Negative testcase with incorrect hive-query.
+        {
+            String query = getHive2BadScript(inputDir.toString(), outputDir.toString());
+            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+            dataWriter.write(SAMPLE_DATA_TEXT);
+            dataWriter.close();
+            Context context = createContext(getQueryActionXml(query));
+            final String launcherId = submitAction(context, Namespace.getNamespace("uri:oozie:hive2-action:0.2"));
+            waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+            Configuration conf = new XConfiguration();
+            conf.set("user.name", getTestUser());
+            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                    conf);
+            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            Hive2ActionExecutor ae = new Hive2ActionExecutor();
+            ae.check(context, context.getAction());
+            assertTrue(launcherId.equals(context.getAction().getExternalId()));
+            assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+            ae.end(context, context.getAction());
+            assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+            assertNull(context.getExternalChildIDs());
+        }
+    }
+
+    private String getHive2BadScript(String inputPath, String outputPath) {
+        StringBuilder buffer = new StringBuilder(NEW_LINE);
+        buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
+        buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
+        buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");
+        buffer.append(inputPath).append("';").append(NEW_LINE);
+        buffer.append("INSERT OVERWRITE DIRECTORY '");
+        buffer.append(outputPath).append("'").append(NEW_LINE);
+        buffer.append("SELECT (a-1) FROM test-bad;").append(NEW_LINE);
+        return buffer.toString();
     }
 
     private String submitAction(Context context, Namespace ns) throws Exception {
