@@ -1378,7 +1378,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         } catch (WorkflowException we) {
             assertEquals(ErrorCode.E0757, we.getErrorCode());
             assertTrue(we.getMessage().contains("Fork node [f]"));
-            assertTrue(we.getMessage().contains("[j2,j1]"));
+            assertTrue(we.getMessage().contains("[j2,j1]") || we.getMessage().contains("[j1,j2]"));
         }
     }
 
