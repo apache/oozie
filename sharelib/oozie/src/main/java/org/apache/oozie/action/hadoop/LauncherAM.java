@@ -40,7 +40,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.SaslRpcServer.AuthMethod;
+import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ContainerStatus;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
@@ -131,7 +137,30 @@ public class LauncherAM {
         String submitterUser = System.getProperty("submitter.user", "").trim();
         Preconditions.checkArgument(!submitterUser.isEmpty(), "Submitter user is undefined");
         System.out.println("Submitter user is: " + submitterUser);
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(submitterUser);
+
+        String jobUserName = System.getenv(ApplicationConstants.Environment.USER.name());
+
+        // DEBUG - will be removed
+        UserGroupInformation login = UserGroupInformation.getLoginUser();
+        System.out.println("Login: " + login.getUserName());
+        System.out.println("SecurityEnabled:" + UserGroupInformation.isSecurityEnabled());
+        System.out.println("Login keytab based:" + UserGroupInformation.isLoginKeytabBased());
+        System.out.println("Login ticket based:" + UserGroupInformation.isLoginTicketBased());
+        System.out.println("Login from keytab: " + login.isFromKeytab());
+        System.out.println("Login has kerberos credentials: " + login.hasKerberosCredentials());
+        System.out.println("Login authMethod: " + login.getAuthenticationMethod());
+        System.out.println("JobUserName:" + jobUserName);
+
+        UserGroupInformation ugi = null;
+
+        if (UserGroupInformation.getLoginUser().getShortUserName().equals(submitterUser)) {
+            System.out.println("Using login user for UGI");
+            ugi = UserGroupInformation.getLoginUser();
+        } else {
+            ugi = UserGroupInformation.createRemoteUser(submitterUser);
+            ugi.addCredentials(UserGroupInformation.getLoginUser().getCredentials());
+        }
+
         boolean backgroundAction = false;
 
         try {
