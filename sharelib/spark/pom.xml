@@ -202,13 +202,13 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-kafka_${spark.scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
+            <version>${spark.streaming.kafka.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-bagel_${spark.scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
+            <version>${spark.bagel.version}</version>
             <scope>compile</scope>
         </dependency>
 

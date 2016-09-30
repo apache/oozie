@@ -3,6 +3,7 @@
 
 -- Oozie 4.3.0 release
 
+OOZIE-2606 Set spark.yarn.jars to fix Spark 2.0 with Oozie (satishsaley via rohini)
 OOZIE-2673 Include XSD for shell-action:0.3 in documentation (abhishekbafna via rkanter)
 OOZIE-2194 oozie job -kill doesn't work with spark action (abhishekbafna via rohini)
 OOZIE-2501 ZK reentrant lock doesn't work for few cases (puru)
