@@ -1163,7 +1163,15 @@ public class TestOozieCLI extends DagServletTestCase {
                 String oozieUrl = getContextURL();
                 String[] args = new String[]{"admin", "-queuedump", "-oozie", oozieUrl};
                 String out = runOozieCLIAndGetStdout(args);
-                assertTrue(out.contains("Server Queue Dump"));
+
+                assertTrue("Queue dump",
+                        out.contains("Server Queue Dump"));
+                assertTrue("Queue dump empty message",
+                        out.contains("The queue dump is empty, nothing to display."));
+                assertTrue("Uniqueness map dump",
+                        out.contains("Server Uniqueness Map Dump"));
+                assertTrue("Uniqueness dump empty message",
+                        out.contains("The uniqueness map dump is empty, nothing to display."));
 
                 return null;
             }

@@ -1,5 +1,7 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2634 Queue dump command message is confusing when the queue is empty (andras.piros via rkanter)
+
 
 -- Oozie 4.3.0 release
 

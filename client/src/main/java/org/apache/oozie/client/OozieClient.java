@@ -18,6 +18,7 @@
 
 package org.apache.oozie.client;
 
+import com.google.common.collect.Lists;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonToBean;
@@ -2317,44 +2318,63 @@ public class OozieClient {
 
         @Override
         protected List<String> call(HttpURLConnection conn) throws IOException, OozieClientException {
-            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
-                Reader reader = new InputStreamReader(conn.getInputStream());
-                JSONObject json = (JSONObject) JSONValue.parse(reader);
-                JSONArray queueDumpArray = (JSONArray) json.get(JsonTags.QUEUE_DUMP);
-
-                List<String> list = new ArrayList<String>();
-                list.add("[Server Queue Dump]:");
-                for (Object o : queueDumpArray) {
-                    JSONObject entry = (JSONObject) o;
-                    if (entry.get(JsonTags.CALLABLE_DUMP) != null) {
-                        String value = (String) entry.get(JsonTags.CALLABLE_DUMP);
-                        list.add(value);
-                    }
-                }
-                if (queueDumpArray.size() == 0) {
-                    list.add("Queue dump is null!");
-                }
-
-                list.add("******************************************");
-                list.add("[Server Uniqueness Map Dump]:");
-
-                JSONArray uniqueDumpArray = (JSONArray) json.get(JsonTags.UNIQUE_MAP_DUMP);
-                for (Object o : uniqueDumpArray) {
-                    JSONObject entry = (JSONObject) o;
-                    if (entry.get(JsonTags.UNIQUE_ENTRY_DUMP) != null) {
-                        String value = (String) entry.get(JsonTags.UNIQUE_ENTRY_DUMP);
-                        list.add(value);
-                    }
-                }
-                if (uniqueDumpArray.size() == 0) {
-                    list.add("Uniqueness dump is null!");
-                }
-                return list;
-            }
-            else {
+            if ((conn.getResponseCode() != HttpURLConnection.HTTP_OK)) {
                 handleError(conn);
+                return null;
             }
-            return null;
+
+            Reader reader = new InputStreamReader(conn.getInputStream());
+            JSONObject json = (JSONObject) JSONValue.parse(reader);
+            List<String> queueDumpMessages = Lists.newArrayList();
+
+            addSeparator(queueDumpMessages);
+
+            addQueueMessages(json,
+                    queueDumpMessages,
+                    JsonTags.QUEUE_DUMP,
+                    JsonTags.CALLABLE_DUMP,
+                    "[Server Queue Dump]:",
+                    "The queue dump is empty, nothing to display.");
+
+            addSeparator(queueDumpMessages);
+
+            addQueueMessages(json,
+                    queueDumpMessages,
+                    JsonTags.UNIQUE_MAP_DUMP,
+                    JsonTags.UNIQUE_ENTRY_DUMP,
+                    "[Server Uniqueness Map Dump]:",
+                    "The uniqueness map dump is empty, nothing to display.");
+
+            addSeparator(queueDumpMessages);
+
+            return queueDumpMessages;
+        }
+
+        private void addQueueMessages(JSONObject json,
+                                      List<String> queueMessages,
+                                      String queueName,
+                                      String queueValue,
+                                      String headerMessage,
+                                      String emptyMessage) {
+
+            JSONArray queueDumpArray = (JSONArray) json.get(queueName);
+            queueMessages.add(headerMessage);
+
+            for (Object o : queueDumpArray) {
+                JSONObject entry = (JSONObject) o;
+                if (entry.get(queueValue) != null) {
+                    String value = (String) entry.get(queueValue);
+                    queueMessages.add(value);
+                }
+            }
+
+            if (queueDumpArray.isEmpty()) {
+                queueMessages.add(emptyMessage);
+            }
+        }
+
+        private void addSeparator(List<String> list) {
+            list.add("******************************************");
         }
     }
 
