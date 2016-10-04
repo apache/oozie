@@ -272,7 +272,7 @@ public class HiveMain extends LauncherMain {
         }
 
         // Pass any parameters to Hive via arguments
-        String[] params = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
+        String[] params = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -292,7 +292,7 @@ public class HiveMain extends LauncherMain {
             System.out.println();
         }
 
-        String[] hiveArgs = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
+        String[] hiveArgs = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
         for (String hiveArg : hiveArgs) {
             if (DISALLOWED_HIVE_OPTIONS.contains(hiveArg)) {
                 throw new RuntimeException("Error: Hive argument " + hiveArg + " is not supported");

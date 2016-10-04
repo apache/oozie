@@ -309,8 +309,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         if (recordReader != null) {
             conf.set("oozie.streaming.record-reader", recordReader);
         }
-        MapReduceMain.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
-        MapReduceMain.setStrings(conf, "oozie.streaming.env", env);
+        ActionUtils.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
+        ActionUtils.setStrings(conf, "oozie.streaming.env", env);
     }
 
     @Override

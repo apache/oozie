@@ -98,7 +98,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
-        MapReduceMain.setStrings(conf, HIVE_PARAMS, strParams);
+        ActionUtils.setStrings(conf, HIVE_PARAMS, strParams);
 
         String[] strArgs = null;
         List<Element> eArgs = actionXml.getChildren("argument", ns);
@@ -108,7 +108,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
-        MapReduceMain.setStrings(conf, HIVE_ARGS, strArgs);
+        ActionUtils.setStrings(conf, HIVE_ARGS, strArgs);
         return conf;
     }
 

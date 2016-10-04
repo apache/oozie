@@ -179,7 +179,7 @@ public class Hive2Main extends LauncherMain {
         }
 
         // Pass any parameters to Beeline via arguments
-        String[] params = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
+        String[] params = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -204,7 +204,7 @@ public class Hive2Main extends LauncherMain {
         arguments.add("-a");
         arguments.add("delegationToken");
 
-        String[] beelineArgs = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
+        String[] beelineArgs = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
         for (String beelineArg : beelineArgs) {
             if (DISALLOWED_BEELINE_OPTIONS.contains(beelineArg)) {
                 throw new RuntimeException("Error: Beeline argument " + beelineArg + " is not supported");

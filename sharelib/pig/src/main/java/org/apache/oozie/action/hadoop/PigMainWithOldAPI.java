@@ -136,7 +136,7 @@ public class PigMainWithOldAPI extends LauncherMain {
 
         arguments.add("-file");
         arguments.add(script);
-        String[] params = MapReduceMain.getStrings(actionConf, "oozie.pig.params");
+        String[] params = ActionUtils.getStrings(actionConf, "oozie.pig.params");
         for (String param : params) {
             arguments.add("-param");
             arguments.add(param);
@@ -188,7 +188,7 @@ public class PigMainWithOldAPI extends LauncherMain {
         arguments.add("-logfile");
         arguments.add(pigLog);
 
-        String[] pigArgs = MapReduceMain.getStrings(actionConf, "oozie.pig.args");
+        String[] pigArgs = ActionUtils.getStrings(actionConf, "oozie.pig.args");
         for (String pigArg : pigArgs) {
             if (DISALLOWED_PIG_OPTIONS.contains(pigArg)) {
                 throw new RuntimeException("Error: Pig argument " + pigArg + " is not supported");

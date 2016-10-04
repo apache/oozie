@@ -161,7 +161,7 @@ public class SqoopMain extends LauncherMain {
         Configuration sqoopConf = setUpSqoopSite();
         String logFile = setUpSqoopLog4J(sqoopConf);
 
-        String[] sqoopArgs = MapReduceMain.getStrings(sqoopConf, SqoopActionExecutor.SQOOP_ARGS);
+        String[] sqoopArgs = ActionUtils.getStrings(sqoopConf, SqoopActionExecutor.SQOOP_ARGS);
         if (sqoopArgs == null) {
             throw new RuntimeException("Action Configuration does not have [" + SqoopActionExecutor.SQOOP_ARGS + "] property");
         }

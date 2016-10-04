@@ -112,7 +112,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
                 }
             }
         }
-        MapReduceMain.setStrings(actionConf, key, strTagValue);
+        ActionUtils.setStrings(actionConf, key, strTagValue);
     }
 
     /**

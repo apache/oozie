@@ -150,7 +150,7 @@ public class PigMain extends LauncherMain {
 
         arguments.add("-file");
         arguments.add(script);
-        String[] params = MapReduceMain.getStrings(actionConf, PigActionExecutor.PIG_PARAMS);
+        String[] params = ActionUtils.getStrings(actionConf, PigActionExecutor.PIG_PARAMS);
         for (String param : params) {
             arguments.add("-param");
             arguments.add(param);
@@ -204,7 +204,7 @@ public class PigMain extends LauncherMain {
         arguments.add("-logfile");
         arguments.add(pigLog);
 
-        String[] pigArgs = MapReduceMain.getStrings(actionConf, PigActionExecutor.PIG_ARGS);
+        String[] pigArgs = ActionUtils.getStrings(actionConf, PigActionExecutor.PIG_ARGS);
         for (String pigArg : pigArgs) {
             if (DISALLOWED_PIG_OPTIONS.contains(pigArg)) {
                 throw new RuntimeException("Error: Pig argument " + pigArg + " is not supported");

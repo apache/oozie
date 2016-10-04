@@ -123,31 +123,20 @@ public class MapReduceMain extends LauncherMain {
         return runJob;
     }
 
+    @Deprecated
+    public static void setStrings(Configuration conf, String key, String[] values) {
+        ActionUtils.setStrings(conf, key, values);
+    }
+
+    @Deprecated
+    public static String[] getStrings(Configuration conf, String key) {
+        return ActionUtils.getStrings(conf, key);
+    }
+
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
         return new JobClient(jobConf);
     }
 
-    // allows any character in the value, the conf.setStrings() does not allow
-    // commas
-    public static void setStrings(Configuration conf, String key, String[] values) {
-        if (values != null) {
-            conf.setInt(key + ".size", values.length);
-            for (int i = 0; i < values.length; i++) {
-                conf.set(key + "." + i, values[i]);
-            }
-        }
-    }
-
-    public static String[] getStrings(Configuration conf, String key) {
-        String[] values = new String[conf.getInt(key + ".size", 0)];
-        for (int i = 0; i < values.length; i++) {
-            values[i] = conf.get(key + "." + i);
-            if (values[i] == null) {
-                values[i] = "";
-            }
-        }
-        return values;
-    }
     /**
      * Will run the user specified OozieActionConfigurator subclass (if one is provided) to update the action configuration.
      *

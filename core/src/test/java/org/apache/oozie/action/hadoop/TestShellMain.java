@@ -25,7 +25,6 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Properties;
 
-import org.apache.hadoop.fs.Path;
 import org.apache.oozie.util.XConfiguration;
 
 //Test cases are mainly implemented in the Base class
@@ -53,8 +52,8 @@ public class TestShellMain extends ShellTestCase {
 
         jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, SHELL_COMMAND_NAME);
         String[] args = new String[] { SHELL_COMMAND_SCRIPTFILE_OPTION, script.toString(), "A", "B" };
-        MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, args);
-        MapReduceMain.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ENVS,
+        ActionUtils.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, args);
+        ActionUtils.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ENVS,
                 new String[] { "var1=value1", "var2=value2" });
 
         File actionXml = new File(getTestCaseDir(), "action.xml");

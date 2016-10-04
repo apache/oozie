@@ -108,7 +108,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     private void setSqoopCommand(Configuration conf, String[] args) {
-        MapReduceMain.setStrings(conf, SQOOP_ARGS, args);
+        ActionUtils.setStrings(conf, SQOOP_ARGS, args);
     }
 
     /**

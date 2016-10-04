@@ -98,8 +98,8 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
 
     public static void setPigScript(Configuration conf, String script, String[] params, String[] args) {
         conf.set(PIG_SCRIPT, script);
-        MapReduceMain.setStrings(conf, PIG_PARAMS, params);
-        MapReduceMain.setStrings(conf, PIG_ARGS, args);
+        ActionUtils.setStrings(conf, PIG_PARAMS, params);
+        ActionUtils.setStrings(conf, PIG_ARGS, args);
     }
 
 

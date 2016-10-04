@@ -22,7 +22,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.action.hadoop.MapReduceMain;
+import org.apache.oozie.action.hadoop.ActionUtils;
 import org.jdom.Namespace;
 import org.jdom.Element;
 
@@ -57,7 +57,7 @@ public class SubmitSqoopXCommand extends SubmitHttpXCommand {
         ele.addContent(nn);
 
         List<String> Dargs = new ArrayList<String>();
-        String[] args = MapReduceMain.getStrings(conf, getOptions());
+        String[] args = ActionUtils.getStrings(conf, getOptions());
         for (String arg : args) {
             if (arg.startsWith("-D")) {
                 Dargs.add(arg);

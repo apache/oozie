@@ -21,7 +21,7 @@ package org.apache.oozie.command.wf;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.action.hadoop.MapReduceMain;
+import org.apache.oozie.action.hadoop.ActionUtils;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XLog;
@@ -55,9 +55,9 @@ public class TestSubmitPigXCommand extends XFsTestCase {
 
         String pigArgsStr = "-a aaa -b bbb -c ccc -M -Da=aaa -Db=bbb -param input=abc";
         String[] args = pigArgsStr.split(" ");
-        MapReduceMain.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
+        ActionUtils.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
         String[] params = new String[]{"INPUT=/some/path", "OUTPUT=/some/other/path", "abc=xyz"};
-        MapReduceMain.setStrings(conf, XOozieClient.PIG_SCRIPT_PARAMS, params);
+        ActionUtils.setStrings(conf, XOozieClient.PIG_SCRIPT_PARAMS, params);
 
         SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf);
         String xml = submitPigCmd.getWorkflowXml(conf);
@@ -128,7 +128,7 @@ public class TestSubmitPigXCommand extends XFsTestCase {
         String[] args = new String[2];
         args[0] = "-a";
         args[1] = "aaa bbb";
-        MapReduceMain.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
+        ActionUtils.setStrings(conf, XOozieClient.PIG_OPTIONS, args);
 
         SubmitPigXCommand submitPigCmd = new SubmitPigXCommand(conf);
         String xml = submitPigCmd.getWorkflowXml(conf);

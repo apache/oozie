@@ -102,10 +102,10 @@ public class TestHiveMain extends MainTestCase {
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
             jobConf.set(HiveActionExecutor.HIVE_SCRIPT, script.toString());
-            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_PARAMS, new String[]{
+            ActionUtils.setStrings(jobConf, HiveActionExecutor.HIVE_PARAMS, new String[]{
                 "IN=" + inputDir.toUri().getPath(),
                 "OUT=" + outputDir.toUri().getPath()});
-            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_ARGS,
+            ActionUtils.setStrings(jobConf, HiveActionExecutor.HIVE_ARGS,
                 new String[]{ "-v" });
 
             File actionXml = new File(getTestCaseDir(), "action.xml");

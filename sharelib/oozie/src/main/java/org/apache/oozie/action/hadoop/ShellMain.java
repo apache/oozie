@@ -24,10 +24,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +186,7 @@ public class ShellMain extends LauncherMain {
      */
     private Map<String, String> getEnvMap(Map<String, String> envp, Configuration actionConf) {
         // Adding user-specified environments
-        String[] envs = MapReduceMain.getStrings(actionConf, CONF_OOZIE_SHELL_ENVS);
+        String[] envs = ActionUtils.getStrings(actionConf, CONF_OOZIE_SHELL_ENVS);
         for (String env : envs) {
             String[] varValue = env.split("=",2); // Error case is handled in
                                                 // ShellActionExecutor
@@ -339,7 +339,7 @@ public class ShellMain extends LauncherMain {
      */
     protected List<String> getShellArguments(Configuration actionConf) {
         List<String> arguments = new ArrayList<String>();
-        String[] scrArgs = MapReduceMain.getStrings(actionConf, CONF_OOZIE_SHELL_ARGS);
+        String[] scrArgs = ActionUtils.getStrings(actionConf, CONF_OOZIE_SHELL_ARGS);
         for (String scrArg : scrArgs) {
             arguments.add(scrArg);
         }
