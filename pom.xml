@@ -1829,7 +1829,7 @@
                         <exclude>test-patch/**</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>*.patch</exclude>
-                        <exclude>tools/src/test/resources/dumpData/ooziedb*.json</exclude>
+                        <exclude>**/*.json</exclude>
                     </excludes>
                 </configuration>
             </plugin>
