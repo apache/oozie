@@ -5,6 +5,7 @@ OOZIE-2634 Queue dump command message is confusing when the queue is empty (andr
 
 -- Oozie 4.3.0 release
 
+OOZIE-1814 Oozie should mask any passwords in logs and REST interfaces (andras.piros via rkanter)
 OOZIE-2622 ExtJS 2.2 is no longer available (rkanter)
 OOZIE-2606 Set spark.yarn.jars to fix Spark 2.0 with Oozie (satishsaley via rohini)
 OOZIE-2673 Include XSD for shell-action:0.3 in documentation (abhishekbafna via rkanter)
