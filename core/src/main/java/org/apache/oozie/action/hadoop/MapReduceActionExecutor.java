@@ -363,6 +363,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 jobCompleted = runningJob.isComplete();
             } catch (Exception e) {
                 LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
+                LOG.warn("Unable to check the state of a running MapReduce job - please check the health of the Job History Server!");
                 exception = true;
                 throw convertException(e);
             } finally {
