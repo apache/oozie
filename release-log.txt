@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release
 
+OOZIE-2613 Upgrade hive version from 0.13.1 to 1.2.0 (abhishekbafna via rkanter)
 OOZIE-2658 --driver-class-path can overwrite the classpath in SparkMain (gezapeti via rkanter)
 OOZIE-1814 Oozie should mask any passwords in logs and REST interfaces (andras.piros via rkanter)
 OOZIE-2622 ExtJS 2.2 is no longer available (rkanter)
