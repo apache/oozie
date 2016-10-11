@@ -89,8 +89,8 @@
         <clover.license>/home/jenkins/tools/clover/latest/lib/clover.license</clover.license>
 
          <!-- Sharelib component versions -->
-         <hive.version>0.13.1</hive.version>
-         <hive.jline.version>0.9.94</hive.jline.version>
+         <hive.version>1.2.0</hive.version>
+         <hive.jline.version>2.12</hive.jline.version>
          <pig.version>0.16.0</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
@@ -106,7 +106,7 @@
 
          <!-- Tomcat version -->
          <tomcat.version>6.0.44</tomcat.version>
-
+         <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.1</openjpa.version>
          <xerces.version>2.10.0</xerces.version>
          <curator.version>2.5.0</curator.version>
@@ -878,7 +878,7 @@
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
-                <version>0.9.94</version>
+                <version>${jline.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>junit</groupId>
@@ -984,10 +984,6 @@
                     </exclusion>
                     <exclusion>
                         <artifactId>hive-builtins</artifactId>
-                        <groupId>org.apache.hive</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>hive-common</artifactId>
                         <groupId>org.apache.hive</groupId>
                     </exclusion>
                     <exclusion>
@@ -1860,6 +1856,8 @@
                 <hadoop.majorversion>1</hadoop.majorversion>
                 <pig.classifier></pig.classifier>
                 <sqoop.classifier>hadoop100</sqoop.classifier>
+                <hive.version>0.13.1</hive.version>
+                <hive.jline.version>0.9.94</hive.jline.version>
             </properties>
         </profile>
         <profile>

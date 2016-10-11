@@ -25,6 +25,7 @@ import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.test.XHCatTestCase;
+import org.apache.oozie.test.XTestCase;
 import org.junit.Test;
 
 public class TestHCatURIHandler extends XHCatTestCase {
@@ -67,6 +68,8 @@ public class TestHCatURIHandler extends XHCatTestCase {
 
     @Test
     public void testExists() throws Exception {
+        //setting current user as test user because directory structure created by HCat have current user permissions (755).
+        setSystemProperty(XTestCase.TEST_USER1_PROP, System.getProperty("user.name"));
         createTestTable();
 
         addPartition(db, table, "year=2012;month=12;dt=02;country=us");
