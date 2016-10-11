@@ -49,6 +49,7 @@ public class SparkMain extends LauncherMain {
     private static final String JOB_NAME_OPTION = "--name";
     private static final String CLASS_NAME_OPTION = "--class";
     private static final String VERBOSE_OPTION = "--verbose";
+    private static final String DRIVER_CLASSPATH_OPTION = "--driver-class-path";
     private static final String EXECUTOR_CLASSPATH = "spark.executor.extraClassPath=";
     private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
     private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
@@ -116,29 +117,31 @@ public class SparkMain extends LauncherMain {
         if(jarPath!=null && jarPath.endsWith(".py")){
             isPyspark = true;
         }
-        boolean addedExecutorClasspath = false;
-        boolean addedDriverClasspath = false;
         boolean addedHiveSecurityToken = false;
         boolean addedHBaseSecurityToken = false;
+        StringBuilder driverClassPath = new StringBuilder();
+        StringBuilder executorClassPath = new StringBuilder();
         String sparkOpts = actionConf.get(SparkActionExecutor.SPARK_OPTS);
         if (StringUtils.isNotEmpty(sparkOpts)) {
             List<String> sparkOptions = splitSparkOpts(sparkOpts);
             for (int i = 0; i < sparkOptions.size(); i++) {
                 String opt = sparkOptions.get(i);
+                boolean addToSparkArgs = true;
                 if (yarnClusterMode || yarnClientMode) {
                     if (opt.startsWith(EXECUTOR_CLASSPATH)) {
-                        // Include the current working directory (of executor
-                        // container) in executor classpath, because it will contain
-                        // localized files
-                        opt = opt + File.pathSeparator + PWD;
-                        addedExecutorClasspath = true;
+                        appendWithPathSeparator(opt.substring(EXECUTOR_CLASSPATH.length()), executorClassPath);
+                        addToSparkArgs = false;
                     }
                     if (opt.startsWith(DRIVER_CLASSPATH)) {
-                        // Include the current working directory (of driver
-                        // container) in executor classpath, because it will contain
-                        // localized files
-                        opt = opt + File.pathSeparator + PWD;
-                        addedDriverClasspath = true;
+                        appendWithPathSeparator(opt.substring(DRIVER_CLASSPATH.length()), driverClassPath);
+                        addToSparkArgs = false;
+                    }
+                    if (opt.equals(DRIVER_CLASSPATH_OPTION)) {
+                        // we need the next element after this option
+                        appendWithPathSeparator(sparkOptions.get(i + 1), driverClassPath);
+                        // increase i to skip the next element.
+                        i++;
+                        addToSparkArgs = false;
                     }
                 }
                 if (opt.startsWith(HIVE_SECURITY_TOKEN)) {
@@ -147,25 +150,24 @@ public class SparkMain extends LauncherMain {
                 if (opt.startsWith(HBASE_SECURITY_TOKEN)) {
                     addedHBaseSecurityToken = true;
                 }
-                sparkArgs.add(opt);
+                if(addToSparkArgs) {
+                    sparkArgs.add(opt);
+                }
             }
         }
 
         if ((yarnClusterMode || yarnClientMode)) {
-            if (!addedExecutorClasspath) {
-                // Include the current working directory (of executor container)
-                // in executor classpath, because it will contain localized
-                // files
-                sparkArgs.add("--conf");
-                sparkArgs.add(EXECUTOR_CLASSPATH + PWD);
-            }
-            if (!addedDriverClasspath) {
-                // Include the current working directory (of driver container)
-                // in executor classpath, because it will contain localized
-                // files
-                sparkArgs.add("--conf");
-                sparkArgs.add(DRIVER_CLASSPATH + PWD);
-            }
+            // Include the current working directory (of executor container)
+            // in executor classpath, because it will contain localized
+            // files
+            appendWithPathSeparator(PWD, executorClassPath);
+            appendWithPathSeparator(PWD, driverClassPath);
+
+            sparkArgs.add("--conf");
+            sparkArgs.add(EXECUTOR_CLASSPATH + executorClassPath.toString());
+
+            sparkArgs.add("--conf");
+            sparkArgs.add(DRIVER_CLASSPATH + driverClassPath.toString());
         }
         sparkArgs.add("--conf");
         sparkArgs.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=" + SPARK_LOG4J_PROPS);
@@ -492,4 +494,10 @@ public class SparkMain extends LauncherMain {
         return manifest.getMainAttributes().getValue("Specification-Version");
     }
 
+    private void appendWithPathSeparator(String what, StringBuilder to){
+        if(to.length() > 0){
+            to.append(File.pathSeparator);
+        }
+        to.append(what);
+    }
 }
