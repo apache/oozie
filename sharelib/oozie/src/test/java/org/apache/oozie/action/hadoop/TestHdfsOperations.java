@@ -69,13 +69,11 @@ public class TestHdfsOperations {
     @Before
     public void setup() throws IOException {
         configureMocksForHappyPath();
+        actionData.put("testKey", "testValue");
     }
 
     @Test
     public void testActionDataUploadToHdfsSucceeds() throws IOException {
-        configureMocksForHappyPath();
-        actionData.put("testKey", "testValue");
-
         hdfsOperations.uploadActionDataToHDFS(configurationMock, path, actionData);
 
         verify(seqFileWriterFactoryMock).createSequenceFileWriter(eq(configurationMock),
@@ -89,7 +87,6 @@ public class TestHdfsOperations {
 
     @Test(expected = IOException.class)
     public void testActionDataUploadToHdfsFailsWhenAppendingToWriter() throws IOException {
-        configureMocksForHappyPath();
         willThrow(new IOException()).given(writerMock).append(any(Text.class), any(Text.class));
 
         hdfsOperations.uploadActionDataToHDFS(configurationMock, path, actionData);
@@ -97,8 +94,6 @@ public class TestHdfsOperations {
 
     @Test(expected = IOException.class)
     public void testActionDataUploadToHdfsFailsWhenWriterIsNull() throws IOException {
-        configureMocksForHappyPath();
-        actionData.put("testKey", "testValue");
         given(seqFileWriterFactoryMock.createSequenceFileWriter(eq(configurationMock),
                 any(Path.class), eq(Text.class), eq(Text.class))).willReturn(null);
 
