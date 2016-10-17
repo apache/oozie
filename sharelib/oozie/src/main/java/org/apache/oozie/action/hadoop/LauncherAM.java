@@ -17,120 +17,133 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
-import org.apache.hadoop.yarn.api.records.Container;
-import org.apache.hadoop.yarn.api.records.ContainerStatus;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
-import org.apache.hadoop.yarn.api.records.NodeReport;
-import org.apache.hadoop.yarn.client.api.AMRMClient;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 public class LauncherAM {
+    private static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
+    private static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
+    public static final String ACTIONOUTPUTTYPE_ID_SWAP = "IdSwap";
+    public static final String ACTIONOUTPUTTYPE_OUTPUT = "Output";
+    public static final String ACTIONOUTPUTTYPE_STATS = "Stats";
+    public static final String ACTIONOUTPUTTYPE_EXT_CHILD_ID = "ExtChildID";
 
-    static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
-
-    static final String ACTION_PREFIX = "oozie.action.";
+    public static final String JAVA_CLASS_PATH = "java.class.path";
+    public static final String OOZIE_ACTION_ID = "oozie.action.id";
+    public static final String OOZIE_JOB_ID = "oozie.job.id";
+    public static final String ACTION_PREFIX = "oozie.action.";
     public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = ACTION_PREFIX + "max.output.data";
-    static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
-    static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + "count";
-    static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
-
-    static final String OOZIE_ACTION_DIR_PATH = ACTION_PREFIX + "dir.path";
-    static final String ACTION_PREPARE_XML = ACTION_PREFIX + "prepare.xml";
-    static final String ACTION_DATA_SEQUENCE_FILE = "action-data.seq"; // COMBO FILE
-    static final String ACTION_DATA_EXTERNAL_CHILD_IDS = "externalChildIDs";
-    static final String ACTION_DATA_OUTPUT_PROPS = "output.properties";
-    static final String ACTION_DATA_STATS = "stats.properties";
-    static final String ACTION_DATA_NEW_ID = "newId";
-    static final String ACTION_DATA_ERROR_PROPS = "error.properties";
+    public static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
+    public static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + "count";
+    public static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
+    public static final String OOZIE_ACTION_DIR_PATH = ACTION_PREFIX + "dir.path";
+    public static final String ACTION_PREPARE_XML = ACTION_PREFIX + "prepare.xml";
+    public static final String ACTION_DATA_SEQUENCE_FILE = "action-data.seq"; // COMBO FILE
+    public static final String ACTION_DATA_EXTERNAL_CHILD_IDS = "externalChildIDs";
+    public static final String ACTION_DATA_OUTPUT_PROPS = "output.properties";
+    public static final String ACTION_DATA_STATS = "stats.properties";
+    public static final String ACTION_DATA_NEW_ID = "newId";
+    public static final String ACTION_DATA_ERROR_PROPS = "error.properties";
+    public static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
 
     // TODO: OYA: more unique file names?  action.xml may be stuck for backwards compat though
     public static final String LAUNCHER_JOB_CONF_XML = "launcher.xml";
     public static final String ACTION_CONF_XML = "action.xml";
     public static final String ACTION_DATA_FINAL_STATUS = "final.status";
 
-    private static AMRMClientAsync<AMRMClient.ContainerRequest> amRmClientAsync = null;
-    private static Configuration launcherJobConf = null;
-    private static Path actionDir;
-    private static Map<String, String> actionData = new HashMap<String,String>();
+    private final UserGroupInformation ugi;
+    private final AMRMCallBackHandler callbackHandler;
+    private final AMRMClientAsyncFactory amRmClientAsyncFactory;
+    private final HdfsOperations hdfsOperations;
+    private final LocalFsOperations localFsOperations;
+    private final PrepareActionsHandler prepareHandler;
+    private final LauncherAMCallbackNotifierFactory callbackNotifierFactory;
+    private final LauncherSecurityManager launcherSecurityManager;
 
-    private static void printDebugInfo(String[] mainArgs) throws IOException {
-        printContentsOfCurrentDir();
+    private Configuration launcherJobConf;
+    private AMRMClientAsync<?> amRmClientAsync;
+    private Path actionDir;
+    private Map<String, String> actionData = new HashMap<String,String>();
 
-        System.out.println();
-        System.out.println("Oozie Launcher Application Master configuration");
-        System.out.println("===============================================");
-        System.out.println("Workflow job id   : " + launcherJobConf.get("oozie.job.id"));
-        System.out.println("Workflow action id: " + launcherJobConf.get("oozie.action.id"));
-        System.out.println();
-        System.out.println("Classpath         :");
-        System.out.println("------------------------");
-        StringTokenizer st = new StringTokenizer(System.getProperty("java.class.path"), ":");
-        while (st.hasMoreTokens()) {
-            System.out.println("  " + st.nextToken());
-        }
-        System.out.println("------------------------");
-        System.out.println();
-        String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-        System.out.println("Main class        : " + mainClass);
-        System.out.println();
-        System.out.println("Maximum output    : "
-                + launcherJobConf.getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024));
-        System.out.println();
-        System.out.println("Arguments         :");
-        for (String arg : mainArgs) {
-            System.out.println("                    " + arg);
-        }
-
-        System.out.println();
-        System.out.println("Java System Properties:");
-        System.out.println("------------------------");
-        System.getProperties().store(System.out, "");
-        System.out.flush();
-        System.out.println("------------------------");
-        System.out.println();
-
-        System.out.println("=================================================================");
-        System.out.println();
-        System.out.println(">>> Invoking Main class now >>>");
-        System.out.println();
-        System.out.flush();
+    public LauncherAM(UserGroupInformation ugi,
+            AMRMClientAsyncFactory amRmClientAsyncFactory,
+            AMRMCallBackHandler callbackHandler,
+            HdfsOperations hdfsOperations,
+            LocalFsOperations localFsOperations,
+            PrepareActionsHandler prepareHandler,
+            LauncherAMCallbackNotifierFactory callbackNotifierFactory,
+            LauncherSecurityManager launcherSecurityManager) {
+        this.ugi = Preconditions.checkNotNull(ugi, "ugi should not be null");
+        this.amRmClientAsyncFactory = Preconditions.checkNotNull(amRmClientAsyncFactory, "amRmClientAsyncFactory should not be null");
+        this.callbackHandler = Preconditions.checkNotNull(callbackHandler, "callbackHandler should not be null");
+        this.hdfsOperations = Preconditions.checkNotNull(hdfsOperations, "hdfsOperations should not be null");
+        this.localFsOperations = Preconditions.checkNotNull(localFsOperations, "localFsOperations should not be null");
+        this.prepareHandler = Preconditions.checkNotNull(prepareHandler, "prepareHandler should not be null");
+        this.callbackNotifierFactory = Preconditions.checkNotNull(callbackNotifierFactory, "callbackNotifierFactory should not be null");
+        this.launcherSecurityManager = Preconditions.checkNotNull(launcherSecurityManager, "launcherSecurityManager should not be null");
     }
 
-    // TODO: OYA: rethink all print messages and formatting
-    public static void main(String[] AMargs) throws Exception {
-        final ErrorHolder eHolder = new ErrorHolder();
-        FinalApplicationStatus finalStatus = FinalApplicationStatus.FAILED;
+    public static void main(String[] args) throws Exception {
+        UserGroupInformation ugi = null;
         String submitterUser = System.getProperty("submitter.user", "").trim();
         Preconditions.checkArgument(!submitterUser.isEmpty(), "Submitter user is undefined");
         System.out.println("Submitter user is: " + submitterUser);
+
+        if (UserGroupInformation.getLoginUser().getShortUserName().equals(submitterUser)) {
+            System.out.println("Using login user for UGI");
+            ugi = UserGroupInformation.getLoginUser();
+        } else {
+            ugi = UserGroupInformation.createRemoteUser(submitterUser);
+            ugi.addCredentials(UserGroupInformation.getLoginUser().getCredentials());
+        }
+
+        AMRMClientAsyncFactory amRmClientAsyncFactory = new AMRMClientAsyncFactory();
+        AMRMCallBackHandler callbackHandler = new AMRMCallBackHandler();
+        HdfsOperations hdfsOperations = new HdfsOperations(new SequenceFileWriterFactory(), ugi);
+        LocalFsOperations localFSOperations = new LocalFsOperations();
+        PrepareActionsHandler prepareHandler = new PrepareActionsHandler();
+        LauncherAMCallbackNotifierFactory callbackNotifierFactory = new LauncherAMCallbackNotifierFactory();
+        LauncherSecurityManager launcherSecurityManager = new LauncherSecurityManager();
+
+        LauncherAM launcher = new LauncherAM(ugi,
+                amRmClientAsyncFactory,
+                callbackHandler,
+                hdfsOperations,
+                localFSOperations,
+                prepareHandler,
+                callbackNotifierFactory,
+                launcherSecurityManager);
+
+        launcher.run();
+    }
+
+    // TODO: OYA: rethink all print messages and formatting
+    public void run() throws Exception {
+        final ErrorHolder errorHolder = new ErrorHolder();
+        OozieActionResult actionResult = OozieActionResult.FAILED;
+        boolean launcerExecutedProperly = false;
 
         String jobUserName = System.getenv(ApplicationConstants.Environment.USER.name());
 
@@ -144,25 +157,15 @@ public class LauncherAM {
         System.out.println("Login authMethod: " + login.getAuthenticationMethod());
         System.out.println("JobUserName:" + jobUserName);
 
-        UserGroupInformation ugi = null;
-
-        if (UserGroupInformation.getLoginUser().getShortUserName().equals(submitterUser)) {
-            System.out.println("Using login user for UGI");
-            ugi = UserGroupInformation.getLoginUser();
-        } else {
-            ugi = UserGroupInformation.createRemoteUser(submitterUser);
-            ugi.addCredentials(UserGroupInformation.getLoginUser().getCredentials());
-        }
-
         boolean backgroundAction = false;
 
         try {
             try {
-                launcherJobConf = readLauncherConf();
+                launcherJobConf = localFsOperations.readLauncherConf();
                 System.out.println("Launcher AM configuration loaded");
             } catch (Exception ex) {
-                eHolder.setErrorMessage("Could not load the Launcher AM configuration file");
-                eHolder.setErrorCause(ex);
+                errorHolder.setErrorMessage("Could not load the Launcher AM configuration file");
+                errorHolder.setErrorCause(ex);
                 throw ex;
             }
 
@@ -175,8 +178,8 @@ public class LauncherAM {
                 executePrepare(ugi);
                 System.out.println("Completed the execution of prepare actions successfully");
             } catch (Exception ex) {
-                eHolder.setErrorMessage("Prepare execution in the Launcher AM has failed");
-                eHolder.setErrorCause(ex);
+                errorHolder.setErrorMessage("Prepare execution in the Launcher AM has failed");
+                errorHolder.setErrorCause(ex);
                 throw ex;
             }
 
@@ -185,14 +188,14 @@ public class LauncherAM {
             // TODO: OYA: should we allow turning this off?
             // TODO: OYA: what should default be?
             if (launcherJobConf.getBoolean("oozie.launcher.print.debug.info", true)) {
-                printDebugInfo(mainArgs);
+                printDebugInfo();
             }
 
             setupMainConfiguration();
 
-            finalStatus = runActionMain(mainArgs, eHolder, ugi);
+            launcerExecutedProperly = runActionMain(mainArgs, errorHolder, ugi);
 
-            if (finalStatus == FinalApplicationStatus.SUCCEEDED) {
+            if (launcerExecutedProperly) {
                 handleActionData();
                 if (actionData.get(ACTION_DATA_OUTPUT_PROPS) != null) {
                     System.out.println();
@@ -218,36 +221,87 @@ public class LauncherAM {
             System.err.println("Launcher AM execution failed");
             e.printStackTrace(System.out);
             e.printStackTrace(System.err);
-            finalStatus = FinalApplicationStatus.FAILED;
-            eHolder.setErrorCause(e);
-            eHolder.setErrorMessage(e.getMessage());
+            launcerExecutedProperly = false;
+            if (!errorHolder.isPopulated()) {
+                errorHolder.setErrorCause(e);
+                errorHolder.setErrorMessage(e.getMessage());
+            }
             throw e;
         } finally {
             try {
-                // Store final status in case Launcher AM falls off the RM
-                actionData.put(ACTION_DATA_FINAL_STATUS, finalStatus.toString());
-                if (finalStatus != FinalApplicationStatus.SUCCEEDED) {
-                    failLauncher(eHolder);
+                ErrorHolder callbackErrorHolder = callbackHandler.getError();
+
+                if (launcerExecutedProperly) {
+                    actionResult = backgroundAction ? OozieActionResult.RUNNING : OozieActionResult.SUCCEEDED;
                 }
-                uploadActionDataToHDFS(ugi);
+
+                if (!launcerExecutedProperly) {
+                    updateActionDataWithFailure(errorHolder, actionData);
+                } else if (callbackErrorHolder != null) {  // async error from the callback
+                    actionResult = OozieActionResult.FAILED;
+                    updateActionDataWithFailure(callbackErrorHolder, actionData);
+                }
+
+                actionData.put(ACTION_DATA_FINAL_STATUS, actionResult.toString());
+                hdfsOperations.uploadActionDataToHDFS(launcherJobConf, actionDir, actionData);
             } finally {
                 try {
-                    unregisterWithRM(finalStatus, eHolder.getErrorMessage());
+                    unregisterWithRM(actionResult, errorHolder.getErrorMessage());
                 } finally {
-                    LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(launcherJobConf);
-                    cn.notifyURL(finalStatus, backgroundAction);
+                    LauncherAMCallbackNotifier cn = callbackNotifierFactory.createCallbackNotifier(launcherJobConf);
+                    cn.notifyURL(actionResult);
                 }
             }
         }
     }
 
-    private static void registerWithRM() throws IOException, YarnException {
-        AMRMClient<AMRMClient.ContainerRequest> amRmClient = AMRMClient.createAMRMClient();
+    @VisibleForTesting
+    Map<String, String> getActionData() {
+        return actionData;
+    }
 
-        AMRMCallBackHandler callBackHandler = new AMRMCallBackHandler();
-        // TODO: OYA: make heartbeat interval configurable
-        // TODO: OYA: make heartbeat interval higher to put less load on RM, but lower than timeout
-        amRmClientAsync = AMRMClientAsync.createAMRMClientAsync(amRmClient, 60000, callBackHandler);
+    private void printDebugInfo() throws IOException {
+        localFsOperations.printContentsOfDir(new File("."));
+
+        System.out.println();
+        System.out.println("Oozie Launcher Application Master configuration");
+        System.out.println("===============================================");
+        System.out.println("Workflow job id   : " + launcherJobConf.get(OOZIE_JOB_ID));
+        System.out.println("Workflow action id: " + launcherJobConf.get(OOZIE_ACTION_ID));
+        System.out.println();
+        System.out.println("Classpath         :");
+        System.out.println("------------------------");
+        StringTokenizer st = new StringTokenizer(System.getProperty(JAVA_CLASS_PATH), ":");
+        while (st.hasMoreTokens()) {
+            System.out.println("  " + st.nextToken());
+        }
+        System.out.println("------------------------");
+        System.out.println();
+        String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
+        System.out.println("Main class        : " + mainClass);
+        System.out.println();
+        System.out.println("Maximum output    : "
+                + launcherJobConf.getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024));
+        System.out.println();
+
+        System.out.println();
+        System.out.println("Java System Properties:");
+        System.out.println("------------------------");
+        System.getProperties().store(System.out, "");
+        System.out.flush();
+        System.out.println("------------------------");
+        System.out.println();
+
+        System.out.println("=================================================================");
+        System.out.println();
+        System.out.println(">>> Invoking Main class now >>>");
+        System.out.println();
+        System.out.flush();
+    }
+
+    private void registerWithRM() throws IOException, YarnException {
+        // TODO: OYA: make heartbeat interval configurable & make interval higher to put less load on RM, but lower than timeout
+        amRmClientAsync = amRmClientAsyncFactory.createAMRMClientAsync(60000);
         amRmClientAsync.init(new Configuration(launcherJobConf));
         amRmClientAsync.start();
 
@@ -255,28 +309,24 @@ public class LauncherAM {
         amRmClientAsync.registerApplicationMaster("", 0, "");
     }
 
-    private static void unregisterWithRM(FinalApplicationStatus status, String message) throws YarnException, IOException {
+    private void unregisterWithRM(OozieActionResult actionResult, String message) throws YarnException, IOException {
         if (amRmClientAsync != null) {
             System.out.println("Stopping AM");
             try {
                 message = (message == null) ? "" : message;
                 // tracking url is determined automatically
-                amRmClientAsync.unregisterApplicationMaster(status, message, "");
-            } catch (YarnException ex) {
-                System.err.println("Error un-registering AM client");
-                throw ex;
-            } catch (IOException ex) {
+                amRmClientAsync.unregisterApplicationMaster(actionResult.getYarnStatus(), message, "");
+            } catch (Exception ex) {
                 System.err.println("Error un-registering AM client");
                 throw ex;
             } finally {
                 amRmClientAsync.stop();
-                amRmClientAsync = null;
             }
         }
     }
 
     // Method to execute the prepare actions
-    private static void executePrepare(UserGroupInformation ugi) throws Exception {
+    private void executePrepare(UserGroupInformation ugi) throws Exception {
         Exception e = ugi.doAs(new PrivilegedAction<Exception>() {
             @Override
             public Exception run() {
@@ -286,7 +336,7 @@ public class LauncherAM {
                         if (prepareXML.length() != 0) {
                             Configuration actionConf = new Configuration(launcherJobConf);
                             actionConf.addResource(ACTION_CONF_XML);
-                            PrepareActionsDriver.doOperations(prepareXML, actionConf);
+                            prepareHandler.prepareAction(prepareXML, actionConf);
                         } else {
                             System.out.println("There are no prepare actions to execute.");
                         }
@@ -304,17 +354,13 @@ public class LauncherAM {
         }
     }
 
-    // FIXME - figure out what is actually needed here
-    private static void setupMainConfiguration() throws IOException {
-//        Path pathNew = new Path(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
-//        FileSystem fs = FileSystem.get(pathNew.toUri(), getJobConf());
-//        fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
-
-        System.setProperty("oozie.launcher.job.id", launcherJobConf.get("oozie.job.id"));
-//        System.setProperty(OOZIE_JOB_ID, launcherJobConf.get(OOZIE_JOB_ID));
-//        System.setProperty(OOZIE_ACTION_ID, launcherJobConf.get(OOZIE_ACTION_ID));
-        System.setProperty("oozie.action.conf.xml", new File(ACTION_CONF_XML).getAbsolutePath());
-        System.setProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, new File(ACTION_DATA_EXTERNAL_CHILD_IDS).getAbsolutePath());
+    private void setupMainConfiguration() throws IOException {
+        System.setProperty(OOZIE_LAUNCHER_JOB_ID, launcherJobConf.get(OOZIE_JOB_ID));
+        System.setProperty(OOZIE_JOB_ID, launcherJobConf.get(OOZIE_JOB_ID));
+        System.setProperty(OOZIE_ACTION_ID, launcherJobConf.get(OOZIE_ACTION_ID));
+        System.setProperty(OOZIE_ACTION_CONF_XML, new File(ACTION_CONF_XML).getAbsolutePath());
+        System.setProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS,
+                new File(ACTION_DATA_EXTERNAL_CHILD_IDS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_STATS, new File(ACTION_DATA_STATS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
@@ -326,33 +372,28 @@ public class LauncherAM {
         } else {
             System.setProperty("oozie.job.launch.time", String.valueOf(System.currentTimeMillis()));
         }
-
-//        String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
-//        if (actionConfigClass != null) {
-//            System.setProperty(OOZIE_ACTION_CONFIG_CLASS, actionConfigClass);
-//        }
     }
 
-    private static FinalApplicationStatus runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) {
-        final AtomicReference<FinalApplicationStatus> finalStatus = new AtomicReference<FinalApplicationStatus>(FinalApplicationStatus.FAILED);
+    private boolean runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) {
+        // using AtomicBoolean because we want to modify it inside run()
+        final AtomicBoolean actionMainExecutedProperly = new AtomicBoolean(false);
 
         ugi.doAs(new PrivilegedAction<Void>() {
             @Override
             public Void run() {
-                LauncherSecurityManager secMan = new LauncherSecurityManager();
                 try {
                     Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
                     System.out.println("Launcher class: " + klass.toString());
                     System.out.flush();
                     Method mainMethod = klass.getMethod("main", String[].class);
                     // Enable LauncherSecurityManager to catch System.exit calls
-                    secMan.set();
+                    launcherSecurityManager.set();
                     mainMethod.invoke(null, (Object) mainArgs);
 
                     System.out.println();
                     System.out.println("<<< Invocation of Main class completed <<<");
                     System.out.println();
-                    finalStatus.set(FinalApplicationStatus.SUCCEEDED);
+                    actionMainExecutedProperly.set(true);
                 } catch (InvocationTargetException ex) {
                     ex.printStackTrace(System.out);
                     // Get what actually caused the exception
@@ -362,24 +403,31 @@ public class LauncherAM {
                         cause = cause.getCause();
                     }
                     if (LauncherMainException.class.isInstance(cause)) {
+                        int errorCode = ((LauncherMainException) ex.getCause()).getErrorCode();
                         String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
                         eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" +
-                                ((LauncherMainException) ex.getCause()).getErrorCode() + "]");
+                                errorCode + "]");
+                        eHolder.setErrorCode(errorCode);
                     } else if (SecurityException.class.isInstance(cause)) {
-                        if (secMan.getExitInvoked()) {
-                            System.out.println("Intercepting System.exit(" + secMan.getExitCode()
-                                    + ")");
-                            System.err.println("Intercepting System.exit(" + secMan.getExitCode()
-                                    + ")");
+                        if (launcherSecurityManager.getExitInvoked()) {
+                            final int exitCode = launcherSecurityManager.getExitCode();
+                            System.out.println("Intercepting System.exit(" + exitCode + ")");
+                            System.err.println("Intercepting System.exit(" + exitCode + ")");
                             // if 0 main() method finished successfully
                             // ignoring
-                            eHolder.setErrorCode(secMan.getExitCode());
-                            if (eHolder.getErrorCode() != 0) {
+                            eHolder.setErrorCode(exitCode);
+                            if (exitCode != 0) {
                                 String mainClass = launcherJobConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                                eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" + eHolder.getErrorCode() + "]");
+                                eHolder.setErrorMessage("Main Class [" + mainClass + "],"
+                                        + " exit code [" + eHolder.getErrorCode() + "]");
                             } else {
-                                finalStatus.set(FinalApplicationStatus.SUCCEEDED);
+                                actionMainExecutedProperly.set(true);
                             }
+                        } else {
+                            // just SecurityException, no exit was invoked
+                            eHolder.setErrorCode(0);
+                            eHolder.setErrorCause(cause);
+                            eHolder.setErrorMessage(cause.getMessage());
                         }
                     } else {
                         eHolder.setErrorMessage(cause.getMessage());
@@ -393,144 +441,55 @@ public class LauncherAM {
                     System.out.flush();
                     System.err.flush();
                     // Disable LauncherSecurityManager
-                    secMan.unset();
+                    launcherSecurityManager.unset();
                 }
 
                 return null;
             }
         });
 
-        return finalStatus.get();
+        return actionMainExecutedProperly.get();
     }
 
-    private static void handleActionData() throws IOException {
+    private void handleActionData() throws IOException {
         // external child IDs
-        String externalChildIdsProp = System.getProperty(ACTION_PREFIX
-                + ACTION_DATA_EXTERNAL_CHILD_IDS);
-        if (externalChildIdsProp != null) {
-            File externalChildIDs = new File(externalChildIdsProp);
-            if (externalChildIDs.exists()) {
-                actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
-            }
-        }
+        processActionData(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, null, ACTION_DATA_EXTERNAL_CHILD_IDS, -1, ACTIONOUTPUTTYPE_EXT_CHILD_ID);
 
         // external stats
-        String statsProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_STATS);
-        if (statsProp != null) {
-            File actionStatsData = new File(statsProp);
-            if (actionStatsData.exists()) {
-                int statsMaxOutputData = launcherJobConf.getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
-                        Integer.MAX_VALUE);
-                actionData.put(ACTION_DATA_STATS,
-                        getLocalFileContentStr(actionStatsData, "Stats", statsMaxOutputData));
-            }
-        }
+        processActionData(ACTION_PREFIX + ACTION_DATA_STATS, CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, ACTION_DATA_STATS, Integer.MAX_VALUE, ACTIONOUTPUTTYPE_STATS);
 
         // output data
-        String outputProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS);
-        if (outputProp != null) {
-            File actionOutputData = new File(outputProp);
-            if (actionOutputData.exists()) {
-                int maxOutputData = launcherJobConf.getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024);
-                actionData.put(ACTION_DATA_OUTPUT_PROPS,
-                        getLocalFileContentStr(actionOutputData, "Output", maxOutputData));
-            }
-        }
+        processActionData(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, ACTION_DATA_OUTPUT_PROPS, 2048, ACTIONOUTPUTTYPE_OUTPUT);
 
         // id swap
-        String newIdProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID);
-        if (newIdProp != null) {
-            File newId = new File(newIdProp);
-            if (newId.exists()) {
-                actionData.put(ACTION_DATA_NEW_ID, getLocalFileContentStr(newId, "", -1));
+        processActionData(ACTION_PREFIX + ACTION_DATA_NEW_ID, null, ACTION_DATA_NEW_ID, -1, ACTIONOUTPUTTYPE_ID_SWAP);
+    }
+
+    private void processActionData(String propertyName, String maxSizePropertyName, String actionDataPropertyName, int maxSizeDefault, String type) throws IOException {
+        String propValue = System.getProperty(propertyName);
+        int maxSize = maxSizeDefault;
+
+        if (maxSizePropertyName != null) {
+            maxSize = launcherJobConf.getInt(maxSizePropertyName, maxSizeDefault);
+        }
+
+        if (propValue != null) {
+            File actionDataFile = new File(propValue);
+            if (localFsOperations.fileExists(actionDataFile)) {
+                actionData.put(actionDataPropertyName, localFsOperations.getLocalFileContentAsString(actionDataFile, type, maxSize));
             }
         }
     }
 
-    public static String getLocalFileContentStr(File file, String type, int maxLen) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        Reader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(file));
-            char[] buffer = new char[2048];
-            int read;
-            int count = 0;
-            while ((read = reader.read(buffer)) > -1) {
-                count += read;
-                if (maxLen > -1 && count > maxLen) {
-                    throw new IOException(type + " data exceeds its limit [" + maxLen + "]");
-                }
-                sb.append(buffer, 0, read);
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        return sb.toString();
-    }
-
-    private static void uploadActionDataToHDFS(UserGroupInformation ugi) throws IOException {
-        IOException ioe = ugi.doAs(new PrivilegedAction<IOException>() {
-            @Override
-            public IOException run() {
-                Path finalPath = new Path(actionDir, ACTION_DATA_SEQUENCE_FILE);
-                // upload into sequence file
-                System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
-                        + new Path(actionDir, ACTION_DATA_SEQUENCE_FILE).toUri());
-
-                SequenceFile.Writer wr = null;
-                try {
-                    wr = SequenceFile.createWriter(launcherJobConf,
-                            SequenceFile.Writer.file(finalPath),
-                            SequenceFile.Writer.keyClass(Text.class),
-                            SequenceFile.Writer.valueClass(Text.class));
-                    if (wr != null) {
-                        Set<String> keys = actionData.keySet();
-                        for (String propsKey : keys) {
-                            wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
-                        }
-                    } else {
-                        throw new IOException("SequenceFile.Writer is null for " + finalPath);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return e;
-                } finally {
-                    if (wr != null) {
-                        try {
-                            wr.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            return e;
-                        }
-                    }
-                }
-
-                return null;
-            }
-        });
-
-        if (ioe != null) {
-            throw ioe;
-        }
-    }
-
-    private static void failLauncher(int errorCode, String message, Throwable ex) {
-        ErrorHolder eHolder = new ErrorHolder();
-        eHolder.setErrorCode(errorCode);
-        eHolder.setErrorMessage(message);
-        eHolder.setErrorCause(ex);
-        failLauncher(eHolder);
-    }
-
-    private static void failLauncher(ErrorHolder eHolder) {
-        if (eHolder.getErrorCause() != null) {
+    private void updateActionDataWithFailure(ErrorHolder eHolder, Map<String, String> actionData) {
+        if (eHolder.getErrorCause() != null && eHolder.getErrorCause().getMessage() != null) {
             eHolder.setErrorMessage(eHolder.getErrorMessage() + ", " + eHolder.getErrorCause().getMessage());
         }
+
         Properties errorProps = new Properties();
         errorProps.setProperty("error.code", Integer.toString(eHolder.getErrorCode()));
-        errorProps.setProperty("error.reason", eHolder.getErrorMessage());
+        String errorMessage = eHolder.getErrorMessage() == null ? "<empty>" : eHolder.getErrorMessage();
+        errorProps.setProperty("error.reason", errorMessage);
         if (eHolder.getErrorCause() != null) {
             if (eHolder.getErrorCause().getMessage() != null) {
                 errorProps.setProperty("exception.message", eHolder.getErrorCause().getMessage());
@@ -541,18 +500,19 @@ public class LauncherAM {
             pw.close();
             errorProps.setProperty("exception.stacktrace", sw.toString());
         }
+
         StringWriter sw = new StringWriter();
         try {
             errorProps.store(sw, "");
             sw.close();
-            actionData.put(ACTION_DATA_ERROR_PROPS, sw.toString());
+            actionData.put(LauncherAM.ACTION_DATA_ERROR_PROPS, sw.toString());
 
             // external child IDs
-            String externalChildIdsProp = System.getProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS);
+            String externalChildIdsProp = System.getProperty(LauncherAM.ACTION_PREFIX + LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS);
             if (externalChildIdsProp != null) {
                 File externalChildIDs = new File(externalChildIdsProp);
-                if (externalChildIDs.exists()) {
-                    actionData.put(ACTION_DATA_EXTERNAL_CHILD_IDS, getLocalFileContentStr(externalChildIDs, "", -1));
+                if (localFsOperations.fileExists(externalChildIDs)) {
+                    actionData.put(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS, localFsOperations.getLocalFileContentAsString(externalChildIDs, ACTIONOUTPUTTYPE_EXT_CHILD_ID, -1));
                 }
             }
         } catch (IOException ioe) {
@@ -568,50 +528,17 @@ public class LauncherAM {
         }
     }
 
-    private static class AMRMCallBackHandler implements AMRMClientAsync.CallbackHandler {
-        @Override
-        public void onContainersCompleted(List<ContainerStatus> containerStatuses) {
-            //noop
-        }
-
-        @Override
-        public void onContainersAllocated(List<Container> containers) {
-            //noop
-        }
-
-        @Override
-        public void onShutdownRequest() {
-            failLauncher(0, "ResourceManager requested AM Shutdown", null);
-            // TODO: OYA: interrupt?
-        }
-
-        @Override
-        public void onNodesUpdated(List<NodeReport> nodeReports) {
-            //noop
-        }
-
-        @Override
-        public float getProgress() {
-            return 0.5f;    //TODO: OYA: maybe some action types can report better progress?
-        }
-
-        @Override
-        public void onError(final Throwable ex) {
-            failLauncher(0, ex.getMessage(), ex);
-            // TODO: OYA: interrupt?
-        }
-    }
-
-    public static String[] getMainArguments(Configuration conf) {
+    private String[] getMainArguments(Configuration conf) {
         String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
 
         for (int i = 0; i < args.length; i++) {
             args[i] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
         }
+
         return args;
     }
 
-    private static class LauncherSecurityManager extends SecurityManager {
+    public static class LauncherSecurityManager extends SecurityManager {
         private boolean exitInvoked;
         private int exitCode;
         private SecurityManager securityManager;
@@ -666,69 +593,20 @@ public class LauncherAM {
         }
     }
 
+    public enum OozieActionResult {
+        SUCCEEDED(FinalApplicationStatus.SUCCEEDED),
+        FAILED(FinalApplicationStatus.FAILED),
+        RUNNING(FinalApplicationStatus.SUCCEEDED);
 
-    /**
-     * Print files and directories in current directory. Will list files in the sub-directory (only 1 level deep)
-     */
-    protected static void printContentsOfCurrentDir() {
-        File folder = new File(".");
-        System.out.println();
-        System.out.println("Files in current dir:" + folder.getAbsolutePath());
-        System.out.println("======================");
+        // YARN-equivalent status
+        private FinalApplicationStatus yarnStatus;
 
-        File[] listOfFiles = folder.listFiles();
-        for (File fileName : listOfFiles) {
-            if (fileName.isFile()) {
-                System.out.println("File: " + fileName.getName());
-            } else if (fileName.isDirectory()) {
-                System.out.println("Dir: " + fileName.getName());
-                File subDir = new File(fileName.getName());
-                File[] moreFiles = subDir.listFiles();
-                for (File subFileName : moreFiles) {
-                    if (subFileName.isFile()) {
-                        System.out.println("  File: " + subFileName.getName());
-                    } else if (subFileName.isDirectory()) {
-                        System.out.println("  Dir: " + subFileName.getName());
-                    }
-                }
-            }
-        }
-    }
-
-    protected static Configuration readLauncherConf() {
-        File confFile = new File(LAUNCHER_JOB_CONF_XML);
-        Configuration conf = new Configuration(false);
-        conf.addResource(new Path(confFile.getAbsolutePath()));
-        return conf;
-    }
-
-    protected static class ErrorHolder {
-        private int errorCode = 0;
-        private Throwable errorCause = null;
-        private String errorMessage = null;
-
-        public int getErrorCode() {
-            return errorCode;
+        OozieActionResult(FinalApplicationStatus yarnStatus) {
+            this.yarnStatus = yarnStatus;
         }
 
-        public void setErrorCode(int errorCode) {
-            this.errorCode = errorCode;
-        }
-
-        public Throwable getErrorCause() {
-            return errorCause;
-        }
-
-        public void setErrorCause(Throwable errorCause) {
-            this.errorCause = errorCause;
-        }
-
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public void setErrorMessage(String errorMessage) {
-            this.errorMessage = errorMessage;
+        public FinalApplicationStatus getYarnStatus() {
+            return yarnStatus;
         }
     }
 }

@@ -15,32 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.action.hadoop;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.test.XFsTestCase;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.XConfiguration;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.net.URI;
-import java.util.Map;
+public class LauncherAMCallbackNotifierFactory {
 
-public class TestLauncherAM extends XFsTestCase {
-
-
-    // TODO: OYA: write tests later
-
+    public LauncherAMCallbackNotifier createCallbackNotifier(Configuration conf) {
+        return new LauncherAMCallbackNotifier(conf);
+    }
 }

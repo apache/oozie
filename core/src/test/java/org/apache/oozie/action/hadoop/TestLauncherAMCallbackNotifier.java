@@ -21,6 +21,7 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.oozie.QueryServlet;
+import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
 import org.apache.oozie.command.wf.HangServlet;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XTestCase;
@@ -109,7 +110,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         LauncherAMCallbackNotifier cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
 
         long start = System.currentTimeMillis();
-        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        cnSpy.notifyURL(OozieActionResult.SUCCEEDED);
         long end = System.currentTimeMillis();
         Mockito.verify(cnSpy, Mockito.times(1)).notifyURLOnce();
         Assert.assertTrue("Should have taken more than 5 seconds but it only took " + (end - start), end - start >= 5000);
@@ -120,7 +121,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
 
         cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
         start = System.currentTimeMillis();
-        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        cnSpy.notifyURL(OozieActionResult.SUCCEEDED);
         end = System.currentTimeMillis();
         Mockito.verify(cnSpy, Mockito.times(3)).notifyURLOnce();
         Assert.assertTrue("Should have taken more than 9 seconds but it only took " + (end - start), end - start >= 9000);
@@ -133,7 +134,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
 
         LauncherAMCallbackNotifier cnSpy = Mockito.spy(new LauncherAMCallbackNotifier(conf));
         long start = System.currentTimeMillis();
-        cnSpy.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        cnSpy.notifyURL(OozieActionResult.SUCCEEDED);
         long end = System.currentTimeMillis();
         Mockito.verify(cnSpy, Mockito.times(1)).notifyURLOnce();
         Assert.assertTrue("Should have taken more than 5 seconds but it only took " + (end - start), end - start >= 5000);
@@ -145,7 +146,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
 
         assertNull(QueryServlet.lastQueryString);
-        cn.notifyURL(FinalApplicationStatus.SUCCEEDED, false);
+        cn.notifyURL(OozieActionResult.SUCCEEDED);
         waitForCallbackAndCheckResult(FinalApplicationStatus.SUCCEEDED.toString());
     }
 
@@ -155,18 +156,8 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
 
         assertNull(QueryServlet.lastQueryString);
-        cn.notifyURL(FinalApplicationStatus.SUCCEEDED, true);
-        waitForCallbackAndCheckResult("RUNNING");
-    }
-
-    public void testNotifyBackgroundActionWhenSubmitFailsWithKilled() throws Exception {
-        Configuration conf = setupEmbeddedContainer(QueryServlet.class, "/count/*", "/count/?status=$jobStatus", null);
-
-        LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
-
-        assertNull(QueryServlet.lastQueryString);
-        cn.notifyURL(FinalApplicationStatus.KILLED, true);
-        waitForCallbackAndCheckResult(FinalApplicationStatus.KILLED.toString());
+        cn.notifyURL(OozieActionResult.RUNNING);
+        waitForCallbackAndCheckResult(OozieActionResult.RUNNING.toString());
     }
 
     public void testNotifyBackgroundActionWhenSubmitFailsWithFailed() throws Exception {
@@ -175,7 +166,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         LauncherAMCallbackNotifier cn = new LauncherAMCallbackNotifier(conf);
 
         assertNull(QueryServlet.lastQueryString);
-        cn.notifyURL(FinalApplicationStatus.FAILED, true);
+        cn.notifyURL(OozieActionResult.FAILED);
         waitForCallbackAndCheckResult(FinalApplicationStatus.FAILED.toString());
     }
 

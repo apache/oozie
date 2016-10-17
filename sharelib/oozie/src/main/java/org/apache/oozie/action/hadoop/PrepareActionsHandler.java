@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.action.hadoop;
 
 import java.io.ByteArrayInputStream;
@@ -23,24 +22,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.xml.sax.SAXException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-
-/**
- * Utility class to perform operations on the prepare block of Workflow
- *
- */
-@Deprecated
-public class PrepareActionsDriver {
-    private static final PrepareActionsHandler prepareHandler = new PrepareActionsHandler();
+public class PrepareActionsHandler {
 
     /**
      * Method to parse the prepare XML and execute the corresponding prepare actions
@@ -48,9 +41,44 @@ public class PrepareActionsDriver {
      * @param prepareXML Prepare XML block in string format
      * @throws LauncherException
      */
-    static void doOperations(String prepareXML, Configuration conf)
+    public void prepareAction(String prepareXML, Configuration conf)
             throws IOException, SAXException, ParserConfigurationException, LauncherException {
-        prepareHandler.prepareAction(prepareXML, conf);
+        Document doc = getDocumentFromXML(prepareXML);
+        doc.getDocumentElement().normalize();
+
+        // Get the list of child nodes, basically, each one corresponding to a separate action
+        NodeList nl = doc.getDocumentElement().getChildNodes();
+        LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
+
+        for (int i = 0; i < nl.getLength(); ++i) {
+            Node n = nl.item(i);
+            String operation = n.getNodeName();
+            if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
+                continue;
+            }
+            String pathStr = n.getAttributes().getNamedItem("path").getNodeValue().trim();
+            // use Path to avoid URIsyntax error caused by square bracket in glob
+            URI uri = new Path(pathStr).toUri();
+            LauncherURIHandler handler = factory.getURIHandler(uri);
+            execute(operation, uri, handler, conf);
+        }
+    }
+
+    private void execute(String operation, URI uri, LauncherURIHandler handler, Configuration conf)
+            throws LauncherException {
+
+        switch (operation) {
+            case "delete":
+                handler.delete(uri, conf);
+                break;
+
+            case "mkdir":
+                handler.create(uri, conf);
+                break;
+
+            default:
+                System.out.println("Warning: unknown prepare operation " + operation + " -- skipping");
+            }
     }
 
     // Method to return the document from the prepare XML block
