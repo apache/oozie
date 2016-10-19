@@ -1826,6 +1826,7 @@
                         <exclude>**/.idea/**</exclude>
                         <exclude>*.patch</exclude>
                         <exclude>**/*.json</exclude>
+                        <exclude>bin/test-patch-*</exclude>
                     </excludes>
                 </configuration>
             </plugin>

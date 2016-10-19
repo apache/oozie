@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-1986 Add FindBugs report to pre-commit build (andras.piros via rkanter)
 OOZIE-2634 Queue dump command message is confusing when the queue is empty (andras.piros via rkanter)
 
 
