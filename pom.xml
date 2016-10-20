@@ -91,6 +91,7 @@
          <!-- Sharelib component versions -->
          <hive.version>1.2.0</hive.version>
          <hive.jline.version>2.12</hive.jline.version>
+         <hive.classifier>core</hive.classifier>
          <pig.version>0.16.0</pig.version>
          <pig.classifier></pig.classifier>
          <sqoop.version>1.4.3</sqoop.version>
@@ -115,6 +116,8 @@
          <activemq.version>5.13.3</activemq.version>
          <httpcore.version>4.3.3</httpcore.version>
          <httpclient.version>4.3.6</httpclient.version>
+         <kyro.version>2.22</kyro.version>
+         <json.version>20090211</json.version>
     </properties>
 
     <modules>
@@ -1279,6 +1282,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>javax.mail</groupId>
                 <artifactId>mail</artifactId>
                 <version>1.4</version>
@@ -1370,6 +1379,37 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
                 <version>${curator.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+
+             <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-client</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kyro.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${json.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-exec</artifactId>
+                <version>${hive.version}</version>
+                <classifier>${hive.classifier}</classifier>
             </dependency>
 
             <!-- examples -->
@@ -1857,6 +1897,7 @@
                 <pig.classifier></pig.classifier>
                 <sqoop.classifier>hadoop100</sqoop.classifier>
                 <hive.version>0.13.1</hive.version>
+                <hive.classifier></hive.classifier>
                 <hive.jline.version>0.9.94</hive.jline.version>
             </properties>
         </profile>
