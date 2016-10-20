@@ -188,6 +188,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>jline</groupId>
             <artifactId>jline</artifactId>
             <version>${hive.jline.version}</version>
