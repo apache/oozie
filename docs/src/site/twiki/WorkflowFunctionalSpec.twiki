@@ -213,7 +213,7 @@ The workflow definition language is XML based and it is called hPDL (Hadoop Proc
 Refer to the Appendix A for the[[WorkflowFunctionalSpec#OozieWFSchema][Oozie Workflow Definition XML Schema]]. Appendix
 B has [[WorkflowFunctionalSpec#OozieWFExamples][Workflow Definition Examples]].
 
----++ 2.1 Cycles in Workflow Definitions
+---+++ 2.1 Cycles in Workflow Definitions
 
 Oozie does not support cycles in workflow definitions, workflow definitions must be a strict DAG.
 
