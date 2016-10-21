@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release
 
+OOZIE-2710 Oozie HCatalog example workflow fails (abhishekbafna via shwethags)
 OOZIE-2705 Oozie Spark action ignores spark.executor.extraJavaOptions and spark.driver.extraJavaOptions (gezapeti via rkanter)
 OOZIE-2621 Use hive-exec-<version>-core instead of hive-exec in oozie-core (gezapeti via rkanter)
 OOZIE-2613 Upgrade hive version from 0.13.1 to 1.2.0 (abhishekbafna via rkanter)
