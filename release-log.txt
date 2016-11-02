@@ -8,6 +8,7 @@ OOZIE-2634 Queue dump command message is confusing when the queue is empty (andr
 
 -- Oozie 4.3.0 release
 
+OOZIE-2719 Test case failure (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2674 Improve oozie commads documentation (abhishekbafna via rkanter)
 OOZIE-2710 Oozie HCatalog example workflow fails (abhishekbafna via shwethags)
 OOZIE-2705 Oozie Spark action ignores spark.executor.extraJavaOptions and spark.driver.extraJavaOptions (gezapeti via rkanter)
