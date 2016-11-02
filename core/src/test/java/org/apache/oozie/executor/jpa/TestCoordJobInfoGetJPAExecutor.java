@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.JPAService;
@@ -35,6 +35,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.store.StoreStatusFilter;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.ErrorCode;
 
 public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
     Services services;
@@ -229,6 +230,98 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         CoordinatorJobInfo ret = jpaService.execute(coordInfoGetCmd);
         assertNotNull(ret);
         assertEquals(ret.getCoordJobs().size(), 2);
+    }
+
+    public void testGetJobInfoForText() throws Exception {
+        CoordinatorJobBean coordinatorJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        CoordinatorJobBean coordinatorJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
+
+        coordinatorJob1.setAppName("oozie-coord1");
+        coordinatorJob2.setAppName("oozie-coord2");
+
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob1);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        CoordJobInfoGetJPAExecutor coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        CoordinatorJobInfo ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getCoordJobs().size());
+        filter.clear();
+
+        ArrayList<String> textList = new ArrayList<String>();
+        textList.add("tes");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 2);
+
+        textList.clear();
+        textList.add("oozie-coord1");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 1);
+
+        textList.clear();
+        textList.add("random");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 0);
+
+        textList.clear();
+        textList.add("oozie-coord");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 2);
+
+        textList.add("tes");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        try{
+            jpaService.execute(coordInfoGetCmd);
+            fail("CoordJobInfoGetJPAExecutor should have thrown E0302 exception.");
+        } catch (XException e) {
+            assertEquals(ErrorCode.E0302, e.getErrorCode());
+            assertEquals(e.getMessage(), "E0302: Invalid parameter [cannot specify multiple strings to search]");
+        }
+
+        // Update coord appName and validate text filter
+        coordinatorJob1.setAppName("updated-app-name1");
+        coordinatorJob2.setAppName("updated-app-name2");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob1);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob2);
+
+        textList.clear();
+        textList.add("oozie-coord");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 0);
+
+        textList.clear();
+        textList.add("updated-app");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 2);
+
+        textList.clear();
+        textList.add("updated-app-name1");
+        coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getCoordJobs().size(), 1);
     }
 
     private void _testGetJobInfoForFrequency() throws Exception {

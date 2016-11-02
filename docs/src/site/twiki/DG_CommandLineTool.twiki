@@ -1001,6 +1001,7 @@ The =filter=option syntax is: <code>[NAME=VALUE][;NAME=VALUE]*</code>.
 
 Valid filter names are:
 
+   * text: any text that might be a part of application name or a part of user name or a complete job ID
    * name: the workflow application name from the workflow definition.
    * user: the user that submitted the job.
    * group: the group for the job.

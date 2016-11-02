@@ -46,6 +46,7 @@ public class JobsFilterUtils {
         FILTER_NAMES.add(OozieClient.FILTER_SORT_BY);
         FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_START);
         FILTER_NAMES.add(OozieClient.FILTER_CREATED_TIME_END);
+        FILTER_NAMES.add(OozieClient.FILTER_TEXT);
     }
 
     public static Map<String, List<String>> parseFilter(String filter) throws ServletException{

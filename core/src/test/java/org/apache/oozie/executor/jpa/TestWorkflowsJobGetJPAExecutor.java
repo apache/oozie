@@ -32,10 +32,14 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
+import org.apache.oozie.workflow.lite.LiteWorkflowApp;
+import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
     Services services;
@@ -146,6 +150,75 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         assertEquals(2, wfInfo.getWorkflows().size());
         retBean = wfInfo.getWorkflows().get(0);
         compareWf(workflowJob1, retBean);
+    }
+
+    public void testGetWFInfoForText() throws Exception {
+        WorkflowJobBean workflowJob1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        WorkflowJobBean workflowJob2 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        workflowJob1.setAppName("wf-name-1");
+        workflowJob2.setAppName("wf-name-2");
+
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob1);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> list = new ArrayList<String>();
+        WorkflowsJobGetJPAExecutor wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        WorkflowsInfo wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(2, wfInfo.getWorkflows().size());
+        WorkflowJobBean retBean = wfInfo.getWorkflows().get(0);
+        compareWf(workflowJob2, retBean);
+
+        list.add("wf-name");
+        filter.put(OozieClient.FILTER_TEXT, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(2, wfInfo.getWorkflows().size());
+
+        list.clear();
+        list.add("wf-name-1");
+        filter.put(OozieClient.FILTER_TEXT, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(1, wfInfo.getWorkflows().size());
+
+        list.add("extra-param");
+        filter.put(OozieClient.FILTER_TEXT, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 2);
+        try{
+            jpaService.execute(wfGetCmd);
+            fail("WorkflowsJobGetJPAExecutor should have thrown E0302 exception.");
+        } catch (XException e) {
+            assertEquals(ErrorCode.E0302, e.getErrorCode());
+            assertEquals(e.getMessage(), "E0302: Invalid parameter [cannot specify multiple strings to search]");
+        }
+
+        workflowJob1.setAppName("updated-name-1");
+        workflowJob2.setAppName("updated-name-2");
+
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob1);
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob2);
+
+        list.clear();
+        list.add("wf-name-1");
+        filter.put(OozieClient.FILTER_TEXT, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(0, wfInfo.getWorkflows().size());
+
+        list.clear();
+        list.add("updated-name");
+        filter.put(OozieClient.FILTER_TEXT, list);
+        wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        wfInfo = jpaService.execute(wfGetCmd);
+        assertNotNull(wfInfo);
+        assertEquals(2, wfInfo.getWorkflows().size());
     }
 
     public void testWfJobsGetWithCreatedTime() throws Exception {

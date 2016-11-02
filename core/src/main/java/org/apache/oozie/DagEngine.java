@@ -467,6 +467,7 @@ public class DagEngine extends BaseEngine {
     private static final Set<String> FILTER_NAMES = new HashSet<String>();
 
     static {
+        FILTER_NAMES.add(OozieClient.FILTER_TEXT);
         FILTER_NAMES.add(OozieClient.FILTER_USER);
         FILTER_NAMES.add(OozieClient.FILTER_NAME);
         FILTER_NAMES.add(OozieClient.FILTER_GROUP);
