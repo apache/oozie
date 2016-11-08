@@ -156,6 +156,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
     private String getHive2Script(String inputPath, String outputPath) {
         StringBuilder buffer = new StringBuilder(NEW_LINE);
         buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("CREATE DATABASE IF NOT EXISTS default;").append(NEW_LINE);
         buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
         buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
         buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");

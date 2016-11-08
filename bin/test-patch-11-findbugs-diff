@@ -1,0 +1,325 @@
+#!/bin/bash
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
+BASEDIR=$(pwd)
+TASKNAME="FINDBUGS_DIFF"
+OP=""
+TEMPDIR=${BASEDIR}/tmp
+REPORTDIR=""
+SUMMARYFILE=""
+STDOUT="/dev/null"
+MVNPASSTHRU=""
+FINDBUGS_JAR_URL=https://repo1.maven.org/maven2/me/andrz/findbugs/findbugs-diff/0.1.0/findbugs-diff-0.1.0-all.jar
+FINDBUGS_JAR=findbugs-diff-0.1.0-all.jar
+# Priorities.HIGH_PRIORITY and Priorities.NORMAL_PRIORITY
+FINDBUGS_PRIORITY_THRESHOLD=2
+# Scariest and scary
+FINDBUGS_RANK_THRESHOLD=9
+FINDBUGS_XML_NAME=findbugsXml.xml
+
+
+cleanup_and_exit() {
+  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}"
+  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+
+  exit "$1"
+}
+
+
+remove_file_if_present() {
+  FILE_NAME=$1
+
+  if [ -f "${FILE_NAME}" ]; then
+    rm -f "${FILE_NAME}"
+    echo "[TRACE] File [${FILE_NAME}] removed"
+  fi
+}
+
+print_usage() {
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
+  echo
+}
+
+
+parse_args() {
+  for i in "$@"; do
+    case $i in
+    --taskname)
+      echo ${TASKNAME}
+      exit 0
+      ;;
+    --op=*)
+      OP=${i#*=}
+      ;;
+    --tempdir=*)
+      TEMPDIR=${i#*=}
+      ;;
+    --reportdir=*)
+      REPORTDIR=${i#*=}
+      ;;
+    --summaryfile=*)
+      SUMMARYFILE=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
+      ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    esac
+  done
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" ]] ; then
+    echo "Missing options"
+    echo
+    print_usage
+    cleanup_and_exit 1
+  fi
+  if [[ "${OP}" != "pre" && "${OP}" != "post" && "${OP}" != "report" ]] ; then
+    echo "Invalid operation"
+    echo
+    print_usage
+    cleanup_and_exit 1
+  fi
+}
+
+
+verify_and_save_findbugs_output() {
+  FINDBUGS_OUTPUT_DIR=$1
+  BRANCH_LABEL=$2
+  REPORT_SUFFIX=$3
+
+  echo "[TRACE] Verifying and saving FindBugs output in ${BRANCH_LABEL}"
+  echo "[TRACE] mvn clean verify -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}"
+
+  mvn clean verify -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}
+
+  if [ ! -d "$FINDBUGS_OUTPUT_DIR" ]; then
+    mkdir -p "${FINDBUGS_OUTPUT_DIR}"
+  fi
+
+  find . -name ${FINDBUGS_XML_NAME} ! -path '*/test-patch/*' -exec rsync -avqR {} "${FINDBUGS_OUTPUT_DIR}" ";"
+
+  if [ "$(ls -A "${FINDBUGS_OUTPUT_DIR}")" ] ; then
+    echo "{color:green}+1{color} ${BRANCH_LABEL} produces FindBugs output" >> "${TEMPDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt"
+  else
+    echo "{color:red}-1{color} ${BRANCH_LABEL} does not produce FindBugs output" >> "${TEMPDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt"
+  fi
+
+  echo "[TRACE] FindBugs output in ${BRANCH_LABEL} verified and saved"
+}
+
+
+create_missing_findbugs_files() {
+  PRE_DIR=$1
+  POST_DIR=$2
+
+  create_missing_xml ${PRE_DIR} "pre" "post"
+  create_missing_xml ${POST_DIR} "post" "pre"
+}
+
+create_missing_xml() {
+  sourceFolder=$1
+  sourcePart=$2
+  targetPart=$3
+
+  sourceXmlFiles=()
+  while IFS= read -r -d '' fn; do
+    sourceXmlFiles+=(${fn})
+  done <   <(find "${sourceFolder}" -name ${FINDBUGS_XML_NAME} -print0)
+
+  for index in "${!sourceXmlFiles[@]}"; do
+    targetXmlFile=${sourceXmlFiles[index]/${sourcePart}/${targetPart}}
+    targetFolder=${targetXmlFile%${FINDBUGS_XML_NAME}}
+
+    if [ ! -d ${targetFolder} ]; then
+      echo "[TRACE] Folder [${targetFolder}] does not exist, creating"
+      mkdir -p "${targetFolder}"
+    fi
+
+    if [ ! -f ${targetXmlFile} ]; then
+      echo "[TRACE] XML file [${targetXmlFile}] does not exist, creating"
+      echo "<BugCollection />" > "${targetXmlFile}"
+    fi
+  done
+}
+
+
+download_and_check_findbugs_diff_jar() {
+  DIFF_DIR=$1
+  BASH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  mkdir -p "${DIFF_DIR}"
+
+  echo "[TRACE] Downloading FindBugs diff JAR from ${FINDBUGS_JAR_URL}"
+
+  curl -Ls ${FINDBUGS_JAR_URL} > "${DIFF_DIR}/${FINDBUGS_JAR}"
+
+  echo "[TRACE] FindBugs diff JAR downloaded"
+
+  if hash md5 2>/dev/null; then
+    md5 -q "${DIFF_DIR}/${FINDBUGS_JAR}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+  elif hash md5sum 2>/dev/null; then
+    md5sum "${DIFF_DIR}/${FINDBUGS_JAR}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+  else
+    echo "[ERROR] Neither md5 nor md5sum are present, cannot check FindBugs diff JAR"
+    echo "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR." >> "${SUMMARYFILE}"
+    cleanup_and_exit 1
+  fi
+
+  jarMd5DiffCount=$(grep -Fxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5" "${DIFF_DIR}/${FINDBUGS_JAR}.md5" | wc -l)
+
+  if [ ${jarMd5DiffCount} -gt "0" ]; then
+    echo "[ERROR] FindBugs diff JAR has a weird MD5 sum, rejecting"
+    echo "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting." >> "${SUMMARYFILE}"
+    cleanup_and_exit 1
+  fi
+
+  echo "[TRACE] FindBugs diff JAR checked, is safe to use"
+
+}
+
+
+perform_findbugs_diffs() {
+  PRE_DIR=$1
+  POST_DIR=$2
+  DIFF_DIR=$3
+
+  echo "[TRACE] Performing FindBugs diffs"
+
+  sourceXmlFiles=()
+  while IFS= read -r -d '' fn; do
+    preFindbugsDiffs+=(${fn})
+  done <   <(find "${PRE_DIR}" -name ${FINDBUGS_XML_NAME} -print0)
+
+  postFindbugsDiffs=()
+  while IFS= read -r -d '' fn; do
+    postFindbugsDiffs+=(${fn})
+  done <   <(find "${POST_DIR}" -name ${FINDBUGS_XML_NAME} -print0)
+
+  for index in "${!preFindbugsDiffs[@]}"; do
+    preFindbugsDir=${preFindbugsDiffs[index]}
+    diffDirPostfix=${preFindbugsDir/*${TASKNAME}/${TASKNAME}}
+    diffDirPostfix=${diffDirPostfix:18}
+    diffDirPostfix=${diffDirPostfix%%/target/findbugs/findbugsXml.xml}
+
+    check_minimum_file_size ${preFindbugsDiffs[index]}
+    check_minimum_file_size ${postFindbugsDiffs[index]}
+
+    java -jar -Dorg.slf4j.simpleLogger.defaultLogLevel=ERROR ${DIFF_DIR}/${FINDBUGS_JAR} --outDir=${DIFF_DIR}/${diffDirPostfix} ${preFindbugsDiffs[index]} ${postFindbugsDiffs[index]}
+  done
+
+  echo "[TRACE] FindBugs diffs performed"
+}
+
+
+check_minimum_file_size() {
+  FILE_NAME=$1
+
+  actualSize=$(wc -c < "${FILE_NAME}")
+  minimumSize=10
+  if [ ${actualSize} -le ${minimumSize} ]; then
+    echo "[ERROR] File [${FILE_NAME}] is below minimum size (has only [${actualSize}] bytes), cannot perform FindBugs diff"
+    cleanup_and_exit 1
+  fi
+}
+
+
+check_findbugs_diffs_and_create_reports() {
+  DIFF_DIR=$1
+  REPORT=()
+
+  echo "[TRACE] Checking FindBugs diffs and creating reports"
+
+  belowThresholdCount=0
+  totalCount=0
+  while IFS= read -r -d '' fn; do
+    componentDir=${fn/*${TASKNAME}/${TASKNAME}}
+    componentDir=${componentDir:19}
+    htmlFileName=${componentDir%%.xml}.html
+    componentDir=${componentDir%%/findbugs-new.xml}
+
+    newBugTotalCount=$(xmllint --xpath "count(/BugCollection/BugInstance)" "${fn}")
+    newBugBelowThresholdCount=$(xmllint --xpath "count(/BugCollection/BugInstance[@priority <= ${FINDBUGS_PRIORITY_THRESHOLD} or @rank <= ${FINDBUGS_RANK_THRESHOLD}])" "${fn}")
+
+    belowThresholdCount=$((belowThresholdCount + newBugBelowThresholdCount))
+    totalCount=$((totalCount + newBugTotalCount))
+
+    if [ "${newBugBelowThresholdCount}" -gt "0" ]; then
+      echo "[ERROR] There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}]."
+      REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      echo "[DEBUG] You can find the FindBugs diff here (look for the red and orange ones): ${htmlFileName}"
+      REPORT+=("You can find the FindBugs diff here (look for the red and orange ones): ${htmlFileName}")
+      REPORT+=("The most important FindBugs errors are:")
+      while IFS= read -r line; do
+        REPORT+=( "${line}" );
+      done < <(echo cat "/BugCollection/BugInstance[@priority <= ${FINDBUGS_PRIORITY_THRESHOLD} or @rank <= ${FINDBUGS_RANK_THRESHOLD}]/SourceLine/Message/text() | /BugCollection/BugInstance[@priority <= 2 or @rank <= 9]/LongMessage/text()" \
+      | xmllint --shell "${fn}" | grep -v '\-\-\-\-\-\-\-' | grep -v '/ >' | sed -e 'N;s/\(.*\)\n\(.*\)/\2: \1/')
+    elif [ "${newBugTotalCount}" -gt "0" ]; then
+      echo "[WARN] There are [${newBugTotalCount}] new bugs found in [${componentDir}]."
+      REPORT+=("{color:orange}0{color} There are [${newBugTotalCount}] new bugs found in [${componentDir}] that would be nice to have fixed.")
+      echo "[DEBUG] You can find the FindBugs diff here: ${htmlFileName}"
+      REPORT+=("You can find the FindBugs diff here: ${htmlFileName}")
+    else
+      echo "[DEBUG] There are no new bugs found in [${componentDir}]."
+      REPORT+=("{color:green}+1{color} There are no new bugs found in [${componentDir}].")
+    fi
+
+  done <   <(find "${DIFF_DIR}" -name findbugs-new.xml -print0)
+
+  if [ "${belowThresholdCount}" -gt "0" ]; then
+    echo "[ERROR] There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed."
+    echo "{color:red}-1{color} There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed." \
+        >> "${SUMMARYFILE}"
+  elif [ "${totalCount}" -gt "0" ]; then
+    echo "[WARN] There are [${totalCount}] new bugs found in total that would be nice to have fixed."
+    echo "{color:orange}0{color} There are [${totalCount}] new bugs found in total that would be nice to have fixed." \
+        >> "${SUMMARYFILE}"
+  else
+    echo "[INFO] There are no new bugs found totally]."
+    echo "{color:green}+1{color} There are no new bugs found in total." >> "${SUMMARYFILE}"
+  fi
+
+  for line in "${REPORT[@]}" ; do
+    echo ".    ${line}" >> "${SUMMARYFILE}"
+  done
+
+  echo "[TRACE] FindBugs diffs checked and reports created"
+}
+
+
+parse_args "$@"
+
+case ${OP} in
+  pre)
+    verify_and_save_findbugs_output "${TEMPDIR}/${TASKNAME}/pre" HEAD clean
+    ;;
+  post)
+    verify_and_save_findbugs_output "${TEMPDIR}/${TASKNAME}/post" PATCH patch
+    ;;
+  report)
+    create_missing_findbugs_files "${TEMPDIR}/${TASKNAME}/pre" "${TEMPDIR}/${TASKNAME}/post"
+    download_and_check_findbugs_diff_jar "${TEMPDIR}/${TASKNAME}/diff"
+    perform_findbugs_diffs "${TEMPDIR}/${TASKNAME}/pre" "${TEMPDIR}/${TASKNAME}/post" "${TEMPDIR}/${TASKNAME}/diff"
+    check_findbugs_diffs_and_create_reports "${TEMPDIR}/${TASKNAME}/diff"
+    ;;
+esac
+
+cleanup_and_exit 0

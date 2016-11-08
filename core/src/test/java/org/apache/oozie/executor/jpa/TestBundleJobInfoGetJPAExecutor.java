@@ -28,6 +28,8 @@ import java.util.Map;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.client.BundleJob;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.JPAService;
@@ -144,6 +146,98 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
         BundleJobInfo ret = jpaService.execute(bundleInfoGetCmd);
         assertNotNull(ret);
         assertEquals(2, ret.getBundleJobs().size());
+    }
+
+    public void testGetJobInfoForText() throws Exception {
+        BundleJobBean bundleJob1 = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
+        BundleJobBean bundleJob2 = addRecordToBundleJobTable(BundleJob.Status.KILLED, false);
+
+        bundleJob1.setAppName("oozie-bundle1");
+        bundleJob2.setAppName("oozie-bundle2");
+
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob2);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        BundleJobInfoGetJPAExecutor bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        BundleJobInfo ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(2, ret.getBundleJobs().size());
+        filter.clear();
+
+        ArrayList<String> textList = new ArrayList<String>();
+        textList.add("tes");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 2);
+
+        textList.clear();
+        textList.add("oozie-bundle1");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 1);
+
+        textList.clear();
+        textList.add("random");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 0);
+
+        textList.clear();
+        textList.add("oozie-bundle");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 2);
+
+        textList.add("tes");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        try{
+            jpaService.execute(bundleInfoGetCmd);
+            fail("BundleJobInfoGetJPAExecutor should have thrown E0302 exception.");
+        } catch (XException e) {
+            assertEquals(ErrorCode.E0302, e.getErrorCode());
+            assertEquals(e.getMessage(), "E0302: Invalid parameter [cannot specify multiple strings to search]");
+        }
+
+        // Update bundle appName, user and validate text filter
+        bundleJob1.setAppName("updated-app-name1");
+        bundleJob2.setAppName("updated-app-name2");
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob1);
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob2);
+
+        textList.clear();
+        textList.add("oozie-bundle");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 0);
+
+        textList.clear();
+        textList.add("updated-app");
+        filter.put(OozieClient.FILTER_TEXT, textList);
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 2);
+
+        textList.clear();
+        textList.add("updated-app-name1");
+        bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        ret = jpaService.execute(bundleInfoGetCmd);
+        assertNotNull(ret);
+        assertEquals(ret.getBundleJobs().size(), 1);
     }
 
     private void _testGetJobInfoForGroup() throws Exception {

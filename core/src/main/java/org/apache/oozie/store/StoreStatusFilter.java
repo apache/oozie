@@ -50,6 +50,8 @@ public class StoreStatusFilter {
     public static final String TIME_FORMAT = " Specify time either in UTC format (yyyy-MM-dd'T'HH:mm'Z') or " +
             "a offset value in days/hours/minutes e.g. (-2d/h/m) from the current time.";
 
+    private static final String textFilterStr = "(w.appName LIKE :text1 OR w.user LIKE :text2 OR w.id = :text3)";
+
 
     public static void filter(Map<String, List<String>> filter, List<String> orArray, List<String> colArray,
            List<Object> valArray, StringBuilder sb, String seletStr, String countStr) throws JPAExecutorException {
@@ -320,6 +322,10 @@ public class StoreStatusFilter {
                             orArray.add(colName);
                             colArray.add(colVar);
                         }
+                        // job.id = text || job.appName.contains(text) || job.user.contains(text)
+                        else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_TEXT)) {
+                            filterJobsUsingText(filter, sb, isEnabled, seletStr, valArray, orArray, colArray);
+                        }
                     }
                 }
             }
@@ -381,5 +387,32 @@ public class StoreStatusFilter {
             }
         }
         return sortByStr;
+    }
+
+    public static void filterJobsUsingText(Map<String, List<String>> filter, StringBuilder sb, boolean isEnabled,
+           String seletStr, List<Object> valArray, List<String> orArray, List<String> colArray) throws JPAExecutorException {
+        List<String> values = filter.get(OozieClient.FILTER_TEXT);
+        if (values.size() != 1) {
+            throw new JPAExecutorException(ErrorCode.E0302,
+                    "cannot specify multiple strings to search");
+        }
+        if (!isEnabled) {
+            sb.append(seletStr).append(" where " + textFilterStr);
+        }
+        else {
+            sb.append(" and " + textFilterStr);
+        }
+
+        valArray.add("%" + values.get(0) + "%");
+        orArray.add("appName");
+        colArray.add("text1");
+
+        valArray.add("%" + values.get(0) + "%");
+        orArray.add("user");
+        colArray.add("text2");
+
+        valArray.add(values.get(0));
+        orArray.add("id");
+        colArray.add("text3");
     }
 }

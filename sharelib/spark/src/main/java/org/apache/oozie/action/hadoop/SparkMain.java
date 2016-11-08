@@ -18,14 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.spark.deploy.SparkSubmit;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,9 +26,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.spark.deploy.SparkSubmit;
 
 public class SparkMain extends LauncherMain {
     private static final String MASTER_OPTION = "--master";
@@ -44,8 +49,12 @@ public class SparkMain extends LauncherMain {
     private static final String JOB_NAME_OPTION = "--name";
     private static final String CLASS_NAME_OPTION = "--class";
     private static final String VERBOSE_OPTION = "--verbose";
+    private static final String DRIVER_CLASSPATH_OPTION = "--driver-class-path";
     private static final String EXECUTOR_CLASSPATH = "spark.executor.extraClassPath=";
     private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
+    private static final String EXECUTOR_EXTRA_JAVA_OPTIONS = "spark.executor.extraJavaOptions=";
+    private static final String DRIVER_EXTRA_JAVA_OPTIONS = "spark.driver.extraJavaOptions=";
+    private static final String LOG4J_CONFIGURATION_JAVA_OPTION = "-Dlog4j.configuration=";
     private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
     private static final String HBASE_SECURITY_TOKEN = "spark.yarn.security.tokens.hbase.enabled";
     private static final String CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR = "oozie.action.spark.setup.hadoop.conf.dir";
@@ -56,6 +65,15 @@ public class SparkMain extends LauncherMain {
     private static final String SPARK_LOG4J_PROPS = "spark-log4j.properties";
     private static final Pattern[] SPARK_JOB_IDS_PATTERNS = {
             Pattern.compile("Submitted application (application[0-9_]*)") };
+    public static final Pattern SPARK_ASSEMBLY_JAR_PATTERN = Pattern
+            .compile("^spark-assembly((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+    public static final Pattern SPARK_YARN_JAR_PATTERN = Pattern
+            .compile("^spark-yarn((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+    private static final Pattern SPARK_VERSION_1 = Pattern.compile("^1.*");
+    private static final String SPARK_YARN_JAR = "spark.yarn.jar";
+    private static final String SPARK_YARN_JARS = "spark.yarn.jars";
+    private String sparkYarnJar = null;
+    private String sparkVersion = "1.X.X";
     public static void main(String[] args) throws Exception {
         run(SparkMain.class, args);
     }
@@ -102,29 +120,33 @@ public class SparkMain extends LauncherMain {
         if(jarPath!=null && jarPath.endsWith(".py")){
             isPyspark = true;
         }
-        boolean addedExecutorClasspath = false;
-        boolean addedDriverClasspath = false;
         boolean addedHiveSecurityToken = false;
         boolean addedHBaseSecurityToken = false;
+        boolean addedLog4jDriverSettings = false;
+        boolean addedLog4jExecutorSettings = false;
+        StringBuilder driverClassPath = new StringBuilder();
+        StringBuilder executorClassPath = new StringBuilder();
         String sparkOpts = actionConf.get(SparkActionExecutor.SPARK_OPTS);
         if (StringUtils.isNotEmpty(sparkOpts)) {
             List<String> sparkOptions = splitSparkOpts(sparkOpts);
             for (int i = 0; i < sparkOptions.size(); i++) {
                 String opt = sparkOptions.get(i);
+                boolean addToSparkArgs = true;
                 if (yarnClusterMode || yarnClientMode) {
                     if (opt.startsWith(EXECUTOR_CLASSPATH)) {
-                        // Include the current working directory (of executor
-                        // container) in executor classpath, because it will contain
-                        // localized files
-                        opt = opt + File.pathSeparator + PWD;
-                        addedExecutorClasspath = true;
+                        appendWithPathSeparator(opt.substring(EXECUTOR_CLASSPATH.length()), executorClassPath);
+                        addToSparkArgs = false;
                     }
                     if (opt.startsWith(DRIVER_CLASSPATH)) {
-                        // Include the current working directory (of driver
-                        // container) in executor classpath, because it will contain
-                        // localized files
-                        opt = opt + File.pathSeparator + PWD;
-                        addedDriverClasspath = true;
+                        appendWithPathSeparator(opt.substring(DRIVER_CLASSPATH.length()), driverClassPath);
+                        addToSparkArgs = false;
+                    }
+                    if (opt.equals(DRIVER_CLASSPATH_OPTION)) {
+                        // we need the next element after this option
+                        appendWithPathSeparator(sparkOptions.get(i + 1), driverClassPath);
+                        // increase i to skip the next element.
+                        i++;
+                        addToSparkArgs = false;
                     }
                 }
                 if (opt.startsWith(HIVE_SECURITY_TOKEN)) {
@@ -133,31 +155,38 @@ public class SparkMain extends LauncherMain {
                 if (opt.startsWith(HBASE_SECURITY_TOKEN)) {
                     addedHBaseSecurityToken = true;
                 }
-                sparkArgs.add(opt);
+                if (opt.startsWith(EXECUTOR_EXTRA_JAVA_OPTIONS) || opt.startsWith(DRIVER_EXTRA_JAVA_OPTIONS)) {
+                    if(!opt.contains(LOG4J_CONFIGURATION_JAVA_OPTION)) {
+                        opt += " " + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS;
+                    }else{
+                        System.out.println("Warning: Spark Log4J settings are overwritten." +
+                                " Child job IDs may not be available");
+                    }
+                    if(opt.startsWith(EXECUTOR_EXTRA_JAVA_OPTIONS)) {
+                        addedLog4jExecutorSettings = true;
+                    }else{
+                        addedLog4jDriverSettings = true;
+                    }
+                }
+                if(addToSparkArgs) {
+                    sparkArgs.add(opt);
+                }
             }
         }
 
         if ((yarnClusterMode || yarnClientMode)) {
-            if (!addedExecutorClasspath) {
-                // Include the current working directory (of executor container)
-                // in executor classpath, because it will contain localized
-                // files
-                sparkArgs.add("--conf");
-                sparkArgs.add(EXECUTOR_CLASSPATH + PWD);
-            }
-            if (!addedDriverClasspath) {
-                // Include the current working directory (of driver container)
-                // in executor classpath, because it will contain localized
-                // files
-                sparkArgs.add("--conf");
-                sparkArgs.add(DRIVER_CLASSPATH + PWD);
-            }
-        }
-        sparkArgs.add("--conf");
-        sparkArgs.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=" + SPARK_LOG4J_PROPS);
+            // Include the current working directory (of executor container)
+            // in executor classpath, because it will contain localized
+            // files
+            appendWithPathSeparator(PWD, executorClassPath);
+            appendWithPathSeparator(PWD, driverClassPath);
 
-        sparkArgs.add("--conf");
-        sparkArgs.add("spark.driver.extraJavaOptions=-Dlog4j.configuration=" + SPARK_LOG4J_PROPS);
+            sparkArgs.add("--conf");
+            sparkArgs.add(EXECUTOR_CLASSPATH + executorClassPath.toString());
+
+            sparkArgs.add("--conf");
+            sparkArgs.add(DRIVER_CLASSPATH + driverClassPath.toString());
+        }
 
         if (actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
             sparkArgs.add("--conf");
@@ -172,6 +201,14 @@ public class SparkMain extends LauncherMain {
             sparkArgs.add("--conf");
             sparkArgs.add(HBASE_SECURITY_TOKEN + "=false");
         }
+        if(!addedLog4jExecutorSettings) {
+            sparkArgs.add("--conf");
+            sparkArgs.add(EXECUTOR_EXTRA_JAVA_OPTIONS + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS);
+        }
+        if(!addedLog4jDriverSettings) {
+            sparkArgs.add("--conf");
+            sparkArgs.add(DRIVER_EXTRA_JAVA_OPTIONS + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS);
+        }
         File defaultConfFile = getMatchingFile(SPARK_DEFAULTS_FILE_PATTERN);
         if (defaultConfFile != null) {
             sparkArgs.add("--properties-file");
@@ -179,16 +216,19 @@ public class SparkMain extends LauncherMain {
         }
 
         if ((yarnClusterMode || yarnClientMode)) {
-            String cachedFiles = fixFsDefaultUris(DistributedCache.getCacheFiles(actionConf), jarPath);
+            LinkedList<URI> fixedUris = fixFsDefaultUris(DistributedCache.getCacheFiles(actionConf), jarPath);
+            String cachedFiles = filterSparkYarnJar(fixedUris);
             if (cachedFiles != null && !cachedFiles.isEmpty()) {
                 sparkArgs.add("--files");
                 sparkArgs.add(cachedFiles);
             }
-            String cachedArchives = fixFsDefaultUris(DistributedCache.getCacheArchives(actionConf), jarPath);
+            fixedUris = fixFsDefaultUris(DistributedCache.getCacheArchives(actionConf), jarPath);
+            String cachedArchives = StringUtils.join(fixedUris, ",");
             if (cachedArchives != null && !cachedArchives.isEmpty()) {
                 sparkArgs.add("--archives");
                 sparkArgs.add(cachedArchives);
             }
+            setSparkYarnJarsConf(sparkArgs);
         }
 
         if (!sparkArgs.contains(VERBOSE_OPTION)) {
@@ -384,11 +424,11 @@ public class SparkMain extends LauncherMain {
      * @throws IOException
      * @throws URISyntaxException
      */
-    private String fixFsDefaultUris(URI[] files, String jarPath) throws IOException, URISyntaxException {
+    private LinkedList<URI> fixFsDefaultUris(URI[] files, String jarPath) throws IOException, URISyntaxException {
         if (files == null) {
             return null;
         }
-        ArrayList<URI> listUris = new ArrayList<URI>();
+        LinkedList<URI> listUris = new LinkedList<URI>();
         FileSystem fs = FileSystem.get(new Configuration(true));
         for (int i = 0; i < files.length; i++) {
             URI fileUri = files[i];
@@ -411,6 +451,74 @@ public class SparkMain extends LauncherMain {
                 }
             }
         }
+        return listUris;
+    }
+
+    /**
+     * Filters out the Spark yarn jar and records its version
+     *
+     * @param listUris string containing uris separated by comma
+     * @return
+     * @throws OozieActionConfiguratorException
+     */
+    private String filterSparkYarnJar(LinkedList<URI> listUris) throws OozieActionConfiguratorException {
+        Iterator<URI> iterator = listUris.iterator();
+        File matchedFile = null;
+        while (iterator.hasNext()) {
+            URI uri = iterator.next();
+            Path p = new Path(uri);
+            if (SPARK_YARN_JAR_PATTERN.matcher(p.getName()).find()) {
+                matchedFile = getMatchingFile(SPARK_YARN_JAR_PATTERN);
+            }
+            else if (SPARK_ASSEMBLY_JAR_PATTERN.matcher(p.getName()).find()) {
+                matchedFile = getMatchingFile(SPARK_ASSEMBLY_JAR_PATTERN);
+            }
+            if (matchedFile != null) {
+                sparkYarnJar = uri.toString();
+                try {
+                    sparkVersion = getJarVersion(matchedFile);
+                    System.out.println("Spark Version " + sparkVersion);
+                }
+                catch (IOException io) {
+                    System.out.println(
+                            "Unable to open " + matchedFile.getPath() + ". Default Spark Version " + sparkVersion);
+                }
+                iterator.remove();
+                break;
+            }
+        }
         return StringUtils.join(listUris, ",");
+    }
+
+    /**
+     * Sets spark.yarn.jars for Spark 2.X. Sets spark.yarn.jar for Spark 1.X.
+     *
+     * @param sparkArgs
+     */
+    private void setSparkYarnJarsConf(List<String> sparkArgs) {
+        if (SPARK_VERSION_1.matcher(sparkVersion).find()) {
+            // In Spark 1.X.X, set spark.yarn.jar to avoid
+            // multiple distribution
+            sparkArgs.add("--conf");
+            sparkArgs.add(SPARK_YARN_JAR + "=" + sparkYarnJar);
+                }
+        else {
+            // In Spark 2.X.X, set spark.yarn.jars
+            sparkArgs.add("--conf");
+            sparkArgs.add(SPARK_YARN_JARS + "=" + sparkYarnJar);
+        }
+    }
+
+    private String getJarVersion(File jarFile) throws IOException {
+        @SuppressWarnings("resource")
+        Manifest manifest = new JarFile(jarFile).getManifest();
+        return manifest.getMainAttributes().getValue("Specification-Version");
+    }
+
+    private void appendWithPathSeparator(String what, StringBuilder to){
+        if(to.length() > 0){
+            to.append(File.pathSeparator);
+        }
+        to.append(what);
     }
 }

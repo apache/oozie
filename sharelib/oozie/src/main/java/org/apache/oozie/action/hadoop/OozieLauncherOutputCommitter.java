@@ -19,6 +19,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.apache.hadoop.mapred.JobContext;
@@ -26,6 +27,19 @@ import org.apache.hadoop.mapred.OutputCommitter;
 import org.apache.hadoop.mapred.TaskAttemptContext;
 
 public class OozieLauncherOutputCommitter extends OutputCommitter {
+
+    public OozieLauncherOutputCommitter() {
+        File propConf = new File(LauncherMapper.PROPAGATION_CONF_XML);
+        if (!propConf.exists()) {
+            try {
+                propConf.createNewFile();
+            }
+            catch (IOException e) {
+                System.out.println("Failed to create " + LauncherMapper.PROPAGATION_CONF_XML);
+                e.printStackTrace(System.err);
+            }
+        }
+    }
 
     @Override
     public void setupJob(JobContext jobContext) throws IOException {

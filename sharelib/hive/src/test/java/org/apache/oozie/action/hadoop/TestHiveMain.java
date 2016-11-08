@@ -50,6 +50,7 @@ public class TestHiveMain extends MainTestCase {
     private String getHiveScript(String inputPath, String outputPath) {
         StringBuilder buffer = new StringBuilder(NEW_LINE);
         buffer.append("set -v;").append(NEW_LINE);
+        buffer.append("CREATE DATABASE IF NOT EXISTS default;").append(NEW_LINE);
         buffer.append("DROP TABLE IF EXISTS test;").append(NEW_LINE);
         buffer.append("CREATE EXTERNAL TABLE test (a INT) STORED AS");
         buffer.append(NEW_LINE).append("TEXTFILE LOCATION '");
@@ -57,7 +58,6 @@ public class TestHiveMain extends MainTestCase {
         buffer.append("INSERT OVERWRITE DIRECTORY '");
         buffer.append(outputPath).append("'").append(NEW_LINE);
         buffer.append("SELECT (a-1) FROM test;").append(NEW_LINE);
-
         return buffer.toString();
     }
 
@@ -133,7 +133,6 @@ public class TestHiveMain extends MainTestCase {
                 os = new FileOutputStream(hiveSite);
                 jobConf.writeXml(os);
                 os.close();
-                MiniHCatServer.resetDefaultDBCreation();
                 MiniHCatServer.resetHiveConfStaticVariables();
                 HiveMain.main(null);
             }
@@ -166,5 +165,4 @@ public class TestHiveMain extends MainTestCase {
         }
         return null;
     }
-
 }

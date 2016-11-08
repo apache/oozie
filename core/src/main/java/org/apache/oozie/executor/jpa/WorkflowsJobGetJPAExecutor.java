@@ -216,7 +216,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                             colArray.add(colVar);
                         }
                     }
-                    if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_START)) {
+                    else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_START)) {
                         List<String> values = filter.get(OozieClient.FILTER_CREATED_TIME_START);
                         colName = "createdTimestampStart";
                         if (values.size() > 1) {
@@ -246,7 +246,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                         colArray.add(colVar);
 
                     }
-                    if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_END)) {
+                    else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_CREATED_TIME_END)) {
                         List<String> values = filter.get(OozieClient.FILTER_CREATED_TIME_END);
                         colName = "createdTimestampEnd";
                         if (values.size() > 1) {
@@ -274,6 +274,10 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                         valArray.add(createdTimeStamp);
                         orArray.add(colName);
                         colArray.add(colVar);
+                    }
+                    // w.id = text || w.appName.contains(text) || w.user.contains(text)
+                    else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_TEXT)) {
+                        StoreStatusFilter.filterJobsUsingText(filter, sb, isEnabled, seletStr, valArray, orArray, colArray);
                     }
                 }
             }

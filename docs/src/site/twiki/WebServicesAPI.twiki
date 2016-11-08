@@ -1657,6 +1657,7 @@ The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
 
 Valid filter names are:
 
+   * text: any text that might be a part of application name or a part of user name or a complete job ID
    * name: the application name from the workflow/coordinator/bundle definition
    * user: the user who submitted the job
    * group: the group for the job (support for the group filter is discontinued. version: 3.2.0 OOZIE-228).

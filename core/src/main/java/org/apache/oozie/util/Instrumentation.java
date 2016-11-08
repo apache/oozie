@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
@@ -559,9 +560,9 @@ public class Instrumentation {
      *
      * @return JVM system properties.
      */
-    @SuppressWarnings("unchecked")
     public Map<String, String> getJavaSystemProperties() {
-        return (Map<String, String>) (Object) System.getProperties();
+        Map<String, String> unmasked = Maps.fromProperties(System.getProperties());
+        return new PasswordMasker().mask(unmasked);
     }
 
     /**
@@ -570,7 +571,8 @@ public class Instrumentation {
      * @return the OS environment used to start Oozie.
      */
     public Map<String, String> getOSEnv() {
-        return System.getenv();
+        Map<String, String> unmasked = System.getenv();
+        return new PasswordMasker().mask(unmasked);
     }
 
     /**

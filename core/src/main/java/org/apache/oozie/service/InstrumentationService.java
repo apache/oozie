@@ -75,7 +75,7 @@ public class InstrumentationService implements Service {
         isEnabled = true;
     }
 
-    protected void initLogging(Services services, final Instrumentation instr, int interval) throws ServiceException {
+    void initLogging(Services services, final Instrumentation instr, int interval) throws ServiceException {
         log.info("*********** Startup ***********");
         log.info("Java System Properties: {E}{0}", mapToString(instr.getJavaSystemProperties()));
         log.info("OS Env: {E}{0}", mapToString(instr.getOSEnv()));
@@ -102,12 +102,14 @@ public class InstrumentationService implements Service {
         }
     }
 
-    protected String mapToString(Map<String, String> map) {
+    private String mapToString(Map<String, String> map) {
         String E = System.getProperty("line.separator");
         StringBuilder sb = new StringBuilder();
+
         for (Map.Entry<String, String> entry : map.entrySet()) {
             sb.append("    ").append(entry.getKey()).append(" = ").append(entry.getValue()).append(E);
         }
+
         return sb.toString();
     }
 

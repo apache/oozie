@@ -78,7 +78,10 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>2.4.0</hadoop.version>
+        <hadoop.version>2.6.0</hadoop.version>
+        <hadoop.majorversion>2</hadoop.majorversion>
+        <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
+        <oozie.hadoop-utils.version>hadoop-${hadoop.majorversion}-${project.version}</oozie.hadoop-utils.version>
         <hbase.version>0.94.27</hbase.version>
 
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
@@ -87,12 +90,15 @@
 
 
          <!-- Sharelib component versions -->
-         <hive.version>0.13.1</hive.version>
-         <hive.jline.version>0.9.94</hive.jline.version>
-         <pig.version>0.12.1</pig.version>
+         <hive.version>1.2.0</hive.version>
+         <hive.jline.version>2.12</hive.jline.version>
+         <pig.version>0.16.0</pig.version>
          <pig.classifier>h2</pig.classifier>
+         <hive.classifier>core</hive.classifier>
          <sqoop.version>1.4.3</sqoop.version>
          <spark.version>1.6.1</spark.version>
+         <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
+         <spark.bagel.version>1.6.1</spark.bagel.version>
          <spark.guava.version>14.0.1</spark.guava.version>
          <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop200</sqoop.classifier>
@@ -101,7 +107,7 @@
 
          <!-- Tomcat version -->
          <tomcat.version>6.0.44</tomcat.version>
-
+         <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.1</openjpa.version>
          <xerces.version>2.10.0</xerces.version>
          <curator.version>2.5.0</curator.version>
@@ -110,6 +116,8 @@
          <activemq.version>5.13.3</activemq.version>
          <httpcore.version>4.3.3</httpcore.version>
          <httpclient.version>4.3.6</httpclient.version>
+         <kyro.version>2.22</kyro.version>
+         <json.version>20090211</json.version>
     </properties>
 
     <modules>
@@ -328,6 +336,18 @@
                         <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-api</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+
+            <dependency>
+                 <groupId>org.apache.hadoop</groupId>
+                 <artifactId>hadoop-yarn-common</artifactId>
+                 <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
@@ -858,7 +878,7 @@
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
-                <version>0.9.94</version>
+                <version>${jline.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>junit</groupId>
@@ -964,10 +984,6 @@
                     </exclusion>
                     <exclusion>
                         <artifactId>hive-builtins</artifactId>
-                        <groupId>org.apache.hive</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>hive-common</artifactId>
                         <groupId>org.apache.hive</groupId>
                     </exclusion>
                     <exclusion>
@@ -1263,6 +1279,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>javax.mail</groupId>
                 <artifactId>mail</artifactId>
                 <version>1.4</version>
@@ -1366,6 +1388,37 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
                 <version>${curator.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+
+             <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-client</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kyro.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${json.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-exec</artifactId>
+                <version>${hive.version}</version>
+                <classifier>${hive.classifier}</classifier>
             </dependency>
 
             <!-- examples -->
@@ -1817,7 +1870,8 @@
                         <exclude>test-patch/**</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>*.patch</exclude>
-                        <exclude>tools/src/test/resources/dumpData/ooziedb*.json</exclude>
+                        <exclude>**/*.json</exclude>
+                        <exclude>bin/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -1872,6 +1926,28 @@
             <modules>
                 <module>login</module>
             </modules>
+        </profile>
+        <profile>
+            <id>spark-1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spark.version>1.6.1</spark.version>
+                <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
+                <spark.bagel.version>1.6.1</spark.bagel.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <spark.version>2.0.0</spark.version>
+                <spark.streaming.kafka.version>1.6.2</spark.streaming.kafka.version>
+                <spark.bagel.version>1.6.2</spark.bagel.version>
+            </properties>
         </profile>
     </profiles>
 </project>

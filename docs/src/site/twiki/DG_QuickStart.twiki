@@ -52,7 +52,7 @@ available to customise the versions of the dependencies:
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
--Dhive.version=<version> - default 0.13.1
+-Dhive.version=<version> - default 0.13.1 for hadoop-1, 1.2.0 for hadoop-2 and hadoop-3 profile
 -Dhbase.version=<version> - default 0.94.2
 </verbatim>
 
@@ -65,9 +65,9 @@ More details on building Oozie can be found on the [[ENG_Building][Building Oozi
    * Unix (tested in Linux and Mac OS X)
    * Java 1.7+
    * Hadoop
-      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.0.0 & 0.23.1)
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.2.1 & 2.4.0+)
    * ExtJS library (optional, to enable Oozie webconsole)
-      * [[http://dev.sencha.com/deploy/ext-2.2.zip][ExtJS 2.2]]
+      * [[http://archive.cloudera.com/gplextras/misc/ext-2.2.zip][ExtJS 2.2]]
 
 The Java 1.7+ =bin= directory should be in the command path.
 

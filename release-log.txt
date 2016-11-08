@@ -2,9 +2,24 @@
 
 OOZIE-2590 OYA: Create basic Oozie Launcher Application Master (rkanter)
 OOZIE-2316 Drop support for Hadoop 1 and 0.23 (asasvari via rkanter)
+OOZIE-1459 Remove the version in the child poms for maven-antrun-plugin (Jan Hentschel via rkanter)
+OOZIE-2225 Add wild card filter for gathering jobs (sai-krish via rkanter)
+OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)
+OOZIE-1986 Add FindBugs report to pre-commit build (andras.piros via rkanter)
+OOZIE-2634 Queue dump command message is confusing when the queue is empty (andras.piros via rkanter)
 
 -- Oozie 4.3.0 release
 
+OOZIE-2719 Test case failure (abhishekbafna via jaydeepvishwakarma)
+OOZIE-2674 Improve oozie commads documentation (abhishekbafna via rkanter)
+OOZIE-2710 Oozie HCatalog example workflow fails (abhishekbafna via shwethags)
+OOZIE-2705 Oozie Spark action ignores spark.executor.extraJavaOptions and spark.driver.extraJavaOptions (gezapeti via rkanter)
+OOZIE-2621 Use hive-exec-<version>-core instead of hive-exec in oozie-core (gezapeti via rkanter)
+OOZIE-2613 Upgrade hive version from 0.13.1 to 1.2.0 (abhishekbafna via rkanter)
+OOZIE-2658 --driver-class-path can overwrite the classpath in SparkMain (gezapeti via rkanter)
+OOZIE-1814 Oozie should mask any passwords in logs and REST interfaces (andras.piros via rkanter)
+OOZIE-2622 ExtJS 2.2 is no longer available (rkanter)
+OOZIE-2606 Set spark.yarn.jars to fix Spark 2.0 with Oozie (satishsaley via rohini)
 OOZIE-2673 Include XSD for shell-action:0.3 in documentation (abhishekbafna via rkanter)
 OOZIE-2194 oozie job -kill doesn't work with spark action (abhishekbafna via rohini)
 OOZIE-2501 ZK reentrant lock doesn't work for few cases (puru)

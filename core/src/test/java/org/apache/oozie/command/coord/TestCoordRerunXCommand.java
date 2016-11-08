@@ -60,6 +60,7 @@ import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLog;
@@ -569,6 +570,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordRerunCleanupForHCat() throws Exception {
+        //setting current user as test user because directory structure created by HCat have current user permissions (755).
+        setSystemProperty(XTestCase.TEST_USER1_PROP, System.getProperty("user.name"));
         super.setupHCatalogServer();
         services = super.setupServicesForHCatalog();
         services.init();
