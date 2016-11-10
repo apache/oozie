@@ -125,7 +125,11 @@ public abstract class LauncherMain {
         }
     }
 
-    private static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
+        return getChildYarnJobs(actionConf, ApplicationsRequestScope.OWN);
+    }
+
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
         System.out.println("Fetching child yarn jobs");
         Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
         String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
@@ -142,8 +146,9 @@ public abstract class LauncherMain {
         }
 
         GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
-        gar.setScope(ApplicationsRequestScope.OWN);
+        gar.setScope(scope);
         gar.setApplicationTags(Collections.singleton(tag));
+
         long endTime = System.currentTimeMillis();
         if (startTime > endTime) {
             System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +

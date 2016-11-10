@@ -27,7 +27,6 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
-import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,10 +34,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -63,7 +60,6 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
-import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -100,7 +96,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
         assertEquals(Arrays.asList(JavaMain.class), ae.getLauncherClasses());
@@ -365,7 +360,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         Context context = createContext(actionXml, null);
         submitAction(context);
-        waitUntilYarnAppState(context.getAction().getExternalId(), YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalId());
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
@@ -385,7 +380,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
@@ -410,7 +405,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
         ActionExecutor ae = new JavaActionExecutor();
         try {
             ae.check(context, context.getAction());
@@ -441,7 +436,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         final String runningJobId = submitAction(context);
         ActionExecutor ae = new JavaActionExecutor();
         assertFalse(ae.isCompleted(context.getAction().getExternalStatus()));
-        waitUntilYarnAppState(runningJobId, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJobId);
         ae.check(context, context.getAction());
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
         assertNull(context.getAction().getData());
@@ -460,7 +455,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
@@ -481,7 +476,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
       //FIXME  assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
@@ -504,7 +499,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
      //FIXME   assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
@@ -526,7 +521,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
       //FIXME  assertFalse(LauncherMapperHelper.isMainSuccessful(runningJob));
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
@@ -551,7 +546,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.DONE, context.getAction().getStatus());
         assertEquals("KILLED", context.getAction().getExternalStatus());
         assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
-        waitUntilYarnAppState(runningJob, YarnApplicationState.KILLED);
+        waitUntilYarnAppKilledAndAssertSuccess(runningJob);
     }
 
 
@@ -827,7 +822,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         Context context = createContext(actionXml, null);
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
         ActionExecutor ae = new JavaActionExecutor();
         ae.check(context, context.getAction());
         assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
@@ -1876,13 +1871,13 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Test when server side setting is not enabled
         JobConf launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
-        assertEquals("true", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED)); // disabled by default
 
         ConfigurationService.set("oozie.action.launcher." + JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, "true");
 
         // Test when server side setting is enabled but tez-site.xml is not in DistributedCache
         launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
-        assertEquals("true", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
 
         final Path tezSite = new Path("/tmp/tez-site.xml");
         final FSDataOutputStream out = getFileSystem().create(tezSite);
@@ -2202,7 +2197,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ConfigurationService.set("oozie.action.sharelib.for.java", "java");
 
         final String runningJob = submitAction(context);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
     }
 
     public void testJobSubmissionWithoutYarnKill() throws Exception {
@@ -2236,7 +2231,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ConfigurationService.setBoolean(JavaActionExecutor.HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART, false);
 
         final String runningJob = submitAction(context, ae);
-        waitUntilYarnAppState(runningJob, YarnApplicationState.FINISHED);
+        waitUntilYarnAppDoneAndAssertSuccess(runningJob);
     }
 
     public void testDefaultConfigurationInLauncher() throws Exception {

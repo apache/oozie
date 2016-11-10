@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -44,10 +43,8 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 
 import junit.framework.TestCase;
-import net.sf.ehcache.store.compound.ImmutableValueElementCopyStrategy;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -92,18 +89,12 @@ import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
-import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.test.hive.MiniHS2;
 import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-
-import com.google.common.base.Enums;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -122,6 +113,7 @@ import com.google.common.collect.Sets;
  * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
+    private static EnumSet<YarnApplicationState> YARN_TERMINAL_STATES = EnumSet.of(YarnApplicationState.FAILED, YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
     private Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
@@ -1235,46 +1227,42 @@ public abstract class XTestCase extends TestCase {
         return services;
     }
 
-    protected YarnApplicationState waitUntilYarnAppState(String externalId, final YarnApplicationState... acceptedStates)
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates)
             throws HadoopAccessorException, IOException, YarnException {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
-        final Set<YarnApplicationState> states = Sets.immutableEnumSet(Lists.newArrayList(acceptedStates));
-        final MutableBoolean endStateOK = new MutableBoolean(false);
         final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
 
         JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
-        // This is needed here because we need a mutable final YarnClient
-        final MutableObject<YarnClient> yarnClientMO = new MutableObject<YarnClient>(null);
+        final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), jobConf);
+
         try {
-            yarnClientMO.setValue(Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), jobConf));
             waitFor(60 * 1000, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
-                     YarnApplicationState state = yarnClientMO.getValue().getApplicationReport(appId).getYarnApplicationState();
+                     YarnApplicationState state = yarnClient.getApplicationReport(appId).getYarnApplicationState();
                      finalState.setValue(state);
 
-                     if (states.contains(state)) {
-                         endStateOK.setValue(true);
-                         return true;
-                     } else {
-                         return false;
-                     }
+                     return acceptedStates.contains(state);
                 }
             });
         } finally {
-            if (yarnClientMO.getValue() != null) {
-                yarnClientMO.getValue().close();
+            if (yarnClient != null) {
+                yarnClient.close();
             }
         }
 
         log.info("Final state is: {0}", finalState.getValue());
-        assertTrue(endStateOK.isTrue());
         return finalState.getValue();
     }
 
     protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId) throws HadoopAccessorException, IOException, YarnException {
-        YarnApplicationState state = waitUntilYarnAppState(externalId, YarnApplicationState.FAILED, YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
         assertEquals("YARN App state", YarnApplicationState.FINISHED, state);
+    }
+
+    protected void waitUntilYarnAppKilledAndAssertSuccess(String externalId) throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state", YarnApplicationState.KILLED, state);
     }
 
     protected YarnApplicationState getYarnApplicationState(String externalId) throws HadoopAccessorException, IOException, YarnException {
