@@ -115,20 +115,6 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getExternalStatus(), "RUNNING");
     }
 
-    // FIXME - fix JAE.kill()
-    public void testWfActionKillChildJob() throws Exception {
-        String externalJobID = launchSleepJob(1000);
-        String childId = launchSleepJob(1000000);
-
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
-                WorkflowAction.Status.KILLED, childId);
-
-        new ActionKillXCommand(action.getId()).call();
-
-        waitUntilYarnAppKilledAndAssertSuccess(childId);
-    }
-
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String externalJobID, String actionName,
             WorkflowAction.Status status, String childID) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();

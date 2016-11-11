@@ -33,6 +33,14 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -389,6 +397,39 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             }
         } else {
             super.check(context, action);
+        }
+    }
+
+    @Override
+    public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+        // Kill the LauncherAM which submits the MR job
+        super.kill(context, action);
+
+        // We have to check whether the MapReduce execution has started or not. If it has started, then we have to get
+        // the YARN ApplicationID based on the tag and kill it as well
+
+        // TODO: this must be tested in TestMapReduceActionExecutor
+        try {
+            String tag = ActionExecutor.getActionYarnTag(new Configuration(), context.getWorkflow(), action);
+            GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+            gar.setScope(ApplicationsRequestScope.ALL);
+            gar.setApplicationTags(Collections.singleton(tag));
+            Element actionXml = XmlUtils.parseXml(action.getConf());
+            Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
+            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
+            GetApplicationsResponse apps = proxy.getApplications(gar);
+            List<ApplicationReport> appsList = apps.getApplicationList();
+
+            YarnClient yarnClient = YarnClient.createYarnClient();
+            yarnClient.init(actionConf);
+            yarnClient.start();
+
+            for (ApplicationReport app : appsList) {
+                LOG.info("Killing MapReduce job {0}", app.getApplicationId().toString());
+                yarnClient.killApplication(app.getApplicationId());
+            }
+        } catch (Exception e) {
+            throw convertException(e);
         }
     }
 
