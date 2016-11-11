@@ -1007,6 +1007,8 @@ public abstract class XTestCase extends TestCase {
       conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
       // Required to prevent deadlocks with YARN CapacityScheduler
       conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
+      // Default value is 90 - if you have low disk space, tests will fail.
+      conf.set("yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage", "99");
       return conf;
     }
 
