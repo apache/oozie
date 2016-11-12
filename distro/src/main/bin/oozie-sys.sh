@@ -195,7 +195,7 @@ else
   print "Using   OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
 fi
 
-if [ "${CATALINA_BASE}" = "" ]; then
+if [ "${OOZIE_USE_TOMCAT}" = "1" -a "${CATALINA_BASE}" = "" ]; then
   export CATALINA_BASE=${OOZIE_HOME}/oozie-server
   print "Setting CATALINA_BASE:       ${CATALINA_BASE}"
 else
@@ -223,20 +223,40 @@ else
   print "Using   OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
 fi
 
-if [ "${CATALINA_OUT}" = "" ]; then
-  export CATALINA_OUT=${OOZIE_LOG}/catalina.out
-  print "Setting CATALINA_OUT:        ${CATALINA_OUT}"
-else
-  print "Using   CATALINA_OUT:        ${CATALINA_OUT}"
+if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
+  if [  "${CATALINA_OUT}" = "" ]; then
+    export CATALINA_OUT=${OOZIE_LOG}/catalina.out
+    print "Setting CATALINA_OUT:        ${CATALINA_OUT}"
+  else
+    print "Using   CATALINA_OUT:        ${CATALINA_OUT}"
+  fi
 fi
 
-if [ "${CATALINA_PID}" = "" ]; then
+if [ "${OOZIE_USE_TOMCAT}" = "1" -a "${CATALINA_PID}" = "" ]; then
   export CATALINA_PID=${OOZIE_HOME}/oozie-server/temp/oozie.pid
   print "Setting CATALINA_PID:        ${CATALINA_PID}"
 else
   print "Using   CATALINA_PID:        ${CATALINA_PID}"
 fi
 
-export CATALINA_OPTS="${CATALINA_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
+if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
+  export CATALINA_OPTS="${CATALINA_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
+fi
 
 print
+
+setup_ooziedb() {
+  echo "Setting up oozie DB"
+  ${BASEDIR}/bin/ooziedb.sh create -run
+  if [ "$?" -ne "0" ]; then
+    exit -1
+  fi
+  echo
+}
+
+if [ "${JAVA_HOME}" != "" ]; then
+    JAVA_BIN=java
+else
+    JAVA_BIN=${JAVA_HOME}/bin/java
+fi
+

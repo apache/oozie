@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2666 Support embedding Jetty into Oozie (asasvari via rkanter)
 OOZIE-1459 Remove the version in the child poms for maven-antrun-plugin (Jan Hentschel via rkanter)
 OOZIE-2225 Add wild card filter for gathering jobs (sai-krish via rkanter)
 OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)

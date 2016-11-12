@@ -56,7 +56,7 @@
         <failIfNoTests>false</failIfNoTests>
 
         <test.timeout>5400</test.timeout>
-
+        <clover.version>4.0.6</clover.version>
         <!-- platform encoding override -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -105,7 +105,9 @@
          <distcp.version>${hadoop.version}</distcp.version>
          <hadoop.auth.version>${hadoop.version}</hadoop.auth.version>
 
-         <!-- Tomcat version -->
+         <jetty.version>9.2.19.v20160908</jetty.version>
+
+        <!-- Tomcat version -->
          <tomcat.version>6.0.44</tomcat.version>
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.1</openjpa.version>
@@ -130,6 +132,7 @@
         <module>docs</module>
         <module>tools</module>
         <module>minitest</module>
+        <module>server</module>
         <module>distro</module>
         <module>zookeeper-security-tests</module>
     </modules>
@@ -807,6 +810,12 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
                 <version>${streaming.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
@@ -1545,6 +1554,58 @@
                 <artifactId>gson</artifactId>
                 <version>2.7</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>3.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-http</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-rewrite</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-annotations</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-webapp</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>apache-jsp</artifactId>
+                <type>jar</type>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-plus</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1659,6 +1720,7 @@
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
                 <artifactId>maven-clover2-plugin</artifactId>
+                <version>${clover.version}</version>
                 <configuration>
                     <licenseLocation>${clover.license}</licenseLocation>
                     <generateXml>true</generateXml>
@@ -1958,6 +2020,12 @@
                 <spark.streaming.kafka.version>1.6.2</spark.streaming.kafka.version>
                 <spark.bagel.version>1.6.2</spark.bagel.version>
             </properties>
+        </profile>
+        <profile>
+            <id>tomcat</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
         </profile>
     </profiles>
 </project>
