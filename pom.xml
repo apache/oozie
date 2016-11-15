@@ -107,8 +107,8 @@
 
          <jetty.version>9.2.19.v20160908</jetty.version>
 
-        <!-- Tomcat version -->
-         <tomcat.version>6.0.44</tomcat.version>
+         <!-- Tomcat version -->
+         <tomcat.version>6.0.47</tomcat.version>
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.1</openjpa.version>
          <xerces.version>2.10.0</xerces.version>

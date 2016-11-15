@@ -10,6 +10,7 @@ OOZIE-2634 Queue dump command message is confusing when the queue is empty (andr
 
 -- Oozie 4.3.0 release
 
+OOZIE-2725 Upgrade Tomcat to 6.0.47 for the latest security fixes (rkanter via shwethags)
 OOZIE-2724 coord:current resolves monthly/yearly dependencies incorrectly (satishsaley via shwethags)
 OOZIE-2719 Test case failure (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2674 Improve oozie commads documentation (abhishekbafna via rkanter)
