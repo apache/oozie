@@ -62,8 +62,6 @@ public class CoordELFunctions {
     public static final long MINUTE_MSEC = 60 * 1000L;
     public static final long HOUR_MSEC = 60 * MINUTE_MSEC;
     public static final long DAY_MSEC = 24 * HOUR_MSEC;
-    public static final long MONTH_MSEC = 30 * DAY_MSEC;
-    public static final long YEAR_MSEC = 365 * DAY_MSEC;
     /**
      * Used in defining the frequency in 'day' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
@@ -1401,10 +1399,11 @@ public class CoordELFunctions {
                 break;
             case MONTH:
             case END_OF_MONTH:
-                instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / MONTH_MSEC);
+                int diffYear = calEffectiveTime.get(Calendar.YEAR) - current.get(Calendar.YEAR);
+                instanceCount[0] = diffYear * 12 + calEffectiveTime.get(Calendar.MONTH) - current.get(Calendar.MONTH);
                 break;
             case YEAR:
-                instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / YEAR_MSEC);
+                instanceCount[0] = calEffectiveTime.get(Calendar.YEAR) - current.get(Calendar.YEAR);
                 break;
             default:
                 throw new IllegalArgumentException("Unhandled dataset time unit " + dsTimeUnit);
