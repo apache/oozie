@@ -702,6 +702,42 @@ public class TestCoordELFunctions extends XTestCase {
 
         expr = "${coord:current(1)}";
         assertEquals("2009-06-01T07:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        // Case 8
+        ds.setEndOfDuration(TimeUnit.END_OF_MONTH);
+        ds.setFrequency(1);
+        ds.setTimeZone(DateUtils.getTimeZone("UTC"));
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("2010-01-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2016-10-31T00:55Z"));
+        CoordELFunctions.configureEvaluator(eval, ds, appInst);
+
+        expr = "${coord:current(0)}";
+        assertEquals("2016-10-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        expr = "${coord:current(1)}";
+        assertEquals("2016-11-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        expr = "${coord:current(-1)}";
+        assertEquals("2016-09-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        // Test with YEAR
+        ds.setTimeUnit(TimeUnit.YEAR);
+        ds.setEndOfDuration(TimeUnit.YEAR);
+        ds.setFrequency(1);
+        ds.setTimeZone(DateUtils.getTimeZone("UTC"));
+        // Initial instance is far behind to accumulate effect of leap years
+        ds.setInitInstance(DateUtils.parseDateOozieTZ("1963-01-01T00:00Z"));
+        appInst.setNominalTime(DateUtils.parseDateOozieTZ("2016-10-31T00:55Z"));
+        CoordELFunctions.configureEvaluator(eval, ds, appInst);
+
+        expr = "${coord:current(0)}";
+        assertEquals("2016-01-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        expr = "${coord:current(1)}";
+        assertEquals("2017-01-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
+
+        expr = "${coord:current(-1)}";
+        assertEquals("2015-01-01T00:00Z", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     public void testOffset() throws Exception {
