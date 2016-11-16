@@ -37,10 +37,11 @@
             <directory>${basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>license.txt</include>
-                <include>notice.txt</include>
-                <include>readme.txt</include>
+                <include>LICENSE.txt</include>
+                <include>NOTICE.txt</include>
+                <include>README.txt</include>
                 <include>release-log.txt</include>
+                <include>RELEASE_NOTES.txt</include>
             </includes>
         </fileSet>
         <fileSet>

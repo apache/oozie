@@ -1,0 +1,4 @@
+These notes are for Oozie 4.3.0 release.
+
+Oozie no longer includes JSON.org dependencies. If Hive or Hive2 action in workflow needs JSON.org dependencies, then they need to be
+added manually into respective sharelib.
