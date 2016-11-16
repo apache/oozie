@@ -58,6 +58,8 @@ run tar czf oozie-${releaseVersion}.tar.gz oozie-$releaseVersion
 
 run cp oozie-$releaseVersion/release-log.txt .
 
+run cp oozie-$releaseVersion/RELEASE_NOTES.txt .
+
 run cd oozie-$releaseVersion
 
 run mvn apache-rat:check

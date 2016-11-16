@@ -83,6 +83,8 @@ The Java 1.7+ =bin= directory should be in the command path.
 
 *NOTE:* The ExtJS library is not bundled with Oozie because it uses a different license.
 
+*NOTE:* Oozie UI browser compatibility Chrome (all), Firefox (3.5), Internet Explorer (8.0), Opera (10.5).
+
 *NOTE:* It is recommended to use a Oozie Unix user for the Oozie server.
 
 Expand the Oozie distribution =tar.gz=.
