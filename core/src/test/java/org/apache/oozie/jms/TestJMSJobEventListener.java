@@ -38,9 +38,6 @@ import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
 import org.apache.oozie.event.*;
-import org.apache.oozie.jms.ConnectionContext;
-import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.jms.JMSJobEventListener;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
@@ -63,8 +60,8 @@ public class TestJMSJobEventListener extends XTestCase {
         conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
-        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ActiveMQConnFactory
-                + ";" + "java.naming.provider.url#" + localActiveMQBroker + ";connectionFactoryNames#"
+        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ACTIVE_MQ_CONN_FACTORY
+                + ";" + "java.naming.provider.url#" + LOCAL_ACTIVE_MQ_BROKER + ";connectionFactoryNames#"
                 + "ConnectionFactory");
         services.init();
     }
@@ -329,7 +326,7 @@ public class TestJMSJobEventListener extends XTestCase {
             int randomPort = 30000 + random.nextInt(10000);
             String brokerURl = "tcp://localhost:" + randomPort;
             conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
-                    + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + brokerURl + ";connectionFactoryNames#"
+                    + ACTIVE_MQ_CONN_FACTORY + ";" + "java.naming.provider.url#" + brokerURl + ";connectionFactoryNames#"
                     + "ConnectionFactory");
             services.init();
             JMSJobEventListener wfEventListener = new JMSJobEventListener();

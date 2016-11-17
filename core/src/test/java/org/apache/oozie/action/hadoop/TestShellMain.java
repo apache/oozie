@@ -25,6 +25,7 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Properties;
 
+import org.apache.oozie.test.TestConstants;
 import org.apache.oozie.util.XConfiguration;
 
 //Test cases are mainly implemented in the Base class
@@ -50,8 +51,8 @@ public class TestShellMain extends ShellTestCase {
         jobConf.set("fs.default.name", getNameNodeUri());
 
 
-        jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, SHELL_COMMAND_NAME);
-        String[] args = new String[] { SHELL_COMMAND_SCRIPTFILE_OPTION, script.toString(), "A", "B" };
+        jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, TestConstants.SHELL_COMMAND_NAME);
+        String[] args = new String[] { TestConstants.SHELL_COMMAND_SCRIPTFILE_OPTION, script.toString(), "A", "B" };
         ActionUtils.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ARGS, args);
         ActionUtils.setStrings(jobConf, ShellMain.CONF_OOZIE_SHELL_ENVS,
                 new String[] { "var1=value1", "var2=value2" });

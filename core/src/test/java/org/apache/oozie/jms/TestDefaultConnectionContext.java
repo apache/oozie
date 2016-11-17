@@ -44,7 +44,7 @@ public class TestDefaultConnectionContext extends XTestCase {
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
         conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
-                + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + localActiveMQBroker
+                + ACTIVE_MQ_CONN_FACTORY + ";" + "java.naming.provider.url#" + LOCAL_ACTIVE_MQ_BROKER
                 + ";connectionFactoryNames#" + "ConnectionFactory");
         services.init();
     }
