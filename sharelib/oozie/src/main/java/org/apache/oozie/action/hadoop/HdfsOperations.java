@@ -17,12 +17,18 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
@@ -84,5 +90,49 @@ public class HdfsOperations {
         if (ioe != null) {
             throw ioe;
         }
+    }
+
+    public boolean fileExists(final Path path, final Configuration launcherJobConf) throws IOException, InterruptedException {
+        return ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+            @Override
+            public Boolean run() throws Exception {
+                FileSystem fs = FileSystem.get(path.toUri(), launcherJobConf);
+                return fs.exists(path);
+            }
+        });
+    }
+
+    public void writeStringToFile(final Path path, final Configuration conf, final String contents) throws IOException, InterruptedException {
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+                FileSystem fs = FileSystem.get(path.toUri(), conf);
+                java.io.Writer writer = new OutputStreamWriter(fs.create(path));
+                writer.write(contents);
+                writer.close();
+                return null;
+            }
+        });
+    }
+
+    public String readFileContents(final Path path, final Configuration conf) throws IOException, InterruptedException {
+        return ugi.doAs(new PrivilegedExceptionAction<String>() {
+            @Override
+            public String run() throws Exception {
+                FileSystem fs = FileSystem.get(path.toUri(), conf);
+                InputStream is = fs.open(path);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                StringBuilder sb = new StringBuilder();
+
+                String contents;
+                while ((contents = reader.readLine()) != null) {
+                    sb.append(contents);
+                }
+
+                reader.close();
+
+                return sb.toString();
+            }
+        });
     }
 }

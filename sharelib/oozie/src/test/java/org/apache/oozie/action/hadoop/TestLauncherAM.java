@@ -65,6 +65,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.action.hadoop.LauncherAM.LauncherSecurityManager;
 import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
 import org.junit.Before;
@@ -72,7 +73,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -80,6 +80,7 @@ import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestLauncherAM {
+    private static final String DEFAULT_CONTAINER_ID = "container_1479473450392_0001_01_000001";
     private static final String ACTIONDATA_ERROR_PROPERTIES = "error.properties";
     private static final String ACTIONDATA_FINAL_STATUS_PROPERTY = "final.status";
     private static final String ERROR_CODE_PROPERTY = "error.code";
@@ -108,7 +109,7 @@ public class TestLauncherAM {
     private AMRMCallBackHandler callbackHandlerMock;
 
     @Mock
-    private HdfsOperations fsOperationsMock;
+    private HdfsOperations hdfsOperationsMock;
 
     @Mock
     private LocalFsOperations localFsOperationsMock;
@@ -127,7 +128,10 @@ public class TestLauncherAM {
 
     private Configuration launcherJobConfig = new Configuration();
 
-    @InjectMocks
+    private String containerId = DEFAULT_CONTAINER_ID;
+
+    private String applicationId = ConverterUtils.toContainerId(containerId).getApplicationAttemptId().getApplicationId().toString();
+
     private LauncherAM launcherAM;
 
     private ExpectedFailureDetails failureDetails = new ExpectedFailureDetails();
@@ -135,6 +139,8 @@ public class TestLauncherAM {
     @Before
     public void setup() throws IOException {
         configureMocksForHappyPath();
+        launcherJobConfig.set(LauncherMapper.OOZIE_ACTION_RECOVERY_ID, "1");
+        instantiateLauncher();
     }
 
     @Test
@@ -379,6 +385,73 @@ public class TestLauncherAM {
         }
     }
 
+    @Test
+    public void testRecoveryIdNotSet() throws Exception {
+        launcherJobConfig.unset(LauncherMapper.OOZIE_ACTION_RECOVERY_ID);
+        instantiateLauncher();
+
+        executeLauncher();
+
+        failureDetails.expectedExceptionMessage("IO error")
+            .expectedErrorCode(EXIT_CODE_0)
+            .expectedErrorReason("IO error, IO error")
+            .withStackTrace();
+
+        assertFailedExecution();
+    }
+
+    @Test
+    public void testRecoveryIdExistsAndRecoveryIsdMatch() throws Exception {
+        given(hdfsOperationsMock.fileExists(any(Path.class), eq(launcherJobConfig))).willReturn(true);
+        given(hdfsOperationsMock.readFileContents(any(Path.class), eq(launcherJobConfig))).willReturn(applicationId);
+
+        executeLauncher();
+
+        verify(hdfsOperationsMock).readFileContents(any(Path.class), eq(launcherJobConfig));
+    }
+
+    @Test
+    public void testRecoveryIdExistsAndRecoveryIdsDoNotMatch() throws Exception {
+        given(hdfsOperationsMock.fileExists(any(Path.class), eq(launcherJobConfig))).willReturn(true);
+        given(hdfsOperationsMock.readFileContents(any(Path.class), eq(launcherJobConfig))).willReturn("not_matching_appid");
+
+        executeLauncher();
+
+        failureDetails.expectedExceptionMessage("IO error")
+            .expectedErrorCode(EXIT_CODE_0)
+            .expectedErrorReason("IO error, IO error")
+            .withStackTrace();
+
+        verify(hdfsOperationsMock).readFileContents(any(Path.class), eq(launcherJobConfig));
+        assertFailedExecution();
+    }
+
+    @Test
+    public void testReadingRecoveryIdFails() throws Exception {
+        willThrow(new IOException()).given(hdfsOperationsMock).writeStringToFile(any(Path.class), eq(launcherJobConfig), eq(applicationId));
+
+        executeLauncher();
+
+        failureDetails.expectedExceptionMessage("IO error")
+            .expectedErrorCode(EXIT_CODE_0)
+            .expectedErrorReason("IO error, IO error")
+            .withStackTrace();
+
+        assertFailedExecution();
+    }
+
+    private void instantiateLauncher() {
+        launcherAM = new LauncherAM(ugiMock,
+                amRMClientAsyncFactoryMock,
+                callbackHandlerMock,
+                hdfsOperationsMock,
+                localFsOperationsMock,
+                prepareHandlerMock,
+                launcherCallbackNotifierFactoryMock,
+                launcherSecurityManagerMock,
+                containerId);
+    }
+
     @SuppressWarnings("unchecked")
     private void configureMocksForHappyPath() throws IOException {
         launcherJobConfig.set(LauncherAM.OOZIE_ACTION_DIR_PATH, "dummy");
@@ -426,9 +499,10 @@ public class TestLauncherAM {
         verify(amRmAsyncClientMock).unregisterApplicationMaster(FinalApplicationStatus.SUCCEEDED, EMPTY_STRING, EMPTY_STRING);
         verify(amRmAsyncClientMock).stop();
         verify(ugiMock, times(2)).doAs(any(PrivilegedAction.class)); // prepare & action main
-        verify(fsOperationsMock).uploadActionDataToHDFS(any(Configuration.class), any(Path.class), any(Map.class));
+        verify(hdfsOperationsMock).uploadActionDataToHDFS(any(Configuration.class), any(Path.class), any(Map.class));
         verify(launcherCallbackNotifierFactoryMock).createCallbackNotifier(any(Configuration.class));
         verify(launcherCallbackNotifierMock).notifyURL(actionResult);
+        verify(hdfsOperationsMock).writeStringToFile(any(Path.class), any(Configuration.class), any(String.class));
 
         Map<String, String> actionData = launcherAM.getActionData();
         verifyFinalStatus(actionData, actionResult);

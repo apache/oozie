@@ -21,10 +21,7 @@ package org.apache.oozie.service;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -250,20 +247,10 @@ public class TestRecoveryService extends XDataTestCase {
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job1, action1, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
         JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
-        String user = conf.get("user.name");
-        String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-
         String launcherId = action1.getExternalId();
 
-        final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        waitFor(240 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
         Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
         assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
@@ -274,10 +261,8 @@ public class TestRecoveryService extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRecoveryCoordCreate() throws Exception {
-        final BundleActionBean bundleAction;
-        final BundleJobBean bundle;
-        bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
-        bundleAction = addRecordToBundleActionTable(bundle.getId(), "coord1", 1, Job.Status.PREP);
+        final BundleJobBean bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        addRecordToBundleActionTable(bundle.getId(), "coord1", 1, Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
 
         sleep(3000);
@@ -290,7 +275,7 @@ public class TestRecoveryService extends XDataTestCase {
                         jpaService.execute(new BundleActionGetJPAExecutor(bundle.getId(), "coord1"));
                 try {
                     if (mybundleAction.getCoordId() != null) {
-                        CoordinatorJobBean coord = jpaService.execute(new CoordJobGetJPAExecutor(mybundleAction.getCoordId()));
+                        jpaService.execute(new CoordJobGetJPAExecutor(mybundleAction.getCoordId()));
                         return true;
                     }
                 } catch (Exception e) {
@@ -345,12 +330,11 @@ public class TestRecoveryService extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRecoveryCoordExists() throws Exception {
-        final BundleActionBean bundleAction;
         final BundleJobBean bundle;
         final CoordinatorJob coord;
         bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
         coord = addRecordToCoordJobTable(Job.Status.PREP, false, false);
-        bundleAction = addRecordToBundleActionTable(bundle.getId(), coord.getId(), "coord1", 1, Job.Status.PREP);
+        addRecordToBundleActionTable(bundle.getId(), coord.getId(), "coord1", 1, Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
 
         sleep(3000);

@@ -49,6 +49,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
@@ -103,6 +104,7 @@ import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 
 
 public class JavaActionExecutor extends ActionExecutor {
@@ -958,6 +960,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public void submitLauncher(FileSystem actionFs, final Context context, WorkflowAction action) throws ActionExecutorException {
         JobClient jobClient = null;
         boolean exception = false;
+        YarnClient yarnClient = null;
         try {
             Path appPathRoot = new Path(context.getWorkflow().getAppPath());
 
@@ -1014,23 +1017,23 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
-            boolean alreadyRunning = false;
-            String launcherId = null;
-            String consoleUrl = null;
-            // TODO: OYA: equivalent of this? (recovery, alreadyRunning)  When does this happen?
-//            LOG.debug("Creating Job Client for action " + action.getId());
-//            jobClient = createJobClient(context, launcherJobConf);
-//            launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
-//                    .getRecoveryId());
-//            alreadyRunning = launcherId != null;
-            RunningJob runningJob;
+            String consoleUrl;
+            String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
+                    .getRecoveryId());
+            boolean alreadyRunning = launcherId != null;
 
             // if user-retry is on, always submit new launcher
             boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
+            yarnClient = createYarnClient(context, launcherJobConf);
 
             if (alreadyRunning && !isUserRetry) {
-                runningJob = jobClient.getJob(JobID.forName(launcherId));
-                if (runningJob == null) {
+                try {
+                    ApplicationId appId = ConverterUtils.toApplicationId(launcherId);
+                    ApplicationReport report = yarnClient.getApplicationReport(appId);
+                    consoleUrl = report.getTrackingUrl();
+                } catch (RemoteException e) {
+                    // caught when the application id does not exist
+                    LOG.error("Got RemoteException from YARN", e);
                     String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
                             "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
@@ -1070,32 +1073,18 @@ public class JavaActionExecutor extends ActionExecutor {
                     LOG.info("No need to inject credentials.");
                 }
 
-                YarnClient yarnClient = null;
-                try {
-                    String user = context.getWorkflow().getUser();
+                String user = context.getWorkflow().getUser();
 
-                    // Create application
-                    yarnClient = createYarnClient(context, launcherJobConf);
-                    YarnClientApplication newApp = yarnClient.createApplication();
-                    ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
+                YarnClientApplication newApp = yarnClient.createApplication();
+                ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
+                ApplicationSubmissionContext appContext =
+                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf);
+                yarnClient.submitApplication(appContext);
 
-                    // Create launch context for app master
-                    ApplicationSubmissionContext appContext =
-                            createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf);
-
-                    // Submit the launcher AM
-                    yarnClient.submitApplication(appContext);
-
-                    launcherId = appId.toString();
-                    LOG.debug("After submission get the launcherId [{0}]", launcherId);
-                    ApplicationReport appReport = yarnClient.getApplicationReport(appId);
-                    consoleUrl = appReport.getTrackingUrl();
-                } finally {
-                    if (yarnClient != null) {
-                        yarnClient.close();
-                        yarnClient = null;
-                    }
-                }
+                launcherId = appId.toString();
+                LOG.debug("After submission get the launcherId [{0}]", launcherId);
+                ApplicationReport appReport = yarnClient.getApplicationReport(appId);
+                consoleUrl = appReport.getTrackingUrl();
             }
 
             String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
@@ -1106,6 +1095,10 @@ public class JavaActionExecutor extends ActionExecutor {
             throw convertException(ex);
         }
         finally {
+            if (yarnClient != null) {
+                Closeables.closeQuietly(yarnClient);
+            }
+ 
             if (jobClient != null) {
                 try {
                     jobClient.close();
@@ -1126,26 +1119,16 @@ public class JavaActionExecutor extends ActionExecutor {
                                                                     Context context, Configuration actionConf)
             throws IOException, HadoopAccessorException, URISyntaxException {
 
-        // Create launch context for app master
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
 
-        // set the application id
         appContext.setApplicationId(appId);
-
-        // set the application name
         appContext.setApplicationName(launcherJobConf.getJobName());
         appContext.setApplicationType("Oozie Launcher");
-
-        // Set the priority for the application master
         Priority pri = Records.newRecord(Priority.class);
         int priority = 0; // TODO: OYA: Add a constant or a config
         pri.setPriority(priority);
         appContext.setPriority(pri);
-
-        // Set the queue to which this application is to be submitted in the RM
         appContext.setQueue(launcherJobConf.getQueueName());
-
-        // Set up the container launch context for the application master
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
 
         // Set the resources to localize
@@ -1193,7 +1176,7 @@ public class JavaActionExecutor extends ActionExecutor {
         vargs.add("-Dhadoop.root.logger=INFO,CLA");
         vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
         vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
-        vargs.add("org.apache.oozie.action.hadoop.LauncherAM");  // note: using string temporarily so we don't have to depend on sharelib-oozie
+        vargs.add(LauncherAM.class.getCanonicalName());
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
                 Path.SEPARATOR + ApplicationConstants.STDOUT);
         vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +

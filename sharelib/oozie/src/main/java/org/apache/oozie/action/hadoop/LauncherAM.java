@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
 import java.security.PrivilegedAction;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -34,7 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ContainerId;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
@@ -81,6 +83,7 @@ public class LauncherAM {
     private final PrepareActionsHandler prepareHandler;
     private final LauncherAMCallbackNotifierFactory callbackNotifierFactory;
     private final LauncherSecurityManager launcherSecurityManager;
+    private final ContainerId containerId;
 
     private Configuration launcherJobConf;
     private AMRMClientAsync<?> amRmClientAsync;
@@ -94,7 +97,8 @@ public class LauncherAM {
             LocalFsOperations localFsOperations,
             PrepareActionsHandler prepareHandler,
             LauncherAMCallbackNotifierFactory callbackNotifierFactory,
-            LauncherSecurityManager launcherSecurityManager) {
+            LauncherSecurityManager launcherSecurityManager,
+            String containerId) {
         this.ugi = Preconditions.checkNotNull(ugi, "ugi should not be null");
         this.amRmClientAsyncFactory = Preconditions.checkNotNull(amRmClientAsyncFactory, "amRmClientAsyncFactory should not be null");
         this.callbackHandler = Preconditions.checkNotNull(callbackHandler, "callbackHandler should not be null");
@@ -103,6 +107,7 @@ public class LauncherAM {
         this.prepareHandler = Preconditions.checkNotNull(prepareHandler, "prepareHandler should not be null");
         this.callbackNotifierFactory = Preconditions.checkNotNull(callbackNotifierFactory, "callbackNotifierFactory should not be null");
         this.launcherSecurityManager = Preconditions.checkNotNull(launcherSecurityManager, "launcherSecurityManager should not be null");
+        this.containerId = ContainerId.fromString(Preconditions.checkNotNull(containerId, "containerId should not be null"));
     }
 
     public static void main(String[] args) throws Exception {
@@ -134,29 +139,16 @@ public class LauncherAM {
                 localFSOperations,
                 prepareHandler,
                 callbackNotifierFactory,
-                launcherSecurityManager);
+                launcherSecurityManager,
+                System.getenv("CONTAINER_ID"));
 
         launcher.run();
     }
 
-    // TODO: OYA: rethink all print messages and formatting
     public void run() throws Exception {
         final ErrorHolder errorHolder = new ErrorHolder();
         OozieActionResult actionResult = OozieActionResult.FAILED;
         boolean launcerExecutedProperly = false;
-
-        String jobUserName = System.getenv(ApplicationConstants.Environment.USER.name());
-
-        // DEBUG - will be removed
-        UserGroupInformation login = UserGroupInformation.getLoginUser();
-        System.out.println("Login: " + login.getUserName());
-        System.out.println("SecurityEnabled:" + UserGroupInformation.isSecurityEnabled());
-        System.out.println("Login keytab based:" + UserGroupInformation.isLoginKeytabBased());
-        System.out.println("Login from keytab: " + login.isFromKeytab());
-        System.out.println("Login has kerberos credentials: " + login.hasKerberosCredentials());
-        System.out.println("Login authMethod: " + login.getAuthenticationMethod());
-        System.out.println("JobUserName:" + jobUserName);
-
         boolean backgroundAction = false;
 
         try {
@@ -288,15 +280,20 @@ public class LauncherAM {
         System.out.println("Java System Properties:");
         System.out.println("------------------------");
         System.getProperties().store(System.out, "");
-        System.out.flush();
         System.out.println("------------------------");
         System.out.println();
 
+        System.out.println("Environment variables");
+        Map<String, String> env = System.getenv();
+        System.out.println("------------------------");
+        for (Map.Entry<String, String> entry : env.entrySet()) {
+            System.out.println(entry.getKey() + "=" + entry.getValue());
+        }
+        System.out.println("------------------------");
         System.out.println("=================================================================");
         System.out.println();
         System.out.println(">>> Invoking Main class now >>>");
         System.out.println();
-        System.out.flush();
     }
 
     private void registerWithRM() throws IOException, YarnException {
@@ -317,7 +314,7 @@ public class LauncherAM {
                 // tracking url is determined automatically
                 amRmClientAsync.unregisterApplicationMaster(actionResult.getYarnStatus(), message, "");
             } catch (Exception ex) {
-                System.err.println("Error un-registering AM client");
+                System.out.println("Error un-registering AM client");
                 throw ex;
             } finally {
                 amRmClientAsync.stop();
@@ -366,12 +363,7 @@ public class LauncherAM {
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
 
-        // FIXME - make sure it's always set
-        if (launcherJobConf.get("oozie.job.launch.time") != null) {
-            System.setProperty("oozie.job.launch.time", launcherJobConf.get("oozie.job.launch.time"));
-        } else {
-            System.setProperty("oozie.job.launch.time", String.valueOf(System.currentTimeMillis()));
-        }
+        System.setProperty("oozie.job.launch.time", String.valueOf(System.currentTimeMillis()));
     }
 
     private boolean runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) {
@@ -382,9 +374,9 @@ public class LauncherAM {
             @Override
             public Void run() {
                 try {
+                    setRecoveryId();
                     Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
                     System.out.println("Launcher class: " + klass.toString());
-                    System.out.flush();
                     Method mainMethod = klass.getMethod("main", String[].class);
                     // Enable LauncherSecurityManager to catch System.exit calls
                     launcherSecurityManager.set();
@@ -412,7 +404,6 @@ public class LauncherAM {
                         if (launcherSecurityManager.getExitInvoked()) {
                             final int exitCode = launcherSecurityManager.getExitCode();
                             System.out.println("Intercepting System.exit(" + exitCode + ")");
-                            System.err.println("Intercepting System.exit(" + exitCode + ")");
                             // if 0 main() method finished successfully
                             // ignoring
                             eHolder.setErrorCode(exitCode);
@@ -438,8 +429,6 @@ public class LauncherAM {
                     eHolder.setErrorMessage(t.getMessage());
                     eHolder.setErrorCause(t);
                 } finally {
-                    System.out.flush();
-                    System.err.flush();
                     // Disable LauncherSecurityManager
                     launcherSecurityManager.unset();
                 }
@@ -449,6 +438,31 @@ public class LauncherAM {
         });
 
         return actionMainExecutedProperly.get();
+    }
+
+    private void setRecoveryId() throws LauncherException {
+        try {
+            ApplicationId applicationId = containerId.getApplicationAttemptId().getApplicationId();
+            String applicationIdStr = applicationId.toString();
+
+            String recoveryId = Preconditions.checkNotNull(launcherJobConf.get(LauncherMapper.OOZIE_ACTION_RECOVERY_ID),
+                            "RecoveryID should not be null");
+
+            Path path = new Path(actionDir, recoveryId);
+            if (!hdfsOperations.fileExists(path, launcherJobConf)) {
+                hdfsOperations.writeStringToFile(path, launcherJobConf, applicationIdStr);
+            } else {
+                String id = hdfsOperations.readFileContents(path, launcherJobConf);
+
+                if (!applicationIdStr.equals(id)) {
+                    throw new LauncherException(MessageFormat.format(
+                            "YARN Id mismatch, action file [{0}] declares Id [{1}] current Id [{2}]", path, id,
+                            applicationIdStr));
+                }
+            }
+        } catch (Exception ex) {
+            throw new LauncherException("IO error",ex);
+        }
     }
 
     private void handleActionData() throws IOException {
@@ -516,14 +530,12 @@ public class LauncherAM {
                 }
             }
         } catch (IOException ioe) {
-            System.err.println("A problem occured trying to fail the launcher");
+            System.out.println("A problem occured trying to fail the launcher");
             ioe.printStackTrace();
         } finally {
             System.out.print("Failing Oozie Launcher, " + eHolder.getErrorMessage() + "\n");
-            System.err.print("Failing Oozie Launcher, " + eHolder.getErrorMessage() + "\n");
             if (eHolder.getErrorCause() != null) {
                 eHolder.getErrorCause().printStackTrace(System.out);
-                eHolder.getErrorCause().printStackTrace(System.err);
             }
         }
     }
