@@ -325,6 +325,7 @@ public class StoreStatusFilter {
                         // job.id = text || job.appName.contains(text) || job.user.contains(text)
                         else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_TEXT)) {
                             filterJobsUsingText(filter, sb, isEnabled, seletStr, valArray, orArray, colArray);
+                            isEnabled = true;
                         }
                     }
                 }

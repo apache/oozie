@@ -278,6 +278,7 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                     // w.id = text || w.appName.contains(text) || w.user.contains(text)
                     else if (entry.getKey().equalsIgnoreCase(OozieClient.FILTER_TEXT)) {
                         StoreStatusFilter.filterJobsUsingText(filter, sb, isEnabled, seletStr, valArray, orArray, colArray);
+                        isEnabled = true;
                     }
                 }
             }

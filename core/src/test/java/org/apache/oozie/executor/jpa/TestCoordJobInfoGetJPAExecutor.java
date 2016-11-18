@@ -324,6 +324,25 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         assertEquals(ret.getCoordJobs().size(), 1);
     }
 
+    public void testGetJobInfoForTextAndStatus() throws Exception {
+        CoordinatorJobBean coordinatorJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
+        coordinatorJob.setAppName("coord-job-1");
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, coordinatorJob);
+
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> textFilterList = new ArrayList<String>();
+        textFilterList.add("coord-job-1");
+        List<String> textStatusList = new ArrayList<String>();
+        textStatusList.add(CoordinatorJob.Status.RUNNING.toString());
+        filter.put(OozieClient.FILTER_TEXT, textFilterList);
+        filter.put(OozieClient.FILTER_STATUS, textStatusList);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        CoordJobInfoGetJPAExecutor coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        CoordinatorJobInfo coordJobsInfo = jpaService.execute(coordInfoGetCmd);
+        assertEquals(1, coordJobsInfo.getCoordJobs().size());
+    }
+
     private void _testGetJobInfoForFrequency() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
