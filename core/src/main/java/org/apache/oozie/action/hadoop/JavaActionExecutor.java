@@ -1413,7 +1413,11 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
-        RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalId()));
+        String externalId = action.getExternalId();
+        RunningJob runningJob = null;
+        if (externalId != null) {
+            runningJob = jobClient.getJob(JobID.forName(externalId));
+        }
         return runningJob;
     }
 
