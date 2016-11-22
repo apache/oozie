@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
@@ -52,8 +51,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
@@ -81,7 +78,6 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -331,46 +327,6 @@ public class JavaActionExecutor extends ActionExecutor {
         if (amChildOpts != null && !amChildOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
             conf.set(YARN_AM_COMMAND_OPTS, amChildOpts + " " + oozieJavaTmpDirSetting);
         }
-    }
-
-    // FIXME: is this needed?
-    private HashMap<String, List<String>> populateEnvMap(String input) {
-        HashMap<String, List<String>> envMaps = new HashMap<String, List<String>>();
-        String[] envEntries = input.split(",");
-        for (String envEntry : envEntries) {
-            String[] envKeyVal = envEntry.split("=");
-            String envKey = envKeyVal[0].trim();
-            List<String> valList = envMaps.get(envKey);
-            if (valList == null) {
-                valList = new ArrayList<String>();
-            }
-            valList.add(envKeyVal[1].trim());
-            envMaps.put(envKey, valList);
-        }
-        return envMaps;
-    }
-
-    public int extractHeapSizeMB(String input) {
-        int ret = 0;
-        if(input == null || input.equals(""))
-            return ret;
-        Matcher m = heapPattern.matcher(input);
-        String heapStr = null;
-        String heapNum = null;
-        // Grabs the last match which takes effect (in case that multiple Xmx options specified)
-        while (m.find()) {
-            heapStr = m.group(1);
-            heapNum = m.group(2);
-        }
-        if (heapStr != null) {
-            // when Xmx specified in Gigabyte
-            if(heapStr.endsWith("g") || heapStr.endsWith("G")) {
-                ret = Integer.parseInt(heapNum) * 1024;
-            } else {
-                ret = Integer.parseInt(heapNum);
-            }
-        }
-        return ret;
     }
 
     public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf)

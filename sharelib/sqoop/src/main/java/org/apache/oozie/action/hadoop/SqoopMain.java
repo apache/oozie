@@ -182,13 +182,6 @@ public class SqoopMain extends LauncherMain {
         try {
             runSqoopJob(sqoopArgs);
         }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
-        }
         finally {
             System.out.println("\n<<< Invocation of Sqoop command completed <<<\n");
             writeExternalChildIDs(logFile, SQOOP_JOB_IDS_PATTERNS, "Sqoop");

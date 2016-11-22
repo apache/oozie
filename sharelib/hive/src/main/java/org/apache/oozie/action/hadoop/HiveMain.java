@@ -317,13 +317,6 @@ public class HiveMain extends LauncherMain {
         try {
             runHive(arguments.toArray(new String[arguments.size()]));
         }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
-        }
         finally {
             System.out.println("\n<<< Invocation of Hive command completed <<<\n");
             writeExternalChildIDs(logFile, HIVE_JOB_IDS_PATTERNS, "Hive");

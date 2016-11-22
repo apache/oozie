@@ -62,10 +62,9 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         setSystemProperty("oozie.service.ActionService.executor.classes", Hive2ActionExecutor.class.getName());
     }
 
-    @SuppressWarnings("unchecked")
     public void testSetupMethodsForScript() throws Exception {
         Hive2ActionExecutor ae = new Hive2ActionExecutor();
-        List<Class> classes = new ArrayList<Class>();
+        List<Class<?>> classes = new ArrayList<>();
         classes.add(Hive2Main.class);
         assertEquals(classes, ae.getLauncherClasses());
 
@@ -103,10 +102,9 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         assertEquals("--dee", conf.get("oozie.hive2.args.1"));
     }
 
-    @SuppressWarnings("unchecked")
     public void testSetupMethodsForQuery() throws Exception {
         Hive2ActionExecutor ae = new Hive2ActionExecutor();
-        List<Class> classes = new ArrayList<Class>();
+        List<Class<?>> classes = new ArrayList<>();
         classes.add(Hive2Main.class);
         assertEquals(classes, ae.getLauncherClasses());
 
@@ -245,28 +243,33 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
-        // Negative testcase with incorrect hive-query.
-        {
-            String query = getHive2BadScript(inputDir.toString(), outputDir.toString());
-            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
-            dataWriter.write(SAMPLE_DATA_TEXT);
-            dataWriter.close();
-            Context context = createContext(getQueryActionXml(query));
-            final String launcherId = submitAction(context, Namespace.getNamespace("uri:oozie:hive2-action:0.2"));
-            waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-            Configuration conf = new XConfiguration();
-            conf.set("user.name", getTestUser());
-            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
-                    conf);
-            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
-            Hive2ActionExecutor ae = new Hive2ActionExecutor();
-            ae.check(context, context.getAction());
-            assertTrue(launcherId.equals(context.getAction().getExternalId()));
-            assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
-            ae.end(context, context.getAction());
-            assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
-            assertNull(context.getExternalChildIDs());
-        }
+    }
+
+    public void testHive2ActionFails() throws Exception {
+        setupHiveServer2();
+        Path inputDir = new Path(getFsTestCaseDir(), INPUT_DIRNAME);
+        Path outputDir = new Path(getFsTestCaseDir(), OUTPUT_DIRNAME);
+        FileSystem fs = getFileSystem();
+
+        String query = getHive2BadScript(inputDir.toString(), outputDir.toString());
+        Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+        dataWriter.write(SAMPLE_DATA_TEXT);
+        dataWriter.close();
+        Context context = createContext(getQueryActionXml(query));
+        final String launcherId = submitAction(context, Namespace.getNamespace("uri:oozie:hive2-action:0.2"));
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+        Configuration conf = new XConfiguration();
+        conf.set("user.name", getTestUser());
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                conf);
+        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        Hive2ActionExecutor ae = new Hive2ActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
+        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+        assertNull(context.getExternalChildIDs());
     }
 
     private String getHive2BadScript(String inputPath, String outputPath) {
