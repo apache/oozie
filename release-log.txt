@@ -1,5 +1,6 @@
 -- Oozie 4.3.0 release
 
+OOZIE-2720 Test failure - TestCoordMaterializeTriggerService#testMaxMatThrottleNotPicked (gezapeti via rohini)
 OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)
 OOZIE-2723 JSON.org license is now CatX (rkanter, abhishekbafna via shwethags)
 OOZIE-2725 Upgrade Tomcat to 6.0.47 for the latest security fixes (rkanter via shwethags)
