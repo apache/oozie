@@ -36,7 +36,8 @@ class TestConfigurations {
 
         yarnConfig.setBoolean(YarnConfiguration.AUTO_FAILOVER_ENABLED, false);
         yarnConfig.set(YarnConfiguration.RM_WEBAPP_ADDRESS, "localhost:0");
-
+        yarnConfig.set(YarnConfiguration.NM_VCORES, "16");
+        yarnConfig.set(YarnConfiguration.NM_PMEM_MB, "16000");
         return yarnConfig;
     }
 
@@ -56,10 +57,10 @@ class TestConfigurations {
         return jobConf;
     }
 
-    JobConf createPristineJobConf(final String jobTrackerUri, final String nameNodeUri) {
+    JobConf createPristineJobConf(final String resouceManagerUri, final String nameNodeUri) {
         final JobConf jobConf = new JobConf();
 
-        jobConf.set("mapred.job.tracker", jobTrackerUri);
+        jobConf.set("yarn.resourcemanager.address", resouceManagerUri);
         jobConf.set("fs.default.name", nameNodeUri);
 
         return jobConf;
