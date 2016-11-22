@@ -19,7 +19,6 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,15 +28,9 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -77,7 +70,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         assertEquals(classes, ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<hive2>" +
-            "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+            "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
             "<name-node>" + getNameNodeUri() + "</name-node>" +
             "<jdbc-url>jdbc:hive2://foo:1234/bar</jdbc-url>" +
             "<password>pass</password>" +
@@ -119,7 +112,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
 
         String sampleQuery = "SELECT count(*) from foobar";
         Element actionXml = XmlUtils.parseXml("<hive2  xmlns=\"uri:oozie:hive2-action:0.2\">" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<jdbc-url>jdbc:hive2://foo:1234/bar</jdbc-url>" +
                 "<password>pass</password>" +
@@ -176,7 +169,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             "<password>dummy</password>" +
             "<script>" + HIVE_SCRIPT_FILENAME + "</script>" +
             "</hive2>";
-        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
+        return MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
     }
 
     private String getQueryActionXml(String query) {
@@ -186,7 +179,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         "<configuration></configuration>" +
         "<jdbc-url>{2}</jdbc-url>" +
         "<password>dummy</password>";
-        String expanded = MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
+        String expanded = MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri(), getHiveServer2JdbcURL(""));
         // MessageFormat strips single quotes, which causes issues with the hive query parser
         return expanded +
             "<query>" + query + "</query>" + "</hive2>";

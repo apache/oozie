@@ -165,7 +165,7 @@ public class TestCoordJobsToBeMaterializedJPAExecutor extends XFsTestCase {
         final OozieClient coordClient = LocalOozie.getCoordClient();
         Properties conf = coordClient.createConfiguration();
         conf.setProperty(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
-        conf.setProperty("jobTracker", getJobTrackerUri());
+        conf.setProperty("jobTracker", getResourceManagerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("wfAppPath", wfAppPath.toString());
         conf.remove("user.name");

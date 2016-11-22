@@ -21,16 +21,10 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.SparkConfigurationService;
 import org.apache.oozie.service.WorkflowAppService;
@@ -49,7 +43,6 @@ import java.io.Writer;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -92,7 +85,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         SparkConfigurationService scs = Services.get().get(SparkConfigurationService.class);
         scs.destroy();
         ConfigurationService.set("oozie.service.SparkConfigurationService.spark.configurations",
-                getJobTrackerUri() + "=" + sparkConfDir.getAbsolutePath());
+                getResourceManagerUri() + "=" + sparkConfDir.getAbsolutePath());
         scs.init(Services.get());
 
         _testSetupMethods("local[*]", new HashMap<String, String>(), "client");
@@ -109,7 +102,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         assertEquals(Arrays.asList(SparkMain.class), ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<spark>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<master>" + master + "</master>" +
                 (mode != null ? "<mode>" + mode + "</mode>" : "") +
@@ -162,7 +155,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
                 "<arg>" + getAppPath() + "/" + OUTPUT + "</arg>" +
                 "<spark-opts>--conf " +SPARK_TESTING_MEMORY+"</spark-opts>"+
                 "</spark>";
-        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
+        return MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri());
     }
 
 

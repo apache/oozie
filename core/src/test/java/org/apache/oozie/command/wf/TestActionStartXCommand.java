@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -48,7 +47,6 @@ import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQ
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
@@ -331,7 +329,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
         + getNameNodeUri() + "</name-node>" + "<configuration>"
         + "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName()
         + "</value></property>" +
@@ -417,7 +415,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName()
                 + "</value></property>" + "<property><name>mapred.reducer.class</name><value>"
@@ -524,7 +522,7 @@ public class TestActionStartXCommand extends XDataTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName()
                 + "</value></property>" + "<property><name>mapred.reducer.class</name><value>"

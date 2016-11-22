@@ -22,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -32,22 +31,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
 import org.jdom.Namespace;
 
 public class TestHiveActionExecutor extends ActionExecutorTestCase {
@@ -113,7 +104,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         "</configuration>" +
         "<script>" + HIVE_SCRIPT_FILENAME + "</script>" +
         "</hive>";
-        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
+        return MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri());
     }
 
     private String getActionQueryXml(String query) {
@@ -142,7 +133,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             "<value>DEBUG</value>" +
             "</property>" +
             "</configuration>";
-        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri())
+        return MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri())
             + "<query>" + query + "</query>" +
             "</hive>";
     }

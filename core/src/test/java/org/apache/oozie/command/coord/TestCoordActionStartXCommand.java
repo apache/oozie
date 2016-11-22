@@ -198,7 +198,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         jobConf.setProperty(OozieClient.COORDINATOR_APP_PATH, coordAppPath.toString());
         jobConf.setProperty(OozieClient.USER_NAME, getTestUser());
         jobConf.setProperty(OozieClient.GROUP_NAME, getTestGroup());
-        jobConf.setProperty("myJobTracker", getJobTrackerUri());
+        jobConf.setProperty("myJobTracker", getResourceManagerUri());
         jobConf.setProperty("myNameNode", getNameNodeUri());
         jobConf.setProperty("wfAppPath", new Path(wfAppPath, "workflow.xml").toString());
         jobConf.setProperty("mrclass", MapperReducerForTest.class.getName());

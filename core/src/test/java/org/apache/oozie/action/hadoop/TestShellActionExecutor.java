@@ -26,16 +26,10 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.PropertiesUtils;
@@ -81,7 +75,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     public void testSetupMethods() throws Exception {
         ShellActionExecutor ae = new ShellActionExecutor();
         assertNull(ae.getLauncherClasses());
-        Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+        Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>SCRIPT</exec>"
                 + "<argument>a=A</argument>" + "<argument>b=B</argument>" + "</shell>");
 
@@ -123,7 +117,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         // Create sample Shell action xml
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
                 + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
                 + "<env-var>var1=val1</env-var>" + "<env-var>var2=val2</env-var>" + "<file>" + script.toString()
@@ -149,7 +143,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         // Create sample Shell action xml
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>oozie.action.shell.setup.hadoop.conf.dir</name><value>true</value></property>"
                 + "</configuration>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
@@ -193,7 +187,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         // Create sample Shell action xml
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>oozie.action.shell.setup.hadoop.conf.dir</name><value>true</value></property>"
                 + "<property><name>oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties"
@@ -223,7 +217,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         // Create sample shell action xml
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
                 + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>" + "<file>"
                 + script.toString() + "#" + script.getName() + "</file>" + "</shell>";
@@ -249,7 +243,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         w.write(PERL_SCRIPT_CONTENT);
         w.close();
         // Create a Sample Shell action using the perl script
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>perl</exec>" + "<argument>script.pl</argument>"
                 + "<argument>A</argument>" + "<argument>B</argument>" + "<env-var>my_var1=my_val1</env-var>" + "<file>"
                 + script.toString() + "#" + script.getName() + "</file>" + "<capture-output/>" + "</shell>";
@@ -276,7 +270,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
 
         String envValueHavingEqualSign = "a=b;c=d";
         // Create sample shell action xml
-        String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<shell>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
                 + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
                 + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>" + script.toString()

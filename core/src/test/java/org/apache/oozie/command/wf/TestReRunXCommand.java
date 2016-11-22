@@ -144,7 +144,7 @@ public class TestReRunXCommand extends XDataTestCase {
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
         conf.setProperty("nameNode", getNameNodeUri());
-        conf.setProperty("jobTracker", getJobTrackerUri());
+        conf.setProperty("jobTracker", getResourceManagerUri());
         conf.setProperty(OozieClient.APP_PATH, getTestCaseFileUri("workflow.xml"));
         conf.setProperty(OozieClient.USER_NAME, getTestUser());
         conf.setProperty("cmd4", "echo1");      //expected to fail

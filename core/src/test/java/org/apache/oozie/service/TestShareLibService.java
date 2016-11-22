@@ -175,7 +175,7 @@ public class TestShareLibService extends XFsTestCase {
 
         try {
             services.init();
-            String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "</java>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
             XConfiguration protoConf = new XConfiguration();
@@ -203,7 +203,7 @@ public class TestShareLibService extends XFsTestCase {
         conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
         try {
             services.init();
-            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "</pig>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
             XConfiguration protoConf = new XConfiguration();
@@ -249,7 +249,7 @@ public class TestShareLibService extends XFsTestCase {
 
         try {
             services.init();
-            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>"
                     + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
@@ -537,7 +537,7 @@ public class TestShareLibService extends XFsTestCase {
             createFile(libpath.toString() + Path.SEPARATOR + "pig_10" + Path.SEPARATOR + "pig-10.jar");
             createFile(libpath.toString() + Path.SEPARATOR + "oozie" + Path.SEPARATOR + "oozie_luncher.jar");
 
-            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>"
                     + "<property><name>oozie.action.sharelib.for.pig</name><value>pig_10</value></property>" + "</pig>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
@@ -718,7 +718,7 @@ public class TestShareLibService extends XFsTestCase {
 
     private URI[] setUpPigJob(boolean useSystemSharelib) throws Exception {
         services.init();
-        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node></pig>";
         Element eActionXml = XmlUtils.parseXml(actionXml);
         XConfiguration protoConf = new XConfiguration();
@@ -863,7 +863,7 @@ public class TestShareLibService extends XFsTestCase {
 
             // Test hive-site.xml not in distributed cache
             setupSharelibConf("hive-site.xml", "oozie.hive_conf");
-            String actionXml = "<hive>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<hive>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "<script>test</script>" + "</hive>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
 
@@ -943,7 +943,7 @@ public class TestShareLibService extends XFsTestCase {
             prop.put("oozie.hive_conf", "/user/test/" + sharelibPath + "/hive-site.xml#hive-site.xml");
             setupSharelibConf("hive-site.xml", "oozie.hive_conf", prop);
 
-            String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "<script>test</script>" + "</pig>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
             XConfiguration protoConf = new XConfiguration();

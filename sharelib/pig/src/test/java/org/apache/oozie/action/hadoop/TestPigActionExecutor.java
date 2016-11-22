@@ -92,7 +92,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         assertEquals(classes, ae.getLauncherClasses());
 
         Element actionXml = XmlUtils.parseXml("<pig>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<script>SCRIPT</script>" +
                 "<param>a=A</param>" +
@@ -342,7 +342,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         String actionXml = "<pig>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 setPigConfig(writeStats).toXmlString(false) +
                 "<script>" + script.getName() + "</script>" +
@@ -376,7 +376,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         w.close();
 
         String actionXml = "<pig>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 setPigConfig(true).toXmlString(false) +
                 "<script>" + script.getName() + "</script>" +
@@ -421,7 +421,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(rootArchive).close();
 
         String actionXml = "<pig>" +
-                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "      <job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "      <name-node>" + getNameNodeUri() + "</name-node>" +
                 "      <script>id.pig</script>" +
                 "      <file>" + jar.toString() +

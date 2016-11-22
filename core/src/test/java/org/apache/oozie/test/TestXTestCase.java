@@ -193,7 +193,7 @@ public class TestXTestCase extends TestCase {
                 setSystemProperty(TestConstants.OOZIE_TEST_NAME_NODE, "hdfs://xyz:9000");
                 setSystemProperty(TestConstants.OOZIE_TEST_JOB_TRACKER, "xyz:9001");
                 assertEquals("hdfs://xyz:9000", getNameNodeUri());
-                assertEquals("xyz:9001", getJobTrackerUri());
+                assertEquals("xyz:9001", getResourceManagerUri());
             }
         }
 

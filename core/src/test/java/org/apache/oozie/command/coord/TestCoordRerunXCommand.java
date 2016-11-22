@@ -1083,7 +1083,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         final OozieClient coordClient = LocalOozie.getCoordClient();
         Properties conf = coordClient.createConfiguration();
         conf.setProperty(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
-        conf.setProperty("jobTracker", getJobTrackerUri());
+        conf.setProperty("jobTracker", getResourceManagerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("wfAppPath", wfAppPath.toString());
         conf.remove("user.name");
@@ -1293,7 +1293,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         final OozieClient coordClient = LocalOozie.getCoordClient();
         Properties conf = coordClient.createConfiguration();
         conf.setProperty(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
-        conf.setProperty("jobTracker", getJobTrackerUri());
+        conf.setProperty("jobTracker", getResourceManagerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("wfAppPath", wfAppPath.toString());
         conf.remove("user.name");
@@ -1306,7 +1306,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
                 "<start to='java' />" +
                 "       <action name='java'>" +
                 "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + JavaSleepAction.class.getName() + "</main-class>" +
                 "<arg>exit0</arg>" +
