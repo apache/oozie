@@ -23,6 +23,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
 import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
@@ -53,13 +56,12 @@ public class LauncherMainHadoopUtils {
         System.out.println("tag id : " + tag);
         long startTime = 0L;
         try {
-            try {
-                if(actionConf.get(OOZIE_JOB_LAUNCH_TIME) != null) {
-                    startTime = Long.parseLong(actionConf.get(OOZIE_JOB_LAUNCH_TIME));
-                }
-                else {
-                    startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
-                }
+            if(actionConf.get(OOZIE_JOB_LAUNCH_TIME) != null) {
+                startTime = Long.parseLong(actionConf.get(OOZIE_JOB_LAUNCH_TIME));
+            }
+            else {
+                startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+            }
         } catch(NumberFormatException nfe) {
             throw new RuntimeException("Could not find Oozie job launch time", nfe);
         }
