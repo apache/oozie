@@ -36,6 +36,7 @@ FINDBUGS_XML_NAME=findbugsXml.xml
 cleanup_and_exit() {
   remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}"
   remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum"
 
   exit "$1"
 }
@@ -177,16 +178,27 @@ download_and_check_findbugs_diff_jar() {
   if hash md5 2>/dev/null; then
     md5 -q "${DIFF_DIR}/${FINDBUGS_JAR}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
   elif hash md5sum 2>/dev/null; then
-    md5sum "${DIFF_DIR}/${FINDBUGS_JAR}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+    md5Content=($(md5sum "${DIFF_DIR}/${FINDBUGS_JAR}"))
+    echo "${md5Content}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum"
   else
     echo "[ERROR] Neither md5 nor md5sum are present, cannot check FindBugs diff JAR"
     echo "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR." >> "${SUMMARYFILE}"
     cleanup_and_exit 1
   fi
 
-  jarMd5DiffCount=$(grep -Fxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5" "${DIFF_DIR}/${FINDBUGS_JAR}.md5" | wc -l)
+  if hash md5 2>/dev/null; then
+    jarMd5DiffCount=$(grep -Fxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5" "${DIFF_DIR}/${FINDBUGS_JAR}.md5" | wc -l)
+  elif hash md5sum 2>/dev/null; then
+    jarMd5DiffCount=$(grep -Fxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5sum" "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum" | wc -l)
+  fi
 
   if [ ${jarMd5DiffCount} -gt "0" ]; then
+    if hash md5 2>/dev/null; then
+      echo "[TRACE] md5 of FindBugs diff jar is " < cat ${DIFF_DIR}/${FINDBUGS_JAR}.md5
+    elif hash md5sum 2>/dev/null; then
+      echo "[TRACE] md5sum of FindBugs diff jar is " < cat ${DIFF_DIR}/${FINDBUGS_JAR}.md5sum
+    fi
+
     echo "[ERROR] FindBugs diff JAR has a weird MD5 sum, rejecting"
     echo "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting." >> "${SUMMARYFILE}"
     cleanup_and_exit 1
@@ -256,8 +268,16 @@ check_findbugs_diffs_and_create_reports() {
     htmlFileName=${componentDir%%.xml}.html
     componentDir=${componentDir%%/findbugs-new.xml}
 
-    newBugTotalCount=$(xmllint --xpath "count(/BugCollection/BugInstance)" "${fn}")
-    newBugBelowThresholdCount=$(xmllint --xpath "count(/BugCollection/BugInstance[@priority <= ${FINDBUGS_PRIORITY_THRESHOLD} or @rank <= ${FINDBUGS_RANK_THRESHOLD}])" "${fn}")
+    xmlLintXPathCompatible=$(xmllint | grep -e '\-\-xpath' | wc -l)
+    if [ "${xmlLintXPathCompatible}" -eq "0" ]; then
+      echo "[TRACE] Old XMLLib present, calling 'xmllint --shell' to get bug instance counts"
+      newBugTotalCount=$(xmllint --shell "${fn}" <<< 'xpath count(/BugCollection/BugInstance)' | grep -oE '[^ ]+$')
+      newBugBelowThresholdCount=$(xmllint --shell "${fn}" <<< 'xpath count(/BugCollection/BugInstance[@priority <= "${FINDBUGS_PRIORITY_THRESHOLD}" or @rank <= "${FINDBUGS_RANK_THRESHOLD}"])' | grep -oE '[^ ]+$')
+    else
+      echo "[TRACE] New XMLLib present, calling 'xmllint --xpath' to get bug instance counts"
+      newBugTotalCount=$(xmllint --xpath "count(/BugCollection/BugInstance)" "${fn}")
+      newBugBelowThresholdCount=$(xmllint --xpath "count(/BugCollection/BugInstance[@priority <= ${FINDBUGS_PRIORITY_THRESHOLD} or @rank <= ${FINDBUGS_RANK_THRESHOLD}])" "${fn}")
+    fi
 
     belowThresholdCount=$((belowThresholdCount + newBugBelowThresholdCount))
     totalCount=$((totalCount + newBugTotalCount))
