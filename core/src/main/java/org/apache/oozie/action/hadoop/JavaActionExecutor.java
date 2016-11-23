@@ -25,6 +25,7 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.PrivilegedExceptionAction;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
@@ -69,6 +71,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
+import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.ELEvaluator;
@@ -1594,7 +1597,7 @@ public class JavaActionExecutor extends ActionExecutor {
         boolean exception = false;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            JobConf jobConf = createBaseHadoopConf(context, actionXml);
+            final JobConf jobConf = createBaseHadoopConf(context, actionXml);
             WorkflowJob wfJob = context.getWorkflow();
             Configuration conf = null;
             if ( wfJob.getConf() != null ) {
@@ -1603,7 +1606,15 @@ public class JavaActionExecutor extends ActionExecutor {
             String launcherTag = LauncherMapperHelper.getActionYarnTag(conf, wfJob.getParentId(), action);
             jobConf.set(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS, LauncherMapperHelper.getTag(launcherTag));
             jobConf.set(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME, Long.toString(action.getStartTime().getTime()));
-            LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
+            UserGroupInformation ugi = Services.get().get(UserGroupInformationService.class)
+                    .getProxyUser(context.getWorkflow().getUser());
+            ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
+                public Void run() throws Exception {
+                    LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
+                    return null;
+                }
+            });
             jobClient = createJobClient(context, jobConf);
             RunningJob runningJob = getRunningJob(context, action, jobClient);
             if (runningJob != null) {

@@ -11,6 +11,7 @@ OOZIE-2634 Queue dump command message is confusing when the queue is empty (andr
 
 -- Oozie 4.3.0 release
 
+OOZIE-2742 Unable to kill applications based on tag (satishsaley via rohini)
 OOZIE-2720 Test failure - TestCoordMaterializeTriggerService#testMaxMatThrottleNotPicked (gezapeti via rohini)
 OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)
 OOZIE-2723 JSON.org license is now CatX (rkanter, abhishekbafna via shwethags)
