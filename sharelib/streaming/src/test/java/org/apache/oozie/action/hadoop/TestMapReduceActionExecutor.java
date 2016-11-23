@@ -52,6 +52,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.streaming.StreamJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -494,6 +495,12 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertTrue(MapperReducerCredentialsForTest.hasCredentials(mrJob));
     }
 
+    protected XConfiguration getSleepMapReduceConfig(String inputDir, String outputDir) {
+        XConfiguration conf = getMapReduceConfig(inputDir, outputDir);
+        conf.set("mapred.mapper.class", BlockingMapper.class.getName());
+        return conf;
+    }
+
     protected XConfiguration getMapReduceConfig(String inputDir, String outputDir) {
         XConfiguration conf = new XConfiguration();
         conf.set("mapred.mapper.class", MapperReducerForTest.class.getName());
@@ -652,6 +659,44 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
         assertEquals("doh", errorProps.getProperty("exception.message"));
         assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
+    }
+
+    public void testMapReduceActionKill() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+                + getNameNodeUri() + "</name-node>"
+                + getSleepMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
+
+        Context context = createContext(MAP_REDUCE, actionXml);
+        final String launcherId = submitAction(context);
+        // wait until LauncherAM terminates - the MR job keeps running the background
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+
+        MapReduceActionExecutor mae = new MapReduceActionExecutor();
+        mae.check(context, context.getAction());  // must be called so that externalChildIDs are read from HDFS
+        JobConf conf = mae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
+        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
+
+        mae.kill(context, context.getAction());
+
+        waitFor(10_000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return mrJob.isComplete();
+            }
+        });
+        assertEquals(JobStatus.State.KILLED, mrJob.getJobStatus().getState());
     }
 
     public void testMapReduceWithCredentials() throws Exception {

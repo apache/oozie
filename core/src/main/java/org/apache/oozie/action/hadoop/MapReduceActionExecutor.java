@@ -50,6 +50,11 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Closeables;
+
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
     public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
@@ -401,16 +406,15 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+    public void kill(final Context context, final WorkflowAction action) throws ActionExecutorException {
         // Kill the LauncherAM which submits the MR job
         super.kill(context, action);
 
         // We have to check whether the MapReduce execution has started or not. If it has started, then we have to get
         // the YARN ApplicationID based on the tag and kill it as well
-
-        // TODO: this must be tested in TestMapReduceActionExecutor
+        YarnClient yarnClient = null;
         try {
-            String tag = ActionExecutor.getActionYarnTag(new Configuration(), context.getWorkflow(), action);
+            String tag = LauncherMapperHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(), context.getWorkflow(), action));
             GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
             gar.setScope(ApplicationsRequestScope.ALL);
             gar.setApplicationTags(Collections.singleton(tag));
@@ -420,16 +424,34 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             GetApplicationsResponse apps = proxy.getApplications(gar);
             List<ApplicationReport> appsList = apps.getApplicationList();
 
-            YarnClient yarnClient = YarnClient.createYarnClient();
-            yarnClient.init(actionConf);
-            yarnClient.start();
+            if (appsList.size() > 1) {
+                String applications = Joiner.on(",").join(Iterables.transform(appsList, new Function<ApplicationReport, String>() {
+                    @Override
+                    public String apply(ApplicationReport input) {
+                        return input.toString();
+                    }
+                }));
 
-            for (ApplicationReport app : appsList) {
-                LOG.info("Killing MapReduce job {0}", app.getApplicationId().toString());
+                LOG.error("Too many applications were returned: {0}", applications);
+                throw new IllegalArgumentException("Too many applications were returned");
+            } else if (appsList.size() == 1) {
+
+                yarnClient = YarnClient.createYarnClient();
+                yarnClient.init(actionConf);
+                yarnClient.start();
+
+                ApplicationReport app = appsList.get(0);
+                LOG.info("Killing MapReduce job {0}, YARN Id: {1}", action.getExternalChildIDs(), app.getApplicationId().toString());
                 yarnClient.killApplication(app.getApplicationId());
+            } else {
+                LOG.info("No MapReduce job to kill");
             }
         } catch (Exception e) {
             throw convertException(e);
+        } finally {
+            if (yarnClient != null) {
+                Closeables.closeQuietly(yarnClient);
+            }
         }
     }
 

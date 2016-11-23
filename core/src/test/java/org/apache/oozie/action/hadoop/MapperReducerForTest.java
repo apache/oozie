@@ -30,7 +30,7 @@ import org.apache.hadoop.mapred.Reducer;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class MapperReducerForTest implements Mapper, Reducer {
+public class MapperReducerForTest implements Mapper<Object, Object, Object, Object>, Reducer<Object, Object, Object, Object> {
     public static final String GROUP = "g";
     public static final String NAME = "c";
     /**
@@ -66,14 +66,14 @@ public class MapperReducerForTest implements Mapper, Reducer {
     public void close() throws IOException {
     }
 
-    @SuppressWarnings("unchecked")
-    public void map(Object key, Object value, OutputCollector collector, Reporter reporter) throws IOException {
+    @Override
+    public void map(Object key, Object value, OutputCollector<Object, Object> collector, Reporter reporter) throws IOException {
         collector.collect(key, value);
         reporter.incrCounter(GROUP, NAME, 5l);
     }
 
-    @SuppressWarnings("unchecked")
-    public void reduce(Object key, Iterator values, OutputCollector collector, Reporter reporter)
+    @Override
+    public void reduce(Object key, Iterator<Object> values, OutputCollector<Object, Object> collector, Reporter reporter)
             throws IOException {
         while (values.hasNext()) {
             collector.collect(key, values.next());
