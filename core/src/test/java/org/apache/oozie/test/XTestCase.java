@@ -44,14 +44,15 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.authorize.ProxyUsers;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.exceptions.YarnException;
-import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
+import org.apache.oozie.action.hadoop.YarnJobActions;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -666,17 +667,25 @@ public abstract class XTestCase extends TestCase {
     private static void shutdownMiniCluster() {
         try {
             if (yarnCluster != null) {
+                final YarnJobActions yarnJobActions =
+                        new YarnJobActions.Builder(yarnCluster.getConfig(), ApplicationsRequestScope.ALL)
+                                .build();
+                final Set<ApplicationId> allYarnJobs = yarnJobActions.getYarnJobs();
+
+                yarnJobActions.killSelectedYarnJobs(allYarnJobs);
+
                 yarnCluster.stop();
             }
         } catch (final Exception ex) {
-            System.out.println(ex);
+            System.out.println(ex.getMessage());
         }
+
         try {
             if (dfsCluster != null) {
                 dfsCluster.shutdown();
             }
         } catch (final Exception ex) {
-            System.out.println(ex);
+            System.out.println(ex.getMessage());
         }
         // This is tied to the MiniCluster because it inherits configs from there
         hs2Config = null;

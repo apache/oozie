@@ -217,7 +217,7 @@ public class PigMain extends LauncherMain {
             System.out.println("             " + arg);
         }
 
-        LauncherMain.killChildYarnJobs(actionConf);
+        YarnJobActions.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();

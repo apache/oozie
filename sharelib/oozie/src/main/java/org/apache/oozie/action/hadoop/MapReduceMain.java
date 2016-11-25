@@ -50,7 +50,7 @@ public class MapReduceMain extends LauncherMain {
 
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
-        LauncherMain.killChildYarnJobs(jobConf);
+        YarnJobActions.killChildYarnJobs(jobConf);
 
         // Run a config class if given to update the job conf
         runConfigClass(jobConf);

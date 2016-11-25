@@ -85,7 +85,7 @@ public class SparkMain extends LauncherMain {
         prepareHadoopConfig(actionConf);
 
         setYarnTag(actionConf);
-        LauncherMain.killChildYarnJobs(actionConf);
+        YarnJobActions.killChildYarnJobs(actionConf);
         String logFile = setUpSparkLog4J(actionConf);
         List<String> sparkArgs = new ArrayList<String>();
 

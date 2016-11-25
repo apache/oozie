@@ -224,7 +224,7 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 wfAction.setErrorInfo(null, null);
                 incrActionCounter(wfAction.getType(), 1);
 
-                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
+                LOG.info("Start action [{0}] with user-retry state   : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
                                 wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
                                         .getUserRetryInterval());
 
