@@ -339,6 +339,11 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
+    protected boolean needToAddMRJars() {
+        return true;
+    }
+
+    @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         Map<String, String> actionData = Collections.emptyMap();
         JobConf jobConf = null;

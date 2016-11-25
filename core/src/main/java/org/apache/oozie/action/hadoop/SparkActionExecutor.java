@@ -153,6 +153,16 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
+    protected boolean needToAddMRJars() {
+        return true;
+    }
+
+    @Override
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        env.put("SPARK_HOME", ".");
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SPARK_MAIN_CLASS_NAME);
     }

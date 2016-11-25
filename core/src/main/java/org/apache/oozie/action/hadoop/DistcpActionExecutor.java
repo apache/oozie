@@ -107,6 +107,11 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     }
 
     @Override
+    protected boolean needToAddMRJars() {
+        return true;
+    }
+
+    @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS);
     }

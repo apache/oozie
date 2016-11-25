@@ -133,6 +133,11 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
+    protected boolean needToAddMRJars() {
+        return true;
+    }
+
+    @Override
     protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
         boolean loadDefaultResources = ConfigurationService
                 .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);

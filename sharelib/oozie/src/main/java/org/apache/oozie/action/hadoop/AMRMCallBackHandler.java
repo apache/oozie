@@ -53,7 +53,7 @@ public class AMRMCallBackHandler implements AMRMClientAsync.CallbackHandler {
 
     @Override
     public float getProgress() {
-        return 0.5f;    //TODO: OYA: maybe some action types can report better progress?
+        return 0.5f;
     }
 
     @Override

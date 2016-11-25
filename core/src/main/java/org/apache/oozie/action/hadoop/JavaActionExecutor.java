@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -144,7 +144,6 @@ public class JavaActionExecutor extends ActionExecutor {
     protected static final String HADOOP_USER = "user.name";
 
     protected XLog LOG = XLog.getLog(getClass());
-    private static final Pattern heapPattern = Pattern.compile("-Xmx(([0-9]+)[mMgG])");
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
 
     public XConfiguration workflowConf = null;
@@ -914,7 +913,6 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     public void submitLauncher(FileSystem actionFs, final Context context, WorkflowAction action) throws ActionExecutorException {
-        JobClient jobClient = null;
         boolean exception = false;
         YarnClient yarnClient = null;
         try {
@@ -1054,20 +1052,6 @@ public class JavaActionExecutor extends ActionExecutor {
             if (yarnClient != null) {
                 Closeables.closeQuietly(yarnClient);
             }
- 
-            if (jobClient != null) {
-                try {
-                    jobClient.close();
-                }
-                catch (Exception e) {
-                    if (exception) {
-                        LOG.error("JobClient error: ", e);
-                    }
-                    else {
-                        throw convertException(e);
-                    }
-                }
-            }
         }
     }
 
@@ -1107,23 +1091,17 @@ public class JavaActionExecutor extends ActionExecutor {
         ClasspathUtils.setupClasspath(env, launcherJobConf);
 
         // FIXME: move this to specific places where it's actually needed - keeping it here for now
-        ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        if (needToAddMRJars()) {
+            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        }
 
-        // FIXME: Pyspark fix
-        // FIXME: Do we want to support mapred.child.env?
-        env.put("SPARK_HOME", ".");
-
-        amContainer.setEnvironment(env);
+        addActionSpecificEnvVars(env);
+        amContainer.setEnvironment(Collections.unmodifiableMap(env));
 
         // Set the command
         List<String> vargs = new ArrayList<String>(6);
         vargs.add(MRApps.crossPlatformifyMREnv(launcherJobConf, ApplicationConstants.Environment.JAVA_HOME)
                 + "/bin/java");
-        // TODO: OYA: remove attach debugger to AM; useful for debugging
-//                    vargs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
-
-        // FIXME: decide what to do with this method call - signature keeps changing
-        // MRApps.addLog4jSystemProperties("INFO", 1024 * 1024, 0, vargs, null);
 
         vargs.add("-Dlog4j.configuration=container-log4j.properties");
         vargs.add("-Dlog4j.debug=true");
@@ -1143,8 +1121,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
 
         List<String> vargsFinal = ImmutableList.of(mergedCommand.toString());
-        LOG.debug("Command to launch container for ApplicationMaster is : "
-                + mergedCommand);
+        LOG.debug("Command to launch container for ApplicationMaster is: {0}", mergedCommand);
         amContainer.setCommands(vargsFinal);
         appContext.setAMContainerSpec(amContainer);
 
@@ -1379,6 +1356,22 @@ public class JavaActionExecutor extends ActionExecutor {
      */
     protected String getActualExternalId(WorkflowAction action) {
         return action.getExternalId();
+    }
+
+    /**
+     * If returns true, it means that we have to add Hadoop MR jars to the classpath. Subclasses should override this method if necessary.
+     *
+     */
+    protected boolean needToAddMRJars() {
+        return false;
+    }
+
+    /**
+     * Adds action-specific environment variables. Default implementation is no-op. Subclasses should override this method if necessary.
+     *
+     */
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        // nop
     }
 
     @Override

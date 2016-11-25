@@ -225,6 +225,10 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         }
     }
 
+    @Override
+    protected boolean needToAddMRJars() {
+        return true;
+    }
 
     /**
      * Return the sharelib name for the action.

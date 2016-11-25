@@ -56,7 +56,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Properties;
 
@@ -137,7 +137,7 @@ public class TestLauncherAM {
     private ExpectedFailureDetails failureDetails = new ExpectedFailureDetails();
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws Exception {
         configureMocksForHappyPath();
         launcherJobConfig.set(LauncherMapper.OOZIE_ACTION_RECOVERY_ID, "1");
         instantiateLauncher();
@@ -182,6 +182,20 @@ public class TestLauncherAM {
         verifyZeroInteractions(prepareHandlerMock);
         assertSuccessfulExecution(OozieActionResult.SUCCEEDED);
         assertNoActionOutputData();
+    }
+
+    @Test
+    public void testLauncherClassNotDefined() throws Exception {
+        launcherJobConfig.unset(LauncherAM.CONF_OOZIE_ACTION_MAIN_CLASS);
+
+        executeLauncher();
+
+        failureDetails.expectedExceptionMessage("Launcher class should not be null")
+            .expectedErrorCode(EXIT_CODE_0)
+            .expectedErrorReason("Launcher class should not be null")
+            .withStackTrace();
+
+        assertFailedExecution();
     }
 
     @Test
@@ -394,7 +408,7 @@ public class TestLauncherAM {
 
         failureDetails.expectedExceptionMessage("IO error")
             .expectedErrorCode(EXIT_CODE_0)
-            .expectedErrorReason("IO error, IO error")
+            .expectedErrorReason("IO error")
             .withStackTrace();
 
         assertFailedExecution();
@@ -419,7 +433,7 @@ public class TestLauncherAM {
 
         failureDetails.expectedExceptionMessage("IO error")
             .expectedErrorCode(EXIT_CODE_0)
-            .expectedErrorReason("IO error, IO error")
+            .expectedErrorReason("IO error")
             .withStackTrace();
 
         verify(hdfsOperationsMock).readFileContents(any(Path.class), eq(launcherJobConfig));
@@ -452,8 +466,8 @@ public class TestLauncherAM {
                 containerId);
     }
 
-    @SuppressWarnings("unchecked")
-    private void configureMocksForHappyPath() throws IOException {
+     @SuppressWarnings("unchecked")
+    private void configureMocksForHappyPath() throws Exception {
         launcherJobConfig.set(LauncherAM.OOZIE_ACTION_DIR_PATH, "dummy");
         launcherJobConfig.set(LauncherAM.OOZIE_JOB_ID, "dummy");
         launcherJobConfig.set(LauncherAM.OOZIE_ACTION_ID, "dummy");
@@ -461,12 +475,11 @@ public class TestLauncherAM {
 
         given(localFsOperationsMock.readLauncherConf()).willReturn(launcherJobConfig);
         given(localFsOperationsMock.fileExists(any(File.class))).willReturn(true);
-
         willReturn(amRmAsyncClientMock).given(amRMClientAsyncFactoryMock).createAMRMClientAsync(anyInt());
-        given(ugiMock.doAs(any(PrivilegedAction.class))).willAnswer(new Answer<Object>() {
+        given(ugiMock.doAs(any(PrivilegedExceptionAction.class))).willAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                PrivilegedAction<?> action = (PrivilegedAction<?>) invocation.getArguments()[0];
+                PrivilegedExceptionAction<?> action = (PrivilegedExceptionAction<?>) invocation.getArguments()[0];
                 return action.run();
             }
         });
@@ -498,7 +511,7 @@ public class TestLauncherAM {
         verify(amRmAsyncClientMock).registerApplicationMaster(anyString(), anyInt(), anyString());
         verify(amRmAsyncClientMock).unregisterApplicationMaster(FinalApplicationStatus.SUCCEEDED, EMPTY_STRING, EMPTY_STRING);
         verify(amRmAsyncClientMock).stop();
-        verify(ugiMock, times(2)).doAs(any(PrivilegedAction.class)); // prepare & action main
+        verify(ugiMock, times(2)).doAs(any(PrivilegedExceptionAction.class)); // prepare & action main
         verify(hdfsOperationsMock).uploadActionDataToHDFS(any(Configuration.class), any(Path.class), any(Map.class));
         verify(launcherCallbackNotifierFactoryMock).createCallbackNotifier(any(Configuration.class));
         verify(launcherCallbackNotifierMock).notifyURL(actionResult);

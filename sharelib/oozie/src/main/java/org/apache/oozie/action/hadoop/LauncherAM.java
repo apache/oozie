@@ -24,7 +24,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Permission;
-import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +42,7 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 public class LauncherAM {
@@ -116,6 +117,8 @@ public class LauncherAM {
         Preconditions.checkArgument(!submitterUser.isEmpty(), "Submitter user is undefined");
         System.out.println("Submitter user is: " + submitterUser);
 
+        // We don't need remote/proxy user if the current login user is the workflow submitter
+        // Otherwise we have to create a remote user
         if (UserGroupInformation.getLoginUser().getShortUserName().equals(submitterUser)) {
             System.out.println("Using login user for UGI");
             ugi = UserGroupInformation.getLoginUser();
@@ -160,31 +163,13 @@ public class LauncherAM {
                 errorHolder.setErrorCause(ex);
                 throw ex;
             }
-
-            registerWithRM();
-
             actionDir = new Path(launcherJobConf.get(OOZIE_ACTION_DIR_PATH));
 
-            try {
-                System.out.println("\nStarting the execution of prepare actions");
-                executePrepare(ugi);
-                System.out.println("Completed the execution of prepare actions successfully");
-            } catch (Exception ex) {
-                errorHolder.setErrorMessage("Prepare execution in the Launcher AM has failed");
-                errorHolder.setErrorCause(ex);
-                throw ex;
-            }
-
+            registerWithRM();
+            executePrepare(ugi, errorHolder);
             final String[] mainArgs = getMainArguments(launcherJobConf);
-
-            // TODO: OYA: should we allow turning this off?
-            // TODO: OYA: what should default be?
-            if (launcherJobConf.getBoolean("oozie.launcher.print.debug.info", true)) {
-                printDebugInfo();
-            }
-
+            printDebugInfo();
             setupMainConfiguration();
-
             launcerExecutedProperly = runActionMain(mainArgs, errorHolder, ugi);
 
             if (launcerExecutedProperly) {
@@ -323,11 +308,12 @@ public class LauncherAM {
     }
 
     // Method to execute the prepare actions
-    private void executePrepare(UserGroupInformation ugi) throws Exception {
-        Exception e = ugi.doAs(new PrivilegedAction<Exception>() {
-            @Override
-            public Exception run() {
-                try {
+    private void executePrepare(UserGroupInformation ugi, ErrorHolder errorHolder) throws Exception {
+        try {
+            System.out.println("\nStarting the execution of prepare actions");
+            ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
+                public Void run() throws Exception {
                     String prepareXML = launcherJobConf.get(ACTION_PREPARE_XML);
                     if (prepareXML != null) {
                         if (prepareXML.length() != 0) {
@@ -338,16 +324,14 @@ public class LauncherAM {
                             System.out.println("There are no prepare actions to execute.");
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return e;
+                    return null;
                 }
-                return null;
-            }
-        });
-
-        if (e != null) {
-            throw e;
+            });
+            System.out.println("Completed the execution of prepare actions successfully");
+        } catch (Exception ex) {
+            errorHolder.setErrorMessage("Prepare execution in the Launcher AM has failed");
+            errorHolder.setErrorCause(ex);
+            throw ex;
         }
     }
 
@@ -366,20 +350,21 @@ public class LauncherAM {
         System.setProperty("oozie.job.launch.time", String.valueOf(System.currentTimeMillis()));
     }
 
-    private boolean runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) {
+    private boolean runActionMain(final String[] mainArgs, final ErrorHolder eHolder, UserGroupInformation ugi) throws Exception {
         // using AtomicBoolean because we want to modify it inside run()
         final AtomicBoolean actionMainExecutedProperly = new AtomicBoolean(false);
 
-        ugi.doAs(new PrivilegedAction<Void>() {
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
             @Override
-            public Void run() {
+            public Void run() throws Exception {
                 try {
                     setRecoveryId();
-                    Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
+                    Class<?> klass = launcherJobConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, null);
+                    Preconditions.checkNotNull(klass, "Launcher class should not be null");
                     System.out.println("Launcher class: " + klass.toString());
                     Method mainMethod = klass.getMethod("main", String[].class);
                     // Enable LauncherSecurityManager to catch System.exit calls
-                    launcherSecurityManager.set();
+                    launcherSecurityManager.enable();
                     mainMethod.invoke(null, (Object) mainArgs);
 
                     System.out.println();
@@ -430,7 +415,7 @@ public class LauncherAM {
                     eHolder.setErrorCause(t);
                 } finally {
                     // Disable LauncherSecurityManager
-                    launcherSecurityManager.unset();
+                    launcherSecurityManager.disable();
                 }
 
                 return null;
@@ -497,7 +482,11 @@ public class LauncherAM {
 
     private void updateActionDataWithFailure(ErrorHolder eHolder, Map<String, String> actionData) {
         if (eHolder.getErrorCause() != null && eHolder.getErrorCause().getMessage() != null) {
-            eHolder.setErrorMessage(eHolder.getErrorMessage() + ", " + eHolder.getErrorCause().getMessage());
+            if (Objects.equal(eHolder.getErrorMessage(), eHolder.getErrorCause().getMessage())) {
+                eHolder.setErrorMessage(eHolder.getErrorMessage());
+            } else {
+                eHolder.setErrorMessage(eHolder.getErrorMessage() + ", " + eHolder.getErrorCause().getMessage());
+            }
         }
 
         Properties errorProps = new Properties();
@@ -553,27 +542,27 @@ public class LauncherAM {
     public static class LauncherSecurityManager extends SecurityManager {
         private boolean exitInvoked;
         private int exitCode;
-        private SecurityManager securityManager;
+        private SecurityManager originalSecurityManager;
 
         public LauncherSecurityManager() {
             exitInvoked = false;
             exitCode = 0;
-            securityManager = System.getSecurityManager();
+            originalSecurityManager = System.getSecurityManager();
         }
 
         @Override
         public void checkPermission(Permission perm, Object context) {
-            if (securityManager != null) {
+            if (originalSecurityManager != null) {
                 // check everything with the original SecurityManager
-                securityManager.checkPermission(perm, context);
+                originalSecurityManager.checkPermission(perm, context);
             }
         }
 
         @Override
         public void checkPermission(Permission perm) {
-            if (securityManager != null) {
+            if (originalSecurityManager != null) {
                 // check everything with the original SecurityManager
-                securityManager.checkPermission(perm);
+                originalSecurityManager.checkPermission(perm);
             }
         }
 
@@ -592,15 +581,15 @@ public class LauncherAM {
             return exitCode;
         }
 
-        public void set() {
+        public void enable() {
             if (System.getSecurityManager() != this) {
                 System.setSecurityManager(this);
             }
         }
 
-        public void unset() {
+        public void disable() {
             if (System.getSecurityManager() == this) {
-                System.setSecurityManager(securityManager);
+                System.setSecurityManager(originalSecurityManager);
             }
         }
     }
