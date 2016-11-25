@@ -117,7 +117,6 @@
          <httpcore.version>4.3.3</httpcore.version>
          <httpclient.version>4.3.6</httpclient.version>
          <kyro.version>2.22</kyro.version>
-         <json.version>20090211</json.version>
     </properties>
 
     <modules>

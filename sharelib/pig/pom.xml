@@ -138,10 +138,6 @@
                     <groupId>org.apache.curator</groupId>
                     <artifactId>curator-recipes</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.json</groupId>
-                    <artifactId>json</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
 

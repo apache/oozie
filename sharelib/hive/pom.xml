@@ -91,10 +91,6 @@
                     <groupId>org.apache.hive</groupId>
                     <artifactId>hive-exec</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.json</groupId>
-                    <artifactId>json</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
 
