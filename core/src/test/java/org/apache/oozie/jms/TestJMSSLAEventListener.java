@@ -56,8 +56,8 @@ public class TestJMSSLAEventListener extends XTestCase {
         conf = services.getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
-        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ACTIVE_MQ_CONN_FACTORY
-                + ";" + "java.naming.provider.url#" + LOCAL_ACTIVE_MQ_BROKER + ";" + "connectionFactoryNames#"
+        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ActiveMQConnFactory
+                + ";" + "java.naming.provider.url#" + localActiveMQBroker + ";" + "connectionFactoryNames#"
                 + "ConnectionFactory");
         services.init();
     }

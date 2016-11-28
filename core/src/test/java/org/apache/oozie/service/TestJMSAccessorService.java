@@ -21,6 +21,7 @@ package org.apache.oozie.service;
 import java.net.URI;
 import java.util.Random;
 
+import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.broker.BrokerService;
@@ -160,7 +161,7 @@ public class TestJMSAccessorService extends XTestCase {
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");
         servicesConf.set(JMSAccessorService.CONF_RETRY_MAX_ATTEMPTS, "3");
         servicesConf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, "default=java.naming.factory.initial#"
-                + ACTIVE_MQ_CONN_FACTORY + ";" + "java.naming.provider.url#" + brokerURl + ";" + "connectionFactoryNames#"
+                + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + brokerURl + ";" + "connectionFactoryNames#"
                 + "ConnectionFactory");
         services.init();
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
@@ -192,7 +193,7 @@ public class TestJMSAccessorService extends XTestCase {
         services = super.setupServicesForHCatalog();
         int randomPort = 30000 + random.nextInt(10000);
         String brokerURL = "tcp://localhost:" + randomPort;
-        String jndiPropertiesString = "java.naming.factory.initial#" + ACTIVE_MQ_CONN_FACTORY + ";"
+        String jndiPropertiesString = "java.naming.factory.initial#" + ActiveMQConnFactory + ";"
                 + "java.naming.provider.url#" + brokerURL + ";" + "connectionFactoryNames#" + "ConnectionFactory";
         Configuration servicesConf = services.getConf();
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");
@@ -241,7 +242,7 @@ public class TestJMSAccessorService extends XTestCase {
     public void testConnectionRetryMaxAttempt() throws Exception {
         services.destroy();
         services = super.setupServicesForHCatalog();
-        String jndiPropertiesString = "java.naming.factory.initial#" + ACTIVE_MQ_CONN_FACTORY + ";"
+        String jndiPropertiesString = "java.naming.factory.initial#" + ActiveMQConnFactory + ";"
                 + "java.naming.provider.url#" + "tcp://localhost:12345;connectionFactoryNames#ConnectionFactory";
         Configuration servicesConf = services.getConf();
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");

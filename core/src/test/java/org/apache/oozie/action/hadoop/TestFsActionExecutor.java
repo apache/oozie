@@ -35,7 +35,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.test.TestConstants;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -305,7 +305,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
 
     public void testDeleteHcat() throws Exception {
         //setting current user as test user because directory structure created by HCat have current user permissions (755).
-        setSystemProperty(TestConstants.TEST_USER1_PROP, System.getProperty("user.name"));
+        setSystemProperty(XTestCase.TEST_USER1_PROP, System.getProperty("user.name"));
         createTestTable();
         addPartition(db, table, "year=2012;month=12;dt=02;country=us");
         URI hcatURI = getHCatURI(db, table, "country=us;year=2012;month=12;dt=02");

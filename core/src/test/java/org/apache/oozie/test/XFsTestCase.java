@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -36,15 +37,16 @@ import org.apache.oozie.service.Services;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that need Hadoop FS access. <p/> As part of its
  * setup, this testcase class creates a unique test working directory per test method in the FS. <p/> The URI of the FS
- * namenode must be specified via the {@link TestConstants#OOZIE_TEST_NAME_NODE} system property. The default value is
+ * namenode must be specified via the {@link XTestCase#OOZIE_TEST_NAME_NODE} system property. The default value is
  * 'hdfs://localhost:9000'.
  *
  * The test working directory is created in the specified FS URI, under the current user name home directory, under the
- * subdirectory name specified wit the system property {@link TestConstants#OOZIE_TEST_DIR}. The default value is '/tmp'.
+ * subdirectory name specified wit the system property {@link XTestCase#OOZIE_TEST_DIR}. The default value is '/tmp'.
  * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/$TEST_CASE_METHOD/'
  * <p/> For example: 'hdfs://localhost:9000/user/tucu/tmp/oozietest/org.apache.oozie.service.TestELService/testEL/'
  */

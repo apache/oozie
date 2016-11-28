@@ -66,7 +66,7 @@ public class TestHCatMessageHandler extends XDataTestCase {
         super.setUp();
         services = super.setupServicesForHCatalog();
         services.init();
-        connFac = new ActiveMQConnectionFactory(LOCAL_ACTIVE_MQ_BROKER);
+        connFac = new ActiveMQConnectionFactory(localActiveMQBroker);
         conn = connFac.createConnection();
         conn.start();
         session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);

@@ -37,7 +37,7 @@ public class TestXTestCase extends TestCase {
     }
 
     public void testBaseDir() throws Exception {
-        testBaseDir = System.getProperty(TestConstants.OOZIE_TEST_DIR);
+        testBaseDir = System.getProperty(XTestCase.OOZIE_TEST_DIR);
         try {
             MyXTestCase testcase = new MyXTestCase();
             testcase.setName(getName());
@@ -47,7 +47,7 @@ public class TestXTestCase extends TestCase {
         }
         finally {
             if (testBaseDir != null) {
-                System.getProperties().setProperty(TestConstants.OOZIE_TEST_DIR, testBaseDir);
+                System.getProperties().setProperty(XTestCase.OOZIE_TEST_DIR, testBaseDir);
             }
         }
     }
@@ -190,8 +190,8 @@ public class TestXTestCase extends TestCase {
 
         public void testHadoopSysProps() {
             if (TESTING) {
-                setSystemProperty(TestConstants.OOZIE_TEST_NAME_NODE, "hdfs://xyz:9000");
-                setSystemProperty(TestConstants.OOZIE_TEST_JOB_TRACKER, "xyz:9001");
+                setSystemProperty(XTestCase.OOZIE_TEST_NAME_NODE, "hdfs://xyz:9000");
+                setSystemProperty(XTestCase.OOZIE_TEST_JOB_TRACKER, "xyz:9001");
                 assertEquals("hdfs://xyz:9000", getNameNodeUri());
                 assertEquals("xyz:9001", getJobTrackerUri());
             }
