@@ -672,7 +672,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getSleepMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
 
