@@ -34,7 +34,6 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.mapreduce.v2.MiniMRYarnCluster;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -511,7 +510,7 @@ public abstract class XTestCase extends TestCase {
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniDFSCluster dfsCluster2 = null;
-    private static MiniMRYarnCluster yarnCluster = null;
+    private static MiniYARNCluster yarnCluster = null;
     private static MiniHCatServer hcatServer = null;
     private static MiniHS2 hiveserver2 = null;
     private static HiveConf hs2Config = null;
@@ -562,7 +561,7 @@ public abstract class XTestCase extends TestCase {
 
     private void setupYarnCluster(final JobConf dfsConfig) {
         final Configuration yarnConfig = testConfigurations.createYarnConfig(dfsConfig);
-        yarnCluster = new MiniMRYarnCluster(this.getClass().getName());
+        yarnCluster = new MiniYARNCluster(this.getClass().getName(), 1, 1, 1, 1);
         yarnCluster.init(yarnConfig);
         yarnCluster.start();
     }
