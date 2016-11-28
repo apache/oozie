@@ -905,7 +905,7 @@ public class TestRecoveryService extends XDataTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName()
                 + "</value></property>" + "<property><name>mapred.reducer.class</name><value>"

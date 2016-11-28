@@ -90,7 +90,7 @@ public class TestRerun extends XFsTestCase {
         final OozieClient wfClient = LocalOozie.getClient();
         Properties conf = wfClient.createConfiguration();
         conf.setProperty(OozieClient.APP_PATH, new Path(appPath, "workflow.xml").toString());
-        conf.setProperty("jobTracker", getResourceManagerUri());
+        conf.setProperty("jobTracker", getJobTrackerUri());
         conf.setProperty("nameNode", getNameNodeUri());
         conf.setProperty("mrclass", MapperReducerForTest.class.getName());
         conf.setProperty("input", input.toString());

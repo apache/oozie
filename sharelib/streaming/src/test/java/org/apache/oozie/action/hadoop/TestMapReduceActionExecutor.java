@@ -86,7 +86,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     public Element createUberJarActionXML(String uberJarPath, String additional) throws Exception{
-        return XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+        return XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + additional + "<configuration>"
                 + "<property><name>oozie.mapreduce.uber.jar</name><value>" + uberJarPath + "</value></property>"
                 + "</configuration>" + "</map-reduce>");
@@ -125,7 +125,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         Configuration conf = new XConfiguration();
         conf.set("nameNode", getNameNodeUri());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set(OozieClient.APP_PATH, new File(getTestCaseDir(), "workflow.xml").toURI().toString());
         conf.set(OozieClient.LOG_TOKEN, "t");
@@ -151,7 +151,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Element eConf = eAction.getChild("name-node", eAction.getNamespace());
         assertEquals(getNameNodeUri(), eConf.getText());
         eConf = eAction.getChild("job-tracker", eAction.getNamespace());
-        assertEquals(getResourceManagerUri(), eConf.getText());
+        assertEquals(getJobTrackerUri(), eConf.getText());
 
         // check other m-r settings
         eConf = eAction.getChild("configuration", eAction.getNamespace());
@@ -220,7 +220,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         List<Class<?>> classes = Arrays.<Class<?>>asList(StreamingMain.class);
         assertEquals(classes, ae.getLauncherClasses());
 
-        Element actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+        Element actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>mapred.input.dir</name><value>IN</value></property>"
                 + "<property><name>mapred.output.dir</name><value>OUT</value></property>" + "</configuration>"
@@ -282,7 +282,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
         assertNull(launcherJobConf.getJar());                                                   // same for launcher conf (not set)
 
-        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "</map-reduce>");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
@@ -305,7 +305,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         }
         serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
 
-        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<streaming>" + "<mapper>M</mapper>"
                 + "<reducer>R</reducer>" + "<record-reader>RR</record-reader>"
                 + "<record-reader-mapping>RRM1=1</record-reader-mapping>"
@@ -323,7 +323,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals("2", conf.get("oozie.streaming.record-reader-mapping.size"));
         assertEquals("2", conf.get("oozie.streaming.env.size"));
 
-        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+        actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<pipes>" + "<map>M</map>" + "<reduce>R</reduce>"
                 + "<inputformat>IF</inputformat>" + "<partitioner>P</partitioner>" + "<writer>W</writer>"
                 + "<program>PP</program>" + "</pipes>" + "<configuration>"
@@ -540,7 +540,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
         _testSubmit(MAP_REDUCE, actionXml);
@@ -561,7 +561,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ow.close();
 
         String actionXml = "<map-reduce>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<configuration>" +
                 "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
@@ -591,7 +591,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
         conf.set(MapperReducerForTest.JOB_XML_OUTPUT_LOCATION, jobXml.toUri().toString());
         conf.set("B", "b");
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + conf.toXmlString(false)
                 + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
@@ -615,7 +615,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceConfig(inputDir.toString(), outputDir.toString()).toXmlString(false)
                 + "<config-class>org.apache.oozie.does.not.exist</config-class>" + "</map-reduce>";
@@ -645,7 +645,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
         conf.setBoolean("oozie.test.throw.exception", true);        // causes OozieActionConfiguratorForTest to throw an exception
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + conf.toXmlString(false)
                 + "<config-class>" + OozieActionConfiguratorForTest.class.getName() + "</config-class>" + "</map-reduce>";
@@ -710,7 +710,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceCredentialsConfig(inputDir.toString(), outputDir.toString()).toXmlString(false)
                 + "</map-reduce>";
@@ -774,7 +774,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceUberJarConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
         String jobID = _testSubmit(MAP_REDUCE, actionXml);
@@ -862,7 +862,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "      <streaming>" + "        <mapper>cat</mapper>"
                 + "        <reducer>wc</reducer>" + "      </streaming>"
                 + streamingConf.toXmlString(false) + "<file>"
@@ -952,7 +952,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             w.write("dummy\n");
             w.close();
 
-            String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "      <pipes>" + "        <program>" + programPath
                     + "#wordcount-simple" + "</program>" + "      </pipes>"
                     + getPipesConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "<file>"
@@ -983,7 +983,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // configuration.
         String actionXml = "<map-reduce>"
                 + "<job-tracker>"
-                + getResourceManagerUri()
+                + getJobTrackerUri()
                 + "</job-tracker>"
                 + "<name-node>"
                 + getNameNodeUri()
@@ -1055,7 +1055,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // configuration.
         String actionXml = "<map-reduce>"
                 + "<job-tracker>"
-                + getResourceManagerUri()
+                + getJobTrackerUri()
                 + "</job-tracker>"
                 + "<name-node>"
                 + getNameNodeUri()
@@ -1122,7 +1122,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         // configuration.
         String actionXml = "<map-reduce>"
                 + "<job-tracker>"
-                + getResourceManagerUri()
+                + getJobTrackerUri()
                 + "</job-tracker>"
                 + "<name-node>"
                 + getNameNodeUri()
@@ -1161,7 +1161,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         actionXml = "<map-reduce>"
                 + "<job-tracker>"
-                + getResourceManagerUri()
+                + getJobTrackerUri()
                 + "</job-tracker>"
                 + "<name-node>"
                 + getNameNodeUri()
@@ -1206,7 +1206,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         mrConfig.set("mapred.job.name", mapredJobName);
 
         StringBuilder sb = new StringBuilder("<map-reduce>")
-                .append("<job-tracker>").append(getResourceManagerUri())
+                .append("<job-tracker>").append(getJobTrackerUri())
                 .append("</job-tracker>").append("<name-node>")
                 .append(getNameNodeUri()).append("</name-node>")
                 .append(mrConfig.toXmlString(false)).append("</map-reduce>");
@@ -1303,7 +1303,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(rootArchive).close();
 
         String actionXml = "<map-reduce>" +
-                "      <job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "      <name-node>" + getNameNodeUri() + "</name-node>" +
                 "      <main-class>CLASS</main-class>" +
                 "      <file>" + jar.toString() +

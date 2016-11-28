@@ -47,7 +47,7 @@ public class TestShellMain extends ShellTestCase {
         jobConf.setInt("mapred.map.tasks", 1);
         jobConf.setInt("mapred.map.max.attempts", 1);
         jobConf.setInt("mapred.reduce.max.attempts", 1);
-        jobConf.set("mapred.job.tracker", getResourceManagerUri());
+        jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
 
 

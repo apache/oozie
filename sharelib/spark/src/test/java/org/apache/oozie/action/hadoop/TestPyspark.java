@@ -24,9 +24,15 @@ import java.util.ArrayList;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -55,7 +61,7 @@ public class TestPyspark extends ActionExecutorTestCase {
                 "<jar>" + PI_EXAMPLE + "</jar>" +
                 "<spark-opts>" +sparkOpts +"</spark-opts>" +
                 "</spark>";
-        return MessageFormat.format(script, getResourceManagerUri(), getNameNodeUri());
+        return MessageFormat.format(script, getJobTrackerUri(), getNameNodeUri());
     }
 
     public void testPyspark() throws Exception {

@@ -79,7 +79,7 @@ public class TestLauncher extends XFsTestCase {
         jobConf.setInt("mapred.reduce.max.attempts", 1);
 
         jobConf.set("mapreduce.framework.name", "yarn");
-        jobConf.set("mapred.job.tracker", getResourceManagerUri());
+        jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
 
 

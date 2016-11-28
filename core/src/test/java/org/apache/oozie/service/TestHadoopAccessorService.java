@@ -20,11 +20,13 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ipc.RemoteException;
+import org.apache.hadoop.security.authorize.*;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.mapred.JobConf;
@@ -152,7 +154,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateJobClient() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getResourceManagerUri());
+        JobConf conf = has.createJobConf(getJobTrackerUri());
 
         JobClient jc = has.createJobClient(getTestUser(), conf);
         assertNotNull(jc);
@@ -167,7 +169,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
         }
 
         JobConf conf2 = new JobConf(false);
-        conf2.set("mapred.job.tracker", getResourceManagerUri());
+        conf2.set("mapred.job.tracker", getJobTrackerUri());
         try {
             has.createJobClient(getTestUser(), conf2);
             fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
@@ -179,7 +181,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateYarnClient() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getResourceManagerUri());
+        JobConf conf = has.createJobConf(getJobTrackerUri());
 
         YarnClient yc = has.createYarnClient(getTestUser(), conf);
         assertNotNull(yc);
@@ -195,7 +197,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
         }
 
         JobConf conf2 = new JobConf(false);
-        conf2.set("yarn.resourcemanager.address", getResourceManagerUri());
+        conf2.set("yarn.resourcemanager.address", getJobTrackerUri());
         try {
             has.createYarnClient(getTestUser(), conf2);
             fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
@@ -207,7 +209,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateFileSystem() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getResourceManagerUri());
+        JobConf conf = has.createJobConf(getJobTrackerUri());
 
         FileSystem fs = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf);
         assertNotNull(fs);

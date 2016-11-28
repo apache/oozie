@@ -368,7 +368,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         // At this point, the launcher job has started (but not finished)
         // Now, shutdown the job tracker to pretend it has gone down during the launcher job
-        executeWhileResourceManagerIsShutdown(new ShutdownResourceManagerExecutable() {
+        executeWhileJobTrackerIsShutdown(new ShutdownJobTrackerExecutable() {
             @Override
             public void execute() throws Exception {
                 assertEquals(0, action1.getRetries());
@@ -505,7 +505,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         // At this point, the launcher job has finished and the map-reduce action has started (but not finished)
         // Now, shutdown the job tracker to pretend it has gone down during the map-reduce job
-        executeWhileResourceManagerIsShutdown(new ShutdownResourceManagerExecutable() {
+        executeWhileJobTrackerIsShutdown(new ShutdownJobTrackerExecutable() {
             @Override
             public void execute() throws Exception {
                 assertEquals(0, action1.getRetries());
@@ -647,7 +647,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         w.close();
 
         String actionXml = "<map-reduce>" +
-        "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
         "<name-node>" + getNameNodeUri() + "</name-node>" +
         "<prepare><delete path=\"" + outputDir.toString() + "\"/></prepare>" +
         "<configuration>" +

@@ -707,7 +707,7 @@ public class TestEventGeneration extends XDataTestCase {
         action.setLastCheckTime(new Date());
         action.setPendingOnly();
 
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<main-class>" + "${dummy}" + "</java>";
         action.setConf(actionXml);
         jpaService.execute(new WorkflowActionInsertJPAExecutor(action));

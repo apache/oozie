@@ -345,7 +345,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         writeToFile(wfXml, workflowUri);
         Configuration conf = new XConfiguration();
         conf.set("nameNode", getNameNodeUri());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set("foobarRef", "foobarRef");
         conf.set("key", "job_prop_value");
         conf.set(OozieClient.APP_PATH, workflowUri);

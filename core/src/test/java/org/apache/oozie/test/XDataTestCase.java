@@ -1094,7 +1094,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         conf.set("appName", "bundle-app-name");
         conf.set("coordName1", "coord1");
@@ -1320,7 +1320,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration jobConf = new XConfiguration();
         jobConf.set(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        jobConf.set("jobTracker", getResourceManagerUri());
+        jobConf.set("jobTracker", getJobTrackerUri());
         jobConf.set("nameNode", getNameNodeUri());
         jobConf.set("wfAppPath", wfAppPath.toString());
 
@@ -1434,7 +1434,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         w.write("dummy\n");
         w.close();
 
-        String actionXml = "<map-reduce>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<configuration>"
                 + "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName()
                 + "</value></property>" + "<property><name>mapred.reducer.class</name><value>"
@@ -1492,7 +1492,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         conf.set("appName", "bundle-app-name");
         conf.set("coordName1", "coord1");
@@ -1562,7 +1562,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         conf.set("coordName1", "coord1");
         conf.set("coordName2", "coord2");

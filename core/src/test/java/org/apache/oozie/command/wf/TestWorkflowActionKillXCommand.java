@@ -131,7 +131,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         action.setExternalChildIDs(childID);
 
         String actionXml = "<map-reduce>" +
-        "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
         "<name-node>" + getNameNodeUri() + "</name-node>" +
         "<configuration>" +
         "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +

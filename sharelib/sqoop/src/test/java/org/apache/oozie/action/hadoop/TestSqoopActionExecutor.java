@@ -22,12 +22,21 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
+import org.jdom.Namespace;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,6 +44,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -42,6 +52,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
@@ -136,19 +147,19 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
     private String getActionXml() {
         String command = MessageFormat.format(SQOOP_COMMAND, getActionJdbcUri(), getSqoopOutputDir());
-        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getResourceManagerUri(), getNameNodeUri(),
+        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
                                     "dummy", "dummyValue", command);
     }
 
     private String getActionXmlEval() {
       String query = "select TT.I, TT.S from TT";
-      return MessageFormat.format(SQOOP_ACTION_EVAL_XML, getResourceManagerUri(), getNameNodeUri(),
+      return MessageFormat.format(SQOOP_ACTION_EVAL_XML, getJobTrackerUri(), getNameNodeUri(),
         getActionJdbcUri(), query);
     }
 
     private String getActionXmlFreeFromQuery() {
         String query = "select TT.I, TT.S from TT where $CONDITIONS";
-        return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getResourceManagerUri(), getNameNodeUri(),
+        return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
                                     getActionJdbcUri(), query, getSqoopOutputDir());
     }
 

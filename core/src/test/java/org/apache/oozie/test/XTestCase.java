@@ -456,7 +456,7 @@ public abstract class XTestCase extends TestCase {
      *
      * @return the job tracker URI.
      */
-    protected String getResourceManagerUri() {
+    protected String getJobTrackerUri() {
         return System.getProperty(TestConstants.OOZIE_TEST_JOB_TRACKER, "localhost:9001");
     }
 
@@ -577,6 +577,7 @@ public abstract class XTestCase extends TestCase {
 
     private void createHdfsPathsAndSetupPermissions() throws IOException {
         final FileSystem fileSystem = dfsCluster.getFileSystem();
+
         fileSystem.mkdirs(new Path("target/test-data"));
         fileSystem.mkdirs(new Path("target/test-data" + "/minicluster/mapred"));
         fileSystem.mkdirs(new Path("/user"));
@@ -737,14 +738,14 @@ public abstract class XTestCase extends TestCase {
         if (yarnCluster != null) {
             return testConfigurations.createJobConfFromYarnCluster(yarnCluster.getConfig());
         } else {
-            return testConfigurations.createPristineJobConf(getResourceManagerUri(), getNameNodeUri());
+            return testConfigurations.createPristineJobConf(getJobTrackerUri(), getNameNodeUri());
         }
     }
 
     /**
-     * A 'closure' used by {@link XTestCase#executeWhileResourceManagerIsShutdown} method.
+     * A 'closure' used by {@link XTestCase#executeWhileJobTrackerIsShutdown} method.
      */
-    public interface ShutdownResourceManagerExecutable {
+    public interface ShutdownJobTrackerExecutable {
 
         /**
          * Execute some code
@@ -755,23 +756,16 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
-     * Execute some code, expressed via a {@link ShutdownResourceManagerExecutable}, while the ResourceManager is shutdown. Once the code has
-     * finished, the ResourceManager is restarted (even if an exception occurs).
+     * Execute some code, expressed via a {@link ShutdownJobTrackerExecutable}, while the JobTracker is shutdown. Once the code has
+     * finished, the JobTracker is restarted (even if an exception occurs).
      *
-     * @param executable The ShutdownResourceManagerExecutable to execute while the ResourceManager is shutdown
+     * @param executable The ShutdownJobTrackerExecutable to execute while the JobTracker is shutdown
      */
-    protected void executeWhileResourceManagerIsShutdown(final ShutdownResourceManagerExecutable executable) {
-        for (int i=0; i<yarnCluster.getNumOfResourceManager();i++){
-            yarnCluster.getResourceManager(i).stop();
-        }
+    protected void executeWhileJobTrackerIsShutdown(final ShutdownJobTrackerExecutable executable) {
         try {
             executable.execute();
         } catch (final Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            for (int i=0; i<yarnCluster.getNumOfResourceManager();i++){
-                yarnCluster.getResourceManager(i).start();
-            }
         }
     }
 
@@ -801,7 +795,7 @@ public abstract class XTestCase extends TestCase {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
         final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
 
-        final JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getResourceManagerUri());
+        final JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
         final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), jobConf);
 
         try {
@@ -837,7 +831,7 @@ public abstract class XTestCase extends TestCase {
     protected YarnApplicationState getYarnApplicationState(final String externalId) throws HadoopAccessorException, IOException, YarnException {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
         YarnApplicationState state = null;
-        final JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getResourceManagerUri());
+        final JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
         // This is needed here because we need a mutable final YarnClient
         final MutableObject<YarnClient> yarnClientMO = new MutableObject<YarnClient>(null);
         try {

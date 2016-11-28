@@ -171,8 +171,8 @@ public abstract class XFsTestCase extends XTestCase {
      * @throws HadoopAccessorException thrown if the JobClient could not be obtained.
      */
     protected JobClient createJobClient() throws HadoopAccessorException {
-        JobConf conf = has.createJobConf(getResourceManagerUri());
-        conf.set("mapred.job.tracker", getResourceManagerUri());
+        JobConf conf = has.createJobConf(getJobTrackerUri());
+        conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
 
         return has.createJobClient(getTestUser(), conf);

@@ -44,6 +44,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -86,7 +87,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
         setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
-                          "*=hadoop-conf," + getResourceManagerUri() + "=action-conf");
+                          "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
         setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getFsTestCaseDir().toUri().getPath() + "/systemlib");
         new File(getTestCaseConfDir(), "action-conf").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
@@ -134,7 +135,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             fail();
         }
 
-        Element actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        Element actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<job-xml>job.xml</job-xml>" + "<job-xml>job2.xml</job-xml>" + "<configuration>" +
                 "<property><name>oozie.launcher.a</name><value>LA</value></property>" +
@@ -195,7 +196,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = ae.createBaseHadoopConf(context, actionXml);
         assertEquals(protoConf.get(WorkflowAppService.HADOOP_USER), conf.get(WorkflowAppService.HADOOP_USER));
-        assertEquals(getResourceManagerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
         assertEquals(getNameNodeUri(), conf.get("fs.default.name"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
@@ -267,7 +268,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
        // FIXME - this file exists - must use the correct path
        //  assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
 
-        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>mapred.job.queue.name</name><value>AQ</value></property>" +
                 "<property><name>oozie.action.sharelib.for.java</name><value>sharelib-java</value></property>" +
@@ -280,7 +281,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("AQ", actionConf.get("mapred.job.queue.name"));
         assertEquals("sharelib-java", actionConf.get("oozie.action.sharelib.for.java"));
 
-        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>oozie.launcher.mapred.job.queue.name</name><value>LQ</value></property>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
@@ -290,7 +291,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         assertEquals("LQ", conf.get("mapred.job.queue.name"));
 
-        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>oozie.launcher.mapred.job.queue.name</name><value>LQ</value></property>" +
                 "<property><name>mapred.job.queue.name</name><value>AQ</value></property>" +
@@ -353,7 +354,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testSimpestSleSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
@@ -371,7 +372,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testOutputSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>out</arg>" +
@@ -396,7 +397,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testIdSwapSubmitOK() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>id</arg>" +
@@ -425,7 +426,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
 
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester2.class.getName() + "</main-class>" +
                 "<file>" + appJarPath.toString() + "</file>" +
@@ -446,7 +447,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExit0SubmitOK() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>exit0</arg>" +
@@ -467,7 +468,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExit1SubmitError() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>exit1</arg>" +
@@ -490,7 +491,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExceptionSubmitException() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>exception</arg>" +
@@ -512,7 +513,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testExceptionSubmitThrowable() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "<arg>throwable</arg>" +
@@ -534,7 +535,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testKill() throws Exception {
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
@@ -551,7 +552,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testRecovery() throws Exception {
         final String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
@@ -611,7 +612,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(rootArchive).close();
 
         String actionXml = "<java>" +
-                "      <job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "      <name-node>" + getNameNodeUri() + "</name-node>" +
                 "      <main-class>CLASS</main-class>" +
                 "      <file>" + jar.toString() + "</file>\n" +
@@ -719,7 +720,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().create(rootArchive).close();
 
         String actionXml = "<java>" +
-                "      <job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "      <name-node>" + getNameNodeUri() + "</name-node>" +
                 "      <main-class>CLASS</main-class>" +
                 "      <file>" + jar.toString() +
@@ -801,7 +802,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         fs.mkdirs(delete);
 
         String actionXml = "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<prepare>" +
                 "<mkdir path='" + mkdir + "'/>" +
@@ -1189,7 +1190,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testJavaOpts() throws Exception {
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
                 + "<property><name>a</name><value>AA</value></property>"
@@ -1215,7 +1216,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
         assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
 
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
                 + "<property><name>a</name><value>AA</value></property>"
@@ -1240,7 +1241,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
         assertEquals("-Xmx200m JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
 
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
                 + "<property><name>a</name><value>AA</value></property>"
@@ -1267,7 +1268,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
         assertEquals("JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
 
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
                 + "<property><name>a</name><value>AA</value></property>"
@@ -1294,7 +1295,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("-Xmx200m JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapred.child.java.opts"));
         assertEquals("-Xmx200m JAVA-OPT3 JAVA-OPT1 JAVA-OPT2", conf.get("mapreduce.map.java.opts"));
 
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + "<configuration>" + "<property><name>oozie.launcher.a</name><value>LA</value></property>"
                 + "<property><name>a</name><value>AA</value></property>"
@@ -1332,7 +1333,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path jar2Path = new Path(actionLibPath, "jar2.jar");
         getFileSystem().create(jar2Path).close();
 
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
                 "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "</value></property>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
@@ -1355,7 +1356,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path jar3Path = new Path(getFsTestCaseDir(), "jar3.jar");
         getFileSystem().create(jar3Path).close();
 
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
                 "<property><name>oozie.launcher.oozie.libpath</name><value>" + jar3Path + "</value></property>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
@@ -1374,7 +1375,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(cacheFilesStr.contains(jar3Path.toString()));
 
         // Test adding a directory and a file (comma separated)
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
                 "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "," + jar3Path +
                 "</value></property>" +
@@ -1423,7 +1424,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path jar5Path = new Path(otherShareLibPath, "jar5.jar");
         getFileSystem().create(jar5Path).close();
 
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
@@ -1503,7 +1504,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 return "java-action-executor";
             }
         };
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNode2Uri() + "</name-node>" + "<main-class>" + LauncherMainTester.class.getName()
                 + "</main-class>" + "</java>";
         Element eActionXml = XmlUtils.parseXml(actionXml);
@@ -1538,7 +1539,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testFilesystemScheme() throws Exception {
         try {
-            String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+            String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "<main-class>" + LauncherMainTester.class.getName()
                     + "</main-class>" + "</java>";
             Element eActionXml = XmlUtils.parseXml(actionXml);
@@ -1561,7 +1562,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testACLDefaults_launcherACLsSetToDefault() throws Exception {
         // CASE: launcher specific ACLs not configured - set defaults
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>mapreduce.job.acl-view-job</name><value>VIEWER</value></property>" +
                 "<property><name>mapreduce.job.acl-modify-job</name><value>MODIFIER</value></property>" +
@@ -1586,7 +1587,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testACLDefaults_noFalseChange() throws Exception {
         // CASE: launcher specific ACLs configured, but MR job ACLs not configured i.e. null. Check for no false changes to null
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>oozie.launcher.mapreduce.job.acl-view-job</name><value>V</value></property>" +
                 "<property><name>oozie.launcher.mapreduce.job.acl-modify-job</name><value>M</value></property>" +
@@ -1611,7 +1612,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testACLDefaults_explicitLauncherAndActionSettings() throws Exception {
         // CASE: launcher specific ACLs configured, as well as MR job ACLs configured. Check that NO overriding with defaults
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>oozie.launcher.mapreduce.job.acl-view-job</name><value>V</value></property>" +
                 "<property><name>oozie.launcher.mapreduce.job.acl-modify-job</name><value>M</value></property>" +
@@ -1639,7 +1640,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     public void testACLModifyJob() throws Exception {
         // CASE 1: If user has provided modify-acl value
         // then it should NOT be overridden by group name
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "<property><name>mapreduce.job.acl-modify-job</name><value>MODIFIER</value></property>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
@@ -1656,7 +1657,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // CASE 2: If user has not provided modify-acl value
         // then it equals group name
-        actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
                 "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
@@ -1788,7 +1789,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         //Test UpdateCOnfForJavaTmpDir for launcherConf
         String actionXml1 = "<java>"
                         + "<job-tracker>"
-                        + getResourceManagerUri()
+                        + getJobTrackerUri()
                         + "</job-tracker>"
                         + "<name-node>"
                         + getNameNodeUri()
@@ -1824,7 +1825,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         //Test UpdateConfForJavaTmpDIr for actionConf
         String actionXml = "<java>"
                         + "<job-tracker>"
-                        + getResourceManagerUri()
+                        + getJobTrackerUri()
                         + "</job-tracker>"
                         + "<name-node>"
                         + getNameNodeUri()
@@ -1852,7 +1853,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Element actionXml = XmlUtils
                 .parseXml("<java>"
                         + "<job-tracker>"
-                        + getResourceManagerUri()
+                        + getJobTrackerUri()
                         + "</job-tracker>"
                         + "<name-node>"
                         + getNameNodeUri()
@@ -1886,7 +1887,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Element actionXmlWithTez = XmlUtils
                 .parseXml("<java>"
                         + "<job-tracker>"
-                        + getResourceManagerUri()
+                        + getJobTrackerUri()
                         + "</job-tracker>"
                         + "<name-node>"
                         + getNameNodeUri()
@@ -1902,7 +1903,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Element actionXmlATSDisabled = XmlUtils
                 .parseXml("<java>"
                         + "<job-tracker>"
-                        + getResourceManagerUri()
+                        + getJobTrackerUri()
                         + "</job-tracker>"
                         + "<name-node>"
                         + getNameNodeUri()
@@ -2079,7 +2080,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         //   (first should be used)
         // 4. Fully qualified path located in the second filesystem
         String str = "<java>"
-                + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>"
+                + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNode2Uri() + "</name-node>"
                 + "<job-xml>" + jobXmlAbsolutePath.toString() + "</job-xml>"
                 + "<job-xml>job2.xml</job-xml>"
@@ -2169,7 +2170,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         is = new FileInputStream(jarFile);
         IOUtils.copyStream(is, os3);
 
-        String actionXml = "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNode2Uri() + "</name-node>" +
                 "<job-xml>job.xml</job-xml>" +
                 "<main-class>"+ LauncherMainTester.class.getName() + "</main-class>" +
@@ -2212,7 +2213,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         w.write("A = load '$INPUT' using PigStorage(':');\n");
         w.write("store B into '$OUTPUT' USING PigStorage();\n");
         w.close();
-        String actionXml = "<pig>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" + "<name-node>"
+        String actionXml = "<pig>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<prepare>" + "<delete path='outputdir' />" + "</prepare>"
                 + "<configuration>" + "<property>" + "<name>mapred.compress.map.output</name>" + "<value>true</value>"
                 + "</property>" + "<property>" + "<name>mapred.job.queue.name</name>" + "<value>default</value>"
@@ -2236,7 +2237,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     public void testDefaultConfigurationInLauncher() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
         Element actionXmlWithConfiguration = XmlUtils.parseXml(
-                "<java>" + "<job-tracker>" + getResourceManagerUri() +"</job-tracker>" +
+                "<java>" + "<job-tracker>" + getJobTrackerUri() +"</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<configuration>" +
                 "<property><name>oozie.launcher.a</name><value>AA</value></property>" +
@@ -2245,16 +2246,16 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<main-class>MAIN-CLASS</main-class>" +
                 "</java>");
         Element actionXmlWithoutConfiguration = XmlUtils.parseXml(
-                "<java>" + "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>MAIN-CLASS</main-class>" +
                 "</java>");
 
         Configuration conf = new Configuration(false);
         Assert.assertEquals(0, conf.size());
-        conf.set("yarn.resourcemanager.address", getResourceManagerUri());
+        conf.set("yarn.resourcemanager.address", getJobTrackerUri());
         ae.setupLauncherConf(conf, actionXmlWithConfiguration, null, null);
-        assertEquals(getResourceManagerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
         assertEquals("AA", conf.get("oozie.launcher.a"));
         assertEquals("AA", conf.get("a"));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
@@ -2263,9 +2264,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = new Configuration(false);
         Assert.assertEquals(0, conf.size());
-        conf.set("yarn.resourcemanager.address", getResourceManagerUri());
+        conf.set("yarn.resourcemanager.address", getJobTrackerUri());
         ae.setupLauncherConf(conf, actionXmlWithoutConfiguration, null, null);
-        assertEquals(getResourceManagerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
         assertEquals("action.barbar", conf.get("action.foofoo"));
         assertEquals(3, conf.size());

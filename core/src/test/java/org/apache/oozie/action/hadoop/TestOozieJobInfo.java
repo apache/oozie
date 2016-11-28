@@ -202,7 +202,7 @@ public class TestOozieJobInfo extends XDataTestCase {
         writer2.write(APP1);
         writer2.close();
         jobConf.set(OozieClient.USER_NAME, getTestUser());
-        jobConf.set("myJobTracker", getResourceManagerUri());
+        jobConf.set("myJobTracker", getJobTrackerUri());
         jobConf.set("myNameNode", getNameNodeUri());
         jobConf.set("wfAppPath", new Path(wfAppPath, "workflow.xml").toString());
         jobConf.set("mrclass", MapperReducerForTest.class.getName());
@@ -239,7 +239,7 @@ public class TestOozieJobInfo extends XDataTestCase {
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.BUNDLE_APP_PATH, bundleAppPath.toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        conf.set("jobTracker", getResourceManagerUri());
+        conf.set("jobTracker", getJobTrackerUri());
         conf.set("nameNode", getNameNodeUri());
         conf.set("appName", "bundle-app-name");
         conf.set("start", "2009-02-01T00:00Z");

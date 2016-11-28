@@ -559,7 +559,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "<start to='java' />" +
                 "       <action name='java'>" +
                 "<java>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<main-class>" + JavaSleepAction.class.getName() + "</main-class>" +
                 "<arg>exit0</arg>" +
@@ -850,7 +850,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 "<start to='java' />" +
                 "<action name='java'>" +
                 "<java>" +
-                "    <job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "    <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "    <name-node>" + getNameNodeUri() + "</name-node>" +
                 "        <configuration>" +
                 "            <property>" +

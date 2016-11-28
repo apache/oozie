@@ -50,7 +50,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         os.close();
 
         String actionXml = "<distcp>" +
-                "<job-tracker>" + getResourceManagerUri() + "</job-tracker>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<arg>" + inputPath + "</arg>"+
                 "<arg>" + outputPath + "</arg>" +
