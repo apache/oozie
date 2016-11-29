@@ -448,7 +448,7 @@ public class TestLauncherAM {
 
         failureDetails.expectedExceptionMessage("IO error")
             .expectedErrorCode(EXIT_CODE_0)
-            .expectedErrorReason("IO error, IO error")
+            .expectedErrorReason("IO error")
             .withStackTrace();
 
         assertFailedExecution();
