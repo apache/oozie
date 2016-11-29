@@ -229,7 +229,7 @@ public class Hive2Main extends LauncherMain {
         }
         System.out.println();
 
-        YarnJobActions.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();

@@ -125,6 +125,82 @@ public abstract class LauncherMain {
         }
     }
 
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
+        return getChildYarnJobs(actionConf, ApplicationsRequestScope.OWN);
+    }
+
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
+        System.out.println("Fetching child yarn jobs");
+        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        if (tag == null) {
+            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return childYarnJobs;
+        }
+        System.out.println("tag id : " + tag);
+        long startTime = 0L;
+        try {
+            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+        } catch(NumberFormatException nfe) {
+            throw new RuntimeException("Could not find Oozie job launch time", nfe);
+        }
+
+        GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+        gar.setScope(scope);
+        gar.setApplicationTags(Collections.singleton(tag));
+
+        long endTime = System.currentTimeMillis();
+        if (startTime > endTime) {
+            System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
+                    "Attempting to work around...");
+            // We don't know which one is wrong (relative to the RM), so to be safe, let's assume they're both wrong and add an
+            // offset in both directions
+            long diff = 2 * (startTime - endTime);
+            startTime = startTime - diff;
+            endTime = endTime + diff;
+        }
+        gar.setStartRange(startTime, endTime);
+        try {
+            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
+            GetApplicationsResponse apps = proxy.getApplications(gar);
+            List<ApplicationReport> appsList = apps.getApplicationList();
+            for(ApplicationReport appReport : appsList) {
+                childYarnJobs.add(appReport.getApplicationId());
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+        } catch (YarnException ye) {
+            throw new RuntimeException("Exception occurred while finding child jobs", ye);
+        }
+
+        System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
+        return childYarnJobs;
+    }
+
+    public static void killChildYarnJobs(Configuration actionConf) {
+        try {
+            Set<ApplicationId> childYarnJobs = getChildYarnJobs(actionConf);
+            if (!childYarnJobs.isEmpty()) {
+                System.out.println();
+                System.out.println("Found [" + childYarnJobs.size() + "] Map-Reduce jobs from this launcher");
+                System.out.println("Killing existing jobs and starting over:");
+                YarnClient yarnClient = YarnClient.createYarnClient();
+                yarnClient.init(actionConf);
+                yarnClient.start();
+                for (ApplicationId app : childYarnJobs) {
+                    System.out.print("Killing job [" + app + "] ... ");
+                    yarnClient.killApplication(app);
+                    System.out.println("Done");
+                }
+                System.out.println();
+            }
+        } catch (YarnException ye) {
+            throw new RuntimeException("Exception occurred while killing child job(s)", ye);
+        } catch (IOException ioe) {
+            throw new RuntimeException("Exception occurred while killing child job(s)", ioe);
+        }
+    }
+
     protected abstract void run(String[] args) throws Exception;
 
     /**

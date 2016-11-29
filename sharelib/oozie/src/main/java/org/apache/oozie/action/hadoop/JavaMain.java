@@ -44,7 +44,7 @@ public class JavaMain extends LauncherMain {
         setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
         setApplicationTags(actionConf, SPARK_YARN_TAGS);
 
-        YarnJobActions.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         Class<?> klass = actionConf.getClass(JAVA_MAIN_CLASS, Object.class);
         System.out.println("Java action main class        : " + klass.getName());

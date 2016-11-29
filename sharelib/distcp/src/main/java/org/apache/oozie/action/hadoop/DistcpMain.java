@@ -51,7 +51,7 @@ public class DistcpMain extends JavaMain {
     protected void run(String[] args) throws Exception {
 
         Configuration actionConf = loadActionConf();
-        YarnJobActions.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
         String logFile = setUpDistcpLog4J(actionConf);
         Class<?> klass = actionConf.getClass(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS,
                 org.apache.hadoop.tools.DistCp.class);

@@ -31,7 +31,6 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.LauncherMain;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
-import org.apache.oozie.action.hadoop.YarnJobActions;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -43,6 +42,8 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
+
+import com.google.common.collect.Sets;
 
 public class TestWorkflowActionKillXCommand extends XDataTestCase {
     private Services services;
@@ -171,13 +172,8 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
 
         jobClient.submitJob(jobConf);
-
-        final Set<ApplicationId> apps = new YarnJobActions.Builder(jobConf, ApplicationsRequestScope.ALL)
-                .checkApplicationTags(true)
-                .checkStartRange(true)
-                .build()
-                .getYarnJobs();
-
+        Set<ApplicationId> apps = Sets.newHashSet();
+        apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);
         assertEquals("Number of YARN apps", apps.size(), 1);
 
         sleepjob.close();

@@ -916,9 +916,9 @@ public abstract class XTestCase extends TestCase {
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
-			if (System.getProperty("hadoop.log.dir") == null) {
-				System.setProperty("hadoop.log.dir", testCaseDir);
-			}
+            if (System.getProperty("hadoop.log.dir") == null) {
+                System.setProperty("hadoop.log.dir", testCaseDir);
+            }
             // Tell the ClasspathUtils that we're using a mini cluster
             ClasspathUtils.setUsingMiniYarnCluster(true);
             int taskTrackers = 2;
@@ -1083,7 +1083,6 @@ public abstract class XTestCase extends TestCase {
         catch (Exception ex) {
             System.out.println(ex);
         }
-
         try {
             if (dfsCluster != null) {
                 dfsCluster.shutdown();
@@ -1311,4 +1310,3 @@ public abstract class XTestCase extends TestCase {
     }
 
 }
-
