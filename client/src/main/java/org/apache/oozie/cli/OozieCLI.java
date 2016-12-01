@@ -327,7 +327,7 @@ public class OozieCLI {
         Option len = new Option(LEN_OPTION, true, "number of actions (default TOTAL ACTIONS, requires -info)");
         Option filter = new Option(FILTER_OPTION, true,
                 "<key><comparator><value>[;<key><comparator><value>]*\n"
-                    + "(All Coordinator actions satisfying the filters will be retreived).\n"
+                    + "(All Coordinator actions satisfying the filters will be retrieved).\n"
                     + "key: status or nominaltime\n"
                     + "comparator: =, !=, <, <=, >, >=. = is used as OR and others as AND\n"
                     + "status: values are valid status like SUCCEEDED, KILLED etc. Only = and != apply for status\n"
@@ -352,12 +352,13 @@ public class OozieCLI {
                 "coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids"
                         + "(requires -log)");
         Option date = new Option(DATE_OPTION, true,
-                "coordinator/bundle rerun on action dates (requires -rerun); coordinator log retrieval on action dates (requires -log)");
+                "coordinator/bundle rerun on action dates (requires -rerun); "
+                + "coordinator log retrieval on action dates (requires -log)");
         Option rerun_coord = new Option(COORD_OPTION, true, "bundle rerun on coordinator names (requires -rerun)");
         Option rerun_refresh = new Option(RERUN_REFRESH_OPTION, false,
                 "re-materialize the coordinator rerun actions (requires -rerun)");
         Option rerun_nocleanup = new Option(RERUN_NOCLEANUP_OPTION, false,
-                "do not clean up output-events of the coordiantor rerun actions (requires -rerun)");
+                "do not clean up output-events of the coordinator rerun actions (requires -rerun)");
         Option rerun_failed = new Option(RERUN_FAILED_OPTION, false,
                 "runs the failed workflow actions of the coordinator actions (requires -rerun)");
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
@@ -456,10 +457,10 @@ public class OozieCLI {
         Option filter = new Option(FILTER_OPTION, true,
                 "text=<*>\\;user=<U>\\;name=<N>\\;group=<G>\\;status=<S>\\;frequency=<F>\\;unit=<M>" +
                         "\\;startcreatedtime=<SC>\\;endcreatedtime=<EC> \\;sortBy=<SB>\n" +
-                        "(text filter: matches partially with name and user or complete match with job ID" +
-                        "valid unit values are 'months', 'days', 'hours' or 'minutes'. " +
+                        "(text filter: matches partially with name and user or complete match with job ID. " +
+                        "Valid unit values are 'months', 'days', 'hours' or 'minutes'. " +
                         "startcreatedtime, endcreatedtime: time of format yyyy-MM-dd'T'HH:mm'Z'. " +
-                        "valid values for sortBy are 'createdTime' or 'lastModifiedTime'.)");
+                        "Valid values for sortBy are 'createdTime' or 'lastModifiedTime'.)");
         Option localtime = new Option(LOCAL_TIME_OPTION, false, "use local time (same as passing your time zone to -" +
                 TIME_ZONE_OPTION + "). Overrides -" + TIME_ZONE_OPTION + " option");
         Option kill = new Option(KILL_OPTION, false, "bulk kill operation");
@@ -471,8 +472,10 @@ public class OozieCLI {
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
         Option bulkMonitor = new Option(BULK_OPTION, true, "key-value pairs to filter bulk jobs response. e.g. bundle=<B>\\;" +
                 "coordinators=<C>\\;actionstatus=<S>\\;startcreatedtime=<SC>\\;endcreatedtime=<EC>\\;" +
-                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; bundle, coordinators and actionstatus can be multiple comma separated values" +
-                "bundle and coordinators can be id(s) or appName(s) of those jobs. Specifying bundle is mandatory, other params are optional");
+                "startscheduledtime=<SS>\\;endscheduledtime=<ES>\\; bundle, " +
+                "coordinators and actionstatus can be multiple comma separated values. " +
+                "Bundle and coordinators can be id(s) or appName(s) of those jobs. " +
+                "Specifying bundle is mandatory, other params are optional");
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();
@@ -1369,7 +1372,8 @@ public class OozieCLI {
             for (CoordinatorAction action : actions) {
                 System.out.println(String.format(COORD_ACTION_FORMATTER, maskIfNull(action.getId()),
                         action.getStatus(), maskIfNull(action.getExternalId()), maskIfNull(action.getErrorCode()),
-                        maskDate(action.getCreatedTime(), timeZoneId, verbose), maskDate(action.getNominalTime(), timeZoneId, verbose),
+                        maskDate(action.getCreatedTime(), timeZoneId, verbose),
+                        maskDate(action.getNominalTime(), timeZoneId, verbose),
                         maskDate(action.getLastModifiedTime(), timeZoneId, verbose)));
 
                 System.out.println(RULER);
