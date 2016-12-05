@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2745 test-patch should also list the failed tests (gezapeti via rkanter)
 OOZIE-2740 oozie help misspelled coordinator (coordiantor) and retrieved (retreived) (gsohn via rkanter)
 OOZIE-2690 OOZIE NPE while executing kill() (abhishekbafna via jaydeepvishwakarma)
 OOZIE-2737 testConfigDefaultPropsToAction is flaky (satishsaley via rohini)
