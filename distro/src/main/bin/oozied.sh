@@ -33,28 +33,13 @@ done
 BASEDIR=`dirname ${PRG}`
 BASEDIR=`cd ${BASEDIR}/..;pwd`
 
-if [ -e "${BASEDIR}/oozie-server" ]; then
-  export OOZIE_USE_TOMCAT=1
-else
-  export OOZIE_USE_TOMCAT=0
-fi
-
 if [ $# -le 0 ]; then
-  if [ "${OOZIE_USE_TOMCAT}" -eq "1" ]; then
-    echo "Usage: oozied.sh (start|stop|run) [<catalina-args...>]"
-  else
-    echo "Usage: oozied.sh (start|stop|run)"
-  fi
+  echo "Usage: oozied.sh (start|stop|run)"
   exit 1
 fi
 
 actionCmd=$1
 shift
 
-if [ "${OOZIE_USE_TOMCAT}" == "1" ]; then
-  source ${BASEDIR}/bin/oozie-tomcat-server.sh
-  tomcat_main $actionCmd
-else
-  source ${BASEDIR}/bin/oozie-jetty-server.sh
-  jetty_main $actionCmd
-fi
+source ${BASEDIR}/bin/oozie-jetty-server.sh
+jetty_main $actionCmd
