@@ -257,11 +257,6 @@
 
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
-        <url-pattern>/ext-2.2/*</url-pattern>
-    </filter-mapping>
-
-    <filter-mapping>
-        <filter-name>authenticationfilter</filter-name>
         <url-pattern>/docs/*</url-pattern>
     </filter-mapping>
 
