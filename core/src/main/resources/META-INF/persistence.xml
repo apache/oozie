@@ -76,6 +76,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.ConnectionFactoryProperties" value="PrintParameters=true" />
         </properties>
     </persistence-unit>
 
