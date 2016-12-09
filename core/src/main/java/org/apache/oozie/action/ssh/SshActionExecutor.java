@@ -407,10 +407,10 @@ public class SshActionExecutor extends ActionExecutor {
         // TODO check
         String callBackUrl = Services.get().get(CallbackService.class)
                 .createCallBackUrl(action.getId(), EXT_STATUS_VAR);
-        String command = XLog.format("{0}{1} {2}ssh-base.sh {3} {4} \"{5}\" \"{6}\" {7} {8} ", SSH_COMMAND_BASE, host, dirLocation,
-                preserveArgsS, ConfigurationService.get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd)
-                .toString();
-        String[] commandArray = command.split("\\s");
+        String command = XLog.format("{0}{1} {2}ssh-base.sh {3} {4} \"{5}\" \"{6}\" {7} \"{8}\" ", SSH_COMMAND_BASE, host, dirLocation,
+                preserveArgsS, ConfigurationService.get(HTTP_COMMAND), callBackUrl, callbackPost, recoveryId, cmnd
+                .replace("\\", "\\\\").replace("\"", "\\\"")).toString();
+        String[] commandArray = command.split("\\s+");
         String[] finalCommand;
         if (args == null) {
             finalCommand = commandArray;

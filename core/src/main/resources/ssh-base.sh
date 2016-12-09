@@ -35,8 +35,8 @@ fi
 #    exit 127
 #fi
 
-preserveArgs=${1}
-if [ $preserveArgs == "PRESERVE_ARGS" ]
+preserveArgs="${1}"
+if [ "$preserveArgs" == "PRESERVE_ARGS" ]
 then
     $dir/ssh-wrapper.sh "${@}" </dev/null >/dev/null 2>&1 &
     echo $!

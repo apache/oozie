@@ -34,7 +34,7 @@ echo $mpid > $dir/$actionId.pid
 stdout="$dir/$mpid.$actionId.stdout"
 stderr="$dir/$mpid.$actionId.stderr"
 
-if [ $preserveArgs == "PRESERVE_ARGS" ]
+if [ "$preserveArgs" == "PRESERVE_ARGS" ]
 then
     cmnd=${1}
     shift
@@ -46,7 +46,7 @@ then
     fi
 else
     cmnd="${*}"
-    if $cmnd >>${stdout} 2>>${stderr}; then
+    if eval "$cmnd" >>${stdout} 2>>${stderr}; then
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
     else
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
