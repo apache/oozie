@@ -221,6 +221,25 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         assertEquals(2, wfInfo.getWorkflows().size());
     }
 
+    public void testGetWFInfoForTextAndStatus() throws Exception {
+        WorkflowJobBean workflowJob = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        workflowJob.setAppName("wf-name-1");
+        WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, workflowJob);
+
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> textFilterList = new ArrayList<String>();
+        textFilterList.add("wf-name-1");
+        List<String> textStatusList = new ArrayList<String>();
+        textStatusList.add(WorkflowJob.Status.PREP.toString());
+        filter.put(OozieClient.FILTER_TEXT, textFilterList);
+        filter.put(OozieClient.FILTER_STATUS, textStatusList);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        WorkflowsJobGetJPAExecutor wfGetCmd = new WorkflowsJobGetJPAExecutor(filter, 1, 20);
+        WorkflowsInfo wfInfo = jpaService.execute(wfGetCmd);
+        assertEquals(1, wfInfo.getWorkflows().size());
+    }
+
     public void testWfJobsGetWithCreatedTime() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         Date createdTime1 = DateUtils.parseDateUTC("2012-01-01T10:00Z");

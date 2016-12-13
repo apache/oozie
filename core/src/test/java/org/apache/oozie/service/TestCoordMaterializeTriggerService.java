@@ -30,6 +30,7 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -40,6 +41,7 @@ import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.CoordMaterializeTriggerService.CoordMaterializeTriggerRunnable;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLog;
@@ -47,12 +49,13 @@ import org.apache.oozie.util.XmlUtils;
 
 public class TestCoordMaterializeTriggerService extends XDataTestCase {
     private Services services;
-
+    JPAService jpaService;
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
         services.init();
+        jpaService = Services.get().get(JPAService.class);
     }
 
     @Override
@@ -70,23 +73,32 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
      * @throws Exception
      */
     public void testCoordMaterializeTriggerService1() throws Exception {
-
         Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date end = DateUtils.parseDateOozieTZ("2009-02-20T23:59Z");
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
 
-        sleep(3000);
+        waitForStatus(30000, job, CoordinatorJob.Status.PREP);
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
-        sleep(1000);
+        waitForStatus(10000, job, CoordinatorJob.Status.RUNNING);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
 
         int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(coordJob.getId()));
         assert (numWaitingActions <= coordJob.getMatThrottling());
+    }
+
+    private void waitForStatus(int timeout, final CoordinatorJobBean job, final CoordinatorJob.Status status) {
+        waitFor(timeout, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
+                CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+                return status == coordJob.getStatus();
+            }
+        });
     }
 
     /**
@@ -99,12 +111,11 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         Date end = new Date(start.getTime() + 3600 * 48 * 1000);
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
 
-        sleep(3000);
+        waitForStatus(30000, job, CoordinatorJob.Status.PREP);
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
-        sleep(1000);
+        waitForStatus(10000, job, CoordinatorJob.Status.RUNNING);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(job.getId());
         CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
@@ -115,6 +126,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         setSystemProperty(CoordMaterializeTriggerService.CONF_MATERIALIZATION_SYSTEM_LIMIT, "1");
         services = new Services();
         services.init();
+        jpaService = services.get(JPAService.class);
 
         Date start = new Date();
         Date end = new Date(start.getTime() + 3600 * 5 * 1000);
@@ -129,9 +141,8 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
 
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
-        sleep(1000);
+        waitForStatus(10000, job2, CoordinatorJob.Status.RUNNING);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         // second job is beyond limit but still should be picked up
         job2 = jpaService.execute(new CoordJobGetJPAExecutor(job2.getId()));
         assertEquals(CoordinatorJob.Status.RUNNING, job2.getStatus());
@@ -145,7 +156,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         setSystemProperty(CoordMaterializeTriggerService.CONF_MATERIALIZATION_SYSTEM_LIMIT, "10");
         services = new Services();
         services.init();
-
+        jpaService = services.get(JPAService.class);
         Date start = new Date();
         Date end = new Date(start.getTime() + 3600 * 5 * 1000);
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
@@ -153,12 +164,11 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         addRecordToCoordActionTable(job.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
         job.setMatThrottling(3);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        JPAService jpaService = Services.get().get(JPAService.class);
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date lastModifiedDate = job.getLastModifiedTime();
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
-        sleep(1000);
+        waitForModification(job.getId(), lastModifiedDate);
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertNotSame(lastModifiedDate, job.getLastModifiedTime());
 
@@ -167,9 +177,20 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         lastModifiedDate = job.getLastModifiedTime();
         runnable.run();
-        sleep(1000);
+
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(lastModifiedDate, job.getLastModifiedTime());
+    }
+
+    private void waitForModification(final String id, final Date lastModifiedDate) {
+        waitFor(10000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                CoordJobGetJPAExecutor coordGetCmd = new CoordJobGetJPAExecutor(id);
+                CoordinatorJobBean coordJob = jpaService.execute(coordGetCmd);
+                return !coordJob.getLastModifiedTime().equals(lastModifiedDate);
+            }
+        });
     }
 
     public void testMaxMatThrottleNotPickedMultipleJobs() throws Exception {
@@ -177,6 +198,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         setSystemProperty(CoordMaterializeTriggerService.CONF_MATERIALIZATION_SYSTEM_LIMIT, "3");
         services = new Services();
         services.init();
+        jpaService = services.get(JPAService.class);
         Date start = new Date();
         Date end = new Date(start.getTime() + 3600 * 5 * 1000);
         CoordinatorJobBean job1 = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
@@ -197,7 +219,6 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         job3.setMatThrottling(2);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job3);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         job1 = jpaService.execute(new CoordJobGetJPAExecutor(job1.getId()));
         Date lastModifiedDate1 = job1.getLastModifiedTime();
         job2 = jpaService.execute(new CoordJobGetJPAExecutor(job2.getId()));
@@ -208,7 +229,9 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
 
         Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
         runnable.run();
-        sleep(1000);
+        waitForModification(job1.getId(), lastModifiedDate1);
+        waitForModification(job2.getId(), lastModifiedDate2);
+        waitForModification(job3.getId(), lastModifiedDate3);
 
         job1 = jpaService.execute(new CoordJobGetJPAExecutor(job1.getId()));
         assertNotSame(lastModifiedDate1, job1.getLastModifiedTime());

@@ -20,7 +20,7 @@ package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.jdom.Element;
-import org.json.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.text.SimpleDateFormat;
 import java.util.Map;
@@ -191,8 +191,8 @@ public class ELConstantsFunctions {
     }
 
     public static String toJsonStr(Map<String, String> map) {
-        JSONObject json = new JSONObject(map);
-        return XmlUtils.escapeCharsForXML(json.toString());
+        String json = JSONValue.toJSONString(map);
+        return XmlUtils.escapeCharsForXML(json);
     }
 
     public static String toPropertiesStr(Map<String, String> map) {

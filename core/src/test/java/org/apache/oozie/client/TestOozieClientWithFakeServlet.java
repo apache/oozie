@@ -34,7 +34,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
-import org.json.JSONArray;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.junit.Test;
@@ -150,7 +150,7 @@ public class TestOozieClientWithFakeServlet {
             ByteArrayInputStream result = new ByteArrayInputStream("".getBytes());
             if (check) {
                 JSONArray array = new JSONArray();
-                array.put(2L);
+                array.add(2L);
                 String s = JSONValue.toJSONString(array);
                 result = new ByteArrayInputStream(s.getBytes());
                 check = false;

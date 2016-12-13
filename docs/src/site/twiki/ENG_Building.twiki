@@ -219,12 +219,13 @@ the versions of the dependencies:
 -Dpig.classifier=<classifier> - default none
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
--Dtomcat.version=<version> - default 6.0.41
+-Dtomcat.version=<version> - default 6.0.47
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
 -Dhive.version=<version> - default 0.13.1 for hadoop-1, 1.2.0 for hadoop-2 and hadoop-3 profile
 -Dhbase.version=<version> - default 0.94.2
+-Dtez.version=<version> - default 0.8.4
 </verbatim>
 
 The following properties should be specified when building a release:

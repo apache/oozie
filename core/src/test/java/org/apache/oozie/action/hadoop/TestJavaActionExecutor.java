@@ -490,6 +490,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testExceptionSubmitException() throws Exception {
+
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +

@@ -2463,9 +2463,10 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.http.hostname</name>
-        <value>localhost</value>
+        <value>0.0.0.0</value>
         <description>
-            Oozie server host name.
+            Oozie server host name. The network interface Oozie server binds to as an IP address or a hostname.
+            Most users won't need to change this setting from the default value.
         </description>
     </property>
 
@@ -2478,10 +2479,90 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.http.request.header.size</name>
+        <value>65536</value>
+        <description>
+            Oozie HTTP request header size.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.http.response.header.size</name>
+        <value>65536</value>
+        <description>
+            Oozie HTTP response header size.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.https.port</name>
         <value>11443</value>
         <description>
             Oozie ssl server port.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.enabled</name>
+        <value>false</value>
+        <description>
+            Controls whether SSL encryption is enabled.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.truststore.file</name>
+        <value>custom.truststore</value>
+        <description>
+            Path to a TrustStore file.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.truststore.pass</name>
+        <value>cloudera</value>
+        <description>
+            Password to the TrustStore.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.keystore.file</name>
+        <value></value>
+        <description>
+            Path to a KeyStore file.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.keystore.pass</name>
+        <value></value>
+        <description>
+            Password to the KeyStore.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.include.protocols</name>
+        <value>TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2</value>
+        <description>
+            Enabled TLS protocols.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.exclude.cipher.suites</name>
+        <value>TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA,SSL_DHE_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5</value>
+        <description>
+            List of weak Cipher suites to exclude.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.jsp.tmp.dir</name>
+        <value>/tmp</value>
+        <description>
+            Temporary directory for compiling JSP pages.
         </description>
     </property>
 
@@ -2491,6 +2572,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Each Oozie server should have its own unique instance id. The default is system property
             =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.server.threadpool.max.threads</name>
+        <value>150</value>
+        <description>
+             Controls the threadpool size for the Oozie Server (if using embbedded Jetty)
         </description>
     </property>
 

@@ -47,13 +47,14 @@ available to customise the versions of the dependencies:
 -Dpig.version=<version> - default 0.12.1
 -Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3
--Dsqoop.classifier=<classifier> - default hadoop200
--Dtomcat.version=<version> - default 6.0.44
+-Dsqoop.classifier=<classifier> - default hadoop100
+-Dtomcat.version=<version> - default 6.0.47
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
 -Dhive.version=<version> - default 0.13.1 for hadoop-1, 1.2.0 for hadoop-2 and hadoop-3 profile
 -Dhbase.version=<version> - default 0.94.2
+-Dtez.version=<version> - default 0.8.4
 </verbatim>
 
 More details on building Oozie can be found on the [[ENG_Building][Building Oozie]] page.
@@ -80,6 +81,8 @@ The Java 1.7+ =bin= directory should be in the command path.
    * Download ExtJS library (it must be version 2.2)
 
 *NOTE:* The ExtJS library is not bundled with Oozie because it uses a different license.
+
+*NOTE:* Oozie UI browser compatibility Chrome (all), Firefox (3.5), Internet Explorer (8.0), Opera (10.5).
 
 *NOTE:* It is recommended to use a Oozie Unix user for the Oozie server.
 

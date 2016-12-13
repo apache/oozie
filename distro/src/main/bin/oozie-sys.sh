@@ -195,13 +195,6 @@ else
   print "Using   OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
 fi
 
-if [ "${CATALINA_BASE}" = "" ]; then
-  export CATALINA_BASE=${OOZIE_HOME}/oozie-server
-  print "Setting CATALINA_BASE:       ${CATALINA_BASE}"
-else
-  print "Using   CATALINA_BASE:       ${CATALINA_BASE}"
-fi
-
 if [ "${OOZIE_HTTPS_KEYSTORE_FILE}" = "" ]; then
   export OOZIE_HTTPS_KEYSTORE_FILE=${HOME}/.keystore
   print "Setting OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
@@ -223,20 +216,20 @@ else
   print "Using   OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
 fi
 
-if [ "${CATALINA_OUT}" = "" ]; then
-  export CATALINA_OUT=${OOZIE_LOG}/catalina.out
-  print "Setting CATALINA_OUT:        ${CATALINA_OUT}"
-else
-  print "Using   CATALINA_OUT:        ${CATALINA_OUT}"
-fi
-
-if [ "${CATALINA_PID}" = "" ]; then
-  export CATALINA_PID=${OOZIE_HOME}/oozie-server/temp/oozie.pid
-  print "Setting CATALINA_PID:        ${CATALINA_PID}"
-else
-  print "Using   CATALINA_PID:        ${CATALINA_PID}"
-fi
-
-export CATALINA_OPTS="${CATALINA_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
-
 print
+
+setup_ooziedb() {
+  echo "Setting up oozie DB"
+  ${BASEDIR}/bin/ooziedb.sh create -run
+  if [ "$?" -ne "0" ]; then
+    exit -1
+  fi
+  echo
+}
+
+if [ "${JAVA_HOME}" != "" ]; then
+    JAVA_BIN=java
+else
+    JAVA_BIN=${JAVA_HOME}/bin/java
+fi
+

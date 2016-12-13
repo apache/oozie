@@ -240,6 +240,25 @@ public class TestBundleJobInfoGetJPAExecutor extends XDataTestCase {
         assertEquals(ret.getBundleJobs().size(), 1);
     }
 
+    public void testGetJobInfoForTextAndStatus() throws Exception {
+        BundleJobBean bundleJob = addRecordToBundleJobTable(BundleJob.Status.RUNNING, false);
+        bundleJob.setAppName("bundle-job-1");
+        BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQueryExecutor.BundleJobQuery.UPDATE_BUNDLE_JOB, bundleJob);
+
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> textFilterList = new ArrayList<String>();
+        textFilterList.add("bundle-job-1");
+        List<String> textStatusList = new ArrayList<String>();
+        textStatusList.add(BundleJob.Status.RUNNING.toString());
+        filter.put(OozieClient.FILTER_TEXT, textFilterList);
+        filter.put(OozieClient.FILTER_STATUS, textStatusList);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        BundleJobInfoGetJPAExecutor bundleInfoGetCmd = new BundleJobInfoGetJPAExecutor(filter, 1, 20);
+        BundleJobInfo bundleJobsInfo = jpaService.execute(bundleInfoGetCmd);
+        assertEquals(1, bundleJobsInfo.getBundleJobs().size());
+    }
+
     private void _testGetJobInfoForGroup() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

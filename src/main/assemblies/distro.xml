@@ -6,9 +6,9 @@
   to you under the Apache License, Version 2.0 (the
   "License"); you may not use this file except in compliance
   with the License.  You may obtain a copy of the License at
-  
+
        http://www.apache.org/licenses/LICENSE-2.0
-  
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,16 +37,16 @@
             <directory>${basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>license.txt</include>
-                <include>notice.txt</include>
-                <include>readme.txt</include>
+                <include>LICENSE.txt</include>
+                <include>NOTICE.txt</include>
+                <include>README.txt</include>
                 <include>release-log.txt</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>${basedir}/src/main/bin</directory>
             <outputDirectory>/bin</outputDirectory>
-            <includes>          
+            <includes>
                 <include>*</include>
             </includes>
             <fileMode>0755</fileMode>
@@ -76,22 +76,6 @@
                 <include>*</include>
             </includes>
         </fileSet>
-        <!-- Embedded Tomcat -->
-        <fileSet>
-            <directory>${basedir}/target/tomcat/oozie-server</directory>
-            <outputDirectory>/oozie-server</outputDirectory>
-            <excludes>
-                <exclude>bin/*.sh</exclude>
-            </excludes>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/target/tomcat/oozie-server/bin</directory>
-            <outputDirectory>/oozie-server/bin</outputDirectory>
-            <includes>
-                <include>*.sh</include>
-            </includes>
-            <fileMode>0555</fileMode>
-        </fileSet>
         <!--  Oozie Login Server Example war and jar -->
          <fileSet>
             <directory>${basedir}/../login/target</directory>
@@ -102,14 +86,36 @@
             </includes>
             <fileMode>0555</fileMode>
         </fileSet>
-
+        <!-- Oozie Server - embedded jetty -->
+        <fileSet>
+                <directory>${basedir}/../server/target/</directory>
+                <outputDirectory>/embedded-oozie-server</outputDirectory>
+                <includes>
+                    <include>oozie-server*.jar</include>
+                    <include>**/jetty*.jar</include>
+                    <include>**/*jsp*.jar</include>
+                    <include>**/mail*.jar</include>
+                    <include>**/apache*.jar</include>
+                    <include>**/commons-el*.jar</include>
+                    <include>**/javax.servlet-api-3.1.0.jar</include>
+                    <include>**/jasper*jar</include>
+                    <include>**/taglibs-*jar</include>
+                    <include>**/org.eclipse.jdt.core-*jar</include>
+                </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../webapp/target/oozie-webapp-${project.version}</directory>
+            <outputDirectory>/embedded-oozie-server/webapp</outputDirectory>
+            <excludes>
+                <exclude>**/web.xml</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
     <files>
         <!-- Oozie configuration files -->
         <file>
             <source>${basedir}/../core/src/main/resources/oozie-default.xml</source>
             <outputDirectory>/conf</outputDirectory>
-            <destName>oozie-default.xml.reference</destName>
         </file>
         <!-- Oozie core jar -->
         <file>
@@ -120,12 +126,6 @@
         <file>
             <source>${basedir}/../core/target/oozie-core-${project.version}-tests.jar</source>
             <outputDirectory>/oozie-core</outputDirectory>
-        </file>
-        <!-- Oozie war -->
-        <file>
-            <source>${basedir}/../webapp/target/oozie-webapp-${project.version}.war</source>
-            <outputDirectory>/</outputDirectory>
-            <destName>oozie.war</destName>
         </file>
         <!-- Oozie Documentation -->
         <file>

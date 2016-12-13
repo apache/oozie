@@ -19,10 +19,9 @@
 
 # Set Oozie specific environment variables here.
 
-# Settings for the Embedded Tomcat that runs Oozie
+# Settings for the Embedded Jetty that runs Oozie
 # Java System properties for Oozie should be specified in this variable
 #
-export CATALINA_OPTS="$CATALINA_OPTS -Xmx1024m"
 
 # Oozie configuration file to load from Oozie configuration directory
 #

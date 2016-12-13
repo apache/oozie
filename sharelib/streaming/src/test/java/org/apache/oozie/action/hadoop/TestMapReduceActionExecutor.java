@@ -59,6 +59,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.command.wf.StartXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
@@ -141,11 +142,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         String wfId = new SubmitXCommand(conf).call();
         new StartXCommand(wfId).call();
-        sleep(3000);
+        waitForWorkflowAction(wfId + "@mr-node");
 
         WorkflowActionBean mrAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION,
                 wfId + "@mr-node");
-
         // check NN and JT settings
         Element eAction = XmlUtils.parseXml(mrAction.getConf());
         Element eConf = eAction.getChild("name-node", eAction.getNamespace());
@@ -196,12 +196,12 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
          writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
          IOUtils.copyCharStream(new StringReader(wfXml), writer);
 
-         wfId = new SubmitXCommand(conf).call();
-         new StartXCommand(wfId).call();
-         sleep(3000);
+        wfId = new SubmitXCommand(conf).call();
+        new StartXCommand(wfId).call();
+        waitForWorkflowAction(wfId + "@mr-node");
 
-         mrAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION,
-                 wfId + "@mr-node");
+        mrAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION,
+                wfId + "@mr-node");
 
          // check param
          eAction = XmlUtils.parseXml(mrAction.getConf());
@@ -1378,5 +1378,14 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         }
     }
 
+    private void waitForWorkflowAction(final String actionId) {
+        waitFor(3 * 60 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowActionBean mrAction = WorkflowActionQueryExecutor.getInstance()
+                        .get(WorkflowActionQuery.GET_ACTION, actionId);
+                return mrAction.inTerminalState() || mrAction.getStatus() == Status.RUNNING;
+            }
+        });
+    }
 
 }

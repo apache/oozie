@@ -28,6 +28,10 @@ import org.apache.oozie.servlet.ServicesLoader;
  */
 public class ConfigUtils {
     private final static XLog LOG = XLog.getLog(ConfigUtils.class);
+    public static final String OOZIE_HTTPS_ENABLED = "oozie.https.enabled";
+    public static final String OOZIE_HTTP_HOSTNAME = "oozie.http.hostname";
+    public static final String OOZIE_HTTPS_PORT = "oozie.https.port";
+    public static final String OOZIE_HTTP_PORT = "oozie.http.port";
 
     public static boolean BOOLEAN_DEFAULT = false;
     public static String STRING_DEFAULT = "";
@@ -92,13 +96,13 @@ public class ConfigUtils {
         else {
             sb.append("http://");
         }
-        sb.append(ConfigurationService.get("oozie.http.hostname"));
+        sb.append(ConfigurationService.get(OOZIE_HTTP_HOSTNAME));
         sb.append(":");
         if (secure) {
-            sb.append(ConfigurationService.get("oozie.https.port"));
+            sb.append(ConfigurationService.get(OOZIE_HTTPS_PORT));
         }
         else {
-            sb.append(ConfigurationService.get("oozie.http.port"));
+            sb.append(ConfigurationService.get(OOZIE_HTTP_PORT));
         }
         sb.append("/oozie");
         return sb.toString();
@@ -110,7 +114,7 @@ public class ConfigUtils {
      * @return the HTTP or HTTPS URL for this Oozie server
      */
     public static String getOozieEffectiveUrl() {
-        return getOozieURL(ServicesLoader.isSSLEnabled());
+        return getOozieURL(ServicesLoader.isSSLEnabled() || ConfigurationService.getBoolean(OOZIE_HTTPS_ENABLED));
     }
 
     public static boolean isBackwardSupportForCoordStatus() {
