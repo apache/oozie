@@ -138,10 +138,6 @@
                     <groupId>org.apache.curator</groupId>
                     <artifactId>curator-recipes</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.json</groupId>
-                    <artifactId>json</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
 
@@ -235,6 +231,40 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>tez</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-api</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-runtime-library</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-runtime-internals</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-mapreduce</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-dag</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-yarn-timeline-history-with-acls</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
 </project>
 

@@ -1,15 +1,23 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2616 Add Tez profile for Hive and Pig sharelibs (poeppt via rkanter)
+OOZIE-2741 Remove Tomcat (asasvari via rkanter)
+OOZIE-2745 test-patch should also list the failed tests (gezapeti via rkanter)
+OOZIE-2740 oozie help misspelled coordinator (coordiantor) and retrieved (retreived) (gsohn via rkanter)
+OOZIE-2690 OOZIE NPE while executing kill() (abhishekbafna via jaydeepvishwakarma)
+OOZIE-2737 testConfigDefaultPropsToAction is flaky (satishsaley via rohini)
 OOZIE-2666 Support embedding Jetty into Oozie (asasvari via rkanter)
 OOZIE-1459 Remove the version in the child poms for maven-antrun-plugin (Jan Hentschel via rkanter)
-OOZIE-2225 Add wild card filter for gathering jobs (sai-krish via rkanter)
-OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)
+OOZIE-2225 Add wild card filter for gathering jobs (sai-krish,pbacsko via rkanter,rohini)
 OOZIE-1986 Add FindBugs report to pre-commit build (andras.piros via rkanter)
 OOZIE-2634 Queue dump command message is confusing when the queue is empty (andras.piros via rkanter)
 
 
 -- Oozie 4.3.0 release
 
+OOZIE-2742 Unable to kill applications based on tag (satishsaley via rohini)
+OOZIE-2720 Test failure - TestCoordMaterializeTriggerService#testMaxMatThrottleNotPicked (gezapeti via rohini)
+OOZIE-2536 Hadoop's cleanup of local directory in uber mode causing failures (satishsaley via rohini)
 OOZIE-2723 JSON.org license is now CatX (rkanter, abhishekbafna via shwethags)
 OOZIE-2725 Upgrade Tomcat to 6.0.47 for the latest security fixes (rkanter via shwethags)
 OOZIE-2724 coord:current resolves monthly/yearly dependencies incorrectly (satishsaley via shwethags)

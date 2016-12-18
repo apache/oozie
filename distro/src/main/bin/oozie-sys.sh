@@ -195,13 +195,6 @@ else
   print "Using   OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
 fi
 
-if [ "${OOZIE_USE_TOMCAT}" = "1" -a "${CATALINA_BASE}" = "" ]; then
-  export CATALINA_BASE=${OOZIE_HOME}/oozie-server
-  print "Setting CATALINA_BASE:       ${CATALINA_BASE}"
-else
-  print "Using   CATALINA_BASE:       ${CATALINA_BASE}"
-fi
-
 if [ "${OOZIE_HTTPS_KEYSTORE_FILE}" = "" ]; then
   export OOZIE_HTTPS_KEYSTORE_FILE=${HOME}/.keystore
   print "Setting OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
@@ -221,26 +214,6 @@ if [ "${OOZIE_INSTANCE_ID}" = "" ]; then
   print "Setting OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
 else
   print "Using   OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
-fi
-
-if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
-  if [  "${CATALINA_OUT}" = "" ]; then
-    export CATALINA_OUT=${OOZIE_LOG}/catalina.out
-    print "Setting CATALINA_OUT:        ${CATALINA_OUT}"
-  else
-    print "Using   CATALINA_OUT:        ${CATALINA_OUT}"
-  fi
-fi
-
-if [ "${OOZIE_USE_TOMCAT}" = "1" -a "${CATALINA_PID}" = "" ]; then
-  export CATALINA_PID=${OOZIE_HOME}/oozie-server/temp/oozie.pid
-  print "Setting CATALINA_PID:        ${CATALINA_PID}"
-else
-  print "Using   CATALINA_PID:        ${CATALINA_PID}"
-fi
-
-if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
-  export CATALINA_OPTS="${CATALINA_OPTS} -Dderby.stream.error.file=${OOZIE_LOG}/derby.log"
 fi
 
 print

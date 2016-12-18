@@ -125,11 +125,7 @@ additionalDir=""
 extjsHome=""
 jarsPath=""
 prepareWar=""
-inputWar="${OOZIE_HOME}/oozie.war"
-outputWar="${CATALINA_BASE}/webapps/oozie.war"
-outputWarExpanded="${CATALINA_BASE}/webapps/oozie"
 secure=""
-secureConfigsDir="${CATALINA_BASE}/conf/ssl"
 
 while [ $# -gt 0 ]
 do
@@ -143,16 +139,7 @@ do
     #Create lib directory from war if lib doesn't exist
     if [ ! -d "${BASEDIR}/lib" ]; then
       mkdir ${BASEDIR}/lib
-
-      if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
-        unzip ${BASEDIR}/oozie.war WEB-INF/lib/*.jar -d ${BASEDIR}/lib > /dev/null
-        mv ${BASEDIR}/lib/WEB-INF/lib/*.jar ${BASEDIR}/lib/
-        rmdir ${BASEDIR}/lib/WEB-INF/lib
-        rmdir ${BASEDIR}/lib/WEB-INF
-      else
-        cp ${JETTY_LIB_DIR}/*  ${BASEDIR}/lib
-      fi
-
+      cp ${JETTY_LIB_DIR}/*  ${BASEDIR}/lib
     fi
 
     OOZIECPPATH=""
@@ -190,13 +177,6 @@ do
   fi
   shift
 done
-
-if [ -e "${CATALINA_PID}" -a "${OOZIE_USE_TOMCAT}" = "1" ]; then
-  echo
-  echo "ERROR: Stop Oozie first"
-  echo
-  exit -1
-fi
 
 echo
 
@@ -274,130 +254,7 @@ prepare_jetty() {
   fi
 }
 
-prepare_tomcat() {
-  if [ "${prepareWar}" == "" ]; then
-    echo "no arguments given"
-    printUsage
-    exit -1
-  else
-    if [ -e "${outputWar}" ]; then
-        chmod -f u+w ${outputWar}
-        rm -rf ${outputWar}
-    fi
-    rm -rf ${outputWarExpanded}
-
-    check_adding_extensions
-
-    prepare
-
-    checkFileExists ${inputWar}
-    checkFileDoesNotExist ${outputWar}
-
-    check_extjs
-
-    if [ "${addJars}" = "true" ]; then
-        for jarPath in ${jarsPath//:/$'\n'}
-        do
-          checkFileExists ${jarPath}
-        done
-    fi
-
-    #Unpacking original war
-    unzip ${inputWar} -d ${tmpWarDir} > /dev/null
-    checkExec "unzipping Oozie input WAR"
-
-    components=""
-
-    if [ "${OOZIE_USE_TOMCAT}" == "1" ]; then
-      if [ "${secure}" != "" ]; then
-        #Use the SSL version of server.xml in oozie-server
-        checkFileExists ${secureConfigsDir}/ssl-server.xml
-        cp ${secureConfigsDir}/ssl-server.xml ${CATALINA_BASE}/conf/server.xml
-        #Inject the SSL version of web.xml in oozie war
-        checkFileExists ${secureConfigsDir}/ssl-web.xml
-        cp ${secureConfigsDir}/ssl-web.xml ${tmpWarDir}/WEB-INF/web.xml
-        echo "INFO: Using secure server.xml and secure web.xml"
-      else
-        #Use the regular version of server.xml in oozie-server
-        checkFileExists ${secureConfigsDir}/server.xml
-        cp ${secureConfigsDir}/server.xml ${CATALINA_BASE}/conf/server.xml
-        #No need to restore web.xml because its already in the original WAR file
-      fi
-    fi
-
-    if [ "${addExtjs}" = "true" ]; then
-      if [ ! "${components}" = "" ];then
-        components="${components}, "
-      fi
-      components="${components}ExtJS library"
-      if [ -e ${tmpWarDir}/ext-2.2 ]; then
-        echo
-        echo "Specified Oozie WAR '${inputWar}' already contains ExtJS library files"
-        cleanup_and_exit
-      fi
-      #If the extjs path given is a ZIP, expand it and use it from there
-      if [ -f ${extjsHome} ]; then
-        unzip ${extjsHome} -d ${tmpDir} > /dev/null
-        extjsHome=${tmpDir}/ext-2.2
-      fi
-      #Inject the library in oozie war
-      cp -r ${extjsHome} ${tmpWarDir}/ext-2.2
-      checkExec "copying ExtJS files into staging"
-    fi
-
-    if [ "${addJars}" = "true" ]; then
-      if [ ! "${components}" = "" ];then
-        components="${components}, "
-      fi
-      components="${components}JARs"
-
-      for jarPath in ${jarsPath//:/$'\n'}
-      do
-        found=`ls ${tmpWarDir}/WEB-INF/lib/${jarPath} 2> /dev/null | wc -l`
-        checkExec "looking for JAR ${jarPath} in input WAR"
-        if [ ! $found = 0 ]; then
-          echo
-          echo "Specified Oozie WAR '${inputWar}' already contains JAR ${jarPath}"
-          cleanup_and_exit
-        fi
-        cp ${jarPath} ${tmpWarDir}/WEB-INF/lib/
-        checkExec "copying jar ${jarPath} to staging"
-      done
-    fi
-
-    #Creating new Oozie WAR
-    currentDir=`pwd`
-    cd ${tmpWarDir}
-    zip -r oozie.war * > /dev/null
-    checkExec "creating new Oozie WAR"
-    cd ${currentDir}
-
-    #copying new Oozie WAR to asked location
-    if [ "${OOZIE_USE_TOMCAT}" == "1" ]; then
-      cp ${tmpWarDir}/oozie.war ${outputWar}
-      checkExec "copying new Oozie WAR"
-
-      echo
-      echo "New Oozie WAR file with added '${components}' at ${outputWar}"
-      echo
-    fi
-
-    cleanUp
-
-    if [ "$?" -ne "0" ]; then
-      exit -1
-    fi
-
-    log_ready_to_start
-
-  fi
-}
-
-if [ "${OOZIE_USE_TOMCAT}" = "1" ]; then
-  prepare_tomcat
-else
-  prepare_jetty
-fi
+prepare_jetty
 
 log_ready_to_start
 exit 0

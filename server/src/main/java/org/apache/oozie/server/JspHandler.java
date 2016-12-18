@@ -19,8 +19,6 @@
 package org.apache.oozie.server;
 
 import com.google.common.base.Preconditions;
-import org.apache.tomcat.InstanceManager;
-import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.jsp.JettyJspServlet;
@@ -87,7 +85,6 @@ public class JspHandler {
         URI baseUri = webRootResourceLocator.getWebRootResourceUri();
         servletContextHandler.setResourceBase(baseUri.toASCIIString());
         servletContextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
-        servletContextHandler.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         servletContextHandler.addBean(new ServletContainerInitializersStarter(servletContextHandler), true);
         servletContextHandler.setClassLoader(getUrlClassLoader());
 

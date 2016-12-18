@@ -214,6 +214,8 @@ the versions of the dependencies:
 -Puber - Bundle required hadoop and hcatalog libraries in oozie war
 -P<profile> - default hadoop-2. Valid are hadoop-1, hadoop-2 or hadoop-3. Choose the correct hadoop
 profile depending on the hadoop version used.
+-Ptez - Bundle tez jars in hive and pig sharelibs. Useful if you want to use tez
+as the execution engine for those applications.
 -Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 2.4.0 for hadoop-2 and 3.0.0-SNAPSHOT for hadoop-3
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
@@ -227,6 +229,7 @@ profile depending on the hadoop version used.
 -Dcurator.version=<version> - default 2.5.0
 -Dhive.version=<version> - default 0.13.1 for hadoop-1, 1.2.0 for hadoop-2 and hadoop-3 profile
 -Dhbase.version=<version> - default 0.94.2
+-Dtez.version=<version> - default 0.8.4
 </verbatim>
 
 The following properties should be specified when building a release:

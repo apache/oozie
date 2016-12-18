@@ -95,6 +95,7 @@ case $OP in
     ;;
   report)
     failedTests=` find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//'`
+    testsWithError=` find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//'`
     testsRun=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
     testsFailed=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
     testsErrors=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
@@ -109,6 +110,9 @@ case $OP in
       echo ".    The patch failed the following testcases:" >> $SUMMARYFILE
       echo "" >> ${SUMMARYFILE}
       echo "${failedTests}" | sed 's/^/.      /' >> $SUMMARYFILE
+      echo "" >> ${SUMMARYFILE}
+      echo ".    Tests failing with errors:" >> $SUMMARYFILE
+      echo "${testsWithError}" | sed 's/^/.      /' >> $SUMMARYFILE
       echo "" >> ${SUMMARYFILE}
     else
       if [[ "$testsExitCode" != "0" ]] ; then
