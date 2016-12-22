@@ -2,6 +2,7 @@
 
 OOZIE-2590 OYA: Create basic Oozie Launcher Application Master (rkanter)
 OOZIE-2316 Drop support for Hadoop 1 and 0.23 (asasvari via rkanter)
+OOZIE-2757 Malformed xml is Spark action doc page (gezapeti via abhishekbafna)
 OOZIE-2616 Add Tez profile for Hive and Pig sharelibs (poeppt via rkanter)
 OOZIE-2741 Remove Tomcat (asasvari via rkanter)
 OOZIE-2745 test-patch should also list the failed tests (gezapeti via rkanter)

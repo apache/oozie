@@ -15,11 +15,11 @@ The =spark= action runs a Spark job.
 The workflow job will wait until the Spark job completes before
 continuing to the next action.
 
-To run the Spark job, you have to configure the =spark= action with the
-=job-tracker=, =name-node=, Spark =master= elements as
+To run the Spark job, you have to configure the =spark= action with
+the =job-tracker=, =name-node=, Spark =master= elements as
 well as the necessary elements, arguments and configuration.
 
-Spark options can be specified in an element called =spark-opts=
+Spark options can be specified in an element called =spark-opts=.
 
 A =spark= action can be configured to create or delete HDFS directories
 before starting the Spark job.
@@ -79,7 +79,7 @@ specify multiple =job.xml= files.
 The =configuration= element, if present, contains configuration
 properties that are passed to the Spark job.
 
-The =master= element indicates the url of the Spark Master. Ex: spark://host:port, mesos://host:port, yarn-cluster, yarn-master,
+The =master= element indicates the url of the Spark Master. Ex: spark://host:port, mesos://host:port, yarn-cluster, yarn-client,
 or local.
 
 The =mode= element if present indicates the mode of spark, where to run spark driver program. Ex: client,cluster.  This is typically
@@ -125,7 +125,7 @@ expressions.
                 </property>
             </configuration>
             <master>local[*]</master>
-            <mode>client<mode>
+            <mode>client</mode>
             <name>Spark Example</name>
             <class>org.apache.spark.examples.mllib.JavaALS</class>
             <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
