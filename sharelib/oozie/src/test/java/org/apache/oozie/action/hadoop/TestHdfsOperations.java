@@ -26,7 +26,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
-import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,13 +67,13 @@ public class TestHdfsOperations {
     private HdfsOperations hdfsOperations;
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws Exception {
         configureMocksForHappyPath();
         actionData.put("testKey", "testValue");
     }
 
     @Test
-    public void testActionDataUploadToHdfsSucceeds() throws IOException {
+    public void testActionDataUploadToHdfsSucceeds() throws Exception {
         hdfsOperations.uploadActionDataToHDFS(configurationMock, path, actionData);
 
         verify(seqFileWriterFactoryMock).createSequenceFileWriter(eq(configurationMock),
@@ -86,14 +86,14 @@ public class TestHdfsOperations {
     }
 
     @Test(expected = IOException.class)
-    public void testActionDataUploadToHdfsFailsWhenAppendingToWriter() throws IOException {
+    public void testActionDataUploadToHdfsFailsWhenAppendingToWriter() throws Exception {
         willThrow(new IOException()).given(writerMock).append(any(Text.class), any(Text.class));
 
         hdfsOperations.uploadActionDataToHDFS(configurationMock, path, actionData);
     }
 
     @Test(expected = IOException.class)
-    public void testActionDataUploadToHdfsFailsWhenWriterIsNull() throws IOException {
+    public void testActionDataUploadToHdfsFailsWhenWriterIsNull() throws Exception {
         given(seqFileWriterFactoryMock.createSequenceFileWriter(eq(configurationMock),
                 any(Path.class), eq(Text.class), eq(Text.class))).willReturn(null);
 
@@ -101,11 +101,11 @@ public class TestHdfsOperations {
     }
 
     @SuppressWarnings("unchecked")
-    private void configureMocksForHappyPath() throws IOException {
-        given(ugiMock.doAs(any(PrivilegedAction.class))).willAnswer(new Answer<Object>() {
+    private void configureMocksForHappyPath() throws Exception {
+        given(ugiMock.doAs(any(PrivilegedExceptionAction.class))).willAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                PrivilegedAction<?> action = (PrivilegedAction<?>) invocation.getArguments()[0];
+                PrivilegedExceptionAction<?> action = (PrivilegedExceptionAction<?>) invocation.getArguments()[0];
                 return action.run();
             }
         });

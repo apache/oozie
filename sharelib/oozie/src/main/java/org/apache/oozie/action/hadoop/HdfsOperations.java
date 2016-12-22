@@ -22,10 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.security.PrivilegedAction;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -37,6 +38,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import com.google.common.base.Preconditions;
 
 public class HdfsOperations {
+    private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private final SequenceFileWriterFactory seqFileWriterFactory;
     private final UserGroupInformation ugi;
 
@@ -48,10 +50,11 @@ public class HdfsOperations {
     /**
      * Creates a Sequence file which contains the output from an action and uploads it to HDFS.
      */
-    public void uploadActionDataToHDFS(final Configuration launcherJobConf, final Path actionDir, final Map<String, String> actionData) throws IOException {
-        IOException ioe = ugi.doAs(new PrivilegedAction<IOException>() {
+    public void uploadActionDataToHDFS(final Configuration launcherJobConf, final Path actionDir,
+            final Map<String, String> actionData) throws IOException, InterruptedException {
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
             @Override
-            public IOException run() {
+            public Void run() throws Exception {
                 Path finalPath = new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE);
                 // upload into sequence file
                 System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
@@ -62,23 +65,18 @@ public class HdfsOperations {
                     wr = seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class);
 
                     if (wr != null) {
-                        Set<String> keys = actionData.keySet();
-                        for (String propsKey : keys) {
-                            wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                        for (Entry<String, String> entry : actionData.entrySet()) {
+                            wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
                         }
                     } else {
                         throw new IOException("SequenceFile.Writer is null for " + finalPath);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return e;
                 } finally {
                     if (wr != null) {
                         try {
                             wr.close();
                         } catch (IOException e) {
-                            e.printStackTrace();
-                            return e;
+                            throw e;
                         }
                     }
                 }
@@ -86,10 +84,6 @@ public class HdfsOperations {
                 return null;
             }
         });
-
-        if (ioe != null) {
-            throw ioe;
-        }
     }
 
     public boolean fileExists(final Path path, final Configuration launcherJobConf) throws IOException, InterruptedException {
@@ -102,12 +96,13 @@ public class HdfsOperations {
         });
     }
 
-    public void writeStringToFile(final Path path, final Configuration conf, final String contents) throws IOException, InterruptedException {
+    public void writeStringToFile(final Path path, final Configuration conf, final String contents)
+            throws IOException, InterruptedException {
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
                 FileSystem fs = FileSystem.get(path.toUri(), conf);
-                java.io.Writer writer = new OutputStreamWriter(fs.create(path));
+                java.io.Writer writer = new OutputStreamWriter(fs.create(path), DEFAULT_CHARSET);
                 writer.write(contents);
                 writer.close();
                 return null;
@@ -121,7 +116,7 @@ public class HdfsOperations {
             public String run() throws Exception {
                 FileSystem fs = FileSystem.get(path.toUri(), conf);
                 InputStream is = fs.open(path);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is, DEFAULT_CHARSET));
                 StringBuilder sb = new StringBuilder();
 
                 String contents;

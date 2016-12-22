@@ -25,7 +25,8 @@ import org.apache.hadoop.io.SequenceFile;
 
 public class SequenceFileWriterFactory {
 
-    public SequenceFile.Writer createSequenceFileWriter(Configuration launcherJobConf, Path finalPath, Class<?> keyClass, Class<?> valueClass) throws IOException {
+    public SequenceFile.Writer createSequenceFileWriter(Configuration launcherJobConf, Path finalPath,
+            Class<?> keyClass, Class<?> valueClass) throws IOException {
         return SequenceFile.createWriter(launcherJobConf,
                 SequenceFile.Writer.file(finalPath),
                 SequenceFile.Writer.keyClass(keyClass),

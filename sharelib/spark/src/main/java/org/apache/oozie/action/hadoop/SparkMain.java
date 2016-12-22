@@ -321,11 +321,16 @@ public class SparkMain extends LauncherMain {
      */
     private File getMatchingFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
         File localDir = new File(".");
-        for(String fileName : localDir.list()){
-            if(fileNamePattern.matcher(fileName).find()){
-                return new File(fileName);
+        String[] files = localDir.list();
+
+        if (files != null) {
+            for(String fileName : files){
+                if(fileNamePattern.matcher(fileName).find()){
+                    return new File(fileName);
+                }
             }
         }
+
         return null;
     }
 

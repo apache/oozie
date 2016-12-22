@@ -412,18 +412,20 @@ public class HadoopAccessorService implements Service {
             public boolean accept(File dir, String name) {
                 return ActionConfFileType.isSupportedFileType(name);
             }});
-        Arrays.sort(actionConfFiles, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        for (File f : actionConfFiles) {
-            if (f.isFile() && f.canRead()) {
-                updateActionConfigWithFile(actionConf, f);
+
+        if (actionConfFiles != null) {
+            Arrays.sort(actionConfFiles, new Comparator<File>() {
+                @Override
+                public int compare(File o1, File o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+            for (File f : actionConfFiles) {
+                if (f.isFile() && f.canRead()) {
+                    updateActionConfigWithFile(actionConf, f);
+                }
             }
         }
-
     }
 
     private Configuration readActionConfFile(File file) throws IOException {

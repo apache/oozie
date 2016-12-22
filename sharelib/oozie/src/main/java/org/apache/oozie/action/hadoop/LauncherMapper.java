@@ -34,8 +34,8 @@ import java.security.Permission;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -433,9 +433,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             try {
                 wr = SequenceFile.createWriter(fs, getJobConf(), finalPath, Text.class, Text.class);
                 if (wr != null) {
-                    Set<String> keys = actionData.keySet();
-                    for (String propsKey : keys) {
-                        wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                    for (Entry<String, String> entry : actionData.entrySet()) {
+                        wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
                     }
                 }
                 else {
@@ -581,20 +580,26 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.out.println("======================");
 
         File[] listOfFiles = folder.listFiles();
-        for (File fileName : listOfFiles) {
-            if (fileName.isFile()) {
-                System.out.println("File: " + fileName.getName());
-            }
-            else if (fileName.isDirectory()) {
-                System.out.println("Dir: " + fileName.getName());
-                File subDir = new File(fileName.getName());
-                File[] moreFiles = subDir.listFiles();
-                for (File subFileName : moreFiles) {
-                    if (subFileName.isFile()) {
-                        System.out.println("  File: " + subFileName.getName());
-                    }
-                    else if (subFileName.isDirectory()) {
-                        System.out.println("  Dir: " + subFileName.getName());
+
+        if (listOfFiles != null) {
+            for (File fileName : listOfFiles) {
+                if (fileName.isFile()) {
+                    System.out.println("File: " + fileName.getName());
+                }
+                else if (fileName.isDirectory()) {
+                    System.out.println("Dir: " + fileName.getName());
+                    File subDir = new File(fileName.getName());
+                    File[] moreFiles = subDir.listFiles();
+
+                    if (moreFiles != null) {
+                        for (File subFileName : moreFiles) {
+                            if (subFileName.isFile()) {
+                                System.out.println("  File: " + subFileName.getName());
+                            }
+                            else if (subFileName.isDirectory()) {
+                                System.out.println("  Dir: " + subFileName.getName());
+                            }
+                        }
                     }
                 }
             }

@@ -192,7 +192,8 @@ public abstract class XFsTestCase extends XTestCase {
      * @return the Path object which represents a file on HDFS
      * @throws Exception
      */
-    protected Path getPathToWorkflowResource(String userName, WorkflowJob job, Services services, ActionExecutorContext context, String fileName) throws Exception {
+    protected Path getPathToWorkflowResource(String userName, WorkflowJob job, Services services,
+            ActionExecutorContext context, String fileName) throws Exception {
         return new Path(
                 "/user" +
                 "/" + userName +

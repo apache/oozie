@@ -111,15 +111,16 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
             missingDependenciesSet = new HashMap<String, List<String>>();
             availableDependenciesSet = new HashMap<String, List<String>>();
 
-            Set<String> keySets = dependencyMap.keySet();
-            for (String key : keySets) {
-                for (CoordInputInstance coordInputInstance : dependencyMap.get(key))
+            for (Entry<String, List<CoordInputInstance>> entry : dependencyMap.entrySet()) {
+                String key = entry.getKey();
+                for (CoordInputInstance coordInputInstance : entry.getValue()) {
                     if (coordInputInstance.isAvailable()) {
                         addToAvailableDependencies(key, coordInputInstance);
                     }
                     else {
                         addToMissingDependencies(key, coordInputInstance);
                     }
+                }
             }
         }
         catch (Exception e) {

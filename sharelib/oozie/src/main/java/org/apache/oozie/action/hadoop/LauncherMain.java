@@ -213,7 +213,8 @@ public abstract class LauncherMain {
      * @throws IOException thrown if an IO error ocurred.
      */
 
-    protected static void logMasking(String header, Collection<String> maskSet, Iterable<Map.Entry<String,String>> conf) throws IOException {
+    protected static void logMasking(String header, Collection<String> maskSet, Iterable<Map.Entry<String,String>> conf)
+            throws IOException {
         StringWriter writer = new StringWriter();
         writer.write(header + "\n");
         writer.write("--------------------\n");

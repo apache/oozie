@@ -18,7 +18,6 @@
 
 package org.apache.oozie.client.rest;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,6 +27,8 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.BulkResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Server-side implementation class of the client interface BulkResponse
@@ -48,20 +49,14 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
     public static final String BULK_FILTER_END_NOMINAL_EPOCH = "endscheduledtime";
     public static final String BULK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:SS'Z'";
 
-    public static final Set<String> BULK_FILTER_NAMES = new HashSet<String>();
-
-    static {
-
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_BUNDLE);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_COORD);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_LEVEL);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_STATUS);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_END_CREATED_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_START_NOMINAL_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_END_NOMINAL_EPOCH);
-
-    }
+    public static final Set<String> BULK_FILTER_NAMES = ImmutableSet.of(BulkResponseImpl.BULK_FILTER_BUNDLE,
+            BulkResponseImpl.BULK_FILTER_COORD,
+            BulkResponseImpl.BULK_FILTER_LEVEL,
+            BulkResponseImpl.BULK_FILTER_STATUS,
+            BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH,
+            BulkResponseImpl.BULK_FILTER_END_CREATED_EPOCH,
+            BulkResponseImpl.BULK_FILTER_START_NOMINAL_EPOCH,
+            BulkResponseImpl.BULK_FILTER_END_NOMINAL_EPOCH);
 
     /**
      * Construct JSON object using the bulk request object and the associated tags

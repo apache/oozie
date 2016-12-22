@@ -158,7 +158,8 @@ public class TestOozieJobInfo extends XDataTestCase {
         String user = conf.get("user.name");
 
         FileSystem fs = getFileSystem();
-        Configuration jobXmlConf = new XConfiguration(fs.open(getPathToWorkflowResource(user, wfbean, services, context, LauncherAM.LAUNCHER_JOB_CONF_XML)));
+        Configuration jobXmlConf = new XConfiguration(fs.open(getPathToWorkflowResource(
+                user, wfbean, services, context, LauncherAM.LAUNCHER_JOB_CONF_XML)));
         String jobInfo = jobXmlConf.get(OozieJobInfo.JOB_INFO_KEY);
 
         // BUNDLE_ID;BUNDLE_NAME;COORDINATOR_NAME;COORDINATOR_NOMINAL_TIME;

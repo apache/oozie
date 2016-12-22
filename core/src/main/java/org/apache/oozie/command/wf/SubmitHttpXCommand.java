@@ -46,6 +46,8 @@ import org.apache.oozie.client.XOozieClient;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -54,17 +56,8 @@ import java.util.HashSet;
 
 public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
 
-    protected static final Set<String> MANDATORY_OOZIE_CONFS = new HashSet<String>();
-    protected static final Set<String> OPTIONAL_OOZIE_CONFS = new HashSet<String>();
-
-    static {
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.RM);
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.NN);
-        MANDATORY_OOZIE_CONFS.add(OozieClient.LIBPATH);
-
-        OPTIONAL_OOZIE_CONFS.add(XOozieClient.FILES);
-        OPTIONAL_OOZIE_CONFS.add(XOozieClient.ARCHIVES);
-    }
+    static final Set<String> MANDATORY_OOZIE_CONFS = ImmutableSet.of(XOozieClient.RM, XOozieClient.NN, OozieClient.LIBPATH);
+    static final Set<String> OPTIONAL_OOZIE_CONFS = ImmutableSet.of(XOozieClient.FILES, XOozieClient.ARCHIVES);
 
     private Configuration conf;
 

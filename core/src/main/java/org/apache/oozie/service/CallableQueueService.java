@@ -48,6 +48,8 @@ import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * The callable queue service queues {@link XCallable}s for asynchronous execution.
  * <p>
@@ -95,9 +97,9 @@ public class CallableQueueService implements Service, Instrumentable {
 
     private final Map<String, Date> uniqueCallables = new ConcurrentHashMap<String, Date>();
 
-    private final ConcurrentHashMap<String, Set<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<String, Set<XCallable<?>>>();
+    private final ConcurrentHashMap<String, Set<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<>();
 
-    public static final HashSet<String> INTERRUPT_TYPES = new HashSet<String>();
+    private Set<String> interruptTypes;
 
     private int interruptMapMaxSize;
 
@@ -452,10 +454,12 @@ public class CallableQueueService implements Service, Instrumentable {
         int threads = ConfigurationService.getInt(conf, CONF_THREADS);
         boolean callableNextEligible = ConfigurationService.getBoolean(conf, CONF_CALLABLE_NEXT_ELIGIBLE);
 
+        interruptTypes = new HashSet<>();
         for (String type : ConfigurationService.getStrings(conf, CONF_CALLABLE_INTERRUPT_TYPES)) {
             log.debug("Adding interrupt type [{0}]", type);
-            INTERRUPT_TYPES.add(type);
+            interruptTypes.add(type);
         }
+        interruptTypes = ImmutableSet.copyOf(interruptTypes);
 
         if (!callableNextEligible) {
             queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
@@ -720,12 +724,12 @@ public class CallableQueueService implements Service, Instrumentable {
     public void checkInterruptTypes(XCallable<?> callable) {
         if ((callable instanceof CompositeCallable) && (((CompositeCallable) callable).getCallables() != null)) {
             for (XCallable<?> singleCallable : ((CompositeCallable) callable).getCallables()) {
-                if (INTERRUPT_TYPES.contains(singleCallable.getType())) {
+                if (interruptTypes.contains(singleCallable.getType())) {
                     insertCallableIntoInterruptMap(singleCallable);
                 }
             }
         }
-        else if (INTERRUPT_TYPES.contains(callable.getType())) {
+        else if (interruptTypes.contains(callable.getType())) {
             insertCallableIntoInterruptMap(callable);
         }
     }
@@ -789,6 +793,10 @@ public class CallableQueueService implements Service, Instrumentable {
     public <T> List<Future<T>> invokeAll(List<CallableWrapper<T>> tasks)
             throws InterruptedException {
         return executor.invokeAll(tasks);
+    }
+
+    public Set<String> getInterruptTypes() {
+        return interruptTypes;
     }
 
 }

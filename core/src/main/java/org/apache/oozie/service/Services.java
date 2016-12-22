@@ -204,7 +204,6 @@ public class Services {
      *
      * @throws ServiceException thrown if any of the services could not initialize.
      */
-    @SuppressWarnings("unchecked")
     public void init() throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         log.trace("Initializing");
@@ -255,9 +254,9 @@ public class Services {
      *                configuration.
      * @throws ServiceException thrown if a service class could not be loaded.
      */
-    private void loadServices(Class[] classes, List<Service> list) throws ServiceException {
+    private void loadServices(Class<?>[] classes, List<Service> list) throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
-        for (Class klass : classes) {
+        for (Class<?> klass : classes) {
             try {
                 Service service = (Service) klass.newInstance();
                 log.debug("Loading service [{0}] implementation [{1}]", service.getInterface(),

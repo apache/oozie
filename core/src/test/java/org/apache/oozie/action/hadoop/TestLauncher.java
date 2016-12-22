@@ -42,8 +42,8 @@ import java.util.Map;
 // this whole class can be deleted - for now, just renamed the tests that fail
 // These tests mostly validate LaunhcherMapper - with OOYA, LauncherMapper should be eliminated, too
 
-// With Hadoop 2.4.0, things work slightly differently (there is an exception in LauncherMapper.map()), also, SequenceFile.Reader got deprecated
-// constructors which throws NPE if the Configuration is not populated properly
+// With Hadoop 2.4.0, things work slightly differently (there is an exception in LauncherMapper.map()), also,
+// SequenceFile.Reader got deprecated
 public class TestLauncher extends XFsTestCase {
 
     @Override

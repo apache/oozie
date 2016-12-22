@@ -241,8 +241,11 @@ public class HiveMain extends LauncherMain {
             File localDir = new File("dummy").getAbsoluteFile().getParentFile();
             System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
             System.out.println("------------------------");
-            for (String file : localDir.list()) {
-                System.out.println("  " + file);
+            String[] files = localDir.list();
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("  " + file);
+                }
             }
             System.out.println("------------------------");
             System.out.println();

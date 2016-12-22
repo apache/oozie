@@ -1742,6 +1742,7 @@
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
                     <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                    <excludeFilterFile>findbugs-filter.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                  <execution>

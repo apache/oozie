@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -694,6 +695,7 @@ public class Instrumentation {
     public String toString() {
         String E = System.getProperty("line.separator");
         StringBuilder sb = new StringBuilder(4096);
+
         for (String element : all.keySet()) {
             sb.append(element).append(':').append(E);
             List<String> groups = new ArrayList<String>(all.get(element).keySet());

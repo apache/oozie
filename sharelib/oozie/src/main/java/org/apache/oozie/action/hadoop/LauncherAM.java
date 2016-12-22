@@ -101,13 +101,16 @@ public class LauncherAM {
             LauncherSecurityManager launcherSecurityManager,
             String containerId) {
         this.ugi = Preconditions.checkNotNull(ugi, "ugi should not be null");
-        this.amRmClientAsyncFactory = Preconditions.checkNotNull(amRmClientAsyncFactory, "amRmClientAsyncFactory should not be null");
+        this.amRmClientAsyncFactory = Preconditions.checkNotNull(amRmClientAsyncFactory,
+                "amRmClientAsyncFactory should not be null");
         this.callbackHandler = Preconditions.checkNotNull(callbackHandler, "callbackHandler should not be null");
         this.hdfsOperations = Preconditions.checkNotNull(hdfsOperations, "hdfsOperations should not be null");
         this.localFsOperations = Preconditions.checkNotNull(localFsOperations, "localFsOperations should not be null");
         this.prepareHandler = Preconditions.checkNotNull(prepareHandler, "prepareHandler should not be null");
-        this.callbackNotifierFactory = Preconditions.checkNotNull(callbackNotifierFactory, "callbackNotifierFactory should not be null");
-        this.launcherSecurityManager = Preconditions.checkNotNull(launcherSecurityManager, "launcherSecurityManager should not be null");
+        this.callbackNotifierFactory = Preconditions.checkNotNull(callbackNotifierFactory,
+                "callbackNotifierFactory should not be null");
+        this.launcherSecurityManager = Preconditions.checkNotNull(launcherSecurityManager,
+                "launcherSecurityManager should not be null");
         this.containerId = ContainerId.fromString(Preconditions.checkNotNull(containerId, "containerId should not be null"));
     }
 
@@ -445,26 +448,31 @@ public class LauncherAM {
                             applicationIdStr));
                 }
             }
-        } catch (Exception ex) {
-            throw new LauncherException("IO error",ex);
+        } catch (RuntimeException | InterruptedException | IOException ex) {
+            throw new LauncherException("IO error", ex);
         }
     }
 
     private void handleActionData() throws IOException {
         // external child IDs
-        processActionData(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, null, ACTION_DATA_EXTERNAL_CHILD_IDS, -1, ACTIONOUTPUTTYPE_EXT_CHILD_ID);
+        processActionData(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, null,
+                ACTION_DATA_EXTERNAL_CHILD_IDS, -1, ACTIONOUTPUTTYPE_EXT_CHILD_ID);
 
         // external stats
-        processActionData(ACTION_PREFIX + ACTION_DATA_STATS, CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, ACTION_DATA_STATS, Integer.MAX_VALUE, ACTIONOUTPUTTYPE_STATS);
+        processActionData(ACTION_PREFIX + ACTION_DATA_STATS, CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
+                ACTION_DATA_STATS, Integer.MAX_VALUE, ACTIONOUTPUTTYPE_STATS);
 
         // output data
-        processActionData(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, ACTION_DATA_OUTPUT_PROPS, 2048, ACTIONOUTPUTTYPE_OUTPUT);
+        processActionData(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
+                ACTION_DATA_OUTPUT_PROPS, 2048, ACTIONOUTPUTTYPE_OUTPUT);
 
         // id swap
-        processActionData(ACTION_PREFIX + ACTION_DATA_NEW_ID, null, ACTION_DATA_NEW_ID, -1, ACTIONOUTPUTTYPE_ID_SWAP);
+        processActionData(ACTION_PREFIX + ACTION_DATA_NEW_ID, null,
+                ACTION_DATA_NEW_ID, -1, ACTIONOUTPUTTYPE_ID_SWAP);
     }
 
-    private void processActionData(String propertyName, String maxSizePropertyName, String actionDataPropertyName, int maxSizeDefault, String type) throws IOException {
+    private void processActionData(String propertyName, String maxSizePropertyName, String actionDataPropertyName,
+            int maxSizeDefault, String type) throws IOException {
         String propValue = System.getProperty(propertyName);
         int maxSize = maxSizeDefault;
 
@@ -475,7 +483,8 @@ public class LauncherAM {
         if (propValue != null) {
             File actionDataFile = new File(propValue);
             if (localFsOperations.fileExists(actionDataFile)) {
-                actionData.put(actionDataPropertyName, localFsOperations.getLocalFileContentAsString(actionDataFile, type, maxSize));
+                actionData.put(actionDataPropertyName, localFsOperations.getLocalFileContentAsString(actionDataFile,
+                        type, maxSize));
             }
         }
     }
@@ -515,7 +524,8 @@ public class LauncherAM {
             if (externalChildIdsProp != null) {
                 File externalChildIDs = new File(externalChildIdsProp);
                 if (localFsOperations.fileExists(externalChildIDs)) {
-                    actionData.put(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS, localFsOperations.getLocalFileContentAsString(externalChildIDs, ACTIONOUTPUTTYPE_EXT_CHILD_ID, -1));
+                    actionData.put(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS,
+                            localFsOperations.getLocalFileContentAsString(externalChildIDs, ACTIONOUTPUTTYPE_EXT_CHILD_ID, -1));
                 }
             }
         } catch (IOException ioe) {

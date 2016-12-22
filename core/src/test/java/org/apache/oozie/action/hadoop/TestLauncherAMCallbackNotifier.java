@@ -170,7 +170,8 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         waitForCallbackAndCheckResult(FinalApplicationStatus.FAILED.toString());
     }
 
-    private Configuration setupEmbeddedContainer(Class<?> servletClass, String servletEndPoint, String servletUrl, Map<String, String> params) throws Exception {
+    private Configuration setupEmbeddedContainer(Class<?> servletClass, String servletEndPoint,
+            String servletUrl, Map<String, String> params) throws Exception {
         container = new EmbeddedServletContainer("test");
         if (servletEndPoint != null) {
             if (params != null) {

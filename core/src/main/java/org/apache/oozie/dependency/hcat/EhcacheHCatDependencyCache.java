@@ -478,13 +478,13 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
 
     @Override
     public void removeNonWaitingCoordActions(Set<String> staleActions) {
-        Iterator<String> serverItr = missingDepsByServer.keySet().iterator();
-        while (serverItr.hasNext()) {
-            String server = serverItr.next();
-            Cache missingCache = missingDepsByServer.get(server);
+        for (Entry<String, Cache> entry : missingDepsByServer.entrySet()) {
+            Cache missingCache = entry.getValue();
+
             if (missingCache == null) {
                 continue;
             }
+
             synchronized (missingCache) {
                 for (Object key : missingCache.getKeys()) {
                     Element element = missingCache.get(key);

@@ -47,6 +47,8 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 
+import com.google.common.base.Preconditions;
+
 public class OozieSharelibCLI {
     public static final String[] HELP_INFO = {
             "",
@@ -255,20 +257,27 @@ public class OozieSharelibCLI {
     private List<Future<Void>> copyFolderRecursively(final FileSystem fs, final ExecutorService threadPool,
             File srcFile, final Path dstPath) throws IOException {
         List<Future<Void>> taskList = new ArrayList<Future<Void>>();
-        for (final File file : srcFile.listFiles()) {
-            final Path trgName = new Path(dstPath, file.getName());
-            if (file.isDirectory()) {
-                taskList.addAll(copyFolderRecursively(fs, threadPool, file, trgName));
-            } else {
-                taskList.add(threadPool.submit(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        fs.copyFromLocalFile(new Path(file.toURI()), trgName);
-                        return null;
-                    }
-                }));
+        File[] files = srcFile.listFiles();
+
+        if (files != null) {
+            for (final File file : files) {
+                final Path trgName = new Path(dstPath, file.getName());
+                if (file.isDirectory()) {
+                    taskList.addAll(copyFolderRecursively(fs, threadPool, file, trgName));
+                } else {
+                    taskList.add(threadPool.submit(new Callable<Void>() {
+                        @Override
+                        public Void call() throws Exception {
+                            fs.copyFromLocalFile(new Path(file.toURI()), trgName);
+                            return null;
+                        }
+                    }));
+                }
             }
+        } else {
+            System.out.println("WARNING: directory listing of " + srcFile.getAbsolutePath().toString() + " returned null");
         }
+
         return taskList;
     }
 }

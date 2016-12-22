@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -110,7 +112,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context) throws ActionExecutorException {
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
+            throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
         conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
         return conf;
@@ -261,7 +264,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     // Return the value of the specified configuration property
-    private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue) throws ActionExecutorException {
+    private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue)
+            throws ActionExecutorException {
         try {
             String ret = defaultValue;
             if (actionConf != null) {
@@ -381,7 +385,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 jobCompleted = runningJob.isComplete();
             } catch (Exception e) {
                 LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
-                LOG.warn("Unable to check the state of a running MapReduce job - please check the health of the Job History Server!");
+                LOG.warn("Unable to check the state of a running MapReduce job -"
+                        + " please check the health of the Job History Server!");
                 exception = true;
                 throw convertException(e);
             } finally {
@@ -399,7 +404,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             }
 
             // run original check() if the MR action is completed or there are errors - otherwise mark it as RUNNING
-            if (jobCompleted || (!jobCompleted && actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS))) {
+            if (jobCompleted || actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
                 super.check(context, action);
             } else {
                 context.setExternalStatus(RUNNING);
@@ -419,7 +424,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         // the YARN ApplicationID based on the tag and kill it as well
         YarnClient yarnClient = null;
         try {
-            String tag = LauncherMapperHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(), context.getWorkflow(), action));
+            String tag = LauncherMapperHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(),
+                    context.getWorkflow(), action));
             GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
             gar.setScope(ApplicationsRequestScope.ALL);
             gar.setApplicationTags(Collections.singleton(tag));
@@ -432,7 +438,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             if (appsList.size() > 1) {
                 String applications = Joiner.on(",").join(Iterables.transform(appsList, new Function<ApplicationReport, String>() {
                     @Override
-                    public String apply(ApplicationReport input) {
+                    public String apply(@Nonnull ApplicationReport input) {
                         return input.toString();
                     }
                 }));
@@ -446,7 +452,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 yarnClient.start();
 
                 ApplicationReport app = appsList.get(0);
-                LOG.info("Killing MapReduce job {0}, YARN Id: {1}", action.getExternalChildIDs(), app.getApplicationId().toString());
+                LOG.info("Killing MapReduce job {0}, YARN Id: {1}", action.getExternalChildIDs(),
+                        app.getApplicationId().toString());
                 yarnClient.killApplication(app.getApplicationId());
             } else {
                 LOG.info("No MapReduce job to kill");
