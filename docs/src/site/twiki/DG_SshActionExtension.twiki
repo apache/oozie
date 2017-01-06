@@ -24,6 +24,9 @@ command must follow the following requirements:
    * The format of the output must be a valid Java Properties file.
    * The size of the output must not exceed 2KB.
 
+Note: Ssh Action will fail if any output is written to standard error / output upon login (e.g. .bashrc of the remote
+user contains ls -a).
+
 *Syntax:*
 
 <verbatim>
