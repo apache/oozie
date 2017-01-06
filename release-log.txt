@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2654 Zookeeper dependent services should not depend on Connectionstate to be valid before cleaning up (venkatnrangan via abhishekbafna)
 OOZIE-2519 Oozie HA with SSL info is slightly incorrect (andras.piros via rkanter)
 OOZIE-2757 Malformed xml is Spark action doc page (gezapeti via abhishekbafna)
 OOZIE-2616 Add Tez profile for Hive and Pig sharelibs (poeppt via rkanter)

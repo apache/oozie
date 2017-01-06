@@ -177,9 +177,7 @@ public class ZKUtils {
         // If there are no more classes using ZooKeeper, we should teardown everything.
         users.remove(user);
         if (users.isEmpty() && zk != null) {
-            if (ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
-                zk.teardown();
-            }
+            zk.teardown();
             zk = null;
         }
     }
