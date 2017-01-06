@@ -50,6 +50,8 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 
+import com.google.common.base.Strings;
+
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
     static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
@@ -494,10 +496,21 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     public static String[] getMainArguments(Configuration conf) {
         String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
+
+        int pos = 0;
         for (int i = 0; i < args.length; i++) {
-            args[i] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+            String arg = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+            if (!Strings.isNullOrEmpty(arg)) {
+                args[pos++] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+            }
         }
-        return args;
+
+        // this is to skip null args, that is <arg></arg> in the workflow XML -- in this case,
+        // args[] might look like {"arg1", "arg2", null, null} at this point
+        String[] retArray = new String[pos];
+        System.arraycopy(args, 0, retArray, 0, pos);
+
+        return retArray;
     }
 
     private void setupHeartBeater(Reporter reporter) {
