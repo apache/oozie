@@ -2941,4 +2941,30 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("DEBUG", conf.get(oozieActionHiveRootLogger));
     }
 
+    public void testEmptyArgs() throws Exception {
+        String actionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg></arg>" +
+                "</java>";
+
+        Context context = createContext(actionXml, null);
+        final RunningJob runningJob = submitAction(context);
+        waitFor(60 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return runningJob.isComplete();
+            }
+        });
+        assertTrue(runningJob.isSuccessful());
+        ActionExecutor ae = new JavaActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+    }
 }
