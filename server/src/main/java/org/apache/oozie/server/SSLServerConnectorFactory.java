@@ -44,6 +44,10 @@ class SSLServerConnectorFactory {
     public static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_PASS = "oozie.https.keystore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_FILE = "oozie.https.keystore.file";
+    public static final String OOZIE_HTTPS_EXCLUDE_PROTOCOLS = "oozie.https.exclude.protocols";
+    public static final String OOZIE_HTTPS_INCLUDE_PROTOCOLS = "oozie.https.include.protocols";
+    public static final String OOZIE_HTTPS_INCLUDE_CIPHER_SUITES = "oozie.https.include.cipher.suites";
+    public static final String OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES = "oozie.https.exclude.cipher.suites";
 
     private SslContextFactory sslContextFactory;
     private Configuration conf;
@@ -69,7 +73,11 @@ class SSLServerConnectorFactory {
                 String.format("Invalid port number specified: \'%d\'. It should be between 1 and 65535.", oozieHttpsPort));
 
         setIncludeProtocols();
-        setCipherSuites();
+        setExcludeProtocols();
+
+        setIncludeCipherSuites();
+        setExludeCipherSuites();
+
         setTrustStorePath();
         setTrustStorePass();
 
@@ -87,20 +95,42 @@ class SSLServerConnectorFactory {
         return secureServerConnector;
     }
 
-    private void setCipherSuites() {
-        String excludeCipherList = conf.get("oozie.https.exclude.cipher.suites");
+    private void setExludeCipherSuites() {
+        String excludeCipherList = conf.get(OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES);
         String[] excludeCipherSuites = excludeCipherList.split(",");
         sslContextFactory.setExcludeCipherSuites(excludeCipherSuites);
 
         LOG.info(String.format("SSL context - excluding cipher suites: %s", Arrays.toString(excludeCipherSuites)));
     }
 
+    private void setIncludeCipherSuites() {
+        String includeCipherList = conf.get(OOZIE_HTTPS_INCLUDE_CIPHER_SUITES);
+        if (includeCipherList == null || includeCipherList.isEmpty()) {
+            return;
+        }
+
+        String[] includeCipherSuites = includeCipherList.split(",");
+        sslContextFactory.setIncludeCipherSuites(includeCipherSuites);
+
+        LOG.info(String.format("SSL context - including cipher suites: %s", Arrays.toString(includeCipherSuites)));
+    }
+
     private void setIncludeProtocols() {
-        String enabledProtocolsList = conf.get("oozie.https.include.protocols");
+        String enabledProtocolsList = conf.get(OOZIE_HTTPS_INCLUDE_PROTOCOLS);
         String[] enabledProtocols = enabledProtocolsList.split(",");
         sslContextFactory.setIncludeProtocols(enabledProtocols);
 
         LOG.info(String.format("SSL context - including protocols: %s", Arrays.toString(enabledProtocols)));
+    }
+
+    private void setExcludeProtocols() {
+        String excludedProtocolsList = conf.get(OOZIE_HTTPS_EXCLUDE_PROTOCOLS);
+        if (excludedProtocolsList == null || excludedProtocolsList.isEmpty()) {
+            return;
+        }
+        String[] excludedProtocols = excludedProtocolsList.split(",");
+        sslContextFactory.setExcludeProtocols(excludedProtocols);
+        LOG.info(String.format("SSL context - excluding protocols: %s", Arrays.toString(excludedProtocols)));
     }
 
     private void setTrustStorePath() {
