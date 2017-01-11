@@ -1983,15 +1983,6 @@
             </properties>
         </profile>
         <profile>
-            <id>loginServerExample</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>login</module>
-            </modules>
-        </profile>
-        <profile>
             <id>spark-1</id>
             <activation>
                 <activeByDefault>true</activeByDefault>

@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2732 Remove login server example (rkanter via abhishekbafna)
 OOZIE-2756 Extend HTTPS configuration settings for embedded Jetty (asasvari via abhishekbafna)
 OOZIE-2727 OozieDBCLI creates temporary directories and do not delete them (gezapeti via rkanter)
 OOZIE-2728 Typo in Error E0405 (gezapeti via rkanter)
