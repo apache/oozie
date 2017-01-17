@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -99,10 +98,10 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
+    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
                                Configuration actionConf) throws ActionExecutorException {
 
-        JobConf launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
+        Configuration launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
         if (launcherJobConf.get("oozie.launcher." + TASK_USER_PRECEDENCE) == null) {
             launcherJobConf.set(TASK_USER_PRECEDENCE, "true");
         }

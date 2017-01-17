@@ -604,7 +604,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
 
     @SuppressWarnings("unchecked")
     public List<WorkflowAction> getActions() {
-        return (List<WorkflowAction>)(List<?>) actions;
+        return (List) actions;
     }
 
     public void setActions(List<WorkflowActionBean> nodes) {

@@ -33,7 +33,6 @@ import java.util.regex.Matcher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -154,7 +153,7 @@ public class TestOozieJobInfo extends XDataTestCase {
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(wfbean, actionList.get(1), false,
                 false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(actionList.get(1).getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(actionList.get(1).getConf()));
         String user = conf.get("user.name");
 
         FileSystem fs = getFileSystem();

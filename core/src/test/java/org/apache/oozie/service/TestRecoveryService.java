@@ -246,7 +246,7 @@ public class TestRecoveryService extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job1, action1, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
         String launcherId = action1.getExternalId();
 
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);

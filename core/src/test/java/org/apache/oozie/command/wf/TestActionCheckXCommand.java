@@ -23,6 +23,7 @@ import java.io.Writer;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -257,7 +258,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 
@@ -408,7 +409,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job2, action1, false, false);
         WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action2.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action2.getConf()));
         String user = conf.get("user.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 
@@ -480,7 +481,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job0, action1, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
         String user = conf.get("user.name");
         JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
 

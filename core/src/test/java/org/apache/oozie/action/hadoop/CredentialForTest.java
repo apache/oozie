@@ -20,20 +20,17 @@ package org.apache.oozie.action.hadoop;
 
 import java.util.Map.Entry;
 
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.Credentials;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.action.hadoop.Credentials;
 import org.apache.oozie.action.hadoop.CredentialsProperties;
 
-
-
-@SuppressWarnings("deprecation")
-public class CredentialForTest extends Credentials {
+public class CredentialForTest implements CredentialsProvider {
 
     @Override
-    public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
-
+    public void updateCredentials(Credentials credentials, Configuration config,
+            CredentialsProperties props, Context context) throws Exception {
         String paramA = null;
         String paramB = null;
         for (Entry<String, String>  parameter : props.getProperties().entrySet()) {
@@ -50,7 +47,7 @@ public class CredentialForTest extends Credentials {
             throw new CredentialException(ErrorCode.E0510, "required parameters is null.");
         }
 
-        jobconf.set(props.getName(), "testcert");
+        config.set(props.getName(), "testcert");
     }
 
 }

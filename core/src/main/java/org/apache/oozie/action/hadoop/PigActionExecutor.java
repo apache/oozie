@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
@@ -129,10 +128,10 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+    protected Configuration loadHadoopDefaultResources(Context context, Element actionXml) {
         boolean loadDefaultResources = ConfigurationService
                 .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);
-        JobConf conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
+        Configuration conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
         return conf;
     }
 }

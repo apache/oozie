@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
@@ -879,10 +880,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Try to load the token without it being defined in oozie-site; should get an exception
         JobConf credentialsConf = new JobConf();
+        Credentials credentials = new Credentials();
         Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
         XConfiguration.copy(launcherConf, credentialsConf);
         try {
-            ae.setCredentialTokens(credentialsConf, context, action, credProperties);
+            ae.setCredentialTokens(credentials, credentialsConf, context, action, credProperties);
             fail("Should have gotten an exception but did not");
         }
         catch (ActionExecutorException aee) {
@@ -896,13 +898,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Try to load the token after being defined in oozie-site; should work correctly
         credentialsConf = new JobConf();
+        credentials = new Credentials();
         launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
         XConfiguration.copy(launcherConf, credentialsConf);
-        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
-        Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
+        ae.setCredentialTokens(credentials, credentialsConf, context, action, credProperties);
+        Token<? extends TokenIdentifier> tk = credentials.getToken(new Text("ABC Token"));
         assertNotNull(tk);
 
-        byte[] secKey = credentialsConf.getCredentials().getSecretKey(new Text(InsertTestToken.DUMMY_SECRET_KEY));
+        byte[] secKey = credentials.getSecretKey(new Text(InsertTestToken.DUMMY_SECRET_KEY));
         assertNotNull(secKey);
         assertEquals(InsertTestToken.DUMMY_SECRET_KEY, new String(secKey, "UTF-8"));
     }
@@ -938,8 +941,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         try {
         // Setting the credential properties in launcher conf should fail
-        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context, action,
-                actionConf);
+        ae.setCredentialPropertyToActionConf(context, action, actionConf);
         }
         catch (ActionExecutorException e) {
             assertEquals(e.getErrorCode(), "JA021");
@@ -1083,10 +1085,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Try to load the token without it being defined in oozie-site; should get an exception
         JobConf credentialsConf = new JobConf();
+        Credentials credentials = new Credentials();
         Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
         XConfiguration.copy(launcherConf, credentialsConf);
-        ae.setCredentialTokens(credentialsConf, context, action, credProperties);
-        Token<? extends TokenIdentifier> tk = credentialsConf.getCredentials().getToken(new Text("ABC Token"));
+        ae.setCredentialTokens(credentials, credentialsConf, context, action, credProperties);
+        Token<? extends TokenIdentifier> tk = credentials.getToken(new Text("ABC Token"));
         if (expectingTokens) {
             assertNotNull(tk);
         } else {
@@ -1523,7 +1526,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         getFileSystem().mkdirs(javaShareLibPath);
         Services.get().setService(ShareLibService.class);
 
-        JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
+        Configuration conf = ae.createBaseHadoopConf(context, eActionXml);
         // Despite systemLibPath is not fully qualified and the action refers to the
         // second namenode the next line won't throw exception because default fs is used
         ae.addShareLib(conf, new String[] { "java-action-executor" });
@@ -1547,7 +1550,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             Context context = createContext(actionXml, null);
             Path appPath = new Path("localfs://namenode:port/mydir");
             JavaActionExecutor ae = new JavaActionExecutor();
-            JobConf conf = ae.createBaseHadoopConf(context, eActionXml);
+            Configuration conf = ae.createBaseHadoopConf(context, eActionXml);
             Services.get().destroy();
             setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs,viewfs");
             new Services().init();
@@ -1868,10 +1871,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
         action.setType(ae.getType());
         Context context = new Context(wf, action);
-        JobConf actionConf = new JobConf();
+        Configuration actionConf = new JobConf();
 
         // Test when server side setting is not enabled
-        JobConf launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
+        Configuration launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED)); // disabled by default
 
         ConfigurationService.set("oozie.action.launcher." + JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, "true");

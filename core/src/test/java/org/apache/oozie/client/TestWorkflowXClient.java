@@ -152,7 +152,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                     fail("submit client without JT should throw exception");
                 }
                 catch (RuntimeException exception) {
-                    assertEquals("java.lang.RuntimeException: jobtracker is not specified in conf", exception.toString());
+                    assertEquals("java.lang.RuntimeException: Resource manager is not specified in conf", exception.toString());
                 }
                 conf.setProperty(XOozieClient.RM, "localhost:9001");
                 try {

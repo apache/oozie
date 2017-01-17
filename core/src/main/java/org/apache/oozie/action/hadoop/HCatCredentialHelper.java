@@ -18,10 +18,11 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SaslRpcServer;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
@@ -50,18 +51,18 @@ public class HCatCredentialHelper {
      * @param server - Serevr URI for HCat server
      * @throws Exception
      */
-    public void set(JobConf launcherJobConf, String principal, String server) throws Exception {
+    public void set(Credentials credentials, Configuration launcherConfig, String principal, String server) throws Exception {
         HCatClient client = null;
         try {
-            client = getHCatClient(launcherJobConf, principal, server);
+            client = getHCatClient(launcherConfig, principal, server);
             XLog.getLog(getClass()).debug(
                     "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
-                            + launcherJobConf.get(USER_NAME));
-            String tokenStrForm = client.getDelegationToken(launcherJobConf.get(USER_NAME), UserGroupInformation
+                            + launcherConfig.get(USER_NAME));
+            String tokenStrForm = client.getDelegationToken(launcherConfig.get(USER_NAME), UserGroupInformation
                     .getLoginUser().getShortUserName());
             Token<DelegationTokenIdentifier> hcatToken = new Token<DelegationTokenIdentifier>();
             hcatToken.decodeFromUrlString(tokenStrForm);
-            launcherJobConf.getCredentials().addToken(new Text("HCat Token"), hcatToken);
+            credentials.addToken(new Text("HCat Token"), hcatToken);
             XLog.getLog(getClass()).debug("Added the HCat token in job conf");
         }
         catch (Exception ex) {
@@ -77,13 +78,13 @@ public class HCatCredentialHelper {
 
     /**
      * Getting the HCat client.
-     * @param launcherJobConf
+     * @param launcherConfig
      * @param principal
      * @param server
      * @return HCatClient
      * @throws HCatException
      */
-    public HCatClient getHCatClient(JobConf launcherJobConf,
+    public HCatClient getHCatClient(Configuration launcherConfig,
         String principal, String server) throws HCatException {
         HiveConf hiveConf = null;
         HCatClient hiveclient = null;
@@ -95,7 +96,7 @@ public class HCatCredentialHelper {
         hiveConf.set(HIVE_METASTORE_KERBEROS_PRINCIPAL, principal);
         hiveConf.set(HIVE_METASTORE_LOCAL, "false");
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, server);
-        String protection = launcherJobConf.get(HADOOP_RPC_PROTECTION,
+        String protection = launcherConfig.get(HADOOP_RPC_PROTECTION,
            SaslRpcServer.QualityOfProtection.AUTHENTICATION.name()
               .toLowerCase());
         XLog.getLog(getClass()).debug("getHCatClient, setting rpc protection to " + protection);

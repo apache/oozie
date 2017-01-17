@@ -18,15 +18,15 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.util.XLog;
 
-
-public class InsertTestToken extends Credentials{
+public class InsertTestToken implements CredentialsProvider {
     public static String DUMMY_SECRET_KEY = "DummySecretKey";
     public InsertTestToken() {
     }
@@ -34,14 +34,16 @@ public class InsertTestToken extends Credentials{
     /* (non-Javadoc)
      * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
      */
+
     @Override
-    public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
+    public void updateCredentials(Credentials  credentials, Configuration config, CredentialsProperties props, Context context)
+            throws Exception {
         try {
             Token<DelegationTokenIdentifier> abctoken = new Token<DelegationTokenIdentifier>();
-            jobconf.getCredentials().addToken(new Text("ABC Token"), abctoken);
+            credentials.addToken(new Text("ABC Token"), abctoken);
             XLog.getLog(getClass()).debug("Added the ABC token in job conf");
 
-            jobconf.getCredentials().addSecretKey(new Text(DUMMY_SECRET_KEY), DUMMY_SECRET_KEY.getBytes("UTF-8"));
+            credentials.addSecretKey(new Text(DUMMY_SECRET_KEY), DUMMY_SECRET_KEY.getBytes("UTF-8"));
             XLog.getLog(getClass()).debug("Added the " + DUMMY_SECRET_KEY + " in job conf");
         }
         catch (Exception e) {

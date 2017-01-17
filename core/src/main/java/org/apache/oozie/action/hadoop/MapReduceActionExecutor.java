@@ -209,8 +209,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
-                JobConf jobConf = createBaseHadoopConf(context, actionXml);
-                jobClient = createJobClient(context, jobConf);
+                Configuration jobConf = createBaseHadoopConf(context, actionXml);
+                jobClient = createJobClient(context, new JobConf(jobConf));
                 RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalChildIDs()));
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR002",
@@ -297,19 +297,20 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
+    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
             Configuration actionConf) throws ActionExecutorException {
         // If the user is using a regular MapReduce job and specified an uber jar, we need to also set it for the launcher;
         // so we override createLauncherConf to call super and then to set the uber jar if specified. At this point, checking that
         // uber jars are enabled and resolving the uber jar path is already done by setupActionConf() when it parsed the actionConf
         // argument and we can just look up the uber jar in the actionConf argument.
-        JobConf launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
+        Configuration launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) == null && actionXml.getChild("pipes", ns) == null) {
             // Set for uber jar
             String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
             if (uberJar != null && uberJar.trim().length() > 0) {
-                launcherJobConf.setJar(uberJar);
+                // TODO
+                // launcherJobConf.setJar(uberJar);
             }
         }
         return launcherJobConf;
@@ -350,7 +351,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
         Map<String, String> actionData = Collections.emptyMap();
-        JobConf jobConf = null;
+        Configuration jobConf = null;
 
         try {
             FileSystem actionFs = context.getAppFileSystem();
@@ -372,7 +373,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             boolean exception = false;
 
             try {
-                jobClient = createJobClient(context, jobConf);
+                jobClient = createJobClient(context, new JobConf(jobConf));
                 RunningJob runningJob = jobClient.getJob(JobID.forName(newId));
 
                 if (runningJob == null) {

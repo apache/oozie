@@ -19,7 +19,7 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.action.hadoop.CredentialsProvider;
+import org.apache.oozie.action.hadoop.CredentialsProviderFactory;
 import org.apache.oozie.action.hadoop.DistcpActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.LauncherMapper;
@@ -212,7 +212,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals(false, ConfigurationService.getBoolean(HadoopAccessorService.KERBEROS_AUTH_ENABLED));
 
         assertEquals(0, ConfigurationService.getStrings("no.defined").length);
-        assertEquals(0, ConfigurationService.getStrings(CredentialsProvider.CRED_KEY).length);
+        assertEquals(0, ConfigurationService.getStrings(CredentialsProviderFactory.CRED_KEY).length);
         assertEquals(1, ConfigurationService.getStrings(DistcpActionExecutor.CLASS_NAMES).length);
         assertEquals("distcp=org.apache.hadoop.tools.DistCp",
                 ConfigurationService.getStrings(DistcpActionExecutor.CLASS_NAMES)[0]);

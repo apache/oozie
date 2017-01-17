@@ -116,7 +116,7 @@ public class XOozieClient extends OozieClient {
     private void validateHttpSubmitConf(Properties conf) {
         String RM = conf.getProperty(XOozieClient.RM);
         if (RM == null) {
-            throw new RuntimeException("jobtracker is not specified in conf");
+            throw new RuntimeException("Resource manager is not specified in conf");
         }
 
         String NN = conf.getProperty(XOozieClient.NN);

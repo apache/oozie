@@ -39,7 +39,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.Counters;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.client.OozieClient;
@@ -119,13 +118,8 @@ public class LauncherMapperHelper {
         launcherConf.setInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, fsGlobMax);
     }
 
-    public static void setupLauncherInfo(JobConf launcherConf, String jobId, String actionId, Path actionDir,
+    public static void setupLauncherInfo(Configuration launcherConf, String jobId, String actionId, Path actionDir,
             String recoveryId, Configuration actionConf, String prepareXML) throws IOException, HadoopAccessorException {
-
-        launcherConf.setMapperClass(LauncherMapper.class);
-        launcherConf.setSpeculativeExecution(false);
-        launcherConf.setNumMapTasks(1);
-        launcherConf.setNumReduceTasks(0);
 
         launcherConf.set(LauncherMapper.OOZIE_JOB_ID, jobId);
         launcherConf.set(LauncherMapper.OOZIE_ACTION_ID, actionId);
@@ -147,13 +141,9 @@ public class LauncherMapperHelper {
           actionConf.setStrings("mapreduce.job.cache.files", purgedEntries.toArray(new String[purgedEntries.size()]));
           launcherConf.setBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", true);
         }
-
-        launcherConf.setInputFormat(OozieLauncherInputFormat.class);
-        launcherConf.setOutputFormat(OozieLauncherOutputFormat.class);
-        launcherConf.setOutputCommitter(OozieLauncherOutputCommitter.class);
     }
 
-    public static void setupYarnRestartHandling(JobConf launcherJobConf, Configuration actionConf, String launcherTag,
+    public static void setupYarnRestartHandling(Configuration launcherJobConf, Configuration actionConf, String launcherTag,
                                                 long launcherTime)
             throws NoSuchAlgorithmException {
         launcherJobConf.setLong(LauncherMain.OOZIE_JOB_LAUNCH_TIME, launcherTime);

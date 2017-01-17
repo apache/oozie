@@ -26,7 +26,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.security.PrivilegedExceptionAction;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,10 +55,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
-import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
@@ -237,21 +233,20 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    public JobConf createBaseHadoopConf(Context context, Element actionXml) {
+    public Configuration createBaseHadoopConf(Context context, Element actionXml) {
         return createBaseHadoopConf(context, actionXml, true);
     }
 
-    protected JobConf createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
+    protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
-        JobConf conf = null;
+        Configuration conf = null;
         if (loadResources) {
             conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
         }
         else {
-            conf = new JobConf(false);
-            // conf.set(HadoopAccessorService.OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, "true");
+            conf = new Configuration(false);
         }
 
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
@@ -268,7 +263,7 @@ public class JavaActionExecutor extends ActionExecutor {
         return conf;
     }
 
-    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+    protected Configuration loadHadoopDefaultResources(Context context, Element actionXml) {
         return createBaseHadoopConf(context, actionXml);
     }
 
@@ -777,7 +772,7 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
+    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
             throws ActionExecutorException {
         try {
 
@@ -788,7 +783,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             // launcher job configuration
-            JobConf launcherJobConf = createBaseHadoopConf(context, actionXml);
+            Configuration launcherJobConf = createBaseHadoopConf(context, actionXml);
             // cancel delegation token on a launcher job which stays alive till child job(s) finishes
             // otherwise (in mapred action), doesn't cancel not to disturb running child job
             launcherJobConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
@@ -822,15 +817,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 launcherJobConf.set(ACTION_SHARELIB_FOR + getType(), actionShareLibProperty);
             }
             setLibFilesArchives(context, actionXml, appPathRoot, launcherJobConf);
-
-            String jobName = launcherJobConf.get(HADOOP_JOB_NAME);
-            if (jobName == null || jobName.isEmpty()) {
-                jobName = XLog.format(
-                        "oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
-                        context.getWorkflow().getAppName(), action.getName(),
-                        context.getWorkflow().getId());
-            launcherJobConf.setJobName(jobName);
-            }
 
             // Inject Oozie job information if enabled.
             injectJobInfo(launcherJobConf, actionConf, context, action);
@@ -912,7 +898,7 @@ public class JavaActionExecutor extends ActionExecutor {
         injectCallback(context, launcherConf);
     }
 
-    private void actionConfToLauncherConf(Configuration actionConf, JobConf launcherConf) {
+    private void actionConfToLauncherConf(Configuration actionConf, Configuration launcherConf) {
         for (String name : SPECIAL_PROPERTIES) {
             if (actionConf.get(name) != null && launcherConf.get("oozie.launcher." + name) == null) {
                 launcherConf.set(name, actionConf.get(name));
@@ -938,14 +924,6 @@ public class JavaActionExecutor extends ActionExecutor {
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
 
-            String jobName = actionConf.get(HADOOP_JOB_NAME);
-            if (jobName == null || jobName.isEmpty()) {
-                jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}",
-                        getType(), context.getWorkflow().getAppName(),
-                        action.getName(), context.getWorkflow().getId());
-                actionConf.set(HADOOP_JOB_NAME, jobName);
-            }
-
             injectActionCallback(context, actionConf);
 
             if(actionConf.get(ACL_MODIFY_JOB) == null || actionConf.get(ACL_MODIFY_JOB).trim().equals("")) {
@@ -959,15 +937,17 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             // Setting the credential properties in launcher conf
-            JobConf credentialsConf = null;
+            Configuration credentialsConf = null;
+
             HashMap<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
                     action, actionConf);
+            Credentials credentials = null;
             if (credentialsProperties != null) {
-
+                credentials = new Credentials();
                 // Adding if action need to set more credential tokens
-                credentialsConf = new JobConf(false);
+                credentialsConf = new Configuration(false);
                 XConfiguration.copy(actionConf, credentialsConf);
-                setCredentialTokens(credentialsConf, context, action, credentialsProperties);
+                setCredentialTokens(credentials, credentialsConf, context, action, credentialsProperties);
 
                 // insert conf to action conf from credentialsConf
                 for (Entry<String, String> entry : credentialsConf) {
@@ -976,7 +956,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     }
                 }
             }
-            JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
+            Configuration launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
             String consoleUrl;
             String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
@@ -1010,21 +990,21 @@ public class JavaActionExecutor extends ActionExecutor {
 //                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
 
                 // insert credentials tokens to launcher job conf if needed
-                if (needInjectCredentials() && credentialsConf != null) {
-                    for (Token<? extends TokenIdentifier> tk : credentialsConf.getCredentials().getAllTokens()) {
+                if (credentialsConf != null) {
+                    for (Token<? extends TokenIdentifier> tk :credentials.getAllTokens()) {
                         Text fauxAlias = new Text(tk.getKind() + "_" + tk.getService());
                         LOG.debug("ADDING TOKEN: " + fauxAlias);
-                        launcherJobConf.getCredentials().addToken(fauxAlias, tk);
+                        credentials.addToken(fauxAlias, tk);
                     }
-                    if (credentialsConf.getCredentials().numberOfSecretKeys() > 0) {
+                    if (credentials.numberOfSecretKeys() > 0) {
                         for (Entry<String, CredentialsProperties> entry : credentialsProperties.entrySet()) {
                             CredentialsProperties credProps = entry.getValue();
                             if (credProps != null) {
                                 Text credName = new Text(credProps.getName());
-                                byte[] secKey = credentialsConf.getCredentials().getSecretKey(credName);
+                                byte[] secKey = credentials.getSecretKey(credName);
                                 if (secKey != null) {
                                     LOG.debug("ADDING CREDENTIAL: " + credProps.getName());
-                                    launcherJobConf.getCredentials().addSecretKey(credName, secKey);
+                                    credentials.addSecretKey(credName, secKey);
                                 }
                             }
                         }
@@ -1039,7 +1019,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 YarnClientApplication newApp = yarnClient.createApplication();
                 ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
                 ApplicationSubmissionContext appContext =
-                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf);
+                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf, action.getName(), credentials);
                 yarnClient.submitApplication(appContext);
 
                 launcherId = appId.toString();
@@ -1061,20 +1041,26 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, JobConf launcherJobConf, String user,
-                                                                    Context context, Configuration actionConf)
+    private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, Configuration launcherJobConf,
+                                        String user, Context context, Configuration actionConf, String actionName,
+                                        Credentials credentials)
             throws IOException, HadoopAccessorException, URISyntaxException {
 
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
 
+        String jobName = XLog.format(
+                "oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
+                context.getWorkflow().getAppName(), actionName,
+                context.getWorkflow().getId());
+
         appContext.setApplicationId(appId);
-        appContext.setApplicationName(launcherJobConf.getJobName());
+        appContext.setApplicationName(jobName);
         appContext.setApplicationType("Oozie Launcher");
         Priority pri = Records.newRecord(Priority.class);
         int priority = 0; // TODO: OYA: Add a constant or a config
         pri.setPriority(priority);
         appContext.setPriority(pri);
-        appContext.setQueue(launcherJobConf.getQueueName());
+        appContext.setQueue("default");  // TODO: will be possible to set in <launcher>
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
 
         // Set the resources to localize
@@ -1096,7 +1082,6 @@ public class JavaActionExecutor extends ActionExecutor {
         // This adds the Hadoop jars to the classpath in the Launcher JVM
         ClasspathUtils.setupClasspath(env, launcherJobConf);
 
-        // FIXME: move this to specific places where it's actually needed - keeping it here for now
         if (needToAddMRJars()) {
             ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
         }
@@ -1132,9 +1117,11 @@ public class JavaActionExecutor extends ActionExecutor {
         appContext.setAMContainerSpec(amContainer);
 
         // Set tokens
-        DataOutputBuffer dob = new DataOutputBuffer();
-        launcherJobConf.getCredentials().writeTokenStorageToStream(dob);
-        amContainer.setTokens(ByteBuffer.wrap(dob.getData(), 0, dob.getLength()));
+        if (credentials != null) {
+            DataOutputBuffer dob = new DataOutputBuffer();
+            credentials.writeTokenStorageToStream(dob);
+            amContainer.setTokens(ByteBuffer.wrap(dob.getData(), 0, dob.getLength()));
+        }
 
         // Set Resources
         // TODO: OYA: make resources allocated for the AM configurable and choose good defaults (memory MB, vcores)
@@ -1142,24 +1129,6 @@ public class JavaActionExecutor extends ActionExecutor {
         appContext.setResource(resource);
 
         return appContext;
-    }
-
-    private boolean needInjectCredentials() {
-        boolean methodExists = true;
-
-        Class<?> klass;
-        try {
-            klass = Class.forName("org.apache.hadoop.mapred.JobConf");
-            klass.getMethod("getCredentials");
-        }
-        catch (ClassNotFoundException ex) {
-            methodExists = false;
-        }
-        catch (NoSuchMethodException ex) {
-            methodExists = false;
-        }
-
-        return methodExists;
     }
 
     protected HashMap<String, CredentialsProperties> setCredentialPropertyToActionConf(Context context,
@@ -1199,20 +1168,20 @@ public class JavaActionExecutor extends ActionExecutor {
         return credPropertiesMap;
     }
 
-    protected void setCredentialTokens(JobConf jobconf, Context context, WorkflowAction action,
+    protected void setCredentialTokens(Credentials credentials, Configuration jobconf, Context context, WorkflowAction action,
             HashMap<String, CredentialsProperties> credPropertiesMap) throws Exception {
 
         if (context != null && action != null && credPropertiesMap != null) {
             // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
-            CredentialsProvider.ensureKerberosLogin();
+            CredentialsProviderFactory.ensureKerberosLogin();
             for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
                 String credName = entry.getKey();
                 CredentialsProperties credProps = entry.getValue();
                 if (credProps != null) {
-                    CredentialsProvider credProvider = new CredentialsProvider(credProps.getType());
-                    Credentials credentialObject = credProvider.createCredentialObject();
-                    if (credentialObject != null) {
-                        credentialObject.addtoJobConf(jobconf, credProps, context);
+                    CredentialsProviderFactory tokenProviderFactory = new CredentialsProviderFactory(credProps.getType());
+                    CredentialsProvider tokenProvider = tokenProviderFactory.createCredentialsProvider();
+                    if (tokenProvider != null) {
+                        tokenProvider.updateCredentials(credentials, jobconf, credProps, context);
                         LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
                     }
                     else {
@@ -1224,7 +1193,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
         }
-
     }
 
     protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,
@@ -1351,7 +1319,7 @@ public class JavaActionExecutor extends ActionExecutor {
      * @return YarnClient
      * @throws HadoopAccessorException
      */
-    protected YarnClient createYarnClient(Context context, JobConf jobConf) throws HadoopAccessorException {
+    protected YarnClient createYarnClient(Context context, Configuration jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         return Services.get().get(HadoopAccessorService.class).createYarnClient(user, jobConf);
     }
@@ -1391,7 +1359,7 @@ public class JavaActionExecutor extends ActionExecutor {
         YarnClient yarnClient = null;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            JobConf jobConf = createBaseHadoopConf(context, actionXml);
+            Configuration jobConf = createBaseHadoopConf(context, actionXml);
             FileSystem actionFs = context.getAppFileSystem();
             yarnClient = createYarnClient(context, jobConf);
             FinalApplicationStatus appStatus = null;
@@ -1528,7 +1496,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
 
-            JobConf jobConf = createBaseHadoopConf(context, actionXml);
+            Configuration jobConf = createBaseHadoopConf(context, actionXml);
             yarnClient = createYarnClient(context, jobConf);
             yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
 
@@ -1641,7 +1609,7 @@ public class JavaActionExecutor extends ActionExecutor {
             HadoopAccessorException, URISyntaxException {
     }
 
-    private void injectJobInfo(JobConf launcherJobConf, Configuration actionConf, Context context, WorkflowAction action) {
+    private void injectJobInfo(Configuration launcherJobConf, Configuration actionConf, Context context, WorkflowAction action) {
         if (OozieJobInfo.isJobInfoEnabled()) {
             try {
                 OozieJobInfo jobInfo = new OozieJobInfo(actionConf, context, action);

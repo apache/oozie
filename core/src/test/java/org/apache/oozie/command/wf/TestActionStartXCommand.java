@@ -160,7 +160,7 @@ public class TestActionStartXCommand extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
 
         String launcherId = action.getExternalId();
 
@@ -227,7 +227,7 @@ public class TestActionStartXCommand extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
         String user = conf.get("user.name");
 
         String launcherId = action.getExternalId();

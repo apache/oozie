@@ -37,7 +37,6 @@ import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -52,7 +51,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
@@ -532,6 +530,10 @@ public class HadoopAccessorService implements Service {
         catch (IOException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
+    }
+
+    public JobClient createJobClient(String user, Configuration conf) throws HadoopAccessorException {
+        return createJobClient(user, new JobConf(conf));
     }
 
     /**
