@@ -20,8 +20,10 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.pig.Main;
 import org.apache.pig.PigRunner;
+import org.apache.pig.scripting.ScriptEngine;
 import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -34,7 +36,9 @@ import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,6 +52,7 @@ import java.util.regex.Pattern;
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
     public static final int STRING_BUFFER_SIZE = 100;
+    public static final String LOG_EXPANDED_PIG_SCRIPT = LauncherMapper.ACTION_PREFIX + "pig.log.expandedscript";
 
     private static final Pattern[] PIG_JOB_IDS_PATTERNS = {
             Pattern.compile("HadoopJobId: (job_\\S*)"),
@@ -136,17 +141,7 @@ public class PigMain extends LauncherMain {
             throw new RuntimeException("Error: Pig script file [" + script + "] does not exist");
         }
 
-        System.out.println("Pig script [" + script + "] content: ");
-        System.out.println("------------------------");
-        BufferedReader br = new BufferedReader(new FileReader(script));
-        String line = br.readLine();
-        while (line != null) {
-            System.out.println(line);
-            line = br.readLine();
-        }
-        br.close();
-        System.out.println("------------------------");
-        System.out.println();
+        printScript(script, "");
 
         arguments.add("-file");
         arguments.add(script);
@@ -212,6 +207,12 @@ public class PigMain extends LauncherMain {
             arguments.add(pigArg);
         }
 
+        if (actionConf.getBoolean(LOG_EXPANDED_PIG_SCRIPT, true)
+                // To avoid Pig running the embedded scripts on dryrun
+                && ScriptEngine.getSupportedScriptLang(script) == null) {
+            logExpandedScript(script, arguments);
+        }
+
         System.out.println("Pig command arguments :");
         for (String arg : arguments) {
             System.out.println("             " + arg);
@@ -244,8 +245,65 @@ public class PigMain extends LauncherMain {
         }
     }
 
+    /**
+     * Logs the expanded
+     *
+     * @param script
+     * @param arguments
+     */
+    private void logExpandedScript(String script, List<String> arguments) {
+        List<String> dryrunArgs = new ArrayList<String>();
+        dryrunArgs.addAll(arguments);
+        dryrunArgs.add("-dryrun");
+        try {
+            PigRunner.run(dryrunArgs.toArray(new String[dryrunArgs.size()]), null);
+            printScript(script + ".expanded", "Expanded");
+        }
+        catch (Exception e) {
+            System.out.println("Failure while expanding pig script");
+            e.printStackTrace(System.out);
+        }
+    }
 
-
+    private void printScript(String name, String type) {
+        FileInputStream fin = null;
+        InputStreamReader inReader = null;
+        BufferedReader bufReader = null;
+        try {
+            File script = new File(name);
+            if (!script.exists()) {
+                return;
+            }
+            System.out.println("-----------------------------------------------------------");
+            System.out.println(type + " Pig script [" + name + "] content: ");
+            System.out.println("-----------------------------------------------------------");
+            fin = new FileInputStream(script);
+            inReader = new InputStreamReader(fin, "UTF-8");
+            bufReader = new BufferedReader(inReader);
+            String line = bufReader.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = bufReader.readLine();
+            }
+            bufReader.close();
+        }
+        catch (RuntimeException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            System.out.println("Unable to read " + name);
+            e.printStackTrace(System.out);
+        }
+        finally {
+            IOUtils.closeQuietly(fin);
+            IOUtils.closeQuietly(inReader);
+            IOUtils.closeQuietly(bufReader);
+        }
+        System.out.println();
+        System.out.flush();
+        System.out.println("-----------------------------------------------------------");
+        System.out.println();
+    }
     private void handleError(String pigLog) throws Exception {
         System.err.println();
         System.err.println("Pig logfile dump:");

@@ -1882,6 +1882,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.pig.log.expandedscript</name>
+        <value>true</value>
+        <description>
+            Log the expanded pig script in launcher stdout log
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.rootlogger.log.level</name>
         <value>INFO</value>
         <description>
