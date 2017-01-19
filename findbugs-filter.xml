@@ -16,14 +16,17 @@
   limitations under the License.
 -->
 <FindBugsFilter>
+     <!-- excluded because eventServie is static and it cannot be simply rewritten -->
      <Match>
        <Class name="org.apache.oozie.command.XCommand" />
        <Field name="eventService" />
        <Bug pattern="MS_CANNOT_BE_FINAL" />
      </Match>
 
+     <!-- excluded due to the complicated usage of keySet()/get() methods -->
      <Match>
        <Class name="org.apache.oozie.util.Instrumentation" />
+       <Method name="toString" />
        <Bug pattern="WMI_WRONG_MAP_ITERATOR" />
      </Match>
 </FindBugsFilter>

@@ -1503,17 +1503,15 @@ public class JavaActionExecutor extends ActionExecutor {
             context.setExternalStatus(KILLED);
             context.setExecutionData(KILLED, null);
         } catch (Exception ex) {
-            LOG.error("Error: ", ex);
+            LOG.error("Error when killing YARN application", ex);
             throw convertException(ex);
         } finally {
             try {
                 FileSystem actionFs = context.getAppFileSystem();
                 cleanUpActionDir(actionFs, context);
-                if (yarnClient != null) {
-                    yarnClient.close();
-                }
+                Closeables.closeQuietly(yarnClient);
             } catch (Exception ex) {
-                LOG.error("Error: ", ex);
+                LOG.error("Error when cleaning up action dir", ex);
                 throw convertException(ex);
             }
         }

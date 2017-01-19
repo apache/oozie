@@ -60,9 +60,8 @@ public class HdfsOperations {
                 System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
                         + new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE).toUri());
 
-                SequenceFile.Writer wr = null;
-                try {
-                    wr = seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class);
+                try (SequenceFile.Writer wr =
+                        seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class)) {
 
                     if (wr != null) {
                         for (Entry<String, String> entry : actionData.entrySet()) {
@@ -70,14 +69,6 @@ public class HdfsOperations {
                         }
                     } else {
                         throw new IOException("SequenceFile.Writer is null for " + finalPath);
-                    }
-                } finally {
-                    if (wr != null) {
-                        try {
-                            wr.close();
-                        } catch (IOException e) {
-                            throw e;
-                        }
                     }
                 }
 
@@ -101,10 +92,11 @@ public class HdfsOperations {
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                FileSystem fs = FileSystem.get(path.toUri(), conf);
-                java.io.Writer writer = new OutputStreamWriter(fs.create(path), DEFAULT_CHARSET);
-                writer.write(contents);
-                writer.close();
+                try (FileSystem fs = FileSystem.get(path.toUri(), conf);
+                        java.io.Writer writer = new OutputStreamWriter(fs.create(path), DEFAULT_CHARSET)) {
+                    writer.write(contents);
+                }
+
                 return null;
             }
         });
@@ -114,17 +106,17 @@ public class HdfsOperations {
         return ugi.doAs(new PrivilegedExceptionAction<String>() {
             @Override
             public String run() throws Exception {
-                FileSystem fs = FileSystem.get(path.toUri(), conf);
-                InputStream is = fs.open(path);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is, DEFAULT_CHARSET));
                 StringBuilder sb = new StringBuilder();
 
-                String contents;
-                while ((contents = reader.readLine()) != null) {
-                    sb.append(contents);
-                }
+                try (FileSystem fs = FileSystem.get(path.toUri(), conf);
+                        InputStream is = fs.open(path);
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, DEFAULT_CHARSET))) {
 
-                reader.close();
+                    String contents;
+                    while ((contents = reader.readLine()) != null) {
+                        sb.append(contents);
+                    }
+                }
 
                 return sb.toString();
             }

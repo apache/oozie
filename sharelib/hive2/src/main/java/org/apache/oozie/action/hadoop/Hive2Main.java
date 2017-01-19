@@ -261,8 +261,6 @@ public class Hive2Main extends LauncherMain {
         BeeLine beeLine = new BeeLine();
         beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile))));
         int status = beeLine.begin(args, null);
-        System.out.println("*** Return value from Beeline is: " + status);
-        System.out.println("*** Current security manager: " + System.getSecurityManager());
         beeLine.close();
         if (status != 0) {
             System.exit(status);

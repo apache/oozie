@@ -95,7 +95,7 @@ function checkOption() {
 #get the list of hadoop jars that will be injected based on the hadoop version
 function getHadoopJars() {
   version=$1
-  if [[ "${version}" =~ 2.* ]]; then
+  if [[ "${version}" =~ (2|3).* ]]; then
     suffix="-[0-9.]*"
     #List is separated by ":"
     hadoopJars="hadoop-mapreduce-client-core${suffix}.jar:hadoop-mapreduce-client-common${suffix}.jar:hadoop-mapreduce-client-jobclient${suffix}.jar:hadoop-mapreduce-client-app${suffix}.jar:hadoop-yarn-common${suffix}.jar:hadoop-yarn-api${suffix}.jar:hadoop-yarn-client${suffix}.jar:hadoop-hdfs${suffix}.jar:hadoop-common${suffix}.jar:hadoop-auth${suffix}.jar:guava*.jar:protobuf-*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar:commons-cli-*.jar:commons-io-*.jar"

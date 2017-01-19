@@ -114,7 +114,7 @@ specified in the =test.properties= file (which is loaded by the =XTestCase= clas
 
 *hadoop.version* =(*)=: indicates the Hadoop version(Hadoop-2) you wish to build Oozie against specifically. It will
 substitute this value in the Oozie POM properties and pull the corresponding Hadoop artifacts from Maven.
-For Hadoop 2.x, the default (and minimum) version is 2.4.0.
+For Hadoop 2.x, the default (and minimum) version is 2.6.0.
 
 *generateSite* (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
@@ -216,7 +216,7 @@ the versions of the dependencies:
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.16.0
--Dpig.classifier=<classifier> - default none
+-Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
 -Dtomcat.version=<version> - default 6.0.47

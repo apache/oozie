@@ -20,13 +20,11 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ipc.RemoteException;
-import org.apache.hadoop.security.authorize.*;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.mapred.JobConf;

@@ -48,10 +48,6 @@ import com.google.common.base.Preconditions;
 public class LauncherAM {
     private static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
     private static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
-    public static final String ACTIONOUTPUTTYPE_ID_SWAP = "IdSwap";
-    public static final String ACTIONOUTPUTTYPE_OUTPUT = "Output";
-    public static final String ACTIONOUTPUTTYPE_STATS = "Stats";
-    public static final String ACTIONOUTPUTTYPE_EXT_CHILD_ID = "ExtChildID";
 
     public static final String JAVA_CLASS_PATH = "java.class.path";
     public static final String OOZIE_ACTION_ID = "oozie.action.id";
@@ -154,7 +150,7 @@ public class LauncherAM {
     public void run() throws Exception {
         final ErrorHolder errorHolder = new ErrorHolder();
         OozieActionResult actionResult = OozieActionResult.FAILED;
-        boolean launcerExecutedProperly = false;
+        boolean launcherExecutedProperly = false;
         boolean backgroundAction = false;
 
         try {
@@ -173,9 +169,9 @@ public class LauncherAM {
             final String[] mainArgs = getMainArguments(launcherJobConf);
             printDebugInfo();
             setupMainConfiguration();
-            launcerExecutedProperly = runActionMain(mainArgs, errorHolder, ugi);
+            launcherExecutedProperly = runActionMain(mainArgs, errorHolder, ugi);
 
-            if (launcerExecutedProperly) {
+            if (launcherExecutedProperly) {
                 handleActionData();
                 if (actionData.get(ACTION_DATA_OUTPUT_PROPS) != null) {
                     System.out.println();
@@ -201,7 +197,7 @@ public class LauncherAM {
             System.err.println("Launcher AM execution failed");
             e.printStackTrace(System.out);
             e.printStackTrace(System.err);
-            launcerExecutedProperly = false;
+            launcherExecutedProperly = false;
             if (!errorHolder.isPopulated()) {
                 errorHolder.setErrorCause(e);
                 errorHolder.setErrorMessage(e.getMessage());
@@ -211,11 +207,11 @@ public class LauncherAM {
             try {
                 ErrorHolder callbackErrorHolder = callbackHandler.getError();
 
-                if (launcerExecutedProperly) {
+                if (launcherExecutedProperly) {
                     actionResult = backgroundAction ? OozieActionResult.RUNNING : OozieActionResult.SUCCEEDED;
                 }
 
-                if (!launcerExecutedProperly) {
+                if (!launcherExecutedProperly) {
                     updateActionDataWithFailure(errorHolder, actionData);
                 } else if (callbackErrorHolder != null) {  // async error from the callback
                     actionResult = OozieActionResult.FAILED;
@@ -456,23 +452,23 @@ public class LauncherAM {
     private void handleActionData() throws IOException {
         // external child IDs
         processActionData(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS, null,
-                ACTION_DATA_EXTERNAL_CHILD_IDS, -1, ACTIONOUTPUTTYPE_EXT_CHILD_ID);
+                ACTION_DATA_EXTERNAL_CHILD_IDS, -1);
 
         // external stats
         processActionData(ACTION_PREFIX + ACTION_DATA_STATS, CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
-                ACTION_DATA_STATS, Integer.MAX_VALUE, ACTIONOUTPUTTYPE_STATS);
+                ACTION_DATA_STATS, Integer.MAX_VALUE);
 
         // output data
         processActionData(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
-                ACTION_DATA_OUTPUT_PROPS, 2048, ACTIONOUTPUTTYPE_OUTPUT);
+                ACTION_DATA_OUTPUT_PROPS, 2048);
 
         // id swap
         processActionData(ACTION_PREFIX + ACTION_DATA_NEW_ID, null,
-                ACTION_DATA_NEW_ID, -1, ACTIONOUTPUTTYPE_ID_SWAP);
+                ACTION_DATA_NEW_ID, -1);
     }
 
     private void processActionData(String propertyName, String maxSizePropertyName, String actionDataPropertyName,
-            int maxSizeDefault, String type) throws IOException {
+            int maxSizeDefault) throws IOException {
         String propValue = System.getProperty(propertyName);
         int maxSize = maxSizeDefault;
 
@@ -484,7 +480,7 @@ public class LauncherAM {
             File actionDataFile = new File(propValue);
             if (localFsOperations.fileExists(actionDataFile)) {
                 actionData.put(actionDataPropertyName, localFsOperations.getLocalFileContentAsString(actionDataFile,
-                        type, maxSize));
+                        actionDataPropertyName, maxSize));
             }
         }
     }
@@ -525,7 +521,7 @@ public class LauncherAM {
                 File externalChildIDs = new File(externalChildIdsProp);
                 if (localFsOperations.fileExists(externalChildIDs)) {
                     actionData.put(LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS,
-                            localFsOperations.getLocalFileContentAsString(externalChildIDs, ACTIONOUTPUTTYPE_EXT_CHILD_ID, -1));
+                            localFsOperations.getLocalFileContentAsString(externalChildIDs, ACTION_DATA_EXTERNAL_CHILD_IDS, -1));
                 }
             }
         } catch (IOException ioe) {

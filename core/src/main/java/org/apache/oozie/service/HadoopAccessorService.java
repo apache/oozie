@@ -532,12 +532,21 @@ public class HadoopAccessorService implements Service {
         }
     }
 
+    /**
+     * Return a JobClient created with the provided user/group.
+     *
+     *
+     * @param conf Configuration with all necessary information to create the
+     *        JobClient.
+     * @return JobClient created with the provided user/group.
+     * @throws HadoopAccessorException if the client could not be created.
+     */
     public JobClient createJobClient(String user, Configuration conf) throws HadoopAccessorException {
         return createJobClient(user, new JobConf(conf));
     }
 
     /**
-     * Return a YarnClient created with the provided user and configuration.
+     * Return a YarnClient created with the provided user and configuration. The caller is responsible for closing it when done.
      *
      * @param user The username to impersonate
      * @param conf The conf

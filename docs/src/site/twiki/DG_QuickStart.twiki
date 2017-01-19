@@ -41,10 +41,10 @@ suitable when same oozie package needs to be used in multiple set-ups with diffe
 
 2. Build with -Puber which will bundle the required libraries in the oozie war. Further, the following options are
 available to customise the versions of the dependencies:
--Dhadoop.version=<version> - default 2.4.0
+-Dhadoop.version=<version> - default 2.6.0
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
--Dpig.version=<version> - default 0.12.1
+-Dpig.version=<version> - default 0.16.0
 -Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
