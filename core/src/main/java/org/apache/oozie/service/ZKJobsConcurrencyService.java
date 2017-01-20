@@ -83,7 +83,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      */
     @Override
     public void destroy() {
-        if (leaderLatch != null && ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
+        if (leaderLatch != null) {
             IOUtils.closeSafely(leaderLatch);
         }
         if (zk != null) {

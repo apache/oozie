@@ -1857,6 +1857,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.pig.log.expandedscript</name>
+        <value>true</value>
+        <description>
+            Log the expanded pig script in launcher stdout log
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.rootlogger.log.level</name>
         <value>INFO</value>
         <description>
@@ -2512,7 +2520,7 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.https.truststore.file</name>
-        <value>custom.truststore</value>
+        <value></value>
         <description>
             Path to a TrustStore file.
         </description>
@@ -2520,7 +2528,7 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.https.truststore.pass</name>
-        <value>cloudera</value>
+        <value></value>
         <description>
             Password to the TrustStore.
         </description>
@@ -2547,6 +2555,22 @@ will be the requeue interval for the actions which are waiting for a long time w
         <value>TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2</value>
         <description>
             Enabled TLS protocols.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.exclude.protocols</name>
+        <value></value>
+        <description>
+            Disabled TLS protocols.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.include.cipher.suites</name>
+        <value></value>
+        <description>
+            List of Cipher suites to include.
         </description>
     </property>
 

@@ -273,6 +273,16 @@ public class TestConfigurationService extends XTestCase {
         assertEquals(5000, ConfigurationService.getInt(SLAService.CONF_CAPACITY));
         assertEquals(11000, ConfigurationService.getInt("oozie.http.port"));
         assertEquals(11443, ConfigurationService.getInt("oozie.https.port"));
+        assertFalse(ConfigurationService.getBoolean("oozie.https.enabled"));
+        assertEquals(65536, ConfigurationService.getInt("oozie.http.response.header.size"));
+        assertEquals(65536, ConfigurationService.getInt("oozie.http.request.header.size"));
+        assertEquals("TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2", ConfigurationService.get("oozie.https.include.protocols"));
+        assertEquals("", ConfigurationService.get("oozie.https.exclude.protocols"));
+        assertEquals("", ConfigurationService.get("oozie.https.include.cipher.suites"));
+        assertEquals("TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA," +
+                "SSL_DHE_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA," +
+                "SSL_RSA_WITH_RC4_128_MD5", ConfigurationService.get("oozie.https.exclude.cipher.suites"));
+        assertEquals(150, ConfigurationService.getInt("oozie.server.threadpool.max.threads"));
 
         cl.destroy();
     }

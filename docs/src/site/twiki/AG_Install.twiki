@@ -791,19 +791,19 @@ SSL certificate provided by the Oozie servers (so the load balancer does not nee
 documentation on how to configure this.  Make sure to point the load balancer at the https://HOST:HTTPS_PORT addresses for your
 Oozie servers.  Clients can then connect to the load balancer at https://LOAD_BALANCER_HOST:PORT.
 
-*Important:* Callbacks from the JobTracker/ResourceManager are done via http or https depending on what you enter for the
+*Important:* Callbacks from the ApplicationMaster are done via http or https depending on what you enter for the
 =OOZIE_BASE_URL= property.  If you are using a Certificate from a Certificate Authority, you can simply put the https address here.
 If you are using a self-signed certificate, you have to do one of the following options (Option 1 is recommended):
 
 Option 1) You'll need to follow the steps in
 the [[AG_Install#Configure_the_Oozie_Client_to_connect_using_SSL_HTTPS][Configure the Oozie Client to connect using SSL (HTTPS)]]
-section, but on the host of the JobTracker/ResourceManager.  You can then set =OOZIE_BASE_URL= to the load balancer https address.
-This will allow the JobTracker/ResourceManager to contact the Oozie server with https (like the Oozie client, they are also Java
+section, but on the host of the ApplicationMaster.  You can then set =OOZIE_BASE_URL= to the load balancer https address.
+This will allow the ApplicationMaster to contact the Oozie server with https (like the Oozie client, they are also Java
 programs).
 
 Option 2) You'll need setup another load balancer, or another "pool" on the existing load balancer, with the http addresses of the
 Oozie servers.  You can then set =OOZIE_BASE_URL= to the load balancer http address.  Clients should use the https load balancer
-address.  This will allow clients to use https while the JobTracker/ResourceManager uses http for callbacks.
+address.  This will allow clients to use https while the ApplicationMaster uses http for callbacks.
 
 ---+++ Fine Tuning an Oozie Server
 

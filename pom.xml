@@ -1533,6 +1533,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-hadoop-utils</artifactId>
+                <version>${oozie.hadoop-utils.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>dk.brics.automaton</groupId>
                 <artifactId>automaton</artifactId>
                 <version>1.11-8</version>
@@ -1944,15 +1950,6 @@
             <properties>
                 <oozie.test.forkMode>always</oozie.test.forkMode>
             </properties>
-        </profile>
-        <profile>
-            <id>loginServerExample</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>login</module>
-            </modules>
         </profile>
         <profile>
             <id>spark-1</id>
