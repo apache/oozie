@@ -81,7 +81,6 @@
         <hadoop.version>2.6.0</hadoop.version>
         <hadoop.majorversion>2</hadoop.majorversion>
         <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
-        <oozie.hadoop-utils.version>hadoop-${hadoop.majorversion}-${project.version}</oozie.hadoop-utils.version>
         <hbase.version>0.94.27</hbase.version>
 
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
@@ -1530,12 +1529,6 @@
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
                 <version>3.3.1.201403241930-r</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.oozie</groupId>
-                <artifactId>oozie-hadoop-utils</artifactId>
-                <version>${oozie.hadoop-utils.version}</version>
             </dependency>
 
             <dependency>
