@@ -1306,7 +1306,7 @@ public class JavaActionExecutor extends ActionExecutor {
      * @return JobClient
      * @throws HadoopAccessorException
      */
-    protected JobClient createJobClient(Context context, JobConf jobConf) throws HadoopAccessorException {
+    protected JobClient createJobClient(Context context, Configuration jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         return Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
     }

@@ -210,7 +210,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
                 Configuration jobConf = createBaseHadoopConf(context, actionXml);
-                jobClient = createJobClient(context, new JobConf(jobConf));
+                jobClient = createJobClient(context, jobConf);
                 RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalChildIDs()));
                 if (runningJob == null) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "MR002",
@@ -294,26 +294,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     protected String getDefaultShareLibName(Element actionXml) {
         Namespace ns = actionXml.getNamespace();
         return (actionXml.getChild("streaming", ns) != null) ? "mapreduce-streaming" : null;
-    }
-
-    @Override
-    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
-            Configuration actionConf) throws ActionExecutorException {
-        // If the user is using a regular MapReduce job and specified an uber jar, we need to also set it for the launcher;
-        // so we override createLauncherConf to call super and then to set the uber jar if specified. At this point, checking that
-        // uber jars are enabled and resolving the uber jar path is already done by setupActionConf() when it parsed the actionConf
-        // argument and we can just look up the uber jar in the actionConf argument.
-        Configuration launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
-        Namespace ns = actionXml.getNamespace();
-        if (actionXml.getChild("streaming", ns) == null && actionXml.getChild("pipes", ns) == null) {
-            // Set for uber jar
-            String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
-            if (uberJar != null && uberJar.trim().length() > 0) {
-                // TODO
-                // launcherJobConf.setJar(uberJar);
-            }
-        }
-        return launcherJobConf;
     }
 
     public static void setStreaming(Configuration conf, String mapper, String reducer, String recordReader,

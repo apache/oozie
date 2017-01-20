@@ -250,45 +250,33 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));  // absolute path with namenode
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertEquals(getNameNodeUri() + "/app/job.jar", launcherJobConf.getJar());              // same for launcher conf
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));  // absolute path with namenode
 
         actionXml = createUberJarActionXML("/app/job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get("oozie.mapreduce.uber.jar"));  // absolute path without namenode
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertEquals(getNameNodeUri() + "/app/job.jar", launcherJobConf.getJar());              // same for launcher conf
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));  // absolute path without namenode
 
         actionXml = createUberJarActionXML("job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals(getFsTestCaseDir() + "/job.jar", conf.get("oozie.mapreduce.uber.jar"));    // relative path
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertEquals(getFsTestCaseDir() + "/job.jar", launcherJobConf.getJar());                // same for launcher
+        assertEquals(getFsTestCaseDir() + "/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR)); // relative path
 
         actionXml = createUberJarActionXML("job.jar", "<streaming></streaming>");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals("", conf.get("oozie.mapreduce.uber.jar"));                                 // ignored for streaming
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertNull(launcherJobConf.getJar());                                                   // same for launcher conf (not set)
+        assertEquals("", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));                                 // ignored for streaming
 
         actionXml = createUberJarActionXML("job.jar", "<pipes></pipes>");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertEquals("", conf.get("oozie.mapreduce.uber.jar"));                                 // ignored for pipes
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertNull(launcherJobConf.getJar());                                                   // same for launcher conf (not set)
 
         actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "</map-reduce>");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
         assertNull(conf.get("oozie.mapreduce.uber.jar"));                                       // doesn't resolve if not set
-        launcherJobConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, conf);
-       // assertNull(launcherJobConf.getJar());                                                   // same for launcher conf
 
         // Disable uber jars to test that MapReduceActionExecutor won't allow the oozie.mapreduce.uber.jar property
         serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", false);

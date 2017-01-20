@@ -131,7 +131,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
                 Configuration jobConf = createBaseHadoopConf(context, actionXml);
-                jobClient = createJobClient(context, new JobConf(jobConf));
+                jobClient = createJobClient(context, jobConf);
 
                 // Cumulative counters for all Sqoop mapreduce jobs
                 Counters counters = null;
