@@ -26,6 +26,7 @@
             <xs:sequence>
                 <xs:element name="signal-value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
                 <xs:element name="external-status" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+                <xs:element name="external-childIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element name="error" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element name="avoid-set-execution-data" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element name="avoid-set-end-data" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>

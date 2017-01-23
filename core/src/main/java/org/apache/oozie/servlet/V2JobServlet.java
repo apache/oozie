@@ -21,6 +21,7 @@ package org.apache.oozie.servlet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +30,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BaseEngineException;
-import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
@@ -42,10 +42,12 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @SuppressWarnings("serial")
@@ -295,9 +297,23 @@ public class V2JobServlet extends V1JobServlet {
         catch (BaseEngineException e) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
         }
-
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        JSONArray jsonArray = new JSONArray();
+        String jobId = getResourceName(request);
+        try {
+            jsonArray.addAll(Services.get().get(DagEngineService.class).getDagEngine(getUser(request))
+                    .getWorkflowActionRetries(jobId));
+            return jsonArray;
+        }
+        catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
 
     /**
      * Gets the base engine based on jobId.

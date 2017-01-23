@@ -453,7 +453,8 @@ function jobDetailsPopup(response, request) {
     var appName = jobDetails["appName"];
     var jobActionStatus = new Ext.data.JsonStore({
         data: jobDetails["actions"],
-        fields: ['id', 'name', 'type', 'startTime', 'retries', 'consoleUrl', 'endTime', 'externalId', 'status', 'trackerUri', 'workflowId', 'errorCode', 'errorMessage', 'conf', 'transition', 'externalStatus', 'externalChildIDs']
+        fields: ['id', 'name', 'type', 'startTime', 'consoleUrl', 'endTime', 'externalId', 'status', 'userRetryCount' ,'trackerUri',
+                 'workflowId', 'errorCode', 'errorMessage', 'conf', 'transition', 'externalStatus', 'externalChildIDs']
     });
 
     var formFieldSet = new Ext.form.FieldSet({
@@ -623,6 +624,7 @@ function jobDetailsPopup(response, request) {
     function showActionContextMenu(thisGrid, rowIndex, cellIndex, e) {
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         actionDetailsGridWindow(actionStatus);
+
         function actionDetailsGridWindow(actionStatus) {
             var formFieldSet = new Ext.form.FieldSet({
                 title: actionStatus.actionName,
@@ -665,6 +667,12 @@ function jobDetailsPopup(response, request) {
                     name: 'status',
                     width: 400,
                     value: actionStatus["status"]
+                }, {
+                    fieldLabel: 'Retries',
+                    editable: false,
+                    width: 400,
+                    name: 'userRetryCount',
+                    value: actionStatus["userRetryCount"]
                 }, {
                     fieldLabel: 'Error Code',
                     editable: false,
@@ -716,66 +724,244 @@ function jobDetailsPopup(response, request) {
                 //width: 540,
                 items: [formFieldSet]
             });
+            var actionInfoPanel = new Ext.TabPanel({
+                activeTab: 0,
+                autoHeight: true,
+                deferredRender: false,
+                items: [ {
+                    title: 'Action Info',
+                    items: detail
+                }, {
+                    title: 'Action Configuration',
+                    items: new Ext.form.TextArea({
+                        fieldLabel: 'Configuration',
+                        editable: false,
+                        name: 'config',
+                        height: 350,
+                        width: 540,
+                        autoScroll: true,
+                        value: actionStatus["conf"]
+                    })
+
+                }],
+                tbar: [{
+                    text: "&nbsp;&nbsp;&nbsp;",
+                    icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                    handler: function() {
+                        var a = win.items.get(0).getActiveTab();
+                        if (a.title == "Action retries") {
+                            fetchActionRetries(workflowId + "@" + actionStatus["name"]);
+                        }
+                        else {
+                            refreshActionDetails(workflowId + "@" + actionStatus["name"], detail, urlUnit);
+                        }
+                    }
+                }]
+            });
+            var actionRetries;
             var urlUnit = new Ext.FormPanel();
-            populateUrlUnit(actionStatus, urlUnit);
+            populateUrlUnit(actionStatus["consoleUrl"], actionStatus["externalChildIDs"], urlUnit);
             var win = new Ext.Window({
                 title: 'Action (Name: ' + actionStatus["name"] + '/JobId: ' + workflowId + ')',
                 closable: true,
                 width: 560,
                 autoHeight: true,
                 plain: true,
-                items: [new Ext.TabPanel({
-                    activeTab: 0,
-                    autoHeight: true,
-                    deferredRender: false,
-                    items: [ {
-                        title: 'Action Info',
-                        items: detail
-                    }, {
-                        title: 'Action Configuration',
-                        items: new Ext.form.TextArea({
-                            fieldLabel: 'Configuration',
-                            editable: false,
-                            name: 'config',
-                            height: 350,
-                            width: 540,
-                            autoScroll: true,
-                            value: actionStatus["conf"]
-                        })
-                    }],
-                    tbar: [{
-                        text: "&nbsp;&nbsp;&nbsp;",
-                        icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
-                        handler: function() {
-                            refreshActionDetails(workflowId+"@"+actionStatus["name"], detail, urlUnit);
-                        }
-                    }]
-                })]
+                items: [actionInfoPanel]
             });
+
+            var isLoadedActionRetries = false;
+
+            actionInfoPanel.addListener("tabchange", function(panel, selectedTab) {
+                if (selectedTab.title == "Action retries") {
+                    if ( !isLoadedActionRetries ) {
+                        fetchActionRetries(workflowId + "@" + actionStatus["name"]);
+                        isLoadedActionRetries = true;
+                    }
+                }
+            });
+
+            var reTriesPanel = new Ext.TabPanel();
+
+            function fetchActionRetries(actionId) {
+                Ext.Ajax.request({
+                    url: getOozieBase() + 'job/' + actionId + "?show=retries",
+                    timeout: 300000,
+                    success: function(response, request) {
+                        actionRetries = JSON.parse(response.responseText);
+                        var currentTabs = [];
+                        reTriesPanel.items.each(function(item) {
+                            currentTabs.push(item);
+                        });
+                        populateRetries(actionStatus, actionRetries, reTriesPanel);
+                        currentTabs.forEach(function(item) {
+                            reTriesPanel.remove(item);
+                        })
+                    }
+                });
+            }
+            populateRetries(actionStatus, actionRetries, reTriesPanel);
+
+            function populateRetries(actionStatus, actionRetries, reTriesPanel) {
+                var retryCount = getRetryCount(actionStatus, actionRetries);
+                for (i = 0; i < retryCount; i++) {
+                    var attemptNumber = ' Attempt - ' + (i + 1);
+                    if (actionRetries) {
+                        var retriesJson =  actionRetries['retries'];
+                          attemptNumber = ' Attempt - ' + retriesJson[i]["attempt"];
+                    }
+                    var form = new Ext.FormPanel({
+                        title: attemptNumber,
+                        width: 500,
+                        height: 400,
+                        style: 'background-color:  #eaf1fb'
+                    });
+                    if (actionRetries) {
+                        var retriesJson =  actionRetries['retries'];
+                        addTextField(form, "Start Time", "startTime", retriesJson[i]);
+                        addTextField(form, "End Time", "endTime", retriesJson[i]);
+                        populateRetriesUrl(form, "Console URL", "consoleUrl", retriesJson[i]);
+                        populateRetriesChildUrl(form, retriesJson[i]);
+                    }
+                    reTriesPanel.add(form);
+                    form.show();
+                }
+                reTriesPanel.doLayout();
+            }
+
+            function getRetryCount(actionStatus, actionRetries) {
+                if (actionRetries) {
+                    if (actionRetries['retries']) {
+                        return actionRetries['retries'].length;
+                    }
+                } else {
+                    return actionStatus["userRetryCount"];
+                }
+            }
+            function populateRetriesUrl(form, label, key, retriesObj) {
+                if ( retriesObj[key] ) {
+                    var textUrl = new Ext.form.TriggerField({
+                        fieldLabel: label,
+                        editable: false,
+                        width: 400,
+                        height: 100,
+                        value: retriesObj[key],
+                        triggerClass: 'x-form-search-trigger',
+                        onTriggerClick: function() {
+                            window.open(retriesObj[text]);
+                        }
+                    });
+                    form.add(textUrl);
+                }
+                else {
+                    addTextField(form, label, key, retriesObj);
+                }
+            }
+
+            function addTextField(form, label, key, retriesObj) {
+                if (retriesObj[key]) {
+                    var textUrl = new Ext.form.TextField({
+                        fieldLabel: label,
+                        width: 400,
+                        value: retriesObj[key]
+                    });
+                    form.add(textUrl);
+                } else {
+                    var textUrl = new Ext.form.TextField({
+                        fieldLabel: label,
+                        width: 400,
+                        value: 'n/a'
+                    });
+                    form.add(textUrl);
+                }
+            }
+
+            function populateRetriesChildUrl(form, retriesObj) {
+                populateUrlUnit(retriesObj["consoleUrl"], retriesObj["externalChildIDs"], form);
+            }
 
             // Tab to show list of child Job URLs
             var childJobsItem = {
-                title : 'Child Job URLs',
-                autoScroll : true,
-                frame : true,
-                labelAlign : 'right',
-                labelWidth : 70,
+                title: 'Child Job URLs',
+                autoScroll: true,
+                frame: true,
+                labelAlign: 'right',
+                labelWidth: 70,
                 height: 350,
                 width: 540,
-                items : urlUnit
+                items: urlUnit
             };
-            if (actionStatus.type == "pig" || actionStatus.type == "hive" || actionStatus.type == "map-reduce"
-                    || actionStatus.type == "hive2" || actionStatus.type == "sqoop" || actionStatus.type == "distcp"
-                    || actionStatus.type == "spark") {
+            if (actionStatus.type == "pig" || actionStatus.type == "hive" || actionStatus.type == "map-reduce" ||
+                actionStatus.type == "hive2" || actionStatus.type == "sqoop" || actionStatus.type == "distcp" ||
+                actionStatus.type == "spark") {
                 var tabPanel = win.items.get(0);
                 tabPanel.add(childJobsItem);
+            }
+            // Tab to show list of Retries
+            var retriesActionItem = {
+                title: 'Action retries',
+                autoScroll: true,
+                frame: true,
+                labelAlign: 'right',
+                labelWidth: 70,
+                height: 350,
+                width: 540,
+                items: reTriesPanel
+            };
+            if (actionStatus["userRetryCount"] > 0) {
+                var tabPanel = win.items.get(0);
+                tabPanel.add(retriesActionItem);
             }
             win.setPosition(50, 50);
             win.show();
         }
     }
+    function populateUrlUnit(consoleUrl, externalChildIDs, urlUnit) {
+        if (consoleUrl && externalChildIDs && externalChildIDs != "null") {
+            var urlPrefix = consoleUrl.trim().split(/_/)[0];
+            // externalChildIds is a comma-separated string of each child job
+            // ID.
+            // Create URL list by appending jobID portion after stripping "job"
+            var jobIds = externalChildIDs.split(/,/);
+            var count = 1;
+            jobIds.forEach(function(jobId) {
+                jobId = jobId.trim().split(/job/);
+                if (jobId.length > 1) {
+                    jobId = jobId[1];
+                    var jobUrl = new Ext.form.TriggerField({
+                        fieldLabel : 'Child Job ' + count,
+                        editable : false,
+                        name : 'childJobURLs',
+                        width : 400,
+                        value : urlPrefix + jobId,
+                        triggerClass : 'x-form-search-trigger',
+                        onTriggerClick : function() {
+                            window.open(urlPrefix + jobId);
+                        }
+                    });
+                    if (jobId != undefined) {
+                        urlUnit.add(jobUrl);
+                        count++;
+                    }
+                }
+            });
+            if (count == 1) {
+                var note = new Ext.form.TextField({
+                    fieldLabel : 'Child Job',
+                    value : 'n/a'
+                });
+                urlUnit.add(note);
+            }
+        } else {
+            var note = new Ext.form.TextField({
+                fieldLabel : 'Child Job',
+                value : 'n/a'
+            });
+            urlUnit.add(note);
+        }
+    }
 
-    function populateUrlUnit(actionStatus, urlUnit) {
+    function populateRetries(actionStatus, urlUnit) {
         var consoleUrl = actionStatus["consoleUrl"];
         var externalChildIDs = actionStatus["externalChildIDs"];
         if (consoleUrl && externalChildIDs && externalChildIDs != "null") {
@@ -830,7 +1016,7 @@ function jobDetailsPopup(response, request) {
                 var results = JSON.parse(response.responseText);
                 detail.getForm().setValues(results);
                 urlUnit.getForm().setValues(results);
-                populateUrlUnit(results, urlUnit);
+                populateUrlUnit(results["consoleUrl"], results["externalChildIDs"], urlUnit);
             }
         });
     }
@@ -1353,6 +1539,12 @@ function coordJobDetailsPopup(response, request) {
                     name: 'status',
                     width: 400,
                     value: actionStatus["status"]
+                }, {
+                    fieldLabel: 'Retries',
+                    editable: false,
+                    width: 400,
+                    name: 'userRetryCount',
+                    value: actionStatus["userRetryCount"]
                 }, {
                     fieldLabel: 'Error Code',
                     editable: false,

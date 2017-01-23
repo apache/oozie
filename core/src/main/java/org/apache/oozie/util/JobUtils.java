@@ -28,10 +28,12 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -165,5 +167,13 @@ public class JobUtils {
         else { // Hadoop 2.x
             DistributedCache.addFileToClassPath(file, conf, fs);
         }
+    }
+
+    public static String getRetryKey(WorkflowActionBean wfAction, String key) {
+        return ActionXCommand.RETRY + wfAction.getUserRetryCount() + "." + key;
+    }
+
+    public static String getRetryKey(String key, int retry) {
+        return ActionXCommand.RETRY + retry + "." + key;
     }
 }

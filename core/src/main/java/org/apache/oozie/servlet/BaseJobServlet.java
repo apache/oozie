@@ -41,6 +41,7 @@ import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public abstract class BaseJobServlet extends JsonRestServlet {
@@ -353,8 +354,14 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             json.put(JsonTags.STATUS, status);
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
-        }
-        else {
+        } else if (show.equals(RestConstants.JOB_SHOW_ACTION_RETRIES_PARAM)) {
+            stopCron();
+            JSONArray retries = getActionRetries(request, response);
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.WORKFLOW_ACTION_RETRIES, retries);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }        else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.JOB_SHOW_PARAM, show);
         }
@@ -570,4 +577,15 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
+    /**
+     * Gets the action retries.
+     *
+     * @param request the request
+     * @param response the response
+     * @return the action retries
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
 }

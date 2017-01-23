@@ -55,6 +55,7 @@ import org.apache.oozie.command.wf.SubmitSqoopXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
+import org.apache.oozie.command.wf.WorkflowActionRetryInfoXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
@@ -577,6 +578,22 @@ public class DagEngine extends BaseEngine {
     public WorkflowActionBean getWorkflowAction(String actionId) throws BaseEngineException {
         try {
 			return new WorkflowActionInfoXCommand(actionId).call();
+        }
+        catch (CommandException ex) {
+            throw new BaseEngineException(ex);
+        }
+    }
+
+    /**
+     * Gets the workflow action retries.
+     *
+     * @param actionId the action id
+     * @return the workflow action retries
+     * @throws BaseEngineException the base engine exception
+     */
+    public List<Map<String, String>> getWorkflowActionRetries(String actionId) throws BaseEngineException {
+        try {
+            return new WorkflowActionRetryInfoXCommand(actionId).call();
         }
         catch (CommandException ex) {
             throw new BaseEngineException(ex);

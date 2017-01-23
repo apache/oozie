@@ -1154,6 +1154,21 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testWfActionRetries() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                MockDagEngineService.reset();
+                String[] args = new String[] { "job", "-oozie", oozieUrl, "-retries",
+                        MockDagEngineService.JOB_ID + "0" + MockDagEngineService.JOB_ID_END + "@a"};
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(RestConstants.JOB_SHOW_ACTION_RETRIES_PARAM, MockDagEngineService.did);
+                return null;
+            }
+        });
+    }
+
     public void testAdminQueueDump() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override

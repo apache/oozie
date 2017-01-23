@@ -105,6 +105,7 @@ oozie job <OPTIONS>           : job operations
           -sladisable           disables sla alerts for the job and its children
           -slaenable            enables sla alerts for the job and its children
           -slachange            Update sla param for jobs, supported param are should-start, should-end and max-duration
+          -retries              Get information of the retry attempts for a given workflow action.
 
 </verbatim>
 
@@ -624,6 +625,34 @@ Job ID                                   Status    Started                 Ended
 0000001-140324164318985-oozie-joe-W     SUCCEEDED 2014-03-24 23:44 GMT    2014-03-24 23:44 GMT
 .----------------------------------------------------------------------------------------------------
 </verbatim>
+
+---+++ Listing all retry attempts of a workflow action
+
+When retry-max is specified for an action in the workflow definition, and there is a failure, it will be retried till it succeeds or retry-max attempts are exhausted. To get information on all the retry attempts, =-retries= command can be used.
+
+<verbatim>
+$ oozie job -retries 0000000-161212175234862-oozie-puru-W@pig-node -oozie http://localhost:11000/oozie
+
+ID : 0000000-161212175234862-oozie-puru-W@pig-node
+------------------------------------------------------------------------------------------------------------------------------------
+Attempt        : 1
+Start Time     : Tue, 13 Dec 2016 01:56:24 GMT
+End Time       : Tue, 13 Dec 2016 01:56:27 GMT
+Console URL    : http://localhost:50030/jobdetails.jsp?jobid=job_201612051339_2650
+------------------------------------------------------------------------------------------------------------------------------------
+Attempt        : 2
+Start Time     : Tue, 13 Dec 2016 01:56:24 GMT
+End Time       : Tue, 13 Dec 2016 01:56:27 GMT
+Console URL    : http://localhost:50030/jobdetails.jsp?jobid=job_201612051339_2650
+------------------------------------------------------------------------------------------------------------------------------------
+Attempt        : 3
+Start Time     : Tue, 13 Dec 2016 01:56:24 GMT
+End Time       : Tue, 13 Dec 2016 01:56:27 GMT
+Console URL    : http://localhost:50030/jobdetails.jsp?jobid=job_201612051339_2650
+------------------------------------------------------------------------------------------------------------------------------------
+$
+</verbatim>
+
 
 ---+++ Checking the xml definition of a Workflow, Coordinator or Bundle Job
 

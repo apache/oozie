@@ -1123,4 +1123,10 @@ public class V1JobServlet extends BaseJobServlet {
     void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
+
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
 }
