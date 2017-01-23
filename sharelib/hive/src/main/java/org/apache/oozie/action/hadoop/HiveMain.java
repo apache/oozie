@@ -166,8 +166,11 @@ public class HiveMain extends LauncherMain {
         hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.hive.ql.exec", "false");
         hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.SessionState", "false");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
 
         String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);
