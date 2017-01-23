@@ -257,7 +257,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(actionConf, context, actionXml, getFsTestCaseDir());
 
-
         conf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
         ae.setupLauncherConf(conf, actionXml, getFsTestCaseDir(), context);
         assertEquals("MAIN-CLASS", actionConf.get("oozie.action.java.main", "null"));
@@ -265,9 +264,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertTrue(conf.get("mapreduce.map.java.opts").contains("JAVA-OPTS"));
         assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
-
-       // FIXME - this file exists - must use the correct path
-       //  assertTrue(getFileSystem().exists(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML)));
 
         actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
