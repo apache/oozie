@@ -244,7 +244,7 @@ public interface JsonTags {
     String COORD_UPDATE_DIFF = "diff";
 
     String STATUS = "status";
-
+    String ACTION_ATTEMPT = "attempt";
     String VALIDATE = "validate";
 
 }

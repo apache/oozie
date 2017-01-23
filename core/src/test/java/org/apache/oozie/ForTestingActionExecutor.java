@@ -60,19 +60,26 @@ public class ForTestingActionExecutor extends ActionExecutor {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, TEST_ERROR, "start");
         }
         String externalStatus = eConf.getChild("external-status", ns).getText().trim();
+        Element externalChildIds = eConf.getChild("external-childIds", ns);
 
         String runningMode = "sync";
         Element runningModeElement = eConf.getChild("running-mode", ns);
         if (null != runningModeElement) {
-            if (runningModeElement.getText().trim().equals("async")) {
-                runningMode = "async";
-            }
+            runningMode = runningModeElement.getText().trim();
         }
         if (runningMode.equals("async")) {
             context.setStartData("blah", "blah", "blah");
             return;
         }
 
+        if (runningMode.equals("async-error")) {
+            context.setStartData("blah", "blah", "blah");
+            context.setExecutionData(externalStatus, null);
+            if (null != externalChildIds) {
+                context.setExternalChildIDs(externalChildIds.getText());
+            }
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, TEST_ERROR, "start");
+        }
         boolean callSetExecutionData = true;
         Element setStartData = eConf.getChild("avoid-set-execution-data", ns);
         if (null != setStartData) {
@@ -82,6 +89,9 @@ public class ForTestingActionExecutor extends ActionExecutor {
         }
         if (callSetExecutionData) {
             context.setExecutionData(externalStatus, null);
+        }
+        if (null != externalChildIds) {
+            context.setExternalChildIDs(externalChildIds.getText());
         }
     }
 

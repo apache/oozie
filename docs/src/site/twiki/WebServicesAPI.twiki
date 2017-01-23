@@ -1353,6 +1353,37 @@ GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&filter=status%21
 </verbatim>
 This retrieves coordinator actions except for SUCCEEDED status, which is useful for debugging.
 
+*Retrive information of the retry attempts of the workflow action:*
+
+<verbatim>
+GET oozie/v2/job/0000000-161212175234862-oozie-puru-W@pig-node?show=retries
+</verbatim>
+
+*Response*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+.
+{
+     "retries":
+     [
+         {
+             "startTime": "Tue, 13 Dec 2016 01:54:13 GMT",
+             "consoleUrl": "http://localhost:50030/jobdetails.jsp?jobid=job_201612051339_2648",
+             "endTime": "Tue, 13 Dec 2016 01:54:20 GMT",
+             "attempt": "1"
+         },
+         {
+             "startTime": "Tue, 13 Dec 2016 01:55:20 GMT",
+             "consoleUrl": "http://localhost:50030/jobdetails.jsp?jobid=job_201612051339_2649",
+             "endTime": "Tue, 13 Dec 2016 01:55:24 GMT",
+             "attempt": "2"
+         }
+    ]
+}
+</verbatim>
+
 ---++++ Job Application Definition
 
 A HTTP GET request retrieves the workflow or a coordinator job definition file.

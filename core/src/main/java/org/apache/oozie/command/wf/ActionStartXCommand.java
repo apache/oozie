@@ -40,6 +40,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
@@ -55,8 +56,10 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -230,7 +233,11 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
                 Instrumentation.Cron cron = new Instrumentation.Cron();
                 cron.start();
-                context.setStartTime();
+                // do not override starttime for retries
+                if (wfAction.getStartTime() == null) {
+                    context.setStartTime();
+                }
+                context.setVar(JobUtils.getRetryKey(wfAction, JsonTags.WORKFLOW_ACTION_START_TIME), String.valueOf(new Date().getTime()));
                 executor.start(context, wfAction);
                 cron.stop();
                 FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");

@@ -81,6 +81,8 @@ public interface RestConstants {
 
     String JOB_SHOW_PARAM = "show";
 
+    String JOB_SHOW_ACTION_RETRIES_PARAM = "retries";
+
     String JOB_SHOW_CONFIG = "config";
 
     String JOB_SHOW_INFO = "info";

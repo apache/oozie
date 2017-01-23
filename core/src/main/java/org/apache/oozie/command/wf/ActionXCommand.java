@@ -39,6 +39,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ConfigurationService;
@@ -51,6 +52,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -64,6 +66,7 @@ import org.apache.oozie.workflow.lite.NodeDef;
  */
 public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
+    public static final String RETRY = "retry.";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
 
@@ -157,8 +160,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         LOG.warn("Setting Action Status to [{0}]", status);
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
-        WorkflowJobBean wfJob = (WorkflowJobBean) context.getWorkflow();
-        if (!handleUserRetry(action, wfJob)) {
+        if (!handleUserRetry(context, action)) {
             incrActionErrorCounter(action.getType(), "error", 1);
             action.setPending();
             if (isStart) {
@@ -192,7 +194,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      */
     public void failJob(ActionExecutor.Context context, WorkflowActionBean action) throws CommandException {
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
-        if (!handleUserRetry(action, workflow)) {
+        if (!handleUserRetry(context, action)) {
             incrActionErrorCounter(action.getType(), "failed", 1);
             LOG.warn("Failing Job due to failed action [{0}]", action.getName());
             try {
@@ -220,7 +222,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      * @return true if user-retry has to be handled for this action
      * @throws CommandException thrown if unable to fail job
      */
-    public boolean handleUserRetry(WorkflowActionBean action, WorkflowJobBean wfJob) throws CommandException {
+    public boolean handleUserRetry(ActionExecutor.Context context, WorkflowActionBean action) throws CommandException {
+        WorkflowJobBean wfJob = (WorkflowJobBean) context.getWorkflow();
         String errorCode = action.getErrorCode();
         Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
 
@@ -232,6 +235,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             ActionExecutor.RETRYPOLICY retryPolicy = getUserRetryPolicy(action, wfJob);
             long interval = getRetryDelay(action.getUserRetryCount(), action.getUserRetryInterval() * 60, retryPolicy);
             action.setStatus(WorkflowAction.Status.USER_RETRY);
+            context.setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_END_TIME), String.valueOf(new Date().getTime()));
             action.incrmentUserRetryCount();
             action.setPending();
             queue(new ActionStartXCommand(action.getId(), action.getType()), interval);
@@ -295,20 +299,27 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         private Job.Status jobStatus;
 
         /**
-		 * Constructing the ActionExecutorContext, setting the private members
-		 * and constructing the proto configuration
-		 */
-        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry, boolean isUserRetry) {
+         * Constructing the ActionExecutorContext, setting the private members
+         * and constructing the proto configuration
+         */
+        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry,
+                boolean isUserRetry) {
             this.workflow = workflow;
             this.action = action;
             this.isRetry = isRetry;
             this.isUserRetry = isUserRetry;
-            try {
-                protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
+            if (null != workflow.getProtoActionConf()) {
+                try {
+                    protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
+                }
+                catch (IOException ex) {
+                    throw new RuntimeException("It should not happen", ex);
+                }
             }
-            catch (IOException ex) {
-                throw new RuntimeException("It should not happen", ex);
-            }
+        }
+
+        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action) {
+            this(workflow, action, false, false);
         }
 
         /*
@@ -388,6 +399,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
          * @see org.apache.oozie.action.ActionExecutor.Context#setStartData(java.lang.String, java.lang.String, java.lang.String)
          */
         public void setStartData(String externalId, String trackerUri, String consoleUrl) {
+            setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_CONSOLE_URL), consoleUrl);
             action.setStartData(externalId, trackerUri, consoleUrl);
             started = true;
         }
@@ -423,6 +435,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
          * @see org.apache.oozie.action.ActionExecutor.Context#setExternalChildIDs(java.lang.String)
          */
         public void setExternalChildIDs(String externalChildIDs) {
+            setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS), externalChildIDs);
             action.setExternalChildIDs(externalChildIDs);
             executed = true;
         }

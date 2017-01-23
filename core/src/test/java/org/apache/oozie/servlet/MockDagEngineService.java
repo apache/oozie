@@ -38,7 +38,6 @@ import org.apache.oozie.client.rest.JMSConnectionInfoBean;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.util.XmlUtils;
-import org.json.simple.JSONValue;
 
 public class MockDagEngineService extends DagEngineService {
     public static final String JOB_ID = "job-";
@@ -233,6 +232,11 @@ public class MockDagEngineService extends DagEngineService {
         public String getJobIdForExternalId(String externalId) throws DagEngineException {
             did = RestConstants.JOBS_EXTERNAL_ID_PARAM;
             return (externalId.equals("external-valid")) ? "id-valid" : null;
+        }
+
+        public List<Map<String, String>> getWorkflowActionRetries(String actionId) throws DagEngineException {
+            did = RestConstants.JOB_SHOW_ACTION_RETRIES_PARAM;
+            return new ArrayList<Map<String, String>>();
         }
 
         private int validateWorkflowIdx(String jobId) throws DagEngineException {

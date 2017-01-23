@@ -179,6 +179,8 @@ public class OozieCLI {
 
     public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
 
+    public static final String WORKFLOW_ACTIONS_RETRIES = "retries";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
@@ -381,8 +383,10 @@ public class OozieCLI {
         Option slaChange = new Option(SLA_CHANGE, true,
                 "Update sla param for jobs, supported param are should-start, should-end, nominal-time and max-duration");
 
-
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+
+        Option workflowActionRetries = new Option(WORKFLOW_ACTIONS_RETRIES, true,
+                "Get information of the retry attempts for a given workflow action");
 
         OptionGroup actions = new OptionGroup();
         actions.addOption(submit);
@@ -406,7 +410,7 @@ public class OozieCLI {
         actions.addOption(slaDisableAlert);
         actions.addOption(slaEnableAlert);
         actions.addOption(slaChange);
-
+        actions.addOption(workflowActionRetries);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -1184,6 +1188,7 @@ public class OozieCLI {
                     }
                     printWorkflowAction(wc.getWorkflowActionInfo(optionValue), timeZoneId,
                             options.contains(VERBOSE_OPTION));
+
                 }
                 else {
                     String filter = commandLine.getOptionValue(FILTER_OPTION);
@@ -1319,6 +1324,12 @@ public class OozieCLI {
             else if (options.contains(SLA_CHANGE)) {
                 slaAlertCommand(commandLine.getOptionValue(SLA_CHANGE), wc, commandLine, options);
             }
+            else if (options.contains(WORKFLOW_ACTIONS_RETRIES)) {
+                printWorkflowActionRetries(
+                        wc.getWorkflowActionRetriesInfo(commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES)),
+                        commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES));
+            }
+
         }
         catch (OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);
@@ -1481,6 +1492,26 @@ public class OozieCLI {
             System.out.println("External ChildIDs : " + action.getExternalChildIDs());
         }
 
+        System.out.println(RULER);
+    }
+
+    void printWorkflowActionRetries(List<Map<String, String>> retries, String actionId) {
+        System.out.println("ID : " + maskIfNull(actionId));
+        if (retries.isEmpty()) {
+            System.out.println("No Retries");
+        }
+        for (Map<String, String> retry: retries) {
+            System.out.println(RULER);
+            System.out.println("Attempt        : " + retry.get(JsonTags.ACTION_ATTEMPT));
+            System.out.println("Start Time     : " + retry.get(JsonTags.WORKFLOW_ACTION_START_TIME));
+            System.out.println("End Time       : " + retry.get(JsonTags.WORKFLOW_ACTION_END_TIME));
+            if (null != retry.get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL)) {
+                System.out.println("Console URL    : " + retry.get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
+            }
+            if (null != retry.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS)) {
+                System.out.println("Child URL      : " + retry.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
+            }
+        }
         System.out.println(RULER);
     }
 

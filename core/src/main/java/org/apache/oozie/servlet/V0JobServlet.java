@@ -29,6 +29,7 @@ import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.apache.oozie.ErrorCode;
 
@@ -258,6 +259,12 @@ public class V0JobServlet extends BaseJobServlet {
 
     @Override
     void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
     }
 }
