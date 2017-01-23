@@ -47,7 +47,7 @@ public class CredentialsProviderFactory {
         String type;
         String classname;
         for (String function : ConfigurationService.getStrings(CRED_KEY)) {
-            function = Trim(function);
+            function = trim(function);
             LOG.debug("Creating Credential class for : " + function);
             String[] str = function.split("=");
             if (str.length > 0) {
@@ -75,7 +75,8 @@ public class CredentialsProviderFactory {
 
     /**
      * Relogs into Kerberos using the Keytab for the Oozie server user.  This should be called before attempting to get delegation
-     * tokens via {@link CredentialsProvider} implementations to ensure that the Kerberos credentials are current and won't expire too soon.
+     * tokens via {@link CredentialsProvider} implementations to ensure that the Kerberos credentials are current and won't expire
+     * too soon.
      *
      * @throws IOException
      */
@@ -91,7 +92,7 @@ public class CredentialsProviderFactory {
      * @param str
      * @return trim string
      */
-    public String Trim(String str) {
+    public String trim(String str) {
         if (str != null) {
             str = str.replaceAll("\\n", "");
             str = str.replaceAll("\\t", "");

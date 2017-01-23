@@ -250,12 +250,14 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));  // absolute path with namenode
+        // absolute path with namenode
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));
 
         actionXml = createUberJarActionXML("/app/job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));  // absolute path without namenode
+        // absolute path without namenode
+        assertEquals(getNameNodeUri() + "/app/job.jar", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));
 
         actionXml = createUberJarActionXML("job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
@@ -265,7 +267,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         actionXml = createUberJarActionXML("job.jar", "<streaming></streaming>");
         conf = ae.createBaseHadoopConf(context, actionXml);
         ae.setupActionConf(conf, context, actionXml, getFsTestCaseDir());
-        assertEquals("", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));                                 // ignored for streaming
+        // ignored for streaming
+        assertEquals("", conf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR));
 
         actionXml = createUberJarActionXML("job.jar", "<pipes></pipes>");
         conf = ae.createBaseHadoopConf(context, actionXml);

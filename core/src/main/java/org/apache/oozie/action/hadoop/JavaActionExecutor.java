@@ -772,8 +772,8 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml, Configuration actionConf)
-            throws ActionExecutorException {
+    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
+            Configuration actionConf) throws ActionExecutorException {
         try {
 
             // app path could be a file
@@ -1019,7 +1019,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 YarnClientApplication newApp = yarnClient.createApplication();
                 ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
                 ApplicationSubmissionContext appContext =
-                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf, action.getName(), credentials);
+                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf, action.getName(),
+                                credentials);
                 yarnClient.submitApplication(appContext);
 
                 launcherId = appId.toString();
