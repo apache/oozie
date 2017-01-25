@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2619 Make Hive action defaults to match hive defaults when running from command line (venkatnrangan via abhishekbafna)
 OOZIE-2776 Log message is repeated twice for hive actions (satishsaley)
 OOZIE-2691 Show workflow action retry information in UI (puru)
 OOZIE-2709 Log the substituted pig script by expanding macros (satishsaley)

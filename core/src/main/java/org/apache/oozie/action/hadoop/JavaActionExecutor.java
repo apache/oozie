@@ -532,7 +532,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_JOB_TRACKER), getType());
-            XConfiguration.injectDefaults(actionDefaults, actionConf);
+            XConfiguration.copy(actionDefaults, actionConf);
             has.checkSupportedFilesystem(appPath.toUri());
 
             // Set the Java Main Class for the Java action to give to the Java launcher
