@@ -22,6 +22,7 @@ package org.apache.oozie.server;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -140,13 +141,13 @@ class SSLServerConnectorFactory {
     }
 
     private void setTrustStorePass() {
-        String trustStorePass = conf.get(OOZIE_HTTPS_TRUSTSTORE_PASS);
+        String trustStorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_TRUSTSTORE_PASS).trim();
         Preconditions.checkNotNull(trustStorePass, "setTrustStorePass is null");
         sslContextFactory.setTrustStorePassword(trustStorePass);
     }
 
     private void setKeystorePass() {
-        String keystorePass = conf.get(OOZIE_HTTPS_KEYSTORE_PASS);
+        String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS).trim();
         Preconditions.checkNotNull(keystorePass, "keystorePass is null");
         sslContextFactory.setKeyManagerPassword(keystorePass);
     }
