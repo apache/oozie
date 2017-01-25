@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2771 Allow retrieving keystore and truststore passwords from Hadoop Credential Provider (asasvari via abhishekbafna)
 OOZIE-2748 NPE in LauncherMapper.printArgs() (pbacsko via rkanter)
 OOZIE-2654 Zookeeper dependent services should not depend on Connectionstate to be valid before cleaning up (venkatnrangan via abhishekbafna)
 OOZIE-2690 OOZIE NPE while executing kill() (abhishekbafna via jaydeepvishwakarma)
