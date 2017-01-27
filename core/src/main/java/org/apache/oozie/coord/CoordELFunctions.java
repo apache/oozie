@@ -62,6 +62,8 @@ public class CoordELFunctions {
     public static final long MINUTE_MSEC = 60 * 1000L;
     public static final long HOUR_MSEC = 60 * MINUTE_MSEC;
     public static final long DAY_MSEC = 24 * HOUR_MSEC;
+    public static final long WEEK_MSEC = 7 * DAY_MSEC;
+
     /**
      * Used in defining the frequency in 'day' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
@@ -133,6 +135,27 @@ public class CoordELFunctions {
         eval.setVariable("endOfDuration", TimeUnit.END_OF_DAY);
         return val;
     }
+
+    /**
+     * Used in defining the frequency in 'week' unit and specify the "end of
+     * week" property.
+     * <p>
+     * Every instance will start at 00:00 hour of start of week
+     * <p>
+     * domain: <code> val &gt; 0</code> and should be integer.
+     *
+     * @param val frequency in number of weeks.
+     * @return number of weeks and also set the frequency timeunit to week of
+     *         the year and end_of_duration flag to week of the year
+     */
+    public static int ph1_coord_endOfWeeks(int val) {
+        val = ParamChecker.checkGTZero(val, "n");
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        eval.setVariable("timeunit", TimeUnit.WEEK);
+        eval.setVariable("endOfDuration", TimeUnit.END_OF_WEEK);
+        return val;
+    }
+
 
     /**
      * Used in defining the frequency in 'month' unit and specify the "end of month" property. <p> Every instance will
@@ -775,6 +798,18 @@ public class CoordELFunctions {
         return echoUnResolved("absolute", date);
     }
 
+    public static String ph1_coord_endOfMonths_echo(String date) {
+        return echoUnResolved("endOfMonths", date);
+    }
+
+    public static String ph1_coord_endOfWeeks_echo(String date) {
+        return echoUnResolved("endOfWeeks", date);
+    }
+
+    public static String ph1_coord_endOfDays_echo(String date) {
+        return echoUnResolved("endOfDays", date);
+    }
+
     public static String ph1_coord_currentRange_echo(String start, String end) {
         return echoUnResolved("currentRange", start + ", " + end);
     }
@@ -797,6 +832,18 @@ public class CoordELFunctions {
 
     public static String ph2_coord_absolute_echo(String date) {
         return echoUnResolved("absolute", date);
+    }
+
+    public static String ph2_coord_endOfMonths_echo(String date) {
+        return echoUnResolved("endOfMonths", date);
+    }
+
+    public static String ph2_coord_endOfWeeks_echo(String date) {
+        return echoUnResolved("endOfWeeks", date);
+    }
+
+    public static String ph2_coord_endOfDays_echo(String date) {
+        return echoUnResolved("endOfDays", date);
     }
 
     public static String ph2_coord_absolute_range(String startInstance, int end) throws Exception {
@@ -1396,6 +1443,10 @@ public class CoordELFunctions {
             case DAY:
             case END_OF_DAY:
                 instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / DAY_MSEC);
+                break;
+            case WEEK:
+            case END_OF_WEEK:
+                instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / WEEK_MSEC);
                 break;
             case MONTH:
             case END_OF_MONTH:

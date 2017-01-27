@@ -69,12 +69,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.CoordinatorJobBean;
 
 public class CoordCommandUtils {
-    public static int CURRENT = 0;
-    public static int LATEST = 1;
-    public static int FUTURE = 2;
-    public static int OFFSET = 3;
-    public static int ABSOLUTE = 4;
-    public static int UNEXPECTED = -1;
+    public static final int CURRENT = 0;
+    public static final int LATEST = 1;
+    public static final int FUTURE = 2;
+    public static final int OFFSET = 3;
+    public static final int ABSOLUTE = 4;
+    public static final int ENDOFMONTHS = 5;
+    public static final int ENDOFWEEKS = 6;
+    public static final int ENDOFDAYS = 7;
+    public static final int UNEXPECTED = -1;
 
     public static final String RESOLVED_UNRESOLVED_SEPARATOR = "!!";
     public static final String UNRESOLVED_INSTANCES_TAG = "unresolved-instances";
@@ -90,8 +93,8 @@ public class CoordCommandUtils {
      */
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
-        if (funcType == ABSOLUTE) {
-            return ABSOLUTE;
+        if (funcType == ABSOLUTE || funcType == ENDOFMONTHS || funcType == ENDOFWEEKS || funcType == ENDOFDAYS) {
+            return funcType;
         }
         if (funcType == CURRENT || funcType == LATEST) {
             return parseOneArg(function);
@@ -171,6 +174,15 @@ public class CoordCommandUtils {
         else if (function.indexOf("absolute") >= 0) {
             return ABSOLUTE;
         }
+        else if (function.indexOf("endOfMonths") >= 0) {
+            return ENDOFMONTHS;
+        }
+        else if (function.indexOf("endOfWeeks") >= 0) {
+            return ENDOFWEEKS;
+        }
+        else if (function.indexOf("endOfDays") >= 0) {
+            return ENDOFDAYS;
+        }
         return UNEXPECTED;
         // throw new RuntimeException("Unexpected instance name "+ function);
     }
@@ -182,11 +194,12 @@ public class CoordCommandUtils {
      */
     public static void checkIfBothSameType(String startInst, String endInst) throws CommandException {
         if (getFuncType(startInst) != getFuncType(endInst)) {
-            if (getFuncType(startInst) == ABSOLUTE) {
+            if (getFuncType(startInst) == ABSOLUTE || getFuncType(startInst) == ENDOFMONTHS
+                    || getFuncType(startInst) == ENDOFWEEKS || getFuncType(startInst) == ENDOFDAYS) {
                 if (getFuncType(endInst) != CURRENT) {
                     throw new CommandException(ErrorCode.E1010,
-                            "Only start-instance as absolute and end-instance as current is supported." + " start = "
-                                    + startInst + "  end = " + endInst);
+                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays and end-instance as current is supported."
+                                    + " start = " + startInst + "  end = " + endInst);
                 }
             }
             else {
@@ -243,6 +256,7 @@ public class CoordCommandUtils {
                                                          // arguments for
                                                          // future
                                                          // function
+
             int startIndex = getInstanceNumber(strStart, restArg);
             String startRestArg = restArg.toString();
             restArg.delete(0, restArg.length());
@@ -251,16 +265,17 @@ public class CoordCommandUtils {
             int funcType = getFuncType(strStart);
 
             if (funcType == ABSOLUTE) {
-                StringBuffer bf = new StringBuffer();
-                bf.append("${coord:absoluteRange(\"").append(parseOneStringArg(strStart))
-                        .append("\",").append(endIndex).append(")}");
-                String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
-                if (matInstance != null && !matInstance.isEmpty()) {
-                    if (instances.length() > 0) {
-                        instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                    }
-                    instances.append(matInstance);
-                }
+                resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                        parseOneStringArg(strStart));
+            }
+            else if (funcType == ENDOFMONTHS) {
+                resolveInstanceRangeEndOfMonths(event, instances, appInst, conf, eval, strStart, endIndex);
+            }
+            else if (funcType == ENDOFWEEKS) {
+                resolveInstanceRangeEndOfWeeks(event, instances, appInst, conf, eval, strStart, endIndex);
+            }
+            else if (funcType == ENDOFDAYS) {
+                resolveInstanceRangeEndOfDays(event, instances, appInst, conf, eval, strStart, endIndex);
             }
             else {
                 if (funcType == OFFSET) {
@@ -323,6 +338,54 @@ public class CoordCommandUtils {
             // Remove start-instance and end-instances
             event.removeChild("start-instance", event.getNamespace());
             event.removeChild("end-instance", event.getNamespace());
+        }
+    }
+
+    private static void resolveInstanceRangeEndOfDays(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
+        Date nominalTime = appInst.getNominalTime();
+        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        int diff = Integer.parseInt(parseOneStringArg(strStart));
+        cal.add(Calendar.DATE, diff);
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(cal.getTime()));
+    }
+
+    private static void resolveInstanceRangeEndOfWeeks(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
+        Date nominalTime = appInst.getNominalTime();
+        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
+        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+        int diff = Integer.parseInt(parseOneStringArg(strStart));
+        cal.add(Calendar.WEEK_OF_YEAR, diff);
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(cal.getTime()));
+    }
+
+    private static void resolveInstanceRangeEndOfMonths(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
+        int FIRST_DAY_OF_MONTH = 1;
+        Date nominalTime = appInst.getNominalTime();
+        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
+        cal.set(Calendar.DAY_OF_MONTH, FIRST_DAY_OF_MONTH);
+        int diff = Integer.parseInt(parseOneStringArg(strStart));
+        cal.add(Calendar.MONTH, diff);
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(cal.getTime()));
+    }
+
+    private static void resolveAbsoluteRange(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex, String rangeStr) throws Exception {
+        StringBuffer bf = new StringBuffer();
+        bf.append("${coord:absoluteRange(\"").append(rangeStr).append("\",")
+                .append(endIndex).append(")}");
+        String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
+        if (matInstance != null && !matInstance.isEmpty()) {
+            if (instances.length() > 0) {
+                instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+            }
+            instances.append(matInstance);
         }
     }
 

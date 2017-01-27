@@ -320,7 +320,7 @@ The =${coord:months(int n)}= and =${coord:endOfMonths(int n)}= EL functions shou
 
 Constant values cannot be used to indicate a month based frequency because the number of days in a month changes month to month and on leap years; plus the number of hours in every day of the month are not always the same for timezones that observe daylight-saving time.
 
----++++ 4.4.2.1. The coord:months(int n) EL function
+---+++++ 4.4.2.1. The coord:months(int n) EL function
 
 The =${coord:months(int n)}= EL function returns the number of minutes for 'n' complete months starting with the month of the current nominal time for which the computation is being done.
 
@@ -339,7 +339,7 @@ The =${coord:months(int n)}= EL function includes *all* the minutes of the curre
 | =2009-03-08T08:00Z= | =UTC= | =${coord:months(2)}= | 87840 | =2009-03-08T08:00Z= | total minutes in 2009MAR and 2009APR UTC time |
 | =2009-03-08T08:00Z= | =America/Los_Angeles= | =${coord:months(2)}= | 87780 | =2009-03-08T08:00Z= | total minutes in 2009MAR and 2009APR PST8PDT time <br/> (2009MAR08 is DST switch in US) |
 
----++++ 4.4.2.2. The coord:endOfMonths(int n) EL function
+---+++++ 4.4.2.2. The coord:endOfMonths(int n) EL function
 
 The =${coord:endOfMonths(int n)}= EL function is identical to the =${coord:months(int n)}= except that it shifts the first occurrence to the end of the month for the specified timezone before computing the interval in minutes.
 
@@ -405,7 +405,75 @@ The =${coord:endOfMonths(int n)}= EL function is identical to the =${coord:month
  </coordinator-app>
 </verbatim>
 
----++++ 4.4.3. Cron syntax in coordinator frequency
+---++++ 4.4.3. The coord:endOfWeeks(int n) EL function
+
+The =${coord:endOfWeeks(int n)}=  EL function shifts the first occurrence to the start of the week for the specified
+timezone before computing the interval in minutes. The start of the week depends on the Java's implementation of
+[[https://docs.oracle.com/javase/8/docs/api/java/util/Calendar.html#getFirstDayOfWeek--][Calendar.getFirstDayOfWeek()]]
+ i.e. first day of the week is SUNDAY in the U.S., MONDAY in France.
+
+*%GREEN% Examples: %ENDCOLOR%*
+
+| *Starting Nominal UTC time* | *Timezone* | *Usage*  | *Value* | *First Occurrence* | *Comments* |
+| =2017-01-04T00:00Z= | =UTC= | =${coord:endOfWeeks(1)}= | 10080 | =2017-01-08T00:00Z= | first occurrence on 2017JAN08 08:00 UTC time |
+| =2017-01-04T08:00Z= | =UTC= | =${coord:endOfWeeks(1)}= | 10080 | =2017-01-08T08:00Z= | first occurrence on 2017JAN08 08:00 UTC time |
+| =2017-01-06T08:00Z= | =UTC= | =${coord:endOfWeeks(1)}= | 10080 | =2017-01-08T08:00Z= | first occurrence on 2017JAN08 08:00 UTC time |
+| =2017-01-04T08:00Z= | =America/Los_Angeles= | =${coord:endOfWeeks(1)}= | 10080 | =2017-01-08T08:00Z= | first occurrence in 2017JAN08 08:00 UTC time |
+| =2017-01-06T08:00Z= | =America/Los_Angeles= | =${coord:endOfWeeks(1)}= | 10080 | =2017-01-08T08:00Z= | first occurrence in 2017JAN08 08:00 UTC time |
+
+<verbatim>
+<coordinator-app name="hello-coord" frequency="${coord:endOfWeeks(1)}"
+                  start="2017-01-04T08:00Z" end="2017-12-31T08:00Z" timezone="America/Los_Angeles"
+                 xmlns="uri:oozie:coordinator:0.1">
+      <controls>
+        <timeout>10</timeout>
+        <concurrency>${concurrency_level}</concurrency>
+        <execution>${execution_order}</execution>
+        <throttle>${materialization_throttle}</throttle>
+      </controls>
+
+      <datasets>
+       <dataset name="din" frequency="${coord:endOfWeeks(1)}"
+                initial-instance="2017-01-01T08:00Z" timezone="America/Los_Angeles">
+         <uri-template>${baseFsURI}/${YEAR}/${MONTH}/${DAY}</uri-template>
+        </dataset>
+       <dataset name="dout" frequency="${coord:endOfWeeks(1)}"
+                initial-instance="2017-01-01T08:00Z" timezone="UTC">
+         <uri-template>${baseFsURI}/${YEAR}/${MONTH}/${DAY}</uri-template>
+        </dataset>
+      </datasets>
+
+      <input-events>
+         <data-in name="input" dataset="din">
+            <instance>${coord:current(0)}</instance>
+         </data-in>
+      </input-events>
+
+      <output-events>
+         <data-out name="output" dataset="dout">
+            <instance>${coord:current(1)}</instance>
+         </data-out>
+      </output-events>
+
+      <action>
+        <workflow>
+          <app-path>${wf_app_path}</app-path>
+          <configuration>
+              <property>
+              <name>wfInput</name>
+              <value>${coord:dataIn('input')}</value>
+            </property>
+            <property>
+              <name>wfOutput</name>
+              <value>${coord:dataOut('output')}</value>
+            </property>
+         </configuration>
+       </workflow>
+      </action>
+ </coordinator-app>
+</verbatim>
+
+---++++ 4.4.4. Cron syntax in coordinator frequency
 
 Oozie has historically allowed only very basic forms of scheduling: You could choose
 to run jobs separated by a certain number of minutes, hours, days or weeks. That's
@@ -2151,7 +2219,7 @@ Then, the dataset instances for the input events for the coordinator action will
 
 ---++++ 6.6.8. coord:absolute(String timeStamp) EL Function for Synchronous Datasets
 
-=${coord:absolute(String timeStamp)} = represents absolute dataset instance time. coord:absolute is only supported with range
+=${coord:absolute(String timeStamp)}= represents absolute dataset instance time. coord:absolute is only supported with range
 where, start-instance is coord:absolute and end-instance is coord:current. Specifying a fixed date as the start instance is
 useful if your processing needs to process all dataset instances from a specific instance to the current instance.
 
@@ -2162,13 +2230,13 @@ Coordinator application definition:
 
 <verbatim>
 <coordinator-app name="app-coord" frequency="${coord:months(1)}"
-                    start="2009-01-01T01:00Z" end="2009-12-31T24:00" timezone="UTC"
+                    start="2009-01-01T01:00Z" end="2009-12-31T00:00" timezone="UTC"
                     xmlns="uri:oozie:coordinator:0.4">
     <input-events>
         <data-in name="input" dataset="logs">
             <dataset name='a' frequency='7' initial-instance="2009-01-01T01:00Z"
                 timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
-                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}
+                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}
                 </uri-template>
             </dataset>
             <start-instance>${coord:absolute("2009-01-01T01:00Z")}</start-instance>
@@ -2187,23 +2255,238 @@ Then, the dataset instances for the input events for the coordinator action at f
 
 <verbatim>
   hdfs://bar:8020/app/logs/2009/02/01
-<verbatim>
+</verbatim>
 
 The dataset instances for the input events for the coordinator action at second run will be:
 
 <verbatim>
   hdfs://bar:8020/app/logs/2009/02/01
   hdfs://bar:8020/app/logs/2009/02/07
+</verbatim>
+
+
+---++++ 6.6.9. coord:endOfMonths(int n) EL Function for Synchronous Datasets
+
+
+=${coord:endOfMonths(int n)}= represents dataset instance at start of n <sup>th</sup> month. coord:endOfMonths is only
+supported with range, where start-instance is coord:endOfMonths and end-instance is coord:current. Specifying start of
+a month is useful if you want to process all the dataset instances from starting of a month to the current instance.
+This function calculates the dataset occurences similar to
+[[CoordinatorFunctionalSpec#a4.4.2.2._The_coord:endOfMonthsint_n_EL_function][coord:endOfMonths(int n) EL function]]
+mentioned above.
+
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
 <verbatim>
+<coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start='2009-08-06T01:00Z' end="2009-12-31T00:00" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.4">
+    <input-events>
+        <data-in name="input" dataset="logs">
+            <dataset name='a' frequency='1' initial-instance='2009-06-06T01:00Z'
+                timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
+                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}
+                </uri-template>
+            </dataset>
+            <start-instance>${coord:endOfMonths(0)}</start-instance>
+            <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+    </input-events>
+    <action>
+        <workflow>
+        .............
+        </workflow>
+    </action>
+</coordinator-app>
+</verbatim>
+
+Then, the dataset instances for the input events for the coordinator action at first run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/01
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/03
+  hdfs://bar:8020/app/logs/2009/08/04
+  hdfs://bar:8020/app/logs/2009/08/05
+  hdfs://bar:8020/app/logs/2009/08/06
+</verbatim>
+
+The dataset instances for the input events for the coordinator action at second run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/01
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/03
+  hdfs://bar:8020/app/logs/2009/08/04
+  hdfs://bar:8020/app/logs/2009/08/05
+  hdfs://bar:8020/app/logs/2009/08/06
+  hdfs://bar:8020/app/logs/2009/08/07
+</verbatim>
 
 
----++++ 6.6.9. coord:version(int n) EL Function for Asynchronous Datasets
+---++++ 6.6.10. coord:endOfWeeks(int n) EL Function for Synchronous Datasets
+
+
+=${coord:endOfWeeks(int n)}= represents dataset instance at start of n <sup>th</sup> week. The start of the week
+calculated similar to mentioned in
+[[CoordinatorFunctionalSpec#a4.4.3._The_coord:endOfWeeksint_n_EL_function][coord:endOfWeeks section above]].
+coord:endOfWeeks is only supported with range, where start-instance is coord:endOfWeeks and end-instance is
+coord:current. Specifying start of a week is useful if you want to process all the dataset instances from
+starting of a week to the current instance.
+
+*%GREEN% Examples: %ENDCOLOR%*
+
+1. *. =${coord:endOfWeeks(int n)}= datetime calculation:*
+
+Datasets Definition:
+
+<verbatim>
+<datasets>
+.
+  <dataset name="logs" frequency="${coord:days(1)}"
+           initial-instance="2009-01-01T00:00Z" timezone="UTC">
+    <uri-template>hdfs://bar:8020/app/logs/${YEAR}${MONTH}/${DAY}</uri-template>
+  </dataset>
+.
+</datasets>
+</verbatim>
+
+For a coordinator action creation time: =2009-05-29T00:00Z= the =${coord:endOfMonths(int n)}= EL function
+would resolve to the following datetime values for the 'logs'  dataset:
+
+| *${coord:endOfWeeks(int offset)}* | *Dataset 'logs'* |
+| =${coord:endOfWeeks(0)}= | =2009-05-24T00:00Z= |
+| =${coord:endOfWeeks(1)}= | =2009-05-31T00:00Z= |
+| =${coord:endOfWeeks(-1)}= | =2009-05-17T00:00Z= |
+| =${coord:endOfWeeks(-3)}= | =2009-05-03T00:00Z= |
+
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
+<verbatim>
+<coordinator-app name="app-coord" frequency="${coord:days(1)}"
+                    start='2009-08-06T01:00Z' end="2009-12-31T00:00" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.4">
+    <input-events>
+        <data-in name="input" dataset="logs">
+            <dataset name='a' frequency='1' initial-instance='2009-06-06T01:00Z'
+                timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>
+                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}
+                </uri-template>
+            </dataset>
+            <start-instance>${coord:endOfWeeks(0)}</start-instance>
+            <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+    </input-events>
+    <action>
+        <workflow>
+        .............
+        </workflow>
+    </action>
+</coordinator-app>
+</verbatim>
+
+Then, the dataset instances for the input events for the coordinator action at first run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/03
+  hdfs://bar:8020/app/logs/2009/08/04
+  hdfs://bar:8020/app/logs/2009/08/05
+  hdfs://bar:8020/app/logs/2009/08/06
+</verbatim>
+
+The dataset instances for the input events for the coordinator action at second run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/02
+  hdfs://bar:8020/app/logs/2009/08/03
+  hdfs://bar:8020/app/logs/2009/08/04
+  hdfs://bar:8020/app/logs/2009/08/05
+  hdfs://bar:8020/app/logs/2009/08/06
+  hdfs://bar:8020/app/logs/2009/08/07
+</verbatim>
+
+
+---++++ 6.6.11. coord:endOfDays(int n) EL Function for Synchronous Datasets
+
+
+=${coord:endOfDays(int n)}= represents dataset instance at start of n <sup>th</sup> day. coord:endOfDays is only
+supported with range, where start-instance is coord:endOfDays and end-instance is coord:current. Specifying start
+of a day is useful if you want to process all the dataset instances from starting of a day to the current instance.
+This function calculates the dataset occurences similar to
+[[CoordinatorFunctionalSpec#a4.4.1.2._The_coord:endOfDaysint_n_EL_function][coord:endOfDays(int n) EL function]]
+mentioned above.
+
+
+*%GREEN% Example: %ENDCOLOR%*:
+
+Coordinator application definition:
+
+<verbatim>
+<coordinator-app name="app-coord" frequency='60' freq_timeunit='MINUTE'
+                    start='2009-08-06T05:00Z' end="2009-12-31T00:00" timezone="UTC"
+                    xmlns="uri:oozie:coordinator:0.4">
+    <input-events>
+        <data-in name="input" dataset="logs">
+            <dataset name='a' frequency='60' initial-instance='2009-06-06T00:00Z'
+                timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>
+                <uri-template>hdfs://bar:8020/app/logs/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE}
+                </uri-template>
+            </dataset>
+            <start-instance>${coord:endOfDays(0)}</start-instance>
+            <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+    </input-events>
+    <action>
+        <workflow>
+        .............
+        </workflow>
+    </action>
+</coordinator-app>
+</verbatim>
+
+Then, the dataset instances for the input events for the coordinator action at first run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/06/00/00
+  hdfs://bar:8020/app/logs/2009/08/06/01/00
+  hdfs://bar:8020/app/logs/2009/08/06/02/00
+  hdfs://bar:8020/app/logs/2009/08/06/03/00
+  hdfs://bar:8020/app/logs/2009/08/06/04/00
+  hdfs://bar:8020/app/logs/2009/08/06/05/00
+</verbatim>
+
+The dataset instances for the input events for the coordinator action at second run will be:
+
+<verbatim>
+  hdfs://bar:8020/app/logs/2009/08/06/00/00
+  hdfs://bar:8020/app/logs/2009/08/06/01/00
+  hdfs://bar:8020/app/logs/2009/08/06/02/00
+  hdfs://bar:8020/app/logs/2009/08/06/03/00
+  hdfs://bar:8020/app/logs/2009/08/06/04/00
+  hdfs://bar:8020/app/logs/2009/08/06/05/00
+  hdfs://bar:8020/app/logs/2009/08/06/06/00
+</verbatim>
+
+
+---++++ 6.6.12. coord:version(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.10. coord:latest(int n) EL Function for Asynchronous Datasets
+
+---++++ 6.6.13. coord:latest(int n) EL Function for Asynchronous Datasets
    * TBD
 
----++++ 6.6.11. Dataset Instance Resolution for Instances Before the Initial Instance
+
+---++++ 6.6.14. Dataset Instance Resolution for Instances Before the Initial Instance
+
 
 When defining input events that refer to dataset instances it may be possible that the resolution of instances is out of it lower bound. This is scenario is likely to happen when the instance resolution is very close to the initial-instance. This is useful for bootstrapping the application.
 

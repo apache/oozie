@@ -21,8 +21,9 @@ package org.apache.oozie.coord;
 import java.util.Calendar;
 
 public enum TimeUnit {
-    MINUTE(Calendar.MINUTE), HOUR(Calendar.HOUR), DAY(Calendar.DATE), MONTH(Calendar.MONTH), YEAR(Calendar.YEAR), END_OF_DAY(Calendar.DATE), END_OF_MONTH(
-        Calendar.MONTH), CRON(0), NONE(-1);
+    MINUTE(Calendar.MINUTE), HOUR(Calendar.HOUR), DAY(Calendar.DATE), WEEK(Calendar.WEEK_OF_YEAR), MONTH(
+            Calendar.MONTH), YEAR(Calendar.YEAR), END_OF_DAY(
+                    Calendar.DATE), END_OF_MONTH(Calendar.MONTH), END_OF_WEEK(Calendar.WEEK_OF_YEAR), CRON(0), NONE(-1);
 
     private int calendarUnit;
 
