@@ -1,0 +1,8 @@
+Package: [[artifactId]]
+Version: [[version]]
+Section: misc
+Priority: optional
+Architecture: all
+Maintainer: data-dev@inmobi.com
+Distribution: development
+Description: making deb for oozie
