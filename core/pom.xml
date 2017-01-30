@@ -408,12 +408,6 @@
 
         <dependency>
             <groupId>com.codahale.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.codahale.metrics</groupId>
             <artifactId>metrics-jvm</artifactId>
             <scope>compile</scope>
         </dependency>

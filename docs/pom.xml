@@ -129,14 +129,14 @@
                                     <directory>target/site</directory>
                                     <targetPath>docs</targetPath>
                                 </resource>
-                                <resource>
+                                <!--<resource>
                                     <directory>../client/target/site</directory>
                                     <targetPath>docs/client</targetPath>
                                 </resource>
                                 <resource>
                                     <directory>../core/target/site</directory>
                                     <targetPath>docs/core</targetPath>
-                                </resource>
+                                </resource>-->
                                 <resource>
                                     <directory>..</directory>
                                     <targetPath>docs</targetPath>

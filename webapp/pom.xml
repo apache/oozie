@@ -130,6 +130,11 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.falcon</groupId>
+            <artifactId>falcon-oozie-el-extension</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
