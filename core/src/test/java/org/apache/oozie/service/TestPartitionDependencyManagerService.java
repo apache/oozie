@@ -20,16 +20,13 @@ package org.apache.oozie.service;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.client.CoordinatorAction.Status;
-import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.dependency.hcat.EhcacheHCatDependencyCache;
 import org.apache.oozie.dependency.hcat.HCatMessageHandler;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
+import org.apache.oozie.dependency.hcat.SimpleHCatDependencyCache;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
@@ -137,6 +134,39 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         assertFalse(jmsService.isListeningToTopic(connInfo, dep3.getDb() + "." + dep3.getTable()));
     }
 
+    @Test
+    public void testHCatCanonicalHostName() throws Exception {
+        ConfigurationService.setBoolean(SimpleHCatDependencyCache.USE_CANONICAL_HOSTNAME, true);
+        ConfigurationService.set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
+                SimpleHCatDependencyCacheExtended.class.getName());
+        services.init();
+
+        // Test all APIs related to dependency caching
+        String actionId1 = "1";
+
+        String server1 = "hcat-server1-A:5080";
+        String server2 = "hcat-server1-B:5080";
+        String db = "mydb";
+        String table1 = "mytbl1";
+        HCatURI dep1 = new HCatURI(new URI("hcat://" + server1 + "/" + db + "/" + table1 + "/dt=20120101;country=us"));
+        HCatURI dep2 = new HCatURI(new URI("hcat://" + server2 + "/" + db + "/" + table1 + "/dt=20120101;country=us"));
+
+        PartitionDependencyManagerService pdms = Services.get().get(PartitionDependencyManagerService.class);
+        addMissingDependencyAndRegister(dep1, actionId1, pdms);
+        assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
+        assertTrue(pdms.getWaitingActions(dep2).contains(actionId1));
+
+        ConfigurationService.set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
+                EhcacheHCatDependencyCacheExtended.class.getName());
+        services.init();
+
+        pdms = Services.get().get(PartitionDependencyManagerService.class);
+        addMissingDependencyAndRegister(dep1, actionId1, pdms);
+        assertTrue(pdms.getWaitingActions(dep1).contains(actionId1));
+        assertTrue(pdms.getWaitingActions(dep2).contains(actionId1));
+
+    }
+
     protected void addMissingDependencyAndRegister(HCatURI hcatURI, String actionId, PartitionDependencyManagerService pdms) {
         pdms.addMissingDependency(hcatURI, actionId);
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
@@ -196,5 +226,18 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
             assertNotNull(dep.toURIString() + " is missing in cache", waitingActions);
             assertTrue(dep.toURIString() + " is missing in cache", waitingActions.contains(actionID));
         }
+    }
+}
+
+class SimpleHCatDependencyCacheExtended extends SimpleHCatDependencyCache {
+    public String canonicalizeHostname(String name) {
+        return name.replace("-B", "-A");
+    }
+
+}
+
+class EhcacheHCatDependencyCacheExtended extends EhcacheHCatDependencyCache {
+    public String canonicalizeHostname(String name) {
+        return name.replace("-B", "-A");
     }
 }

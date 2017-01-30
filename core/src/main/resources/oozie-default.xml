@@ -211,6 +211,17 @@
         </description>
    </property>
 
+ <!-- HCatAccessorService -->
+   <property>
+        <name>oozie.service.HCatAccessorService.jms.use.canonical.hostname</name>
+        <value>false</value>
+        <description>The JMS messages published from a HCat server usually contains the canonical hostname of the HCat server
+        in standalone mode or the canonical name of the VIP in a case of multiple nodes in a HA setup. This setting is used
+        to translate the HCat server hostname or its aliases specified by the user in the HCat URIs of the coordinator dependencies
+        to its canonical name so that they can be exactly matched with the JMS dependency availability notifications.
+        </description>
+   </property>
+
     <!-- TopicService -->
 
    <property>
