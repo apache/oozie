@@ -1955,8 +1955,8 @@
             </activation>
             <properties>
                 <spark.version>1.6.3</spark.version>
-                <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
-                <spark.bagel.version>1.6.1</spark.bagel.version>
+                <spark.streaming.kafka.version>1.6.3</spark.streaming.kafka.version>
+                <spark.bagel.version>1.6.3</spark.bagel.version>
             </properties>
         </profile>
         <profile>
