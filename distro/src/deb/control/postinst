@@ -198,7 +198,7 @@ else
     sudo cp $OOZIE_CURRENT/share/lib/pig/*.jar $OOZIE_CURRENT/libext/ || true
     sudo cp $OOZIE_CURRENT/share/lib/hive/*.jar $OOZIE_CURRENT/libext/ || true
     #work around need to resolve it 
-    sudo rm $OOZIE_CURRENT/libext/httpc*4.1.3*.jar
+    sudo rm $OOZIE_CURRENT/libext/httpc*4.1.3*.jar || true
 
     sudo chown -R oozie:oozie $OOZIE_CURRENT/ || true
     sudo chown -R oozie $OOZIE_CURRENT/ || true

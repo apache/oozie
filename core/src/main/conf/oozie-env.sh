@@ -22,7 +22,7 @@
 # Settings for the Embedded Tomcat that runs Oozie
 # Java System properties for Oozie should be specified in this variable
 #
-export CATALINA_OPTS="$CATALINA_OPTS -Xmx1024m"
+export CATALINA_OPTS="$CATALINA_OPTS -Xmx4096m -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:${OOZIE_HOME}/logs/gc.log -Dsun.net.client.defaultConnectTimeout=30000 -Dsun.net.client.defaultReadTimeout=120000"
 
 # Oozie configuration file to load from Oozie configuration directory
 #
