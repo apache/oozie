@@ -617,7 +617,7 @@ public class SLACalculatorMemory implements SLACalculator {
         @SuppressWarnings("rawtypes")
         List<UpdateEntry> updateList = new ArrayList<BatchQueryExecutor.UpdateEntry>();
         for (Pair<String, Map<String, String>> jobIdSLAPair : jobIdsSLAPair) {
-            SLACalcStatus slaCalc = getSLACalcStatus(jobIdSLAPair.getFist());
+            SLACalcStatus slaCalc = getSLACalcStatus(jobIdSLAPair.getFirst());
             if (slaCalc != null) {
                 updateParams(slaCalc, jobIdSLAPair.getSecond());
                 updateDBSlaExpectedValues(slaCalc, updateList);

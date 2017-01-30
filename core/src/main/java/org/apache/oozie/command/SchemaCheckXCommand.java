@@ -195,10 +195,10 @@ public class SchemaCheckXCommand extends XCommand<Void> {
             problem = true;
         } else {
             for (Map.Entry<String, Integer> ent : expectedColumnTypes.entrySet()) {
-                if (!foundColumns.get(ent.getKey()).getFist().equals(ent.getValue())) {
+                if (!foundColumns.get(ent.getKey()).getFirst().equals(ent.getValue())) {
                     LOG.error("Expected column [{0}] in table [{1}] to have type [{2}], but found type [{3}]",
                             ent.getKey(), table, getSQLTypeFromInt(ent.getValue()),
-                            getSQLTypeFromInt(foundColumns.get(ent.getKey()).getFist()));
+                            getSQLTypeFromInt(foundColumns.get(ent.getKey()).getFirst()));
                     problem = true;
                 } else if (foundColumns.get(ent.getKey()).getSecond() != null) {
                     LOG.error("Expected column [{0}] in table [{1}] to have default value [NULL], but found default vale [{2}]",

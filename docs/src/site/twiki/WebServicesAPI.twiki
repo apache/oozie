@@ -1616,6 +1616,55 @@ PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-enable&action-
 </verbatim>
 Will enable SLA alert for actions 1,14,17,18,19,20.
 
+---+++ Getting missing dependencies of coordinator action(s)
+
+<verbatim>
+GET oozie/v2/job/0000000-170104115137443-oozie-puru-C?show=missing-dependencies&action-list=1,20
+</verbatim>
+
+*Response*
+
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+
+{
+"missingDependencies":
+[{
+        "blockedOn": "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS",
+        "dataSets":
+        [
+            {
+                "missingDependencies":
+                [
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS"
+                ],
+                "dataSet": "input-2"
+            }
+        ],
+        "id": 1
+    },
+    {
+        "blockedOn": "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/20/00/_SUCCESS",
+        "dataSets":
+        [
+            {
+                "missingDependencies":
+                [
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/20/00/_SUCCESS",
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/19/40/_SUCCESS",
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/19/20/_SUCCESS",
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/19/00/_SUCCESS",
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/18/40/_SUCCESS",
+                    "hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/18/20/_SUCCESS"
+                ],
+                "dataSet": "input-2"
+            }
+        ],
+        "id": 20
+    }]
+}
+</verbatim>
 ---++++ Jobs Information
 
 A HTTP GET request retrieves workflow and coordinator jobs information.

@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2770 Show missing dependencies for coord actions (puru)
 OOZIE-2630 Oozie Coordinator EL Functions to get first day of the week/month (satishsaley)
 OOZIE-2771 Allow retrieving keystore and truststore passwords from Hadoop Credential Provider (asasvari via abhishekbafna)
 OOZIE-2619 Make Hive action defaults to match hive defaults when running from command line (venkatnrangan via abhishekbafna)

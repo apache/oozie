@@ -181,6 +181,8 @@ public class OozieCLI {
 
     public static final String WORKFLOW_ACTIONS_RETRIES = "retries";
 
+    public static final String COORD_ACTION_MISSING_DEPENDENCIES = "missingdeps";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
@@ -382,6 +384,9 @@ public class OozieCLI {
                 "enables sla alerts for the job and its children");
         Option slaChange = new Option(SLA_CHANGE, true,
                 "Update sla param for jobs, supported param are should-start, should-end, nominal-time and max-duration");
+        Option coordActionMissingDependencies = new Option(COORD_ACTION_MISSING_DEPENDENCIES, true,
+                "List missing dependencies of a coord action. To specify multiple actions, use with -action or -date option.");
+
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -411,6 +416,7 @@ public class OozieCLI {
         actions.addOption(slaEnableAlert);
         actions.addOption(slaChange);
         actions.addOption(workflowActionRetries);
+        actions.addOption(coordActionMissingDependencies);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -1328,6 +1334,19 @@ public class OozieCLI {
                 printWorkflowActionRetries(
                         wc.getWorkflowActionRetriesInfo(commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES)),
                         commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES));
+            }
+            else if (options.contains(COORD_ACTION_MISSING_DEPENDENCIES)) {
+                String actions = null, dates = null;
+
+                if (options.contains(ACTION_OPTION)) {
+                    actions = commandLine.getOptionValue(ACTION_OPTION);
+                }
+
+                if (options.contains(DATE_OPTION)) {
+                    dates = commandLine.getOptionValue(DATE_OPTION);
+                }
+                wc.getCoordActionMissingDependencies(commandLine.getOptionValue(COORD_ACTION_MISSING_DEPENDENCIES),
+                        actions, dates, System.out);
             }
 
         }

@@ -217,4 +217,6 @@ public interface RestConstants {
 
     String USER_PARAM = "user";
 
+    public static final String COORD_ACTION_MISSING_DEPENDENCIES = "missing-dependencies";
+
 }

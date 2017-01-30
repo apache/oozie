@@ -57,7 +57,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         assertEquals(1, map.size());
         Pair<String, FILTER_COMPARATORS> key = map.keySet().iterator().next();
         assertNotNull(key);
-        assertEquals(OozieClient.FILTER_STATUS, key.getFist());
+        assertEquals(OozieClient.FILTER_STATUS, key.getFirst());
         assertEquals(FILTER_COMPARATORS.EQUALS, key.getSecond());
         List<Object> list = map.get(key);
         assertNotNull(list);
@@ -71,7 +71,7 @@ public class TestCoordinatorEngineSimple extends XTestCase {
         assertEquals(1, map.size());
         key = map.keySet().iterator().next();
         assertNotNull(key);
-        assertEquals(OozieClient.FILTER_NOMINAL_TIME, key.getFist());
+        assertEquals(OozieClient.FILTER_NOMINAL_TIME, key.getFirst());
         assertEquals(FILTER_COMPARATORS.GREATER_EQUAL, key.getSecond());
         list = map.get(key);
         assertNotNull(list);

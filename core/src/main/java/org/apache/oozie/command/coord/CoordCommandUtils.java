@@ -25,8 +25,6 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.TimeZone;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
 import java.util.Calendar;
@@ -58,6 +56,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -737,7 +736,7 @@ public class CoordCommandUtils {
                 .createPullInputDependencies(isInputLogicSpecified);
         CoordInputDependency coordPushInputDependency = CoordInputDependencyFactory
                 .createPushInputDependencies(isInputLogicSpecified);
-        Map<String, String> unresolvedList = new HashMap<String, String>();
+        List<Pair<String, String>> unresolvedList = new ArrayList<Pair<String, String>>();
 
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
 
@@ -776,11 +775,11 @@ public class CoordCommandUtils {
 
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INSTANCES_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
-                unresolvedList.put(name, tmpUnresolved);
+                unresolvedList.add(new Pair<String,String>(name, tmpUnresolved));
             }
         }
-        for(String unresolvedDatasetName:unresolvedList.keySet()){
-            coordPullInputDependency.addUnResolvedList(unresolvedDatasetName, unresolvedList.get(unresolvedDatasetName));
+        for (Pair<String, String> unresolvedDataset : unresolvedList) {
+            coordPullInputDependency.addUnResolvedList(unresolvedDataset.getFirst(), unresolvedDataset.getSecond());
         }
         actionBean.setPullInputDependencies(coordPullInputDependency);
         actionBean.setPushInputDependencies(coordPushInputDependency);
@@ -946,4 +945,13 @@ public class CoordCommandUtils {
         return pathExists(sPath, actionConf, user);
     }
 
+    public static String getFirstMissingDependency(CoordinatorActionBean coordAction) {
+        CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+        CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+        String firstMissingDependencies = coordPullInputDependency.getFirstMissingDependency();
+        if (StringUtils.isEmpty(firstMissingDependencies)) {
+            firstMissingDependencies = coordPushInputDependency.getFirstMissingDependency();
+        }
+        return firstMissingDependencies;
+    }
 }

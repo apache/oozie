@@ -999,6 +999,31 @@ All other arguments are optional:
   $oozie job -slaenable <bundle_job_id> [-action 1,3-4,7-40] [-date 2009-01-01T01:00Z::2009-05-31T23:59Z,2009-11-10T01:00Z::2009-12-31T22:00Z] [-coordinator <List_of_coord_names/ids]
   </verbatim>
 
+---+++ Getting missing dependencies of coordinator action(s)
+   * Coordination action id can be specified directly for getting missing dependencies of a single action.
+   * To get information on multiple actions, either -action or -date option can be specified with the coordinator job id.
+   * missingdeps command doesn't recompute dependencies. It list missing dependencies which were last computed.
+   * Oozie checks missing dependencies sequentially, and it will stop on first missing dependency. =Blocked On= is the first missing dependency for action. So, there could be a chance that Oozie will report some missing dependencies, but it might be present. To resolve the waiting issue, one should fix the blockedOn missing dependency.
+   * For input logic, missingdeps command doesn't compute input-logic expression. It will report everything which is missing or not computed.
+<verbatim>
+oozie job  -oozie http://localhost:11000/oozie -missingDependencies 0000000-170104141851590-oozie-puru-C -action 1
+oozie job  -oozie http://localhost:11000/oozie -missingDependencies 0000000-170104141851590-oozie-puru-C@1
+
+id : 1
+blockedOn : hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS
+
+dataSet : input-1
+missingDependencies :
+      hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS
+
+dataSet : input-2
+missingDependencies :
+      hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS
+      hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/40/_SUCCESS
+      hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/20/_SUCCESS
+      hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS
+$
+</verbatim>
 ---++ Jobs Operations
 
 ---+++ Checking the Status of multiple Workflow Jobs

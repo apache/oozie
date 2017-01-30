@@ -35,6 +35,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +48,7 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -592,6 +594,7 @@ public class OozieClient {
         }
 
         protected abstract T call(HttpURLConnection conn) throws IOException, OozieClientException;
+
     }
 
     protected abstract class MapClientCallable extends ClientCallable<Map<String, String>> {
@@ -1231,6 +1234,99 @@ public class OozieClient {
         return new JobDefinition(jobId).call();
     }
 
+    /**
+     * Get coord action missing dependencies
+     * @param jobId
+     * @param actionList
+     * @param dates
+     * @throws OozieClientException
+     */
+    public void getCoordActionMissingDependencies(String jobId, String actionList, String dates, PrintStream ps)
+            throws OozieClientException {
+        new CoordActionMissingDependencies(jobId, actionList, dates, ps).call();
+    }
+
+    /**
+     * Get coord action missing dependencies
+     * @param jobId
+     * @param actionList
+     * @param dates
+     * @throws OozieClientException
+     */
+    public void getCoordActionMissingDependencies(String jobId, String actionList, String dates)
+            throws OozieClientException {
+        new CoordActionMissingDependencies(jobId, actionList, dates).call();
+    }
+
+    private class CoordActionMissingDependencies extends ClientCallable<String> {
+        PrintStream printStream;
+        public CoordActionMissingDependencies(String jobId, String actionList, String dates, PrintStream ps) {
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    RestConstants.COORD_ACTION_MISSING_DEPENDENCIES, RestConstants.JOB_COORD_SCOPE_ACTION_LIST, actionList,
+                    RestConstants.JOB_COORD_SCOPE_DATE, dates));
+            this.printStream = ps;
+        }
+
+        public CoordActionMissingDependencies(String jobId, String actionList, String dates) {
+            this(jobId, actionList, dates, System.out);
+        }
+
+
+        @SuppressWarnings("unchecked")
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
+                Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
+                JSONObject json = (JSONObject) JSONValue.parse(reader);
+                if (json != null) {
+                    JSONArray inputDependencies = (JSONArray) json.get(JsonTags.COORD_ACTION_MISSING_DEPENDENCIES);
+                    for (Object dependencies : inputDependencies) {
+                        printStream.println();
+                        printStream.println("CoordAction : "
+                                + ((JSONObject) dependencies).get(JsonTags.COORDINATOR_ACTION_ID));
+                        if (((JSONObject) dependencies).get(JsonTags.COORD_ACTION_FIRST_MISSING_DEPENDENCIES) != null) {
+                            printStream.println("Blocked on  : "
+                                    + ((JSONObject) dependencies)
+                                            .get(JsonTags.COORD_ACTION_FIRST_MISSING_DEPENDENCIES));
+                        }
+
+                        if (((JSONObject) dependencies).get(JsonTags.COORDINATOR_ACTION_DATASETS) != null) {
+
+                            JSONArray missingDependencies = (JSONArray) ((JSONObject) dependencies)
+                                    .get(JsonTags.COORDINATOR_ACTION_DATASETS);
+
+                            for (Object missingDependenciesJson : missingDependencies) {
+
+                                printStream.println("Dataset     : "
+                                        + ((JSONObject) missingDependenciesJson)
+                                                .get(JsonTags.COORDINATOR_ACTION_DATASET));
+
+                                JSONArray inputDependenciesList = (JSONArray) ((JSONObject) missingDependenciesJson)
+                                        .get(JsonTags.COORDINATOR_ACTION_MISSING_DEPS);
+                                printStream.println("Pending Dependencies : ");
+
+                                if (inputDependenciesList != null) {
+                                    Iterator<String> iterator = inputDependenciesList.iterator();
+                                    while (iterator.hasNext()) {
+                                        printStream.println("\t  " + iterator.next());
+                                    }
+                                }
+                                printStream.println();
+                            }
+                        }
+                    }
+                }
+                else {
+                    printStream.println(" No missing input dependencies found");
+                }
+
+            }
+            else {
+                handleError(conn);
+            }
+            return null;
+        }
+    }
+
     private class JobDefinition extends JobMetadata {
 
         JobDefinition(String jobId) {
@@ -1268,7 +1364,7 @@ public class OozieClient {
                 InputStreamReader isr = new InputStreamReader(is);
                 try {
                     if (printStream != null) {
-                        sendToOutputStream(isr, -1);
+                        sendToOutputStream(isr, -1, printStream);
                     }
                     else {
                         returnVal = getReaderAsString(isr, -1);
@@ -1291,7 +1387,7 @@ public class OozieClient {
          * @param maxLen max content length allowed, if -1 there is no limit.
          * @throws IOException
          */
-        private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
+        private void sendToOutputStream(Reader reader, int maxLen, PrintStream printStream) throws IOException {
             notNull(reader, "reader");
             StringBuilder sb = new StringBuilder();
             char[] buffer = new char[2048];

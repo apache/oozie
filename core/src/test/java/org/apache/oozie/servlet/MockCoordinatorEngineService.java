@@ -39,8 +39,11 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Pair;
 
 public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static final String JOB_ID = "coord-job-C-";
@@ -247,6 +250,13 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             }
             validateCoordinatorIdx(jobId);
             return "";
+        }
+
+        @Override
+        public List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> getCoordActionMissingDependencies(
+                String id, String actions, String dates) throws CommandException {
+            did = RestConstants.COORD_ACTION_MISSING_DEPENDENCIES;
+            return new ArrayList<Pair<CoordinatorActionBean, Map<String, ActionDependency>>>() ;
         }
 
         @Override
