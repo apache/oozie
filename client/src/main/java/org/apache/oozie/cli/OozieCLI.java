@@ -1499,7 +1499,7 @@ public class OozieCLI {
         System.out.println("External ID       : " + maskIfNull(action.getExternalId()));
         System.out.println("External Status   : " + maskIfNull(action.getExternalStatus()));
         System.out.println("Name              : " + maskIfNull(action.getName()));
-        System.out.println("Retries           : " + action.getRetries());
+        System.out.println("Retries           : " + action.getUserRetryCount());
         System.out.println("Tracker URI       : " + maskIfNull(action.getTrackerUri()));
         System.out.println("Type              : " + maskIfNull(action.getType()));
         System.out.println("Started           : " + maskDate(action.getStartTime(), timeZoneId, verbose));

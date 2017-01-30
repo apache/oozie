@@ -848,7 +848,7 @@ function jobDetailsPopup(response, request) {
                         value: retriesObj[key],
                         triggerClass: 'x-form-search-trigger',
                         onTriggerClick: function() {
-                            window.open(retriesObj[text]);
+                            window.open(retriesObj[key]);
                         }
                     });
                     form.add(textUrl);
