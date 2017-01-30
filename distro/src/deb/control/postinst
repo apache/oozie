@@ -1,0 +1,216 @@
+#!/bin/bash
+set -e
+
+[ -e "/etc/default/oozie" ] && . /etc/default/oozie
+
+echo "OOZIE_CURRENT=$OOZIE_CURRENT"
+echo "OOZIE_BASE=$OOZIE_BASE"
+echo "EXTJS_URL=$EXTJS_URL"
+echo "MYSQL_CONNECTOR_JAR=$MYSQL_CONNECTOR_JAR"
+echo "NAMENODE=$NAMENODE"
+echo "HADOOP_CONF=$HADOOP_CONF"
+echo "HADOOP_CLIENT=$HADOOP_CLIENT"
+echo "HADOOP_HDFS_CLIENT=$HADOOP_HDFS_CLIENT"
+echo "HADOOP_MAPREDUCE_CLIENT=$HADOOP_MAPREDUCE_CLIENT"
+echo "HADOOP_YARN_CLIENT=$HADOOP_YARN_CLIENT"
+echo "ZOOKEEPER_CLIENT=$ZOOKEEPER_CLIENT"
+echo "DEPLOYMENT_MODE=$DEPLOYMENT_MODE"
+echo "DB_FLAG=$DB_FLAG"
+
+flag=false
+
+if [ "$OOZIE_CURRENT" == "" ]; then
+    echo "OOZIE_CURRENT NOT SET"
+    flag=true
+fi
+
+if [ "$OOZIE_BASE" == "" ]; then
+    echo "OOZIE_BASE_DIR NOT SET"
+    flag=true
+fi
+
+if [ "$NAMENODE" == "" ]; then
+    echo "NAMENODE NOT SET"
+    flag=true
+fi
+
+if [[ "$HADOOP_CONF" == "" ]]; then
+    echo "HADOOP_CONF NOT SET"
+    flag=true
+fi
+
+if [ "$HADOOP_CLIENT" == "" ]; then
+    echo "HADOOP_CLIENT NOT SET"
+    flag=true
+fi
+
+if [ "$HADOOP_HDFS_CLIENT" == "" ]; then
+    echo "HADOOP_HDFS_CLIENT NOT SET"
+    flag=true
+fi
+
+if [ "$HADOOP_MAPREDUCE_CLIENT" == "" ]; then
+    echo "HADOOP_MAPREDUCE_CLIENT NOT SET"
+    flag=true
+fi
+
+if [ "$HADOOP_YARN_CLIENT" == "" ]; then
+    echo "HADOOP_YARN_CLIENT NOT SET"
+    flag=true
+fi
+
+if [ "$ZOOKEEPER_CLIENT" == "" ]; then
+    echo "ZOOKEEPER_CLIENT NOT SET"
+    flag=true
+fi
+
+if [ "$flag" = true ];then
+    exit 1
+fi
+
+if [[ "$DEPLOYMENT_MODE" == "FULL" || "$DEPLOYMENT_MODE" == "WITHOUT_SHARELIB" || "$DEPLOYMENT_MODE" == "ONLY_SHARELIB" ]]; then
+    echo "DEPLOYMENT_MODE IS VALID"
+else
+    echo "DEPLOYMENT_MODE IS NOT VALID"
+    exit 1
+fi
+
+if [ -f "$OOZIE_CURRENT/oozie-server/temp/oozie.pid" ]; then
+        echo "Oozie service is already running on $OOZIE_CURRENT/oozie-server/temp/oozie.pid. Please stop the service and try the installation again."
+        exit 1
+fi
+
+if [ "$DEPLOYMENT_MODE" == "ONLY_SHARELIB" ]; then
+
+    if [ ! -d "$OOZIE_BASE" ]; then
+        # Control will enter here if $OOZIE_BASE doesn't exist.
+        echo "$OOZIE_BASE does not exist...Please ensure that OOZIE_BASE_DIR is correctly set"
+        exit 1
+    fi
+
+    if [ ! -d "$OOZIE_CURRENT" ]; then
+        # Control will enter here if $OOZIE_CURRENT doesn't exist.
+        echo "$OOZIE_CURRENT does not exist...Please ensure that OOZIE_CURRENT is correctly set"
+        exit 1
+    fi
+
+    cd $OOZIE_BASE/
+
+    VERSION=oozie-[[version]]
+    OOZIE_VERSION=$(echo "$(echo $VERSION| tr '~' '-')") #This is to replace the '~' sign in the version with '-'
+    OOZIE_SHARELIB=${OOZIE_VERSION}_SHARELIB
+    if [ -d "$OOZIE_BASE/$OOZIE_SHARELIB" ]; then
+        # Control will enter here if $OOZIE_CURRENT doesn't exist.
+        sudo mv $OOZIE_BASE/$OOZIE_SHARELIB $OOZIE_BASE/${OOZIE_SHARELIB}.`date +"%Y%m%d%H%M%S"`
+    fi
+
+    DISTRO=$(ls /opt/inmobi/${OOZIE_VERSION}|grep distro|grep tar.gz|grep $OOZIE_VERSION)
+    sudo mkdir $OOZIE_BASE/$OOZIE_SHARELIB
+    sudo tar -xvf /opt/inmobi/${OOZIE_VERSION}/$DISTRO -C $OOZIE_BASE/$OOZIE_SHARELIB
+
+    cd $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION
+    SHARE=$(ls | grep sharelib | grep tar.gz)
+    sudo tar -xvf $SHARE
+
+    sudo mkdir -p $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/pig/
+    sudo mkdir -p $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/oozie/
+    sudo mkdir -p $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/hive/
+    sudo mkdir -p $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/hive2/
+    sudo mkdir -p $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/spark/
+    cd $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION
+
+    sudo cp $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/share/lib/oozie/* $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/oozie/ || true
+    sudo cp $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/share/lib/pig/* $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/pig/ || true
+    sudo cp $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/share/lib/hive/* $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/hive/ || true
+    sudo cp $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/share/lib/hive2/* $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/hive2/ || true
+    sudo cp $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/share/lib/spark/* $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib/lib/spark/ || true
+
+    sudo chown -R oozie:oozie $OOZIE_CURRENT/ || true
+    sudo chown -R oozie $OOZIE_CURRENT/ || true
+
+    sudo -u oozie $OOZIE_CURRENT/bin/oozie-setup.sh sharelib create -fs $NAMENODE -locallib $OOZIE_BASE/$OOZIE_SHARELIB/$OOZIE_VERSION/temp_sharelib
+    sudo mv $OOZIE_BASE/$OOZIE_SHARELIB $OOZIE_BASE/${OOZIE_SHARELIB}.`date +"%Y%m%d%H%M%S"`
+
+else
+
+    if [ ! -d "$OOZIE_BASE" ]; then
+        # Control will enter here if $OOZIE_BASE doesn't exist.
+        sudo mkdir -p $OOZIE_BASE
+    fi
+
+    VERSION=oozie-[[version]]
+    OOZIE_VERSION=$(echo "$(echo $VERSION| tr '~' '-')") #This is to replace the '~' sign in  the version with '-'
+
+    cd $OOZIE_BASE/
+    OOZIE_CURRENT_TEMP=${OOZIE_CURRENT}.`date +"%Y%m%d%H%M%S"`
+    sudo mv $OOZIE_CURRENT $OOZIE_CURRENT_TEMP || true
+    DISTRO=$(ls /opt/inmobi/${OOZIE_VERSION}|grep distro|grep tar.gz|grep $OOZIE_VERSION)
+    sudo tar -xvf /opt/inmobi/${OOZIE_VERSION}/$DISTRO
+
+    sudo mv $OOZIE_BASE/$OOZIE_VERSION $OOZIE_CURRENT
+
+    cd $OOZIE_CURRENT
+    sudo mkdir $OOZIE_CURRENT/libext
+    cd $OOZIE_CURRENT/libext
+    sudo cp $HADOOP_CLIENT/*.jar . || true
+    sudo cp $HADOOP_CLIENT/lib/*.jar . || true
+    sudo cp $HADOOP_HDFS_CLIENT/*.jar . || true
+    sudo cp $HADOOP_HDFS_CLIENT/lib/*.jar . || true
+    sudo cp $HADOOP_MAPREDUCE_CLIENT/*.jar . || true
+    sudo cp $HADOOP_MAPREDUCE_CLIENT/lib/*.jar . || true
+    sudo cp $HADOOP_YARN_CLIENT/*.jar . || true
+    sudo cp $HADOOP_YARN_CLIENT/lib/*.jar . || true
+    sudo cp $ZOOKEEPER_CLIENT/zookeeper.jar . || true
+
+    sudo rm jasper-compiler*.jar jsp-api*.jar servlet-api*.jar || true
+
+    if [ "$EXTJS_URL" != "" ]; then
+        sudo wget $EXTJS_URL || true
+    fi
+
+    if [ "$MYSQL_CONNECTOR_JAR" != "" ]; then
+        sudo wget $MYSQL_CONNECTOR_JAR || true
+    fi
+
+    cd $OOZIE_CURRENT
+    SHARE=$(ls | grep sharelib | grep tar.gz)
+    sudo tar -xvf $SHARE
+    sudo cp $OOZIE_CURRENT/share/lib/pig/guava-11.0.2.jar $OOZIE_CURRENT/share/lib/hcatalog/ || true
+
+    sudo rm -r $OOZIE_CURRENT/conf/hadoop-conf || true
+    cd $OOZIE_CURRENT/conf
+    sudo cp -r $HADOOP_CONF hadoop-conf
+
+    sudo mkdir -p $OOZIE_CURRENT/temp_sharelib/lib/pig/
+    sudo mkdir -p $OOZIE_CURRENT/temp_sharelib/lib/oozie/
+    sudo mkdir -p $OOZIE_CURRENT/temp_sharelib/lib/hive/
+    sudo mkdir -p $OOZIE_CURRENT/temp_sharelib/lib/hive2/
+    sudo mkdir -p $OOZIE_CURRENT/temp_sharelib/lib/spark/
+    cd $OOZIE_CURRENT
+
+    sudo cp $OOZIE_CURRENT/share/lib/oozie/* $OOZIE_CURRENT/temp_sharelib/lib/oozie/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/pig/* $OOZIE_CURRENT/temp_sharelib/lib/pig/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/hive/* $OOZIE_CURRENT/temp_sharelib/lib/hive/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/hive2/* $OOZIE_CURRENT/temp_sharelib/lib/hive2/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/spark/* $OOZIE_CURRENT/temp_sharelib/lib/spark/ || true
+
+    sudo cp $OOZIE_CURRENT/share/lib/hcatalog/*.jar $OOZIE_CURRENT/libext/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/pig/*.jar $OOZIE_CURRENT/libext/ || true
+    sudo cp $OOZIE_CURRENT/share/lib/hive/*.jar $OOZIE_CURRENT/libext/ || true
+    #work around need to resolve it 
+    sudo rm $OOZIE_CURRENT/libext/httpc*4.1.3*.jar || true
+
+    sudo chown -R oozie:oozie $OOZIE_CURRENT/ || true
+    sudo chown -R oozie $OOZIE_CURRENT/ || true
+
+    if [[ "$DB_FLAG" == "TRUE" || "$DB_FLAG" == "True" || "$DB_FLAG" == "true" ]]; then
+        sudo -u oozie $OOZIE_CURRENT/bin/ooziedb.sh create -sqlfile $OOZIE_CURRENT/oozie.sql -run
+    fi
+
+    sudo -u oozie $OOZIE_CURRENT/bin/oozie-setup.sh prepare-war
+
+    if [ "$DEPLOYMENT_MODE" == "FULL" ]; then
+        sudo -u oozie $OOZIE_CURRENT/bin/oozie-setup.sh sharelib create -fs $NAMENODE -locallib $OOZIE_CURRENT/temp_sharelib
+    fi
+    echo "In case of rollback please move the existing $OOZIE_CURRENT directory to some backup and move $OOZIE_CURRENT_TEMP to $OOZIE_CURRENT...Ignore this if installing oozie for the first time"
+fi
