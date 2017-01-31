@@ -359,7 +359,7 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-auth</artifactId>
-                <version>${hadooplib.version}</version>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -502,7 +502,7 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-distcp</artifactId>
-                <version>${hadooplib.version}</version>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
 
