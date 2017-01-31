@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.2-SNAPSHOT</version>
+        <version>4.3.2</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadoop-utils</artifactId>
-    <version>4.3.2-SNAPSHOT</version>
+    <version>4.3.2</version>
     <description>Apache Oozie Hadoop Utils ${project.version}</description>
     <name>Apache Oozie Hadoop Utils ${project.version}</name>
     <packaging>jar</packaging>
