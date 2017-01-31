@@ -1801,6 +1801,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <skipTests>true</skipTests>
                     <forkMode>${oozie.test.forkMode}</forkMode>
                     <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                     <argLine>${maven.test.java.opts}</argLine>
