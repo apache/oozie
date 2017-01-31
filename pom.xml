@@ -1560,7 +1560,7 @@
             <dependency>
                 <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-hadoop-utils</artifactId>
-                <version>${oozie.hadoop-utils.version}</version>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
