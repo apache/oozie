@@ -3461,9 +3461,10 @@ Supported operators are OR, AND, COMBINE. OR and AND operators are nested, one c
    * COMBINE :  With combine, instances of A and B can be interleaved to get the final "combined" set of total instances. All datasets in combine should have the same range defined with the current EL function. Combine does not support latest and future EL functions. Combine cannot also be nested.
 
 Additional options
-   * *%BLUE% MIN: %ENDCOLOR%* Minimum number of input instances that should be available.
-   * *%BLUE% WAIT (in minutes): %ENDCOLOR%* If all dependencies are not met, and MIN dependencies are met,  then Oozie will keep on waiting for more instances till wait time elapses or all dependent data are available.
+   * *%BLUE% MIN: %ENDCOLOR%* Minimum number of input instances that should be available. This can be used in cases where inputs are optional and the processing can be done on a subset of input instances.
+   * %BLUE% WAIT (in minutes): %ENDCOLOR% Wait is used to specify the amount of time to continue checking for availability of instances of a particular dataset before moving on to the next dataset defined in a OR condition. The wait time is calculated from the beginning of the nominal time of the action or the action creation time whichever is later. The main purpose of this is to give preference to the primary datasource before checking the secondary datasource.
 
+Wait when used with min option has a totally different purpose. It is used to specify the additional amount of time to wait and check for more instances after the required minimum set of instances become available. Any additional instances that become available during the wait time are then included.
 
 The conditional logic can be specified using the <input-logic> tag in the coordinator.xml using the [[CoordinatorFunctionalSpec#Oozie_Coordinator_Schema_0.5][Oozie Coordinator Schema 0.5]] and above. If not specified, the default behavior of "AND" of all defined input dependencies is applied.
 
@@ -3481,6 +3482,18 @@ coord:dataIn() function can be used to get the comma separated list of evaluated
 </input-logic>
 </verbatim>
 With above expression one can specify the dataset as AorB. Action will start running as soon dataset A or B is available. Dataset "A" has higher precedence over "B" because it is defined first. Oozie will first check for availability of dataset A and only if A is not available, availability of dataset B will be checked.
+
+*%GREEN% Example: %ENDCOLOR%*:
+<verbatim>
+<input-logic>
+    <or name="AorBorC">
+        <data-in dataset="A" wait = "60"/>
+        <data-in dataset="B" wait = "90"/>
+        <data-in dataset="C"/>
+    </or>
+</input-logic>
+</verbatim>
+With the above expression, it will wait for 60 mins from the nominal time of the action or the action creation time whichever is later for all the instances of dataset A to be available. If it is not available in 60 minutes, then it will start checking for instances of dataset B. If instances of B are not available in another 30 minutes, then it will start checking for dataset C.
 
 *%GREEN% Example: %ENDCOLOR%*:
 <verbatim>
