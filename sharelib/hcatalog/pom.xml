@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.0</version>
+        <version>4.3.1-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-hcatalog</artifactId>
-    <version>4.3.0</version>
+    <version>4.3.1-SNAPSHOT</version>
     <description>Apache Oozie Share Lib HCatalog</description>
     <name>Apache Oozie Share Lib HCatalog</name>
     <packaging>jar</packaging>
