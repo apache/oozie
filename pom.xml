@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-main</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.3.0</version>
     <description>Apache Oozie Main</description>
     <name>Apache Oozie Main</name>
     <packaging>pom</packaging>
@@ -87,7 +87,7 @@
         <hive.jline.version>2.12</hive.jline.version>
         <hive.classifier>core</hive.classifier>
         <pig.version>0.16.0</pig.version>
-        <pig.classifier></pig.classifier>
+        <pig.classifier />
         <sqoop.version>1.4.3</sqoop.version>
         <spark.version>1.4.1</spark.version>
         <spark.streaming.kafka.version>1.4.1</spark.streaming.kafka.version>
@@ -191,7 +191,7 @@
         <connection>scm:git:git://github.com/InMobi/oozie.git</connection>
         <developerConnection>scm:git:https://github.com/InMobi/oozie.git</developerConnection>
         <url>scm:git:https://github.com/InMobi/oozie.git</url>
-        <tag>HEAD</tag>
+        <tag>4.3.0</tag>
     </scm>
 
     <dependencyManagement>
