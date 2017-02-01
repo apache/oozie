@@ -1006,24 +1006,25 @@ All other arguments are optional:
    * Oozie checks missing dependencies sequentially, and it will stop on first missing dependency. =Blocked On= is the first missing dependency for action. So, there could be a chance that Oozie will report some missing dependencies, but it might be present. To resolve the waiting issue, one should fix the blockedOn missing dependency.
    * For input logic, missingdeps command doesn't compute input-logic expression. It will report everything which is missing or not computed.
 <verbatim>
-oozie job  -oozie http://localhost:11000/oozie -missingDependencies 0000000-170104141851590-oozie-puru-C -action 1
-oozie job  -oozie http://localhost:11000/oozie -missingDependencies 0000000-170104141851590-oozie-puru-C@1
-
-id : 1
-blockedOn : hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS
-
-dataSet : input-1
-missingDependencies :
+$oozie job  -oozie http://localhost:11000/oozie -missingdeps 0000000-170104141851590-oozie-puru-C -action 1
+$oozie job  -oozie http://localhost:11000/oozie -missingdeps 0000000-170104141851590-oozie-puru-C@1
+.
+CoordAction :  1
+Blocked on  : hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS
+.
+Dataset     : input-1
+Pending Dependencies :
       hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS
-
-dataSet : input-2
-missingDependencies :
+.
+Dataset     : input-2
+Pending Dependencies :
       hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/01/00/_SUCCESS
       hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/40/_SUCCESS
       hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/20/_SUCCESS
       hdfs://localhost:9000/user/purushah/examples/input-data/rawLogs/2010/01/01/00/00/_SUCCESS
 $
 </verbatim>
+
 ---++ Jobs Operations
 
 ---+++ Checking the Status of multiple Workflow Jobs
