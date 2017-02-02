@@ -20,24 +20,26 @@ package org.apache.oozie.workflow.lite;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.oozie.util.StringSerializationUtil;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.util.ParamChecker;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.ErrorCode;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 //TODO javadoc
 public class LiteWorkflowApp implements Writable, WorkflowApp {
+    /**
+     * Serialization of strings longer than 65k changed. This flag marks which method to use during reading.
+     */
+    public static final int NEW_SERIALIZATION_METHOD_FLAG = -1;
     private String name;
     private String definition;
     private Map<String, NodeDef> nodesMap = new LinkedHashMap<String, NodeDef>();
@@ -111,13 +113,9 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(name);
-        //dataOutput.writeUTF(definition);
-        //writeUTF() has limit 65535, so split long string to multiple short strings
-        List<String> defList = divideStr(definition);
-        dataOutput.writeInt(defList.size());
-        for (String d : defList) {
-            dataOutput.writeUTF(d);
-        }
+        // write out -1 as a marker to use StringSerializationUtil. Previously it was split to 20k long bits in a list.
+        dataOutput.writeInt(NEW_SERIALIZATION_METHOD_FLAG);
+        StringSerializationUtil.writeString(dataOutput, definition);
         dataOutput.writeInt(nodesMap.size());
         for (NodeDef n : getNodeDefs()) {
             dataOutput.writeUTF(n.getClass().getName());
@@ -125,43 +123,22 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
         }
     }
 
-    /**
-     * To split long string to a list of smaller strings.
-     *
-     * @param str
-     * @return List
-     */
-    private List<String> divideStr(String str) {
-        List<String> list = new ArrayList<String>();
-        int len = 20000;
-        int strlen = str.length();
-        int start = 0;
-        int end = len;
-
-        while (end < strlen) {
-            list.add(str.substring(start, end));
-            start = end;
-            end += len;
-        }
-
-        if (strlen <= end) {
-            list.add(str.substring(start, strlen));
-        }
-        return list;
-    }
-
     @Override
     public void readFields(DataInput dataInput) throws IOException {
         name = dataInput.readUTF();
-        //definition = dataInput.readUTF();
         //read the full definition back
-        int defListSize = dataInput.readInt();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < defListSize; i++) {
-            sb.append(dataInput.readUTF());
+        int definitionListFlag = dataInput.readInt();
+        if(definitionListFlag > NEW_SERIALIZATION_METHOD_FLAG) {
+            // negative number marking the usage of StringSerializationUtil
+            // positive number is the length of the array the String was broken into.
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < definitionListFlag; i++) {
+                sb.append(dataInput.readUTF());
+            }
+            definition = sb.toString();
+        } else {
+            definition = StringSerializationUtil.readString(dataInput);
         }
-        definition = sb.toString();
-
         int numNodes = dataInput.readInt();
         for (int x = 0; x < numNodes; x++) {
             try {
