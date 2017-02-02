@@ -25,6 +25,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.StringSerializationUtil;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -51,10 +52,6 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private static String PATH_SEPARATOR = "/";
     private static String ROOT = PATH_SEPARATOR;
     private static String TRANSITION_SEPARATOR = "#";
-
-    // Using unique string to indicate version. This is to make sure that it
-    // doesn't match with user data.
-    private static final String DATA_VERSION = "V==1";
 
     private static class NodeInstance {
         String nodeName;
@@ -556,6 +553,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     @Override
     public void write(DataOutput dOut) throws IOException {
+
         dOut.writeUTF(instanceId);
 
         //Hadoop Configuration has to get its act right
@@ -577,7 +575,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         dOut.writeInt(persistentVars.size());
         for (Map.Entry<String, String> entry : persistentVars.entrySet()) {
             dOut.writeUTF(entry.getKey());
-            writeStringAsBytes(entry.getValue(), dOut);
+            StringSerializationUtil.writeString(dOut, entry.getValue());
         }
     }
 
@@ -607,32 +605,9 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         int numVars = dIn.readInt();
         for (int x = 0; x < numVars; x++) {
             String vName = dIn.readUTF();
-            String vVal = readBytesAsString(dIn);
-            persistentVars.put(vName, vVal);
+            persistentVars.put(vName, StringSerializationUtil.readString(dIn));
         }
         refreshLog();
-    }
-
-    private void writeStringAsBytes(String value, DataOutput dOut) throws IOException {
-        if (value == null) {
-            dOut.writeUTF(null);
-            return;
-        }
-        dOut.writeUTF(DATA_VERSION);
-        byte[] data = value.getBytes("UTF-8");
-        dOut.writeInt(data.length);
-        dOut.write(data);
-    }
-
-    private String readBytesAsString(DataInput dIn) throws IOException {
-        String value = dIn.readUTF();
-        if (value != null && value.equals(DATA_VERSION)) {
-            int length = dIn.readInt();
-            byte[] data = new byte[length];
-            dIn.readFully(data);
-            value = new String(data, "UTF-8");
-        }
-        return value;
     }
 
     @Override
