@@ -36,6 +36,8 @@
             <xs:element name="jar" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="spark-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+
+            <xs:element name="version" type="xs:int" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
 
