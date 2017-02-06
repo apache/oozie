@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2787 Oozie distributes application jar twice making the spark job fail (satishsaley)
 OOZIE-2789 Maven complains about checkstyle error during build (xzheng via abhishekbafna)
 OOZIE-2777 Config-default.xml longer than 64k results in java.io.UTFDataFormatException (gezapeti via harsh)
 OOZIE-2782 Input logic wait documentation is confusing (puru)
