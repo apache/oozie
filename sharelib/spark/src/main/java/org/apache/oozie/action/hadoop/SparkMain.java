@@ -218,6 +218,7 @@ public class SparkMain extends LauncherMain {
             JarFilter jarfilter = new JarFilter(fixedUris, jarPath);
             jarfilter.filter();
             jarPath = jarfilter.getApplicationJar();
+            fixedUris.add(new Path(SPARK_LOG4J_PROPS).toUri());
             String cachedFiles = StringUtils.join(fixedUris, ",");
             if (cachedFiles != null && !cachedFiles.isEmpty()) {
                 sparkArgs.add("--files");
