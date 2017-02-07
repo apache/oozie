@@ -848,13 +848,20 @@ public class CoordELFunctions {
 
     public static String ph2_coord_absolute_range(String startInstance, int end) throws Exception {
         int[] instanceCount = new int[1];
-
+        Calendar startInstanceCal = DateUtils.getCalendar(startInstance);
+        Calendar currentInstance = getCurrentInstance(startInstanceCal.getTime(), instanceCount);
         // getCurrentInstance() returns null, which means startInstance is less
         // than initial instance
-        if (getCurrentInstance(DateUtils.getCalendar(startInstance).getTime(), instanceCount) == null) {
+        if (currentInstance == null) {
             throw new CommandException(ErrorCode.E1010,
                     "intial-instance should be equal or earlier than the start-instance. intial-instance is "
                             + getInitialInstance() + " and start-instance is " + startInstance);
+        }
+        if (currentInstance.getTimeInMillis() != startInstanceCal.getTimeInMillis()) {
+            throw new CommandException(ErrorCode.E1010,
+                    "initial-instance is not in phase with start-instance. initial-instance is "
+                            + DateUtils.formatDateOozieTZ(getInitialInstanceCal()) + " and start-instance is "
+                            + DateUtils.formatDateOozieTZ(startInstanceCal));
         }
         int[] nominalCount = new int[1];
         if (getCurrentInstance(getActionCreationtime(), nominalCount) == null) {
@@ -1584,7 +1591,7 @@ public class CoordELFunctions {
     /**
      * @return dataset TimeZone
      */
-    private static TimeZone getDatasetTZ(ELEvaluator eval) {
+    public static TimeZone getDatasetTZ(ELEvaluator eval) {
         SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(DATASET);
         if (ds == null) {
             throw new RuntimeException("Associated Dataset should be defined with key " + DATASET);

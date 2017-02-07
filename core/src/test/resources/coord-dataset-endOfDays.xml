@@ -24,7 +24,7 @@
                 <uri-template>hdfs:///tmp/workflows/${YEAR}/${MONTH}/${DAY}/${HOUR}/${MINUTE};region=us
                 </uri-template>
             </dataset>
-            <start-instance>${coord:endOfDays(0)}
+            <start-instance>${coord:endOfDays(-1)}
             </start-instance>
             <end-instance>${coord:current(0)}</end-instance>
         </data-in>

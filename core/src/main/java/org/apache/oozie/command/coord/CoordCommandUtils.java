@@ -92,10 +92,11 @@ public class CoordCommandUtils {
      */
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
-        if (funcType == ABSOLUTE || funcType == ENDOFMONTHS || funcType == ENDOFWEEKS || funcType == ENDOFDAYS) {
+        if (funcType == ABSOLUTE) {
             return funcType;
         }
-        if (funcType == CURRENT || funcType == LATEST) {
+        if (funcType == CURRENT || funcType == LATEST || funcType == ENDOFMONTHS || funcType == ENDOFWEEKS
+                || funcType == ENDOFDAYS) {
             return parseOneArg(function);
         }
         else {
@@ -268,13 +269,16 @@ public class CoordCommandUtils {
                         parseOneStringArg(strStart));
             }
             else if (funcType == ENDOFMONTHS) {
-                resolveInstanceRangeEndOfMonths(event, instances, appInst, conf, eval, strStart, endIndex);
+                resolveInstanceRangeEndOfDuration(TimeUnit.MONTH, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
             }
             else if (funcType == ENDOFWEEKS) {
-                resolveInstanceRangeEndOfWeeks(event, instances, appInst, conf, eval, strStart, endIndex);
+                resolveInstanceRangeEndOfDuration(TimeUnit.WEEK, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
             }
             else if (funcType == ENDOFDAYS) {
-                resolveInstanceRangeEndOfDays(event, instances, appInst, conf, eval, strStart, endIndex);
+                resolveInstanceRangeEndOfDuration(TimeUnit.DAY, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
             }
             else {
                 if (funcType == OFFSET) {
@@ -340,40 +344,6 @@ public class CoordCommandUtils {
         }
     }
 
-    private static void resolveInstanceRangeEndOfDays(Element event, StringBuilder instances, SyncCoordAction appInst,
-            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
-        Date nominalTime = appInst.getNominalTime();
-        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        int diff = Integer.parseInt(parseOneStringArg(strStart));
-        cal.add(Calendar.DATE, diff);
-        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
-                DateUtils.formatDateOozieTZ(cal.getTime()));
-    }
-
-    private static void resolveInstanceRangeEndOfWeeks(Element event, StringBuilder instances, SyncCoordAction appInst,
-            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
-        Date nominalTime = appInst.getNominalTime();
-        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
-        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
-        int diff = Integer.parseInt(parseOneStringArg(strStart));
-        cal.add(Calendar.WEEK_OF_YEAR, diff);
-        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
-                DateUtils.formatDateOozieTZ(cal.getTime()));
-    }
-
-    private static void resolveInstanceRangeEndOfMonths(Element event, StringBuilder instances, SyncCoordAction appInst,
-            Configuration conf, ELEvaluator eval, String strStart, int endIndex) throws Exception {
-        int FIRST_DAY_OF_MONTH = 1;
-        Date nominalTime = appInst.getNominalTime();
-        Calendar cal = DateUtils.getCalendar(DateUtils.formatDateOozieTZ(nominalTime));
-        cal.set(Calendar.DAY_OF_MONTH, FIRST_DAY_OF_MONTH);
-        int diff = Integer.parseInt(parseOneStringArg(strStart));
-        cal.add(Calendar.MONTH, diff);
-        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
-                DateUtils.formatDateOozieTZ(cal.getTime()));
-    }
-
     private static void resolveAbsoluteRange(Element event, StringBuilder instances, SyncCoordAction appInst,
             Configuration conf, ELEvaluator eval, String strStart, int endIndex, String rangeStr) throws Exception {
         StringBuffer bf = new StringBuffer();
@@ -386,6 +356,15 @@ public class CoordCommandUtils {
             }
             instances.append(matInstance);
         }
+    }
+
+    private static void resolveInstanceRangeEndOfDuration(TimeUnit duration, Element event, StringBuilder instances,
+            SyncCoordAction appInst, Configuration conf, ELEvaluator eval, String strStart, int startIndex,
+            int endIndex) throws Exception {
+        Calendar startInstance = new StartInstanceFinder(startIndex, duration, CoordELFunctions.getDatasetTZ(eval),
+                appInst.getNominalTime()).getStartInstance();
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(startInstance));
     }
 
     /**
@@ -954,4 +933,57 @@ public class CoordCommandUtils {
         }
         return firstMissingDependencies;
     }
+
+    /**
+     * Class to find get start instance
+     */
+    private static class StartInstanceFinder {
+
+        private int startIndex;
+        private TimeUnit timeUnit;
+        private TimeZone datasetTimeZone;
+        private Date nominalTime;
+
+        /**
+         * @param startIndex dataset index
+         * @param timeUnit
+         * @param datasetTimeZone
+         * @param nominalTime nominal time of action
+         */
+        public StartInstanceFinder(int startIndex, TimeUnit timeUnit, TimeZone datasetTimeZone, Date nominalTime) {
+            this.startIndex = startIndex;
+            this.timeUnit = timeUnit;
+            this.datasetTimeZone = datasetTimeZone;
+            this.nominalTime = nominalTime;
+        }
+
+        /**
+         * Calculates the start instance. It put the start instance to the start
+         * of a day i.e. 00:00:00.
+         */
+        public Calendar getStartInstance() throws Exception {
+            Calendar startInstance = Calendar.getInstance(datasetTimeZone);
+            startInstance.setTime(nominalTime);
+            startInstance.set(Calendar.HOUR_OF_DAY, 0);
+            startInstance.set(Calendar.MINUTE, 0);
+            startInstance.set(Calendar.SECOND, 0);
+            switch (timeUnit) {
+                case WEEK:
+                    startInstance.set(Calendar.DAY_OF_WEEK, startInstance.getFirstDayOfWeek());
+                    startInstance.add(Calendar.WEEK_OF_YEAR, startIndex + 1);
+                    break;
+                case MONTH:
+                    int FIRST_DAY_OF_MONTH = 1;
+                    startInstance.set(Calendar.DAY_OF_MONTH, FIRST_DAY_OF_MONTH);
+                    startInstance.add(Calendar.MONTH, startIndex + 1);
+                    break;
+                case DAY:
+                    startInstance.add(Calendar.DATE, startIndex + 1);
+                    break;
+                default:
+            }
+            return startInstance;
+        }
+    }
+
 }
