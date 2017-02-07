@@ -1843,6 +1843,7 @@
                         <exclude>docs/src/site/twiki/*.twiki</exclude>
                         <exclude>examples/src/main/data/*</exclude>
                         <exclude>core/src/test/resources/test-ioutils.txt</exclude>
+						<exclude>core/src/test/resources/oldWorkFlowApp.serialized</exclude>
                         <exclude>sharelib/pig/src/test/resources/PigMain.txt</exclude>
                         <exclude>sharelib/hive/src/test/resources/HiveMain.txt</exclude>
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
