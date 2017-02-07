@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2786 Pass Oozie workflow ID and settings to Spark application configuration (zhengxb2005 via rkanter)
 OOZIE-2790 log4j configuration is not passed to spark executors (satishsaley)
 OOZIE-2787 Oozie distributes application jar twice making the spark job fail (satishsaley)
 OOZIE-2789 Maven complains about checkstyle error during build (xzheng via abhishekbafna)

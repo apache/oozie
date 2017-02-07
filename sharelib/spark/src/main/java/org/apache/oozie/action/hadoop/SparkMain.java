@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -42,6 +43,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.spark.deploy.SparkSubmit;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class SparkMain extends LauncherMain {
     private static final String MASTER_OPTION = "--master";
@@ -113,6 +116,8 @@ public class SparkMain extends LauncherMain {
             sparkArgs.add(CLASS_NAME_OPTION);
             sparkArgs.add(className);
         }
+
+        appendOoziePropertiesToSparkConf(sparkArgs, actionConf);
 
         String jarPath = actionConf.get(SparkActionExecutor.SPARK_JAR);
         if(jarPath!=null && jarPath.endsWith(".py")){
@@ -464,6 +469,18 @@ public class SparkMain extends LauncherMain {
         @SuppressWarnings("resource")
         Manifest manifest = new JarFile(jarFile).getManifest();
         return manifest.getMainAttributes().getValue("Specification-Version");
+    }
+
+    /*
+     * Get properties that needs to be passed to Spark as Spark configuration from actionConf.
+     */
+    @VisibleForTesting
+    protected void appendOoziePropertiesToSparkConf(List<String> sparkArgs, Configuration actionConf) {
+        for (Map.Entry<String, String> oozieConfig : actionConf
+                .getValByRegex("^oozie\\.(?!launcher|spark).+").entrySet()) {
+            sparkArgs.add("--conf");
+            sparkArgs.add(String.format("spark.%s=%s", oozieConfig.getKey(), oozieConfig.getValue()));
+        }
     }
 
     private void appendWithPathSeparator(String what, StringBuilder to){
