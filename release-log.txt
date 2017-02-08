@@ -1,9 +1,10 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2778 Copy only jetty.version related server dependencies to distro (asasvari via abhishekbafna)
 OOZIE-2786 Pass Oozie workflow ID and settings to Spark application configuration (zhengxb2005 via rkanter)
 OOZIE-2790 log4j configuration is not passed to spark executors (satishsaley)
 OOZIE-2787 Oozie distributes application jar twice making the spark job fail (satishsaley)
-OOZIE-2789 Maven complains about checkstyle error during build (xzheng via abhishekbafna)
+OOZIE-2789 Maven complains about checkstyle error during build (zhengxb2005 via abhishekbafna)
 OOZIE-2777 Config-default.xml longer than 64k results in java.io.UTFDataFormatException (gezapeti via harsh)
 OOZIE-2782 Input logic wait documentation is confusing (puru)
 OOZIE-2781 HCat partition available notification is not sent to coordinator actions if coordinator job is using a different hostname (cname, IP address, etc. ) for HCat URL (puru)

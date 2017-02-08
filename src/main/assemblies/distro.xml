@@ -82,13 +82,12 @@
                 <outputDirectory>/embedded-oozie-server</outputDirectory>
                 <includes>
                     <include>oozie-server*.jar</include>
-                    <include>**/jetty*.jar</include>
+                    <include>**/jetty*-${jetty.version}.jar</include>
                     <include>**/*jsp*.jar</include>
                     <include>**/mail*.jar</include>
                     <include>**/apache*.jar</include>
                     <include>**/commons-el*.jar</include>
                     <include>**/javax.servlet-api-3.1.0.jar</include>
-                    <include>**/jasper*jar</include>
                     <include>**/taglibs-*jar</include>
                     <include>**/org.eclipse.jdt.core-*jar</include>
                 </includes>
