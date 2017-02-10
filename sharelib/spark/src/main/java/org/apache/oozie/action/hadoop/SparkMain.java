@@ -520,7 +520,7 @@ public class SparkMain extends LauncherMain {
     /**
      * This class is used for filtering out unwanted jars.
      */
-    private static class JarFilter {
+    static class JarFilter {
         private String sparkVersion = "1.X.X";
         private String sparkYarnJar;
         private String applicationJar;
@@ -547,9 +547,10 @@ public class SparkMain extends LauncherMain {
          *
          * @throws OozieActionConfiguratorException
          */
-        private void filter() throws OozieActionConfiguratorException {
+        public void filter() throws OozieActionConfiguratorException {
             Iterator<URI> iterator = listUris.iterator();
             File matchedFile = null;
+            Path applJarPath = new Path(applicationJar);
             while (iterator.hasNext()) {
                 URI uri = iterator.next();
                 Path p = new Path(uri);
@@ -575,11 +576,26 @@ public class SparkMain extends LauncherMain {
                 // Here we skip the application jar, because
                 // (if uris are same,) it will get distributed multiple times
                 // - one time with --files and another time as application jar.
-                if (p.getName().equals(applicationJar) || uri.toString().equals(applicationJar)) {
-                    applicationJar = uri.toString();
+                if (isApplicationJar(p.getName(), uri, applJarPath)) {
+                    String fragment = uri.getFragment();
+                    applicationJar = fragment != null && fragment.length() > 0 ? fragment : uri.toString();
                     iterator.remove();
                 }
             }
+        }
+
+        /**
+         * Checks if a file is application jar
+         *
+         * @param fileName fileName name of the file
+         * @param fileUri fileUri URI of the file
+         * @param applJarPath Path of application jar
+         * @return true if fileName or fileUri is the application jar
+         */
+        private boolean isApplicationJar(String fileName, URI fileUri, Path applJarPath) {
+            return (fileName.equals(applicationJar) || fileUri.toString().equals(applicationJar)
+                    || applJarPath.getName().equals(fileName)
+                    || applicationJar.equals(fileUri.getFragment()));
         }
 
         public String getApplicationJar() {

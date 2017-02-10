@@ -200,6 +200,42 @@ The =jar= element indicates python file. Refer to the file by it's localized nam
 in PySpark. The py file should be in the lib/ folder next to the workflow.xml or added using the =file= element so that
 it's localized to the working directory with just its name.
 
+---+++ Using Symlink in <jar>
+
+A symlink must be specified using =[[WorkflowFunctionalSpec#a3.2.2.
+1_Adding_Files_and_Archives_for_the_Job][file]]= element. Then, you can use
+the symlink name in =jar= element.
+
+*Example:*
+
+Specifying relative path for symlink:
+
+Make sure that the file is within the application directory i.e. =oozie.wf.application.path= .
+<verbatim>
+        <spark xmlns="uri:oozie:spark-action:0.2">
+        ...
+            <jar>py-spark-example-symlink.py</jar>
+            ...
+            ...
+            <file>py-spark.py#py-spark-example-symlink.py</file>
+        ...
+        </spark>
+</verbatim>
+
+Specifying full path for symlink:
+<verbatim>
+        <spark xmlns="uri:oozie:spark-action:0.2">
+        ...
+            <jar>spark-example-symlink.jar</jar>
+            ...
+            ...
+            <file>hdfs://localhost:8020/user/testjars/all-oozie-examples.jar#spark-example-symlink.jar</file>
+        ...
+        </spark>
+</verbatim>
+
+
+
 ---++ Appendix, Spark XML-Schema
 
 ---+++ AE.A Appendix A, Spark XML-Schema
