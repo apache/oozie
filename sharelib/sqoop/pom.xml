@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.3</version>
+        <version>4.3.4-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-sqoop</artifactId>
-    <version>4.3.3</version>
+    <version>4.3.4-SNAPSHOT</version>
     <description>Apache Oozie Share Lib Sqoop</description>
     <name>Apache Oozie Share Lib Sqoop</name>
     <packaging>jar</packaging>

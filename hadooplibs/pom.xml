@@ -21,11 +21,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.3</version>
+        <version>4.3.4-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-hadooplibs</artifactId>
-    <version>4.3.3</version>
+    <version>4.3.4-SNAPSHOT</version>
     <description>Apache Oozie Hadoop Libs</description>
     <name>Apache Oozie Hadoop Libs</name>
     <packaging>pom</packaging>
