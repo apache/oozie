@@ -21,12 +21,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.3-SNAPSHOT</version>
+        <version>4.3.3</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-sharelib-spark</artifactId>
-    <version>4.3.3-SNAPSHOT</version>
+    <version>4.3.3</version>
     <description>Apache Oozie Share Lib Spark</description>
     <name>Apache Oozie Share Lib Spark</name>
     <packaging>jar</packaging>
