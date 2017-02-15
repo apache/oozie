@@ -23,6 +23,9 @@ import org.apache.pig.PigRunner;
 import org.apache.pig.scripting.ScriptEngine;
 import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -54,7 +57,8 @@ public class PigMain extends LauncherMain {
     public static final int STRING_BUFFER_SIZE = 100;
     public static final String LOG_EXPANDED_PIG_SCRIPT = LauncherMapper.ACTION_PREFIX + "pig.log.expandedscript";
 
-    private static final Pattern[] PIG_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] PIG_JOB_IDS_PATTERNS = {
             Pattern.compile("HadoopJobId: (job_\\S*)"),
             Pattern.compile("Submitted application (application[0-9_]*)")
     };

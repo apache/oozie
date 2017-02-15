@@ -33,12 +33,16 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class DistcpMain extends JavaMain {
 
     private Constructor<?> construct;
     private Object[] constArgs;
     private static final String DISTCP_LOG4J_PROPS = "distcp-log4j.properties";
-    private static final Pattern[] DISTCP_JOB_IDS_PATTERNS = {
+
+    @VisibleForTesting
+    static final Pattern[] DISTCP_JOB_IDS_PATTERNS = {
             Pattern.compile("Job complete: (job_\\S*)"),
             Pattern.compile("Job (job_\\S*) completed successfully"),
             Pattern.compile("Submitted application (application[0-9_]*)")

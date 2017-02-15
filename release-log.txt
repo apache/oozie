@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2792 Hive2 action is not parsing Spark application ID from log file properly when Hive is on Spark (zhengxb2005 via rkanter)
 OOZIE-2788 Fix jobs API servlet mapping for EmbeddedOozieServer (abhishekbafna via rkanter)
 OOZIE-2778 Copy only jetty.version related server dependencies to distro (asasvari via abhishekbafna)
 OOZIE-2786 Pass Oozie workflow ID and settings to Spark application configuration (zhengxb2005 via rkanter)

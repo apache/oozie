@@ -40,8 +40,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.conf.HiveConf;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class HiveMain extends LauncherMain {
-    private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
             Pattern.compile("Submitted application (application[0-9_]*)")
     };

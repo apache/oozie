@@ -18,10 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.test.MiniHCatServer;
-import org.apache.oozie.util.XConfiguration;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -29,16 +25,27 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.test.MiniHCatServer;
+import org.apache.oozie.util.XConfiguration;
 
 public class TestHiveMain extends MainTestCase {
     private SecurityManager SECURITY_MANAGER;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         SECURITY_MANAGER = System.getSecurityManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
         super.tearDown();
@@ -61,6 +68,7 @@ public class TestHiveMain extends MainTestCase {
         return buffer.toString();
     }
 
+    @Override
     public Void call() throws Exception {
         if (System.getenv("HADOOP_HOME") == null) {
             System.out.println("WARNING: 'HADOOP_HOME' env var not defined, TestHiveMain test is not running");
@@ -164,5 +172,24 @@ public class TestHiveMain extends MainTestCase {
 //            assertTrue(props.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
         }
         return null;
+    }
+
+    public void testJobIDPattern() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("Ended Job = job_001");
+        lines.add("Submitted application application_002");
+        // Non-matching ones
+        lines.add("Ended Job = . job_003");
+        lines.add("Ended Job = abc004");
+        lines.add("Submitted application = job_005");
+        lines.add("Submitted application. job_006");
+        Set<String> jobIds = new LinkedHashSet<String>();
+        for (String line : lines) {
+            LauncherMain.extractJobIDs(line, HiveMain.HIVE_JOB_IDS_PATTERNS, jobIds);
+        }
+        Set<String> expected = new LinkedHashSet<String>();
+        expected.add("job_001");
+        expected.add("job_002");
+        assertEquals(expected, jobIds);
     }
 }
