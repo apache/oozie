@@ -97,7 +97,7 @@
         <spark.scala.binary.version.1>2.10</spark.scala.binary.version.1>
 
         <!-- spark 2.1.0 future version -->
-        <spark.version.2>2.1.0</spark.version.2>
+        <spark.version.2>2.0.2</spark.version.2>
         <spark.streaming.kafka.version.2>1.6.2</spark.streaming.kafka.version.2>
         <spark.bagel.version.2>1.6.3</spark.bagel.version.2>
         <spark.scala.binary.version.2>2.11</spark.scala.binary.version.2>
