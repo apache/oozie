@@ -160,4 +160,10 @@ public class SparkActionExecutor extends JavaActionExecutor {
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SPARK_MAIN_CLASS_NAME);
     }
+
+    @Override
+    public String[] getShareLibFilesForActionConf() {
+        return new String[] { "hive-site.xml" };
+    }
+
 }
