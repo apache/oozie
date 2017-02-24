@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.util;
+package org.apache.oozie.action.hadoop;
 
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p/>
  * Tested with {@see System#getProperties()} and {@see System#getenv()}.
  */
-class PasswordMasker {
+public class PasswordMasker {
 
     /**
      * The mask that is applied to recognized passwords.
@@ -45,32 +45,43 @@ class PasswordMasker {
     private static final String PASSWORD_KEY = "pass";
 
     /**
-     * Tells us whether an OS environment variable that contains a password fragment.
-     * <p/>
-     * E.g. {{-Djavax.net.ssl.trustStorePassword=password}} from {{$CATALINA_OPTS}}.
+     * Tells us whether a given string contains a password fragment. A password fragment is something that looks
+     * like {{-Djavax.net.ssl.trustStorePassword=password}} or {{HADOOP_CREDSTORE_PASSWORD=pwd123}}
+     *
      **/
-    private static final String REGEX_CONTAINING_PASSWORD_FRAGMENT_OS_ENV_STYLE =
-            ".*[((\\s)+-[D|X][\\w[.\\w]*]*(?i)pass[\\w[.\\w]*]*=)([\\w]+)]+.*";
+    private static final String PASSWORD_CONTAINING_REGEX =
+            "(.*)([\\w[.\\w]*]*(?i)" + PASSWORD_KEY + "[\\w]*=)([\\w]+)(.*)";
+
+    private static final Pattern PASSWORD_CONTAINING_PATTERN = Pattern
+            .compile(PASSWORD_CONTAINING_REGEX);
 
     /**
-     * Extracts a password fragment from an OS environment variable. Can be used iteratively to get all fragments.
+     * Extracts a password fragment from a given string.
      * <p/>
-     * E.g. {{-Doozie.https.keystore.pass=password}} and {{-Djavax.net.ssl.trustStorePassword=password}} from {{$CATALINA_OPTS}}.
      * {@see java.util.Matcher#find()}
      **/
-    private static final String REGEX_EXTRACTING_PASSWORD_FRAGMENTS_OS_ENV_STYLE =
-            "((\\s)+-[D|X][\\w[.\\w]*]*(?i)pass[\\w[.\\w]*]*=)([\\w]+)";
+    private static final String PASSWORD_EXTRACTING_REGEX =
+            "([\\w[.\\w]*]*(?i)pass[\\w]*=)([\\w]+)";
 
-    private static final Pattern PATTERN_CONTAINING_PASSWORD_FRAGMENTS = Pattern
-            .compile(REGEX_CONTAINING_PASSWORD_FRAGMENT_OS_ENV_STYLE);
+    private static final Pattern PASSWORD_EXTRACTING_PATTERN = Pattern
+            .compile(PASSWORD_EXTRACTING_REGEX);
 
-    private static final Pattern PATTERN_EXTRACTING_PASSWORD_FRAGMENTS = Pattern
-            .compile(REGEX_EXTRACTING_PASSWORD_FRAGMENTS_OS_ENV_STYLE);
-
-    Map<String, String> mask(Map<String, String> unmasked) {
+    /**
+     * Returns a map where keys are masked if they are considered a password.
+     * There are two cases when passwords are masked:
+     * 1. The key contains the string "pass". In this case, the entire value is considered a password and replaced completely with
+     * a masking string.
+     * 2. The value matches a regular expression. Strings like "HADOOP_CREDSTORE_PASSWORD=pwd123" or
+     * "-Djavax.net.ssl.trustStorePassword=password" are considered password definition strings and the text after the equal sign
+     * is replaced with a masking string.
+     *
+     * @param unmasked key-value map
+     * @return A new map where values are changed based on the replace algorithm described above
+     */
+    public Map<String, String> mask(Map<String, String> unmasked) {
         return Maps.transformEntries(unmasked, new Maps.EntryTransformer<String, String, String>() {
             @Override
-            public String transformEntry(@Nullable String key, @Nullable String value) {
+            public String transformEntry(@Nonnull String key, @Nonnull String value) {
                 checkNotNull(key, "key has to be set");
                 checkNotNull(value, "value has to be set");
 
@@ -78,29 +89,41 @@ class PasswordMasker {
                     return PASSWORD_MASK;
                 }
 
-                if (containsPasswordFragment(value)) {
-                    return maskPasswordFragments(value);
-                }
-
-                return value;
+                return maskPasswordsIfNecessary(value);
             }
         });
     }
 
+    /**
+     * Masks passwords inside a string. A substring is subject to password masking if it looks like
+     * "HADOOP_CREDSTORE_PASSWORD=pwd123" or "-Djavax.net.ssl.trustStorePassword=password". The text after the equal sign is
+     * replaced with a masking string.
+     *
+     * @param unmasked String which might contain passwords
+     * @return The same string where passwords are replaced with a masking string. If there is no password inside, the original
+     * string is returned.
+     */
+    public String maskPasswordsIfNecessary(String unmasked) {
+        if (containsPasswordFragment(unmasked)) {
+            return maskPasswordFragments(unmasked);
+        } else {
+            return unmasked;
+        }
+    }
+
     private boolean isPasswordKey(String key) {
         return key.toLowerCase().contains(PASSWORD_KEY);
-
     }
 
     private boolean containsPasswordFragment(String maybePasswordFragments) {
-        return PATTERN_CONTAINING_PASSWORD_FRAGMENTS
+        return PASSWORD_CONTAINING_PATTERN
                 .matcher(maybePasswordFragments)
                 .matches();
     }
 
     private String maskPasswordFragments(String maybePasswordFragments) {
         StringBuilder maskedBuilder = new StringBuilder();
-        Matcher passwordFragmentsMatcher = PATTERN_EXTRACTING_PASSWORD_FRAGMENTS
+        Matcher passwordFragmentsMatcher = PASSWORD_EXTRACTING_PATTERN
                 .matcher(maybePasswordFragments);
 
         int start = 0, end;

@@ -263,8 +263,9 @@ public class SparkMain extends LauncherMain {
         System.out.println("Oozie Spark action configuration");
         System.out.println("=================================================================");
         System.out.println();
+        PasswordMasker passwordMasker = new PasswordMasker();
         for (String arg : sparkArgs) {
-            System.out.println("                    " + arg);
+            System.out.println("                    " + passwordMasker.maskPasswordsIfNecessary(arg));
         }
         System.out.println();
         try {
