@@ -44,7 +44,7 @@ public class Hive2Main extends LauncherMain {
     static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
             Pattern.compile("Submitted application (application[0-9_]*)"),
-            Pattern.compile("Running with YARN Application = (application_[0-9]+)")
+            Pattern.compile("Running with YARN Application = (application[0-9_]*)")
     };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
 

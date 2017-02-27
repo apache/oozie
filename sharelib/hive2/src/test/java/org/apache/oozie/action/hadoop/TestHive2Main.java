@@ -30,13 +30,13 @@ public class TestHive2Main extends XTestCase {
         List<String> lines = new ArrayList<String>();
         lines.add("Ended Job = job_001");
         lines.add("Running with YARN Application = application_002");
+        lines.add("Running with YARN Application = application_002_2");
         lines.add("Submitted application application_003");
+        lines.add("Submitted application application_003_2");
         // Non-matching ones
         lines.add("Ended Job = ");
         lines.add("Ended Job = abc");
         lines.add("Running with YARN Application = job_004");
-        lines.add("Running with YARN Application = application005");
-        lines.add("Running with YARN Application = application_abc");
         lines.add("Submitted application job_006");
         Set<String> jobIds = new LinkedHashSet<String>();
         for (String line : lines) {
@@ -46,7 +46,9 @@ public class TestHive2Main extends XTestCase {
         Set<String> expected = new LinkedHashSet<String>();
         expected.add("job_001");
         expected.add("job_002");
+        expected.add("job_002_2");
         expected.add("job_003");
+        expected.add("job_003_2");
         assertEquals(expected, jobIds);
     }
 }
