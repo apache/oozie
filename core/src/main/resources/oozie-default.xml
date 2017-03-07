@@ -2746,13 +2746,23 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.SparkConfigurationService.spark.configurations.blacklist</name>
+        <value>spark.yarn.jar,spark.yarn.jars</value>
+        <description>
+             Comma separated list of properties to ignore from any Spark configurations specified in
+             oozie.service.SparkConfigurationService.spark.configurations property.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar</name>
         <value>true</value>
         <description>
-            If true, Oozie will ignore the "spark.yarn.jar" property from any Spark configurations specified in
-            oozie.service.SparkConfigurationService.spark.configurations.  If false, Oozie will not ignore it.  It is recommended
-            to leave this as true because it can interfere with the jars in the Spark sharelib.
-        </description>
+             Deprecated. Use oozie.service.SparkConfigurationService.spark.configurations.blacklist instead.
+             If true, Oozie will ignore the "spark.yarn.jar" property from any Spark configurations specified in
+             oozie.service.SparkConfigurationService.spark.configurations.  If false, Oozie will not ignore it.  It is recommended
+             to leave this as true because it can interfere with the jars in the Spark sharelib.
+         </description>
     </property>
 
     <property>
