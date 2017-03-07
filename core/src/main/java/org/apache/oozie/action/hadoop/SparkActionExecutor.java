@@ -32,7 +32,7 @@ import org.jdom.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 
 public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SparkMain";
@@ -79,9 +79,11 @@ public class SparkActionExecutor extends JavaActionExecutor {
         StringBuilder sparkOptsSb = new StringBuilder();
         if (master.startsWith("yarn")) {
             String resourceManager = actionConf.get(HADOOP_JOB_TRACKER);
-            Map<String, String> sparkConfig = Services.get().get(SparkConfigurationService.class).getSparkConfig(resourceManager);
-            for (Map.Entry<String, String> entry : sparkConfig.entrySet()) {
-                sparkOptsSb.append("--conf ").append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
+            Properties sparkConfig =
+                    Services.get().get(SparkConfigurationService.class).getSparkConfig(resourceManager);
+            for (String property : sparkConfig.stringPropertyNames()) {
+                sparkOptsSb.append("--conf ")
+                        .append(property).append("=").append(sparkConfig.getProperty(property)).append(" ");
             }
         }
         String sparkOpts = actionXml.getChildTextTrim("spark-opts", ns);
