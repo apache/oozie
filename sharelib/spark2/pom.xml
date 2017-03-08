@@ -21,23 +21,23 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.4-SNAPSHOT</version>
+        <version>4.3.3-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <groupId>org.apache.oozie</groupId>
-    <artifactId>oozie-sharelib-spark</artifactId>
-    <version>4.3.4-SNAPSHOT</version>
+    <artifactId>oozie-sharelib-spark2</artifactId>
+    <version>4.3.3-SNAPSHOT</version>
     <description>Apache Oozie Share Lib Spark</description>
-    <name>Apache Oozie Share Lib Spark</name>
+    <name>Apache Oozie Share Lib Spark2</name>
     <packaging>jar</packaging>
 
     <properties>
-        <sharelib.action.postfix>spark</sharelib.action.postfix>
+        <sharelib.action.postfix>spark2</sharelib.action.postfix>
         <sharelib.transitive.filtering>false</sharelib.transitive.filtering>
-        <spark.version>${spark.version.1}</spark.version>
-        <spark.scala.binary.version>${spark.scala.binary.version.1}</spark.scala.binary.version>
-        <spark.streaming.kafka.version>${spark.streaming.kafka.version.1}</spark.streaming.kafka.version>
-        <spark.bagel.version>${spark.bagel.version.1}</spark.bagel.version>
+        <spark.version>${spark.version.2}</spark.version>
+        <spark.scala.binary.version>${spark.scala.binary.version.2}</spark.scala.binary.version>
+        <spark.streaming.kafka.version>${spark.streaming.kafka.version.2}</spark.streaming.kafka.version>
+        <spark.bagel.version>${spark.bagel.version.2}</spark.bagel.version>
 
     </properties>
 
@@ -232,6 +232,12 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-core</artifactId>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

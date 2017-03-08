@@ -30,6 +30,12 @@
     <name>Apache Oozie Examples</name>
     <packaging>jar</packaging>
 
+    <properties>
+        <spark.version>${spark.version.1}</spark.version>
+        <spark.scala.binary.version>${spark.scala.binary.version.1}</spark.scala.binary.version>
+
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
