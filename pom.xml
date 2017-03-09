@@ -178,7 +178,7 @@
         <repository>
             <id>releases</id>
             <name>Releases</name>
-            <url>http://maven.scm.corp.inmobi.com/content/repositories/releases/</url>
+            <url>https://artifactory-maven.corp.inmobi.com/content/repositories/releases/</url>
         </repository>
         <repository>
             <id>hotton releases</id>
