@@ -21,11 +21,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.4</version>
+        <version>4.3.5-SNAPSHOT</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-zookeeper-security-tests</artifactId>
-    <version>4.3.4</version>
+    <version>4.3.5-SNAPSHOT</version>
     <description>Apache Oozie ZooKeeper Security Tests</description>
     <name>Apache Oozie ZooKeeper Security Tests</name>
     <packaging>jar</packaging>
