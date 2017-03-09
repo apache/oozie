@@ -44,9 +44,10 @@ public class SqoopActionExecutor extends JavaActionExecutor {
   public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
   private static final String SQOOP_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SqoopMain";
   static final String SQOOP_ARGS = "oozie.sqoop.args";
+  private static final String SQOOP = "sqoop";
 
     public SqoopActionExecutor() {
-        super("sqoop");
+        super(SQOOP);
     }
 
     @Override
@@ -85,25 +86,35 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             throw convertException(ex);
         }
 
-        String[] args;
+        final List<String> argList = new ArrayList<>();
+        // Build a list of arguments from either a tokenized <command> string or a list of <arg>
         if (actionXml.getChild("command", ns) != null) {
             String command = actionXml.getChild("command", ns).getTextTrim();
             StringTokenizer st = new StringTokenizer(command, " ");
-            List<String> l = new ArrayList<String>();
             while (st.hasMoreTokens()) {
-                l.add(st.nextToken());
+                argList.add(st.nextToken());
             }
-            args = l.toArray(new String[l.size()]);
         }
         else {
             List<Element> eArgs = (List<Element>) actionXml.getChildren("arg", ns);
-            args = new String[eArgs.size()];
-            for (int i = 0; i < eArgs.size(); i++) {
-                args[i] = eArgs.get(i).getTextTrim();
+            for (Element elem : eArgs) {
+                argList.add(elem.getTextTrim());
             }
         }
+        // If the command is given accidentally as "sqoop import --option"
+        // instead of "import --option" we can make a user's life easier
+        // by removing away the unnecessary "sqoop" token.
+        // However, we do not do this if the command looks like
+        // "sqoop --option", as that's entirely invalid.
+        if (argList.size() > 1 &&
+                argList.get(0).equalsIgnoreCase(SQOOP) &&
+                !argList.get(1).startsWith("-")) {
+            XLog.getLog(getClass()).info(
+                    "Found a redundant 'sqoop' prefixing the command. Removing it.");
+            argList.remove(0);
+        }
 
-        setSqoopCommand(actionConf, args);
+        setSqoopCommand(actionConf, argList.toArray(new String[argList.size()]));
         return actionConf;
     }
 
