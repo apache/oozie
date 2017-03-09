@@ -52,11 +52,11 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
-    private static final String SQOOP_COMMAND = "import --connect {0} --table TT --target-dir {1} -m 1";
+    private static final String SQOOP_IMPORT_COMMAND =
+            "import --connect {0} --table TT --target-dir {1} -m 1";
 
     private static final String SQOOP_ACTION_COMMAND_XML =
             "<sqoop xmlns=\"uri:oozie:sqoop-action:0.1\">" +
@@ -81,18 +81,18 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
             "<value>INFO</value>" +
             "</property>" +
             "</configuration>" +
-            "<arg>import</arg>" +
+            "{2}" +
             "<arg>--connect</arg>" +
-            "<arg>{2}</arg>" +
+            "<arg>{3}</arg>" +
             "<arg>--username</arg>" +
             "<arg>sa</arg>" +
             "<arg>--password</arg>" +
             "<arg></arg>" +
             "<arg>--verbose</arg>" +
             "<arg>--query</arg>" +
-            "<arg>{3}</arg>" +
-            "<arg>--target-dir</arg>" +
             "<arg>{4}</arg>" +
+            "<arg>--target-dir</arg>" +
+            "<arg>{5}</arg>" +
             "<arg>--split-by</arg>" +
             "<arg>I</arg>" +
             "</sqoop>";
@@ -146,9 +146,23 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     }
 
     private String getActionXml() {
-        String command = MessageFormat.format(SQOOP_COMMAND, getActionJdbcUri(), getSqoopOutputDir());
+        String command = MessageFormat.format(SQOOP_IMPORT_COMMAND, getActionJdbcUri(), getSqoopOutputDir());
         return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
                                     "dummy", "dummyValue", command);
+    }
+
+    private String getRedundantCommandActionXml() {
+        String command = "sqoop " +
+                MessageFormat.format(SQOOP_IMPORT_COMMAND, getActionJdbcUri(), getSqoopOutputDir());
+        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
+                "dummy", "dummyValue", command);
+    }
+
+    private String getBadCommandActionXml() {
+        String command = MessageFormat.format(SQOOP_IMPORT_COMMAND,
+                getActionJdbcUri(), getSqoopOutputDir()).replace("import", "sqoop");
+        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
+                "dummy", "dummyValue", command);
     }
 
     private String getActionXmlEval() {
@@ -157,10 +171,18 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         getActionJdbcUri(), query);
     }
 
-    private String getActionXmlFreeFromQuery() {
+    private String getArgsActionXmlFreeFromQuery(boolean redundant) {
         String query = "select TT.I, TT.S from TT where $CONDITIONS";
         return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
+                                    (redundant ? "<arg>sqoop</arg>" : "") + "<arg>import</arg>",
                                     getActionJdbcUri(), query, getSqoopOutputDir());
+    }
+
+    private String getBadArgsActionXml() {
+        String query = "select TT.I, TT.S from TT where $CONDITIONS";
+        return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
+                "<arg>sqoop</arg>",
+                getActionJdbcUri(), query, getSqoopOutputDir());
     }
 
     private void createDB() throws Exception {
@@ -175,10 +197,57 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         conn.close();
     }
 
-    public void testSqoopAction() throws Exception {
+    /**
+     * Tests a bad command of 'sqoop --username ...' style.
+     * Test asserts that the job will fail.
+     */
+    public void testSqoopActionWithBadCommand() throws Exception {
+        runSqoopActionWithBadCommand(getBadCommandActionXml());
+    }
+
+    private void runSqoopActionWithBadCommand(String actionXml) throws Exception {
         createDB();
 
-        Context context = createContext(getActionXml());
+        Context context = createContext(actionXml);
+        final RunningJob launcherJob = submitAction(context);
+        String launcherId = context.getAction().getExternalId();
+        waitFor(120 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return launcherJob.isComplete();
+            }
+        });
+        assertTrue(launcherJob.isSuccessful());
+        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+                context.getProtoActionConf());
+        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+
+        SqoopActionExecutor ae = new SqoopActionExecutor();
+        ae.check(context, context.getAction());
+        assertTrue(launcherId.equals(context.getAction().getExternalId()));
+        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+    }
+
+    /**
+     * Tests a normal command of 'import --username ...'.
+     */
+    public void testSqoopAction() throws Exception {
+        runSqoopAction(getActionXml());
+    }
+
+    /**
+     * Tests a redundant command of 'sqoop import --username ...'.
+     * The test guarantees a success, since the redundant 'sqoop' must get removed.
+     */
+    public void testSqoopActionWithRedundantPrefix() throws Exception {
+        runSqoopAction(getRedundantCommandActionXml());
+    }
+
+    private void runSqoopAction(String actionXml) throws Exception {
+        createDB();
+
+        Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
         waitFor(120 * 1000, new Predicate() {
@@ -245,10 +314,33 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertTrue(hadoopCounters.isEmpty());
     }
 
-    public void testSqoopActionFreeFormQuery() throws Exception {
+    /**
+     * Runs a job with arg-style command of 'sqoop --username ...' form that's invalid.
+     * The test ensures it fails.
+     */
+    public void testSqoopActionWithBadRedundantArgsAndFreeFormQuery() throws Exception {
+        runSqoopActionWithBadCommand(getBadArgsActionXml());
+    }
+
+    /**
+     * Runs a job with the arg-style command of 'sqoop import --username ...'.
+     * The test guarantees that the redundant 'sqoop' is auto-removed (job passes).
+     */
+    public void testSqoopActionWithRedundantArgsAndFreeFormQuery() throws Exception {
+        runSqoopActionFreeFormQuery(getArgsActionXmlFreeFromQuery(true));
+    }
+
+    /**
+     * Runs a job with the normal arg-style command of 'import --username ...'.
+     */
+    public void testSqoopActionWithArgsAndFreeFormQuery() throws Exception {
+        runSqoopActionFreeFormQuery(getArgsActionXmlFreeFromQuery(false));
+    }
+
+    private void runSqoopActionFreeFormQuery(String actionXml) throws Exception {
         createDB();
 
-        Context context = createContext(getActionXmlFreeFromQuery());
+        Context context = createContext(actionXml);
         final RunningJob launcherJob = submitAction(context);
         String launcherId = context.getAction().getExternalId();
         waitFor(120 * 1000, new Predicate() {
