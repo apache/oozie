@@ -1151,10 +1151,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 LOG.debug("Submitting the job through Job Client for action " + action.getId());
 
                 // setting up propagation of the delegation token.
-                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-                Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(has
-                        .getMRDelegationTokenRenewer(launcherJobConf));
-                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
+                Services.get().get(HadoopAccessorService.class).addRMDelegationToken(jobClient, launcherJobConf);
 
                 // insert credentials tokens to launcher job conf if needed
                 if (needInjectCredentials() && credentialsConf != null) {
