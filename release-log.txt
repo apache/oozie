@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-1887 Remove the utils dir (kvntrieu via rkanter)
 OOZIE-2540 Create a PySpark example (abhishekbafna via rkanter)
 OOZIE-807 Docs can be explicit about multiple sub-workflow definitions being possible (qwertymaniac via rkanter)
 OOZIE-2811 Add support for filtering out properties from SparkConfigurationService (gezapeti via rkanter)
