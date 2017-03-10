@@ -207,7 +207,7 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         Timestamp cactionLmt = coordAction.getLastModifiedTimestamp();
         if (cactionLmt.after(actionCheckTs)) {
             throw new PreconditionException(ErrorCode.E1100, "The coord action :" + actionId
-                    + " has been udated. Ignore CoordActionCheckCommand!");
+                    + " has been updated. Ignore CoordActionCheckCommand!");
         }
         if (coordAction.getStatus().equals(CoordinatorAction.Status.SUCCEEDED)
                 || coordAction.getStatus().equals(CoordinatorAction.Status.FAILED)

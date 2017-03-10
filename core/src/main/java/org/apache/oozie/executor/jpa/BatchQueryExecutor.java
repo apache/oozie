@@ -124,7 +124,7 @@ public class BatchQueryExecutor {
                             (SLASummaryQuery) entry.getQueryName(), (SLASummaryBean) entry.getBean(), em);
                 }
                 else {
-                    throw new JPAExecutorException(ErrorCode.E0603, "BatchQueryExecutor faield to construct a query");
+                    throw new JPAExecutorException(ErrorCode.E0603, "BatchQueryExecutor failed to construct a query");
                 }
                 queryList.add(new QueryEntry(entry.getQueryName(), query));
             }

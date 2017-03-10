@@ -443,7 +443,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
         }
         catch (Exception e) {
             assertTrue(e.getCause().getMessage()
-                    .contains("intial-instance should be equal or earlier than the start-instance"));
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
         }
 
         try {
@@ -576,7 +576,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
         catch (Exception e) {
             e.printStackTrace(System.out);
             assertTrue(e.getCause().getMessage()
-                    .contains("intial-instance should be equal or earlier than the start-instance"));
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
         }
     }
 
@@ -665,7 +665,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
         catch (Exception e) {
             e.printStackTrace(System.out);
             assertTrue(e.getCause().getMessage()
-                    .contains("intial-instance should be equal or earlier than the start-instance"));
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
         }
     }
 
@@ -749,7 +749,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
         }
         catch (Exception e) {
             assertTrue(e.getCause().getMessage()
-                    .contains("intial-instance should be equal or earlier than the start-instance"));
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
         }
     }
 

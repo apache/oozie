@@ -254,7 +254,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             catch (CommandException ce) {
                 errMsg = ce.getMessage();
                 errCode = ce.getErrorCode().toString();
-                log.warn("command exception occured ", ce);
+                log.warn("command exception occurred ", ce);
             }
             catch (java.io.IOException ioe) {
                 errMsg = ioe.getMessage();

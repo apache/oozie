@@ -121,14 +121,14 @@ public class SchemaCheckXCommand extends XCommand<Void> {
                 LOG.info("Database schema is GOOD");
             }
         } catch (SQLException sqle) {
-            LOG.error("An Exception occured while talking to the database: " + sqle.getMessage(), sqle);
+            LOG.error("An Exception occurred while talking to the database: " + sqle.getMessage(), sqle);
             problem = true;
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (Exception e) {
-                    LOG.error("An Exception occured while disconnecting from the database: " + e.getMessage(), e);
+                    LOG.error("An Exception occurred while disconnecting from the database: " + e.getMessage(), e);
                 }
             }
             Services.get().get(SchemaCheckerService.class).updateInstrumentation(problem, startTime);

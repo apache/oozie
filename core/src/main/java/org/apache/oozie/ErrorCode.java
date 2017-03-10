@@ -173,7 +173,7 @@ public enum ErrorCode {
     E0814(XLog.STD, "SignalCommand for action id=[{0}] is already processed, status=[{1}], , pending=[{2}]"),
     E0815(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionCheck Execution"),
     E0816(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionStart Execution"),
-    E0817(XLog.STD, "The wf action [{0}] has been udated recently. Ignoring ActionCheck."),
+    E0817(XLog.STD, "The wf action [{0}] has been updated recently. Ignoring ActionCheck."),
     E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING or SUSPENDED."),
     E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{0}]."),
     E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
@@ -182,7 +182,7 @@ public enum ErrorCode {
 
     E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
     E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
-    E0902(XLog.OPS, "Exception occured: [{0}]"),
+    E0902(XLog.OPS, "Exception occurred: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
     E0905(XLog.STD, "Scheme not present in uri [{0}]"),

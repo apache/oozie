@@ -184,11 +184,11 @@ public abstract class LauncherMain {
                 OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
                 actionConfigurator.configure(actionConf);
             } catch (ClassNotFoundException e) {
-                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             } catch (InstantiationException e) {
-                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             } catch (IllegalAccessException e) {
-                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             }
         }
     }

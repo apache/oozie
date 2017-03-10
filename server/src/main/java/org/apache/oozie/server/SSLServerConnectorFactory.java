@@ -92,7 +92,7 @@ class SSLServerConnectorFactory {
 
         secureServerConnector.setPort(oozieHttpsPort);
 
-        LOG.info(String.format("Secure server connector created, listenning on port %d", oozieHttpsPort));
+        LOG.info(String.format("Secure server connector created, listening on port %d", oozieHttpsPort));
         return secureServerConnector;
     }
 

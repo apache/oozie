@@ -615,7 +615,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
                 context.getProtoActionConf());
         Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
-        assertEquals("An Exception occured while instantiating the action config class",
+        assertEquals("An Exception occurred while instantiating the action config class",
                 errorProps.getProperty("exception.message"));
         assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
     }

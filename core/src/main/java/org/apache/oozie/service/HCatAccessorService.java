@@ -81,8 +81,8 @@ public class HCatAccessorService implements Service {
         try {
             loadHCatConf(services);
         } catch(IOException ioe) {
-            throw new ServiceException(ErrorCode.E0100, HCatAccessorService.class.getName(), "An exception occured while attempting"
-                    + "to load the HCat Configuration", ioe);
+            throw new ServiceException(ErrorCode.E0100, HCatAccessorService.class.getName(), "An exception occurred"
+                    + " while attempting to load the HCat Configuration", ioe);
         }
     }
 

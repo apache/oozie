@@ -121,7 +121,7 @@ public class PigMain extends LauncherMain {
             System.setProperty("mapreduce.job.credentials.binary", jobTokenFile);
         }
         else {
-            System.out.println("Non-kerberoes execution");
+            System.out.println("Non-kerberos execution");
         }
 
         //setting oozie workflow id as caller context id for pig

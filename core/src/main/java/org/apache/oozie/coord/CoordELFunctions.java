@@ -854,7 +854,7 @@ public class CoordELFunctions {
         // than initial instance
         if (currentInstance == null) {
             throw new CommandException(ErrorCode.E1010,
-                    "intial-instance should be equal or earlier than the start-instance. intial-instance is "
+                    "initial-instance should be equal or earlier than the start-instance. initial-instance is "
                             + getInitialInstance() + " and start-instance is " + startInstance);
         }
         if (currentInstance.getTimeInMillis() != startInstanceCal.getTimeInMillis()) {
@@ -866,7 +866,7 @@ public class CoordELFunctions {
         int[] nominalCount = new int[1];
         if (getCurrentInstance(getActionCreationtime(), nominalCount) == null) {
             throw new CommandException(ErrorCode.E1010,
-                    "intial-instance should be equal or earlier than the nominal time. intial-instance is "
+                    "initial-instance should be equal or earlier than the nominal time. initial-instance is "
                             + getInitialInstance() + " and nominal time is " + getActionCreationtime());
         }
         // getCurrentInstance return offset relative to initial instance.
