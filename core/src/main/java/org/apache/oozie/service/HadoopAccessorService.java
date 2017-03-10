@@ -514,8 +514,6 @@ public class HadoopAccessorService implements Service {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
-            conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
             return jobClient;
         }
         catch (InterruptedException ex) {
@@ -524,6 +522,27 @@ public class HadoopAccessorService implements Service {
         catch (IOException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Get the RM delegation token using jobClient and add it to conf
+     *
+     * @param jobClient
+     * @param conf
+     * @throws HadoopAccessorException
+     */
+    public void addRMDelegationToken(JobClient jobClient, JobConf conf) throws HadoopAccessorException {
+        Token<DelegationTokenIdentifier> mrdt;
+        try {
+            mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
+        }
+        catch (IOException e) {
+            throw new HadoopAccessorException(ErrorCode.E0902, e.getMessage(), e);
+        }
+        catch (InterruptedException e) {
+            throw new HadoopAccessorException(ErrorCode.E0902, e.getMessage(), e);
+        }
+        conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
     }
 
     /**

@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2807 Oozie gets RM delegation token even for checking job status (satishsaley)
 OOZIE-2811 Add support for filtering out properties from SparkConfigurationService (gezapeti via rkanter)
 OOZIE-2802 Spark action failure on Spark 2.1.0 due to duplicate sharelibs (gezapeti via rkanter)
 OOZIE-2803 Mask passwords when printing out configs/args in MapReduceMain and SparkMain (pbacsko via rkanter)
