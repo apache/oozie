@@ -66,7 +66,7 @@ public class SshActionExecutor extends ActionExecutor {
 
     public static final String ERR_SETUP_FAILED = "SETUP_FAILED";
     public static final String ERR_EXECUTION_FAILED = "EXECUTION_FAILED";
-    public static final String ERR_UNKNOWN_ERROR = "UNKOWN_ERROR";
+    public static final String ERR_UNKNOWN_ERROR = "UNKNOWN_ERROR";
     public static final String ERR_COULD_NOT_CONNECT = "COULD_NOT_CONNECT";
     public static final String ERR_HOST_RESOLUTION = "COULD_NOT_RESOLVE_HOST";
     public static final String ERR_FNF = "FNF";
