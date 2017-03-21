@@ -286,7 +286,7 @@ public class OozieDBCLI {
             postUpgradeDBTo40(sqlFile, run);
         }
         else {
-            System.out.println("No Post ugprade updates available for " + version);
+            System.out.println("No Post upgrade updates available for " + version);
         }
     }
 
@@ -300,7 +300,7 @@ public class OozieDBCLI {
         postUpgradeTasks(sqlFile, run, true);
         if (run) {
             System.out.println();
-            System.out.println("Post ugprade updates have been executed");
+            System.out.println("Post upgrade updates have been executed");
         }
         System.out.println();
     }

@@ -1907,6 +1907,7 @@
                         <exclude>docs/src/site/twiki/*.twiki</exclude>
                         <exclude>examples/src/main/data/*</exclude>
                         <exclude>core/src/test/resources/test-ioutils.txt</exclude>
+						<exclude>core/src/test/resources/oldWorkFlowApp.serialized</exclude>
                         <exclude>sharelib/pig/src/test/resources/PigMain.txt</exclude>
                         <exclude>sharelib/hive/src/test/resources/HiveMain.txt</exclude>
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
@@ -1961,7 +1962,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <spark.version>2.0.0</spark.version>
+                <spark.version>2.1.0</spark.version>
                 <spark.streaming.kafka.version>1.6.2</spark.streaming.kafka.version>
                 <spark.bagel.version>1.6.2</spark.bagel.version>
             </properties>

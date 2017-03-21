@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
@@ -120,6 +121,50 @@ public class TestSubmitXCommand extends XDataTestCase {
         catch (CommandException ce) {
             fail("Should succeed");
         }
+    }
+
+    public void testSubmitLongXml() throws Exception {
+        Configuration conf = new XConfiguration();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+            String actionXml = "<map-reduce>"
+                    + "<job-tracker>${jobTracker}</job-tracker>"
+                    + "<name-node>${nameNode}</name-node>"
+                    + "        <prepare>"
+                    + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                    + "        </prepare>"
+                    + "        <configuration>"
+                    + "          <property><name>bb</name><value>BB</value></property>"
+                    + "          <property><name>cc</name><value>from_action</value></property>"
+                    + "        </configuration>"
+                    + "      </map-reduce>";
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.5' name='too-long-wf'> " +
+                "<global><configuration>"+generate64kData()+"</configuration></global><start to='mr-node' /> "
+                + "    <action name=\"mr-node\">"
+                + actionXml
+                + "    <ok to=\"end\"/>"
+                + "    <error to=\"end\"/>"
+                + "</action>"
+                + "<end name='end' /> " + "</workflow-app>";
+
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        addBunchOfProperties(conf);
+
+        SubmitXCommand sc = new SubmitXCommand(conf);
+        sc.call();
+    }
+
+    private void addBunchOfProperties(Configuration conf) {
+        int i=0;
+        while(conf.size() < 10000){
+            conf.set("ID"+i, i+"something");
+            i++;
+        }
+    }
+
+    private String generate64kData() {
+       return "<property><name>radnom</name><value>"+ RandomStringUtils.randomAlphanumeric(70000)+"</value></property>";
     }
 
     public void testAppPathIsFile1() throws Exception {
@@ -375,8 +420,8 @@ public class TestSubmitXCommand extends XDataTestCase {
         assertEquals(getNameNodeUri()+"/default-output-dir", actionConf.get("mixed"));
     }
 
+
     private void writeToFile(String appXml, String appPath) throws IOException {
-        // TODO Auto-generated method stub
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {

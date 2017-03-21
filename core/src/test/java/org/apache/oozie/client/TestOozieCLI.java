@@ -31,6 +31,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.cli.OozieCLI;
@@ -1624,6 +1625,21 @@ public class TestOozieCLI extends DagServletTestCase {
             }
         });
 
+    }
+
+    public void testCoordActionMissingdependencies() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, false, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
+                String oozieUrl = getContextURL();
+                String[] args = new String[] { "job", "-missingdeps", "aaa-C", "-oozie", oozieUrl };
+                assertEquals(0, new OozieCLI().run(args));
+                assertEquals(MockCoordinatorEngineService.did, RestConstants.COORD_ACTION_MISSING_DEPENDENCIES);
+                assertFalse(MockCoordinatorEngineService.started.get(1));
+                return null;
+            }
+        });
     }
 
     private String runOozieCLIAndGetStdout(String[] args) {

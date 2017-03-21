@@ -25,7 +25,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -38,9 +43,13 @@ import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.coord.CoordELConstants;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.DependencyChecker;
+import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandlerException;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
@@ -52,7 +61,6 @@ import org.jdom.JDOMException;
 
 /**
  * Old approach where dependencies are stored as String.
- *
  */
 public class CoordOldInputDependency implements CoordInputDependency {
 
@@ -153,8 +161,8 @@ public class CoordOldInputDependency implements CoordInputDependency {
         if (StringUtils.isEmpty(missingDependencies)) {
             return;
         }
-        List<String> missingDependenciesList = new ArrayList<String>(Arrays.asList((DependencyChecker
-                .dependenciesAsArray(missingDependencies))));
+        List<String> missingDependenciesList = new ArrayList<String>(
+                Arrays.asList((DependencyChecker.dependenciesAsArray(missingDependencies))));
         missingDependenciesList.removeAll(availableList);
         missingDependencies = DependencyChecker.dependenciesAsString(missingDependenciesList);
 
@@ -178,8 +186,8 @@ public class CoordOldInputDependency implements CoordInputDependency {
 
     public ActionDependency checkPushMissingDependencies(CoordinatorActionBean coordAction,
             boolean registerForNotification) throws CommandException, IOException {
-        return DependencyChecker.checkForAvailability(getMissingDependenciesAsList(), new XConfiguration(
-                new StringReader(coordAction.getRunConf())), !registerForNotification);
+        return DependencyChecker.checkForAvailability(getMissingDependenciesAsList(),
+                new XConfiguration(new StringReader(coordAction.getRunConf())), !registerForNotification);
     }
 
     private boolean checkListOfPaths(CoordinatorActionBean coordAction, StringBuilder existList,
@@ -252,13 +260,12 @@ public class CoordOldInputDependency implements CoordInputDependency {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean checkUnresolved(CoordinatorActionBean coordAction, Element eAction)
-            throws Exception {
+    public boolean checkUnresolved(CoordinatorActionBean coordAction, Element eAction) throws Exception {
         Date nominalTime = DateUtils.parseDateOozieTZ(eAction.getAttributeValue("action-nominal-time"));
         String actualTimeStr = eAction.getAttributeValue("action-actual-time");
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
 
-        if(inputList==null){
+        if (inputList == null) {
             return true;
         }
 
@@ -279,8 +286,8 @@ public class CoordOldInputDependency implements CoordInputDependency {
                     continue;
                 }
                 ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, actionConf);
-                String unResolvedInstance = dEvent.getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG,
-                        dEvent.getNamespace()).getTextTrim();
+                String unResolvedInstance = dEvent
+                        .getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace()).getTextTrim();
                 String unresolvedList[] = unResolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
                 StringBuffer resolvedTmp = new StringBuffer();
                 for (int i = 0; i < unresolvedList.length; i++) {
@@ -297,8 +304,8 @@ public class CoordOldInputDependency implements CoordInputDependency {
                 }
                 if (resolvedTmp.length() > 0) {
                     if (dEvent.getChild("uris", dEvent.getNamespace()) != null) {
-                        resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR).append(
-                                dEvent.getChild("uris", dEvent.getNamespace()).getTextTrim());
+                        resolvedTmp.append(CoordELFunctions.INSTANCE_SEPARATOR)
+                                .append(dEvent.getChild("uris", dEvent.getNamespace()).getTextTrim());
                         dEvent.removeChild("uris", dEvent.getNamespace());
                     }
                     Element uriInstance = new Element("uris", dEvent.getNamespace());
@@ -312,4 +319,98 @@ public class CoordOldInputDependency implements CoordInputDependency {
         return true;
     }
 
+    public Map<String, ActionDependency> getMissingDependencies(CoordinatorActionBean coordAction)
+            throws CommandException, IOException, JDOMException {
+
+        Map<String, ActionDependency> dependenciesMap = null;
+        try {
+            dependenciesMap = getDependency(coordAction);
+        }
+        catch (URIHandlerException e) {
+            throw new IOException(e);
+        }
+
+        StringBuilder nonExistList = new StringBuilder();
+        StringBuilder nonResolvedList = new StringBuilder();
+        CoordCommandUtils.getResolvedList(getMissingDependencies(), nonExistList, nonResolvedList);
+
+        Set<String> missingSets = new HashSet<String>(
+                Arrays.asList(nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR)));
+
+        missingSets.addAll(
+                Arrays.asList(nonResolvedList.toString().split(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR)));
+
+        for (Iterator<Map.Entry<String, ActionDependency>> it = dependenciesMap.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, ActionDependency> entry = it.next();
+            ActionDependency dependency = entry.getValue();
+            dependency.getMissingDependencies().retainAll(missingSets);
+            if (dependenciesMap.get(entry.getKey()).getMissingDependencies().isEmpty()) {
+                it.remove();
+            }
+        }
+        return dependenciesMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, ActionDependency> getDependency(CoordinatorActionBean coordAction)
+            throws JDOMException, URIHandlerException {
+        Map<String, ActionDependency> dependenciesMap = new HashMap<String, ActionDependency>();
+        URIHandlerService uriService = Services.get().get(URIHandlerService.class);
+
+        Element eAction = XmlUtils.parseXml(coordAction.getActionXml());
+        Element inputList = eAction.getChild("input-events", eAction.getNamespace());
+        List<Element> eDataEvents = inputList.getChildren("data-in", eAction.getNamespace());
+        for (Element event : eDataEvents) {
+            Element uri = event.getChild("uris", event.getNamespace());
+            ActionDependency dependency = new ActionDependency();
+            if (uri != null) {
+                Element doneFlagElement = event.getChild("dataset", event.getNamespace()).getChild("done-flag",
+                        event.getNamespace());
+                String[] dataSets = uri.getText().split(CoordELFunctions.INSTANCE_SEPARATOR);
+                String doneFlag = CoordUtils.getDoneFlag(doneFlagElement);
+
+                for (String dataSet : dataSets) {
+                    URIHandler uriHandler;
+                    uriHandler = uriService.getURIHandler(dataSet);
+                    dependency.getMissingDependencies().add(uriHandler.getURIWithDoneFlag(dataSet, doneFlag));
+                }
+            }
+            if (event.getChildTextTrim(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, event.getNamespace()) != null) {
+                dependency.getMissingDependencies()
+                        .addAll(getUnResolvedDependency(coordAction, event).getMissingDependencies());
+            }
+            dependenciesMap.put(event.getAttributeValue("name"), dependency);
+        }
+        return dependenciesMap;
+    }
+
+    private ActionDependency getUnResolvedDependency(CoordinatorActionBean coordAction, Element event)
+            throws JDOMException, URIHandlerException {
+        String tmpUnresolved = event.getChildTextTrim(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, event.getNamespace());
+        ActionDependency dependency = new ActionDependency();
+        StringBuilder nonResolvedList = new StringBuilder();
+        CoordCommandUtils.getResolvedList(getMissingDependencies(), new StringBuilder(), nonResolvedList);
+        if (nonResolvedList.length() > 0) {
+            dependency.getMissingDependencies().add(tmpUnresolved);
+        }
+        return dependency;
+    }
+
+    @Override
+    public String getFirstMissingDependency() {
+        StringBuilder nonExistList = new StringBuilder();
+        String missingDependencies = getMissingDependencies();
+        StringBuilder nonResolvedList = new StringBuilder();
+        CoordCommandUtils.getResolvedList(missingDependencies, nonExistList, nonResolvedList);
+        String firstMissingDependency = "";
+        if (nonExistList.length() > 0) {
+            firstMissingDependency = nonExistList.toString().split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
+        }
+        else {
+            if (nonResolvedList.length() > 0) {
+                firstMissingDependency = nonResolvedList.toString().split(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR)[0];
+            }
+        }
+        return firstMissingDependency;
+    }
 }

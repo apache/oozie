@@ -140,6 +140,8 @@ public interface JsonTags {
     String COORDINATOR_ACTIONS = "actions";
     String COORDINATOR_ACTION_DATA = "data";
     String COORDINATOR_JOB_DATA = "data";
+    String COORDINATOR_ACTION_DATASETS = "dataSets";
+    String COORDINATOR_ACTION_DATASET = "dataSet";
 
     String BUNDLE_JOB_ID = "bundleJobId";
     String BUNDLE_JOB_NAME = "bundleJobName";
@@ -246,5 +248,8 @@ public interface JsonTags {
     String STATUS = "status";
     String ACTION_ATTEMPT = "attempt";
     String VALIDATE = "validate";
+    String COORD_ACTION_MISSING_DEPENDENCIES = "missingDependencies";
+    String COORD_ACTION_FIRST_MISSING_DEPENDENCIES = "blockedOn";
+
 
 }

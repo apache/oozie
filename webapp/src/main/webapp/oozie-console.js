@@ -848,7 +848,7 @@ function jobDetailsPopup(response, request) {
                         value: retriesObj[key],
                         triggerClass: 'x-form-search-trigger',
                         onTriggerClick: function() {
-                            window.open(retriesObj[text]);
+                            window.open(retriesObj[key]);
                         }
                     });
                     form.add(textUrl);
@@ -1484,10 +1484,9 @@ function coordJobDetailsPopup(response, request) {
         var actionStatus = thisGrid.store.data.items[rowIndex].data;
         var workflowId = actionStatus["externalId"];
         if(workflowId == null) {
-            jobDetailsTab.getComponent('coord_job_log').show();
-            Ext.getCmp('actions_text_box').setValue(actionStatus["id"].split("@")[1]);
-            Ext.getCmp('search_filter_box').setValue('recent=5m');
-            fetchLogs(coordJobId, actionsTextBox.getValue());
+            jobDetailsTab.getComponent('coord_action_missing_dependencies').show();
+            Ext.getCmp('actions_missing_dependencies').setValue(actionStatus["id"].split("@")[1]);
+            viewMissingDependencies.execute();
         }
         else {
             jobDetailsGridWindow(workflowId);
@@ -1681,6 +1680,114 @@ function coordJobDetailsPopup(response, request) {
         },
         frame: false
     });
+
+    var missingDependenciesTreeRoot = new Ext.tree.TreeNode({
+        text: "Coord Action Missing Dependencies",
+        expanded: true
+    });
+
+    var missingDependenciesTabButton = new Ext.Button({
+            text: 'Get Missing Dependencies',
+            ctCls: 'x-btn-over',
+            ctCls: 'spaces',
+            isFormField: true,
+            handler: function() {
+                viewMissingDependencies.execute();
+            }
+        });
+
+        var missingDependenciesActionText = new Ext.form.Label({
+            text : 'Enter Coordinator Action number : ',
+            ctCls: 'spaces'
+        });
+        var missingDependenciesTextBox = new Ext.form.TextField({
+            fieldLabel: 'missingDependenciesAction',
+            id: 'actions_missing_dependencies',
+            name: 'missingDependenciesAction',
+            width: 150,
+            value: ''
+        });
+
+        var viewMissingDependencies = new Ext.Action({
+            text: "&nbsp;&nbsp;&nbsp;",
+            icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+            handler: function() {
+                Ext.Ajax.request({
+                    url: getOozieBase() + 'job/' + coordJobId + '?show=missing-dependencies&action-list=' +
+                    missingDependenciesTextBox.getValue(),
+                    success: function(response, request) {
+                        var jsonData = JSON.parse(response.responseText);
+                        var missingDependencies = jsonData["missingDependencies"];
+                        while (missingDependenciesTreeRoot.hasChildNodes()) {
+                            var child = missingDependenciesTreeRoot.firstChild;
+                            missingDependenciesTreeRoot.removeChild(child);
+                        }
+                        var missingDependenciesTree = treeNodeForMissingDependencies(missingDependencies, null, null,
+                               missingDependenciesTreeRoot);
+                        missingDependenciesTreeRoot.expand(false, true);
+                    },
+                    failure : function(response, request) {
+                        Ext.Msg.minWidth = 360;
+                        Ext.Msg.alert(response.getResponseHeader["oozie-error-message"]);
+                    }
+                });
+            }
+        });
+
+    function treeNodeForMissingDependencies(json, rootText, blockedOn, rootNode) {
+        var result;
+        if( rootNode ){
+            result = rootNode;
+        } else {
+            result = new Ext.tree.TreeNode({
+                text: rootText
+            });
+        }
+        if (typeof json === 'object') {
+            for (var i in json) {
+                if (json[i]) {
+                    if (typeof json[i] == 'object') {
+                        var c;
+                        if (json[i]['id']) {
+                            c = treeNodeForMissingDependencies(json[i]['dataSets'], json[i]['id'], json[i]['blockedOn']);
+                        }
+                        if (json[i]['dataSet']) {
+                            c = treeNodeForMissingDependencies(json[i]['missingDependencies'], json[i]['dataSet'], blockedOn);
+                            if( blockedOn ) {
+                                var blockedOnChild = new Ext.tree.TreeNode({
+                                    text: "Blocked On"
+                                });
+                                blockedOnChild.appendChild(new Ext.tree.TreeNode({
+                                    text: blockedOn
+                                }));
+                                result.appendChild(blockedOnChild);
+                                blockedOn = null;
+                            }
+                        }
+                        if (c) {
+                            result.appendChild(c);
+                        }
+                    }
+                    else if (typeof json[i] != 'function') {
+                        result.appendChild(new Ext.tree.TreeNode({
+                            text: json[i]
+                        }));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+        var missingDependenciesArea = new Ext.tree.TreePanel({
+                autoScroll: true,
+                useArrows: true,
+                height: 430,
+                deferredRender: false,
+                root: missingDependenciesTreeRoot,
+                tbar: [missingDependenciesActionText, missingDependenciesTextBox, missingDependenciesTabButton],
+            });
+
     function populateReruns(coordActionId) {
         var actionNum = rerunActionTextBox.getValue();
         store.baseParams.scope = actionNum;
@@ -1698,6 +1805,7 @@ function coordJobDetailsPopup(response, request) {
     var jobDetailsTab = new Ext.TabPanel({
         activeTab: 0,
         autoHeight: true,
+        layoutOnTabChange: true,
         deferredRender: false,
         items: [ {
             title: 'Coord Job Info',
@@ -1751,6 +1859,11 @@ function coordJobDetailsPopup(response, request) {
            tbar: [
                rerunActionText, rerunActionTextBox, getRerunsButton]
        },
+       {
+           title: 'Action Missing Dependencies',
+           id: 'coord_action_missing_dependencies',
+           items: missingDependenciesArea
+       }
     ]});
 
     jobDetailsTab.addListener("tabchange", function(panel, selectedTab) {
@@ -3169,8 +3282,8 @@ function initConsole() {
     viewConfig.execute();
     serverVersion.execute();
     if (isInstrumentationServiceEnabled == "true") {
-        viewInstrumentation.execute();
-    }
+           viewInstrumentation.execute();
+       }
     if (isMetricsInstrumentationServiceEnabled == "true") {
         viewMetrics.execute();
     }

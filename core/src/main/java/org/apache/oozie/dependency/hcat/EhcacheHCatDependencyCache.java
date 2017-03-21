@@ -18,6 +18,7 @@
 
 package org.apache.oozie.dependency.hcat;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.event.CacheEventListener;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
 import org.apache.oozie.service.Services;
@@ -55,6 +57,8 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
     public static String CONF_CACHE_NAME = PartitionDependencyManagerService.CONF_PREFIX + "cache.ehcache.name";
 
     private CacheManager cacheManager;
+
+    private boolean useCanonicalHostName = false;
 
     /**
      * Map of server to EhCache which has key as db#table#pk1;pk2#val;val2 and value as WaitingActions (list of
@@ -100,18 +104,20 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
         missingDepsByServer = new ConcurrentHashMap<String, Cache>();
         partKeyPatterns = new ConcurrentHashMap<String, ConcurrentMap<String, SettableInteger>>();
         availableDeps = new ConcurrentHashMap<String, Collection<String>>();
+        useCanonicalHostName = ConfigurationService.getBoolean(SimpleHCatDependencyCache.USE_CANONICAL_HOSTNAME);
+
     }
 
     @Override
     public void addMissingDependency(HCatURI hcatURI, String actionID) {
-
+        String serverName = canonicalizeHostname(hcatURI.getServer());
         // Create cache for the server if we don't have one
-        Cache missingCache = missingDepsByServer.get(hcatURI.getServer());
+        Cache missingCache = missingDepsByServer.get(serverName);
         if (missingCache == null) {
             CacheConfiguration clonedConfig = cacheConfig.clone();
-            clonedConfig.setName(hcatURI.getServer());
+            clonedConfig.setName(serverName);
             missingCache = new Cache(clonedConfig);
-            Cache exists = missingDepsByServer.putIfAbsent(hcatURI.getServer(), missingCache);
+            Cache exists = missingDepsByServer.putIfAbsent(serverName, missingCache);
             if (exists == null) {
                 cacheManager.addCache(missingCache);
                 missingCache.getCacheEventNotificationService().registerListener(this);
@@ -148,7 +154,7 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
 
         // Increment count for the partition key pattern
         if (newlyAdded) {
-            String tableKey = hcatURI.getServer() + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
+            String tableKey = canonicalizeHostname(hcatURI.getServer()) + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
                     + hcatURI.getTable();
             synchronized (partKeyPatterns) {
                 ConcurrentMap<String, SettableInteger> patternCounts = partKeyPatterns.get(tableKey);
@@ -170,7 +176,7 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
     @Override
     public boolean removeMissingDependency(HCatURI hcatURI, String actionID) {
 
-        Cache missingCache = missingDepsByServer.get(hcatURI.getServer());
+        Cache missingCache = missingDepsByServer.get(canonicalizeHostname(hcatURI.getServer()));
         if (missingCache == null) {
             LOG.warn("Remove missing dependency - Missing cache entry for server - uri={0}, actionID={1}",
                     hcatURI.toURIString(), actionID);
@@ -202,7 +208,7 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
         }
         // Decrement partition key pattern count if the cache entry is removed
         if (decrement) {
-            String tableKey = hcatURI.getServer() + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
+            String tableKey = canonicalizeHostname(hcatURI.getServer()) + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
                     + hcatURI.getTable();
             decrementPartKeyPatternCount(tableKey, partKeys, hcatURI.toURIString());
         }
@@ -212,7 +218,7 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
     @Override
     public Collection<String> getWaitingActions(HCatURI hcatURI) {
         Collection<String> actionIDs = null;
-        Cache missingCache = missingDepsByServer.get(hcatURI.getServer());
+        Cache missingCache = missingDepsByServer.get(canonicalizeHostname(hcatURI.getServer()));
         if (missingCache != null) {
             SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
             String missingKey = hcatURI.getDb() + TABLE_DELIMITER + hcatURI.getTable() + TABLE_DELIMITER
@@ -221,7 +227,15 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
             if (element != null) {
                 WaitingActions waitingActions = (WaitingActions) element.getObjectValue();
                 actionIDs = new ArrayList<String>();
-                String uriString = hcatURI.getURI().toString();
+                URI uri = hcatURI.getURI();
+                String uriString = null;
+                try {
+                    uriString = new URI(uri.getScheme(), canonicalizeHostname(uri.getAuthority()), uri.getPath(),
+                            uri.getQuery(), uri.getFragment()).toString();
+                }
+                catch (URISyntaxException e) {
+                    uriString = hcatURI.toURIString();
+                }
                 for (WaitingAction action : waitingActions.getWaitingActions()) {
                     if (action.getDependencyURI().equals(uriString)) {
                         actionIDs.add(action.getActionID());
@@ -235,7 +249,7 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
     @Override
     public Collection<String> markDependencyAvailable(String server, String db, String table,
             Map<String, String> partitions) {
-        String tableKey = server + TABLE_DELIMITER + db + TABLE_DELIMITER + table;
+        String tableKey = canonicalizeHostname(server) + TABLE_DELIMITER + db + TABLE_DELIMITER + table;
         synchronized (partKeyPatterns) {
             Map<String, SettableInteger> patternCounts = partKeyPatterns.get(tableKey);
             if (patternCounts == null) {
@@ -512,8 +526,8 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
                         // Decrement partition key pattern count if the cache entry is removed
                         SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
                         String partKeys = sortedPKV.getPartKeys();
-                        String tableKey = hcatURI.getServer() + TABLE_DELIMITER + hcatURI.getDb() + TABLE_DELIMITER
-                                + hcatURI.getTable();
+                        String tableKey = canonicalizeHostname(hcatURI.getServer()) + TABLE_DELIMITER + hcatURI.getDb()
+                                + TABLE_DELIMITER + hcatURI.getTable();
                         String hcatURIStr = hcatURI.toURIString();
                         decrementPartKeyPatternCount(tableKey, partKeys, hcatURIStr);
                     }
@@ -525,6 +539,10 @@ public class EhcacheHCatDependencyCache implements HCatDependencyCache, CacheEve
     @Override
     public void removeCoordActionWithDependenciesAvailable(String coordAction) {
         // to be implemented when reverse-lookup data structure for purging is added
+    }
+
+    public String canonicalizeHostname(String name) {
+        return SimpleHCatDependencyCache.canonicalizeHostname(name, useCanonicalHostName);
     }
 
 }

@@ -31,8 +31,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.io.FileWriter;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.net.URL;
 
 public class TestPigMain extends PigTestCase {
@@ -155,6 +159,25 @@ public class TestPigMain extends PigTestCase {
             assertTrue(externalChildIds.contains("job_"));
         }
         return null;
+    }
+
+    public void testJobIDPattern() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("HadoopJobId: job_001");
+        lines.add("Submitted application application_002");
+        // Non-matching ones
+        lines.add("HadoopJobId is set. job_003");
+        lines.add("HadoopJobId: abc004");
+        lines.add("Submitted application = job_005");
+        lines.add("Submitted application. job_006");
+        Set<String> jobIds = new LinkedHashSet<String>();
+        for (String line : lines) {
+            LauncherMain.extractJobIDs(line, PigMain.PIG_JOB_IDS_PATTERNS, jobIds);
+        }
+        Set<String> expected = new LinkedHashSet<String>();
+        expected.add("job_001");
+        expected.add("job_002");
+        assertEquals(expected, jobIds);
     }
 
 }

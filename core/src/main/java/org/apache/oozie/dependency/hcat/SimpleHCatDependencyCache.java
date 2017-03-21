@@ -18,6 +18,9 @@
 
 package org.apache.oozie.dependency.hcat;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,8 +34,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.HCatURI;
@@ -42,6 +45,11 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
 
     private static XLog LOG = XLog.getLog(SimpleHCatDependencyCache.class);
     private static String DELIMITER = ";";
+
+    public static final String USE_CANONICAL_HOSTNAME ="oozie.service.HCatAccessorService.jms.use.canonical.hostname";
+    private boolean useCanonicalHostName = false;
+
+
 
     /**
      * Map of server;db;table - sorter partition key order (country;dt;state) - sorted partition
@@ -65,11 +73,13 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
         missingDeps = new ConcurrentHashMap<String, ConcurrentMap<String, Map<String, Collection<WaitingAction>>>>();
         availableDeps = new ConcurrentHashMap<String, Collection<String>>();
         actionPartitionMap = new ConcurrentHashMap<String, ConcurrentMap<String, Collection<String>>>();
+        useCanonicalHostName = ConfigurationService.getBoolean(USE_CANONICAL_HOSTNAME);
     }
 
     @Override
     public void addMissingDependency(HCatURI hcatURI, String actionID) {
-        String tableKey = hcatURI.getServer() + DELIMITER + hcatURI.getDb() + DELIMITER + hcatURI.getTable();
+        String tableKey = canonicalizeHostname(hcatURI.getServer()) + DELIMITER + hcatURI.getDb() + DELIMITER
+                + hcatURI.getTable();
         SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
         // Partition keys seperated by ;. For eg: date;country;state
         String partKey = sortedPKV.getPartKeys();
@@ -119,7 +129,8 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
 
     @Override
     public boolean removeMissingDependency(HCatURI hcatURI, String actionID) {
-        String tableKey = hcatURI.getServer() + DELIMITER + hcatURI.getDb() + DELIMITER + hcatURI.getTable();
+        String tableKey = canonicalizeHostname(hcatURI.getServer()) + DELIMITER + hcatURI.getDb() + DELIMITER
+                + hcatURI.getTable();
         SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
         String partKey = sortedPKV.getPartKeys();
         String partVal = sortedPKV.getPartVals();
@@ -181,7 +192,8 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
 
     @Override
     public Collection<String> getWaitingActions(HCatURI hcatURI) {
-        String tableKey = hcatURI.getServer() + DELIMITER + hcatURI.getDb() + DELIMITER + hcatURI.getTable();
+        String tableKey = canonicalizeHostname(hcatURI.getServer()) + DELIMITER + hcatURI.getDb() + DELIMITER
+                + hcatURI.getTable();
         SortedPKV sortedPKV = new SortedPKV(hcatURI.getPartitionMap());
         String partKey = sortedPKV.getPartKeys();
         String partVal = sortedPKV.getPartVals();
@@ -198,7 +210,16 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
             return null;
         }
         Collection<String> actionIDs = new ArrayList<String>();
-        String uriString = hcatURI.toURIString();
+        URI uri = hcatURI.getURI();
+        String uriString = null;
+        try {
+            uriString = new URI(uri.getScheme(), canonicalizeHostname(uri.getAuthority()), uri.getPath(),
+                    uri.getQuery(), uri.getFragment()).toString();
+        }
+        catch (URISyntaxException e) {
+            uriString = hcatURI.toURIString();
+        }
+
         for (WaitingAction action : waitingActions) {
             if (action.getDependencyURI().equals(uriString)) {
                 actionIDs.add(action.getActionID());
@@ -210,7 +231,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
     @Override
     public Collection<String> markDependencyAvailable(String server, String db, String table,
             Map<String, String> partitions) {
-        String tableKey = server + DELIMITER + db + DELIMITER + table;
+        String tableKey = canonicalizeHostname(server) + DELIMITER + db + DELIMITER + table;
         Map<String, Map<String, Collection<WaitingAction>>> partKeyPatterns = missingDeps.get(tableKey);
         if (partKeyPatterns == null) {
             LOG.warn("Got partition available notification for " + tableKey
@@ -410,5 +431,35 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
     @Override
     public void removeCoordActionWithDependenciesAvailable(String coordAction) {
         actionPartitionMap.remove(coordAction);
+    }
+
+    public String canonicalizeHostname(String name) {
+        return canonicalizeHostname(name, useCanonicalHostName);
+    }
+
+    public static String canonicalizeHostname(String name, boolean useCanonicalHostName) {
+        if (useCanonicalHostName) {
+            String hostname = name;
+            String port = null;
+            if (name.contains(":")) {
+                hostname = name.split(":")[0];
+                port = name.split(":")[1];
+            }
+            try {
+                InetAddress address = InetAddress.getByName(hostname);
+                String canonicalHostName = address.getCanonicalHostName();
+                if (null != port) {
+                    return canonicalHostName + ":" + port;
+                }
+                return canonicalHostName;
+            }
+            catch (IOException ex) {
+                LOG.error(ex);
+                return name;
+            }
+        }
+        else {
+            return name;
+        }
     }
 }

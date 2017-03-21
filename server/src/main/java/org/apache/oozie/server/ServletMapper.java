@@ -27,6 +27,7 @@ import org.apache.oozie.servlet.V0JobServlet;
 import org.apache.oozie.servlet.V0JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.servlet.V1JobServlet;
+import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.servlet.V2SLAServlet;
@@ -36,12 +37,15 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
 
 
 public class ServletMapper {
     private final WebAppContext servletContextHandler;
+    private static final Logger LOG = LoggerFactory.getLogger(ServletMapper.class);
 
     @Inject
     public ServletMapper(final WebAppContext servletContextHandler) {
@@ -59,19 +63,22 @@ public class ServletMapper {
         mapServlet(CallbackServlet.class, "/callback/*");
 
         ServletHandler servletHandler = servletContextHandler.getServletHandler();
-        String voJobservletName = V0JobsServlet.class.getSimpleName();
-        servletHandler.addServlet(new ServletHolder(voJobservletName, new V0JobsServlet()));
+        String v0JobsServletName = V0JobsServlet.class.getSimpleName();
+        servletHandler.addServlet(new ServletHolder(v0JobsServletName, new V0JobsServlet()));
         ServletMapping jobServletMappingV0 = new ServletMapping();
         jobServletMappingV0.setPathSpec("/v0/jobs");
-        jobServletMappingV0.setServletName(voJobservletName);
+        jobServletMappingV0.setServletName(v0JobsServletName);
 
+        String v1JobsServletName = V1JobsServlet.class.getSimpleName();
+        servletHandler.addServlet(new ServletHolder(v1JobsServletName, new V1JobsServlet()));
         ServletMapping jobServletMappingV1 = new ServletMapping();
         jobServletMappingV1.setPathSpec("/v1/jobs");
-        jobServletMappingV1.setServletName(voJobservletName);
+        jobServletMappingV1.setServletName(v1JobsServletName);
 
+        // v1 and v2 version for the jobs API are same.
         ServletMapping jobServletMappingV2 = new ServletMapping();
         jobServletMappingV2.setPathSpec("/v2/jobs");
-        jobServletMappingV2.setServletName(voJobservletName);
+        jobServletMappingV2.setServletName(v1JobsServletName);
 
         servletHandler.addServletMapping(jobServletMappingV0);
         servletHandler.addServletMapping(jobServletMappingV1);
@@ -89,7 +96,7 @@ public class ServletMapper {
         try {
             servletContextHandler.addServlet(new ServletHolder(servletClass.newInstance()), servletPath);
         } catch (final InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
     }
 }

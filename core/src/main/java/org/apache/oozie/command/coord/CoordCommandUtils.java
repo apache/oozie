@@ -25,8 +25,6 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.TimeZone;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
 import java.util.Calendar;
@@ -58,6 +56,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -69,12 +68,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.CoordinatorJobBean;
 
 public class CoordCommandUtils {
-    public static int CURRENT = 0;
-    public static int LATEST = 1;
-    public static int FUTURE = 2;
-    public static int OFFSET = 3;
-    public static int ABSOLUTE = 4;
-    public static int UNEXPECTED = -1;
+    public static final int CURRENT = 0;
+    public static final int LATEST = 1;
+    public static final int FUTURE = 2;
+    public static final int OFFSET = 3;
+    public static final int ABSOLUTE = 4;
+    public static final int ENDOFMONTHS = 5;
+    public static final int ENDOFWEEKS = 6;
+    public static final int ENDOFDAYS = 7;
+    public static final int UNEXPECTED = -1;
 
     public static final String RESOLVED_UNRESOLVED_SEPARATOR = "!!";
     public static final String UNRESOLVED_INSTANCES_TAG = "unresolved-instances";
@@ -91,9 +93,10 @@ public class CoordCommandUtils {
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
         if (funcType == ABSOLUTE) {
-            return ABSOLUTE;
+            return funcType;
         }
-        if (funcType == CURRENT || funcType == LATEST) {
+        if (funcType == CURRENT || funcType == LATEST || funcType == ENDOFMONTHS || funcType == ENDOFWEEKS
+                || funcType == ENDOFDAYS) {
             return parseOneArg(function);
         }
         else {
@@ -171,6 +174,15 @@ public class CoordCommandUtils {
         else if (function.indexOf("absolute") >= 0) {
             return ABSOLUTE;
         }
+        else if (function.indexOf("endOfMonths") >= 0) {
+            return ENDOFMONTHS;
+        }
+        else if (function.indexOf("endOfWeeks") >= 0) {
+            return ENDOFWEEKS;
+        }
+        else if (function.indexOf("endOfDays") >= 0) {
+            return ENDOFDAYS;
+        }
         return UNEXPECTED;
         // throw new RuntimeException("Unexpected instance name "+ function);
     }
@@ -182,11 +194,12 @@ public class CoordCommandUtils {
      */
     public static void checkIfBothSameType(String startInst, String endInst) throws CommandException {
         if (getFuncType(startInst) != getFuncType(endInst)) {
-            if (getFuncType(startInst) == ABSOLUTE) {
+            if (getFuncType(startInst) == ABSOLUTE || getFuncType(startInst) == ENDOFMONTHS
+                    || getFuncType(startInst) == ENDOFWEEKS || getFuncType(startInst) == ENDOFDAYS) {
                 if (getFuncType(endInst) != CURRENT) {
                     throw new CommandException(ErrorCode.E1010,
-                            "Only start-instance as absolute and end-instance as current is supported." + " start = "
-                                    + startInst + "  end = " + endInst);
+                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays and end-instance as current is supported."
+                                    + " start = " + startInst + "  end = " + endInst);
                 }
             }
             else {
@@ -243,6 +256,7 @@ public class CoordCommandUtils {
                                                          // arguments for
                                                          // future
                                                          // function
+
             int startIndex = getInstanceNumber(strStart, restArg);
             String startRestArg = restArg.toString();
             restArg.delete(0, restArg.length());
@@ -251,16 +265,20 @@ public class CoordCommandUtils {
             int funcType = getFuncType(strStart);
 
             if (funcType == ABSOLUTE) {
-                StringBuffer bf = new StringBuffer();
-                bf.append("${coord:absoluteRange(\"").append(parseOneStringArg(strStart))
-                        .append("\",").append(endIndex).append(")}");
-                String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
-                if (matInstance != null && !matInstance.isEmpty()) {
-                    if (instances.length() > 0) {
-                        instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                    }
-                    instances.append(matInstance);
-                }
+                resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                        parseOneStringArg(strStart));
+            }
+            else if (funcType == ENDOFMONTHS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.MONTH, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
+            }
+            else if (funcType == ENDOFWEEKS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.WEEK, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
+            }
+            else if (funcType == ENDOFDAYS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.DAY, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
             }
             else {
                 if (funcType == OFFSET) {
@@ -324,6 +342,29 @@ public class CoordCommandUtils {
             event.removeChild("start-instance", event.getNamespace());
             event.removeChild("end-instance", event.getNamespace());
         }
+    }
+
+    private static void resolveAbsoluteRange(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex, String rangeStr) throws Exception {
+        StringBuffer bf = new StringBuffer();
+        bf.append("${coord:absoluteRange(\"").append(rangeStr).append("\",")
+                .append(endIndex).append(")}");
+        String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
+        if (matInstance != null && !matInstance.isEmpty()) {
+            if (instances.length() > 0) {
+                instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+            }
+            instances.append(matInstance);
+        }
+    }
+
+    private static void resolveInstanceRangeEndOfDuration(TimeUnit duration, Element event, StringBuilder instances,
+            SyncCoordAction appInst, Configuration conf, ELEvaluator eval, String strStart, int startIndex,
+            int endIndex) throws Exception {
+        Calendar startInstance = new StartInstanceFinder(startIndex, duration, CoordELFunctions.getDatasetTZ(eval),
+                appInst.getNominalTime()).getStartInstance();
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(startInstance));
     }
 
     /**
@@ -674,7 +715,7 @@ public class CoordCommandUtils {
                 .createPullInputDependencies(isInputLogicSpecified);
         CoordInputDependency coordPushInputDependency = CoordInputDependencyFactory
                 .createPushInputDependencies(isInputLogicSpecified);
-        Map<String, String> unresolvedList = new HashMap<String, String>();
+        List<Pair<String, String>> unresolvedList = new ArrayList<Pair<String, String>>();
 
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
 
@@ -713,11 +754,11 @@ public class CoordCommandUtils {
 
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INSTANCES_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
-                unresolvedList.put(name, tmpUnresolved);
+                unresolvedList.add(new Pair<String,String>(name, tmpUnresolved));
             }
         }
-        for(String unresolvedDatasetName:unresolvedList.keySet()){
-            coordPullInputDependency.addUnResolvedList(unresolvedDatasetName, unresolvedList.get(unresolvedDatasetName));
+        for (Pair<String, String> unresolvedDataset : unresolvedList) {
+            coordPullInputDependency.addUnResolvedList(unresolvedDataset.getFirst(), unresolvedDataset.getSecond());
         }
         actionBean.setPullInputDependencies(coordPullInputDependency);
         actionBean.setPushInputDependencies(coordPushInputDependency);
@@ -881,6 +922,68 @@ public class CoordCommandUtils {
             URIHandlerException {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         return pathExists(sPath, actionConf, user);
+    }
+
+    public static String getFirstMissingDependency(CoordinatorActionBean coordAction) {
+        CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+        CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+        String firstMissingDependencies = coordPullInputDependency.getFirstMissingDependency();
+        if (StringUtils.isEmpty(firstMissingDependencies)) {
+            firstMissingDependencies = coordPushInputDependency.getFirstMissingDependency();
+        }
+        return firstMissingDependencies;
+    }
+
+    /**
+     * Class to find get start instance
+     */
+    private static class StartInstanceFinder {
+
+        private int startIndex;
+        private TimeUnit timeUnit;
+        private TimeZone datasetTimeZone;
+        private Date nominalTime;
+
+        /**
+         * @param startIndex dataset index
+         * @param timeUnit
+         * @param datasetTimeZone
+         * @param nominalTime nominal time of action
+         */
+        public StartInstanceFinder(int startIndex, TimeUnit timeUnit, TimeZone datasetTimeZone, Date nominalTime) {
+            this.startIndex = startIndex;
+            this.timeUnit = timeUnit;
+            this.datasetTimeZone = datasetTimeZone;
+            this.nominalTime = nominalTime;
+        }
+
+        /**
+         * Calculates the start instance. It put the start instance to the start
+         * of a day i.e. 00:00:00.
+         */
+        public Calendar getStartInstance() throws Exception {
+            Calendar startInstance = Calendar.getInstance(datasetTimeZone);
+            startInstance.setTime(nominalTime);
+            startInstance.set(Calendar.HOUR_OF_DAY, 0);
+            startInstance.set(Calendar.MINUTE, 0);
+            startInstance.set(Calendar.SECOND, 0);
+            switch (timeUnit) {
+                case WEEK:
+                    startInstance.set(Calendar.DAY_OF_WEEK, startInstance.getFirstDayOfWeek());
+                    startInstance.add(Calendar.WEEK_OF_YEAR, startIndex + 1);
+                    break;
+                case MONTH:
+                    int FIRST_DAY_OF_MONTH = 1;
+                    startInstance.set(Calendar.DAY_OF_MONTH, FIRST_DAY_OF_MONTH);
+                    startInstance.add(Calendar.MONTH, startIndex + 1);
+                    break;
+                case DAY:
+                    startInstance.add(Calendar.DATE, startIndex + 1);
+                    break;
+                default:
+            }
+            return startInstance;
+        }
     }
 
 }

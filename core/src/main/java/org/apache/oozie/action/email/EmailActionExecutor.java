@@ -131,7 +131,7 @@ public class EmailActionExecutor extends ActionExecutor {
         // <to> - One ought to exist.
         String text = element.getChildTextTrim(TO, ns);
         if (text.isEmpty()) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM001", "No receipents were specified in the to-address field.");
+            throw new ActionExecutorException(ErrorType.ERROR, "EM001", "No recipients were specified in the to-address field.");
         }
         tos = text.split(COMMA);
 
@@ -278,7 +278,7 @@ public class EmailActionExecutor extends ActionExecutor {
             throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc> or <bcc>.", e);
         }
         catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM005", "An error occured while adding recipients.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM005", "An error occurred while adding recipients.", e);
         }
         catch (URISyntaxException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM008", "Encountered an error when attaching a file", e);

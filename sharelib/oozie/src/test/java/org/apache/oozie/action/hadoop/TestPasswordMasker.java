@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.oozie.util;
+package org.apache.oozie.action.hadoop;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,10 +30,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestPasswordMasker {
+    private PasswordMasker passwordMasker;
+
+    @Before
+    public void setup() {
+        passwordMasker = new PasswordMasker();
+    }
 
     @Test
     public void testWhenJavaSystemPropertiesAreAskedPasswordsAppearMasked() throws Exception {
-        Map<String, String> masked = new PasswordMasker().mask(jsonToMap("/instrumentation-system-properties.json"));
+        Map<String, String> masked = passwordMasker.mask(jsonToMap("/instrumentation-system-properties.json"));
 
         assertPasswordValueIsMasked(masked, "javax.net.ssl.trustStorePassword");
         assertPasswordValueIsMasked(masked, "oozie.https.keystore.pass");
@@ -40,7 +47,7 @@ public class TestPasswordMasker {
 
     @Test
     public void testWhenOSEnvIsAskedPasswordsAppearMasked() throws Exception {
-        Map<String, String> masked = new PasswordMasker().mask(jsonToMap("/instrumentation-os-env.json"));
+        Map<String, String> masked = passwordMasker.mask(jsonToMap("/instrumentation-os-env.json"));
 
         assertPasswordValueIsMasked(masked, "HADOOP_CREDSTORE_PASSWORD");
         assertPasswordValueIsMasked(masked, "OOZIE_HTTPS_KEYSTORE_PASSWORD");
@@ -52,6 +59,47 @@ public class TestPasswordMasker {
         assertValueFragmentIsPresent(masked, "CATALINA_OPTS", "-Xmx1024m");
         assertValueFragmentIsPresent(masked, "CATALINA_OPTS", "-Doozie.https.keystore.file=/Users/forsage/.keystore");
         assertValueFragmentIsPresent(masked, "CATALINA_OPTS", "-Djava.library.path=");
+    }
+
+    @Test
+    public void testMaskNothing() {
+        assertEquals("abcd", passwordMasker.maskPasswordsIfNecessary("abcd"));
+        assertEquals("abcd abcd", passwordMasker.maskPasswordsIfNecessary("abcd abcd"));
+        assertEquals("-Djava.net.pasX=pwd1", passwordMasker.maskPasswordsIfNecessary("-Djava.net.pasX=pwd1"));
+    }
+
+    @Test
+    public void testMaskJavaSystemProp() {
+        assertEquals("-Djava.sysprop.password=*****", passwordMasker.maskPasswordsIfNecessary("-Djava.sysprop.password=pwd123"));
+    }
+
+    @Test
+    public void testMaskJavaSystemPropWithWhiteSpaces() {
+        assertEquals("  -Djava.sysprop.password=*****  ",
+                passwordMasker.maskPasswordsIfNecessary("  -Djava.sysprop.password=pwd123  "));
+    }
+
+    @Test
+    public void testMaskTwoJavaSystemProps() {
+        assertEquals("-Djava.sysprop.password=***** -Djava.another.password=*****",
+                passwordMasker.maskPasswordsIfNecessary("-Djava.sysprop.password=pwd123 -Djava.another.password=pwd456"));
+    }
+
+    @Test
+    public void testMaskEnvironmentVariable() {
+        assertEquals("DUMMY_PASSWORD=*****", passwordMasker.maskPasswordsIfNecessary("DUMMY_PASSWORD=dummy"));
+    }
+
+    @Test
+    public void testMaskTwoEnvironmentVariables() {
+        assertEquals("DUMMY_PASSWORD=*****:ANOTHER_PASSWORD=*****",
+                passwordMasker.maskPasswordsIfNecessary("DUMMY_PASSWORD=dummy:ANOTHER_PASSWORD=pwd123"));
+    }
+
+    @Test
+    public void testMaskRandomMatchingStuff() {
+        assertEquals("aa -Djava.sysprop.password=***** bb DUMMY_PASSWORD=***** cc",
+                passwordMasker.maskPasswordsIfNecessary("aa -Djava.sysprop.password=1234 bb DUMMY_PASSWORD=dummy cc"));
     }
 
     @SuppressWarnings("unchecked")

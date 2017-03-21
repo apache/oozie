@@ -38,6 +38,8 @@ public class V0JobServlet extends BaseJobServlet {
 
     private static final String INSTRUMENTATION_NAME = "v0job";
 
+    final static String NOT_SUPPORTED_MESSAGE = "Not supported in v0";
+
     public V0JobServlet() {
         super(INSTRUMENTATION_NAME);
     }
@@ -226,45 +228,53 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
+
+    @Override
+    protected JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+
+    }
+
 }

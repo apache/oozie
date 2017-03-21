@@ -37,10 +37,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hive.beeline.BeeLine;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class Hive2Main extends LauncherMain {
-    private static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
-            Pattern.compile("Submitted application (application[0-9_]*)")
+            Pattern.compile("Submitted application (application[0-9_]*)"),
+            Pattern.compile("Running with YARN Application = (application[0-9_]*)")
     };
     private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
 

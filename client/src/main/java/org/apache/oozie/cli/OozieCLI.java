@@ -181,6 +181,8 @@ public class OozieCLI {
 
     public static final String WORKFLOW_ACTIONS_RETRIES = "retries";
 
+    public static final String COORD_ACTION_MISSING_DEPENDENCIES = "missingdeps";
+
     private static final String[] OOZIE_HELP = {
             "the env variable '" + ENV_OOZIE_URL + "' is used as default value for the '-" + OOZIE_OPTION + "' option",
             "the env variable '" + ENV_OOZIE_TIME_ZONE + "' is used as default value for the '-" + TIME_ZONE_OPTION + "' option",
@@ -382,6 +384,9 @@ public class OozieCLI {
                 "enables sla alerts for the job and its children");
         Option slaChange = new Option(SLA_CHANGE, true,
                 "Update sla param for jobs, supported param are should-start, should-end, nominal-time and max-duration");
+        Option coordActionMissingDependencies = new Option(COORD_ACTION_MISSING_DEPENDENCIES, true,
+                "List missing dependencies of a coord action. To specify multiple actions, use with -action or -date option.");
+
 
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
 
@@ -411,6 +416,7 @@ public class OozieCLI {
         actions.addOption(slaEnableAlert);
         actions.addOption(slaChange);
         actions.addOption(workflowActionRetries);
+        actions.addOption(coordActionMissingDependencies);
         actions.setRequired(true);
         Options jobOptions = new Options();
         jobOptions.addOption(oozie);
@@ -1329,6 +1335,19 @@ public class OozieCLI {
                         wc.getWorkflowActionRetriesInfo(commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES)),
                         commandLine.getOptionValue(WORKFLOW_ACTIONS_RETRIES));
             }
+            else if (options.contains(COORD_ACTION_MISSING_DEPENDENCIES)) {
+                String actions = null, dates = null;
+
+                if (options.contains(ACTION_OPTION)) {
+                    actions = commandLine.getOptionValue(ACTION_OPTION);
+                }
+
+                if (options.contains(DATE_OPTION)) {
+                    dates = commandLine.getOptionValue(DATE_OPTION);
+                }
+                wc.getCoordActionMissingDependencies(commandLine.getOptionValue(COORD_ACTION_MISSING_DEPENDENCIES),
+                        actions, dates, System.out);
+            }
 
         }
         catch (OozieClientException ex) {
@@ -1480,7 +1499,7 @@ public class OozieCLI {
         System.out.println("External ID       : " + maskIfNull(action.getExternalId()));
         System.out.println("External Status   : " + maskIfNull(action.getExternalStatus()));
         System.out.println("Name              : " + maskIfNull(action.getName()));
-        System.out.println("Retries           : " + action.getRetries());
+        System.out.println("Retries           : " + action.getUserRetryCount());
         System.out.println("Tracker URI       : " + maskIfNull(action.getTrackerUri()));
         System.out.println("Type              : " + maskIfNull(action.getType()));
         System.out.println("Started           : " + maskDate(action.getStartTime(), timeZoneId, verbose));

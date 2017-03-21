@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
@@ -42,11 +43,14 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.command.wf.ActionXCommand;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.Pair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -312,6 +316,46 @@ public class V2JobServlet extends V1JobServlet {
         }
         catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        String jobId = getResourceName(request);
+        String actions = request.getParameter(RestConstants.JOB_COORD_SCOPE_ACTION_LIST);
+        String dates = request.getParameter(RestConstants.JOB_COORD_SCOPE_DATE);
+
+        try {
+            List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> dependenciesList = Services.get()
+                    .get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request))
+                    .getCoordActionMissingDependencies(jobId, actions, dates);
+            JSONArray dependenciesArray = new JSONArray();
+            for (Pair<CoordinatorActionBean, Map<String, ActionDependency>> dependencies : dependenciesList) {
+                JSONObject json = new JSONObject();
+                JSONArray parentJsonArray = new JSONArray();
+
+                for (String key : dependencies.getSecond().keySet()) {
+                    JSONObject dependencyList = new JSONObject();
+                    JSONArray jsonArray = new JSONArray();
+                    jsonArray.addAll(dependencies.getSecond().get(key).getMissingDependencies());
+                    dependencyList.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, jsonArray);
+                    dependencyList.put(JsonTags.COORDINATOR_ACTION_DATASET, key);
+                    parentJsonArray.add(dependencyList);
+                }
+                json.put(JsonTags.COORD_ACTION_FIRST_MISSING_DEPENDENCIES,
+                        CoordCommandUtils.getFirstMissingDependency(dependencies.getFirst()));
+                json.put(JsonTags.COORDINATOR_ACTION_ID, dependencies.getFirst().getActionNumber());
+                json.put(JsonTags.COORDINATOR_ACTION_DATASETS, parentJsonArray);
+                dependenciesArray.add(json);
+            }
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put(JsonTags.COORD_ACTION_MISSING_DEPENDENCIES, dependenciesArray);
+            return jsonObject;
+        }
+        catch (CommandException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
         }
     }
 

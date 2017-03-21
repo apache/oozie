@@ -121,14 +121,14 @@ public class SchemaCheckXCommand extends XCommand<Void> {
                 LOG.info("Database schema is GOOD");
             }
         } catch (SQLException sqle) {
-            LOG.error("An Exception occured while talking to the database: " + sqle.getMessage(), sqle);
+            LOG.error("An Exception occurred while talking to the database: " + sqle.getMessage(), sqle);
             problem = true;
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (Exception e) {
-                    LOG.error("An Exception occured while disconnecting from the database: " + e.getMessage(), e);
+                    LOG.error("An Exception occurred while disconnecting from the database: " + e.getMessage(), e);
                 }
             }
             Services.get().get(SchemaCheckerService.class).updateInstrumentation(problem, startTime);
@@ -195,10 +195,10 @@ public class SchemaCheckXCommand extends XCommand<Void> {
             problem = true;
         } else {
             for (Map.Entry<String, Integer> ent : expectedColumnTypes.entrySet()) {
-                if (!foundColumns.get(ent.getKey()).getFist().equals(ent.getValue())) {
+                if (!foundColumns.get(ent.getKey()).getFirst().equals(ent.getValue())) {
                     LOG.error("Expected column [{0}] in table [{1}] to have type [{2}], but found type [{3}]",
                             ent.getKey(), table, getSQLTypeFromInt(ent.getValue()),
-                            getSQLTypeFromInt(foundColumns.get(ent.getKey()).getFist()));
+                            getSQLTypeFromInt(foundColumns.get(ent.getKey()).getFirst()));
                     problem = true;
                 } else if (foundColumns.get(ent.getKey()).getSecond() != null) {
                     LOG.error("Expected column [{0}] in table [{1}] to have default value [NULL], but found default vale [{2}]",

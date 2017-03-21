@@ -121,6 +121,14 @@ public class TestCoordELFunctions extends XTestCase {
         assertEquals(TimeUnit.END_OF_DAY, (TimeUnit) eval.getVariable("endOfDuration"));
     }
 
+    public void testEndOfWeeks() throws Exception {
+        init("coord-job-submit-freq");
+        String expr = "${coord:endOfWeeks(3)}";
+        assertEquals("3", CoordELFunctions.evalAndWrap(eval, expr));
+        assertEquals(TimeUnit.WEEK, (TimeUnit) eval.getVariable("timeunit"));
+        assertEquals(TimeUnit.END_OF_WEEK, (TimeUnit) eval.getVariable("endOfDuration"));
+    }
+
     public void testEndOfMonths() throws Exception {
         init("coord-job-submit-freq");
         String expr = "${coord:endOfMonths(1)}";

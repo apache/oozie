@@ -134,7 +134,7 @@ public class JMSAccessorService implements Service {
      * @param topic Topic in which the JMS messages are published
      */
     public void unregisterFromNotification(JMSConnectionInfo connInfo, String topic) {
-        LOG.info("Unregistering JMS listener. Clossing session for {0} and topic {1}", connInfo, topic);
+        LOG.info("Unregistering JMS listener. Closing session for {0} and topic {1}", connInfo, topic);
 
         if (isTopicInRetryList(connInfo, topic)) {
             removeTopicFromRetryList(connInfo, topic);

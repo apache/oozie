@@ -520,8 +520,6 @@ public class HadoopAccessorService implements Service {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
-            conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
             return jobClient;
         }
         catch (InterruptedException ex) {

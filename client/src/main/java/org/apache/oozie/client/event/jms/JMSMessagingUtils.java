@@ -50,7 +50,7 @@ public class JMSMessagingUtils {
                 is.close();
             }
             catch (IOException ioe) {
-                throw new RuntimeException("I/O error occured for " + CLIENT_PROPERTIES, ioe);
+                throw new RuntimeException("I/O error occurred for " + CLIENT_PROPERTIES, ioe);
             }
         }
 

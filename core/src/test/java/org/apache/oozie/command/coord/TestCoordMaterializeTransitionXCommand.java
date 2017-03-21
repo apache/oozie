@@ -743,6 +743,53 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         assertEquals(job.getNextMaterializedTime(), origStart.getTime());
     }
 
+    public void testActionMaterEndOfWeeks() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String appXml = "<coordinator-app name=\"test\" frequency=\"${coord:endOfWeeks(1)}\" start=\"2016-02-03T01:00Z\" "
+                + "end=\"2016-03-03T23:59Z\" timezone=\"UTC\" " + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
+                + "<execution>LIFO</execution> </controls> <datasets> "
+                + "<dataset name=\"a\" frequency=\"${coord:endOfWeeks(1)}\" initial-instance=\"2016-01-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template>  " + "</dataset> "
+                + "<dataset name=\"local_a\" frequency=\"${coord:endOfWeeks(1)}\" initial-instance=\"2016-01-01T01:00Z\" "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template> " + " </dataset> " + "</datasets> <input-events> "
+                + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
+                + "</input-events> " + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> "
+                + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
+                + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
+                + "</property></configuration> </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+
+        CoordinatorJobBean job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, jobId);
+        assertEquals(job.getLastActionNumber(), 0);
+
+        job.setMatThrottling(10);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertEquals(4, job.getLastActionNumber());
+
+        String jobXml = job.getJobXml();
+        Element eJob = XmlUtils.parseXml(jobXml);
+        TimeZone appTz = DateUtils.getTimeZone(job.getTimeZone());
+        TimeUnit endOfFlag = TimeUnit.valueOf(eJob.getAttributeValue("end_of_duration"));
+        TimeUnit freqTU = TimeUnit.valueOf(job.getTimeUnitStr());
+        Calendar origStart = Calendar.getInstance(appTz);
+        origStart.setTime(job.getStartTimestamp());
+        // Move to the End of duration, if needed.
+        DateUtils.moveToEnd(origStart, endOfFlag);
+        origStart.add(freqTU.getCalendarUnit(), 4 * Integer.parseInt(job.getFrequency()));
+        assertEquals(origStart.getTime(), job.getNextMaterializedTime());
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, String freq) throws Exception {
         return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq);

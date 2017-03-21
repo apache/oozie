@@ -21,6 +21,7 @@ package org.apache.oozie.coord.input.dependency;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.CommandException;
@@ -132,6 +133,25 @@ public interface CoordInputDependency {
      */
     ActionDependency checkPushMissingDependencies(CoordinatorActionBean coordAction,
             boolean registerForNotification) throws CommandException, IOException, JDOMException;
+
+    /**
+     * Gets the missing dependencies.
+     *
+     * @param coordAction the coord action
+     * @return the missing dependencies
+     * @throws CommandException the command exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws JDOMException the JDOM exception
+     */
+    public Map<String, ActionDependency> getMissingDependencies(CoordinatorActionBean coordAction)
+            throws CommandException, IOException, JDOMException;
+
+    /**
+     * Gets the first missing dependency.
+     *
+     * @return the first missing dependency
+     */
+    public String getFirstMissingDependency();
 
     /**
      * Check pull missing dependencies.

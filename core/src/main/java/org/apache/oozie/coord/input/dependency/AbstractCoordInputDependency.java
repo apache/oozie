@@ -295,7 +295,6 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
         WritableUtils.writeStringAsBytes(out,INTERNAL_VERSION_ID);
         out.writeBoolean(isDependencyMet);
         WritableUtils.writeMapWithList(out, dependencyMap);
-
     }
 
     @Override
@@ -311,6 +310,20 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
             return false;
         }
         return getAvailableDependencies(dataSet).size() == getDependencyMap().get(dataSet).size();
+    }
+
+    @Override
+    public Map<String, ActionDependency> getMissingDependencies(CoordinatorActionBean coordAction)
+            throws CommandException, IOException, JDOMException {
+        Map<String, ActionDependency> missingDependenciesMap = new HashMap<String, ActionDependency>();
+        for (String key : missingDependenciesSet.keySet()) {
+            missingDependenciesMap.put(key, new ActionDependency(missingDependenciesSet.get(key), new ArrayList<String>()));
+        }
+        return missingDependenciesMap;
+    }
+
+    public String getFirstMissingDependency() {
+        return null;
     }
 
 }

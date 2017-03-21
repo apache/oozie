@@ -170,23 +170,10 @@ public abstract class CoordSLAAlertsXCommand extends SLAAlertsXCommand {
      * @throws CommandException the command exception
      */
     private List<String> getActionListForScopeAndDate(String id, String scope, String dates) throws CommandException {
-        List<String> actionIds = new ArrayList<String>();
-
         if (scope == null && dates == null) {
             return null;
         }
-        List<String> parsed = new ArrayList<String>();
-        if (dates != null) {
-            List<CoordinatorActionBean> actionSet = CoordUtils.getCoordActionsFromDates(id, dates, true);
-            for (CoordinatorActionBean action : actionSet) {
-                actionIds.add(action.getId());
-            }
-            parsed.addAll(actionIds);
-        }
-        if (scope != null) {
-            parsed.addAll(CoordUtils.getActionsIds(id, scope));
-        }
-        return parsed;
+        return CoordUtils.getActionListForScopeAndDate(id, scope, dates);
     }
 
     /**

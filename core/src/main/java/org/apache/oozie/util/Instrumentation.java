@@ -20,6 +20,7 @@ package org.apache.oozie.util;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.hadoop.PasswordMasker;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 

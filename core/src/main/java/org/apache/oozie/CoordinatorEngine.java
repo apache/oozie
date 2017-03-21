@@ -49,6 +49,7 @@ import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
 import org.apache.oozie.command.coord.CoordActionsKillXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
+import org.apache.oozie.command.coord.CoordActionMissingDependenciesXCommand;
 import org.apache.oozie.command.coord.CoordJobXCommand;
 import org.apache.oozie.command.coord.CoordJobsXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
@@ -60,6 +61,7 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -983,5 +985,17 @@ public class CoordinatorEngine extends BaseEngine {
         catch (CommandException ex) {
             throw new CoordinatorEngineException(ex);
         }
+    }
+    /**
+     * Get coord action missing dependencies
+     * @param id jobID
+     * @param actions action list
+     * @param dates nominal time list
+     * @return pair of coord action bean and list of missing input dependencies.
+     * @throws CommandException
+     */
+    public List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> getCoordActionMissingDependencies(String id,
+            String actions, String dates) throws CommandException {
+        return new CoordActionMissingDependenciesXCommand(id, actions, dates).call();
     }
 }

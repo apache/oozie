@@ -62,6 +62,8 @@ public class CoordELFunctions {
     public static final long MINUTE_MSEC = 60 * 1000L;
     public static final long HOUR_MSEC = 60 * MINUTE_MSEC;
     public static final long DAY_MSEC = 24 * HOUR_MSEC;
+    public static final long WEEK_MSEC = 7 * DAY_MSEC;
+
     /**
      * Used in defining the frequency in 'day' unit. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
@@ -133,6 +135,27 @@ public class CoordELFunctions {
         eval.setVariable("endOfDuration", TimeUnit.END_OF_DAY);
         return val;
     }
+
+    /**
+     * Used in defining the frequency in 'week' unit and specify the "end of
+     * week" property.
+     * <p>
+     * Every instance will start at 00:00 hour of start of week
+     * <p>
+     * domain: <code> val &gt; 0</code> and should be integer.
+     *
+     * @param val frequency in number of weeks.
+     * @return number of weeks and also set the frequency timeunit to week of
+     *         the year and end_of_duration flag to week of the year
+     */
+    public static int ph1_coord_endOfWeeks(int val) {
+        val = ParamChecker.checkGTZero(val, "n");
+        ELEvaluator eval = ELEvaluator.getCurrent();
+        eval.setVariable("timeunit", TimeUnit.WEEK);
+        eval.setVariable("endOfDuration", TimeUnit.END_OF_WEEK);
+        return val;
+    }
+
 
     /**
      * Used in defining the frequency in 'month' unit and specify the "end of month" property. <p> Every instance will
@@ -775,6 +798,18 @@ public class CoordELFunctions {
         return echoUnResolved("absolute", date);
     }
 
+    public static String ph1_coord_endOfMonths_echo(String date) {
+        return echoUnResolved("endOfMonths", date);
+    }
+
+    public static String ph1_coord_endOfWeeks_echo(String date) {
+        return echoUnResolved("endOfWeeks", date);
+    }
+
+    public static String ph1_coord_endOfDays_echo(String date) {
+        return echoUnResolved("endOfDays", date);
+    }
+
     public static String ph1_coord_currentRange_echo(String start, String end) {
         return echoUnResolved("currentRange", start + ", " + end);
     }
@@ -799,20 +834,39 @@ public class CoordELFunctions {
         return echoUnResolved("absolute", date);
     }
 
+    public static String ph2_coord_endOfMonths_echo(String date) {
+        return echoUnResolved("endOfMonths", date);
+    }
+
+    public static String ph2_coord_endOfWeeks_echo(String date) {
+        return echoUnResolved("endOfWeeks", date);
+    }
+
+    public static String ph2_coord_endOfDays_echo(String date) {
+        return echoUnResolved("endOfDays", date);
+    }
+
     public static String ph2_coord_absolute_range(String startInstance, int end) throws Exception {
         int[] instanceCount = new int[1];
-
+        Calendar startInstanceCal = DateUtils.getCalendar(startInstance);
+        Calendar currentInstance = getCurrentInstance(startInstanceCal.getTime(), instanceCount);
         // getCurrentInstance() returns null, which means startInstance is less
         // than initial instance
-        if (getCurrentInstance(DateUtils.getCalendar(startInstance).getTime(), instanceCount) == null) {
+        if (currentInstance == null) {
             throw new CommandException(ErrorCode.E1010,
-                    "intial-instance should be equal or earlier than the start-instance. intial-instance is "
+                    "initial-instance should be equal or earlier than the start-instance. initial-instance is "
                             + getInitialInstance() + " and start-instance is " + startInstance);
+        }
+        if (currentInstance.getTimeInMillis() != startInstanceCal.getTimeInMillis()) {
+            throw new CommandException(ErrorCode.E1010,
+                    "initial-instance is not in phase with start-instance. initial-instance is "
+                            + DateUtils.formatDateOozieTZ(getInitialInstanceCal()) + " and start-instance is "
+                            + DateUtils.formatDateOozieTZ(startInstanceCal));
         }
         int[] nominalCount = new int[1];
         if (getCurrentInstance(getActionCreationtime(), nominalCount) == null) {
             throw new CommandException(ErrorCode.E1010,
-                    "intial-instance should be equal or earlier than the nominal time. intial-instance is "
+                    "initial-instance should be equal or earlier than the nominal time. initial-instance is "
                             + getInitialInstance() + " and nominal time is " + getActionCreationtime());
         }
         // getCurrentInstance return offset relative to initial instance.
@@ -1397,6 +1451,10 @@ public class CoordELFunctions {
             case END_OF_DAY:
                 instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / DAY_MSEC);
                 break;
+            case WEEK:
+            case END_OF_WEEK:
+                instanceCount[0] = (int) ((effectiveTime.getTime() - datasetInitialInstance.getTime()) / WEEK_MSEC);
+                break;
             case MONTH:
             case END_OF_MONTH:
                 int diffYear = calEffectiveTime.get(Calendar.YEAR) - current.get(Calendar.YEAR);
@@ -1533,7 +1591,7 @@ public class CoordELFunctions {
     /**
      * @return dataset TimeZone
      */
-    private static TimeZone getDatasetTZ(ELEvaluator eval) {
+    public static TimeZone getDatasetTZ(ELEvaluator eval) {
         SyncCoordDataset ds = (SyncCoordDataset) eval.getVariable(DATASET);
         if (ds == null) {
             throw new RuntimeException("Associated Dataset should be defined with key " + DATASET);

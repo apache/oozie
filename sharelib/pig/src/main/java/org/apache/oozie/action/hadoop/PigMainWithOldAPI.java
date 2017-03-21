@@ -96,7 +96,7 @@ public class PigMainWithOldAPI extends LauncherMain {
             System.setProperty("mapreduce.job.credentials.binary", jobTokenFile);
         }
         else {
-            System.out.println("Non-kerberoes execution");
+            System.out.println("Non-kerberos execution");
         }
 
         OutputStream os = new FileOutputStream("pig.properties");

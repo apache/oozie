@@ -1356,6 +1356,8 @@ another Oozie system.
 
 The parent workflow job will wait until the child workflow job has completed.
 
+There can be several sub-workflows defined within a single workflow, each under its own action element.
+
 *Syntax:*
 
 <verbatim>

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Map;
@@ -100,6 +101,29 @@ public class CoordUtils {
         return coordActions;
     }
 
+    public static List<String> getActionListForScopeAndDate(String id, String scope, String dates) throws CommandException {
+        List<String> actionIds = new ArrayList<String>();
+
+        List<String> parsed = new ArrayList<String>();
+        if (scope == null && dates == null) {
+            parsed.add(id);
+            return parsed;
+        }
+
+        if (dates != null) {
+            List<CoordinatorActionBean> actionSet = CoordUtils.getCoordActionsFromDates(id, dates, true);
+            for (CoordinatorActionBean action : actionSet) {
+                actionIds.add(action.getId());
+            }
+            parsed.addAll(actionIds);
+        }
+        if (scope != null) {
+            parsed.addAll(CoordUtils.getActionsIds(id, scope));
+        }
+        return parsed;
+    }
+
+
     /**
      * Get the list of actions for given date ranges
      *
@@ -115,7 +139,7 @@ public class CoordUtils {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
-        Set<CoordinatorActionBean> actionSet = new HashSet<CoordinatorActionBean>();
+        Set<CoordinatorActionBean> actionSet = new LinkedHashSet<CoordinatorActionBean>();
         String[] list = scope.split(",");
         for (String s : list) {
             s = s.trim();
@@ -169,7 +193,7 @@ public class CoordUtils {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
-        Set<String> actions = new HashSet<String>();
+        Set<String> actions = new LinkedHashSet<String>();
         String[] list = scope.split(",");
         for (String s : list) {
             s = s.trim();
@@ -360,7 +384,7 @@ public class CoordUtils {
         Map<String, Object> params = new HashMap<String, Object>();
         int pcnt= 1;
         for (Map.Entry<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>, List<Object>> filter : filterMap.entrySet()) {
-            String field = filter.getKey().getFist();
+            String field = filter.getKey().getFirst();
             CoordinatorEngine.FILTER_COMPARATORS comp = filter.getKey().getSecond();
             String sqlField;
             if (field.equals(OozieClient.FILTER_STATUS)) {

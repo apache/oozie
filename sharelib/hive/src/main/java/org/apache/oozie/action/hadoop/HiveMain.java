@@ -40,8 +40,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.conf.HiveConf;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class HiveMain extends LauncherMain {
-    private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
             Pattern.compile("Submitted application (application[0-9_]*)")
     };
@@ -166,8 +169,11 @@ public class HiveMain extends LauncherMain {
         hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
         hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.hive.ql.exec", "false");
         hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.SessionState", "false");
         hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
 
         String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
         OutputStream os1 = new FileOutputStream(localProps);

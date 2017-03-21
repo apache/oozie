@@ -32,11 +32,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.sqoop.Sqoop;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class SqoopMain extends LauncherMain {
 
     public static final String SQOOP_SITE_CONF = "sqoop-site.xml";
 
-    private static final Pattern[] SQOOP_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] SQOOP_JOB_IDS_PATTERNS = {
             Pattern.compile("Job complete: (job_\\S*)"),
             Pattern.compile("Job (job_\\S*) has completed successfully"),
             Pattern.compile("Submitted application (application[0-9_]*)")
@@ -153,6 +156,7 @@ public class SqoopMain extends LauncherMain {
         return logFile;
     }
 
+    @Override
     protected void run(String[] args) throws Exception {
         System.out.println();
         System.out.println("Oozie Sqoop action configuration");

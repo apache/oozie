@@ -26,12 +26,18 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+
+import com.google.common.collect.Lists;
 
 public class TestSparkMain extends MainTestCase {
 
@@ -119,5 +125,34 @@ public class TestSparkMain extends MainTestCase {
         for (String s : jarList) {
             assertFalse(pattern.matcher(s).find());
         }
+    }
+
+    public void testAppendOoziePropertiesToSparkConf() throws Exception {
+        SparkMain instance = SparkMain.class.newInstance();
+        List<String> sparkArgs = new ArrayList<String>();
+        Configuration actionConf = new Configuration();
+        actionConf.set("foo", "foo-not-to-include");
+        actionConf.set("oozie.launcher", "launcher-not-to-include");
+        actionConf.set("oozie.spark", "spark-not-to-include");
+        actionConf.set("oozie.bar", "bar");
+
+        instance.appendOoziePropertiesToSparkConf(sparkArgs, actionConf);
+        assertEquals(Lists.newArrayList("--conf", "spark.oozie.bar=bar"), sparkArgs);
+    }
+
+    public void testJobIDPattern() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("Submitted application application_001");
+        // Non-matching ones
+        lines.add("Submitted application job_002");
+        lines.add("HadoopJobId: application_003");
+        lines.add("Submitted application = application_004");
+        Set<String> jobIds = new LinkedHashSet<String>();
+        for (String line : lines) {
+            LauncherMain.extractJobIDs(line, SparkMain.SPARK_JOB_IDS_PATTERNS, jobIds);
+        }
+        Set<String> expected = new LinkedHashSet<String>();
+        expected.add("job_001");
+        assertEquals(expected, jobIds);
     }
 }
