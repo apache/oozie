@@ -349,6 +349,27 @@ public abstract class LauncherMain {
         }
         copyFileMultiplex(actionXmlFile, dstFiles);
     }
+    /**
+     * Print arguments to standard output stream. Mask out argument values to option with name 'password' in them.
+     * @param banner source banner
+     * @param args arguments to be printed
+     */
+    void printArgs(String banner, String[] args) {
+        System.out.println(banner);
+        boolean maskNextArg = false;
+        for (String arg : args) {
+            if (maskNextArg) {
+                System.out.println("             " + "********");
+                maskNextArg = false;
+            }
+            else {
+                System.out.println("             " + arg);
+                if (arg.toLowerCase().contains("password")) {
+                    maskNextArg = true;
+                }
+            }
+        }
+    }
 }
 
 class LauncherMainException extends Exception {

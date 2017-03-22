@@ -34,7 +34,7 @@ public class CredentialsProviderFactory {
     public CredentialsProviderFactory(String type) {
         this.type = type;
         this.cred = null;
-        LOG.debug("Credentials Provider is created for Type: " + type);
+        LOG.debug("Credentials Provider is created for Type: {0}", type);
     }
 
     /**
@@ -54,7 +54,7 @@ public class CredentialsProviderFactory {
                 type = str[0];
                 classname = str[1];
                 if (classname != null) {
-                    LOG.debug("Creating Credential type : '" + type + "', class Name : '" + classname + "'");
+                    LOG.debug("Creating Credential type : '{0}', class Name : '{1}'", type, classname);
                     if (this.type.equalsIgnoreCase(str[0])) {
                         Class<?> klass = null;
                         try {

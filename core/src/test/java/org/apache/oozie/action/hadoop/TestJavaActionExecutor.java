@@ -76,6 +76,8 @@ import org.junit.Test;
 
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
+    public static final String YARN_RESOURCEMANAGER_ADDRESS = "yarn.resourcemanager.address";
+
     @Override
     protected void beforeSetUp() throws Exception {
         super.beforeSetUp();
@@ -110,7 +112,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         }
 
         conf = new XConfiguration();
-        conf.set("yarn.resourcemanager.address", "a");
+        conf.set(YARN_RESOURCEMANAGER_ADDRESS, "a");
         try {
             JavaActionExecutor.checkForDisallowedProps(conf, "x");
             fail();
@@ -197,7 +199,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = ae.createBaseHadoopConf(context, actionXml);
         assertEquals(protoConf.get(WorkflowAppService.HADOOP_USER), conf.get(WorkflowAppService.HADOOP_USER));
-        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get(YARN_RESOURCEMANAGER_ADDRESS));
         assertEquals(getNameNodeUri(), conf.get("fs.default.name"));
 
         conf = ae.createBaseHadoopConf(context, actionXml);
@@ -2253,9 +2255,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         Configuration conf = new Configuration(false);
         Assert.assertEquals(0, conf.size());
-        conf.set("yarn.resourcemanager.address", getJobTrackerUri());
+        conf.set(YARN_RESOURCEMANAGER_ADDRESS, getJobTrackerUri());
         ae.setupLauncherConf(conf, actionXmlWithConfiguration, null, null);
-        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get(YARN_RESOURCEMANAGER_ADDRESS));
         assertEquals("AA", conf.get("oozie.launcher.a"));
         assertEquals("AA", conf.get("a"));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
@@ -2264,9 +2266,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         conf = new Configuration(false);
         Assert.assertEquals(0, conf.size());
-        conf.set("yarn.resourcemanager.address", getJobTrackerUri());
+        conf.set(YARN_RESOURCEMANAGER_ADDRESS, getJobTrackerUri());
         ae.setupLauncherConf(conf, actionXmlWithoutConfiguration, null, null);
-        assertEquals(getJobTrackerUri(), conf.get("yarn.resourcemanager.address"));
+        assertEquals(getJobTrackerUri(), conf.get(YARN_RESOURCEMANAGER_ADDRESS));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
         assertEquals("action.barbar", conf.get("action.foofoo"));
         assertEquals(3, conf.size());

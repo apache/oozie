@@ -1374,7 +1374,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
 
             } catch (Exception ye) {
-                LOG.debug("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
+                LOG.info("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
                 // Fallback to action data file if we can't find the Launcher AM (maybe it got purged)
                 fallback = true;
             }

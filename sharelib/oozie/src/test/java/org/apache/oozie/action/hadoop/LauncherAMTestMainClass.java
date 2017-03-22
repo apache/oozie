@@ -32,15 +32,16 @@ public class LauncherAMTestMainClass {
     public static void main(String args[]) throws Throwable {
         System.out.println("Invocation of TestMain");
 
-        if (args != null && args.length > 0) {
-            if (args[0].equals(JAVA_EXCEPTION)) {
-                throw new JavaMainException(new RuntimeException(JAVA_EXCEPTION_MESSAGE));
-            } else if (args[0].equals(LAUNCHER_EXCEPTION)) {
-                throw new LauncherMainException(LAUNCHER_ERROR_CODE);
-            } else if (args[0].equals(SECURITY_EXCEPTION)) {
-                throw new SecurityException(SECURITY_EXCEPTION_MESSAGE);
-            } else if (args[0].equals(THROWABLE)) {
-                throw new Throwable(THROWABLE_MESSAGE);
+        if (args != null && args.length == 1) {
+            switch (args[0]){
+                case JAVA_EXCEPTION:
+                    throw new JavaMainException(new RuntimeException(JAVA_EXCEPTION_MESSAGE));
+                case LAUNCHER_EXCEPTION:
+                    throw new LauncherMainException(LAUNCHER_ERROR_CODE);
+                case SECURITY_EXCEPTION:
+                    throw new SecurityException(SECURITY_EXCEPTION_MESSAGE);
+                case THROWABLE:
+                    throw new Throwable(THROWABLE_MESSAGE);
             }
         }
     }

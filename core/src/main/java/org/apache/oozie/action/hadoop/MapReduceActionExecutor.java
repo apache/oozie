@@ -63,6 +63,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     public static final String HADOOP_COUNTERS = "hadoop.counters";
     public static final String OOZIE_MAPREDUCE_UBER_JAR_ENABLE = "oozie.action.mapreduce.uber.jar.enable";
     private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
+    public static final String JOB_END_NOTIFICATION_URL = "job.end.notification.url";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
@@ -315,10 +316,11 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     protected void injectCallback(Context context, Configuration conf) {
         // add callback for the MapReduce job
         String callback = context.getCallbackUrl("$jobStatus");
-        if (conf.get("job.end.notification.url") != null) {
-            LOG.warn("Overriding the action job end notification URI");
+        String oriiginalCallbackURL = conf.get(JOB_END_NOTIFICATION_URL);
+        if (oriiginalCallbackURL != null) {
+            LOG.warn("Overriding the action job end notification URI. Original value: {0}", oriiginalCallbackURL);
         }
-        conf.set("job.end.notification.url", callback);
+        conf.set(JOB_END_NOTIFICATION_URL, callback);
 
         super.injectCallback(context, conf);
     }

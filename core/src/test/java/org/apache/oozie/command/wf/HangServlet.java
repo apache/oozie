@@ -46,7 +46,7 @@ public class HangServlet extends HttpServlet {
                     XLog.getLog(HangServlet.class).error("Invalid sleep time, using default (200)", nfe);
                 }
             }
-            XLog.getLog(HangServlet.class).info("Sleeping for " + time + " ms");
+            XLog.getLog(HangServlet.class).info("Sleeping for {0} ms", time);
             Thread.sleep(time);
         }
         catch (Exception ex) {
