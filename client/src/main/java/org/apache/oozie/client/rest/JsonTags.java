@@ -252,4 +252,5 @@ public interface JsonTags {
     String COORD_ACTION_FIRST_MISSING_DEPENDENCIES = "blockedOn";
 
 
+    String PURGE = "purge";
 }

@@ -259,4 +259,17 @@ public class TestV1AdminServlet extends DagServletTestCase {
         });
 
     }
+
+    public void testPurgeServiceV1() throws Exception {
+        runTest("/v1/admin/*", V1AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_PURGE, Collections.EMPTY_MAP);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                assertEquals(HttpServletResponse.SC_OK, connection.getResponseCode());
+                return null;
+            }
+        });
+    }
 }

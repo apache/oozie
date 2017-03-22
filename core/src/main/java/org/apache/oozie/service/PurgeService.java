@@ -39,6 +39,7 @@ public class PurgeService implements Service {
      */
     public static final String CONF_PURGE_INTERVAL = CONF_PREFIX + "purge.interval";
     public static final String PURGE_LIMIT = CONF_PREFIX + "purge.limit";
+    public static final String PURGE_COMMAND_ENABLED = CONF_PREFIX + "enable.command.line";
 
     /**
      * PurgeRunnable is the runnable which is scheduled to run at the configured interval. PurgeCommand is queued to

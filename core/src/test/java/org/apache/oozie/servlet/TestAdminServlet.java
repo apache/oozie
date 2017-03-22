@@ -22,8 +22,6 @@ import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.BuildInfo;
-import org.apache.oozie.servlet.V0AdminServlet;
-import org.apache.oozie.servlet.V0JobServlet;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -263,6 +261,36 @@ public class TestAdminServlet extends DagServletTestCase {
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertEquals(null, json.get(JsonTags.SHARELIB_LIB));
+                return null;
+            }
+        });
+    }
+
+    public void testPurgeServiceV2() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_PURGE, Collections.EMPTY_MAP);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                assertEquals(HttpServletResponse.SC_OK, connection.getResponseCode());
+                return null;
+            }
+        });
+    }
+
+    public void testPurgeServiceV2Negative() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                Map<String, String> params = new HashMap<>();
+                params.put(RestConstants.PURGE_WF_AGE, "30");
+                params.put(RestConstants.PURGE_COORD_AGE, "7");
+                params.put(RestConstants.PURGE_BUNDLE_AGE, "-7");
+                URL url = createURL(RestConstants.ADMIN_PURGE, params);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, connection.getResponseCode());
                 return null;
             }
         });

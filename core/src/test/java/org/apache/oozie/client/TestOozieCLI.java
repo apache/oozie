@@ -990,6 +990,61 @@ public class TestOozieCLI extends DagServletTestCase {
         });
     }
 
+    public void testAdminPurgeCommand() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-purge", "wf=1;coord=2;bundle=3;limit=10;oldCoordAction=true", "-oozie",
+                        oozieUrl};
+                String out = runOozieCLIAndGetStdout(args);
+                assertEquals("Purge command executed successfully" + SYSTEM_LINE_SEPARATOR, out);
+                return null;
+            }
+        });
+
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-purge", "wf=1;coord=0;bundle=0;limit=10;oldCoordAction=true", "-oozie",
+                        oozieUrl};
+                String out = runOozieCLIAndGetStdout(args);
+                assertEquals("Purge command executed successfully" + SYSTEM_LINE_SEPARATOR, out);
+                return null;
+            }
+        });
+    }
+
+    public void testAdminPurgeCommandNegative() throws Exception {
+        runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                String oozieUrl = getContextURL();
+                String[] args = new String[]{"admin", "-purge", "-oozie", oozieUrl};
+                String error = runOozieCLIAndGetStderr(args);
+                assertTrue(error.contains("Missing argument for option: purge"));
+
+                args = new String[]{"admin", "-purge", "invalid=1", "-oozie", oozieUrl};
+                error = runOozieCLIAndGetStderr(args);
+                assertTrue(error.contains("INVALID_INPUT : Invalid purge option [invalid] specified."));
+
+                args = new String[]{"admin", "-purge", "wf=1;coord=", "-oozie", oozieUrl};
+                error = runOozieCLIAndGetStderr(args);
+                assertTrue(error.contains("INVALID_INPUT : Invalid purge option pair [coord=] specified."));
+
+                args = new String[]{"admin", "-purge", "wf=1;coord=-1", "-oozie", oozieUrl};
+                error = runOozieCLIAndGetStderr(args);
+                assertTrue(error.contains("Input value should be a positive integer. Value: -1"));
+
+                args = new String[]{"admin", "-purge", "wf=a", "-oozie", oozieUrl};
+                error = runOozieCLIAndGetStderr(args);
+                assertTrue(error.contains("For input string: \"a\""));
+                return null;
+            }
+        });
+    }
+
     public void testClientBuildVersion() throws Exception {
         String[] args = new String[]{"version"};
         String out = runOozieCLIAndGetStdout(args);

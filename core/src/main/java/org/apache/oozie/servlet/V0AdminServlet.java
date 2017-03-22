@@ -89,18 +89,10 @@ public class V0AdminServlet extends BaseAdminServlet {
     @Override
     protected void setOozieMode(HttpServletRequest request, HttpServletResponse response, String resourceName)
             throws XServletException {
-        if (resourceName.equals(RestConstants.ADMIN_STATUS_RESOURCE)) {
-            boolean safeMode = Boolean.parseBoolean(request.getParameter(modeTag));
-            //Services.get().setSafeMode(safeMode);
-            SYSTEM_MODE sysMode = safeMode == true ? SYSTEM_MODE.NOWEBSERVICE : SYSTEM_MODE.NORMAL;
-            System.out.println(modeTag + " DDDD " + sysMode);
-            Services.get().setSystemMode(sysMode);
-            response.setStatus(HttpServletResponse.SC_OK);
-        }
-        else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
-                                        ErrorCode.E0301, resourceName);
-        }
+        boolean safeMode = Boolean.parseBoolean(request.getParameter(modeTag));
+        SYSTEM_MODE sysMode = safeMode ? SYSTEM_MODE.NOWEBSERVICE : SYSTEM_MODE.NORMAL;
+        Services.get().setSystemMode(sysMode);
+        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     /*

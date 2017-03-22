@@ -20,6 +20,7 @@ package org.apache.oozie.client;
 
 import com.google.common.collect.Lists;
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.cli.ValidationUtil;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonToBean;
 import org.apache.oozie.client.rest.RestConstants;
@@ -2287,6 +2288,74 @@ public class OozieClient {
             return null;
         }
 
+    }
+
+    public String purgeCommand(String purgeOptions) throws OozieClientException {
+        String workflowAge = "";
+        String coordAge = "";
+        String bundleAge = "";
+        String purgeLimit = "";
+        String oldCoordAction = "";
+        if (purgeOptions != null) {
+            String options[] = purgeOptions.split(";");
+            for (String option : options) {
+                String pair[] = option.split("=");
+                if (pair.length < 2) {
+                    throw new OozieClientException(OozieClientException.INVALID_INPUT,
+                            "Invalid purge option pair [" + option + "] specified.");
+                }
+                String key = pair[0].toLowerCase();
+                String value = pair[1];
+                switch (key) {
+                    case "wf":
+                        workflowAge = String.valueOf(ValidationUtil.parsePositiveInteger(value));
+                        break;
+                    case "coord":
+                        coordAge = String.valueOf(ValidationUtil.parsePositiveInteger(value));
+                        break;
+                    case "bundle":
+                        bundleAge = String.valueOf(ValidationUtil.parsePositiveInteger(value));
+                        break;
+                    case "limit":
+                        purgeLimit = String.valueOf(ValidationUtil.parsePositiveInteger(value));
+                        break;
+                    case "oldcoordaction":
+                        oldCoordAction = value;
+                        break;
+                    default:
+                        throw new OozieClientException(OozieClientException.INVALID_INPUT,
+                                "Invalid purge option [" + key + "] specified.");
+                }
+            }
+        }
+        PurgeCommand purgeCommand = new PurgeCommand(workflowAge, coordAge, bundleAge, purgeLimit, oldCoordAction);
+        return purgeCommand.call();
+    }
+
+    private class PurgeCommand extends ClientCallable<String> {
+
+        PurgeCommand(String workflowAge, String coordAge, String bundleAge, String purgeLimit, String oldCoordAction) {
+            super("PUT", RestConstants.ADMIN, RestConstants.ADMIN_PURGE, prepareParams(
+                    RestConstants.PURGE_WF_AGE, workflowAge,
+                    RestConstants.PURGE_COORD_AGE, coordAge,
+                    RestConstants.PURGE_BUNDLE_AGE, bundleAge,
+                    RestConstants.PURGE_LIMIT, purgeLimit,
+                    RestConstants.PURGE_OLD_COORD_ACTION, oldCoordAction
+            ));
+        }
+
+        @Override
+        protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
+                JSONObject jsonObject = (JSONObject) JSONValue.parse(reader);
+                Object msg = jsonObject.get(JsonTags.PURGE);
+                return msg.toString();
+            } else {
+                handleError(conn);
+            }
+            return null;
+        }
     }
 
     /**

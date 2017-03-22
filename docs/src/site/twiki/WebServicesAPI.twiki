@@ -570,6 +570,34 @@ Content-Type: application/json;charset=UTF-8
 ]
 </verbatim>
 
+---++++ Purge Command
+
+Oozie admin purge command cleans up the Oozie Workflow/Coordinator/Bundle records based on the parameters.
+The unit for parameters is day.
+
+Purge command will delete the workflow records (wf=30) older than 30 days, coordinator records (coord=7) older than 7 days and
+bundle records (bundle=7) older than 7 days. The limit (limit=10) defines, number of records to be fetch at a time. Turn
+(oldCoordAction=true/false) =on/off= coordinator action record purging for long running coordinators. If any of the parameter is
+not provided, then it will be taken from the =oozie-default/oozie-site= configuration.
+
+*Request:*
+
+<verbatim>
+
+GET /oozie/v2/admin/purge?wf=30&coord=7&bundle=7&limit=10&oldCoordAction=true
+
+</verbatim>
+
+*Response:*
+
+<verbatim>
+
+{
+  "purge": "Purge command executed successfully"
+}
+
+</verbatim>
+
 ---+++ Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_
