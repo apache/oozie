@@ -206,6 +206,12 @@ public class MiniHCatServer {
         return new URI(uri.toString());
     }
 
+    public URI getHCatURI(String db, String table) throws URISyntaxException {
+        StringBuilder uri = new StringBuilder();
+        uri.append("hcat://").append(getMetastoreAuthority()).append("/").append(db).append("/").append(table);
+        return new URI(uri.toString());
+    }
+
     public void createDatabase(String db, String location) throws Exception {
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(db).ifNotExists(true).location(location).build();
         hcatClient.createDatabase(dbDesc);
@@ -228,6 +234,23 @@ public class MiniHCatServer {
         tblProps.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, "hcat." + db + "." + table);
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc.create(db, table, cols).fileFormat("textfile")
                 .partCols(ptnCols).tblProps(tblProps ).build();
+        hcatClient.createTable(tableDesc);
+        List<String> tables = hcatClient.listTableNamesByPattern(db, "*");
+        assertTrue(tables.contains(table));
+    }
+
+    public void createTable(String db, String table) throws Exception {
+        List<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
+        cols.add(new HCatFieldSchema("userid", Type.INT, "userid"));
+        cols.add(new HCatFieldSchema("viewtime", Type.BIGINT, "view time"));
+        cols.add(new HCatFieldSchema("pageurl", Type.STRING, "page url visited"));
+        cols.add(new HCatFieldSchema("ip", Type.STRING, "IP Address of the User"));
+
+        // Remove this once NotificationListener is fixed and available in HCat snapshot
+        Map<String, String> tblProps = new HashMap<String, String>();
+        tblProps.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, "hcat." + db + "." + table);
+        HCatCreateTableDesc tableDesc = HCatCreateTableDesc.create(db, table, cols).fileFormat("textfile")
+                .tblProps(tblProps ).build();
         hcatClient.createTable(tableDesc);
         List<String> tables = hcatClient.listTableNamesByPattern(db, "*");
         assertTrue(tables.contains(table));

@@ -32,7 +32,7 @@ template is specified as a dataset and input events are defined in Coordinator f
 availability checks by polling the HDFS directory URIs resolved based on the nominal time. When all the data
 dependencies are met, the Coordinator's workflow is triggered which then consumes the available HDFS data.
 
-With addition of HCatalog support, Coordinators also support specifying a set of HCatalog table partitions as a dataset.
+With addition of HCatalog support, Coordinators also support specifying a set of HCatalog tables or table partitions as a dataset.
 The workflow is triggered when the HCatalog table partitions are available and the workflow actions can then read the
 partition data. A mix of HDFS and HCatalog dependencies can be specified as input data dependencies.
 Similar to HDFS directories, HCatalog table partitions can also be specified as output dataset events.
@@ -58,7 +58,10 @@ documentation for the Oozie server side configuration required to support HCatal
 Oozie supports specifying HCatalog partitions as a data dependency through a URI notation. The HCatalog partition URI is
 used to identify a set of table partitions: hcat://bar:8020/logsDB/logsTable/dt=20090415;region=US.
 
-The format to specify a HCatalog table partition URI is
+The format to specify a HCatalog table URI is:
+hcat://[metastore server]:[port]/[database name]/[table name]
+
+The format to specify a HCatalog table partition URI is:
 hcat://[metastore server]:[port]/[database name]/[table name]/[partkey1]=[value];[partkey2]=[value];...
 
 For example,
@@ -94,7 +97,7 @@ Refer to [[CoordinatorFunctionalSpec][Coordinator Functional Specification]] for
 
 ---+++ Workflow
 Refer to [[WorkflowFunctionalSpec][Workflow Functional Specification]] for more information about
-   * how to drop HCatalog partitions in the prepare block of a action
+   * how to drop HCatalog table/partitions in the prepare block of a action
    * the HCatalog EL functions available to use in workflows
 
 Refer to [[DG_ActionAuthentication][Action Authentication]] for more information about

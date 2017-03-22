@@ -61,9 +61,9 @@ public class TestHCatURIHandler extends XHCatTestCase {
         createTable(db, table, "year,month,dt,country");
     }
 
-    private void dropTestTable() throws Exception {
-        dropTable(db, table, false);
-        dropDatabase(db, false);
+    private void dropTestTable(boolean ifExists) throws Exception {
+        dropTable(db, table, ifExists);
+        dropDatabase(db, ifExists);
     }
 
     @Test
@@ -105,7 +105,20 @@ public class TestHCatURIHandler extends XHCatTestCase {
         ((HCatURIHandler)handler).delete(hcatURI, conf, getTestUser());
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
 
-        dropTestTable();
+        dropTestTable(false);
     }
 
+    public void testDeleteTable() throws Exception {
+        try {
+            createTestTable();
+            URI hcatURI = getHCatURI(db, table);
+            URIHandler handler = uriService.getURIHandler(hcatURI);
+
+            assertTrue(handler.exists(hcatURI, conf, getTestUser()));
+            ((HCatURIHandler) handler).delete(hcatURI, conf, getTestUser());
+            assertFalse(handler.exists(hcatURI, conf, getTestUser()));
+        } finally {
+            dropTestTable(true);
+        }
+    }
 }

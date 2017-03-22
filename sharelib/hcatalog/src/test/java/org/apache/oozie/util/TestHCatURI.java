@@ -43,7 +43,21 @@ public class TestHCatURI {
         assertEquals(uri.getTable(), "clicks");
         assertEquals(uri.getPartitionValue("datastamp"), "12");
         assertEquals(uri.getPartitionValue("region"), "us");
+    }
 
+    @Test
+    public void testHCatTableURI() {
+        String input = "hcat://hcat.server.com:5080/mydb/clicks";
+        HCatURI uri = null;
+        try {
+            uri = new HCatURI(input);
+        }
+        catch (Exception ex) {
+            System.err.print(ex.getMessage());
+        }
+        assertEquals(uri.getServerEndPoint(), "hcat://hcat.server.com:5080");
+        assertEquals(uri.getDb(), "mydb");
+        assertEquals(uri.getTable(), "clicks");
     }
 
     @Test(expected = URISyntaxException.class)

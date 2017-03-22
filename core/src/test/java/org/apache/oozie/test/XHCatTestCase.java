@@ -61,6 +61,10 @@ public abstract class XHCatTestCase extends XFsTestCase {
         return hcatServer.getHCatURI(db, table, partitions);
     }
 
+    protected URI getHCatURI(String db, String table) throws URISyntaxException {
+        return hcatServer.getHCatURI(db, table);
+    }
+
     protected void createDatabase(String db) throws Exception {
         if (db.equals("default"))
             return;
@@ -69,6 +73,10 @@ public abstract class XHCatTestCase extends XFsTestCase {
 
     protected void createTable(String db, String table, String partitionCols) throws Exception {
         hcatServer.createTable(db, table, partitionCols);
+    }
+
+    protected void createTable(String db, String table) throws Exception {
+        hcatServer.createTable(db, table);
     }
 
     protected void dropDatabase(String db, boolean ifExists) throws Exception {
