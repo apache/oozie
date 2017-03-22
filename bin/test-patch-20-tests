@@ -91,16 +91,29 @@ case $OP in
         -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
         -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
     exitCode=${PIPESTATUS[0]}
+    failures=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<<" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//' | grep -o '(\(.*\))' | tr -d '()'  | uniq | awk '{ sub ("\\\\$", ""); printf "%s", $0"," } END { print "" }')
+    if [ -n "${failures}" ]; then
+       echo "Rerunning failed tests: ${failures}"
+       echo $FAILURES > ${TEMPDIR}/${TASKNAME}.flakies.out
+       mvn test ${MVNPASSTHRU} -Dmaven.test.failure.ignore=true \
+        -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
+        -Dtest.timeout=7200 -Dtest=${failures} | tee ${TEMPDIR}/${TASKNAME}.rerun.out >> $STDOUT
+       exitCode=${PIPESTATUS[0]}
+    else
+       echo "No Reruns required, all tests passed."
+    fi
     echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
     ;;
   report)
-    failedTests=` find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//'`
-    testsWithError=` find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//'`
-    testsRun=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
-    testsFailed=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
-    testsErrors=`grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}'`
-    hasFailures=`expr $testsFailed + $testsErrors`
-    testsExitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
+    failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
+    testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
+    testsRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsFailed=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsErrors=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    hasFailures=$(expr $testsFailed + $testsErrors)
+    testsExitCode=$(cat ${TEMPDIR}/${TASKNAME}.exitCode)
+    flakyTests=$(cat ${TEMPDIR}/${TASKNAME}.flakies.out)
+    testsReRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
     if [[ $hasFailures != 0 ]] ; then
       echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
       echo ".    Tests run: $testsRun" >> $SUMMARYFILE
@@ -120,6 +133,10 @@ case $OP in
       else
         echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
         echo ".    Tests run: $testsRun" >> $SUMMARYFILE
+        if [ -n "${flakyTests}" ]; then
+          echo ".    Tests rerun: ${testsReRun}" >> $SUMMARYFILE
+          echo ".    Tests failed at first run: ${flakyTests}" >> $SUMMARYFILE
+        fi
       fi
     fi
     ;;

@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2817 Increase test case stability in pre-commit job (gezapeti)
 OOZIE-2820 Fix more spelling errors in exceptions and logging (lzeke via rkanter)
 OOZIE-2816 Strip out the first command word from Sqoop action if its "sqoop" (harsh)
 OOZIE-2813 Remove tabs and trailing whitespaces from oozie-defaul.xml (gezapeti)
