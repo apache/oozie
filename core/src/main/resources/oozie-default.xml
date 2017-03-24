@@ -1882,8 +1882,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.action.shell.setup.hadoop.conf.dir.log4j.content</name>
         <value>
-            log4j.rootLogger=${hadoop.root.logger}
-            hadoop.root.logger=INFO,console
+            log4j.rootLogger=INFO,console
             log4j.appender.console=org.apache.log4j.ConsoleAppender
             log4j.appender.console.target=System.err
             log4j.appender.console.layout=org.apache.log4j.PatternLayout
