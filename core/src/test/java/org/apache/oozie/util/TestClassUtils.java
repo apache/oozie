@@ -18,11 +18,14 @@
 
 package org.apache.oozie.util;
 
-import junit.framework.TestCase;
 import org.json.simple.JSONArray;
+import org.junit.Test;
 
-public class TestClassUtils extends TestCase {
+import static junit.framework.Assert.assertTrue;
 
+public class TestClassUtils {
+
+    @Test
     public void testContainingJar() {
         assertTrue(ClassUtils.findContainingJar(JSONArray.class).contains("json-simple"));
     }

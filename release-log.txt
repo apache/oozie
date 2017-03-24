@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2838 TestClassUtils,TestJsonUtils,TestWritableUtils,TestXmlUtils shall not be an Oozie XTestCase (asasvari via pbacsko)
 OOZIE-2811 amend Add support for filtering out properties from SparkConfigurationService
 OOZIE-2817 amend Increase test case stability in pre-commit job (gezapeti)
 OOZIE-2041 Add an admin command to run the PurgeXCommand (abhishekbafna)
