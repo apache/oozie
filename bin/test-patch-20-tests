@@ -94,7 +94,7 @@ case $OP in
     failures=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<<" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//' | grep -o '(\(.*\))' | tr -d '()'  | uniq | awk '{ sub ("\\\\$", ""); printf "%s", $0"," } END { print "" }')
     if [ -n "${failures}" ]; then
        echo "Rerunning failed tests: ${failures}"
-       echo $FAILURES > ${TEMPDIR}/${TASKNAME}.flakies.out
+       echo ${failures} > ${TEMPDIR}/${TASKNAME}.flakies.out
        mvn test ${MVNPASSTHRU} -Dmaven.test.failure.ignore=true \
         -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
         -Dtest.timeout=7200 -Dtest=${failures} | tee ${TEMPDIR}/${TASKNAME}.rerun.out >> $STDOUT
