@@ -22,6 +22,7 @@ OP=""
 TEMPDIR=${BASEDIR}/tmp
 REPORTDIR=""
 SUMMARYFILE=""
+SUMMARYFILE_FULL=""
 STDOUT="/dev/null"
 MVNPASSTHRU=""
 FINDBUGS_JAR_URL=https://repo1.maven.org/maven2/me/andrz/findbugs/findbugs-diff/0.1.0/findbugs-diff-0.1.0-all.jar
@@ -31,6 +32,7 @@ FINDBUGS_PRIORITY_THRESHOLD=2
 # Scariest and scary
 FINDBUGS_RANK_THRESHOLD=9
 FINDBUGS_XML_NAME=findbugsXml.xml
+BUG_LIMIT_PER_PROJECT=5
 
 
 cleanup_and_exit() {
@@ -52,7 +54,7 @@ remove_file_if_present() {
 }
 
 print_usage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE> --summaryfile-full=<FULL SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
 
@@ -76,6 +78,9 @@ parse_args() {
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
       ;;
+    --summaryfile-full=*)
+      SUMMARYFILE_FULL=${i#*=}
+      ;;
     --verbose)
       STDOUT="/dev/stdout"
       ;;
@@ -87,7 +92,7 @@ parse_args() {
       ;;
     esac
   done
-  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" ]] ; then
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" || "${SUMMARYFILE_FULL}" == "" ]] ; then
     echo "Missing options"
     echo
     print_usage
@@ -108,9 +113,9 @@ verify_and_save_findbugs_output() {
   REPORT_SUFFIX=$3
 
   echo "[TRACE] Verifying and saving FindBugs output in ${BRANCH_LABEL}"
-  echo "[TRACE] mvn clean verify -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}"
+  echo "[TRACE] mvn clean compile test-compile findbugs:check -Dfindbugs.failOnError=false -Dcheckstyle.failOnViolation=false -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}"
 
-  mvn clean verify -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}
+  mvn clean compile test-compile findbugs:check -Dfindbugs.failOnError=false -Dcheckstyle.failOnViolation=false -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}
 
   if [ ! -d "$FINDBUGS_OUTPUT_DIR" ]; then
     mkdir -p "${FINDBUGS_OUTPUT_DIR}"
@@ -182,7 +187,7 @@ download_and_check_findbugs_diff_jar() {
     echo "${md5Content}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum"
   else
     echo "[ERROR] Neither md5 nor md5sum are present, cannot check FindBugs diff JAR"
-    echo "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR." >> "${SUMMARYFILE}"
+    summary_both "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR."
     cleanup_and_exit 1
   fi
 
@@ -200,7 +205,7 @@ download_and_check_findbugs_diff_jar() {
     fi
 
     echo "[ERROR] FindBugs diff JAR has a weird MD5 sum, rejecting"
-    echo "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting." >> "${SUMMARYFILE}"
+    summary_both "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting."
     cleanup_and_exit 1
   fi
 
@@ -257,6 +262,7 @@ check_minimum_file_size() {
 check_findbugs_diffs_and_create_reports() {
   DIFF_DIR=$1
   REPORT=()
+  REPORT_FULL=()
 
   echo "[TRACE] Checking FindBugs diffs and creating reports"
 
@@ -284,44 +290,85 @@ check_findbugs_diffs_and_create_reports() {
 
     if [ "${newBugBelowThresholdCount}" -gt "0" ]; then
       echo "[ERROR] There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}]."
-      REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      REPORT_FULL+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      if [ "${newBugBelowThresholdCount}" -gt "${BUG_LIMIT_PER_PROJECT}" ]; then
+        REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed, listing only the first [${BUG_LIMIT_PER_PROJECT}] ones.")
+      else
+        REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      fi
       echo "[DEBUG] You can find the FindBugs diff here (look for the red and orange ones): ${htmlFileName}"
       REPORT+=("You can find the FindBugs diff here (look for the red and orange ones): ${htmlFileName}")
-      REPORT+=("The most important FindBugs errors are:")
+      REPORT_FULL+=("You can find the FindBugs diff here (look for the red and orange ones): ${htmlFileName}")
+      REPORT_FULL+=("The most important FindBugs errors are:")
+      if [ "${newBugBelowThresholdCount}" -gt "${BUG_LIMIT_PER_PROJECT}" ]; then
+        REPORT+=("The top [${BUG_LIMIT_PER_PROJECT}] most important FindBugs errors are:")
+      else
+        REPORT+=("The most important FindBugs errors are:")
+      fi
+
+      lineCount=0
       while IFS= read -r line; do
-        REPORT+=( "${line}" );
+        REPORT_FULL+=( "${line}" );
+        if [ "${lineCount}" -lt "${BUG_LIMIT_PER_PROJECT}" ]; then
+          REPORT+=( "${line}" );
+        fi
+        lineCount=$((lineCount + 1))
       done < <(echo cat "/BugCollection/BugInstance[@priority <= ${FINDBUGS_PRIORITY_THRESHOLD} or @rank <= ${FINDBUGS_RANK_THRESHOLD}]/SourceLine/Message/text() | /BugCollection/BugInstance[@priority <= 2 or @rank <= 9]/LongMessage/text()" \
       | xmllint --shell "${fn}" | grep -v '\-\-\-\-\-\-\-' | grep -v '/ >' | sed -e 'N;s/\(.*\)\n\(.*\)/\2: \1/')
     elif [ "${newBugTotalCount}" -gt "0" ]; then
       echo "[WARN] There are [${newBugTotalCount}] new bugs found in [${componentDir}]."
       REPORT+=("{color:orange}0{color} There are [${newBugTotalCount}] new bugs found in [${componentDir}] that would be nice to have fixed.")
+      REPORT_FULL+=("{color:orange}0{color} There are [${newBugTotalCount}] new bugs found in [${componentDir}] that would be nice to have fixed.")
       echo "[DEBUG] You can find the FindBugs diff here: ${htmlFileName}"
       REPORT+=("You can find the FindBugs diff here: ${htmlFileName}")
+      REPORT_FULL+=("You can find the FindBugs diff here: ${htmlFileName}")
     else
       echo "[DEBUG] There are no new bugs found in [${componentDir}]."
       REPORT+=("{color:green}+1{color} There are no new bugs found in [${componentDir}].")
+      REPORT_FULL+=("{color:green}+1{color} There are no new bugs found in [${componentDir}].")
     fi
 
   done <   <(find "${DIFF_DIR}" -name findbugs-new.xml -print0)
 
   if [ "${belowThresholdCount}" -gt "0" ]; then
     echo "[ERROR] There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed."
-    echo "{color:red}-1{color} There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed." \
-        >> "${SUMMARYFILE}"
+    summary_both "{color:red}-1{color} There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed."
   elif [ "${totalCount}" -gt "0" ]; then
     echo "[WARN] There are [${totalCount}] new bugs found in total that would be nice to have fixed."
-    echo "{color:orange}0{color} There are [${totalCount}] new bugs found in total that would be nice to have fixed." \
-        >> "${SUMMARYFILE}"
+    summary_both "{color:orange}0{color} There are [${totalCount}] new bugs found in total that would be nice to have fixed."
   else
     echo "[INFO] There are no new bugs found totally]."
-    echo "{color:green}+1{color} There are no new bugs found in total." >> "${SUMMARYFILE}"
+    summary_both "{color:green}+1{color} There are no new bugs found in total."
   fi
 
   for line in "${REPORT[@]}" ; do
-    echo ".    ${line}" >> "${SUMMARYFILE}"
+    summary ".    ${line}"
+  done
+
+  for line in "${REPORT_FULL[@]}" ; do
+    summary_full ".    ${line}"
   done
 
   echo "[TRACE] FindBugs diffs checked and reports created"
+}
+
+
+summary() {
+  LINE=$1
+  echo ${LINE} >> ${SUMMARYFILE}
+}
+
+
+summary_full() {
+  LINE=$1
+  echo ${LINE} >> ${SUMMARYFILE_FULL}
+}
+
+
+summary_both() {
+  LINE=$1
+  echo ${LINE} >> ${SUMMARYFILE}
+  echo ${LINE} >> ${SUMMARYFILE_FULL}
 }
 
 
@@ -339,6 +386,8 @@ case ${OP} in
     download_and_check_findbugs_diff_jar "${TEMPDIR}/${TASKNAME}/diff"
     perform_findbugs_diffs "${TEMPDIR}/${TASKNAME}/pre" "${TEMPDIR}/${TASKNAME}/post" "${TEMPDIR}/${TASKNAME}/diff"
     check_findbugs_diffs_and_create_reports "${TEMPDIR}/${TASKNAME}/diff"
+    echo "[TRACE] Summary file size is $(wc -c ${SUMMARYFILE} | awk '{print $1}') bytes"
+    echo "[TRACE] Full summary file size is $(wc -c ${SUMMARYFILE_FULL} | awk '{print $1}') bytes"
     ;;
 esac
 
