@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2831 Update maven-project-info-reports-plugin to 2.9 (asasvari via gezapeti)
 OOZIE-2753 Update Docs for Jetty Tomcat changes (asasvari via abhishekbafna)
 OOZIE-2841 Limit FindBugs diff errors in JIRA comments (andras.piros via gezapeti)
 OOZIE-2739 Remove property expansion pattern from ShellMain's log4j properties content (harsh)
