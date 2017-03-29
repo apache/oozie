@@ -1,6 +1,7 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
-OOZIE-2841 Limit FindBugs diff errors in JIRA comments
+OOZIE-2753 Update Docs for Jetty Tomcat changes (asasvari via abhishekbafna)
+OOZIE-2841 Limit FindBugs diff errors in JIRA comments (andras.piros via gezapeti)
 OOZIE-2739 Remove property expansion pattern from ShellMain's log4j properties content (harsh)
 OOZIE-2817 amend Increase test case stability in pre-commit job (abhishekbafna)
 OOZIE-2838 TestClassUtils,TestJsonUtils,TestWritableUtils,TestXmlUtils shall not be an Oozie XTestCase (asasvari via pbacsko)

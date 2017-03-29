@@ -20,8 +20,6 @@
 function printUsage() {
   echo
   echo " Usage  : oozie-setup.sh <Command and OPTIONS>"
-  echo "          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
-  echo "                                                -secure will configure the war file to use HTTPS (SSL))"
   echo "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] [-concurrency CONCURRENCY]"
   echo "                                                                (create sharelib for oozie,"
   echo "                                                                FS_URI is the fs.default.name"
@@ -169,8 +167,6 @@ do
   elif [ "$1" = "-d" ]; then
     shift
     additionalDir=$1
-  elif [ "$1" = "prepare-war" ]; then
-    prepareWar=true
   else
     printUsage
     exit -1

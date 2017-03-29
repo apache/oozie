@@ -2647,8 +2647,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.instance.id</name>
         <value>${oozie.http.hostname}</value>
         <description>
-            Each Oozie server should have its own unique instance id. The default is system property
-            =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+            Each Oozie server should have its own unique instance id.
         </description>
     </property>
 

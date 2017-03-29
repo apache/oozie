@@ -1332,13 +1332,17 @@ Example:
 
 <verbatim>
 $ oozie admin -oozie http://localhost:11000/oozie -osenv
-Apple_PubSub_Socket_Render : /private/tmp/com.apple.launchd.V2oxXoP55M/Render
-CATALINA_BASE : /Users/rkanter/dev/oozie/oozie-server
-CATALINA_OUT : /Users/rkanter/dev/oozie/logs/catalina.out
-CATALINA_PID : /Users/rkanter/dev/oozie/oozie-server/temp/oozie.pid
-HADOOP_HOME : /Users/rkanter/dev/hadoop
-HADOOP_HOME_WARN_SUPPRESS : TRUE
-HADOOP_OPTS : -Djava.security.krb5.realm=OX.AC.UK -Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk
+...
+JETTY_OPTS :  -Doozie.home.dir=/Users/asasvari/dev/oozie -Doozie.config.dir=/Users/asasvari/dev/oozie/conf -Doozie.log.dir=/Users/asasvari/dev/oozie/logs -Doozie.data.dir=/Users/asasvari/dev/oozie/data -Doozie.config.file=oozie-site.xml -Doozie.log4j.file=oozie-log4j.properties -Doozie.log4j.reload=10 -Djava.library.path= -cp /Users/asasvari/dev/oozie/embedded-oozie-server/*:/Users/asasvari/dev/oozie/embedded-oozie-server/dependency/*:/Users/asasvari/dev/oozie/lib/*:/Users/asasvari/dev/oozie/libtools/*:/Users/asasvari/dev/oozie/embedded-oozie-server
+JETTY_OUT : /Users/asasvari/dev/oozie/logs/jetty.out
+JETTY_PID_FILE : /Users/asasvari/dev/oozie/embedded-oozie-server/oozie.pid
+OOZIE_CONFIG : /Users/asasvari/dev/oozie/conf
+OOZIE_CONFIG_FILE : oozie-site.xml
+OOZIE_DATA : /Users/asasvari/dev/oozie/data
+OOZIE_HOME : /Users/asasvari/dev/oozie
+OOZIE_LOG : /Users/asasvari/dev/oozie/logs
+OOZIE_LOG4J_FILE : oozie-log4j.properties
+OOZIE_LOG4J_RELOAD : 10
 ...
 </verbatim>
 
@@ -1350,15 +1354,14 @@ Example:
 
 <verbatim>
 $ oozie admin -oozie http://localhost:11000/oozie -javasysprops
-awt.toolkit : sun.lwawt.macosx.LWCToolkit
-catalina.base : /Users/rkanter/dev/oozie/oozie-server
-catalina.home : /Users/rkanter/dev/oozie/oozie-server
-catalina.useNaming : true
-common.loader : ${catalina.base}/lib,${catalina.base}/lib/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar
-derby.stream.error.file : /Users/rkanter/dev/oozie/logs/derby.log
-file.encoding : UTF-8
-file.encoding.pkg : sun.io
-file.separator : /
+...
+oozie.config.dir : /Users/asasvari/dev/oozie/conf
+oozie.config.file : oozie-site.xml
+oozie.data.dir : /Users/asasvari/dev/oozie/data
+oozie.home.dir : /Users/asasvari/dev/oozie
+oozie.log.dir : /Users/asasvari/dev/oozie/logs
+oozie.log4j.file : oozie-log4j.properties
+oozie.log4j.reload : 10
 ...
 </verbatim>
 

@@ -66,7 +66,7 @@ Any configuration properties to be made available to this class should also be a
 
 The XML schema (XSD) for the new Actions should be added to oozie-site.xml, under the property 'oozie.service.WorkflowSchemaService.ext.schemas'. A comma separated list for multiple Action schemas.
 
-The executor class should be placed along with the oozie webapp in the correct path. Once Tomcat is restarted, the custom action node can be used in workflows.
+The executor class should be placed along with the oozie webapp in the correct path. Once Oozie is restarted, the custom action node can be used in workflows.
 
 
 

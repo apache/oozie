@@ -203,8 +203,7 @@ the 'SKIPPING TEST..." message would appear in the testcase log file of both tes
 
 ---++ Building an Oozie Distribution
 
-An Oozie distribution bundles an embedded Tomcat server. The Oozie distro module downloads Tomcat TAR.GZ from Apache
-once (in the =distro/downloads/= directory) and uses it when creating the distro.
+An Oozie distribution bundles an embedded Jetty server.
 
 The simplest way to build Oozie is to run the =mkdistro.sh= script:
 <verbatim>
@@ -223,7 +222,7 @@ as the execution engine for those applications.
 -Dpig.classifier=<classifier> - default none
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
--Dtomcat.version=<version> - default 6.0.47
+-jetty.version=<version> - default 9.2.19.v20160908
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
