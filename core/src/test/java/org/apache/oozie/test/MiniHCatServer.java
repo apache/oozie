@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -146,11 +145,7 @@ public class MiniHCatServer {
     }
 
     public static void resetHiveConfStaticVariables() throws Exception {
-        // HiveConf initializes location of hive-site.xml in static block.
-        // So this is needed so that tests like TestHiveMain that create hive-site.xml don't fail.
-        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-        declaredField.setAccessible(true);
-        declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
+        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
     }
 
     private void setSystemProperty(String name, String value) {

@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -586,13 +585,7 @@ public class SparkMain extends LauncherMain {
         // hive-site.xml.
         // If prepare block had a drop partition it would have been initialized
         // to null.
-        try {
-            Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-            declaredField.setAccessible(true);
-            declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
-        }
-        catch (Throwable ignore) {
-        }
+        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
     }
 
     /**

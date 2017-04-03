@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -207,11 +206,7 @@ public class HiveMain extends LauncherMain {
 
         // Reset the hiveSiteURL static variable as we just created hive-site.xml.
         // If prepare block had a drop partition it would have been initialized to null.
-        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-        if (declaredField != null) {
-            declaredField.setAccessible(true);
-            declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
-        }
+        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
         return hiveConf;
     }
 
