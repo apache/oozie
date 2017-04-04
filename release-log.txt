@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-1283 Remove the old ssh documentation (Jan Hentschel via rkanter)
 OOZIE-2845 Replace reflection-based code which sets variable in HiveConf (pbacsko via abhishekbafna)
 OOZIE-2831 Update maven-project-info-reports-plugin to 2.9 (asasvari via gezapeti)
 OOZIE-2753 Update Docs for Jetty Tomcat changes (asasvari via abhishekbafna)
