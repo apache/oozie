@@ -18,7 +18,12 @@
 
 package org.apache.oozie.server.guice;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.server.EmbeddedOozieServer;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.Services;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.util.security.Constraint;
@@ -26,10 +31,18 @@ import org.eclipse.jetty.util.security.Constraint;
 import java.util.Arrays;
 
 class ConstraintSecurityHandlerProvider implements Provider<ConstraintSecurityHandler> {
+    private final Configuration oozieConfiguration;
+
+    @Inject
+    public ConstraintSecurityHandlerProvider(final Services oozieServices) {
+        oozieConfiguration = oozieServices.get(ConfigurationService.class).getConf();
+    }
+
     @Override
     public ConstraintSecurityHandler get() {
+        String contextPath = EmbeddedOozieServer.getContextPath(oozieConfiguration);
         ConstraintMapping callbackConstraintMapping = new ConstraintMapping();
-        callbackConstraintMapping.setPathSpec("/callback/*");
+        callbackConstraintMapping.setPathSpec(String.format("%s/callback/*", contextPath));
         Constraint unsecureConstraint = new Constraint();
         unsecureConstraint.setDataConstraint(Constraint.DC_NONE);
         callbackConstraintMapping.setConstraint(unsecureConstraint);

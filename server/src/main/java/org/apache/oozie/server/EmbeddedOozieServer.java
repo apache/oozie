@@ -49,6 +49,7 @@ import java.net.URISyntaxException;
  */
 public class EmbeddedOozieServer {
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOozieServer.class);
+    private static String contextPath;
     protected Server server;
     private int httpPort;
     private int httpsPort;
@@ -106,7 +107,7 @@ public class EmbeddedOozieServer {
      */
     public void setup() throws URISyntaxException, IOException, ServiceException {
         conf = serviceController.get(ConfigurationService.class).getConf();
-
+        setContextPath(conf);
         httpPort = getConfigPort(ConfigUtils.OOZIE_HTTP_PORT);
 
         HttpConfiguration httpConfiguration = new HttpConfigurationWrapper(conf).getDefaultHttpConfiguration();
@@ -128,7 +129,7 @@ public class EmbeddedOozieServer {
             server.setConnectors(new Connector[]{connector});
         }
 
-        servletContextHandler.setContextPath("/oozie/");
+        servletContextHandler.setContextPath(contextPath);
         oozieServletMapper.mapOozieServlets();
         oozieFilterMapper.addFilters();
 
@@ -168,6 +169,21 @@ public class EmbeddedOozieServer {
         return isSSLEnabled != null && Boolean.valueOf(isSSLEnabled);
     }
 
+    public static void setContextPath(Configuration oozieConfiguration) {
+        String baseUrl = oozieConfiguration.get("oozie.base.url");
+        String contextPath = baseUrl.substring(baseUrl.lastIndexOf("/"));
+        LOG.info("Server started with contextPath = " + contextPath);
+        EmbeddedOozieServer.contextPath = contextPath;
+    }
+
+    public static String getContextPath(Configuration oozieConfiguration) {
+        if (contextPath != null) {
+            return contextPath;
+        }
+
+        setContextPath(oozieConfiguration);
+        return EmbeddedOozieServer.contextPath;
+    }
 
     public void start() throws Exception {
         server.start();

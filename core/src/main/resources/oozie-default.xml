@@ -102,7 +102,7 @@
 
     <property>
         <name>oozie.base.url</name>
-        <value>http://localhost:8080/oozie</value>
+        <value>http://${oozie.http.hostname}:${oozie.http.port}/oozie</value>
         <description>
              Base Oozie URL.
         </description>
