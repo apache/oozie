@@ -3009,4 +3009,10 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.hcat.uri.regex.pattern</name>
+        <value>([a-z]+://[\w\.\-]+:\d+[,]*)+/\w+/\w+/?[\w+=;\-]*</value>
+        <description>Regex pattern for HCat URIs. The regex can be modified by users as per requirement
+            for parsing/splitting the HCat URIs.</description>
+    </property>
 </configuration>

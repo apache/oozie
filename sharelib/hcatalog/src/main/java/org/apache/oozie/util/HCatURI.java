@@ -55,6 +55,7 @@ public class HCatURI {
 
     private void parse(URI uri) throws URISyntaxException {
 
+        uri = HCatURIParser.parseURI(uri);
         this.uri = uri;
 
         if (uri.getAuthority() == null) {
@@ -104,6 +105,26 @@ public class HCatURI {
 
     public String toURIString() {
         return uri.toString();
+    }
+
+    /**
+     * Return server end points with given scheme
+     * @param scheme uri scheme
+     * @return server end point with given scheme
+     */
+    public String getServerEndPointWithScheme(String scheme) {
+        String authority = uri.getAuthority();
+        String[] authorities = authority.split(",");
+        StringBuilder builder = new StringBuilder();
+        for (String auth : authorities) {
+            if (builder.length() != 0) {
+                builder.append(",");
+            }
+            builder.append(scheme);
+            builder.append("://");
+            builder.append(auth);
+        }
+        return builder.toString();
     }
 
     /**
