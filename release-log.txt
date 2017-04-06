@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2844 Increase stability of Oozie actions when log4j.properties is missing or not readable (andras.piros via pbacsko)
 OOZIE-2701 Oozie to support Multiple HCatalog URIs (abhishekbafna)
 OOZIE-2850 Fix default callback notifications (asasvari via gezapeti)
 OOZIE-1283 Remove the old ssh documentation (Jan Hentschel via rkanter)
