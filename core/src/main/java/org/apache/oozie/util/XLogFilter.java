@@ -24,12 +24,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.util.LogLine.MATCHED_PATTERN;
+
 import com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -61,7 +64,7 @@ public class XLogFilter {
     private static final String TIMESTAMP_REGEX = "(\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d,\\d\\d\\d)";
     private static final String WHITE_SPACE_REGEX = "\\s+";
     private static final String LOG_LEVEL_REGEX = "(\\w+)";
-    private static final String PREFIX_REGEX = TIMESTAMP_REGEX + WHITE_SPACE_REGEX + LOG_LEVEL_REGEX
+    static final String PREFIX_REGEX = TIMESTAMP_REGEX + WHITE_SPACE_REGEX + LOG_LEVEL_REGEX
             + WHITE_SPACE_REGEX;
     private static final Pattern SPLITTER_PATTERN = Pattern.compile(PREFIX_REGEX + ALLOW_ALL_REGEX);
 
@@ -121,6 +124,33 @@ public class XLogFilter {
      * @param logParts
      * @return
      */
+    public boolean splitsMatches(LogLine logLine) {
+        // Check whether logLine matched with filter
+        if (logLine.getMatchedPattern() != MATCHED_PATTERN.SPLIT) {
+            return false;
+        }
+        ArrayList<String> logParts = logLine.getLogParts();
+        if (getStartDate() != null) {
+            if (logParts.get(0).substring(0, 19).compareTo(getFormattedStartDate()) < 0) {
+                return false;
+            }
+        }
+        String logLevel = logParts.get(1);
+        if (this.logLevels == null || this.logLevels.containsKey(logLevel.toUpperCase(Locale.ENGLISH))) {
+            // line contains the permitted logLevel
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the logLevel and logMessage goes through the logFilter.
+     *
+     * @param logParts
+     * @return
+     */
     public boolean matches(ArrayList<String> logParts) {
         if (getStartDate() != null) {
             if (logParts.get(0).substring(0, 19).compareTo(getFormattedStartDate()) < 0) {
@@ -139,8 +169,9 @@ public class XLogFilter {
     }
 
     /**
-     * Splits the log line into timestamp, logLevel and remaining log message. Returns array containing timestamp,
-     * logLevel, and logMessage if the pattern matches i.e A new log statement, else returns null.
+     * Splits the log line into timestamp, logLevel and remaining log message.
+     * Returns array containing timestamp, logLevel, and logMessage if the
+     * pattern matches i.e A new log statement, else returns null.
      *
      * @param logLine
      * @return Array containing log level and log message
@@ -160,8 +191,39 @@ public class XLogFilter {
     }
 
     /**
-     * Constructs the regular expression according to the filter and assigns it to fileterPattarn. ".*" will be assigned
-     * if no filters are set.
+     * If <code>logLine</code> matches with <code>splitPattern</code>,
+     * <ol>
+     * <li>Split the log line into timestamp, logLevel and remaining log
+     * message.</li>
+     * <li>Record the parts of message in <code>logLine</code> to avoid regex
+     * matching in future.</li>
+     * <li>Record the pattern to which <code>logLine</code> has matched.</li>
+     * </ol>
+     * @param logLine
+     * @param splitPattern
+     */
+    public void splitLogMessage(LogLine logLine, Pattern splitPattern) {
+        Matcher splitterWithJobId = splitPattern.matcher(logLine.getLine());
+        Matcher allowAll = SPLITTER_PATTERN.matcher(logLine.getLine());
+        if (splitterWithJobId.matches()) {
+            ArrayList<String> logParts = new ArrayList<String>(3);
+            logParts.add(splitterWithJobId.group(1));// timestamp
+            logParts.add(splitterWithJobId.group(2));// log level
+            logParts.add(splitterWithJobId.group(3));// log message
+            logLine.setLogParts(logParts);
+            logLine.setMatchedPattern(MATCHED_PATTERN.SPLIT);
+        }
+        else if (allowAll.matches()) {
+            logLine.setMatchedPattern(MATCHED_PATTERN.GENENRIC);
+        }
+        else {
+            logLine.setMatchedPattern(MATCHED_PATTERN.NONE);
+        }
+    }
+
+    /**
+     * Constructs the regular expression according to the filter and assigns it
+     * to fileterPattarn. ".*" will be assigned if no filters are set.
      */
     public void constructPattern() {
         if (noFilter && logLevels == null) {
@@ -344,6 +406,10 @@ public class XLogFilter {
 
     public void setFilterPattern(Pattern filterPattern) {
         this.filterPattern = filterPattern;
+    }
+
+    public Pattern getFilterPattern() {
+        return this.filterPattern;
     }
 
 }
