@@ -36,6 +36,7 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 import java.io.File;
@@ -176,7 +177,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("http://0.0.0.0:11000/oozie/callback", ConfigurationService.get(CallbackService.CONF_BASE_URL));
         assertEquals(5, ConfigurationService.getInt(CallbackService.CONF_EARLY_REQUEUE_MAX_RETRIES));
         assertEquals("gz", ConfigurationService.get(CodecFactory.COMPRESSION_OUTPUT_CODEC));
-        assertEquals(4096, ConfigurationService.getInt(XLogStreamingService.STREAM_BUFFER_LEN));
+        assertEquals(4096, ConfigurationService.getInt(XLogStreamer.STREAM_BUFFER_LEN));
         assertEquals(10000,  ConfigurationService.getLong(JvmPauseMonitorService.WARN_THRESHOLD_KEY));
         assertEquals(60, ConfigurationService.getInt(InstrumentationService.CONF_LOGGING_INTERVAL));
         assertEquals(30, ConfigurationService.getInt(PurgeService.CONF_OLDER_THAN));

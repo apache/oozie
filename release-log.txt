@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2815 Oozie not always display job log (puru)
 OOZIE-2860 Improve Jetty logging (andras.piros via pbacsko)
 OOZIE-2457 Oozie log parsing regex consume more than 90% cpu (satishsaley)
 OOZIE-2844 Increase stability of Oozie actions when log4j.properties is missing or not readable (andras.piros via pbacsko)

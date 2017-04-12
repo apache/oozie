@@ -63,13 +63,12 @@ import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.util.XLogStreamer;
 
 /**
  * The DagEngine provides all the DAG engine functionality for WS calls.
@@ -389,80 +388,16 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /**
-     * Stream the log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
     @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
-
-    /**
-     * Stream the error log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
-    @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    /**
-     * Stream the audit log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)),jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer)
             throws IOException, DagEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
+        WorkflowJob job = getJob(jobId);
+        Date lastTime = job.getEndTime();
+        if (lastTime == null) {
+            lastTime = job.getLastModifiedTime();
         }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, DagEngineException {
-        try {
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
-            WorkflowJob job = getJob(jobId);
-            Date lastTime = job.getEndTime();
-            if (lastTime == null) {
-                lastTime = job.getLastModifiedTime();
-            }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
+        Services.get().get(XLogStreamingService.class).streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();

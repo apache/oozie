@@ -295,23 +295,23 @@ public class XLogService implements Service, Instrumentable {
         });
     }
 
-    boolean getLogOverWS() {
+    public boolean getLogOverWS() {
         return logOverWS;
     }
 
-    boolean isErrorLogEnabled(){
+    public boolean isErrorLogEnabled(){
         return errorLogEnabled;
     }
 
-    int getOozieLogRotation() {
+    public int getOozieLogRotation() {
         return oozieLogRotation;
     }
 
-    int getOozieErrorLogRotation() {
+    public int getOozieErrorLogRotation() {
         return oozieErrorLogRotation;
     }
 
-    int getOozieAuditLogRotation() {
+    public int getOozieAuditLogRotation() {
         return oozieAuditLogRotation;
     }
 
@@ -323,7 +323,7 @@ public class XLogService implements Service, Instrumentable {
         return oozieAuditLogName;
     }
 
-    boolean isAuditLogEnabled() {
+    public boolean isAuditLogEnabled() {
         return auditLogEnabled;
     }
 

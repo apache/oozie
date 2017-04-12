@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.util;
 
 import java.io.IOException;
@@ -56,6 +55,7 @@ public class XLogFilter {
     private boolean isActionList = false;
     private String formattedEndDate;
     private String formattedStartDate;
+    private String truncatedMessage;
 
     // TODO Patterns to be read from config file
     private static final String DEFAULT_REGEX = "[^\\]]*";
@@ -290,8 +290,9 @@ public class XLogFilter {
     }
 
     public String getDebugMessage() {
-        return "Log start time = " + getStartDate() + ". Log end time = " + getEndDate() + ". User Log Filter = "
-                + getUserLogFilter() + System.getProperty("line.separator");
+        return new StringBuilder("Log start time = ").append(getStartDate()).append(". Log end time = ")
+                .append(getEndDate()).append(". User Log Filter = ").append(getUserLogFilter())
+                .append(System.getProperty("line.separator")).toString();
     }
 
     public boolean isActionList() {
@@ -302,7 +303,20 @@ public class XLogFilter {
         this.isActionList = isActionList;
     }
 
-    private void calculateScanDate(Date jobStartTime, Date jobEndTime) throws IOException {
+    /**
+     * Calculate scan date
+     *
+     * @param jobStartTime the job start time
+     * @param jobEndTime the job end time
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public void calculateAndCheckDates(Date jobStartTime, Date jobEndTime) throws IOException {
+
+        // for testcase, otherwise jobStartTime and jobEndTime will be always
+        // set
+        if (jobStartTime == null || jobEndTime == null) {
+            return;
+        }
 
         if (userLogFilter.getStartDate() != null) {
             startDate = userLogFilter.getStartDate();
@@ -311,14 +325,15 @@ public class XLogFilter {
             startDate = adjustOffset(jobStartTime, userLogFilter.getStartOffset());
         }
         else {
-            startDate = jobStartTime;
+            startDate = new Date(jobStartTime.getTime());
         }
 
         if (userLogFilter.getEndDate() != null) {
             endDate = userLogFilter.getEndDate();
         }
         else if (userLogFilter.getEndOffset() != -1) {
-            // If user has specified startdate as absolute then end offset will be on user start date,
+            // If user has specified startdate as absolute then end offset will
+            // be on user start date,
             // else end offset will be calculated on job startdate.
             if (userLogFilter.getStartDate() != null) {
                 endDate = adjustOffset(startDate, userLogFilter.getEndOffset());
@@ -328,14 +343,14 @@ public class XLogFilter {
             }
         }
         else {
-            endDate = jobEndTime;
+            endDate = new Date(jobEndTime.getTime());
         }
         // if recent offset is specified then start time = endtime - offset
         if (getUserLogFilter().getRecent() != -1) {
             startDate = adjustOffset(endDate, userLogFilter.getRecent() * -1);
         }
 
-        //add buffer iff dates are not asbsolute
+        // add buffer if dates are not absolute
         if (userLogFilter.getStartDate() == null) {
             startDate = adjustOffset(startDate, -LOG_TIME_BUFFER);
         }
@@ -345,26 +360,27 @@ public class XLogFilter {
 
         formattedEndDate = XLogUserFilterParam.dt.get().format(getEndDate());
         formattedStartDate = XLogUserFilterParam.dt.get().format(getStartDate());
+
+        if (startDate.after(endDate)) {
+            throw new IOException(
+                    "Start time should be less than end time. startTime = " + startDate + " endTime = " + endDate);
+        }
     }
 
     /**
-     * Calculate and validate date range.
+     * validate date range.
      *
      * @param jobStartTime the job start time
      * @param jobEndTime the job end time
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public void calculateAndValidateDateRange(Date jobStartTime, Date jobEndTime) throws IOException {
-        // for testcase, otherwise jobStartTime and jobEndTime will be always set
+    public void validateDateRange(Date jobStartTime, Date jobEndTime) throws IOException {
+        // for testcase, otherwise jobStartTime and jobEndTime will be always
+        // set
         if (jobStartTime == null || jobEndTime == null) {
             return;
         }
-        calculateScanDate(jobStartTime, jobEndTime);
 
-        if (startDate.after(endDate)) {
-            throw new IOException("Start time should be less than end time. startTime = " + startDate + " endtime = "
-                    + endDate);
-        }
         long diffHours = (endDate.getTime() - startDate.getTime()) / (60 * 60 * 1000);
         if (isActionList) {
             int actionLogDuration = ConfigurationService.getInt(MAX_ACTIONLIST_SCAN_DURATION);
@@ -372,10 +388,9 @@ public class XLogFilter {
                 return;
             }
             if (diffHours > actionLogDuration) {
-                throw new IOException(
-                        "Request log streaming time range with action list is higher than configured. Please reduce the scan "
-                                + "time range. Input range (hours) = " + diffHours
-                                + " system allowed (hours) with action list = " + actionLogDuration);
+                setTruncatedMessage("Truncated logs to max log scan duration " + actionLogDuration + " hrs");
+                startDate = adjustOffset(endDate, -1 * actionLogDuration * 60);
+                startDate = adjustOffset(startDate, -1 * LOG_TIME_BUFFER);
             }
         }
         else {
@@ -384,11 +399,24 @@ public class XLogFilter {
                 return;
             }
             if (diffHours > logDuration) {
-                throw new IOException(
-                        "Request log streaming time range is higher than configured. Please reduce the scan time range. For coord"
-                                + " jobs you can provide action list to reduce log scan time range. Input range (hours) = "
-                                + diffHours + " system allowed (hours) = " + logDuration);
+                setTruncatedMessage("Truncated logs to max log scan duration " + logDuration + " hrs");
+                startDate = adjustOffset(endDate, -1 * logDuration * 60);
+                startDate = adjustOffset(startDate, -1 * LOG_TIME_BUFFER);
             }
+        }
+    }
+
+    protected void setTruncatedMessage(String message) {
+        truncatedMessage = message;
+
+    }
+
+    public String getTruncatedMessage() {
+        if (StringUtils.isEmpty(truncatedMessage)) {
+            return truncatedMessage;
+        }
+        else {
+            return truncatedMessage + System.getProperty("line.separator");
         }
     }
 

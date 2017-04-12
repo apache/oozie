@@ -37,11 +37,11 @@ import org.apache.hadoop.security.authentication.client.Authenticator;
 import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 import org.apache.hadoop.security.authentication.client.PseudoAuthenticator;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
 
 public class AuthUrlClient {
 
     public static final String SERVER_SERVER_AUTH_TYPE = "oozie.server.authentication.type";
+    public static final String SERVER_SERVER_CONNECTION_TIMEOUT_SECONDS = "oozie.server.connection.timeout.seconds";
 
     private static XLog LOG = XLog.getLog(AuthUrlClient.class);
 
@@ -129,6 +129,7 @@ public class AuthUrlClient {
                 @Override
                 public BufferedReader run() throws IOException {
                     HttpURLConnection conn = getConnection(url);
+                    conn.setConnectTimeout(ConfigurationService.getInt(SERVER_SERVER_CONNECTION_TIMEOUT_SECONDS, 180));
                     BufferedReader reader = null;
                     if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                         InputStream is = conn.getInputStream();

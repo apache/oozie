@@ -180,38 +180,6 @@ public class TestXLogUserFilterParam extends XTestCase {
         assertTrue(lines[0].contains("E0803: IO error, Variable substitution depth too large: 20 ${dniInputDir}"));
     }
 
-    // Test logduration, out of range
-    public void testException() throws Exception {
-        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
-
-        Properties log4jProps = new Properties();
-        log4jProps.load(is);
-        // prevent conflicts with other tests by changing the log file location
-        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
-        log4jProps.store(new FileOutputStream(log4jFile), "");
-        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
-
-        new Services().init();
-        Services.get().getConf().setInt(XLogFilter.MAX_SCAN_DURATION, 10);
-        Map<String, String[]> paramMap = new HashMap<String, String[]>();
-        paramMap.put(RestConstants.LOG_FILTER_OPTION, new String[] {});
-        XLogFilter filter = new XLogFilter(new XLogUserFilterParam(paramMap));
-        Date startDate = new Date();
-        Date endDate = new Date(startDate.getTime() + 60 * 60 * 1000 * 11);
-
-        try {
-            doStreamLog(filter, startDate, endDate);
-            fail("should not come here");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            assertTrue(e.getMessage().contains(
-                    "Request log streaming time range is higher than configured."));
-        }
-    }
-
     // Test log duration - in range
     public void testNoException_Withrecent() throws Exception {
         File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
@@ -397,7 +365,7 @@ public class TestXLogUserFilterParam extends XTestCase {
     private String doStreamLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
         StringWriter w = new StringWriter();
         Services.get().get(XLogStreamingService.class)
-                .streamLog(xf, startDate, endDate, w, new HashMap<String, String[]>());
+                .streamLog(new XLogStreamer(xf, null), startDate, endDate, w);
         return w.toString();
     }
 

@@ -32,7 +32,9 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XLogErrorStreamer;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.ZKUtils;
 
 public class TestZKXLogStreamingService extends ZKXTestCase {
@@ -198,15 +200,29 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         return doStreamLog(xf, new HashMap<String, String[]>());
     }
 
+    protected String doStreamLog(XLogFilter xf, Date startTime, Date endTime) throws Exception {
+        return doStreamLog(xf, new HashMap<String, String[]>(), false, startTime, endTime);
+    }
+
     protected String doStreamErrorLog(XLogFilter xf) throws Exception {
         return doStreamLog(xf, new HashMap<String, String[]>(), true);
     }
+
+    private String doStreamErrorLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
+        return doStreamLog(xf, new HashMap<String, String[]>(), true, startDate, startDate);
+    }
+
 
     protected String doStreamLog(XLogFilter xf, Map<String, String[]> param) throws Exception {
         return doStreamLog(xf, param, false);
     }
 
     protected String doStreamLog(XLogFilter xf, Map<String, String[]> param, boolean isErrorLog) throws Exception {
+        return doStreamLog(xf, param, isErrorLog, null, null);
+    }
+
+    protected String doStreamLog(XLogFilter xf, Map<String, String[]> param, boolean isErrorLog, Date startTime,
+            Date endTime) throws Exception {
         StringWriter w = new StringWriter();
         ZKXLogStreamingService zkxlss = new ZKXLogStreamingService();
         try {
@@ -215,10 +231,10 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
             zkxlss.init(services);
             sleep(1000); // Sleep to allow ZKUtils ServiceCache to update
             if (isErrorLog) {
-                zkxlss.streamErrorLog(xf, null, null, w, param);
+                zkxlss.streamLog(new XLogErrorStreamer(xf, param), startTime, endTime, w);
             }
             else {
-                zkxlss.streamLog(xf, null, null, w, param);
+                zkxlss.streamLog(new XLogStreamer(xf, param), startTime, endTime, w);
             }
         }
         finally {
@@ -581,6 +597,32 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
             }
             container.stop();
         }
+    }
+
+    public void testTuncateLog() throws Exception {
+        XLogFilter.reset();
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        assertFalse(doStreamDisabledCheck());
+        File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(),
+                                Services.get().get(XLogService.class).getOozieLogName());
+        logFile.getParentFile().mkdirs();
+
+        ConfigurationService.set(XLogFilter.MAX_SCAN_DURATION, "1");
+        Date startDate = new Date();
+        Date endDate = new Date(startDate.getTime() + 60 * 60 * 1000 * 15);
+
+        String log = doStreamLog(new XLogFilter(), startDate, endDate);
+        assertTrue(log.contains("Truncated logs to max log scan duration"));
+        String logError = doStreamErrorLog(new XLogFilter(), startDate, endDate);
+        assertFalse(logError.contains("Truncated logs to max log scan duration"));
     }
 
 }

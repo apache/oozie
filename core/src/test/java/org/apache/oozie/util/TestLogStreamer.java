@@ -22,16 +22,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XTestCase;
 
 public class TestLogStreamer extends XTestCase {
@@ -39,9 +42,20 @@ public class TestLogStreamer extends XTestCase {
     static String logStatement = " USER[oozie] GROUP[-] TOKEN[-] APP[-] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] ";
 
+    String defaultLog4jFile;
+
     private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
 
+    @Override
+    protected void tearDown() throws Exception {
+        if (null != defaultLog4jFile) {
+            setSystemProperty(XLogService.LOG4J_FILE, defaultLog4jFile);
+        }
+        super.tearDown();
+    }
+
     public void testStreamLog() throws IOException, CommandException, ServiceException, ParseException {
+        setupLog4j();
         new Services().init();
 
         long currTime = System.currentTimeMillis();
@@ -151,7 +165,7 @@ public class TestLogStreamer extends XTestCase {
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         Calendar cal = Calendar.getInstance();
         cal.set(2009, Calendar.JUNE, 24, 2, 43, 0);
-        str.streamLog(sw, cal.getTime(), new Date(currTime - 5 * 3600000), 4096);
+        str.streamLog(sw, cal.getTime(), new Date(currTime - 5 * 3600000));
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -172,7 +186,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str1 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str1.streamLog(sw1, null, null, 4096);
+        str1.streamLog(sw1, null, null);
         out = sw1.toString().split("\n");
         // Check if the retrieved log content is of length eight lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -189,6 +203,7 @@ public class TestLogStreamer extends XTestCase {
     }
 
     public void testStreamLogMultipleHours() throws IOException, CommandException, ServiceException {
+        setupLog4j();
         new Services().init();
         long currTime = System.currentTimeMillis();
         XLogFilter.reset();
@@ -243,7 +258,7 @@ public class TestLogStreamer extends XTestCase {
         Calendar calendarEntry = Calendar.getInstance();
         // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January), and end time is current time
         calendarEntry.set(2012, 3, 24, 19, 0);
-        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()), 4096);
+        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()));
         String[] out = sw2.toString().split("\n");
 
         // Check if the retrieved log content is of length five lines after filtering based on time window, file name
@@ -259,6 +274,7 @@ public class TestLogStreamer extends XTestCase {
     }
 
     public void testStreamLogNoDash() throws IOException, CommandException, ServiceException {
+        setupLog4j();
         new Services().init();
         long currTime = System.currentTimeMillis();
         XLogFilter.reset();
@@ -297,7 +313,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
 
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, null, null, 4096);
+        str.streamLog(sw, null, null);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
         // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering
@@ -310,6 +326,16 @@ public class TestLogStreamer extends XTestCase {
         assertEquals(true, out[4].contains("_L5_"));
     }
 
+    public void testBufferLen() throws IOException, CommandException, ServiceException {
+        new Services().init();
+        XLogStreamer str = new XLogStreamer(null, getTestCaseDir(), "oozie.log", 1);
+        assertEquals(4096, str.getBufferLen());
+        str = new XLogErrorStreamer(null);
+        assertEquals(2048, str.getBufferLen());
+        str = new XLogAuditStreamer(null);
+        assertEquals(3, str.getBufferLen());
+    }
+
     static void writeToGZFile(File f, StringBuilder sbr) throws IOException {
         GZIPOutputStream gzout = new GZIPOutputStream(new FileOutputStream(f));
         String strg = sbr.toString();
@@ -317,5 +343,18 @@ public class TestLogStreamer extends XTestCase {
         byte[] buf = strg.getBytes();
         gzout.write(buf, 0, buf.length);
         gzout.close();
+    }
+
+    private void setupLog4j() throws IOException {
+        defaultLog4jFile = System.getProperty(XLogService.LOG4J_FILE);
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
     }
 }

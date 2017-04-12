@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
@@ -192,7 +193,7 @@ public class V0JobServlet extends BaseJobServlet {
         try {
             dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (DagEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }

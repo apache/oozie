@@ -192,7 +192,23 @@
     <property>
         <name>oozie.service.XLogStreamingService.buffer.len</name>
         <value>4096</value>
-        <description>4K buffer for streaming the logs progressively</description>
+        <description>4K buffer for streaming the logs progressively
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.XLogStreamingService.error.buffer.len</name>
+        <value>2048</value>
+        <description>2K buffer for streaming the error logs
+            progressively
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.audit.buffer.len</name>
+        <value>3</value>
+        <description>Number of lines for streaming the audit logs
+            progressively
+        </description>
     </property>
 
  <!-- HCatAccessorService -->
@@ -2219,6 +2235,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Defines authentication used for Oozie server communicating to other Oozie server over HTTP(s).
             Supported values are: simple | kerberos | #AUTHENTICATOR_CLASSNAME#
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.server.connection.timeout.seconds</name>
+        <value>180</value>
+        <description>
+            Defines connection timeout used for Oozie server communicating to other Oozie server over HTTP(s). Default is 3 min.
         </description>
     </property>
 

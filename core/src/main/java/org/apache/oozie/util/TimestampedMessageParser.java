@@ -194,47 +194,21 @@ public class TimestampedMessageParser {
     }
 
     /**
-     * Streams log messages to the passed in Writer. Flushes the log writing
-     * based on buffer len
-     *
-     * @param writer
-     * @param bufferLen maximum len of log buffer
-     * @param bytesWritten num bytes already written to writer
-     * @throws IOException
-     */
-    public void processRemaining(Writer writer, int bufferLen, int bytesWritten) throws IOException {
-        while (increment()) {
-            writer.write(lastMessage);
-            bytesWritten += lastMessage.length();
-            if (bytesWritten > bufferLen) {
-                writer.flush();
-                bytesWritten = 0;
-            }
-        }
-        writer.flush();
-    }
-
-    /**
      * Streams log messages to the passed in Writer, with zero bytes already
      * written
      *
      * @param writer
-     * @param bufferLen maximum len of log buffer
+     * @param logStreamer the log streamer
      * @throws IOException
      */
-    public void processRemaining(Writer writer, int bufferLen) throws IOException {
-        processRemaining(writer, bufferLen, 0);
-    }
-
-    /**
-     * Streams log messages to the passed in Writer, with default buffer len 4K
-     * and zero bytes already written
-     *
-     * @param writer
-     * @throws IOException
-     */
-    public void processRemaining(Writer writer) throws IOException {
-        processRemaining(writer, Services.get().get(XLogStreamingService.class).getBufferLen());
+    public void processRemaining(Writer writer, XLogStreamer logStreamer) throws IOException {
+        while (increment()) {
+            writer.write(lastMessage);
+            if (logStreamer.shouldFlushOutput(lastMessage.length())) {
+                writer.flush();
+            }
+        }
+        writer.flush();
     }
 
     /**
