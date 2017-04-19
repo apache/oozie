@@ -542,7 +542,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockCoordinatorEngineService.JOB_ID + "1", "-action", "1" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_ACTION_KILL, MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -566,7 +566,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockCoordinatorEngineService.JOB_ID + "1", "-date", "2009-12-15T01:00Z::2009-12-16T01:00Z" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_ACTION_KILL, MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -608,7 +608,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-action", "1" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(1));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -632,7 +632,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-date", "2009-12-15T01:00Z::2009-12-16T01:00Z" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(1));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -656,7 +656,7 @@ public class TestOozieCLI extends DagServletTestCase {
                             "-action", "0", "-refresh" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(0));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(0));
                 return null;
             }
         });
@@ -679,7 +679,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-action", "0", "-nocleanup" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_COORD_ACTION_RERUN, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(0));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(0));
                 return null;
             }
         });
@@ -703,7 +703,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-date", "2009-12-15T01:00Z", "-action", "1" };
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -726,7 +726,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockCoordinatorEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END};
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -751,7 +751,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-rerun", MockCoordinatorEngineService.JOB_ID + "0" };
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -776,7 +776,7 @@ public class TestOozieCLI extends DagServletTestCase {
 
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -790,7 +790,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 String[] args = new String[]{"job", "-oozie", oozieUrl, "-ignore", MockCoordinatorEngineService.JOB_ID + "1"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(1));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(1));
 
                 // negative test for "oozie job -ignore <non-existent coord>"
                 MockCoordinatorEngineService.reset();
@@ -799,7 +799,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockDagEngineService.JOB_ID + (MockCoordinatorEngineService.coordJobs.size() + 1)};
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -814,7 +814,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockCoordinatorEngineService.JOB_ID + "1", "-action", "1"};
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(RestConstants.JOB_ACTION_IGNORE, MockCoordinatorEngineService.did);
-                assertTrue(MockCoordinatorEngineService.started.get(1));
+                assertTrue(MockCoordinatorEngineService.startedCoordJobs.get(1));
 
                 // negative test for "oozie job -ignore <non-existent coord> -action 1"
                 MockCoordinatorEngineService.reset();
@@ -822,7 +822,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockDagEngineService.JOB_ID + (MockCoordinatorEngineService.coordJobs.size() + 1), "-action", "1" };
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
 
                 // negative test for "oozie job -ignore <id> -action (action is empty)"
                 MockCoordinatorEngineService.reset();
@@ -830,7 +830,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         MockCoordinatorEngineService.JOB_ID, "-action", ""};
                 assertEquals(-1, new OozieCLI().run(args));
                 assertNull(MockCoordinatorEngineService.did);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
 
                 return null;
             }
@@ -1417,7 +1417,7 @@ public class TestOozieCLI extends DagServletTestCase {
                         "-oozie", oozieUrl, "-Doozie.proxysubmission=true" };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(MockCoordinatorEngineService.did, RestConstants.JOB_ACTION_DRYRUN);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -1432,7 +1432,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 String[] args = new String[] { "job", "-update", "aaa", "-oozie", oozieUrl };
                 assertEquals(-1, new OozieCLI().run(args));
                 assertEquals(MockCoordinatorEngineService.did, RestConstants.JOB_COORD_UPDATE );
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -1450,7 +1450,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 assertEquals(-1, new OozieCLI().run(args));
                 assertEquals(MockCoordinatorEngineService.did, RestConstants.JOB_COORD_UPDATE + "&"
                         + RestConstants.JOB_ACTION_DRYRUN);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });
@@ -1691,7 +1691,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 String[] args = new String[] { "job", "-missingdeps", "aaa-C", "-oozie", oozieUrl };
                 assertEquals(0, new OozieCLI().run(args));
                 assertEquals(MockCoordinatorEngineService.did, RestConstants.COORD_ACTION_MISSING_DEPENDENCIES);
-                assertFalse(MockCoordinatorEngineService.started.get(1));
+                assertFalse(MockCoordinatorEngineService.startedCoordJobs.get(1));
                 return null;
             }
         });

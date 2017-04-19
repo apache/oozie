@@ -61,7 +61,6 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
-import org.apache.oozie.command.coord.CoordWfActionInfoXCommand;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
@@ -964,23 +963,4 @@ public class CoordinatorEngine extends BaseEngine {
             String actions, String dates) throws CommandException {
         return new CoordActionMissingDependenciesXCommand(id, actions, dates).call();
     }
-
-    /**
-     * get wf actions by action name in a coordinator job
-     * @param jobId coordinator job id
-     * @param wfActionName workflow action name
-     * @param offset
-     * @param len
-     * @return list of CoordinatorWfActionBean in a coordinator
-     * @throws CoordinatorEngineException
-     */
-     public List<CoordinatorWfActionBean> getWfActionByJobIdAndName(String jobId, String wfActionName, int offset, int len)
-             throws CoordinatorEngineException {
-        try {
-            return new CoordWfActionInfoXCommand(jobId, wfActionName, offset, len).call();
-        }
-        catch (CommandException ex) {
-            throw new CoordinatorEngineException(ex);
-        }
-     }
 }

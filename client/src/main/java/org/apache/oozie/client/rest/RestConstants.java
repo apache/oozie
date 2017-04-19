@@ -49,6 +49,8 @@ public interface RestConstants {
 
     String ORDER_PARAM = "order";
 
+    String ACTION_NAME_PARAM = "action-name";
+
     String JOB_FILTER_PARAM = "filter";
 
     String JOB_RESOURCE = "/job";
@@ -100,6 +102,8 @@ public interface RestConstants {
     String JOB_SHOW_KILL_PARAM = "show-kill";
 
     String JOB_SHOW_STATUS = "status";
+
+    String JOB_SHOW_WF_ACTIONS_IN_COORD = "wf-actions";
 
     String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 

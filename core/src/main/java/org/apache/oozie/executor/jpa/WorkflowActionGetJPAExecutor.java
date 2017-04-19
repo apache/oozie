@@ -33,11 +33,19 @@ import org.apache.oozie.util.XLog;
  */
 public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionBean> {
 
+    public XLog LOG = XLog.getLog(getClass());
+
     private String wfActionId = null;
+    private final boolean isNullAcceptable;
 
     public WorkflowActionGetJPAExecutor(String wfActionId) {
+        this(wfActionId, false);
+    }
+
+    public WorkflowActionGetJPAExecutor(String wfActionId, boolean isNullAcceptable) {
         ParamChecker.notNull(wfActionId, "wfActionId");
         this.wfActionId = wfActionId;
+        this.isNullAcceptable = isNullAcceptable;
     }
 
     /* (non-Javadoc)
@@ -69,7 +77,13 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
             return bean;
         }
         else {
-            throw new JPAExecutorException(ErrorCode.E0605, wfActionId);
+            if (isNullAcceptable) {
+                LOG.warn("Could not get workflow action {0}", wfActionId);
+                return null;
+            }
+            else {
+                throw new JPAExecutorException(ErrorCode.E0605, wfActionId);
+            }
         }
     }
 }

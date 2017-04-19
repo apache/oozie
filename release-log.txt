@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2827 More directly view of the coordinator’s history from perspective of workflow action. (Alonzo Zhou via pbacsko)
 OOZIE-2864 Maven artifacts for package com.codahale.metrics have inconsistent groupId (andras.piros via pbacsko)
 OOZIE-2862 Coord change command doesn't change job to running if job was killed without creating any actions (puru)
 OOZIE-2815 Oozie not always display job log (puru)

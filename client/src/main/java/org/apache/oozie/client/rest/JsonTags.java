@@ -143,6 +143,11 @@ public interface JsonTags {
     String COORDINATOR_ACTION_DATASETS = "dataSets";
     String COORDINATOR_ACTION_DATASET = "dataSet";
 
+    String COORDINATOR_WF_ACTION_NUMBER = "actionNumber";
+    String COORDINATOR_WF_ACTION = "action";
+    String COORDINATOR_WF_ACTION_NULL_REASON = "nullReason";
+    String COORDINATOR_WF_ACTIONS = "actions";
+
     String BUNDLE_JOB_ID = "bundleJobId";
     String BUNDLE_JOB_NAME = "bundleJobName";
     String BUNDLE_JOB_PATH = "bundleJobPath";

@@ -48,6 +48,8 @@ public abstract class BaseJobServlet extends JsonRestServlet {
 
     private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[1];
 
+    final static String NOT_SUPPORTED_MESSAGE = "Not supported in this version";
+
     static {
         RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("PUT", "GET"), Arrays.asList(new ParameterInfo(
                 RestConstants.ACTION_PARAM, String.class, true, Arrays.asList("PUT")), new ParameterInfo(
@@ -368,6 +370,12 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
+        else if (show.equals(RestConstants.JOB_SHOW_WF_ACTIONS_IN_COORD)) {
+            stopCron();
+            JSONObject json = getWfActionByJobIdAndName(request, response);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
                     RestConstants.JOB_SHOW_PARAM, show);
@@ -607,4 +615,18 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      */
     abstract JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
+
+    /**
+     * get wf actions by name in coordinator job
+     *
+     * @param request the request
+     * @param response the response
+     * @return the JSON object
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    protected JSONObject getWfActionByJobIdAndName(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+    }
 }
