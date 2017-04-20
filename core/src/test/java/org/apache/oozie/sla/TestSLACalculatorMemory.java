@@ -144,6 +144,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         slaCalcMemory.addRegistration(jobId2, slaRegBean2);
         slaCalcMemory.addRegistration(jobId3, slaRegBean3);
 
+        slaCalcMemory.updateAllSlaStatus();
         SLACalcStatus calc1 = slaCalcMemory.get(jobId1);
         SLACalcStatus calc2 = slaCalcMemory.get(jobId2);
         SLACalcStatus calc3 = slaCalcMemory.get(jobId3);
@@ -190,7 +191,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
-
+        slaCalcMemory.updateAllSlaStatus();
 
         SLACalcStatus calc = new SLACalcStatus(SLASummaryQueryExecutor.getInstance().get(
                 SLASummaryQuery.GET_SLA_SUMMARY, jobId1), SLARegistrationQueryExecutor.getInstance().get(
@@ -250,7 +251,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
-        String jobId1 = slaRegBean1.getId();
+        final String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2012-03-07"));
         slaCalcMemory.addRegistration(jobId1, slaRegBean1);
@@ -276,6 +277,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("job-1-W", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
@@ -302,6 +305,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
 
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("FAILED", slaSummary.getJobStatus());
@@ -323,8 +327,16 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
-        slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLAService slaService = Services.get().get(SLAService.class);
+        slaService.startSLAWorker();
+        slaService.addStatusEvent(jobId1, "RUNNING", null, null, null);
+        waitFor(60 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1)
+                        .getEventProcessed() == 7;
+            }
+        });
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, slaSummaryBean.getId());
         //since job is already running and it's a old job
         assertEquals(7, slaSummary.getEventProcessed());
@@ -484,6 +496,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction2);
 
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         slaSummary2 = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId2);
 
