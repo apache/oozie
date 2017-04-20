@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2863 SLACalculatorMemory.loadOnRestart causing delay in server start (puru via satishsaley)
 OOZIE-2843 Enhance logging inside ZKLocksService and MemoryLocksService (andras.piros via pbacsko)
 OOZIE-2818 Can't overwrite oozie.action.max.output.data on a per-workflow basis (asasvari via pbacsko)
 OOZIE-2827 More directly view of the coordinator’s history from perspective of workflow action. (Alonzo Zhou via pbacsko)

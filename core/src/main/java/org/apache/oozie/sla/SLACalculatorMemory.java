@@ -134,42 +134,14 @@ public class SLACalculatorMemory implements SLACalculator {
     }
 
     private void loadOnRestart() {
-        long slaPendingCount = 0;
-        long statusPendingCount = 0;
-
         try {
-            List<SLASummaryBean> summaryBeans = jpaService.execute(new SLASummaryGetRecordsOnRestartJPAExecutor(
-                    modifiedAfter));
+            List<SLASummaryBean> summaryBeans = jpaService
+                    .execute(new SLASummaryGetRecordsOnRestartJPAExecutor(modifiedAfter));
             for (SLASummaryBean summaryBean : summaryBeans) {
                 String jobId = summaryBean.getId();
-
-                SLARegistrationBean slaRegBean = SLARegistrationQueryExecutor.getInstance().get(
-                        SLARegQuery.GET_SLA_REG_ON_RESTART, jobId);
-                SLACalcStatus slaCalcStatus = new SLACalcStatus(summaryBean, slaRegBean);
-
-                // Processed missed jobs
-                try {
-                    SLAXCommandFactory.getSLAEventXCommand(slaCalcStatus).call();
-                }
-                catch (Throwable e) {
-                    LOG.error("Error while updating job {0}", slaCalcStatus.getId(), e);
-                }
-
-                if (slaCalcStatus.getEventProcessed() == 7) {
-                    historySet.add(jobId);
-                    statusPendingCount++;
-                    LOG.debug("Adding job [{0}] to historySet. EventProcessed is [{1}]", slaCalcStatus,
-                            slaCalcStatus);
-                }
-                else if (slaCalcStatus.getEventProcessed() < 7) {
-                    slaMap.put(jobId, slaCalcStatus);
-                    slaPendingCount++;
-                    LOG.debug("Adding job [{0}] to slamap. EventProcessed is [{1}]", slaCalcStatus,
-                            slaCalcStatus);
-
-                }
+                slaMap.put(jobId, new SLACalcStatus(summaryBean));
             }
-            LOG.info("Loaded SLASummary pendingSLA=" + slaPendingCount + ", pendingStatusUpdate=" + statusPendingCount);
+            LOG.info("Loaded {0} SLASummary object after restart", slaMap.size());
         }
         catch (Exception e) {
             LOG.warn("Failed to retrieve SLASummary records on restart", e);
@@ -198,13 +170,24 @@ public class SLACalculatorMemory implements SLACalculator {
         return memObj;
     }
 
-    private SLACalcStatus getSLACalcStatus(String jobId) throws JPAExecutorException {
+    /**
+     * Get SLACalcStatus from map if SLARegistration is not null, else create a new SLACalcStatus
+     * This function deosn't update  slaMap
+     * @param jobId
+     * @return
+     * @throws JPAExecutorException
+     */
+    private SLACalcStatus getOrCreateSLACalcStatus(String jobId) throws JPAExecutorException {
         SLACalcStatus memObj;
         memObj = slaMap.get(jobId);
-        if (memObj == null) {
-            memObj = new SLACalcStatus(SLASummaryQueryExecutor.getInstance()
-                    .get(SLASummaryQuery.GET_SLA_SUMMARY, jobId), SLARegistrationQueryExecutor.getInstance().get(
-                    SLARegQuery.GET_SLA_REG_ON_RESTART, jobId));
+        // if the request came from immediately after restart don't use map SLACalcStatus.
+        if (memObj == null || memObj.getSLARegistrationBean() == null) {
+            SLARegistrationBean registrationBean = SLARegistrationQueryExecutor.getInstance()
+                    .get(SLARegQuery.GET_SLA_REG_ON_RESTART, jobId);
+            SLASummaryBean summaryBean = memObj == null
+                    ? SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId)
+                    : memObj.getSLASummaryBean();
+            return new SLACalcStatus(summaryBean, registrationBean);
         }
         return memObj;
     }
@@ -235,52 +218,55 @@ public class SLACalculatorMemory implements SLACalculator {
             // job might be processed and removed from map by addJobStatus
             return;
         }
-        synchronized (slaCalc) {
-            // get eventProcessed on DB for validation in HA
-            SLASummaryBean summaryBean = null;
-            try {
-                summaryBean = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance()).get(
-                    SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED, jobId);
-            }
-            catch (JPAExecutorException e) {
-                if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
-                    LOG.debug("job [{0}] is is not in DB, removing from Memory", jobId);
-                    slaMap.remove(jobId);
-                    return;
-                }
-                throw e;
-            }
-            byte eventProc = summaryBean.getEventProcessed();
-            slaCalc.setEventProcessed(eventProc);
-            if (eventProc >= 7) {
-                if (eventProc == 7) {
-                    historySet.add(jobId);
-                }
+        boolean firstCheckAfterRetstart = checkAndUpdateSLACalcAfterRestart(slaCalc);
+        // get eventProcessed on DB for validation in HA
+        SLASummaryBean summaryBean = null;
+        try {
+            summaryBean = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance())
+                    .get(SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED, jobId);
+        }
+        catch (JPAExecutorException e) {
+            if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
+                LOG.debug("job [{0}] is is not in DB, removing from Memory", jobId);
                 slaMap.remove(jobId);
-                LOG.trace("Removed Job [{0}] from map as SLA processed", jobId);
+                return;
             }
-            else {
-                if (!slaCalc.getLastModifiedTime().equals(summaryBean.getLastModifiedTime())) {
-                    // Update last modified time.
-                    slaCalc.setLastModifiedTime(summaryBean.getLastModifiedTime());
-                    reloadExpectedTimeAndConfig(slaCalc);
-                    LOG.debug("Last modified time has changed for job " + jobId + " reloading config from DB");
+            throw e;
+        }
+        byte eventProc = summaryBean.getEventProcessed();
+        slaCalc.setEventProcessed(eventProc);
+        if (eventProc >= 7) {
+            if (eventProc == 7) {
+                historySet.add(jobId);
+            }
+            slaMap.remove(jobId);
+            LOG.trace("Removed Job [{0}] from map as SLA processed", jobId);
+        }
+        else {
+            if (!slaCalc.getLastModifiedTime().equals(summaryBean.getLastModifiedTime())) {
+                // Update last modified time.
+                slaCalc.setLastModifiedTime(summaryBean.getLastModifiedTime());
+                reloadExpectedTimeAndConfig(slaCalc);
+                LOG.debug("Last modified time has changed for job " + jobId + " reloading config from DB");
+            }
+            if (firstCheckAfterRetstart || isChanged(slaCalc)) {
+                LOG.debug("{0} job has SLA event change. EventProc = {1}, status = {2}", slaCalc.getId(),
+                        slaCalc.getEventProcessed(), slaCalc.getJobStatus());
+                try {
+                    SLAXCommandFactory.getSLAEventXCommand(slaCalc).call();
+                    checkEventProc(slaCalc);
                 }
-                if (isChanged(slaCalc)) {
-                    LOG.debug("{0} job has SLA event change. EventProc = {1}, status = {2}", slaCalc.getId(),
-                            slaCalc.getEventProcessed(), slaCalc.getJobStatus());
-                    try {
-                        SLAXCommandFactory.getSLAEventXCommand(slaCalc).call();
-                        checkEventProc(slaCalc);
+                catch (XException e) {
+                    if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
+                        LOG.debug("job [{0}] is is not in DB, removing from Memory", slaCalc.getId());
+                        slaMap.remove(jobId);
                     }
-                    catch (XException e) {
-                        if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
-                            LOG.debug("job [{0}] is is not in DB, removing from Memory", slaCalc.getId());
-                            slaMap.remove(jobId);
+                    else {
+                        if (firstCheckAfterRetstart) {
+                            slaCalc.setSLARegistrationBean(null);
                         }
                     }
                 }
-
             }
         }
     }
@@ -473,7 +459,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 "Received addJobStatus request for job  [{0}] jobStatus = [{1}], jobEventStatus = [{2}], startTime = [{3}], "
                         + "endTime = [{4}] ", jobId, jobStatus, jobEventStatus, startTime, endTime);
         SLACalcStatus slaCalc = slaMap.get(jobId);
-
+        boolean firstCheckAfterRetstart = checkAndUpdateSLACalcAfterRestart(slaCalc);
         if (slaCalc == null) {
             SLARegistrationBean slaRegBean = SLARegistrationQueryExecutor.getInstance().get(
                     SLARegQuery.GET_SLA_REG_ALL, jobId);
@@ -505,6 +491,9 @@ public class SLACalculatorMemory implements SLACalculator {
                 checkEventProc(slaCalc);
             }
             catch (XException e) {
+                if (firstCheckAfterRetstart) {
+                    slaCalc.setSLARegistrationBean(null);
+                }
                 LOG.error(e);
                 throw new ServiceException(e);
             }
@@ -570,12 +559,10 @@ public class SLACalculatorMemory implements SLACalculator {
         @SuppressWarnings("rawtypes")
         List<UpdateEntry> updateList = new ArrayList<BatchQueryExecutor.UpdateEntry>();
         for (String jobId : jobIds) {
-            SLACalcStatus slaCalc = getSLACalcStatus(jobId);
-            if (slaCalc != null) {
-                slaCalc.getSLARegistrationBean().removeFromSLAConfigMap(OozieClient.SLA_DISABLE_ALERT);
-                updateDBSlaConfig(slaCalc, updateList);
-                isJobFound = true;
-            }
+            SLACalcStatus slaCalc = getOrCreateSLACalcStatus(jobId);
+            slaCalc.getSLARegistrationBean().removeFromSLAConfigMap(OozieClient.SLA_DISABLE_ALERT);
+            updateDBSlaConfig(slaCalc, updateList);
+            isJobFound = true;
         }
         executeBatchQuery(updateList);
         return isJobFound;
@@ -593,13 +580,10 @@ public class SLACalculatorMemory implements SLACalculator {
         List<UpdateEntry> updateList = new ArrayList<BatchQueryExecutor.UpdateEntry>();
 
         for (String jobId : jobIds) {
-            SLACalcStatus slaCalc = getSLACalcStatus(jobId);
-            if (slaCalc != null) {
-                slaCalc.getSLARegistrationBean().addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT,
-                        Boolean.toString(true));
-                updateDBSlaConfig(slaCalc, updateList);
-                isJobFound = true;
-            }
+            SLACalcStatus slaCalc = getOrCreateSLACalcStatus(jobId);
+            slaCalc.getSLARegistrationBean().addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT, Boolean.toString(true));
+            updateDBSlaConfig(slaCalc, updateList);
+            isJobFound = true;
         }
         executeBatchQuery(updateList);
         return isJobFound;
@@ -617,12 +601,10 @@ public class SLACalculatorMemory implements SLACalculator {
         @SuppressWarnings("rawtypes")
         List<UpdateEntry> updateList = new ArrayList<BatchQueryExecutor.UpdateEntry>();
         for (Pair<String, Map<String, String>> jobIdSLAPair : jobIdsSLAPair) {
-            SLACalcStatus slaCalc = getSLACalcStatus(jobIdSLAPair.getFirst());
-            if (slaCalc != null) {
-                updateParams(slaCalc, jobIdSLAPair.getSecond());
-                updateDBSlaExpectedValues(slaCalc, updateList);
-                isJobFound = true;
-            }
+            SLACalcStatus slaCalc = getOrCreateSLACalcStatus(jobIdSLAPair.getFirst());
+            updateParams(slaCalc, jobIdSLAPair.getSecond());
+            updateDBSlaExpectedValues(slaCalc, updateList);
+            isJobFound = true;
         }
         executeBatchQuery(updateList);
         return isJobFound;
@@ -655,4 +637,24 @@ public class SLACalculatorMemory implements SLACalculator {
         return childJobIds;
     }
 
+    private boolean checkAndUpdateSLACalcAfterRestart(SLACalcStatus slaCalc) throws JPAExecutorException {
+        if (slaCalc != null && slaCalc.getSLARegistrationBean() == null) {
+            return updateSLARegistartion(slaCalc);
+        }
+        return false;
+    }
+
+    public boolean updateSLARegistartion(SLACalcStatus slaCalc) throws JPAExecutorException {
+        if (slaCalc.getSLARegistrationBean() == null) {
+            synchronized (slaCalc) {
+                if (slaCalc.getSLARegistrationBean() == null) {
+                    SLARegistrationBean slaRegBean = SLARegistrationQueryExecutor.getInstance()
+                            .get(SLARegQuery.GET_SLA_REG_ON_RESTART, slaCalc.getId());
+                    slaCalc.updateSLARegistrationBean(slaRegBean);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
