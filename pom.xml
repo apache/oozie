@@ -245,6 +245,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.oozie</groupId>
+                <artifactId>oozie-sharelib-git</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-docs</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>
@@ -1897,6 +1902,10 @@
                              to test the SSH action
                         -->
                         <exclude>**/TestSsh*.java</exclude>
+                        <!-- Explictly use -Dtest=TestIntegrationGitActionExecutor
+                             to integration test the Git action
+                        -->
+                        <exclude>**/TestIntegrationGit*.java</exclude>
                     </excludes>
                     <!-- DO NOT CHANGE THIS VALUES, TESTCASES CANNOT RUN IN PARALLEL -->
                     <parallel>classes</parallel>

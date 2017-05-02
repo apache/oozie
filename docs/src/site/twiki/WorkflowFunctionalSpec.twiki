@@ -1612,6 +1612,83 @@ values and in XML element and attribute values.
 They cannot be used in XML element and attribute names. They cannot be used in the name of a node and they cannot be
 used within the =transition= elements of a node.
 
+#GitAction
+---++++ 3.2.7 Git action
+
+The =git= action allows one to clone a Git repository into HDFS. The supported options are
+are =git-uri=, =branch=, =key-path= and =destination-uri=.
+
+The Git clone is executed asynchronously. If an SSH key is specified it will be created on the file system in a YARN local directory, relying on YARN to remove the file after the action has run.
+
+XXX TODO XXX Path names specified in the =git= action should be able to be parameterized (templatized) using EL expressions.
+Path name should be specified as a absolute path. Each file path must specify the file system URI.
+
+*Syntax:*
+
+<verbatim>
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <action name="[NODE-NAME]">
+        <git>
+            <git-uri>[SOURCE-URI</git-uri>
+            ...
+            <branch>[BRANCH]</branch>
+            ...
+            <key-path>[HDFS-PATH]</key-path>
+            ...
+            <destination-uri>[HDFS-PATH]</destination-uri>
+        </git>
+        <ok to="[NODE-NAME]"/>
+        <error to="[NODE-NAME]"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+*Example:*
+
+<verbatim>
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <action name="clone_oozie">
+         <git>
+            <git-uri>https://github.com/apache/oozie</git-uri>
+            <destination-uri>hdfs://my_git_repo_directory</destination-uri>
+        </fs>
+        <ok to="myotherjob"/>
+        <error to="errorcleanup"/>
+    </action>
+    ...
+</workflow-app>
+</verbatim>
+
+In the above example, a Git repo on GitHub.COM is cloned to the HDFS directory =my_git_repo_directory= which should not exist on the filesystem.
+
+XXX TODO XXX does this work, if a =name-node= element is specified, then it is not necessary for any of the paths to start with the file system
+URI as it is taken from the =name-node= element. This is also true if the name-node is specified in the global section
+(see [[WorkflowFunctionalSpec#GlobalConfigurations][Global Configurations]])
+
+XXX TODO XXX does this work, and would we want to use this to override YARN_DEBUG_DELAY to ensure key goes away? As of schema 0.4, zero or more =job-xml= elements can be specified; these must refer to Hadoop JobConf =job.xml= formatted files
+bundled in the workflow application. They can be used to set additional properties for the FileSystem instance.
+
+XXX TODO XXX don't have this right? As of schema 0.4, if a =configuration= element is specified, then it will also be used to set additional JobConf properties for the
+FileSystem instance. Properties specified in the =configuration= element override properties specified in the files specified
+by any =job-xml= elements.
+
+*Example:*
+
+<verbatim>
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.4">
+    ...
+    <action name="hdfscommands">
+        <fs>
+           <name-node>hdfs://foo:8020</name-node>
+           <job-xml>fs-info.xml</job-xml>
+           <configuration>
+             <property>
+               <name>some.property</name>
+               <value>some.value</value>
+
 #WorkflowProperties
 ---+++ 4.1 Workflow Job Properties (or Parameters)
 
