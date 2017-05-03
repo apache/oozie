@@ -265,7 +265,7 @@ The =${coord:endOfDays(int n)}= EL function is identical to the =${coord:days(in
 <verbatim>
 <coordinator-app name="hello-coord" frequency="${coord:days(1)}"
                   start="2009-01-02T08:00Z" end="2009-01-04T08:00Z" timezone="America/Los_Angeles"
-                 xmlns="uri:oozie:coordinator:0.1">
+                 xmlns="uri:oozie:coordinator:0.5">
       <controls>
         <timeout>10</timeout>
         <concurrency>${concurrency_level}</concurrency>
@@ -356,7 +356,7 @@ The =${coord:endOfMonths(int n)}= EL function is identical to the =${coord:month
 <verbatim>
 <coordinator-app name="hello-coord" frequency="${coord:months(1)}"
                   start="2009-01-02T08:00Z" end="2009-04-02T08:00Z" timezone="America/Los_Angeles"
-                 xmlns="uri:oozie:coordinator:0.1">
+                 xmlns="uri:oozie:coordinator:0.5">
       <controls>
         <timeout>10</timeout>
         <concurrency>${concurrency_level}</concurrency>
@@ -424,7 +424,7 @@ timezone before computing the interval in minutes. The start of the week depends
 <verbatim>
 <coordinator-app name="hello-coord" frequency="${coord:endOfWeeks(1)}"
                   start="2017-01-04T08:00Z" end="2017-12-31T08:00Z" timezone="America/Los_Angeles"
-                 xmlns="uri:oozie:coordinator:0.1">
+                 xmlns="uri:oozie:coordinator:0.5">
       <controls>
         <timeout>10</timeout>
         <concurrency>${concurrency_level}</concurrency>

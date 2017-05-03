@@ -1,5 +1,7 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2870 non working examples in oozie documentation coordinator spec (andras.piros via pbacsko)
+OOZIE-2827 amend More directly view of the coordinator’s history from perspective of workflow action. (Alonzo Zhou via pbacsko)
 OOZIE-2851 spelling mistakes in examples (Artem Ervits via gezapeti)
 OOZIE-2863 SLACalculatorMemory.loadOnRestart causing delay in server start (puru via satishsaley)
 OOZIE-2843 Enhance logging inside ZKLocksService and MemoryLocksService (andras.piros via pbacsko)
