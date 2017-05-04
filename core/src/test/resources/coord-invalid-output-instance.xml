@@ -15,7 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="NAME" frequency="${coord:days(1)}" start="2009-02-01T01:00Z" end="2009-02-03T23:59Z" timezone="UTC">
+<coordinator-app xmlns="uri:oozie:coordinator:0.2" name="NAME" frequency="${coord:days(1)}"
+ start="2009-02-01T01:00Z" end="2009-02-03T23:59Z" timezone="UTC">
   <controls>
     <concurrency>2</concurrency>
     <execution>LIFO</execution>
@@ -30,13 +31,13 @@
   </datasets>
   <input-events>
     <data-in name="A" dataset="a">
-    <start-instance>${coord:future(0, 1)}</start-instance>
-    <end-instance>${coord:future(0, 1)}</end-instance>
+    <instance>${coord:future(0, 1)}</instance>
     </data-in>
   </input-events>
+  <!-- Invalid coordinator application coord:latest()/future(), not permitted in output-events -->
   <output-events>
     <data-out name="LOCAL_A" dataset="local_a">
-      <instance>${coord:current(0)}</instance>
+      <instance>${coord:future(0,2)}</instance>
     </data-out>
   </output-events>
   <action>

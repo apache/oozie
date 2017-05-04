@@ -35,7 +35,7 @@
   </input-events>
   <output-events>
     <data-out name="LOCAL_A" dataset="local_a">
-      <instance>${coord:future(0,2)}</instance>
+      <instance>${coord:current(0)}</instance>
     </data-out>
   </output-events>
   <action>
