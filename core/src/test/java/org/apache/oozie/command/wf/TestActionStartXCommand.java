@@ -28,11 +28,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapperHelper;
+import org.apache.oozie.action.hadoop.LauncherHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.OozieClient;
@@ -48,7 +46,6 @@ import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQ
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
@@ -165,9 +162,9 @@ public class TestActionStartXCommand extends XDataTestCase {
         String launcherId = action.getExternalId();
 
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
     }
 
     public void testActionStartToCheckRetry() throws Exception {
@@ -233,9 +230,9 @@ public class TestActionStartXCommand extends XDataTestCase {
         String launcherId = action.getExternalId();
 
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
     }
 
     /**

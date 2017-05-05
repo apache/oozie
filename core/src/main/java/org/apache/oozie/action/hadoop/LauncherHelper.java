@@ -52,7 +52,7 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 
 // TODO: we're no longer using Launcher Mapper -- give this class a better name
-public class LauncherMapperHelper {
+public class LauncherHelper {
 
     public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 

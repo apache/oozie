@@ -27,14 +27,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.action.hadoop.LauncherMapperHelper;
+import org.apache.oozie.action.hadoop.LauncherHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.WorkflowAction;
@@ -266,9 +265,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
 
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);
@@ -427,9 +426,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);
@@ -494,9 +493,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
             }
         });
         assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(action1.getId()).call();
         WorkflowActionBean action2 = jpaService.execute(wfActionGetCmd);
@@ -561,9 +560,9 @@ public class TestActionCheckXCommand extends XDataTestCase {
         });
 
         assertTrue(launcherJob2.isSuccessful());
-        actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         new ActionCheckXCommand(actionId).call();
         WorkflowActionBean action4 = jpaService.execute(wfActionGetCmd);

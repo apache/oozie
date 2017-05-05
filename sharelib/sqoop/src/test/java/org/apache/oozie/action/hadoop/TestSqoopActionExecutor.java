@@ -22,21 +22,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,7 +35,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -52,7 +42,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
@@ -181,9 +170,9 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(getActionXml());
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -216,9 +205,9 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(getActionXmlEval());
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -239,9 +228,9 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(getActionXmlFreeFromQuery());
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());

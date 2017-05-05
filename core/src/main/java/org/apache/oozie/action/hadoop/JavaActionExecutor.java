@@ -51,7 +51,6 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
@@ -72,7 +71,6 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.WorkflowActionBean;
@@ -88,7 +86,6 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.ELEvaluationException;
@@ -805,7 +802,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     launcherTime = context.getWorkflow().getCreatedTime().getTime();
                 }
                 String actionYarnTag = getActionYarnTag(getWorkflowConf(context), context.getWorkflow(), action);
-                LauncherMapperHelper.setupYarnRestartHandling(launcherJobConf, actionConf, actionYarnTag, launcherTime);
+                LauncherHelper.setupYarnRestartHandling(launcherJobConf, actionConf, actionYarnTag, launcherTime);
             }
             else {
                 LOG.info(MessageFormat.format("{0} is set to false, not setting YARN restart properties",
@@ -837,22 +834,22 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML = XmlUtils.prettyPrint(prepareElement).toString().trim();
                 }
             }
-            LauncherMapperHelper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
+            LauncherHelper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
                     prepareXML);
 
             // Set the launcher Main Class
-            LauncherMapperHelper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
-            LauncherMapperHelper.setupLauncherURIHandlerConf(launcherJobConf);
-            LauncherMapperHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
-            LauncherMapperHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
-            LauncherMapperHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
+            LauncherHelper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
+            LauncherHelper.setupLauncherURIHandlerConf(launcherJobConf);
+            LauncherHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
+            LauncherHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
+            LauncherHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
 
             List<Element> list = actionXml.getChildren("arg", ns);
             String[] args = new String[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 args[i] = list.get(i).getTextTrim();
             }
-            LauncherMapperHelper.setupMainArguments(launcherJobConf, args);
+            LauncherHelper.setupMainArguments(launcherJobConf, args);
 
             // Make mapred.child.java.opts and mapreduce.map.java.opts equal, but give values from the latter priority; also append
             // <java-opt> and <java-opts> and give those highest priority
@@ -959,7 +956,7 @@ public class JavaActionExecutor extends ActionExecutor {
             Configuration launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
             String consoleUrl;
-            String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
+            String launcherId = LauncherHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
                     .getRecoveryId());
             boolean alreadyRunning = launcherId != null;
 
@@ -1098,7 +1095,7 @@ public class JavaActionExecutor extends ActionExecutor {
         vargs.add("-Dlog4j.configuration=container-log4j.properties");
         vargs.add("-Dlog4j.debug=true");
         vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_DIR + "=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 1024 * 1024);
+        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 0);
         vargs.add("-Dhadoop.root.logger=INFO,CLA");
         vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
         vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
@@ -1381,7 +1378,7 @@ public class JavaActionExecutor extends ActionExecutor {
             if (appStatus != null || fallback) {
                 Path actionDir = context.getActionDir();
                 // load sequence file into object
-                Map<String, String> actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
+                Map<String, String> actionData = LauncherHelper.getActionData(actionFs, actionDir, jobConf);
                 if (fallback) {
                     String finalStatus = actionData.get(LauncherAM.ACTION_DATA_FINAL_STATUS);
                     if (finalStatus != null) {
@@ -1411,7 +1408,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 LOG.info(XLog.STD, "action completed, external ID [{0}]", action.getExternalId());
                 context.setExecutionData(appStatus.toString(), null);
                 if (appStatus == FinalApplicationStatus.SUCCEEDED) {
-                    if (getCaptureOutput(action) && LauncherMapperHelper.hasOutputData(actionData)) {
+                    if (getCaptureOutput(action) && LauncherHelper.hasOutputData(actionData)) {
                         context.setExecutionData(SUCCEEDED, PropertiesUtils.stringToProperties(actionData
                                 .get(LauncherAM.ACTION_DATA_OUTPUT_PROPS)));
                         LOG.info(XLog.STD, "action produced output");
@@ -1419,7 +1416,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     else {
                         context.setExecutionData(SUCCEEDED, null);
                     }
-                    if (LauncherMapperHelper.hasStatsData(actionData)) {
+                    if (LauncherHelper.hasStatsData(actionData)) {
                         context.setExecutionStats(actionData.get(LauncherAM.ACTION_DATA_STATS));
                         LOG.info(XLog.STD, "action produced stats");
                     }

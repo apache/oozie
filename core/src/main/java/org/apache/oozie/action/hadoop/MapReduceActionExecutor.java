@@ -316,9 +316,9 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     protected void injectCallback(Context context, Configuration conf) {
         // add callback for the MapReduce job
         String callback = context.getCallbackUrl("$jobStatus");
-        String oriiginalCallbackURL = conf.get(JOB_END_NOTIFICATION_URL);
-        if (oriiginalCallbackURL != null) {
-            LOG.warn("Overriding the action job end notification URI. Original value: {0}", oriiginalCallbackURL);
+        String originalCallbackURL = conf.get(JOB_END_NOTIFICATION_URL);
+        if (originalCallbackURL != null) {
+            LOG.warn("Overriding the action job end notification URI. Original value: {0}", originalCallbackURL);
         }
         conf.set(JOB_END_NOTIFICATION_URL, callback);
 
@@ -340,7 +340,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             jobConf = createBaseHadoopConf(context, actionXml);
             Path actionDir = context.getActionDir();
-            actionData = LauncherMapperHelper.getActionData(actionFs, actionDir, jobConf);
+            actionData = LauncherHelper.getActionData(actionFs, actionDir, jobConf);
         } catch (Exception e) {
             LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
             throw convertException(e);
@@ -367,9 +367,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
 
                 jobCompleted = runningJob.isComplete();
             } catch (Exception e) {
-                LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
                 LOG.warn("Unable to check the state of a running MapReduce job -"
-                        + " please check the health of the Job History Server!");
+                        + " please check the health of the Job History Server!", e);
                 exception = true;
                 throw convertException(e);
             } finally {
@@ -402,12 +401,12 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     public void kill(final Context context, final WorkflowAction action) throws ActionExecutorException {
         // Kill the LauncherAM which submits the MR job
         super.kill(context, action);
-
+        // TODO if action.getExternalChildIDs() is not empty, then kill based on that
         // We have to check whether the MapReduce execution has started or not. If it has started, then we have to get
         // the YARN ApplicationID based on the tag and kill it as well
         YarnClient yarnClient = null;
         try {
-            String tag = LauncherMapperHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(),
+            String tag = LauncherHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(),
                     context.getWorkflow(), action));
             GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
             gar.setScope(ApplicationsRequestScope.ALL);

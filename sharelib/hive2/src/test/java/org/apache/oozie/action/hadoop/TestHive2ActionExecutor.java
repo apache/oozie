@@ -19,7 +19,6 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,15 +28,9 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -207,9 +200,9 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             waitUntilYarnAppDoneAndAssertSuccess(launcherId);
             Configuration conf = new XConfiguration();
             conf.set("user.name", getTestUser());
-            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+            Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            assertFalse(LauncherHelper.hasIdSwap(actionData));
             Hive2ActionExecutor ae = new Hive2ActionExecutor();
             ae.check(context, context.getAction());
             assertTrue(launcherId.equals(context.getAction().getExternalId()));
@@ -236,9 +229,9 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             waitUntilYarnAppDoneAndAssertSuccess(launcherId);
             Configuration conf = new XConfiguration();
             conf.set("user.name", getTestUser());
-            Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+            Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-            assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+            assertFalse(LauncherHelper.hasIdSwap(actionData));
             Hive2ActionExecutor ae = new Hive2ActionExecutor();
             ae.check(context, context.getAction());
             assertTrue(launcherId.equals(context.getAction().getExternalId()));
@@ -267,9 +260,9 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
         Hive2ActionExecutor ae = new Hive2ActionExecutor();
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));

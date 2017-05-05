@@ -49,7 +49,6 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.JobStatus;
@@ -396,9 +395,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -456,9 +455,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -615,7 +614,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+        final Map<String, String> actionData = LauncherHelper.getActionData(fs, context.getActionDir(),
                 context.getProtoActionConf());
         Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
         assertEquals("An Exception occurred while instantiating the action config class",
@@ -645,7 +644,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        final Map<String, String> actionData = LauncherMapperHelper.getActionData(fs, context.getActionDir(),
+        final Map<String, String> actionData = LauncherHelper.getActionData(fs, context.getActionDir(),
                 context.getProtoActionConf());
         Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
         assertEquals("doh", errorProps.getProperty("exception.message"));
@@ -989,9 +988,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
@@ -1058,9 +1057,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -1125,9 +1124,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());
@@ -1207,9 +1206,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
 
         MapReduceActionExecutor ae = new MapReduceActionExecutor();
         ae.check(context, context.getAction());

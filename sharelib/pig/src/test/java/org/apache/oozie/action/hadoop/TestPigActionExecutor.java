@@ -191,9 +191,9 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasStatsData(actionData));
+        assertTrue(LauncherHelper.hasStatsData(actionData));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -293,9 +293,9 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasStatsData(actionData));
+        assertFalse(LauncherHelper.hasStatsData(actionData));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
