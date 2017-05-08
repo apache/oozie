@@ -114,6 +114,11 @@ public class SLAService implements Service {
         new SLAWorker(calcImpl).run();
     }
 
+    @VisibleForTesting
+    public void startSLAWorker() {
+        new Thread(new SLAWorker(calcImpl)).start();
+    }
+
     private class SLAWorker implements Runnable {
 
         SLACalculator calc;

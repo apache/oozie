@@ -436,8 +436,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 LOG.info("Coord status is changed to " + jobStatus + " from " + prevStatus);
                 if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
                     coordJob.setPending();
-                    if (coordJob.getNextMaterializedTime() != null
-                            && coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
+                    if (coordJob.getNextMaterializedTime() == null
+                            || coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
                         coordJob.resetDoneMaterialization();
                     }
                 } else if (jobStatus.equals(CoordinatorJob.Status.IGNORED)) {

@@ -41,6 +41,12 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.oozie</groupId>

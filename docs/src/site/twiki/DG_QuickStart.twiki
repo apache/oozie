@@ -4,7 +4,7 @@
 
 ---+!! Oozie Quick Start
 
-These instructions install and run Oozie using an embedded Tomcat server and an embedded Derby database.
+These instructions install and run Oozie using an embedded Jetty server and an embedded Derby database.
 
 For detailed install and configuration instructions refer to [[AG_Install][Oozie Install]].
 
@@ -48,7 +48,7 @@ available to customise the versions of the dependencies:
 -Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
--Dtomcat.version=<version> - default 6.0.47
+-Djetty.version=<version> - default 9.2.19.v20160908
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
@@ -135,17 +135,13 @@ Sharelib files are copied to new lib_<timestamped> directory. At start, server p
 While starting server also purge sharelib directory which is older than sharelib retention days
 (defined as oozie.service.ShareLibService.temp.sharelib.retention.days and 7 days is default).
 
-"prepare-war [-d directory]" command is for creating war files for oozie with an optional alternative directory other
-than libext.
-
 db create|upgrade|postupgrade -run [-sqlfile <FILE>] command is for create, upgrade or postupgrade oozie db with an
 optional sql file
 
 Run the =oozie-setup.sh= script to configure Oozie with all the components added to the *libext/* directory.
 
 <verbatim>
-$ bin/oozie-setup.sh prepare-war [-d directory] [-secure]
-                     sharelib create -fs <FS_URI> [-locallib <PATH>]
+$ bin/oozie-setup.sh sharelib create -fs <FS_URI> [-locallib <PATH>]
                      sharelib upgrade -fs <FS_URI> [-locallib <PATH>]
                      db create|upgrade|postupgrade -run [-sqlfile <FILE>]
 </verbatim>

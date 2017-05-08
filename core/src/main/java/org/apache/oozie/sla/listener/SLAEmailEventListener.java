@@ -383,7 +383,7 @@ public class SLAEmailEventListener extends SLAEventListener {
                             val.incrementAndGet();
                         }
                         catch (Exception e) {
-                            LOG.debug("blacklist loading throwed exception");
+                            LOG.debug("blacklist loading threw exception: " + e.getMessage());
                         }
                     }
                 }

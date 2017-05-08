@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
@@ -1569,4 +1570,33 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 .contains("tmp/coord/b/2009/03"));
     }
 
+    public void testFailureOnSubmitWithInvalidInstance() throws Exception {
+        testFailure("coord-invalid-output-instance.xml");
+    }
+
+    public void testFailureOnSubmitWithInvalidElFunction() throws Exception {
+        testFailure("coord-invalid-el-function.xml");
+    }
+
+    private void testFailure(String coordinatorXml) throws IOException {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+
+        Reader reader = IOUtils.getResourceAsReader(coordinatorXml, -1);
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        IOUtils.copyCharStream(reader, writer);
+
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+
+        try {
+            sc.call();
+            fail("Should throw an exception");
+        }
+        catch (CommandException e) {
+            assertEquals(Job.Status.FAILED, sc.getJob().getStatus());
+            assertEquals(e.getErrorCode(), ErrorCode.E0803);
+        }
+    }
 }

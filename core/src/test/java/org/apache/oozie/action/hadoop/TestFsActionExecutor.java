@@ -320,6 +320,20 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
     }
 
+    public void testDeleteHcatTable() throws Exception {
+        createTestTable();
+        URI hcatURI = getHCatURI(db, table);
+        URIHandler handler = uriService.getURIHandler(hcatURI);
+        FsActionExecutor ae = new FsActionExecutor();
+        Path path = new Path(hcatURI);
+        Path nameNodePath = new Path(getNameNodeUri());
+        Context context = createContext("<fs/>");
+        XConfiguration conf = new XConfiguration();
+        assertTrue(handler.exists(hcatURI, conf, getTestUser()));
+        ae.delete(context, conf, nameNodePath, path, true);
+        assertFalse(handler.exists(hcatURI, conf, getTestUser()));
+    }
+
     public void testDeleteWithGlob() throws Exception {
 
         FsActionExecutor ae = new FsActionExecutor();

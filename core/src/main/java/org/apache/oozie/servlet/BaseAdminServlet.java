@@ -29,20 +29,28 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.cli.ValidationUtil;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.PurgeXCommand;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JobsConcurrencyService;
+import org.apache.oozie.service.PurgeService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.util.AuthUrlClient;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.XLog;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -50,6 +58,7 @@ import org.json.simple.JSONValue;
 public abstract class BaseAdminServlet extends JsonRestServlet {
 
     private static final long serialVersionUID = 1L;
+    private static final XLog LOG = XLog.getLog(BaseAdminServlet.class);
     protected String modeTag;
 
 
@@ -59,7 +68,13 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     }
 
     /**
-     * Change safemode state.
+     * Oozie admin PUT request for
+     *      change oozie system mode
+     *      admin purge command
+     * @param request http request
+     * @param response http response
+     * @throws ServletException thrown if any servlet error
+     * @throws IOException  thrown if any I/O error
      */
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -68,16 +83,19 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         request.setAttribute(AUDIT_PARAM, request.getParameter(modeTag));
 
         authorizeRequest(request);
-
-        setOozieMode(request, response, resourceName);
-        /*if (resourceName.equals(RestConstants.ADMIN_STATUS_RESOURCE)) {
-            boolean safeMode = Boolean.parseBoolean(request.getParameter(RestConstants.ADMIN_SAFE_MODE_PARAM));
-            Services.get().setSafeMode(safeMode);
-            response.setStatus(HttpServletResponse.SC_OK);
+        switch (resourceName) {
+            case RestConstants.ADMIN_STATUS_RESOURCE:
+                setOozieMode(request, response, resourceName);
+                break;
+            case RestConstants.ADMIN_PURGE:
+                String msg = schedulePurgeCommand(request);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put(JsonTags.PURGE, msg);
+                sendJsonResponse(response, HttpServletResponse.SC_OK, jsonObject);
+                break;
+            default:
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, resourceName);
         }
-        else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, resourceName);
-        }*/
     }
 
 
@@ -162,6 +180,41 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         }
         else if (resource.equals(RestConstants.ADMIN_METRICS_RESOURCE)) {
             sendMetricsResponse(response);
+        }
+    }
+
+    private String schedulePurgeCommand(HttpServletRequest request) throws XServletException {
+        final String purgeCmdDisabledMsg = "Purge service is not enabled";
+        if (!ConfigurationService.getBoolean(PurgeService.PURGE_COMMAND_ENABLED)) {
+            LOG.warn(purgeCmdDisabledMsg);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, purgeCmdDisabledMsg);
+        }
+        String wfAgeStr = request.getParameter(RestConstants.PURGE_WF_AGE);
+        String coordAgeStr = request.getParameter(RestConstants.PURGE_COORD_AGE);
+        String bundleAgeStr = request.getParameter(RestConstants.PURGE_BUNDLE_AGE);
+        String purgeLimitStr = request.getParameter(RestConstants.PURGE_LIMIT);
+        String oldCoordActionStr = request.getParameter(RestConstants.PURGE_OLD_COORD_ACTION);
+
+        int workflowAge = StringUtils.isBlank(wfAgeStr) ? ConfigurationService.getInt(PurgeService.CONF_OLDER_THAN)
+                : ValidationUtil.parsePositiveInteger(wfAgeStr);
+        int coordAge = StringUtils.isBlank(coordAgeStr) ? ConfigurationService.getInt(PurgeService.COORD_CONF_OLDER_THAN)
+                : ValidationUtil.parsePositiveInteger(coordAgeStr);
+        int bundleAge = StringUtils.isBlank(bundleAgeStr) ? ConfigurationService.getInt(PurgeService.BUNDLE_CONF_OLDER_THAN)
+                : ValidationUtil.parsePositiveInteger(bundleAgeStr);
+        int purgeLimit = StringUtils.isBlank(purgeLimitStr) ? ConfigurationService.getInt(PurgeService.PURGE_LIMIT)
+                : ValidationUtil.parsePositiveInteger(purgeLimitStr);
+        boolean purgeOldCoordAction = StringUtils.isBlank(oldCoordActionStr)
+                ? ConfigurationService.getBoolean(PurgeService.PURGE_OLD_COORD_ACTION)
+                : Boolean.parseBoolean(oldCoordActionStr);
+
+        LOG.info("Executing oozie purge command.");
+        PurgeXCommand purgeXCommand = new PurgeXCommand(workflowAge, coordAge, bundleAge, purgeLimit, purgeOldCoordAction);
+        try {
+            purgeXCommand.call();
+            return "Purge command executed successfully";
+        } catch (CommandException e) {
+            throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getErrorCode(), e.getMessage(),
+                    e.getCause());
         }
     }
 

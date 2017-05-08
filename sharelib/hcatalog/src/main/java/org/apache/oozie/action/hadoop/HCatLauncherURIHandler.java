@@ -51,7 +51,11 @@ public class HCatLauncherURIHandler implements LauncherURIHandler {
         HCatClient client = getHCatClient(uri, conf);
         try {
             HCatURI hcatURI = new HCatURI(uri.toString());
-            client.dropPartitions(hcatURI.getDb(), hcatURI.getTable(), hcatURI.getPartitionMap(), true);
+            if (!hcatURI.getPartitionMap().isEmpty()) {
+                client.dropPartitions(hcatURI.getDb(), hcatURI.getTable(), hcatURI.getPartitionMap(), true);
+            } else {
+                client.dropTable(hcatURI.getDb(), hcatURI.getTable(), true);
+            }
             System.out.println("Dropped partitions for " + uri);
             return true;
         }

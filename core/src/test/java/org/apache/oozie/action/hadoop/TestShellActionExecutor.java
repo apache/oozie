@@ -63,9 +63,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             ? "IF EXIST %HADOOP_CONF_DIR%\\log4j.properties echo L4J_EXISTS=yes\n"
             : "if [ -f $HADOOP_CONF_DIR/log4j.properties ]; then echo L4J_EXISTS=yes; fi\n";
     private static final String SHELL_SCRIPT_LOG4J_CONTENT_COUNTER = Shell.WINDOWS
-            ? "SET COMMAND=\"type %HADOOP_CONF_DIR%\\log4j.properties | FIND /c /v \"~DOESNOTMATCH~\"\"\n" +
-              "FOR /f %%i IN (' %COMMAND% ') DO SET L4J_LC=%%i\necho L4J_WC=%L4J_LC%\n"
-            : "echo L4J_LC=$(cat $HADOOP_CONF_DIR/log4j.properties | wc -l)\n";
+            ? "FOR /f %%i IN ('TYPE %HADOOP_CONF_DIR%\\log4j.properties " +
+              "^| FIND /c /v \"~DOESNOTMATCH~\"') DO " +
+              "SET L4J_LC=%%i\necho L4J_LC=%L4J_LC%\n" +
+              "FOR /f %%i IN ('FINDSTR \"CLA CLRA\" %HADOOP_CONF_DIR%\\log4j.properties " +
+              "^| FIND /c /v \"~DOESNOTMATCH~\"') DO " +
+              "SET L4J_APPENDER=%%i\necho L4J_APPENDER=%L4J_APPENDER%\n"
+            : "echo L4J_LC=$(cat $HADOOP_CONF_DIR/log4j.properties | wc -l)\n" +
+              "echo L4J_APPENDER=$(grep -e 'CLA' -e 'CLRA' -c " +
+              "$HADOOP_CONF_DIR/log4j.properties)\n";
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
@@ -156,6 +162,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         String yarnConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("YARN_CONF_DIR");
         String log4jExists = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_EXISTS");
         String log4jFileLineCount = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_LC");
+        String log4BadAppenderCount = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_APPENDER");
         assertNotNull(oozieActionConfXml);
         assertNotNull(hadoopConfDir);
         String s = new File(oozieActionConfXml).getParent() + File.separator + "oozie-hadoop-conf-";
@@ -166,10 +173,13 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
                 "Expected YARN_CONF_DIR to start with " + s + " but was " + yarnConfDir,
                 yarnConfDir.startsWith(s));
         Assert.assertEquals(
-                "Expected log4j.properties file to exist", log4jExists, "yes");
+                "Expected log4j.properties file to exist", "yes", log4jExists);
         Assert.assertTrue(
                 "Expected log4j.properties to have non-zero line count, but has: " + log4jFileLineCount,
                 Integer.parseInt(log4jFileLineCount) > 0);
+        Assert.assertEquals(
+                "Expected log4j.properties to have no container appender references (CLA/CLRA)",
+                0, Integer.parseInt(log4BadAppenderCount));
     }
 
     /**

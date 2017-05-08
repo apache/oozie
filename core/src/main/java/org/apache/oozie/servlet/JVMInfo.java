@@ -120,7 +120,7 @@ public class JVMInfo implements Serializable {
         sb.append("Thread Count=").append(threadMXBean.getThreadCount());
         sb.append("&nbsp;&nbsp;Peak Thread Count=").append(threadMXBean.getPeakThreadCount());
         sb.append("&nbsp;&nbsp;Total Started Threads=").append(threadMXBean.getTotalStartedThreadCount());
-        sb.append("&nbsp;&nbsp;Deamon Threads=").append(threadMXBean.getDaemonThreadCount());
+        sb.append("&nbsp;&nbsp;Daemon Threads=").append(threadMXBean.getDaemonThreadCount());
         sb.append("<br /> &nbsp;&nbsp;&nbsp;&nbsp;RUNNABLE=").append(runnableThreads);
         sb.append("&nbsp;&nbsp;&nbsp;&nbsp;BLOCKED=").append(blockedThreads);
         sb.append("&nbsp;&nbsp;&nbsp;&nbsp;WAITING=").append(waitingThreads);

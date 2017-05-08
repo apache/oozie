@@ -36,6 +36,7 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 import java.io.File;
@@ -173,10 +174,10 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("oozie-conf", ConfigurationService.get("test.nonexist"));
         assertEquals(ConfigUtils.STRING_DEFAULT, ConfigurationService.get(testConf, "test.nonexist"));
 
-        assertEquals("http://localhost:8080/oozie/callback", ConfigurationService.get(CallbackService.CONF_BASE_URL));
+        assertEquals("http://0.0.0.0:11000/oozie/callback", ConfigurationService.get(CallbackService.CONF_BASE_URL));
         assertEquals(5, ConfigurationService.getInt(CallbackService.CONF_EARLY_REQUEUE_MAX_RETRIES));
         assertEquals("gz", ConfigurationService.get(CodecFactory.COMPRESSION_OUTPUT_CODEC));
-        assertEquals(4096, ConfigurationService.getInt(XLogStreamingService.STREAM_BUFFER_LEN));
+        assertEquals(4096, ConfigurationService.getInt(XLogStreamer.STREAM_BUFFER_LEN));
         assertEquals(10000,  ConfigurationService.getLong(JvmPauseMonitorService.WARN_THRESHOLD_KEY));
         assertEquals(60, ConfigurationService.getInt(InstrumentationService.CONF_LOGGING_INTERVAL));
         assertEquals(30, ConfigurationService.getInt(PurgeService.CONF_OLDER_THAN));
@@ -208,7 +209,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("10", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim());
 
         assertEquals(2048, ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA));
-        assertEquals("http://localhost:8080/oozie?job=", ConfigurationService.get(JobXCommand.CONF_CONSOLE_URL));
+        assertEquals("http://0.0.0.0:11000/oozie?job=", ConfigurationService.get(JobXCommand.CONF_CONSOLE_URL));
         assertEquals(false, ConfigurationService.getBoolean(HadoopAccessorService.KERBEROS_AUTH_ENABLED));
 
         assertEquals(0, ConfigurationService.getStrings("no.defined").length);

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Set;
-import java.net.URL;
 
 public class PigMainWithOldAPI extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
@@ -149,40 +148,31 @@ public class PigMainWithOldAPI extends LauncherMain {
 
         String logFile = new File("pig-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        URL log4jFile = Thread.currentThread().getContextClassLoader().getResource("log4j.properties");
-        if (log4jFile != null) {
+        String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
+        String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
-            String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
-            String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        // append required PIG properties to the default hadoop log4j file
+        log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A, B");
+        log4jProperties.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A, B");
+        log4jProperties.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
+        log4jProperties.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.appender.B", "org.apache.log4j.FileAppender");
+        log4jProperties.setProperty("log4j.appender.B.file", logFile);
+        log4jProperties.setProperty("log4j.appender.B.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.B.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
 
-            // append required PIG properties to the default hadoop log4j file
-            Properties hadoopProps = new Properties();
-            hadoopProps.load(log4jFile.openStream());
-            hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A, B");
-            hadoopProps.setProperty("log4j.logger.org.apache.pig", pigLogLevel + ", A, B");
-            hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
-            hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-            hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
-            hadoopProps.setProperty("log4j.appender.B", "org.apache.log4j.FileAppender");
-            hadoopProps.setProperty("log4j.appender.B.file", logFile);
-            hadoopProps.setProperty("log4j.appender.B.layout", "org.apache.log4j.PatternLayout");
-            hadoopProps.setProperty("log4j.appender.B.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
-
-            String localProps = new File("piglog4j.properties").getAbsolutePath();
-            OutputStream os1 = new FileOutputStream(localProps);
-            hadoopProps.store(os1, "");
-            os1.close();
-
-            arguments.add("-log4jconf");
-            arguments.add(localProps);
-
-            // print out current directory
-            File localDir = new File(localProps).getParentFile();
-            System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
+        String localProps = new File("piglog4j.properties").getAbsolutePath();
+        try (OutputStream os1 = new FileOutputStream(localProps)) {
+            log4jProperties.store(os1, "");
         }
-        else {
-            System.out.println("log4jfile is null");
-        }
+
+        arguments.add("-log4jconf");
+        arguments.add(localProps);
+
+        // print out current directory
+        File localDir = new File(localProps).getParentFile();
+        System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
 
         String pigLog = "pig-" + hadoopJobId + ".log";
         arguments.add("-logfile");

@@ -61,6 +61,7 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
+import org.apache.oozie.command.coord.CoordWfActionInfoXCommand;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
@@ -76,8 +77,8 @@ import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.XLogUserFilterParam;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -303,56 +304,20 @@ public class CoordinatorEngine extends BaseEngine {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of start"));
     }
 
-    @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BaseEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
 
     @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BaseEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-    BaseEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer)
             throws IOException, BaseEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
+        Date lastTime = null;
+        CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+        if (job.isTerminalStatus()) {
+            lastTime = job.getLastModifiedTime();
         }
-        catch (Exception e) {
-            throw new IOException(e);
+        if (lastTime == null) {
+            lastTime = new Date();
         }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BaseEngineException {
-        try {
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
-            Date lastTime = null;
-            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-            if (job.isTerminalStatus()) {
-                lastTime = job.getLastModifiedTime();
-            }
-            if (lastTime == null) {
-                lastTime = new Date();
-            }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
+        Services.get().get(XLogStreamingService.class).streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
     }
 
     /**
@@ -362,17 +327,17 @@ public class CoordinatorEngine extends BaseEngine {
      * @param logRetrievalScope Value for the retrieval type
      * @param logRetrievalType Based on which filter criteria the log is retrieved
      * @param writer writer to stream the log to
-     * @param params additional parameters from the request
+     * @param requestParameters additional parameters from the request
      * @throws IOException
      * @throws BaseEngineException
      * @throws CommandException
      */
     public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer,
-            Map<String, String[]> params) throws IOException, BaseEngineException, CommandException {
+            Map<String, String[]> requestParameters) throws IOException, BaseEngineException, CommandException {
 
         Date startTime = null;
         Date endTime = null;
-        XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+        XLogFilter filter = new XLogFilter(new XLogUserFilterParam(requestParameters));
 
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         if (logRetrievalScope != null && logRetrievalType != null) {
@@ -528,7 +493,8 @@ public class CoordinatorEngine extends BaseEngine {
                 }
             }
         }
-        Services.get().get(XLogStreamingService.class).streamLog(filter, startTime, endTime, writer, params);
+        Services.get().get(XLogStreamingService.class).streamLog(new XLogStreamer(filter, requestParameters), startTime,
+                endTime, writer);
     }
 
     /*
@@ -998,4 +964,23 @@ public class CoordinatorEngine extends BaseEngine {
             String actions, String dates) throws CommandException {
         return new CoordActionMissingDependenciesXCommand(id, actions, dates).call();
     }
+
+    /**
+     * get wf actions by action name in a coordinator job
+     * @param jobId coordinator job id
+     * @param wfActionName workflow action name
+     * @param offset
+     * @param len
+     * @return list of CoordinatorWfActionBean in a coordinator
+     * @throws CoordinatorEngineException
+     */
+     public List<CoordinatorWfActionBean> getWfActionByJobIdAndName(String jobId, String wfActionName, int offset, int len)
+             throws CoordinatorEngineException {
+        try {
+            return new CoordWfActionInfoXCommand(jobId, wfActionName, offset, len).call();
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
+     }
 }

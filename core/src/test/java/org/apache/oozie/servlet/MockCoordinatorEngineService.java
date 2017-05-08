@@ -38,12 +38,15 @@ import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
+import org.apache.oozie.client.CoordinatorWfAction;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Pair;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.CoordinatorWfActionBean;
 
 public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static final String JOB_ID = "coord-job-C-";
@@ -61,9 +64,13 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
     public static Integer length = null;
     public static String order = null;
     public static String filter = null;
+    public static String wfActionName = null;
     public static List<CoordinatorJob> coordJobs;
-    public static List<Boolean> started;
+    public static List<CoordinatorWfActionBean> coordWfActions;
+    public static List<Boolean> startedCoordJobs;
     public static final int INIT_COORD_COUNT = 4;
+    public static final int INIT_WF_ACTION_COUNT = 2;
+
 
 
     static {
@@ -77,11 +84,17 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         order = null;
         filter = null;
         coordJobs = new ArrayList<CoordinatorJob>();
-        started = new ArrayList<Boolean>();
+        coordWfActions = new ArrayList<CoordinatorWfActionBean>();
+        startedCoordJobs = new ArrayList<Boolean>();
         for (int i = 0; i < INIT_COORD_COUNT; i++) {
             coordJobs.add(createDummyCoordinatorJob(i));
-            started.add(false);
+            startedCoordJobs.add(false);
         }
+        for(int i = 0; i < INIT_WF_ACTION_COUNT; i++) {
+            coordWfActions.add(createDummyCoordWfAction("actionTest", i+1));
+        }
+        String nullReason = CoordinatorWfAction.NullReason.ACTION_NULL.getNullReason("actionTest2", "wf1");
+        coordWfActions.add(new CoordinatorWfActionBean(INIT_WF_ACTION_COUNT+1, null, nullReason));
     }
 
     @Override
@@ -108,7 +121,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             did = "submit";
             int idx = coordJobs.size();
             coordJobs.add(createDummyCoordinatorJob(idx, conf));
-            started.add(startJob);
+            startedCoordJobs.add(startJob);
             return JOB_ID + idx;
         }
 
@@ -117,7 +130,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             did = RestConstants.JOB_ACTION_DRYRUN;
             int idx = coordJobs.size();
             coordJobs.add(createDummyCoordinatorJob(idx, conf));
-            started.add(false);
+            startedCoordJobs.add(false);
             return JOB_ID + idx;
         }
 
@@ -125,21 +138,21 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public void resume(String jobId) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_RESUME;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, true);
+            startedCoordJobs.set(idx, true);
         }
 
         @Override
         public void suspend(String jobId) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_SUSPEND;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, false);
+            startedCoordJobs.set(idx, false);
         }
 
         @Override
         public void kill(String jobId) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_KILL;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, false);
+            startedCoordJobs.set(idx, false);
         }
 
         @Override
@@ -147,7 +160,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
                 throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_KILL;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, false);
+            startedCoordJobs.set(idx, false);
 
             List<CoordinatorAction> actions = coordJobs.get(idx).getActions();
             List<CoordinatorActionBean> actionBeans = new ArrayList<CoordinatorActionBean>();
@@ -162,7 +175,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public void change(String jobId, String changeValue) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_CHANGE;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, true);
+            startedCoordJobs.set(idx, true);
         }
 
         @Override
@@ -174,7 +187,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         public CoordinatorActionInfo ignore(String jobId, String type, String scope) throws CoordinatorEngineException {
             did = RestConstants.JOB_ACTION_IGNORE;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, true);
+            startedCoordJobs.set(idx, true);
             return null;
         }
         @Override
@@ -182,7 +195,7 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
                 boolean noCleanup, boolean failed, Configuration conf) throws BaseEngineException {
             did = RestConstants.JOB_COORD_ACTION_RERUN;
             int idx = validateCoordinatorIdx(jobId);
-            started.set(idx, true);
+            startedCoordJobs.set(idx, true);
             List<CoordinatorAction> actions = coordJobs.get(idx).getActions();
             List<CoordinatorActionBean> actionBeans = new ArrayList<CoordinatorActionBean>();
             for (CoordinatorAction action : actions) {
@@ -296,6 +309,16 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
             did = RestConstants.SLA_ENABLE_ALERT;
         }
 
+        @Override
+        public List<CoordinatorWfActionBean> getWfActionByJobIdAndName(String jobId, String wfActionName, int offset, int len)
+                throws CoordinatorEngineException {
+            did = RestConstants.JOB_SHOW_WF_ACTIONS_IN_COORD;
+            MockCoordinatorEngineService.offset = offset;
+            MockCoordinatorEngineService.length = len;
+            MockCoordinatorEngineService.wfActionName = wfActionName;
+            return coordWfActions;
+        }
+
         private int validateCoordinatorIdx(String jobId) throws CoordinatorEngineException {
             int idx = -1;
             try {
@@ -395,6 +418,14 @@ public class MockCoordinatorEngineService extends CoordinatorEngineService {
         action.setActionXml(COORD_APP);
         action.setCreatedConf(CONFIGURATION);
         return action;
+    }
+
+    private static CoordinatorWfActionBean createDummyCoordWfAction(String name, int id) {
+        CoordinatorWfActionBean coordWfAction = null;
+        WorkflowActionBean wfAction = new WorkflowActionBean();
+        wfAction.setName(name);
+        coordWfAction = new CoordinatorWfActionBean(id, wfAction, null);
+        return coordWfAction;
     }
 
 }

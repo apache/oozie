@@ -17,8 +17,6 @@
  */
 package org.apache.oozie.util;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.regex.Pattern;
 
 import org.apache.oozie.service.DagXLogInfoService;
@@ -27,20 +25,6 @@ public class XLogAuditFilter extends XLogFilter {
 
     public XLogAuditFilter(XLogUserFilterParam xLogUserFilterParam) {
         super(xLogUserFilterParam);
-    }
-
-    @Override
-    public void calculateAndValidateDateRange(Date jobStartTime, Date jobEndTime) throws IOException {
-        // for testcase, otherwise jobStartTime and jobEndTime will be always set
-        if (jobStartTime == null || jobEndTime == null) {
-            return;
-        }
-
-        if (jobStartTime.after(jobEndTime)) {
-            throw new IOException("Start time should be less than end time. startTime = " + jobStartTime
-                    + " endtime = " + jobEndTime);
-        }
-
     }
 
     public void constructPattern() {

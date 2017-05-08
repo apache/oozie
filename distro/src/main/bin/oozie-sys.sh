@@ -160,62 +160,6 @@ else
   print "Using   OOZIE_LOG4J_RELOAD:  ${OOZIE_LOG4J_RELOAD}"
 fi
 
-if [ "${OOZIE_HTTP_HOSTNAME}" = "" ]; then
-  export OOZIE_HTTP_HOSTNAME=`hostname -f`
-  print "Setting OOZIE_HTTP_HOSTNAME: ${OOZIE_HTTP_HOSTNAME}"
-else
-  print "Using   OOZIE_HTTP_HOSTNAME: ${OOZIE_HTTP_HOSTNAME}"
-fi
-
-if [ "${OOZIE_HTTP_PORT}" = "" ]; then
-  export OOZIE_HTTP_PORT=11000
-  print "Setting OOZIE_HTTP_PORT:     ${OOZIE_HTTP_PORT}"
-else
-  print "Using   OOZIE_HTTP_PORT:     ${OOZIE_HTTP_PORT}"
-fi
-
-if [ "${OOZIE_ADMIN_PORT}" = "" ]; then
-  export OOZIE_ADMIN_PORT=`expr $OOZIE_HTTP_PORT +  1`
-  print "Setting OOZIE_ADMIN_PORT:     ${OOZIE_ADMIN_PORT}"
-else
-  print "Using   OOZIE_ADMIN_PORT:     ${OOZIE_ADMIN_PORT}"
-fi
-
-if [ "${OOZIE_HTTPS_PORT}" = "" ]; then
-  export OOZIE_HTTPS_PORT=11443
-  print "Setting OOZIE_HTTPS_PORT:     ${OOZIE_HTTPS_PORT}"
-else
-  print "Using   OOZIE_HTTPS_PORT:     ${OOZIE_HTTPS_PORT}"
-fi
-
-if [ "${OOZIE_BASE_URL}" = "" ]; then
-  export OOZIE_BASE_URL="http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie"
-  print "Setting OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
-else
-  print "Using   OOZIE_BASE_URL:      ${OOZIE_BASE_URL}"
-fi
-
-if [ "${OOZIE_HTTPS_KEYSTORE_FILE}" = "" ]; then
-  export OOZIE_HTTPS_KEYSTORE_FILE=${HOME}/.keystore
-  print "Setting OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
-else
-  print "Using   OOZIE_HTTPS_KEYSTORE_FILE:     ${OOZIE_HTTPS_KEYSTORE_FILE}"
-fi
-
-if [ "${OOZIE_HTTPS_KEYSTORE_PASS}" = "" ]; then
-  export OOZIE_HTTPS_KEYSTORE_PASS=password
-  print "Setting OOZIE_HTTPS_KEYSTORE_PASS:     ${OOZIE_HTTPS_KEYSTORE_PASS}"
-else
-  print "Using   OOZIE_HTTPS_KEYSTORE_PASS:     ${OOZIE_HTTPS_KEYSTORE_PASS}"
-fi
-
-if [ "${OOZIE_INSTANCE_ID}" = "" ]; then
-  export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
-  print "Setting OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
-else
-  print "Using   OOZIE_INSTANCE_ID:       ${OOZIE_INSTANCE_ID}"
-fi
-
 print
 
 setup_ooziedb() {

@@ -48,7 +48,7 @@ function getLogs(url, searchFilter, logStatus, textArea, shouldParseResponse, er
     if (searchFilter) {
         url = url + "&logfilter=" + searchFilter;
     }
-    logStatus.getEl().dom.innerText = "Log status : Loading... done";
+    logStatus.getEl().dom.innerText = "Log status : Loading...";
 
     if (!errorMsg) {
         errorMsg = "Fatal Error. Can't load logs.";
@@ -96,7 +96,7 @@ function getLogs(url, searchFilter, logStatus, textArea, shouldParseResponse, er
                     logStatus.getEl().dom.innerText = "Log status : Errored out";
 
                 }
-                if (xhr.readyState =4  && xhr.status == 200) {
+                if (xhr.readyState == 4  && xhr.status == 200) {
                     logStatus.getEl().dom.innerText = "Log status : Loading... done";
                 }
             } catch (e) {

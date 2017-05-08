@@ -31,17 +31,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.apache.oozie.service.ConfigurationService.OOZIE_CONFIG_DIR;
-import static org.apache.oozie.service.Services.OOZIE_HOME_DIR;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -49,7 +45,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-//@RunWith(MockitoJUnitRunner.class)
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Services.class)
 public class TestScriptLanguageActionExecutor {

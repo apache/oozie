@@ -35,6 +35,8 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.CoordinatorWfActionBean;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -50,6 +52,7 @@ import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.Pair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -381,4 +384,46 @@ public class V2JobServlet extends V1JobServlet {
         }
     }
 
+    @Override
+    protected JSONObject getWfActionByJobIdAndName(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
+                getUser(request));
+        String jobId = getResourceName(request);
+        String action = request.getParameter(RestConstants.ACTION_NAME_PARAM);
+        String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
+        String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+        String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM);
+        timeZoneId = (timeZoneId == null) ? "GMT" : timeZoneId;
+
+        if (action == null) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
+                    ErrorCode.E0305, RestConstants.ACTION_NAME_PARAM);
+        }
+
+        int offset = (startStr != null) ? Integer.parseInt(startStr) : 1;
+        offset = (offset < 1) ? 1 : offset;
+        /**
+         * set default number of wf actions to be retrieved to
+         * default number of coordinator actions to be retrieved
+         **/
+        int defaultLen = ConfigurationService.getInt(COORD_ACTIONS_DEFAULT_LENGTH);
+        int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
+        len = getCoordinatorJobLength(defaultLen, len);
+
+        try {
+            JSONObject json = new JSONObject();
+            List<CoordinatorWfActionBean> coordWfActions = coordEngine.getWfActionByJobIdAndName(jobId, action, offset, len);
+            JSONArray array = new JSONArray();
+            for (CoordinatorWfActionBean coordWfAction : coordWfActions) {
+                array.add(coordWfAction.toJSONObject(timeZoneId));
+            }
+            json.put(JsonTags.COORDINATOR_JOB_ID, jobId);
+            json.put(JsonTags.COORDINATOR_WF_ACTIONS, array);
+            return json;
+        }
+        catch (CoordinatorEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
 }

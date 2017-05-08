@@ -131,13 +131,13 @@ import java.util.Properties;
 
 ---++ Local Oozie Example
 
-Oozie provides a embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=,
+Oozie provides an embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=,
 which is useful for development, debugging and testing of workflow applications within the convenience of an IDE.
 
-The code snipped below shows the usage of the =LocalOozie= class. All the interaction with Oozie is done using Oozie
+The code snippet below shows the usage of the =LocalOozie= class. All the interaction with Oozie is done using Oozie
  =OozieClient= Java API, as shown in the previous section.
 
-The examples bundled with Oozie include the complete and running class, =LocalOozieExample= from where this snipped was
+The examples bundled with Oozie include the complete and running class, =LocalOozieExample= from where this snippet was
 taken.
 
 <verbatim>
@@ -169,14 +169,14 @@ import java.util.Properties;
     System.out.println("Workflow job submitted");
 .
     // wait until the workflow job finishes printing the status every 10 seconds
-    while (wc.getJobInfo(jobId).getStatus() == Workflow.Status.RUNNING) {
+    while (wc.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING) {
         System.out.println("Workflow job running ...");
         Thread.sleep(10 * 1000);
     }
 .
     // print the final status of the workflow job
     System.out.println("Workflow job completed ...");
-    System.out.println(wf.getJobInfo(jobId));
+    System.out.println(wc.getJobInfo(jobId));
 .
     // stop local Oozie
     LocalOozie.stop();

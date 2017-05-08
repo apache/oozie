@@ -102,7 +102,7 @@
 
     <property>
         <name>oozie.base.url</name>
-        <value>http://localhost:8080/oozie</value>
+        <value>http://${oozie.http.hostname}:${oozie.http.port}/oozie</value>
         <description>
              Base Oozie URL.
         </description>
@@ -192,7 +192,23 @@
     <property>
         <name>oozie.service.XLogStreamingService.buffer.len</name>
         <value>4096</value>
-        <description>4K buffer for streaming the logs progressively</description>
+        <description>4K buffer for streaming the logs progressively
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.XLogStreamingService.error.buffer.len</name>
+        <value>2048</value>
+        <description>2K buffer for streaming the error logs
+            progressively
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.audit.buffer.len</name>
+        <value>3</value>
+        <description>Number of lines for streaming the audit logs
+            progressively
+        </description>
     </property>
 
  <!-- HCatAccessorService -->
@@ -295,7 +311,7 @@
     </property>
 
     <!--  AuthorizationService -->
-    
+
     <property>
         <name>oozie.service.AuthorizationService.authorization.enabled</name>
         <value>false</value>
@@ -332,7 +348,7 @@
             Completed workflow jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.PurgeService.coord.older.than</name>
         <value>7</value>
@@ -340,7 +356,7 @@
             Completed coordinator jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.PurgeService.bundle.older.than</name>
         <value>7</value>
@@ -358,15 +374,15 @@
             specified in oozie.service.PurgeService.older.than.
         </description>
     </property>
-    
+
     <property>
-		<name>oozie.service.PurgeService.purge.limit</name>
-		<value>100</value>
-		<description>
-			Completed Actions purge - limit each purge to this value
+        <name>oozie.service.PurgeService.purge.limit</name>
+        <value>100</value>
+        <description>
+            Completed Actions purge - limit each purge to this value
         </description>
-	</property>
-	
+    </property>
+
     <property>
         <name>oozie.service.PurgeService.purge.interval</name>
         <value>3600</value>
@@ -374,7 +390,15 @@
             Interval at which the purge service will run, in seconds.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.service.PurgeService.enable.command.line</name>
+        <value>true</value>
+        <description>
+            Enable/Disable oozie admin purge command. By default, it is enabled.
+        </description>
+    </property>
+
     <!-- RecoveryService -->
 
     <property>
@@ -427,7 +451,7 @@
         </description>
     </property>
 
-	<property>
+    <property>
         <name>oozie.service.RecoveryService.bundle.older.than</name>
         <value>600</value>
         <description>
@@ -460,7 +484,7 @@
             the action type as the callable type.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.CallableQueueService.callable.next.eligible</name>
         <value>true</value>
@@ -538,23 +562,23 @@
         <value>120</value>
         <description>Default timeout for a coordinator action input check (in minutes) for normal job.
             -1 means infinite timeout</description>
-	</property>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.default.max.timeout
-		</name>
-		<value>86400</value>
-		<description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
+    <property>
+        <name>oozie.service.coord.default.max.timeout
+        </name>
+        <value>86400</value>
+        <description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
         </description>
-	</property>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.input.check.requeue.interval
-		</name>
-		<value>60000</value>
-		<description>Command re-queue interval for coordinator data input check (in millisecond).
+    <property>
+        <name>oozie.service.coord.input.check.requeue.interval
+        </name>
+        <value>60000</value>
+        <description>Command re-queue interval for coordinator data input check (in millisecond).
         </description>
-	</property>
+    </property>
 
     <property>
         <name>oozie.service.coord.input.check.requeue.interval.additional.delay</name>
@@ -573,28 +597,28 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-		<name>oozie.service.coord.default.concurrency
-		</name>
-		<value>1</value>
-		<description>Default concurrency for a coordinator job to determine how many maximum action should
-		be executed at the same time. -1 means infinite concurrency.</description>
-	</property>
+        <name>oozie.service.coord.default.concurrency
+        </name>
+        <value>1</value>
+        <description>Default concurrency for a coordinator job to determine how many maximum action should
+        be executed at the same time. -1 means infinite concurrency.</description>
+    </property>
 
     <property>
-		<name>oozie.service.coord.default.throttle
-		</name>
-		<value>12</value>
-		<description>Default throttle for a coordinator job to determine how many maximum action should 
-		be in WAITING state at the same time.</description>
-	</property>
+        <name>oozie.service.coord.default.throttle
+        </name>
+        <value>12</value>
+        <description>Default throttle for a coordinator job to determine how many maximum action should
+         be in WAITING state at the same time.</description>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.materialization.throttling.factor
-		</name>
-		<value>0.05</value>
-		<description>Determine how many maximum actions should be in WAITING state for a single job at any time. The value is calculated by 
-		this factor X the total queue size.</description>
-	</property>
+    <property>
+        <name>oozie.service.coord.materialization.throttling.factor
+        </name>
+        <value>0.05</value>
+        <description>Determine how many maximum actions should be in WAITING state for a single job at any time. The value is calculated by
+         this factor X the total queue size.</description>
+    </property>
 
     <property>
         <name>oozie.service.coord.check.maximum.frequency</name>
@@ -606,9 +630,9 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-	<!-- ELService -->
+    <!-- ELService -->
     <!--  List of supported groups for ELService -->
-	<property>
+    <property>
         <name>oozie.service.ELService.groups</name>
         <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout,bundle-submit,coord-job-submit-initial-instance</value>
         <description>List of groups for different ELServices</description>
@@ -745,7 +769,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Resolve SLA information during Workflow job submission -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.wf-sla-submit</name>
         <value>
             MINUTES=org.apache.oozie.util.ELConstantsFunctions#SUBMIT_MINUTES,
@@ -1061,7 +1085,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Resolve SLA information during Coordinator job submission -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.coord-sla-submit</name>
         <value>
             MINUTES=org.apache.oozie.coord.CoordELConstants#SUBMIT_MINUTES,
@@ -1247,9 +1271,9 @@ will be the requeue interval for the actions which are waiting for a long time w
             include all the built in ones.
         </description>
     </property>
-    
+
         <!-- Resolve SLA information during Action creation/materialization -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.coord-sla-create</name>
         <value> </value>
         <description>
@@ -1442,17 +1466,17 @@ will be the requeue interval for the actions which are waiting for a long time w
             If the 'oozie.service.JPAService.create.db.schema' property is set to true, this property is ignored.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.JPAService.validate.db.connection.eviction.interval</name>
         <value>300000</value>
         <description>
             Validates DB connections from the DB connection pool.
-            When validate db connection 'TestWhileIdle' is true, the number of milliseconds to sleep 
-            between runs of the idle object evictor thread.
+            When validate db connection 'TestWhileIdle' is true, the number of milliseconds to sleep
+             between runs of the idle object evictor thread.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.JPAService.validate.db.connection.eviction.num</name>
         <value>10</value>
@@ -1745,7 +1769,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             The frequency in seconds at which the StatusTransitService will run.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.StatusTransitService.backward.support.for.coord.status</name>
         <value>false</value>
@@ -1758,7 +1782,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             4. PREPSUSPENDED becomes SUSPENDED in coordinator job
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.StatusTransitService.backward.support.for.states.without.error</name>
         <value>true</value>
@@ -1849,8 +1873,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.action.shell.setup.hadoop.conf.dir.log4j.content</name>
         <value>
-            log4j.rootLogger=${hadoop.root.logger}
-            hadoop.root.logger=INFO,console
+            log4j.rootLogger=INFO,console
             log4j.appender.console=org.apache.log4j.ConsoleAppender
             log4j.appender.console.target=System.err
             log4j.appender.console.layout=org.apache.log4j.PatternLayout
@@ -1947,7 +1970,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             Used when the ouptut of the ssh action is captured.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.action.ssh.allow.user.at.host</name>
         <value>true</value>
@@ -2153,7 +2176,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             ALL is the any kind of error in action executor.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext</name>
         <value> </value>
@@ -2162,7 +2185,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             ALL is the any kind of error in action executor.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.node.def.version</name>
         <value>_oozie_inst_v_2</value>
@@ -2187,6 +2210,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Defines authentication used for Oozie server communicating to other Oozie server over HTTP(s).
             Supported values are: simple | kerberos | #AUTHENTICATOR_CLASSNAME#
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.server.connection.timeout.seconds</name>
+        <value>180</value>
+        <description>
+            Defines connection timeout used for Oozie server communicating to other Oozie server over HTTP(s). Default is 3 min.
         </description>
     </property>
 
@@ -2255,22 +2286,22 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Coordinator Actions default length -->
-	<property>
-		<name>oozie.coord.actions.default.length</name>
-		<value>1000</value>
-		<description>
-			Default number of coordinator actions to be retrieved by the info command
-		</description>
-	</property>
+    <property>
+        <name>oozie.coord.actions.default.length</name>
+        <value>1000</value>
+        <description>
+            Default number of coordinator actions to be retrieved by the info command
+        </description>
+    </property>
 
-	<!-- ForkJoin validation -->
-	<property>
-		<name>oozie.validate.ForkJoin</name>
-		<value>true</value>
-		<description>
-			If true, fork and join should be validated at wf submission time.
-		</description>
-	</property>
+    <!-- ForkJoin validation -->
+    <property>
+        <name>oozie.validate.ForkJoin</name>
+        <value>true</value>
+        <description>
+            If true, fork and join should be validated at wf submission time.
+        </description>
+    </property>
 
     <property>
         <name>oozie.workflow.parallel.fork.action.start</name>
@@ -2281,23 +2312,23 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-	<property>
-		<name>oozie.coord.action.get.all.attributes</name>
-		<value>false</value>
-		<description>
-			Setting to true is not recommended as coord job/action info will bring all columns of the action in memory.
-			Set it true only if backward compatibility for action/job info is required.
-		</description>
-	</property>
+    <property>
+        <name>oozie.coord.action.get.all.attributes</name>
+        <value>false</value>
+        <description>
+            Setting to true is not recommended as coord job/action info will bring all columns of the action in memory.
+            Set it true only if backward compatibility for action/job info is required.
+        </description>
+    </property>
 
-	<property>
-		<name>oozie.service.HadoopAccessorService.supported.filesystems</name>
-		<value>hdfs,hftp,webhdfs</value>
-		<description>
-			Enlist the different filesystems supported for federation. If wildcard "*" is specified,
-			then ALL file schemes will be allowed.
-		</description>
-	</property>
+    <property>
+        <name>oozie.service.HadoopAccessorService.supported.filesystems</name>
+        <value>hdfs,hftp,webhdfs</value>
+        <description>
+            Enlist the different filesystems supported for federation. If wildcard "*" is specified,
+            then ALL file schemes will be allowed.
+        </description>
+    </property>
 
     <property>
         <name>oozie.service.URIHandlerService.uri.handlers</name>
@@ -2615,8 +2646,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.instance.id</name>
         <value>${oozie.http.hostname}</value>
         <description>
-            Each Oozie server should have its own unique instance id. The default is system property
-            =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+            Each Oozie server should have its own unique instance id.
         </description>
     </property>
 
@@ -2978,4 +3008,10 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.hcat.uri.regex.pattern</name>
+        <value>([a-z]+://[\w\.\-]+:\d+[,]*)+/\w+/\w+/?[\w+=;\-]*</value>
+        <description>Regex pattern for HCat URIs. The regex can be modified by users as per requirement
+            for parsing/splitting the HCat URIs.</description>
+    </property>
 </configuration>

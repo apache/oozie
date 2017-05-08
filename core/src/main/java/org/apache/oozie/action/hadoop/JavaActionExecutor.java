@@ -41,6 +41,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.primitives.Ints;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
@@ -840,7 +842,7 @@ public class JavaActionExecutor extends ActionExecutor {
             // Set the launcher Main Class
             LauncherHelper.setupMainClass(launcherJobConf, getLauncherMain(launcherJobConf, actionXml));
             LauncherHelper.setupLauncherURIHandlerConf(launcherJobConf);
-            LauncherHelper.setupMaxOutputData(launcherJobConf, maxActionOutputLen);
+            LauncherHelper.setupMaxOutputData(launcherJobConf, getMaxOutputData(actionConf));
             LauncherHelper.setupMaxExternalStatsSize(launcherJobConf, maxExternalStatsSize);
             LauncherHelper.setupMaxFSGlob(launcherJobConf, maxFSGlobMax);
 
@@ -880,6 +882,16 @@ public class JavaActionExecutor extends ActionExecutor {
         catch (Exception ex) {
             throw convertException(ex);
         }
+    }
+
+    @VisibleForTesting
+    protected static int getMaxOutputData(Configuration actionConf) {
+        String userMaxActionOutputLen = actionConf.get("oozie.action.max.output.data");
+        if (userMaxActionOutputLen != null) {
+            Integer i = Ints.tryParse(userMaxActionOutputLen);
+            return i != null ? i : maxActionOutputLen;
+        }
+        return maxActionOutputLen;
     }
 
     protected void injectCallback(Context context, Configuration conf) {

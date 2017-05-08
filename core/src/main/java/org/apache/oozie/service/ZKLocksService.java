@@ -25,7 +25,6 @@ import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
@@ -35,7 +34,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.curator.framework.recipes.locks.ChildReaper;
 import org.apache.curator.framework.recipes.locks.Reaper;
-import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.utils.ThreadUtils;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -49,16 +47,15 @@ import com.google.common.collect.MapMaker;
 public class ZKLocksService extends MemoryLocksService implements Service, Instrumentable {
 
     private ZKUtils zk;
-    private static XLog LOG = XLog.getLog(ZKLocksService.class);
     public static final String LOCKS_NODE = "/locks";
 
-    private ConcurrentMap<String, InterProcessReadWriteLock> zkLocks = new MapMaker().weakValues().makeMap();
-
+    private static final XLog LOG = XLog.getLog(ZKLocksService.class);
+    private final ConcurrentMap<String, InterProcessReadWriteLock> zkLocks = new MapMaker().weakValues().makeMap();
+    private ChildReaper reaper = null;
 
     private static final String REAPING_LEADER_PATH = ZKUtils.ZK_BASE_SERVICES_PATH + "/locksChildReaperLeaderPath";
-    public static final String REAPING_THRESHOLD = CONF_PREFIX + "ZKLocksService.locks.reaper.threshold";
-    public static final String REAPING_THREADS = CONF_PREFIX + "ZKLocksService.locks.reaper.threads";
-    private ChildReaper reaper = null;
+    static final String REAPING_THRESHOLD = CONF_PREFIX + "ZKLocksService.locks.reaper.threshold";
+    static final String REAPING_THREADS = CONF_PREFIX + "ZKLocksService.locks.reaper.threads";
 
     /**
      * Initialize the zookeeper locks service
@@ -141,30 +138,50 @@ public class ZKLocksService extends MemoryLocksService implements Service, Instr
         return acquireLock(resource, Type.WRITE, wait);
     }
 
-    private LockToken acquireLock(final String resource, Type type, long wait) throws InterruptedException {
-        InterProcessReadWriteLock lockEntry = zkLocks.get(resource);
-        if (lockEntry == null) {
-            InterProcessReadWriteLock newLock = new InterProcessReadWriteLock(zk.getClient(), LOCKS_NODE + "/" + resource);
-            lockEntry = zkLocks.putIfAbsent(resource, newLock);
-            if (lockEntry == null) {
-                lockEntry = newLock;
-            }
+    private LockToken acquireLock(final String resource, final Type type, final long wait) throws InterruptedException {
+        LOG.debug("Acquiring ZooKeeper lock. [resource={};type={};wait={}]", resource, type, wait);
+
+        InterProcessReadWriteLock lockEntry;
+        final String zkPath = LOCKS_NODE + "/" + resource;
+        LOG.debug("Checking existing Curator lock or creating new one. [zkPath={}]", zkPath);
+
+        // Creating a Curator InterProcessReadWriteLock is lightweight - only calling acquire() costs real ZooKeeper calls
+        final InterProcessReadWriteLock newLockEntry = new InterProcessReadWriteLock(zk.getClient(), zkPath);
+        final InterProcessReadWriteLock existingLockEntry = zkLocks.putIfAbsent(resource, newLockEntry);
+        if (existingLockEntry == null) {
+            lockEntry = newLockEntry;
+            LOG.debug("No existing Curator lock present, new one created successfully. [zkPath={}]", zkPath);
         }
-        InterProcessMutex lock = (type.equals(Type.READ)) ? lockEntry.readLock() : lockEntry.writeLock();
+        else {
+            // We can't destoy newLockEntry and we don't have to - it's taken care of by Curator and JVM GC
+            lockEntry = existingLockEntry;
+            LOG.debug("Reusing existing Curator lock. [zkPath={}]", zkPath);
+        }
+
         ZKLockToken token = null;
         try {
+            LOG.debug("Calling Curator to acquire ZooKeeper lock. [resource={};type={};wait={}]", resource, type, wait);
+            final InterProcessMutex lock = (type.equals(Type.READ)) ? lockEntry.readLock() : lockEntry.writeLock();
             if (wait == -1) {
                 lock.acquire();
                 token = new ZKLockToken(lockEntry, type);
+                LOG.debug("ZooKeeper lock acquired successfully. [resource={};type={}]", resource, type);
             }
             else if (lock.acquire(wait, TimeUnit.MILLISECONDS)) {
                 token = new ZKLockToken(lockEntry, type);
+                LOG.debug("ZooKeeper lock acquired successfully waiting. [resource={};type={};wait={}]", resource, type, wait);
+            }
+            else {
+                LOG.warn("Could not acquire ZooKeeper lock, timed out. [resource={};type={};wait={}]", resource, type, wait);
             }
         }
-        catch (Exception ex) {
+        catch (final Exception ex) {
             //Not throwing exception. Should return null, so that command can be requeued
+            LOG.warn("Could not acquire lock due to a ZooKeeper error. " +
+                    "[ex={};resource={};type={};wait={}]", ex, resource, type, wait);
             LOG.error("Error while acquiring lock", ex);
         }
+
         return token;
     }
 

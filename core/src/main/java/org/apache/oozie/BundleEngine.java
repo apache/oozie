@@ -54,14 +54,14 @@ import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.util.XLogStreamer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -245,44 +245,11 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer) throws IOException,
             BundleEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
-
-    @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BundleEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BundleEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BundleEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BundleEngineException {
-        try {
+    try {
             BundleJobBean job;
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
+            logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
             job = new BundleJobXCommand(jobId).call();
             Date lastTime = null;
             if (job.isTerminalStatus()) {
@@ -291,9 +258,10 @@ public class BundleEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
+            Services.get().get(XLogStreamingService.class)
+                    .streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
         }
-        catch (Exception ex) {
+        catch (CommandException ex) {
             throw new IOException(ex);
         }
     }

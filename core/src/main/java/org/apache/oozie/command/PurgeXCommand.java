@@ -142,7 +142,7 @@ public class PurgeXCommand extends XCommand<Void> {
     @Override
     protected Void execute() throws CommandException {
         LOG.info("STARTED Purge to purge Workflow Jobs older than [{0}] days, Coordinator Jobs older than [{1}] days, and Bundle"
-                + "jobs older than [{2}] days.", wfOlderThan, coordOlderThan, bundleOlderThan);
+                + " jobs older than [{2}] days.", wfOlderThan, coordOlderThan, bundleOlderThan);
 
         // Process parentless workflows to purge them and their children
         if (!wfList.isEmpty()) {
@@ -407,7 +407,7 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     @Override
     public String getEntityKey() {
-        return null;
+        return "purge_command";
     }
 
     /* (non-Javadoc)
@@ -415,7 +415,7 @@ public class PurgeXCommand extends XCommand<Void> {
      */
     @Override
     protected boolean isLockRequired() {
-        return false;
+        return true;
     }
 
     /* (non-Javadoc)

@@ -25,28 +25,64 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.BufferedReader;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.Service;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 
 /**
  * XLogStreamer streams the given log file to writer after applying the given filter.
  */
 public class XLogStreamer {
     private static XLog LOG = XLog.getLog(XLogStreamer.class);
+    protected static final String CONF_PREFIX = Service.CONF_PREFIX + "XLogStreamingService.";
+    public static final String STREAM_BUFFER_LEN = CONF_PREFIX + "buffer.len";
+
     private String logFile;
     private String logPath;
-    private XLogFilter logFilter;
+    protected XLogFilter logFilter;
     private long logRotation;
+    Map<String, String[]> requestParam;
+    protected int totalDataWritten;
+    protected int bufferLen;
 
     public XLogStreamer(XLogFilter logFilter, String logPath, String logFile, long logRotationSecs) {
-        this.logFilter = logFilter;
         if (logFile == null) {
             logFile = "oozie-app.log";
         }
+
+        this.logFilter = logFilter;
         this.logFile = logFile;
         this.logPath = logPath;
         this.logRotation = logRotationSecs * 1000l;
+        bufferLen = ConfigurationService.getInt(STREAM_BUFFER_LEN, 4096);
+    }
+
+    public XLogStreamer(XLogFilter logFilter) {
+        this(logFilter, Services.get().get(XLogService.class).getOozieLogPath(), Services.get().get(XLogService.class)
+                .getOozieLogName(), Services.get().get(XLogService.class).getOozieLogRotation());
+
+    }
+
+    public XLogStreamer(XLogFilter logFilter, Map<String, String[]> params) {
+        this(logFilter, Services.get().get(XLogService.class).getOozieLogPath(), Services.get().get(XLogService.class)
+                .getOozieLogName(), Services.get().get(XLogService.class).getOozieLogRotation());
+        this.requestParam = params;
+
+    }
+
+
+    public XLogStreamer(Map<String, String[]> params) throws CommandException {
+        this(new XLogFilter(new XLogUserFilterParam(params)));
+        this.requestParam = params;
     }
 
     /**
@@ -58,15 +94,34 @@ public class XLogStreamer {
      * @param endTime
      * @throws IOException
      */
-    public void streamLog(Writer writer, Date startTime, Date endTime, int bufferLen) throws IOException {
+    public void streamLog(Writer writer, Date startTime, Date endTime) throws IOException {
+        streamLog(writer, startTime, endTime, true);
+    }
+
+    /**
+     * Gets the files that are modified between startTime and endTime in the given logPath and streams the log after
+     * applying the filters
+     *
+     * @param writer the writer
+     * @param startTime the start time
+     * @param endTime the end time
+     * @param appendDebug the append debug
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public void streamLog(Writer writer, Date startTime, Date endTime, boolean appendDebug) throws IOException {
         // Get a Reader for the log file(s)
         BufferedReader reader = new BufferedReader(getReader(startTime, endTime));
         try {
-            if(logFilter.isDebugMode()){
-                writer.write(logFilter.getDebugMessage());
+            if (appendDebug) {
+                if (!StringUtils.isEmpty(logFilter.getTruncatedMessage())) {
+                    writer.write(logFilter.getTruncatedMessage());
+                }
+                if (logFilter.isDebugMode()) {
+                    writer.write(logFilter.getDebugMessage());
+                }
             }
             // Process the entire logs from the reader using the logFilter
-            new TimestampedMessageParser(reader, logFilter).processRemaining(writer, bufferLen);
+            new TimestampedMessageParser(reader, logFilter).processRemaining(writer, this);
         }
         finally {
             reader.close();
@@ -83,12 +138,17 @@ public class XLogStreamer {
      */
 
     private MultiFileReader getReader(Date startTime, Date endTime) throws IOException {
-        logFilter.calculateAndValidateDateRange(startTime, endTime);
+        calculateAndValidateDateRange(startTime, endTime);
         return new MultiFileReader(getFileList(logFilter.getStartDate(), logFilter.getEndDate()));
     }
 
+    protected void calculateAndValidateDateRange(Date startTime, Date endTime) throws IOException {
+        logFilter.calculateAndCheckDates(startTime, endTime);
+        logFilter.validateDateRange(startTime, endTime);
+    }
+
     public BufferedReader makeReader(Date startTime, Date endTime) throws IOException {
-        return new BufferedReader(getReader(startTime,endTime));
+        return new BufferedReader(getReader(startTime, endTime));
     }
 
     /**
@@ -220,7 +280,8 @@ public class XLogStreamer {
             LOG.warn("oozie.log has been GZipped, which is unexpected");
             // Return a value other than -1 to include the file in list
             returnVal = 0;
-        } else {
+        }
+        else {
             Matcher m = gzTimePattern.matcher(fileName);
             if (m.matches() && m.groupCount() == 4) {
                 int year = Integer.parseInt(m.group(1));
@@ -242,11 +303,47 @@ public class XLogStreamer {
                         || (startTime <= logFileStartTime && endTime >= logFileEndTime)) {
                     returnVal = logFileStartTime;
                 }
-            } else {
+            }
+            else {
                 LOG.debug("Filename " + fileName + " does not match the expected format");
                 returnVal = -1;
             }
         }
         return returnVal;
+    }
+
+    public boolean isLogEnabled() {
+        return Services.get().get(XLogService.class).getLogOverWS();
+    }
+
+    public String getLogType() {
+        return RestConstants.JOB_SHOW_LOG;
+    }
+
+    public XLogFilter getXLogFilter() {
+        return logFilter;
+    }
+
+    public String getLogDisableMessage() {
+        return "Log streaming disabled!!";
+    }
+
+    public Map<String, String[]> getRequestParam() {
+        return requestParam;
+    }
+
+    public boolean shouldFlushOutput(int writtenBytes) {
+        this.totalDataWritten += writtenBytes;
+        if (this.totalDataWritten > getBufferLen()) {
+            this.totalDataWritten = 0;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public int getBufferLen() {
+        return bufferLen;
     }
 }

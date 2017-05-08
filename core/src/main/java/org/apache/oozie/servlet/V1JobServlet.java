@@ -990,7 +990,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (DagEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -1009,7 +1009,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             bundleEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (BundleEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }

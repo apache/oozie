@@ -17,7 +17,7 @@
 
 @rem Set Oozie specific environment variables here.
 
-@rem Settings for the Embedded Tomcat that runs Oozie
+@rem Settings for the Embedded Jetty that runs Oozie
 @rem Java System properties for Oozie should be specified in this variable
 @rem
 set CATALINA_OPTS=%CATALINA_OPTS% -Xmx1024m

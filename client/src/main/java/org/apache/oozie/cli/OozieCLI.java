@@ -151,6 +151,7 @@ public class OozieCLI {
     public static final String UPDATE_SHARELIB_OPTION = "sharelibupdate";
 
     public static final String LIST_SHARELIB_LIB_OPTION = "shareliblist";
+    public static final String PURGE_OPTION = "purge";
 
     public static final String SLA_DISABLE_ALERT = "sladisable";
     public static final String SLA_ENABLE_ALERT = "slaenable";
@@ -279,6 +280,8 @@ public class OozieCLI {
         Option sharelib = new Option(LIST_SHARELIB_LIB_OPTION, false,
                 "List available sharelib that can be specified in a workflow action");
         sharelib.setOptionalArg(true);
+        Option purge = new Option(PURGE_OPTION, true, "purge old oozie workflow, coordinator and bundle records from DB " +
+                "(parameter unit: day)");
 
         Options adminOptions = new Options();
         adminOptions.addOption(oozie);
@@ -296,6 +299,7 @@ public class OozieCLI {
         group.addOption(javaSysProps);
         group.addOption(metrics);
         group.addOption(instrumentation);
+        group.addOption(purge);
         adminOptions.addOptionGroup(group);
         addAuthOptions(adminOptions);
         return adminOptions;
@@ -1945,6 +1949,9 @@ public class OozieCLI {
                 } else {
                     printInstrumentation(instrumentation);
                 }
+            } else if (options.contains(PURGE_OPTION)) {
+                String purgeOptions = commandLine.getOptionValue(PURGE_OPTION);
+                System.out.println(wc.purgeCommand(purgeOptions));
             }
         }
         catch (OozieClientException ex) {

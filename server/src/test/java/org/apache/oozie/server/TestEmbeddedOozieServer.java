@@ -74,6 +74,7 @@ public class TestEmbeddedOozieServer {
         doReturn("65536").when(mockConfiguration).get("oozie.http.request.header.size");
         doReturn("65536").when(mockConfiguration).get("oozie.http.response.header.size");
         doReturn("42").when(mockConfiguration).get("oozie.server.threadpool.max.threads");
+        doReturn("https://localhost:11443/oozie").when(mockConfiguration).get("oozie.base.url");
         doReturn(mockConfiguration).when(mockConfigService).getConf();
         doReturn(mockConfigService).when(mockServices).get(ConfigurationService.class);
     }
@@ -91,6 +92,7 @@ public class TestEmbeddedOozieServer {
     @Test
     public void testServerSetup() throws Exception {
         doReturn("false").when(mockConfiguration).get("oozie.https.enabled");
+
         embeddedOozieServer.setup();
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
     }

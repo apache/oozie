@@ -14,10 +14,10 @@ Follow the instructions at [[DG_QuickStart][Oozie Quick Start]].
 
 *IMPORTANT:* Oozie ignores any set value for =OOZIE_HOME=, Oozie computes its home automatically.
 
-When running Oozie with its embedded Tomcat server, the =conf/oozie-env.sh= file can be
+When running Oozie with its embedded Jetty server, the =conf/oozie-env.sh= file can be
 used to configure the following environment variables used by Oozie:
 
-*CATALINA_OPTS* : settings for the Embedded Tomcat that runs Oozie Java System properties
+*JETTY_OPTS* : settings for the Embedded Jetty that runs Oozie. Java System properties
 for Oozie should be specified in this variable. No default value.
 
 *OOZIE_CONFIG_FILE* : Oozie configuration file to load from Oozie configuration directory.
@@ -32,42 +32,21 @@ Default value =oozie-log4j.properties=.
 *OOZIE_LOG4J_RELOAD* : Reload interval of the Log4J configuration file, in seconds.
 Default value =10=
 
-*OOZIE_HTTP_PORT* : The port Oozie server runs. Default value =11000=.
-
-*OOZIE_ADMIN_PORT* : The admin port Oozie server runs. Default value =11001=.
-
-*OOZIE_HTTP_HOSTNAME* : The host name Oozie server runs on. Default value is the output of the
-command =hostname -f=.
-
-*OOZIE_BASE_URL* : The base URL for actions callback URLs to Oozie. The default value
-is =http://${OOZIE_HTTP_HOSTNAME}:${OOZIE_HTTP_PORT}/oozie=.
-
 *OOZIE_CHECK_OWNER* : If set to =true=, Oozie setup/start/run/stop scripts will check that the
 owner of the Oozie installation directory matches the user invoking the script. The default
 value is undefined and interpreted as a =false=.
-
-If Oozie is configured to use HTTPS (SSL), then the following environment variables are also used:
-
-*OOZIE_HTTPS_PORT* : The port Oozie server runs when using HTTPS. Default value =11443=.
-
-*OOZIE_HTTPS_KEYSTORE_FILE* : The location of the keystore file containing the certificate information.
-Default value =${HOME}/.keystore= (i.e. the home dir of the Oozie user).
-
-*OOZIE_HTTPS_KEYSTORE_PASS* : The password of the keystore file. Default value =password=.
 
 *OOZIE_INSTANCE_ID* : The instance id of the Oozie server.  When using HA, each server instance should have a unique instance id.
 Default value =${OOZIE_HTTP_HOSTNAME}=
 
 ---++ Oozie Server Setup
 
-The =oozie-setup.sh= script prepares the embedded Tomcat server to run Oozie.
+The =oozie-setup.sh= script prepares the embedded Jetty server to run Oozie.
 
 The =oozie-setup.sh= script options are:
 
 <verbatim>
 Usage  : oozie-setup.sh <Command and OPTIONS>
-          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars
-                                                -secure will configure the war file to use HTTPS (SSL))
           sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] [-concurrency CONCURRENCY]
                                                                 (create sharelib for oozie,
                                                                 FS_URI is the fs.default.name
@@ -102,7 +81,7 @@ The ExtJS library file name be =ext-2.2.zip=.
 ---+++ Setting Up Oozie with an Alternate Tomcat
 
 Use the =addtowar.sh= script to prepare the Oozie server only if Oozie will run with a different
-servlet  container than the embedded Tomcat provided with the distribution.
+servlet  container than the embedded Jetty provided with the distribution.
 
 The =addtowar.sh= script adds Hadoop JARs, JDBC JARs and the ExtJS library to the Oozie WAR file.
 
@@ -149,7 +128,7 @@ it must be added to Oozie WAR file using the =bin/addtowar.sh= or the =oozie-set
 *IMPORTANT:* It is recommended to set the database's timezone to GMT (consult your database's documentation on how to do this).
 Databases don't handle Daylight Saving Time shifts correctly, and may cause problems if you run any Coordinators with actions
 scheduled to materialize during the 1 hour period where we "fall back".  For Derby, you can add '-Duser.timezone=GMT'
-to =CATALINA_OPTS= in oozie-env.sh to set this.  Alternatively, if using MySQL, you can have Oozie use GMT with MySQL without
+to =JETTY_OPTS= in oozie-env.sh to set this.  Alternatively, if using MySQL, you can have Oozie use GMT with MySQL without
 setting MySQL's timezone to GMT by adding 'useLegacyDatetimeCode=false&serverTimezone=GMT' arguments to the JDBC
 URL, =oozie.service.JPAService.jdbc.url=.  Be advised that changing the timezone on an existing Oozie database while Coordinators
 are already running may cause Coordinators to shift by the offset of their timezone from GMT once after making this change.
@@ -301,7 +280,7 @@ Oozie logs in 4 different files:
    * oozie-instrumentation.log: instrumentation data, every 60 seconds (configurable)
    * oozie-audit.log: audit messages, workflow jobs changes
 
-The embedded Tomcat and embedded Derby log files are also written to Oozie's =logs/= directory.
+The embedded Jetty and embedded Derby log files are also written to Oozie's =logs/= directory.
 
 ---+++ Oozie User Authentication Configuration
 
@@ -703,11 +682,11 @@ included with your JRE. If it's not on your path, you should be able to find it 
 1. Run the following command (as the Oozie user) to create the keystore file, which will be named =.keystore= and located in the
 Oozie user's home directory.
 <verbatim>
-keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=hostname" -storepass password -keypass password
+keytool -genkeypair -alias jetty -keyalg RSA -dname "CN=hostname" -storepass password -keypass password
 </verbatim>
 The =hostname= should be the host name of the Oozie Server or a wildcard on the subdomain it belongs to.  Make sure to include
 the "CN=" part.  You can change =storepass= and =keypass= values, but they should be the same.  If you do want to use something
-other than password, you'll also need to change the =OOZIE_HTTPS_KEYSTORE_PASS= environment variable in oozie-env.sh to
+other than password, you'll also need to change the value of the =oozie.https.keystore.pass= property in =oozie-site.xml= to
 match; =password= is the default.
 
 For example, if your Oozie server was at oozie.int.example.com, then you would do this:
@@ -742,7 +721,7 @@ servers in the HA group can use.  To do that, you'll need to use a wild on the s
 
 2. Once you have your .cert file, run the following command (as the Oozie user) to create a keystore file from your certificate:
 <verbatim>
-keytool -import -alias tomcat -file path/to/certificate.cert
+keytool -import -alias jetty -file path/to/certificate.cert
 </verbatim>
 The keystore file will be named =.keystore= and located in the Oozie user's home directory.
 
@@ -750,11 +729,18 @@ The keystore file will be named =.keystore= and located in the Oozie user's home
 
 1. Make sure the Oozie server isn't running
 
-2. Run the following command (as the Oozie user):
-<verbatim>
-oozie-setup.sh prepare-war -secure
-</verbatim>
-This will configure Oozie to use HTTPS instead of HTTP.  To revert back to HTTP, simply rerun the command without =-secure=.
+2. Configure settings necessary for enabling SSL/TLS support in =oozie-site.xml=.
+
+2a. Set =oozie.https.enabled= to =true=. To revert back to HTTP, set =oozie.https.enabled= to =false=.
+2b. Set location and password for both the keystore and truststore by setting =oozie.https.keystore.file=,
+=oozie.https.keystore.pass=, =oozie.https.truststore.file= and =oozie.https.truststore.pass=.
+
+The default HTTPS port Oozie listens on for secure connections is 11443; it can be changed via =oozie.https.port=.
+
+It is possible to specify other HTTPS settings via =oozie-site.xml=:
+- To include / exclude cipher suites, set =oozie.https.include.cipher.suites= / =oozie.https.exclude.cipher.suites=.
+- To include / exclude TLS protocols, set =oozie.https.include.protocols= / =oozie.https.exclude.protocols=.
+*Note:* Exclude is always preferred over include (i.e. if you both include and exclude an entity, it will be excluded).
 
 3. Start the Oozie server
 
@@ -1071,7 +1057,7 @@ reached. Maximum job id sequence is configured as =oozie.service.ZKUUIDService.j
 
 ---++ Starting and Stopping Oozie
 
-Use the standard Tomcat commands to start and stop Oozie.
+Use the standard commands to start and stop Oozie.
 
 ---++ Oozie Command Line Installation
 
@@ -1188,10 +1174,8 @@ environment variables (shown with their default values):
 export OOZIE_CONFIG=${OOZIE_HOME}/conf
 export OOZIE_DATA={OOZIE_HOME}/data
 export OOZIE_LOG={OOZIE_HOME}/logs
-export CATALINA_BASE=${OOZIE_HOME}/oozie-server
-export CATALINA_TMPDIR=${OOZIE_HOME}/oozie-server/temp
-export CATALINA_OUT=${OOZIE_LOGS}/catalina.out
-export CATALINA_PID=/tmp/oozie.pid
+export JETTY_OUT=${OOZIE_LOGS}/jetty.out
+export JETTY_PID=/tmp/oozie.pid
 </verbatim>
 
 Sample values to make Oozie follow Unix standard filesystem hierarchy:
@@ -1200,9 +1184,7 @@ Sample values to make Oozie follow Unix standard filesystem hierarchy:
 export OOZIE_CONFIG=/etc/oozie
 export OOZIE_DATA=/var/lib/oozie
 export OOZIE_LOG=/var/log/oozie
-export CATALINA_BASE=${OOZIE_DATA}/oozie-server
-export CATALINA_TMPDIR=/tmp
-export CATALINA_PID=/tmp/oozie.pid
+export JETTY_PID=/tmp/oozie.pid
 </verbatim>
 
 [[index][::Go back to Oozie Documentation Index::]]

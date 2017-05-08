@@ -207,6 +207,7 @@ public class TestHASLAService extends ZKXTestCase {
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
         slaCalcMem.init(Services.get().getConf());
+        slaCalcMem.updateAllSlaStatus();
         List<String> slaMapKeys = new ArrayList<String>();
         Iterator<String> itr = slaCalcMem.iterator();
         while (itr.hasNext()) {
@@ -226,6 +227,7 @@ public class TestHASLAService extends ZKXTestCase {
             dummySlaCalcMem.setEventHandlerService(dummyEhs);
             dummyEhs.init(Services.get());
             dummySlaCalcMem.init(Services.get().getConf());
+            dummySlaCalcMem.updateAllSlaStatus();
             slaMapKeys = new ArrayList<String>();
             itr = dummySlaCalcMem.iterator();
             while (itr.hasNext()) {
@@ -402,6 +404,7 @@ public class TestHASLAService extends ZKXTestCase {
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem1 = (SLACalculatorMemory) slas.getSLACalculator();
         slaCalcMem1.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMem1.updateAllSlaStatus();
         List<String> idList = new ArrayList<String>();
         idList.add(id);
         slaCalcMem1.disableAlert(idList);

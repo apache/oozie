@@ -18,24 +18,19 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.util.XLogFilter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLogStreamer;
-
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Map;
 import java.util.Date;
 
 /**
  * Service that performs streaming of log files over Web Services if enabled in XLogService
  */
 public class XLogStreamingService implements Service, Instrumentable {
-    private static final String CONF_PREFIX = Service.CONF_PREFIX + "XLogStreamingService.";
-    public static final String STREAM_BUFFER_LEN = CONF_PREFIX + "buffer.len";
 
-    protected int bufferLen;
 
     /**
      * Initialize the log streaming service.
@@ -44,7 +39,6 @@ public class XLogStreamingService implements Service, Instrumentable {
      * @throws ServiceException thrown if the log streaming service could not be initialized.
      */
     public void init(Services services) throws ServiceException {
-        bufferLen = ConfigurationService.getInt(services.getConf(), STREAM_BUFFER_LEN);
     }
 
     /**
@@ -71,75 +65,37 @@ public class XLogStreamingService implements Service, Instrumentable {
         // nothing to instrument
     }
 
+
     /**
      * Stream the log of a job.
      *
+     * @param logStreamer the log streamer
      * @param filter log streamer filter.
      * @param startTime start time for log events to filter.
      * @param endTime end time for log events to filter.
      * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
+     * @throws IOException Signals that an I/O exception has occurred.
      */
-    public void streamLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
-            throws IOException {
-        XLogService xLogService = Services.get().get(XLogService.class);
-        if (xLogService.getLogOverWS()) {
-            new XLogStreamer(filter, xLogService.getOozieLogPath(), xLogService.getOozieLogName(),
-                    xLogService.getOozieLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
-        }
-        else {
-            writer.write("Log streaming disabled!!");
-        }
+    public void streamLog(XLogStreamer logStreamer, Date startTime, Date endTime, Writer writer) throws IOException {
+        streamLog(logStreamer, startTime, endTime, writer, true);
     }
 
     /**
-     * Stream the error log of a job.
+     * Stream log.
      *
-     * @param filter log streamer filter.
-     * @param startTime start time for log events to filter.
-     * @param endTime end time for log events to filter.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
+     * @param logStreamer the log streamer
+     * @param startTime the start time
+     * @param endTime the end time
+     * @param writer the writer
+     * @param appendDebug the append debug
+     * @throws IOException Signals that an I/O exception has occurred.
      */
-    public void streamErrorLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+    protected void streamLog(XLogStreamer logStreamer, Date startTime, Date endTime, Writer writer, boolean appendDebug)
             throws IOException {
-        XLogService xLogService = Services.get().get(XLogService.class);
-        if (xLogService.isErrorLogEnabled()) {
-            new XLogStreamer(filter, xLogService.getOozieErrorLogPath(), xLogService.getOozieErrorLogName(),
-                    xLogService.getOozieErrorLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
+        if (!logStreamer.isLogEnabled()) {
+            writer.write(logStreamer.getLogDisableMessage());
+            return;
         }
-        else {
-            writer.write("Error Log is disabled!!");
-        }
-    }
-
-    /**
-     * Stream the audit log of a job.
-     *
-     * @param filter log streamer filter.
-     * @param startTime start time for log events to filter.
-     * @param endTime end time for log events to filter.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     */
-    public void streamAuditLog(XLogFilter filter, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
-            throws IOException {
-        XLogService xLogService = Services.get().get(XLogService.class);
-        if (xLogService.isAuditLogEnabled()) {
-            new XLogStreamer(filter, xLogService.getOozieAuditLogPath(), xLogService.getOozieAuditLogName(),
-                    xLogService.getOozieAuditLogRotation()).streamLog(writer, startTime, endTime, bufferLen);
-        }
-        else {
-            writer.write("Audit Log is disabled!!");
-        }
-    }
-
-
-
-    public int getBufferLen() {
-        return bufferLen;
+        logStreamer.streamLog(writer, startTime, endTime, appendDebug);
     }
 }

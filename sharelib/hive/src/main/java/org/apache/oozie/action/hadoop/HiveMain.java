@@ -24,13 +24,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -128,7 +126,7 @@ public class HiveMain extends LauncherMain {
         return hiveConf;
     }
 
-    public static String setUpHiveLog4J(Configuration hiveConf) throws IOException {
+    private String setUpHiveLog4J(Configuration hiveConf) throws IOException {
         //Logfile to capture job IDs
         String hadoopJobId = System.getProperty("oozie.launcher.job.id");
         if (hadoopJobId == null) {
@@ -137,53 +135,45 @@ public class HiveMain extends LauncherMain {
 
         String logFile = new File("hive-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        Properties hadoopProps = new Properties();
-
-        // Preparing log4j configuration
-        URL log4jFile = Thread.currentThread().getContextClassLoader().getResource("log4j.properties");
-        if (log4jFile != null) {
-            // getting hadoop log4j configuration
-            hadoopProps.load(log4jFile.openStream());
-        }
-
         String logLevel = hiveConf.get("oozie.hive.log.level", "INFO");
         String rootLogLevel = hiveConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
-        hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.hive", "false");
-        hadoopProps.setProperty("log4j.logger.hive", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.hive", "false");
-        hadoopProps.setProperty("log4j.logger.DataNucleus", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.DataNucleus", "false");
-        hadoopProps.setProperty("log4j.logger.DataStore", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.DataStore", "false");
-        hadoopProps.setProperty("log4j.logger.JPOX", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.JPOX", "false");
-        hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
-        hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.hive", "false");
+        log4jProperties.setProperty("log4j.logger.hive", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.hive", "false");
+        log4jProperties.setProperty("log4j.logger.DataNucleus", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.DataNucleus", "false");
+        log4jProperties.setProperty("log4j.logger.DataStore", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.DataStore", "false");
+        log4jProperties.setProperty("log4j.logger.JPOX", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.JPOX", "false");
+        log4jProperties.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
+        log4jProperties.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
 
-        hadoopProps.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
-        hadoopProps.setProperty("log4j.appender.jobid.file", logFile);
-        hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
-        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.hive.ql.exec", "false");
-        hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
-        hadoopProps.setProperty("log4j.additivity.SessionState", "false");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
-        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
+        log4jProperties.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
+        log4jProperties.setProperty("log4j.appender.jobid.file", logFile);
+        log4jProperties.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.hive.ql.exec", "false");
+        log4jProperties.setProperty("log4j.logger.SessionState", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.SessionState", "false");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
 
         String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
-        OutputStream os1 = new FileOutputStream(localProps);
-        hadoopProps.store(os1, "");
-        os1.close();
+        try (OutputStream os1 = new FileOutputStream(localProps)) {
+            log4jProperties.store(os1, "");
+        }
 
         localProps = new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath();
-        os1 = new FileOutputStream(localProps);
-        hadoopProps.store(os1, "");
-        os1.close();
+        try (OutputStream os2 = new FileOutputStream(localProps)) {
+            log4jProperties.store(os2, "");
+        }
+
         return logFile;
     }
 
@@ -207,11 +197,7 @@ public class HiveMain extends LauncherMain {
 
         // Reset the hiveSiteURL static variable as we just created hive-site.xml.
         // If prepare block had a drop partition it would have been initialized to null.
-        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-        if (declaredField != null) {
-            declaredField.setAccessible(true);
-            declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
-        }
+        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
         return hiveConf;
     }
 

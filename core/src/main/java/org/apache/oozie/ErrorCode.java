@@ -105,6 +105,7 @@ public enum ErrorCode {
     E0609(XLog.OPS, "Missing [{0}] ORM file [{1}]"),
     E0610(XLog.OPS, "Missing JPAService, StoreService cannot run without a JPAService"),
     E0611(XLog.OPS, "SQL error in operation [{0}], {1}"),
+    E0612(XLog.OPS, "Could not get coordinator actions"),
 
     E0700(XLog.STD, "XML error, {0}"),
     E0701(XLog.STD, "XML schema error, {0}"),

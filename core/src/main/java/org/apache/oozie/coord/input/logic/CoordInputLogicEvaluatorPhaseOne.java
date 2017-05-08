@@ -86,7 +86,7 @@ public class CoordInputLogicEvaluatorPhaseOne implements CoordInputLogicEvaluato
         if (coordInputDependency.getDependencyMap().get(dataSet) == null) {
             CoordInputLogicEvaluatorResult retData = new CoordInputLogicEvaluatorResult();
             if (((CoordPullInputDependency) coordAction.getPullInputDependencies()).getUnResolvedDependency(dataSet) != null) {
-                log.debug("Data set [{0}] is unresolved set, will get resolved in phasetwo", dataSet);
+                log.debug("Data set [{0}] is unresolved set, will get resolved in phase two", dataSet);
                 retData.setStatus(CoordInputLogicEvaluatorResult.STATUS.PHASE_TWO_EVALUATION);
             }
             else {

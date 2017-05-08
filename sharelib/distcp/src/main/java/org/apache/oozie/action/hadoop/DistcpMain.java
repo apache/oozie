@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
@@ -117,7 +115,7 @@ public class DistcpMain extends JavaMain {
         }
     }
 
-    public static String setUpDistcpLog4J(Configuration distcpConf) throws IOException {
+    private String setUpDistcpLog4J(Configuration distcpConf) throws IOException {
         // Logfile to capture job IDs
         String hadoopJobId = System.getProperty("oozie.launcher.job.id");
         if (hadoopJobId == null) {
@@ -126,40 +124,27 @@ public class DistcpMain extends JavaMain {
 
         String logFile = new File("distcp-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        Properties hadoopProps = new Properties();
-
-        // Preparing log4j configuration
-        URL log4jFile = Thread.currentThread().getContextClassLoader().getResource("log4j.properties");
-        if (log4jFile != null) {
-            // getting hadoop log4j configuration
-            hadoopProps.load(log4jFile.openStream());
-        }
-
         String logLevel = distcpConf.get("oozie.distcp.log.level", "INFO");
         String rootLogLevel = distcpConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
-        hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.tools", logLevel + ", A, jobid");
-        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.tools", "false");
-        hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
-        hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.tools", logLevel + ", A, jobid");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.tools", "false");
+        log4jProperties.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
+        log4jProperties.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.A.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
 
-        hadoopProps.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
-        hadoopProps.setProperty("log4j.appender.jobid.file", logFile);
-        hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapred", "INFO, jobid");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.mapreduce.Job", "INFO, jobid");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        log4jProperties.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
+        log4jProperties.setProperty("log4j.appender.jobid.file", logFile);
+        log4jProperties.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%-4r [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.mapred", "INFO, jobid");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.mapreduce.Job", "INFO, jobid");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
 
         String localProps = new File(DISTCP_LOG4J_PROPS).getAbsolutePath();
-        OutputStream os1 = new FileOutputStream(localProps);
-        try {
-            hadoopProps.store(os1, "");
-        }
-        finally {
-            os1.close();
+        try (OutputStream os1 = new FileOutputStream(localProps)) {
+            log4jProperties.store(os1, "");
         }
 
         PropertyConfigurator.configure(DISTCP_LOG4J_PROPS);

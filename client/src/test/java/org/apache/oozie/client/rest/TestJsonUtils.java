@@ -19,25 +19,24 @@
 package org.apache.oozie.client.rest;
 
 import java.text.SimpleDateFormat;
-import junit.framework.TestCase;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
-import org.apache.oozie.client.rest.JsonUtils;
+import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Date;
 import java.util.Locale;
 
-public class TestJsonUtils extends TestCase {
+import static junit.framework.Assert.assertEquals;
 
+public class TestJsonUtils {
+
+    @Test
     public void testValidDate() {
         String str = "Thu, 01 Jan 2009 00:00:00 GMT";
         Date date = JsonUtils.parseDateRfc822(str);
         String str1 = JsonUtils.formatDateRfc822(date);
         assertEquals(str, str1);
     }
-    
+
+    @Test
     public void testValidNonGMTTimeZone() throws Exception {
         String gmtTime = "Thu, 01 Jan 2009 08:00:00 GMT";
         SimpleDateFormat dateFormatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
@@ -45,7 +44,8 @@ public class TestJsonUtils extends TestCase {
         String pstTime = JsonUtils.formatDateRfc822(date, "PST");
         assertEquals(pstTime, "Thu, 01 Jan 2009 00:00:00 PST");
     }
-    
+
+    @Test
     public void testInvalidTimeZone() throws Exception {
         String gmtTime = "Thu, 01 Jan 2009 00:00:00 GMT";
         SimpleDateFormat dateFormatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
@@ -54,15 +54,18 @@ public class TestJsonUtils extends TestCase {
         assertEquals(asdTime, gmtTime);    // defaults to GMT when can't parse time zone
     }
 
+    @Test
     public void testInvalidDateStr() {
         Date date = JsonUtils.parseDateRfc822("Xhu, 01 Jan 2009 00:00:00 GMT");
         assertEquals(null, date);
     }
 
+    @Test
     public void testNullDateStr() {
         assertEquals(null, JsonUtils.parseDateRfc822(null));
     }
 
+    @Test
     public void testNullDate() {
         assertEquals(null, JsonUtils.formatDateRfc822(null));
     }

@@ -553,7 +553,7 @@ public abstract class SqlStatement {
                 this.sb.setLength(sb.length() - 1);
             }
             else {
-                throw new RuntimeException("Need atleast 1 Table !!");
+                throw new RuntimeException("Need at least 1 Table !!");
             }
         }
 
@@ -575,7 +575,7 @@ public abstract class SqlStatement {
                 this.sb.setLength(sb.length() - 1);
             }
             else {
-                throw new RuntimeException("Need atleast 1 Column !!");
+                throw new RuntimeException("Need at least 1 Column !!");
             }
         }
 
