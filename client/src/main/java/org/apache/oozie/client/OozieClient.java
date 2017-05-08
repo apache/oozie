@@ -66,7 +66,7 @@ import org.codehaus.jackson.type.TypeReference;
 
 
 /**
- * Client API to submit and manage Oozie workflow jobs against an Oozie intance.
+ * Client API to submit and manage Oozie workflow jobs against an Oozie instance.
  * <p>
  * This class is thread safe.
  * <p>
@@ -1978,7 +1978,7 @@ public class OozieClient {
      * @param map the map
      * @return the string
      */
-    private String mapToString(Map<String, String> map) {
+    protected String mapToString(Map<String, String> map) {
         StringBuilder sb = new StringBuilder();
         Iterator<Entry<String, String>> it = map.entrySet().iterator();
         while (it.hasNext()) {

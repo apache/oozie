@@ -30,27 +30,25 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.BulkResponseInfo;
-import org.apache.oozie.BundleJobBean;
+import org.apache.oozie.BundleEngine;
+import org.apache.oozie.BundleEngineException;
 import org.apache.oozie.BundleJobInfo;
 import org.apache.oozie.CoordinatorEngine;
-import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorEngineException;
-import org.apache.oozie.BundleEngineException;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.OozieJsonFactory;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
-import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -308,12 +306,12 @@ public class V1JobsServlet extends BaseJobsServlet {
      * request object
      */
     private JSONObject getWorkflowJobs(HttpServletRequest request) throws XServletException {
-        JSONObject json = new JSONObject();
+        JSONObject json;
         try {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -321,12 +319,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             len = (len < 1) ? 50 : len;
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
-            List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, timeZoneId));
-            json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
-            json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
-            json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getWFJSONObject(jobs, timeZoneId);
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -341,12 +334,12 @@ public class V1JobsServlet extends BaseJobsServlet {
      */
     @SuppressWarnings("unchecked")
     private JSONObject getCoordinatorJobs(HttpServletRequest request) throws XServletException {
-        JSONObject json = new JSONObject();
+        JSONObject json;
         try {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -355,12 +348,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                     getUser(request));
             CoordinatorJobInfo jobs = coordEngine.getCoordJobs(filter, start, len);
-            List<CoordinatorJobBean> jsonJobs = jobs.getCoordJobs();
-            json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jsonJobs, timeZoneId));
-            json.put(JsonTags.COORD_JOB_TOTAL, jobs.getTotal());
-            json.put(JsonTags.COORD_JOB_OFFSET, jobs.getStart());
-            json.put(JsonTags.COORD_JOB_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getCoordJSONObject(jobs, timeZoneId);
         }
         catch (CoordinatorEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -370,12 +358,12 @@ public class V1JobsServlet extends BaseJobsServlet {
 
     @SuppressWarnings("unchecked")
     private JSONObject getBundleJobs(HttpServletRequest request) throws XServletException {
-        JSONObject json = new JSONObject();
+        JSONObject json;
         try {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
             String lenStr = request.getParameter(RestConstants.LEN_PARAM);
-            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null 
+            String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM) == null
                     ? "GMT" : request.getParameter(RestConstants.TIME_ZONE_PARAM);
             int start = (startStr != null) ? Integer.parseInt(startStr) : 1;
             start = (start < 1) ? 1 : start;
@@ -384,13 +372,7 @@ public class V1JobsServlet extends BaseJobsServlet {
 
             BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
             BundleJobInfo jobs = bundleEngine.getBundleJobs(filter, start, len);
-            List<BundleJobBean> jsonJobs = jobs.getBundleJobs();
-
-            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jsonJobs, timeZoneId));
-            json.put(JsonTags.BUNDLE_JOB_TOTAL, jobs.getTotal());
-            json.put(JsonTags.BUNDLE_JOB_OFFSET, jobs.getStart());
-            json.put(JsonTags.BUNDLE_JOB_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getBundleJSONObject(jobs, timeZoneId);
         }
         catch (BundleEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -505,110 +487,76 @@ public class V1JobsServlet extends BaseJobsServlet {
         int len = (lenStr != null) ? Integer.parseInt(lenStr) : 50;
         len = (len < 1) ? 50 : len;
 
-        JSONObject json = new JSONObject();
+        JSONObject json;
         List<String> ids = new ArrayList<String>();
 
         if (jobType.equals("wf")) {
-            WorkflowsInfo jobs = null;
+            WorkflowsInfo jobs;
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
-            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-                try {
-                    jobs = dagEngine.killJobs(filter, start, len);
+            try {
+                switch (action) {
+                    case RestConstants.JOB_ACTION_KILL:
+                        jobs = dagEngine.killJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_SUSPEND:
+                        jobs = dagEngine.suspendJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_RESUME:
+                        jobs = dagEngine.resumeJobs(filter, start, len);
+                        break;
+                    default:
+                        throw new DagEngineException(ErrorCode.E0301, action);
                 }
-                catch (DagEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            } else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
-                try {
-                    jobs = dagEngine.suspendJobs(filter, start, len);
-                }
-                catch (DagEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            } else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
-                try {
-                    jobs = dagEngine.resumeJobs(filter, start, len);
-                }
-                catch (DagEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
+            } catch (DagEngineException ex) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
             }
-
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jobs.getWorkflows(), timeZoneId));
-            json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
-            json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
-            json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getWFJSONObject(jobs, timeZoneId);
         }
         else if (jobType.equals("bundle")) {
-            BundleJobInfo jobs = null;
-            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).
-                    getBundleEngine(getUser(request));
-            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-                try {
-                    jobs = bundleEngine.killJobs(filter, start, len);
+            BundleJobInfo jobs;
+            BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
+            try {
+                switch (action) {
+                    case RestConstants.JOB_ACTION_KILL:
+                        jobs = bundleEngine.killJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_SUSPEND:
+                        jobs = bundleEngine.suspendJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_RESUME:
+                        jobs = bundleEngine.resumeJobs(filter, start, len);
+                        break;
+                    default:
+                        throw new BundleEngineException(ErrorCode.E0301, action);
                 }
-                catch (BundleEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
+            } catch (BundleEngineException ex) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
             }
-            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
-                try {
-                    jobs = bundleEngine.suspendJobs(filter, start, len);
-                }
-                catch (BundleEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            }
-            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
-                try {
-                    jobs = bundleEngine.resumeJobs(filter, start, len);
-                }
-                catch (BundleEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            }
-
-            json.put(JsonTags.BUNDLE_JOBS, BundleJobBean.toJSONArray(jobs.getBundleJobs(), timeZoneId));
-            json.put(JsonTags.BUNDLE_JOB_TOTAL, jobs.getTotal());
-            json.put(JsonTags.BUNDLE_JOB_OFFSET, jobs.getStart());
-            json.put(JsonTags.BUNDLE_JOB_LEN, jobs.getLen());
+            json = OozieJsonFactory.getBundleJSONObject(jobs, timeZoneId);
         }
         else {
-            CoordinatorJobInfo jobs = null;
+            CoordinatorJobInfo jobs;
             CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).
                     getCoordinatorEngine(getUser(request));
-            if (action.equals(RestConstants.JOB_ACTION_KILL)) {
-                try {
-                    jobs = coordEngine.killJobs(filter, start, len);
+            try {
+                switch (action) {
+                    case RestConstants.JOB_ACTION_KILL:
+                        jobs = coordEngine.killJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_SUSPEND:
+                        jobs = coordEngine.suspendJobs(filter, start, len);
+                        break;
+                    case RestConstants.JOB_ACTION_RESUME:
+                        jobs = coordEngine.resumeJobs(filter, start, len);
+                        break;
+                    default:
+                        throw new CoordinatorEngineException(ErrorCode.E0301, action);
                 }
-                catch (CoordinatorEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
+            } catch (CoordinatorEngineException ex) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
             }
-            else if (action.equals(RestConstants.JOB_ACTION_SUSPEND)) {
-                try {
-                    jobs = coordEngine.suspendJobs(filter, start, len);
-                }
-                catch (CoordinatorEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            }
-            else if (action.equals(RestConstants.JOB_ACTION_RESUME)) {
-                try {
-                    jobs = coordEngine.resumeJobs(filter, start, len);
-                }
-                catch (CoordinatorEngineException ex) {
-                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-                }
-            }
-
-            json.put(JsonTags.COORDINATOR_JOBS, CoordinatorJobBean.toJSONArray(jobs.getCoordJobs(), timeZoneId));
-            json.put(JsonTags.COORD_JOB_TOTAL, jobs.getTotal());
-            json.put(JsonTags.COORD_JOB_OFFSET, jobs.getStart());
-            json.put(JsonTags.COORD_JOB_LEN, jobs.getLen());
+            json = OozieJsonFactory.getCoordJSONObject(jobs, timeZoneId);
         }
-
         json.put(JsonTags.JOB_IDS, toJSONArray(ids));
         return json;
     }
