@@ -1,6 +1,5 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
-OOZIE-2751 LocalOozieClient is missing methods from OozieClient (abhishekbafna via rkanter)
 OOZIE-2870 non working examples in oozie documentation coordinator spec (andras.piros via pbacsko)
 OOZIE-2827 amend More directly view of the coordinator’s history from perspective of workflow action. (Alonzo Zhou via pbacsko)
 OOZIE-2851 spelling mistakes in examples (Artem Ervits via gezapeti)

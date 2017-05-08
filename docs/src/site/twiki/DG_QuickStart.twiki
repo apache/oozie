@@ -16,7 +16,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
    * Unix box (tested on Mac OS X and Linux)
    * Java JDK 1.7+
    * Maven 3.0.1+
-   * Hadoop 2.6.0+
+   * Hadoop 0.20.2+
    * Pig 0.7+
 
 JDK commands (java, javac) must be in the command path.
@@ -45,7 +45,7 @@ available to customise the versions of the dependencies:
 profile depending on the hadoop version used.
 -Ptez - Bundle tez jars in hive and pig sharelibs. Useful if you want to use tez
 +as the execution engine for those applications.
--Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 2.6.0 for hadoop-2 and 3.0.0-SNAPSHOT for hadoop-3
+-Dhadoop.version=<version> - default 1.2.1 for hadoop-1, 2.4.0 for hadoop-2 and 3.0.0-SNAPSHOT for hadoop-3
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.16.0
@@ -70,7 +70,7 @@ More details on building Oozie can be found on the [[ENG_Building][Building Oozi
    * Unix (tested in Linux and Mac OS X)
    * Java 1.7+
    * Hadoop
-      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.2.1 & 2.6.0+)
+      * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.2.1 & 2.4.0+)
    * ExtJS library (optional, to enable Oozie webconsole)
       * [[http://archive.cloudera.com/gplextras/misc/ext-2.2.zip][ExtJS 2.2]]
 
