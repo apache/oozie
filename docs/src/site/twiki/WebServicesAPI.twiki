@@ -1381,7 +1381,7 @@ GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&filter=status%21
 </verbatim>
 This retrieves coordinator actions except for SUCCEEDED status, which is useful for debugging.
 
-*Retrive information of the retry attempts of the workflow action:*
+*Retrieve information of the retry attempts of the workflow action:*
 
 <verbatim>
 GET oozie/v2/job/0000000-161212175234862-oozie-puru-W@pig-node?show=retries
@@ -2037,8 +2037,8 @@ Assuming Oozie is running at =OOZIE_URL=, the following web services end points 
 
 There is a difference in the JSON format of Job Information API (*/job) particularly for map-reduce action.
 No change for other actions.
-In v1, externalId and consoleUrl point to spawned child job ID, and exteranlChildIDs is null in map-reduce action.
-In v2, externalId and consoleUrl point to launcher job ID, and exteranlChildIDs is spawned child job ID in map-reduce action.
+In v1, externalId and consoleUrl point to spawned child job ID, and externalChildIDs is null in map-reduce action.
+In v2, externalId and consoleUrl point to launcher job ID, and externalChildIDs is spawned child job ID in map-reduce action.
 
 v2 supports retrieving of JMS topic on which job notifications are sent
 

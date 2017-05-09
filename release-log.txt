@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2824 Fix typos in documentation (lzeke via gezapeti)
 OOZIE-2874 Make the Launcher Mapper map-only job's InputFormat class pluggable (andras.piros via gezapeti)
 OOZIE-2751 LocalOozieClient is missing methods from OozieClient (abhishekbafna via rkanter)
 OOZIE-2870 non working examples in oozie documentation coordinator spec (andras.piros via pbacsko)

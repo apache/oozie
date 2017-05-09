@@ -166,7 +166,7 @@ In the REST API, the following filters can be applied while fetching SLA informa
    * parent_id - Parent id of the workflow job, workflow action or coordinator action
    * nominal_start and nominal_end - Start and End range for nominal time of the workflow or coordinator.
    * bundle -  Bundle Job ID or Bundle App Name. Fetches SLA information for actions of all coordinators in that bundle.
-   * event_status - event stauts such as START_MET/START_MISS/DURATION_MET/DURATION_MISS/END_MET/END_MISS
+   * event_status - event status such as START_MET/START_MISS/DURATION_MET/DURATION_MISS/END_MET/END_MISS
    * sla_status - sla status such as NOT_STARTED/IN_PROCESS/MET/MISS
 
 multiple event_status and sla_status can be specified with comma separation. When multiple statuses are specified, they are considered as OR.

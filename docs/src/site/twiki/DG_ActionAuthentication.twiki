@@ -27,8 +27,8 @@ org.apache.oozie.action.hadoop.Credentials to retrieve a delegation token from t
 
 Out of the box, Oozie already comes with support for some credential types
 (see [[DG_ActionAuthentication#Built-in_Credentials_Implementations][Built-in Credentials Implementations]]).
-The credential classes that Oozie should load are specified by the following property in oozie-site.xml.  The lefthand side of the
-equals sign is the type for the credential type, while the righthand side is the class.
+The credential classes that Oozie should load are specified by the following property in oozie-site.xml.  The left hand side of the
+equals sign is the type for the credential type, while the right hand side is the class.
 
 <verbatim>
    <property>
