@@ -143,6 +143,7 @@ public class TestSubmitMRXCommand extends XFsTestCase {
             assertEquals(jtE.getTextTrim(), "new_JT");
         }
         catch(Exception e) {
+            e.printStackTrace();
             fail("should have passed");
         }
     }

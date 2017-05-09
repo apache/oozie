@@ -161,7 +161,7 @@ public class MapReduceMain extends LauncherMain {
                 OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
                 actionConfigurator.configure(actionConf);
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                throw new OozieActionConfiguratorException("An Exception occured while instantiating the action config class", e);
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             }
         }
     }

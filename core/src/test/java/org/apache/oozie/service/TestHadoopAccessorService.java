@@ -158,14 +158,6 @@ public class TestHadoopAccessorService extends XFsTestCase {
         assertNotNull(jc);
         jc.getAllJobs();
 
-        try {
-            has.createJobClient("invalid-user", conf);
-            fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
-        }
-        catch (HadoopAccessorException ex) {
-            assertEquals(ErrorCode.E0902, ex.getErrorCode());
-        }
-
         JobConf conf2 = new JobConf(false);
         conf2.set("mapred.job.tracker", getJobTrackerUri());
         try {
@@ -192,6 +184,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
             fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
         }
         catch (AuthorizationException ex) {
+            ex.printStackTrace(System.err);
         }
 
         JobConf conf2 = new JobConf(false);

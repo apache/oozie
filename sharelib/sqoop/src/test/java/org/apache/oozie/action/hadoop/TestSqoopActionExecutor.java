@@ -198,7 +198,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     private void runSqoopActionWithBadCommand(String actionXml) throws Exception {
         createDB();
 
-        Context context = createContext(getActionXml());
+        Context context = createContext(actionXml);
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
@@ -232,7 +232,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     private void runSqoopAction(String actionXml) throws Exception {
         createDB();
 
-        Context context = createContext(getActionXml());
+        Context context = createContext(actionXml);
         final String launcherId = submitAction(context);
         waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
