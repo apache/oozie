@@ -57,6 +57,8 @@ public class LauncherMapperHelper {
 
     public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
+    private static final LauncherInputFormatClassLocator launcherInputFormatClassLocator = new LauncherInputFormatClassLocator();
+
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
             throws HadoopAccessorException, IOException {
         String jobId = null;
@@ -160,7 +162,7 @@ public class LauncherMapperHelper {
             IOUtils.closeSafely(os);
         }
 
-        launcherConf.setInputFormat(OozieLauncherInputFormat.class);
+        launcherConf.setInputFormat(launcherInputFormatClassLocator.locateOrGet());
         launcherConf.setOutputFormat(OozieLauncherOutputFormat.class);
         launcherConf.setOutputCommitter(OozieLauncherOutputCommitter.class);
     }
