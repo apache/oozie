@@ -184,7 +184,6 @@ public class TestHadoopAccessorService extends XFsTestCase {
             fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
         }
         catch (AuthorizationException ex) {
-            ex.printStackTrace(System.err);
         }
 
         JobConf conf2 = new JobConf(false);
