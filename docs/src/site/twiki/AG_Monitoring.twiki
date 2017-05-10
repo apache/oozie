@@ -177,7 +177,7 @@ by =oozie.service.SchemaCheckerService.check.interval=
 
 By default, the =SchemaCheckerService= will consider "extra" tables, columns, and indexes to be incorrect. Advanced users who have
 added additional tables, columns, and indexes can tell Oozie to ignore these by
-seting =oozie.service.SchemaCheckerService.ignore.extras= to =false=.
+setting =oozie.service.SchemaCheckerService.ignore.extras= to =false=.
 
 The =SchemaCheckerService= currently only supports MySQL, PostgreSQL, and Oracle databases.  SQL Server and Derby are currently not
 supported.

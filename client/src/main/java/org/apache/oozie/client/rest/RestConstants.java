@@ -221,7 +221,7 @@ public interface RestConstants {
 
     String USER_PARAM = "user";
 
-    public static final String COORD_ACTION_MISSING_DEPENDENCIES = "missing-dependencies";
+    String COORD_ACTION_MISSING_DEPENDENCIES = "missing-dependencies";
 
     String ADMIN_PURGE = "purge";
     String PURGE_WF_AGE = "wf";

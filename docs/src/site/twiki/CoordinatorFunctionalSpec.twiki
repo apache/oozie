@@ -3440,7 +3440,7 @@ In this example, the 'nextInstance' will be '2009-01-02T23:00Z' for the first ac
 ---++++ 6.9.2. coord:dateTzOffset(String baseDate, String timezone) EL Function
 
 The =${coord:dateTzOffset(String baseDate, String timezone)}= EL function calculates the date based on the following
-equation : =newDate = baseDate + (Oozie procesing timezone - timezone)=
+equation : =newDate = baseDate + (Oozie processing timezone - timezone)=
 In other words, it offsets the =baseDate= by the difference from Oozie processing timezone to the given =timezone=.  It will
 account for daylight saving time based on the given =baseDate= and =timezone=.
 

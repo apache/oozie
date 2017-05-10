@@ -19,8 +19,6 @@
 package org.apache.oozie;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -36,7 +34,7 @@ import org.apache.oozie.util.XConfiguration;
 
 /**
  * Client API to submit and manage Oozie coordinator jobs against an Oozie
- * intance.
+ * instance.
  * <p>
  * This class is thread safe.
  * <p>
@@ -57,7 +55,7 @@ import org.apache.oozie.util.XConfiguration;
  * among all the filter values for the same name. Multiple values must be
  * specified as different name value pairs.
  */
-public class LocalOozieClientCoord extends OozieClient {
+public class LocalOozieClientCoord extends BaseLocalOozieClient {
 
     private final CoordinatorEngine coordEngine;
 
@@ -68,175 +66,8 @@ public class LocalOozieClientCoord extends OozieClient {
      * @param coordEngine the engine instance to use.
      */
     public LocalOozieClientCoord(CoordinatorEngine coordEngine) {
+        super(coordEngine);
         this.coordEngine = coordEngine;
-    }
-
-    /**
-     * Return the Oozie URL of the coordinator client instance.
-     * <p>
-     * This URL is the base URL fo the Oozie system, with not protocol
-     * versioning.
-     *
-     * @return the Oozie URL of the coordinator client instance.
-     */
-    @Override
-    public String getOozieUrl() {
-        return "localoozie";
-    }
-
-    /**
-     * Return the Oozie URL used by the client and server for WS communications.
-     * <p>
-     * This URL is the original URL plus the versioning element path.
-     *
-     * @return the Oozie URL used by the client and server for communication.
-     * @throws org.apache.oozie.client.OozieClientException thrown in the client
-     *         and the server are not protocol compatible.
-     */
-    @Override
-    public String getProtocolUrl() throws OozieClientException {
-        return "localoozie";
-    }
-
-    /**
-     * Validate that the Oozie client and server instances are protocol
-     * compatible.
-     *
-     * @throws org.apache.oozie.client.OozieClientException thrown in the client
-     *         and the server are not protocol compatible.
-     */
-    @Override
-    public synchronized void validateWSVersion() throws OozieClientException {
-    }
-
-    /**
-     * Create an empty configuration with just the {@link #USER_NAME} set to the
-     * JVM user name and the {@link #GROUP_NAME} set to 'other'.
-     *
-     * @return an empty configuration.
-     */
-    @Override
-    public Properties createConfiguration() {
-        Properties conf = new Properties();
-        if (coordEngine != null) {
-            conf.setProperty(USER_NAME, coordEngine.getUser());
-        }
-        conf.setProperty(GROUP_NAME, "users");
-        return conf;
-    }
-
-    /**
-     * Set a HTTP header to be used in the WS requests by the coordinator
-     * instance.
-     *
-     * @param name header name.
-     * @param value header value.
-     */
-    @Override
-    public void setHeader(String name, String value) {
-    }
-
-    /**
-     * Get the value of a set HTTP header from the coordinator instance.
-     *
-     * @param name header name.
-     * @return header value, <code>null</code> if not set.
-     */
-    @Override
-    public String getHeader(String name) {
-        return null;
-    }
-
-    /**
-     * Remove a HTTP header from the coordinator client instance.
-     *
-     * @param name header name.
-     */
-    @Override
-    public void removeHeader(String name) {
-    }
-
-    /**
-     * Return an iterator with all the header names set in the coordinator
-     * instance.
-     *
-     * @return header names.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public Iterator<String> getHeaderNames() {
-        return Collections.EMPTY_SET.iterator();
-    }
-
-    /**
-     * Submit a coordinator job.
-     *
-     * @param conf job configuration.
-     * @return the job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be submitted.
-     */
-    @Override
-    public String submit(Properties conf) throws OozieClientException {
-        try {
-            return coordEngine.submitJob(new XConfiguration(conf), false);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-    }
-
-    /**
-     * Start a coordinator job.
-     *
-     * @param jobId job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be started.
-     */
-    @Override
-    @Deprecated
-    public void start(String jobId) throws OozieClientException {
-        try {
-            coordEngine.start(jobId);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-        catch (BaseEngineException bex) {
-            throw new OozieClientException(bex.getErrorCode().toString(), bex);
-        }
-    }
-
-    /**
-     * Submit and start a coordinator job.
-     *
-     * @param conf job configuration.
-     * @return the job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be submitted.
-     */
-    @Override
-    public String run(Properties conf) throws OozieClientException {
-        try {
-            return coordEngine.submitJob(new XConfiguration(conf), true);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-    }
-
-    /**
-     * Rerun a workflow job.
-     *
-     * @param jobId job Id to rerun.
-     * @param conf configuration information for the rerun.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be started.
-     */
-    @Override
-    @Deprecated
-    public void reRun(String jobId, Properties conf) throws OozieClientException {
-        throw new OozieClientException(ErrorCode.E0301.toString(), "no-op");
     }
 
     /**
@@ -310,71 +141,6 @@ public class LocalOozieClientCoord extends OozieClient {
     }
 
     /**
-     * Suspend a coordinator job.
-     *
-     * @param jobId job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be suspended.
-     */
-    @Override
-    public void suspend(String jobId) throws OozieClientException {
-        try {
-            coordEngine.suspend(jobId);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-    }
-
-    /**
-     * Resume a coordinator job.
-     *
-     * @param jobId job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be resume.
-     */
-    @Override
-    public void resume(String jobId) throws OozieClientException {
-        try {
-            coordEngine.resume(jobId);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-    }
-
-    /**
-     * Kill a coordinator job.
-     *
-     * @param jobId job Id.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         could not be killed.
-     */
-    @Override
-    public void kill(String jobId) throws OozieClientException {
-        try {
-            coordEngine.kill(jobId);
-        }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
-    }
-
-    /**
-     * Get the info of a workflow job.
-     *
-     * @param jobId job Id.
-     * @return the job info.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the job
-     *         info could not be retrieved.
-     */
-    @Override
-    @Deprecated
-    public WorkflowJob getJobInfo(String jobId) throws OozieClientException {
-        throw new OozieClientException(ErrorCode.E0301.toString(), "no-op");
-    }
-
-    /**
      * Get the info of a coordinator job.
      *
      * @param jobId job Id.
@@ -412,9 +178,6 @@ public class LocalOozieClientCoord extends OozieClient {
         try {
             return coordEngine.getCoordJob(jobId, filter, start, len, false);
         }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
         catch (BaseEngineException bex) {
             throw new OozieClientException(bex.getErrorCode().toString(), bex);
         }
@@ -433,29 +196,9 @@ public class LocalOozieClientCoord extends OozieClient {
         try {
             return coordEngine.getCoordAction(actionId);
         }
-        catch (CoordinatorEngineException ex) {
-            throw new OozieClientException(ex.getErrorCode().toString(), ex);
-        }
         catch (BaseEngineException bex) {
             throw new OozieClientException(bex.getErrorCode().toString(), bex);
         }
-    }
-
-    /**
-     * Return the info of the workflow jobs that match the filter.
-     *
-     * @param filter job filter. Refer to the {@link OozieClient} for the filter
-     *        syntax.
-     * @param start jobs offset, base 1.
-     * @param len number of jobs to return.
-     * @return a list with the workflow jobs info, without node details.
-     * @throws OozieClientException thrown if the jobs info could not be
-     *         retrieved.
-     */
-    @Override
-    @Deprecated
-    public List<WorkflowJob> getJobsInfo(String filter, int start, int len) throws OozieClientException {
-        throw new OozieClientException(ErrorCode.E0301.toString(), "no-op");
     }
 
     /**
@@ -486,21 +229,58 @@ public class LocalOozieClientCoord extends OozieClient {
         }
     }
 
-    /**
-     * Return the info of the workflow jobs that match the filter.
-     * <p>
-     * It returns the first 100 jobs that match the filter.
-     *
-     * @param filter job filter. Refer to the {@link LocalOozieClient} for the
-     *        filter syntax.
-     * @return a list with the workflow jobs info, without node details.
-     * @throws org.apache.oozie.client.OozieClientException thrown if the jobs
-     *         info could not be retrieved.
-     */
     @Override
-    @Deprecated
-    public List<WorkflowJob> getJobsInfo(String filter) throws OozieClientException {
-        throw new OozieClientException(ErrorCode.E0301.toString(), "no-op");
+    public String updateCoord(String jobId, Properties conf, String dryrun, String showDiff) throws OozieClientException {
+        try {
+            return coordEngine.updateJob(new XConfiguration(conf), jobId, Boolean.valueOf(dryrun), Boolean.valueOf(showDiff));
+        } catch (CoordinatorEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
     }
 
+    @Override
+    public String updateCoord(String jobId, String dryrun, String showDiff) throws OozieClientException {
+        try {
+            return coordEngine.updateJob(new XConfiguration(), jobId, Boolean.valueOf(dryrun), Boolean.valueOf(showDiff));
+        } catch (CoordinatorEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
+
+    @Override
+    public CoordinatorJob getCoordJobInfo(String jobId, String filter, int start, int len, String order)
+            throws OozieClientException {
+        try {
+            return coordEngine.getCoordJob(jobId, filter, start, len, order.equalsIgnoreCase("DESC"));
+        } catch (BaseEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
+
+    @Override
+    public List<CoordinatorAction> kill(String jobId, String rangeType, String scope) throws OozieClientException {
+        try {
+            return (List) coordEngine.killActions(jobId, rangeType, scope).getCoordActions();
+        } catch (CoordinatorEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
+
+    @Override
+    public List<CoordinatorAction> ignore(String jobId, String scope) throws OozieClientException {
+        try {
+            return (List) coordEngine.ignore(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, scope).getCoordActions();
+        } catch (CoordinatorEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
+
+    @Override
+    public List<WorkflowJob> getWfsForCoordAction(String coordActionId) throws OozieClientException {
+        try {
+            return (List) coordEngine.getReruns(coordActionId);
+        } catch (CoordinatorEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
 }

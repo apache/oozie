@@ -56,6 +56,8 @@ public class LauncherHelper {
 
     public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
+    private static final LauncherInputFormatClassLocator launcherInputFormatClassLocator = new LauncherInputFormatClassLocator();
+
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
             throws HadoopAccessorException, IOException {
         String jobId = null;

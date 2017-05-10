@@ -2484,7 +2484,7 @@ User-Retry allows user to give certain number of reties (must not exceed system 
 that problem and fix them when action is in =USER_RETRY= state. If failure or error does not go away after max retries,
 the action becomes =FAILED= or =ERROR= and Oozie marks workflow job to =FAILED= or =KILLED=.
 
-Oozie adminstrator can allow more error codes to be handled for User-Retry. By adding this configuration 
+Oozie administrator can allow more error codes to be handled for User-Retry. By adding this configuration
 =oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext= to =oozie.site.xml=
 and error codes as value, these error codes will be considered as User-Retry after system restart.
 

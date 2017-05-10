@@ -19,7 +19,6 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.OozieJsonFactory;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
@@ -96,7 +95,7 @@ public class V0JobsServlet extends BaseJobsServlet {
      */
     @Override
     protected JSONObject getJobs(HttpServletRequest request) throws XServletException, IOException {
-        JSONObject json = new JSONObject();
+        JSONObject json;
         try {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
@@ -108,12 +107,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             DagEngine dagEngine = Services.get().get(DagEngineService.class)
             .getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
-            List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
-            json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
-            json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
-            json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getWFJSONObject(jobs, "GMT");
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);

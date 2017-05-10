@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -320,7 +321,7 @@ public abstract class BaseEngine {
     /**
      * Stream job log.
      *
-     * @param xLogStreamer the log streamer
+     * @param logStreamer the log streamer
      * @param jobId the job id
      * @param writer the writer
      * @throws IOException Signals that an I/O exception has occurred.
@@ -329,4 +330,19 @@ public abstract class BaseEngine {
     protected abstract void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer) throws IOException,
             BaseEngineException;
 
+    interface BaseEngineCallable<V> {
+        V callOrThrow() throws BaseEngineException;
+    }
+
+    static <V> V callOrRethrow(final BaseEngineCallable<V> callable) throws OozieClientException {
+        try {
+            return callable.callOrThrow();
+        } catch (final BaseEngineException e) {
+            throw new OozieClientException(e.getErrorCode().toString(), e);
+        }
+    }
+
+    static <V> V throwNoOp() throws OozieClientException {
+        throw new OozieClientException(ErrorCode.E0301.toString(), "no-op");
+    }
 }

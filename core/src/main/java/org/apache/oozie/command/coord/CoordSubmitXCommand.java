@@ -245,7 +245,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             LogUtils.setLogInfo(coordJob);
 
             if (!dryrun) {
-                verifyElFunctions(coordJob);
                 queueMaterializeTransitionXCommand(jobId);
             }
             else {
@@ -1349,28 +1348,4 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     @Override
     public void performWrites() throws CommandException {
     }
-
-    /**
-     * Verify el functions using dryrun. Throws an exception if dry run throws
-     * an exception and marks the coordJob as FAILED.
-     *
-     * @param coordJob
-     * @throws Exception
-     */
-    private void verifyElFunctions(CoordinatorJobBean coordJob) throws Exception {
-        Job.Status prevStatus = coordJob.getStatus();
-        try {
-            // dry run will catch issues with el functions if any
-            getDryRun(coordJob);
-        }
-        catch (Exception e) {
-            prevStatus = CoordinatorJob.Status.FAILED;
-            throw e;
-        }
-        finally {
-            coordJob.setStatus(prevStatus);
-            coordJob.resetPending();
-        }
-    }
-
 }

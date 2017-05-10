@@ -201,7 +201,7 @@ following configuration properties in the oozie-site.xml:
 ---++ Database Migration
 
 Oozie provides an easy way to switch between databases without losing any data. Oozie servers should be stopped during the
-database migraition process.
+database migration process.
 The export of the database can be done using the following command:
 <verbatim>
 $ bin/oozie-setup.sh export /tmp/oozie_db.zip
@@ -239,7 +239,7 @@ NOTE: The database version of the zip must match the version of the Oozie databa
 After starting the Oozie server, the history and the currently running workflows should be available.
 
 *IMPORTANT:* The tool was primarily developed to make the migration from embedded databases (e.g. Derby) to standalone databases
- (e.g. MySQL, Posgresql, Oracle, MS SQL Server), though it will work between any supported databases.
+ (e.g. MySQL, PosgreSQL, Oracle, MS SQL Server), though it will work between any supported databases.
 It is *not* optimized to handle databases over 1 Gb. If the database size is larger, it should be purged before migration.
 
 ---++ Oozie Configuration

@@ -57,6 +57,7 @@ import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
@@ -122,7 +123,10 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
     public static final String HADOOP_YARN_TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
-    public static final String HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART = "oozie.action.launcher.am.restart.kill.childjobs";
+    public static final String HADOOP_YARN_UBER_MODE = "mapreduce.job.ubertask.enable";
+    public static final String OOZIE_ACTION_LAUNCHER_PREFIX = ActionExecutor.CONF_PREFIX  + "launcher.";
+    public static final String HADOOP_YARN_KILL_CHILD_JOBS_ON_AMRESTART =
+            OOZIE_ACTION_LAUNCHER_PREFIX + "am.restart.kill.childjobs";
     public static final String HADOOP_MAP_MEMORY_MB = "mapreduce.map.memory.mb";
     public static final String HADOOP_CHILD_JAVA_OPTS = "mapred.child.java.opts";
     public static final String HADOOP_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
@@ -149,6 +153,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected XLog LOG = XLog.getLog(getClass());
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
+    private static final LauncherInputFormatClassLocator launcherInputFormatClassLocator = new LauncherInputFormatClassLocator();
 
     public XConfiguration workflowConf = null;
 
@@ -168,8 +173,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     public static List<Class<?>> getCommonLauncherClasses() {
         List<Class<?>> classes = new ArrayList<Class<?>>();
-        classes.add(OozieLauncherInputFormat.class);
         classes.add(LauncherMain.class);
+        classes.add(launcherInputFormatClassLocator.locateOrGet());
         classes.add(OozieLauncherOutputFormat.class);
         classes.add(OozieLauncherOutputCommitter.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
@@ -305,7 +310,7 @@ public class JavaActionExecutor extends ActionExecutor {
     void injectLauncherTimelineServiceEnabled(Configuration launcherConf, Configuration actionConf) {
         // Getting delegation token for ATS. If tez-site.xml is present in distributed cache, turn on timeline service.
         if (actionConf.get("oozie.launcher." + HADOOP_YARN_TIMELINE_SERVICE_ENABLED) == null
-                && ConfigurationService.getBoolean("oozie.action.launcher." + HADOOP_YARN_TIMELINE_SERVICE_ENABLED)) {
+                && ConfigurationService.getBoolean(OOZIE_ACTION_LAUNCHER_PREFIX + HADOOP_YARN_TIMELINE_SERVICE_ENABLED)) {
             String cacheFiles = launcherConf.get("mapred.cache.files");
             if (cacheFiles != null && cacheFiles.contains("tez-site.xml")) {
                 launcherConf.setBoolean(HADOOP_YARN_TIMELINE_SERVICE_ENABLED, true);
@@ -1647,5 +1652,9 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         return workflowConf;
 
+    }
+
+    private String getActionTypeLauncherPrefix() {
+        return "oozie.action." + getType() + ".launcher.";
     }
 }
