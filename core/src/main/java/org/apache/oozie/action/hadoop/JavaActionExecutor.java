@@ -238,6 +238,7 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
+
         Namespace ns = actionXml.getNamespace();
         String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
@@ -253,12 +254,6 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_YARN_RM, jobTracker);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
-
-        // FIXME - think about this!
-        Element e = actionXml.getChild("config-class", ns);
-        if (e != null) {
-            conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
-        }
 
         return conf;
     }
@@ -300,11 +295,6 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             XConfiguration.copy(launcherConf, conf);
             checkForDisallowedProps(launcherConf, "launcher configuration");
-            // Inject config-class for launcher to use for action
-            Element e = actionXml.getChild("config-class", ns);
-            if (e != null) {
-                conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
-            }
             return conf;
         }
         catch (IOException ex) {

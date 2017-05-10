@@ -117,6 +117,23 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
         conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
+        injectConfigClass(conf, actionXml);
+
+        return conf;
+    }
+
+    private void injectConfigClass(Configuration conf, Element actionXml) {
+        // Inject config-class for launcher to use for action
+        Element e = actionXml.getChild("config-class", actionXml.getNamespace());
+        if (e != null) {
+            conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
+        }
+    }
+
+    @Override
+    protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
+        Configuration conf = super.createBaseHadoopConf(context, actionXml, loadResources);
+        injectConfigClass(conf, actionXml);
         return conf;
     }
 
