@@ -19,22 +19,50 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XLog;
 
 public class CredentialsProviderFactory {
-    CredentialsProvider cred;
-    String type;
     public static final String CRED_KEY = "oozie.credentials.credentialclasses";
     private static final XLog LOG = XLog.getLog(CredentialsProviderFactory.class);
+    private static final Map<String, Class<CredentialsProvider>> providerCache = new HashMap<>();
+    private static CredentialsProviderFactory instance;
 
-    public CredentialsProviderFactory(String type) {
-        this.type = type;
-        this.cred = null;
-        LOG.debug("Credentials Provider is created for Type: {0}", type);
+    public static CredentialsProviderFactory getInstance() throws ClassNotFoundException {
+        if(instance == null) {
+            instance = new CredentialsProviderFactory();
+        }
+        return instance;
+    }
+
+    private CredentialsProviderFactory() throws ClassNotFoundException {
+        for (String function : ConfigurationService.getStrings(CRED_KEY)) {
+            function = trim(function);
+            LOG.debug("Creating Credential class for : " + function);
+            String[] str = function.split("=");
+            if (str.length > 0) {
+                String type = str[0];
+                String classname = str[1];
+                if (classname != null) {
+                    LOG.debug("Creating Credential type : '{0}', class Name : '{1}'", type, classname);
+                    Class<?> klass = null;
+                    try {
+                        klass = Thread.currentThread().getContextClassLoader().loadClass(classname);
+                    }
+                    catch (ClassNotFoundException ex) {
+                        LOG.warn("Exception while loading the class '{0}'", classname, ex);
+                        throw ex;
+                    }
+                    providerCache.put(type, (Class<CredentialsProvider>) klass);
+                } else {
+                    LOG.warn("Credential provider class is null for '{0}', skipping", type);
+                }
+            }
+        }
     }
 
     /**
@@ -43,34 +71,8 @@ public class CredentialsProviderFactory {
      * @return Credential object
      * @throws Exception
      */
-    public CredentialsProvider createCredentialsProvider() throws Exception {
-        String type;
-        String classname;
-        for (String function : ConfigurationService.getStrings(CRED_KEY)) {
-            function = trim(function);
-            LOG.debug("Creating Credential class for : " + function);
-            String[] str = function.split("=");
-            if (str.length > 0) {
-                type = str[0];
-                classname = str[1];
-                if (classname != null) {
-                    LOG.debug("Creating Credential type : '{0}', class Name : '{1}'", type, classname);
-                    if (this.type.equalsIgnoreCase(str[0])) {
-                        Class<?> klass = null;
-                        try {
-                            klass = Thread.currentThread().getContextClassLoader().loadClass(classname);
-                        }
-                        catch (ClassNotFoundException ex) {
-                            LOG.warn("Exception while loading the class", ex);
-                            throw ex;
-                        }
-
-                        cred = (CredentialsProvider) ReflectionUtils.newInstance(klass, null);
-                    }
-                }
-            }
-        }
-        return cred;
+    public CredentialsProvider createCredentialsProvider(String type) throws Exception {
+        return providerCache.get(type).newInstance();
     }
 
     /**

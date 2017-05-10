@@ -1188,8 +1188,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 String credName = entry.getKey();
                 CredentialsProperties credProps = entry.getValue();
                 if (credProps != null) {
-                    CredentialsProviderFactory tokenProviderFactory = new CredentialsProviderFactory(credProps.getType());
-                    CredentialsProvider tokenProvider = tokenProviderFactory.createCredentialsProvider();
+                    CredentialsProviderFactory tokenProviderFactory = CredentialsProviderFactory.getInstance();
+                    CredentialsProvider tokenProvider = tokenProviderFactory.createCredentialsProvider(credProps.getType());
                     if (tokenProvider != null) {
                         tokenProvider.updateCredentials(credentials, jobconf, credProps, context);
                         LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
