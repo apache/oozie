@@ -11,7 +11,7 @@
    * Unix box (tested on Mac OS X and Linux)
    * Java JDK 1.7+
    * [[http://maven.apache.org/][Maven 3.0.1+]]
-   * [[http://hadoop.apache.org/core/releases.html][Hadoop 0.20.2+]]
+   * [[http://hadoop.apache.org/core/releases.html][Hadoop 2.6.0+]]
    * [[http://hadoop.apache.org/pig/releases.html][Pig 0.7+]]
 
 JDK commands (java, javac) must be in the command path.
@@ -211,7 +211,9 @@ $ bin/mkdistro.sh [-DskipTests]
 Running =mkdistro.sh= will create the binary distribution of Oozie. The following options are available to customise
 the versions of the dependencies:
 -Puber - Bundle required hadoop and hcatalog libraries in oozie war
--Dhadoop.version=<version> - default 2.4.0
+-Dhadoop.version=<version> - default 2.6.0
+-Ptez - Bundle tez jars in hive and pig sharelibs. Useful if you want to use tez
+as the execution engine for those applications.
 -Dhadoop.auth.version=<version> - defaults to hadoop version
 -Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.16.0
