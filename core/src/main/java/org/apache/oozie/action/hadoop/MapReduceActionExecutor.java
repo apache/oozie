@@ -398,58 +398,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public void kill(final Context context, final WorkflowAction action) throws ActionExecutorException {
-        // Kill the LauncherAM which submits the MR job
-        super.kill(context, action);
-        // TODO if action.getExternalChildIDs() is not empty, then kill based on that
-        // We have to check whether the MapReduce execution has started or not. If it has started, then we have to get
-        // the YARN ApplicationID based on the tag and kill it as well
-        YarnClient yarnClient = null;
-        try {
-            String tag = LauncherHelper.getTag(ActionExecutor.getActionYarnTag(new Configuration(),
-                    context.getWorkflow(), action));
-            GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
-            gar.setScope(ApplicationsRequestScope.ALL);
-            gar.setApplicationTags(Collections.singleton(tag));
-            Element actionXml = XmlUtils.parseXml(action.getConf());
-            Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
-            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
-            GetApplicationsResponse apps = proxy.getApplications(gar);
-            List<ApplicationReport> appsList = apps.getApplicationList();
-
-            if (appsList.size() > 1) {
-                String applications = Joiner.on(",").join(Iterables.transform(appsList, new Function<ApplicationReport, String>() {
-                    @Override
-                    public String apply(@Nonnull ApplicationReport input) {
-                        return input.toString();
-                    }
-                }));
-
-                LOG.error("Too many applications were returned: {0}", applications);
-                throw new IllegalArgumentException("Too many applications were returned");
-            } else if (appsList.size() == 1) {
-
-                yarnClient = YarnClient.createYarnClient();
-                yarnClient.init(actionConf);
-                yarnClient.start();
-
-                ApplicationReport app = appsList.get(0);
-                LOG.info("Killing MapReduce job {0}, YARN Id: {1}", action.getExternalChildIDs(),
-                        app.getApplicationId().toString());
-                yarnClient.killApplication(app.getApplicationId());
-            } else {
-                LOG.info("No MapReduce job to kill");
-            }
-        } catch (Exception e) {
-            throw convertException(e);
-        } finally {
-            if (yarnClient != null) {
-                Closeables.closeQuietly(yarnClient);
-            }
-        }
-    }
-
-    @Override
     void injectActionCallback(Context context, Configuration actionConf) {
         injectCallback(context, actionConf);
     }

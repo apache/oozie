@@ -61,6 +61,7 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
@@ -1506,9 +1507,17 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
 
-            Configuration jobConf = createBaseHadoopConf(context, actionXml);
+            final Configuration jobConf = createBaseHadoopConf(context, actionXml);
+            String launcherTag = LauncherHelper.getActionYarnTag(jobConf, context.getWorkflow().getParentId(), action);
+            jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
+            jobConf.set(LauncherMain.OOZIE_JOB_LAUNCH_TIME, Long.toString(action.getStartTime().getTime()));
             yarnClient = createYarnClient(context, jobConf);
-            yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
+            for(ApplicationId id : LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL)){
+                yarnClient.killApplication(id);
+            }
+            if(action.getExternalId() != null) {
+                yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
+            }
 
             context.setExternalStatus(KILLED);
             context.setExecutionData(KILLED, null);
