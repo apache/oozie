@@ -189,8 +189,8 @@ public abstract class LauncherMain {
         return getChildYarnJobs(actionConf, ApplicationsRequestScope.OWN);
     }
 
-    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
-        System.out.println("Fetching child yarn jobs");
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope,
+                                                      long startTime) {
         Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
         String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
         if (tag == null) {
@@ -198,17 +198,9 @@ public abstract class LauncherMain {
             return childYarnJobs;
         }
         System.out.println("tag id : " + tag);
-        long startTime = 0L;
-        try {
-            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
-        } catch(NumberFormatException nfe) {
-            throw new RuntimeException("Could not find Oozie job launch time", nfe);
-        }
-
         GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
         gar.setScope(scope);
         gar.setApplicationTags(Collections.singleton(tag));
-
         long endTime = System.currentTimeMillis();
         if (startTime > endTime) {
             System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
@@ -235,6 +227,17 @@ public abstract class LauncherMain {
 
         System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
         return childYarnJobs;
+    }
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
+        System.out.println("Fetching child yarn jobs");
+
+        long startTime = 0L;
+        try {
+            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+        } catch(NumberFormatException nfe) {
+            throw new RuntimeException("Could not find Oozie job launch time", nfe);
+        }
+        return getChildYarnJobs(actionConf, scope, startTime);
     }
 
     public static void killChildYarnJobs(Configuration actionConf) {

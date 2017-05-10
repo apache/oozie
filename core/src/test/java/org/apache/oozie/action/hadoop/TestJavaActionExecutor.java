@@ -876,6 +876,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("val3", prop.getProperties().get("prop3"));
 
         // Try to load the token without it being defined in oozie-site; should get an exception
+        CredentialsProviderFactory.destroy();
         JobConf credentialsConf = new JobConf();
         Credentials credentials = new Credentials();
         Configuration launcherConf = ae.createBaseHadoopConf(context, actionXmlconf);
@@ -889,6 +890,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             assertTrue(aee.getMessage().contains("type [abc]"));
             assertTrue(aee.getMessage().contains("name [abcname]"));
         }
+        CredentialsProviderFactory.destroy();
 
         // Define 'abc' token type in oozie-site
         ConfigurationService.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XLog;
@@ -29,17 +30,23 @@ import org.apache.oozie.util.XLog;
 public class CredentialsProviderFactory {
     public static final String CRED_KEY = "oozie.credentials.credentialclasses";
     private static final XLog LOG = XLog.getLog(CredentialsProviderFactory.class);
-    private static final Map<String, Class<CredentialsProvider>> providerCache = new HashMap<>();
     private static CredentialsProviderFactory instance;
+    private final Map<String, Class<CredentialsProvider>> providerCache;
 
-    public static CredentialsProviderFactory getInstance() throws ClassNotFoundException {
+    @VisibleForTesting
+    static void destroy() {
+        instance = null;
+    }
+
+    public static CredentialsProviderFactory getInstance() throws Exception {
         if(instance == null) {
             instance = new CredentialsProviderFactory();
         }
         return instance;
     }
 
-    private CredentialsProviderFactory() throws ClassNotFoundException {
+    private CredentialsProviderFactory() throws Exception {
+        providerCache = new HashMap<>();
         for (String function : ConfigurationService.getStrings(CRED_KEY)) {
             function = trim(function);
             LOG.debug("Creating Credential class for : " + function);
@@ -72,7 +79,11 @@ public class CredentialsProviderFactory {
      * @throws Exception
      */
     public CredentialsProvider createCredentialsProvider(String type) throws Exception {
-        return providerCache.get(type).newInstance();
+        Class<CredentialsProvider> providerClass = providerCache.get(type);
+        if(providerClass == null){
+            return null;
+        }
+        return providerClass.newInstance();
     }
 
     /**
