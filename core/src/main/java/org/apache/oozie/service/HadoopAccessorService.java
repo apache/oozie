@@ -51,6 +51,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
@@ -770,19 +771,11 @@ public class HadoopAccessorService implements Service {
     public LocalResource createLocalResourceForConfigurationFile(String filename, String user, Configuration conf, URI uri,
                                                                  Path dir)
             throws IOException, HadoopAccessorException, URISyntaxException {
-        File f = File.createTempFile(filename, ".tmp");
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(f);
-            conf.writeXml(fos);
-        } finally {
-            if (fos != null) {
-                fos.close();
-            }
-        }
-        FileSystem fs = createFileSystem(user, uri, conf, false);
         Path dst = new Path(dir, filename);
-        fs.copyFromLocalFile(new Path(f.getAbsolutePath()), dst);
+        FileSystem fs = createFileSystem(user, uri, conf, false);
+        try (OutputStream os = fs.create(dst)){
+            conf.writeXml(os);
+        }
         LocalResource localResource = Records.newRecord(LocalResource.class);
         localResource.setType(LocalResourceType.FILE); localResource.setVisibility(LocalResourceVisibility.APPLICATION);
         localResource.setResource(ConverterUtils.getYarnUrlFromPath(dst));

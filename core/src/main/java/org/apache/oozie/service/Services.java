@@ -305,8 +305,8 @@ public class Services {
             }
         } catch (RuntimeException rex) {
             rex.printStackTrace();
-            log.fatal("Runtime Exception during Services Load. Check your list of '{0}' or '{1}'", CONF_SERVICE_CLASSES, CONF_SERVICE_EXT_CLASSES);
-            log.fatal("Runtime Exception during Services load: {0}", rex);
+            log.fatal("Runtime Exception during Services Load. Check your list of '{0}' or '{1}'",
+                    CONF_SERVICE_CLASSES, CONF_SERVICE_EXT_CLASSES, rex);
             throw new ServiceException(ErrorCode.E0103, rex.getMessage(), rex);
         }
     }
