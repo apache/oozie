@@ -3047,4 +3047,13 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>Regex pattern for HCat URIs. The regex can be modified by users as per requirement
             for parsing/splitting the HCat URIs.</description>
     </property>
+
+    <property>
+        <name>oozie.actions.null.args.allowed</name>
+        <value>true</value>
+        <description>
+            When set to true, empty arguments (like &lt;arg&gt;&lt;/arg&gt;) will be passed as "null" to the main method of a
+            given action. That is, the args[] array will contain "null" elements. When set to false, then "nulls" are removed.
+        </description>
+    </property>
 </configuration>
