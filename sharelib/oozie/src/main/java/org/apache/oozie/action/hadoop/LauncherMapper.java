@@ -63,6 +63,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     static final String CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE = "oozie.external.stats.max.size";
     static final String OOZIE_ACTION_CONFIG_CLASS = ACTION_PREFIX + "config.class";
     static final String CONF_OOZIE_ACTION_FS_GLOB_MAX = ACTION_PREFIX + "fs.glob.max";
+    static final String CONF_OOZIE_NULL_ARGS_ALLOWED = ACTION_PREFIX + "null.args.allowed";
 
     static final String COUNTER_GROUP = "oozie.launcher";
     static final String COUNTER_LAUNCHER_ERROR = "oozie.launcher.error";
@@ -497,18 +498,28 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     public static String[] getMainArguments(Configuration conf) {
         String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
 
-        int pos = 0;
-        for (int i = 0; i < args.length; i++) {
-            String arg = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
-            if (!Strings.isNullOrEmpty(arg)) {
-                args[pos++] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
-            }
-        }
+        String[] retArray;
 
-        // this is to skip null args, that is <arg></arg> in the workflow XML -- in this case,
-        // args[] might look like {"arg1", "arg2", null, null} at this point
-        String[] retArray = new String[pos];
-        System.arraycopy(args, 0, retArray, 0, pos);
+        if (conf.getBoolean(CONF_OOZIE_NULL_ARGS_ALLOWED, true)) {
+            for (int i = 0; i < args.length; i++) {
+                args[i] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+            }
+
+            retArray = args;
+        } else {
+            int pos = 0;
+            for (int i = 0; i < args.length; i++) {
+                String arg = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+                if (!Strings.isNullOrEmpty(arg)) {
+                    args[pos++] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
+                }
+            }
+
+            // this is to skip null args, that is <arg></arg> in the workflow XML -- in this case,
+            // args[] might look like {"arg1", "arg2", null, null} at this point
+            retArray = new String[pos];
+            System.arraycopy(args, 0, retArray, 0, pos);
+        }
 
         return retArray;
     }
@@ -632,6 +643,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.out.println(banner);
         boolean maskNextArg = false;
         for (String arg : args) {
+            if (arg == null) {
+                arg = "null"; // prevent NPE in pwd masking
+            }
+
             if (maskNextArg) {
                 System.out.println("             " + "********");
                 maskNextArg = false;

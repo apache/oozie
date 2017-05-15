@@ -993,6 +993,12 @@ public class JavaActionExecutor extends ActionExecutor {
                 args[i] = list.get(i).getTextTrim();
             }
             LauncherMapperHelper.setupMainArguments(launcherJobConf, args);
+            // backward compatibility flag - see OOZIE-2872
+            if (ConfigurationService.getBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED)) {
+                launcherJobConf.setBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED, true);
+            } else {
+                launcherJobConf.setBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED, false);
+            }
 
             // Make mapred.child.java.opts and mapreduce.map.java.opts equal, but give values from the latter priority; also append
             // <java-opt> and <java-opts> and give those highest priority
