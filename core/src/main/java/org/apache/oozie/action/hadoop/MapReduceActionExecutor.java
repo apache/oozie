@@ -133,7 +133,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     @Override
     protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
         Configuration conf = super.createBaseHadoopConf(context, actionXml, loadResources);
-        injectConfigClass(conf, actionXml);
         return conf;
     }
 

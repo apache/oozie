@@ -186,7 +186,6 @@ public class FsELFunctions {
      * ReachingGlobMaxException thrown when globbed file count exceeds the limit
      */
     static class ReachingGlobMaxException extends RuntimeException {
-        private static final long serialVersionUID = -3569871817672303526L;
     }
 
 }

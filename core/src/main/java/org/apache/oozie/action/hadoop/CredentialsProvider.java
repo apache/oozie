@@ -26,7 +26,7 @@ public interface CredentialsProvider {
 
      /**
      * This is the interface for all the Credentials implementation. Any new credential implementation must implement
-     * this function. This function should modify the jobconf which will be used further to pass the credentials to the
+     * this function. This function should modify the configuration which will be used further to pass the credentials to the
      * tasks while running it. Credentials properties and context is also provided by that user can get all the
      * necessary configuration.
      *

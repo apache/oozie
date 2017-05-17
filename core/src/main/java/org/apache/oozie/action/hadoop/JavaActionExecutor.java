@@ -153,7 +153,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected XLog LOG = XLog.getLog(getClass());
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
-    private static final LauncherInputFormatClassLocator launcherInputFormatClassLocator = new LauncherInputFormatClassLocator();
 
     public XConfiguration workflowConf = null;
 
@@ -174,9 +173,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static List<Class<?>> getCommonLauncherClasses() {
         List<Class<?>> classes = new ArrayList<Class<?>>();
         classes.add(LauncherMain.class);
-        classes.add(launcherInputFormatClassLocator.locateOrGet());
-        classes.add(OozieLauncherOutputFormat.class);
-        classes.add(OozieLauncherOutputCommitter.class);
         classes.addAll(Services.get().get(URIHandlerService.class).getClassesForLauncher());
         classes.add(LauncherAM.class);
         classes.add(LauncherAMCallbackNotifier.class);
@@ -970,6 +966,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // if user-retry is on, always submit new launcher
             boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
+            LOG.debug("creating yarnClinet for action {0}", action.getId());
             yarnClient = createYarnClient(context, launcherJobConf);
 
             if (alreadyRunning && !isUserRetry) {
@@ -1133,6 +1130,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // TODO: OYA: make resources allocated for the AM configurable and choose good defaults (memory MB, vcores)
         Resource resource = Resource.newInstance(2048, 1);
         appContext.setResource(resource);
+        appContext.setCancelTokensWhenComplete(true);
 
         return appContext;
     }
@@ -1184,8 +1182,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 String credName = entry.getKey();
                 CredentialsProperties credProps = entry.getValue();
                 if (credProps != null) {
-                    CredentialsProviderFactory tokenProviderFactory = CredentialsProviderFactory.getInstance();
-                    CredentialsProvider tokenProvider = tokenProviderFactory.createCredentialsProvider(credProps.getType());
+                    CredentialsProvider tokenProvider = CredentialsProviderFactory.getInstance()
+                            .createCredentialsProvider(credProps.getType());
                     if (tokenProvider != null) {
                         tokenProvider.updateCredentials(credentials, jobconf, credProps, context);
                         LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
@@ -1341,8 +1339,9 @@ public class JavaActionExecutor extends ActionExecutor {
 
     /**
      * If returns true, it means that we have to add Hadoop MR jars to the classpath.
-     * Subclasses should override this method if necessary.
-     *
+     * Subclasses should override this method if necessary. By default we don't add
+     * MR jars to the classpath.
+     * @return false by default
      */
     protected boolean needToAddMRJars() {
         return false;
@@ -1379,7 +1378,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
 
             } catch (Exception ye) {
-                LOG.info("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
+                LOG.warn("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
                 // Fallback to action data file if we can't find the Launcher AM (maybe it got purged)
                 fallback = true;
             }
@@ -1511,7 +1510,11 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             for(ApplicationId id : LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL,
                     action.getStartTime().getTime())){
-                yarnClient.killApplication(id);
+                try {
+                    yarnClient.killApplication(id);
+                } catch (Exception e) {
+                    LOG.warn("Could not kill child of {0}, {1}", action.getExternalId(), id);
+                }
             }
 
             context.setExternalStatus(KILLED);

@@ -36,7 +36,6 @@ import java.util.Properties;
 
 public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SparkMain";
-    public static final String TASK_USER_PRECEDENCE = "mapreduce.task.classpath.user.precedence";
     public static final String SPARK_MASTER = "oozie.spark.master";
     public static final String SPARK_MODE = "oozie.spark.mode";
     public static final String SPARK_OPTS = "oozie.spark.spark-opts";
@@ -98,17 +97,6 @@ public class SparkActionExecutor extends JavaActionExecutor {
                 ConfigurationService.getBoolean(CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR));
         actionConf.setBoolean(CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR, setupHadoopConf);
         return actionConf;
-    }
-
-    @Override
-    Configuration createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
-                               Configuration actionConf) throws ActionExecutorException {
-
-        Configuration launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
-        if (launcherJobConf.get("oozie.launcher." + TASK_USER_PRECEDENCE) == null) {
-            launcherJobConf.set(TASK_USER_PRECEDENCE, "true");
-        }
-        return launcherJobConf;
     }
 
     @Override

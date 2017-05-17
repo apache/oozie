@@ -35,7 +35,7 @@ public class LauncherAMTestMainClass {
         if (args != null && args.length == 1) {
             switch (args[0]){
                 case JAVA_EXCEPTION:
-                    throw new JavaMainException(new RuntimeException(JAVA_EXCEPTION_MESSAGE));
+                    throw new JavaMain.JavaMainException(new RuntimeException(JAVA_EXCEPTION_MESSAGE));
                 case LAUNCHER_EXCEPTION:
                     throw new LauncherMainException(LAUNCHER_ERROR_CODE);
                 case SECURITY_EXCEPTION:

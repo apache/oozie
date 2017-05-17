@@ -219,10 +219,8 @@ public abstract class LauncherMain {
             for(ApplicationReport appReport : appsList) {
                 childYarnJobs.add(appReport.getApplicationId());
             }
-        } catch (IOException ioe) {
+        } catch (YarnException | IOException ioe) {
             throw new RuntimeException("Exception occurred while finding child jobs", ioe);
-        } catch (YarnException ye) {
-            throw new RuntimeException("Exception occurred while finding child jobs", ye);
         }
 
         System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
@@ -257,10 +255,8 @@ public abstract class LauncherMain {
                 }
                 System.out.println();
             }
-        } catch (YarnException ye) {
+        } catch (IOException | YarnException ye) {
             throw new RuntimeException("Exception occurred while killing child job(s)", ye);
-        } catch (IOException ioe) {
-            throw new RuntimeException("Exception occurred while killing child job(s)", ioe);
         }
     }
 

@@ -53,6 +53,7 @@ public class LauncherAM {
     public static final String OOZIE_ACTION_ID = "oozie.action.id";
     public static final String OOZIE_JOB_ID = "oozie.job.id";
     public static final String ACTION_PREFIX = "oozie.action.";
+    static final String OOZIE_ACTION_RECOVERY_ID = ACTION_PREFIX + "recovery.id";
     public static final String CONF_OOZIE_ACTION_MAX_OUTPUT_DATA = ACTION_PREFIX + "max.output.data";
     public static final String CONF_OOZIE_ACTION_MAIN_ARG_PREFIX = ACTION_PREFIX + "main.arg.";
     public static final String CONF_OOZIE_ACTION_MAIN_ARG_COUNT = CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + "count";
@@ -375,7 +376,7 @@ public class LauncherAM {
                     // Get what actually caused the exception
                     Throwable cause = ex.getCause();
                     // If we got a JavaMainException from JavaMain, then we need to unwrap it
-                    if (JavaMainException.class.isInstance(cause)) {
+                    if (JavaMain.JavaMainException.class.isInstance(cause)) {
                         cause = cause.getCause();
                     }
                     if (LauncherMainException.class.isInstance(cause)) {
@@ -429,7 +430,7 @@ public class LauncherAM {
             ApplicationId applicationId = containerId.getApplicationAttemptId().getApplicationId();
             String applicationIdStr = applicationId.toString();
 
-            String recoveryId = Preconditions.checkNotNull(launcherJobConf.get(LauncherMapper.OOZIE_ACTION_RECOVERY_ID),
+            String recoveryId = Preconditions.checkNotNull(launcherJobConf.get(OOZIE_ACTION_RECOVERY_ID),
                             "RecoveryID should not be null");
 
             Path path = new Path(actionDir, recoveryId);

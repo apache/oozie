@@ -102,6 +102,4 @@ public class HbaseCredentials implements CredentialsProvider {
             }
         }
     }
-
-
 }

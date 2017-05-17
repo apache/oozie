@@ -44,7 +44,6 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
         SKIPPED_CONFS.add(XOozieClient.RM);
         SKIPPED_CONFS.add(XOozieClient.NN);
 
-        //DEPRECATE_MAP.put(XOozieClient.RM, "yarn.resourcemanager.address");
         DEPRECATE_MAP.put(XOozieClient.NN, XOozieClient.NN_2);
         DEPRECATE_MAP.put(WorkflowAppService.HADOOP_USER, "mapreduce.job.user.name");
     }

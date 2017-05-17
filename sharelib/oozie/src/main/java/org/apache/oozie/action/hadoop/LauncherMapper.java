@@ -240,7 +240,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                         // Get what actually caused the exception
                         Throwable cause = ex.getCause();
                         // If we got a JavaMainException from JavaMain, then we need to unwrap it
-                        if (JavaMainException.class.isInstance(cause)) {
+                        if (JavaMain.JavaMainException.class.isInstance(cause)) {
                             cause = cause.getCause();
                         }
                         if (LauncherMainException.class.isInstance(cause)) {
@@ -702,12 +702,3 @@ class LauncherSecurityManager extends SecurityManager {
     }
 }
 
-/**
- * Used by JavaMain to wrap a Throwable when an Exception occurs
- */
-@SuppressWarnings("serial")
-class JavaMainException extends Exception {
-    public JavaMainException(Throwable t) {
-        super(t);
-    }
-}

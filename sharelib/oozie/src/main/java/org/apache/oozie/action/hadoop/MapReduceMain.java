@@ -132,16 +132,6 @@ public class MapReduceMain extends LauncherMain {
         return runJob;
     }
 
-    @Deprecated
-    public static void setStrings(Configuration conf, String key, String[] values) {
-        ActionUtils.setStrings(conf, key, values);
-    }
-
-    @Deprecated
-    public static String[] getStrings(Configuration conf, String key) {
-        return ActionUtils.getStrings(conf, key);
-    }
-
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
         return new JobClient(jobConf);
     }

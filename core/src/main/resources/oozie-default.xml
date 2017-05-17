@@ -1835,14 +1835,6 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-        <name>oozie.action.launcher.mapreduce.input.format.class</name>
-        <value>org.apache.oozie.action.hadoop.OozieLauncherInputFormat</value>
-        <description>
-            Make the Launcher Mapper map-only job's InputFormat class pluggable in order to provide alternative implementations.
-        </description>
-    </property>
-
-    <property>
         <name>oozie.action.spark.setup.hadoop.conf.dir</name>
         <value>false</value>
         <description>

@@ -41,9 +41,6 @@ public class ClasspathUtils {
     private static boolean usingMiniYarnCluster = false;
     private static final List<String> CLASSPATH_ENTRIES = Arrays.asList(
             ApplicationConstants.Environment.PWD.$(),
-            MRJobConfig.JOB_JAR + Path.SEPARATOR + MRJobConfig.JOB_JAR,
-            MRJobConfig.JOB_JAR + Path.SEPARATOR + "classes" + Path.SEPARATOR,
-            MRJobConfig.JOB_JAR + Path.SEPARATOR + "lib" + Path.SEPARATOR + "*",
             ApplicationConstants.Environment.PWD.$() + Path.SEPARATOR + "*"
     );
 

@@ -60,4 +60,13 @@ public class JavaMain extends LauncherMain {
     }
 
 
+    /**
+     * Used by JavaMain to wrap a Throwable when an Exception occurs
+     */
+    @SuppressWarnings("serial")
+    static class JavaMainException extends Exception {
+        public JavaMainException(Throwable t) {
+            super(t);
+        }
+    }
 }

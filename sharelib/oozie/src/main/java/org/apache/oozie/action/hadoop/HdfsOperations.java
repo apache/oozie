@@ -57,8 +57,7 @@ public class HdfsOperations {
             public Void run() throws Exception {
                 Path finalPath = new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE);
                 // upload into sequence file
-                System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
-                        + new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE).toUri());
+                System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: " + finalPath.toUri());
 
                 try (SequenceFile.Writer wr =
                         seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class)) {

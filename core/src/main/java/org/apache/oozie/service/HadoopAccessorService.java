@@ -25,11 +25,9 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
@@ -47,7 +45,6 @@ import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -523,10 +520,7 @@ public class HadoopAccessorService implements Service {
             });
             return jobClient;
         }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        }
-        catch (IOException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
@@ -571,9 +565,7 @@ public class HadoopAccessorService implements Service {
                 }
             });
             return yarnClient;
-        } catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        } catch (IOException ex) {
+        } catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
@@ -624,10 +616,7 @@ public class HadoopAccessorService implements Service {
                 }
             });
         }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        }
-        catch (IOException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }

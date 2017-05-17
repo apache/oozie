@@ -40,7 +40,6 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XLog;
 
 public class CallbackServlet extends JsonRestServlet {
-    private static final long serialVersionUID = 6439106936153152786L;
 
     private static final String INSTRUMENTATION_NAME = "callback";
 
