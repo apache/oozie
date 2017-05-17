@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2888 Upgrade commons-io to 2.4 (dbist13 via pbacsko)
 OOZIE-3171 Revert OOZIE-2771 commit on branch-4.3 (satishsaley)
 OOZIE-2533 Oozie Web UI gives Error 500 with Java 8u91 (asasvari via satishsaley)
 OOZIE-3167 Upgrade tomcat version on Oozie 4.3 branch (satishsaley)
