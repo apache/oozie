@@ -1235,7 +1235,7 @@ public abstract class XTestCase extends TestCase {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
         final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
 
-        Configuration conf = Services.get().get(HadoopAccessorService.class).getCachedConf();
+        Configuration conf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
         final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
 
         try {

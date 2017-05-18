@@ -342,7 +342,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected boolean needToAddMRJars() {
+    protected boolean needToAddMapReduceToClassPath() {
         return true;
     }
 

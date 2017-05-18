@@ -143,7 +143,7 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected boolean needToAddMRJars() {
+    protected boolean needToAddMapReduceToClassPath() {
         return true;
     }
 

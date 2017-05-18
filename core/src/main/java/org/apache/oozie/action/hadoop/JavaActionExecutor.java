@@ -314,14 +314,6 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    void updateConfForJavaTmpDir(Configuration conf) {
-        String amChildOpts = conf.get(YARN_AM_COMMAND_OPTS);
-        String oozieJavaTmpDirSetting = "-Djava.io.tmpdir=./tmp";
-        if (amChildOpts != null && !amChildOpts.contains(JAVA_TMP_DIR_SETTINGS)) {
-            conf.set(YARN_AM_COMMAND_OPTS, amChildOpts + " " + oozieJavaTmpDirSetting);
-        }
-    }
-
     public static void parseJobXmlAndConfiguration(Context context, Element element, Path appPath, Configuration conf)
             throws IOException, ActionExecutorException, HadoopAccessorException, URISyntaxException {
         parseJobXmlAndConfiguration(context, element, appPath, conf, false);
@@ -402,7 +394,6 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // set cancel.delegation.token in actionConf that child job doesn't cancel delegation token
             actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
-            updateConfForJavaTmpDir(actionConf);
             setRootLoggerLevel(actionConf);
             return actionConf;
         }
@@ -862,7 +853,6 @@ public class JavaActionExecutor extends ActionExecutor {
             launcherJobConf.set(HADOOP_CHILD_JAVA_OPTS, opts.toString().trim());
             launcherJobConf.set(HADOOP_MAP_JAVA_OPTS, opts.toString().trim());
 
-            updateConfForJavaTmpDir(launcherJobConf);
             injectLauncherTimelineServiceEnabled(launcherJobConf, actionConf);
 
             // properties from action that are needed by the launcher (e.g. QUEUE NAME, ACLs)
@@ -1085,7 +1075,7 @@ public class JavaActionExecutor extends ActionExecutor {
         // This adds the Hadoop jars to the classpath in the Launcher JVM
         ClasspathUtils.setupClasspath(env, launcherJobConf);
 
-        if (needToAddMRJars()) {
+        if (needToAddMapReduceToClassPath()) {
             ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
         }
 
@@ -1343,7 +1333,7 @@ public class JavaActionExecutor extends ActionExecutor {
      * MR jars to the classpath.
      * @return false by default
      */
-    protected boolean needToAddMRJars() {
+    protected boolean needToAddMapReduceToClassPath() {
         return false;
     }
 

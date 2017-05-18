@@ -42,7 +42,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
 
     private static final String SHELL_EXEC = Shell.WINDOWS ? "cmd.exe" : "sh";
     private static final String SHELL_PARAM = Shell.WINDOWS ? "/c" : "-c";
-    private static final String SHELL_SCRIPTNAME = Shell.WINDOWS ? "script.cmd" : "./script.sh";
+    private static final String SHELL_SCRIPTNAME = Shell.WINDOWS ? "script.cmd" : "script.sh";
     private static final String SHELL_SCRIPT_CONTENT = Shell.WINDOWS
             ? "dir /s /b\necho %1 %2\necho %PATH%\ntype %0"
             : "ls -ltr\necho $1 $2\necho $PATH\npwd\ntype sh";

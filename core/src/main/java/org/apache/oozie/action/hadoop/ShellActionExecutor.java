@@ -19,10 +19,13 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.yarn.util.Apps;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.jdom.Element;
@@ -146,6 +149,11 @@ public class ShellActionExecutor extends JavaActionExecutor {
         String envValues = "PATH=.:$PATH";
         updateProperty(conf, OOZIE_LAUNCHER_MAP_ENV, envValues);
         updateProperty(conf, OOZIE_LAUNCHER_CHILD_ENV, envValues);
+    }
+
+    @Override
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        Apps.setEnvFromInputString(env, "PATH=.:$PATH", File.pathSeparator);
     }
 
     /**

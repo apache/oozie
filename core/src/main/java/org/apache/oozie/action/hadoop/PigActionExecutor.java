@@ -123,7 +123,7 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected boolean needToAddMRJars() {
+    protected boolean needToAddMapReduceToClassPath() {
         return true;
     }
 
