@@ -117,7 +117,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
         conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
-        injectConfigClass(conf, actionXml);
 
         return conf;
     }
@@ -141,6 +140,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         boolean regularMR = false;
+
+        injectConfigClass(actionConf, actionXml);
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) != null) {
             Element streamingXml = actionXml.getChild("streaming", ns);

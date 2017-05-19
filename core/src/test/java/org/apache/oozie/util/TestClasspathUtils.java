@@ -69,7 +69,7 @@ public class TestClasspathUtils extends XFsTestCase {
         assertEquals(2, env.size());
         assertTrue(env.containsKey("CLASSPATH"));
         String[] paths = env.get("CLASSPATH").split(":");
-        assertEquals(12, paths.length);
+        assertEquals(9, paths.length);
         Arrays.sort(paths);
         assertEquals("$HADOOP_COMMON_HOME/share/hadoop/common/*", paths[0]);
         assertEquals("$HADOOP_COMMON_HOME/share/hadoop/common/lib/*", paths[1]);
@@ -80,9 +80,6 @@ public class TestClasspathUtils extends XFsTestCase {
         assertEquals("$HADOOP_YARN_HOME/share/hadoop/yarn/lib/*", paths[6]);
         assertEquals("$PWD", paths[7]);
         assertEquals("$PWD/*", paths[8]);
-        assertEquals("job.jar/classes/", paths[9]);
-        assertEquals("job.jar/job.jar", paths[10]);
-        assertEquals("job.jar/lib/*", paths[11]);
 
         assertTrue(env.containsKey("$PWD"));
         paths = env.get("$PWD").split(":");
