@@ -148,6 +148,8 @@ public class TestHadoopAccessorService extends XFsTestCase {
          */
         assertEquals("100", conf.get("action.testprop"));
         assertEquals("1", conf.get("default.testprop"));
+        assertEquals("org.apache.log4j.ConsoleAppender", conf.get("log4j.appender.oozie"));
+        assertEquals("NONE, null", conf.get("log4j.logger.a"));
     }
 
     public void testCreateJobClient() throws Exception {
