@@ -537,13 +537,7 @@ public class LauncherAM {
     }
 
     private String[] getMainArguments(Configuration conf) {
-        String[] args = new String[conf.getInt(CONF_OOZIE_ACTION_MAIN_ARG_COUNT, 0)];
-
-        for (int i = 0; i < args.length; i++) {
-            args[i] = conf.get(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i);
-        }
-
-        return args;
+        return LauncherMapper.getMainArguments(conf);
     }
 
     public static class LauncherSecurityManager extends SecurityManager {

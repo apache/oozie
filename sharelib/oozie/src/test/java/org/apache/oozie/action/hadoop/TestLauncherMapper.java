@@ -23,6 +23,7 @@ import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MA
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.anyBoolean;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,8 +42,9 @@ public class TestLauncherMapper {
     private Configuration conf;  // we have to use mock, because conf.set(null) throws exception
 
     @Test
-    public void testArgsHandlingWithoutNulls() {
+    public void testArgsHandlingWithoutNullsAndNullsNotAllowed() {
        setupConf(Lists.newArrayList("a", "b", "c"));
+       setEnableNullArgsAllowed(false);
 
        String args[] = LauncherMapper.getMainArguments(conf);
 
@@ -50,8 +52,9 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testArgsHandlingWhenArgsContainNulls() {
+    public void testHandlingWhenArgsContainNullsAndNullsNotAllowed() {
         setupConf(Lists.newArrayList("a", null, "b", null, "c"));
+        setEnableNullArgsAllowed(false);
 
         String args[] = LauncherMapper.getMainArguments(conf);
 
@@ -59,8 +62,9 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testArgsHandlingWhenArgsContainsNullsOnly() {
+    public void testArgsHandlingWhenArgsContainsNullsOnlyAndNullsNotAllowed() {
         setupConf(Lists.<String>newArrayList(null, null, null));
+        setEnableNullArgsAllowed(false);
 
         String args[] = LauncherMapper.getMainArguments(conf);
 
@@ -68,12 +72,33 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testArgsHandlingWhenArgsContainsOneNull() {
+    public void testArgsHandlingWhenArgsContainsOneNullAndNullsNotAllowed() {
         setupConf(Lists.<String>newArrayList((String) null));
+        setEnableNullArgsAllowed(false);
 
         String args[] = LauncherMapper.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] {}, args));
+    }
+
+    @Test
+    public void testHandlingWhenArgsContainNullsAndNullAllowed() {
+        setupConf(Lists.newArrayList("a", null, "b", null, "c"));
+        setEnableNullArgsAllowed(true);
+
+        String args[] = LauncherMapper.getMainArguments(conf);
+
+        assertTrue(Arrays.equals(new String[] { "a", null, "b", null, "c"}, args));
+    }
+
+    @Test
+    public void testArgsHandlingWhenArgsContainsOneNullAndNullsAllowed() {
+        setupConf(Lists.<String>newArrayList((String) null));
+        setEnableNullArgsAllowed(true);
+
+        String args[] = LauncherMapper.getMainArguments(conf);
+
+        assertTrue(Arrays.equals(new String[] { null }, args));
     }
 
     private void setupConf(List<String> argList) {
@@ -84,5 +109,9 @@ public class TestLauncherMapper {
         for (int i = 0; i < argCount; i++) {
             given(conf.get(eq(CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i))).willReturn(argList.get(i));
         }
+    }
+
+    private void setEnableNullArgsAllowed(boolean nullArgsAllowed) {
+        given(conf.getBoolean(eq(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED), anyBoolean())).willReturn(nullArgsAllowed);
     }
 }
