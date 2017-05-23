@@ -33,7 +33,7 @@ import org.apache.oozie.util.XLog;
 /**
  * Helper class to handle the HCat credentials
  * Performs internally the heavy-lifting of fetching delegation tokens from Hive Metastore, abstracted from the user
- * Token is added to the launcher configuration
+ * Token is added to the credentials
  */
 public class HCatCredentialHelper {
 
@@ -45,7 +45,7 @@ public class HCatCredentialHelper {
     private static final String HADOOP_RPC_PROTECTION = "hadoop.rpc.protection";
 
     /**
-     * This Function will set the HCat token to configuration
+     * This Function will set the HCat token to the credentials
      * @param credentials - the credentials
      * @param launcherConfig - launcher configuration
      * @param principal - principal for HCat server

@@ -41,7 +41,7 @@ public class TestLauncherMapper {
     private Configuration conf;  // we have to use mock, because conf.set(null) throws exception
 
     @Test
-    public void testLauncherMapperArgsHandlingWithoutNulls() {
+    public void testArgsHandlingWithoutNulls() {
        setupConf(Lists.newArrayList("a", "b", "c"));
 
        String args[] = LauncherMapper.getMainArguments(conf);
@@ -50,7 +50,7 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testLauncherMapperArgsHandlingWhenArgsContainNulls() {
+    public void testArgsHandlingWhenArgsContainNulls() {
         setupConf(Lists.newArrayList("a", null, "b", null, "c"));
 
         String args[] = LauncherMapper.getMainArguments(conf);
@@ -59,7 +59,7 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testLauncherMapperArgsHandlingWhenArgsContainsNullsOnly() {
+    public void testArgsHandlingWhenArgsContainsNullsOnly() {
         setupConf(Lists.<String>newArrayList(null, null, null));
 
         String args[] = LauncherMapper.getMainArguments(conf);
@@ -68,7 +68,7 @@ public class TestLauncherMapper {
     }
 
     @Test
-    public void testLauncherMapperArgsHandlingWhenArgsContainsOneNull() {
+    public void testArgsHandlingWhenArgsContainsOneNull() {
         setupConf(Lists.<String>newArrayList((String) null));
 
         String args[] = LauncherMapper.getMainArguments(conf);

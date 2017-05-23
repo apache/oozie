@@ -75,6 +75,7 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.util.Apps;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.WorkflowActionBean;
@@ -956,7 +957,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // if user-retry is on, always submit new launcher
             boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
-            LOG.debug("creating yarnClinet for action {0}", action.getId());
+            LOG.debug("Creating yarnClient for action {0}", action.getId());
             yarnClient = createYarnClient(context, launcherJobConf);
 
             if (alreadyRunning && !isUserRetry) {
@@ -1084,7 +1085,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
         // Set the command
         List<String> vargs = new ArrayList<String>(6);
-        vargs.add(MRApps.crossPlatformifyMREnv(launcherJobConf, ApplicationConstants.Environment.JAVA_HOME)
+        vargs.add(Apps.crossPlatformify(ApplicationConstants.Environment.JAVA_HOME.toString())
                 + "/bin/java");
 
         vargs.add("-Dlog4j.configuration=container-log4j.properties");
@@ -1094,6 +1095,11 @@ public class JavaActionExecutor extends ActionExecutor {
         vargs.add("-Dhadoop.root.logger=INFO,CLA");
         vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
         vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
+
+        Path amTmpDir = new Path(Apps.crossPlatformify(ApplicationConstants.Environment.PWD.toString()),
+                YarnConfiguration.DEFAULT_CONTAINER_TEMP_DIR);
+        vargs.add("-Djava.io.tmpdir=" + amTmpDir);
+
         vargs.add(LauncherAM.class.getCanonicalName());
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
                 Path.SEPARATOR + ApplicationConstants.STDOUT);
