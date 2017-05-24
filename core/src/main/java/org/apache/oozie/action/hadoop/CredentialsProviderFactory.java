@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -47,7 +46,7 @@ public class CredentialsProviderFactory {
     }
 
     private CredentialsProviderFactory() throws Exception {
-        providerCache = new ConcurrentHashMap<>();
+        providerCache = new HashMap<>();
         for (String function : ConfigurationService.getStrings(CRED_KEY)) {
             function = trim(function);
             LOG.debug("Creating Credential class for : " + function);
