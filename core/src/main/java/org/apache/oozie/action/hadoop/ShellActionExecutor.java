@@ -126,13 +126,6 @@ public class ShellActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        super.setupLauncherConf(conf, actionXml, appPath, context);
-        return conf;
-    }
-
-    @Override
     protected void addActionSpecificEnvVars(Map<String, String> env) {
         Apps.setEnvFromInputString(env, "PATH=.:$PATH", File.pathSeparator);
     }
