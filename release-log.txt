@@ -1,5 +1,7 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-1770 Create Oozie Application Master for YARN (pbacsko, rkanter, gezapeti)
+OOZIE-2316 Drop support for Hadoop 1 and 0.23 (asasvari)
 OOZIE-2908 Fix typo in oozie.actions.null.args.allowed property in oozie-default.xml (gezapeti)
 OOZIE-2888 Upgrade commons-io to 2.4 (dbist13 via pbacsko)
 OOZIE-2872 Address backward compatibility issue introduced by OOZIE-2748 (pbacsko)

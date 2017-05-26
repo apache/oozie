@@ -18,6 +18,12 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.Counters;
@@ -33,12 +39,6 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-
 public class SqoopActionExecutor extends JavaActionExecutor {
 
   public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
@@ -51,8 +51,8 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }
@@ -68,7 +68,6 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         super.setupActionConf(actionConf, context, actionXml, appPath);
@@ -96,6 +95,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             }
         }
         else {
+            @SuppressWarnings("unchecked")
             List<Element> eArgs = (List<Element>) actionXml.getChildren("arg", ns);
             for (Element elem : eArgs) {
                 argList.add(elem.getTextTrim());
@@ -119,7 +119,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
     }
 
     private void setSqoopCommand(Configuration conf, String[] args) {
-        MapReduceMain.setStrings(conf, SQOOP_ARGS, args);
+        ActionUtils.setStrings(conf, SQOOP_ARGS, args);
     }
 
     /**
@@ -141,7 +141,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
-                JobConf jobConf = createBaseHadoopConf(context, actionXml);
+                Configuration jobConf = createBaseHadoopConf(context, actionXml);
                 jobClient = createJobClient(context, jobConf);
 
                 // Cumulative counters for all Sqoop mapreduce jobs
@@ -234,6 +234,11 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         catch (IOException ex) {
             throw convertException(ex);
         }
+    }
+
+    @Override
+    protected boolean needToAddMapReduceToClassPath() {
+        return true;
     }
 
     /**

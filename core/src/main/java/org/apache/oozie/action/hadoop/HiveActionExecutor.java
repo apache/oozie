@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.service.ConfigurationService;
@@ -49,8 +48,8 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(HIVE_MAIN_CLASS_NAME));
         }
@@ -98,7 +97,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
         for (int i = 0; i < params.size(); i++) {
             strParams[i] = params.get(i).getTextTrim();
         }
-        MapReduceMain.setStrings(conf, HIVE_PARAMS, strParams);
+        ActionUtils.setStrings(conf, HIVE_PARAMS, strParams);
 
         String[] strArgs = null;
         List<Element> eArgs = actionXml.getChildren("argument", ns);
@@ -108,7 +107,7 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
                 strArgs[i] = eArgs.get(i).getTextTrim();
             }
         }
-        MapReduceMain.setStrings(conf, HIVE_ARGS, strArgs);
+        ActionUtils.setStrings(conf, HIVE_ARGS, strArgs);
         return conf;
     }
 
@@ -133,10 +132,15 @@ public class HiveActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected JobConf loadHadoopDefaultResources(Context context, Element actionXml) {
+    protected boolean needToAddMapReduceToClassPath() {
+        return true;
+    }
+
+    @Override
+    protected Configuration loadHadoopDefaultResources(Context context, Element actionXml) {
         boolean loadDefaultResources = ConfigurationService
                 .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);
-        JobConf conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
+        Configuration conf = super.createBaseHadoopConf(context, actionXml, loadDefaultResources);
         return conf;
     }
 }

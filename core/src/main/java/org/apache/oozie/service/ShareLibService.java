@@ -51,14 +51,13 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.client.rest.JsonUtils;
-import org.apache.oozie.hadoop.utils.HadoopShims;
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.FSUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import com.google.common.annotations.VisibleForTesting;
-
-import org.apache.oozie.ErrorCode;
 import org.jdom.JDOMException;
 
 public class ShareLibService implements Service, Instrumentable {
@@ -194,7 +193,7 @@ public class ShareLibService implements Service, Instrumentable {
     private void setupLauncherLibPath(FileSystem fs, Path tmpLauncherLibPath) throws IOException {
 
         ActionService actionService = Services.get().get(ActionService.class);
-        List<Class> classes = JavaActionExecutor.getCommonLauncherClasses();
+        List<Class<?>> classes = JavaActionExecutor.getCommonLauncherClasses();
         Path baseDir = new Path(tmpLauncherLibPath, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
         copyJarContainingClasses(classes, fs, baseDir, JavaActionExecutor.OOZIE_COMMON_LIBDIR);
         Set<String> actionTypes = actionService.getActionTypes();
@@ -217,7 +216,7 @@ public class ShareLibService implements Service, Instrumentable {
      *
      * @param fs the FileSystem
      * @param path the Path
-     * @param perm is permission
+     * @param fsPerm is permission
      * @throws IOException Signals that an I/O exception has occurred.
      */
     private void recursiveChangePermissions(FileSystem fs, Path path, FsPermission fsPerm) throws IOException {
@@ -225,7 +224,7 @@ public class ShareLibService implements Service, Instrumentable {
         FileStatus[] filesStatus = fs.listStatus(path);
         for (int i = 0; i < filesStatus.length; i++) {
             Path p = filesStatus[i].getPath();
-            if (filesStatus[i].isDir()) {
+            if (filesStatus[i].isDirectory()) {
                 recursiveChangePermissions(fs, p, fsPerm);
             }
             else {
@@ -243,11 +242,11 @@ public class ShareLibService implements Service, Instrumentable {
      * @param type is sharelib key
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private void copyJarContainingClasses(List<Class> classes, FileSystem fs, Path executorDir, String type)
+    private void copyJarContainingClasses(List<Class<?>> classes, FileSystem fs, Path executorDir, String type)
             throws IOException {
         fs.mkdirs(executorDir);
         Set<String> localJarSet = new HashSet<String>();
-        for (Class c : classes) {
+        for (Class<?> c : classes) {
             String localJar = findContainingJar(c);
             if (localJar != null) {
                 localJarSet.add(localJar);
@@ -302,7 +301,7 @@ public class ShareLibService implements Service, Instrumentable {
             }
 
             for (FileStatus file : status) {
-                if (file.isDir()) {
+                if (file.isDirectory()) {
                     getPathRecursively(fs, file.getPath(), listOfPaths, shareLibKey, shareLibConfigMap);
                 }
                 else {
@@ -352,14 +351,12 @@ public class ShareLibService implements Service, Instrumentable {
     }
 
     private void checkSymlink(String shareLibKey) throws IOException {
-        if (!HadoopShims.isSymlinkSupported() || symlinkMapping.get(shareLibKey) == null
-                || symlinkMapping.get(shareLibKey).isEmpty()) {
+        if (symlinkMapping.get(shareLibKey) == null || symlinkMapping.get(shareLibKey).isEmpty()) {
             return;
         }
 
-        HadoopShims fileSystem = new HadoopShims(fs);
         for (Path path : symlinkMapping.get(shareLibKey).keySet()) {
-            if (!symlinkMapping.get(shareLibKey).get(path).equals(fileSystem.getSymLinkTarget(path))) {
+            if (!symlinkMapping.get(shareLibKey).get(path).equals(FSUtils.getSymLinkTarget(fs, path))) {
                 synchronized (ShareLibService.class) {
                     Map<String, List<Path>> tmpShareLibMap = new HashMap<String, List<Path>>(shareLibMap);
 
@@ -370,7 +367,7 @@ public class ShareLibService implements Service, Instrumentable {
                             symlinkMapping);
 
                     LOG.info(MessageFormat.format("Symlink target for [{0}] has changed, was [{1}], now [{2}]",
-                            shareLibKey, path, fileSystem.getSymLinkTarget(path)));
+                            shareLibKey, path, FSUtils.getSymLinkTarget(fs, path)));
                     loadShareLibMetaFile(tmpShareLibMap, tmpSymlinkMapping, tmpShareLibConfigMap, sharelibMappingFile,
                             shareLibKey);
                     shareLibMap = tmpShareLibMap;
@@ -423,12 +420,12 @@ public class ShareLibService implements Service, Instrumentable {
      * @return the string
      */
     @VisibleForTesting
-    protected String findContainingJar(Class clazz) {
+    protected String findContainingJar(Class<?> clazz) {
         ClassLoader loader = clazz.getClassLoader();
         String classFile = clazz.getName().replaceAll("\\.", "/") + ".class";
         try {
-            for (Enumeration itr = loader.getResources(classFile); itr.hasMoreElements();) {
-                URL url = (URL) itr.nextElement();
+            for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements();) {
+                URL url = itr.nextElement();
                 if ("jar".equals(url.getProtocol())) {
                     String toReturn = url.getPath();
                     if (toReturn.startsWith("file:")) {
@@ -587,7 +584,7 @@ public class ShareLibService implements Service, Instrumentable {
         }
 
         for (FileStatus dir : dirList) {
-            if (!dir.isDir()) {
+            if (!dir.isDirectory()) {
                 continue;
             }
             List<Path> listOfPaths = new ArrayList<Path>();
@@ -636,19 +633,18 @@ public class ShareLibService implements Service, Instrumentable {
             throws IOException {
         List<Path> listOfPaths = new ArrayList<Path>();
         Map<Path, Path> symlinkMappingforAction = new HashMap<Path, Path>();
-        HadoopShims fileSystem = new HadoopShims(fs);
 
         for (String dfsPath : pathList) {
             Path path = new Path(dfsPath);
             getPathRecursively(fs, new Path(dfsPath), listOfPaths, shareLibKey, shareLibConfigMap);
-            if (HadoopShims.isSymlinkSupported() && fileSystem.isSymlink(path)) {
-                symlinkMappingforAction.put(fs.makeQualified(path), fileSystem.getSymLinkTarget(path));
+            if (FSUtils.isSymlink(fs, path)) {
+                symlinkMappingforAction.put(path, FSUtils.getSymLinkTarget(fs, path));
             }
         }
-        if (HadoopShims.isSymlinkSupported()) {
-            LOG.info("symlink for " + shareLibKey + ":" + symlinkMappingforAction);
-            tmpSymlinkMapping.put(shareLibKey, symlinkMappingforAction);
-        }
+
+        LOG.info("symlink for " + shareLibKey + ":" + symlinkMappingforAction);
+        tmpSymlinkMapping.put(shareLibKey, symlinkMappingforAction);
+
         tmpShareLibMap.put(shareLibKey, listOfPaths);
         LOG.info("Share lib for " + shareLibKey + ":" + listOfPaths);
     }

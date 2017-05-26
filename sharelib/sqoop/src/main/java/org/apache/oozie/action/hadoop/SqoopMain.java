@@ -152,13 +152,13 @@ public class SqoopMain extends LauncherMain {
         Configuration sqoopConf = setUpSqoopSite();
         String logFile = setUpSqoopLog4J(sqoopConf);
 
-        String[] sqoopArgs = MapReduceMain.getStrings(sqoopConf, SqoopActionExecutor.SQOOP_ARGS);
+        String[] sqoopArgs = ActionUtils.getStrings(sqoopConf, SqoopActionExecutor.SQOOP_ARGS);
         if (sqoopArgs == null) {
             throw new RuntimeException("Action Configuration does not have [" + SqoopActionExecutor.SQOOP_ARGS + "] property");
         }
 
-        LauncherMapper.printArgs("Sqoop command arguments :", sqoopArgs);
-        LauncherMainHadoopUtils.killChildYarnJobs(sqoopConf);
+        printArgs("Sqoop command arguments :", sqoopArgs);
+        LauncherMain.killChildYarnJobs(sqoopConf);
 
         System.out.println("=================================================================");
         System.out.println();
@@ -168,13 +168,6 @@ public class SqoopMain extends LauncherMain {
 
         try {
             runSqoopJob(sqoopArgs);
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
         }
         finally {
             System.out.println("\n<<< Invocation of Sqoop command completed <<<\n");

@@ -19,8 +19,10 @@
 package org.apache.oozie.command.coord;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -84,6 +86,11 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         @Override
         public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay){return false;}
+
+        @Override
+        public Set<String> getInterruptTypes() {
+            return Collections.emptySet();
+        }
     }
 
     @Override

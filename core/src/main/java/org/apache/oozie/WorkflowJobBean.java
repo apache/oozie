@@ -462,7 +462,6 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         return pInstance;
     }
 
-    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         return toJSONObject("GMT");
     }

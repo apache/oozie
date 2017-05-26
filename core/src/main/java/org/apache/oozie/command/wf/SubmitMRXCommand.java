@@ -41,11 +41,10 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
 
     static {
         SKIPPED_CONFS.add(WorkflowAppService.HADOOP_USER);
-        SKIPPED_CONFS.add(XOozieClient.JT);
+        SKIPPED_CONFS.add(XOozieClient.RM);
         SKIPPED_CONFS.add(XOozieClient.NN);
 
         DEPRECATE_MAP.put(XOozieClient.NN, XOozieClient.NN_2);
-        DEPRECATE_MAP.put(XOozieClient.JT, XOozieClient.JT_2);
         DEPRECATE_MAP.put(WorkflowAppService.HADOOP_USER, "mapreduce.job.user.name");
     }
 
@@ -93,8 +92,7 @@ public class SubmitMRXCommand extends SubmitHttpXCommand {
     protected Element generateSection(Configuration conf, Namespace ns) {
         Element mapreduce = new Element("map-reduce", ns);
         Element jt = new Element("job-tracker", ns);
-        String newJTVal = conf.get(DEPRECATE_MAP.get(XOozieClient.JT));
-        jt.addContent(newJTVal != null ? newJTVal : (conf.get(XOozieClient.JT)));
+        jt.addContent(conf.get(XOozieClient.RM));
         mapreduce.addContent(jt);
         Element nn = new Element("name-node", ns);
         String newNNVal = conf.get(DEPRECATE_MAP.get(XOozieClient.NN));

@@ -1835,39 +1835,6 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-        <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
-        <value>true</value>
-        <description>
-            Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1) for all action types by default.
-            This can be overridden on a per-action-type basis by setting
-            oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site.xml (where #action-type# is the action
-            type; for example, "pig").  And that can be overridden on a per-action basis by setting
-            oozie.launcher.mapreduce.job.ubertask.enable in an action's configuration section in a workflow.  In summary, the
-            priority is this:
-            1. action's configuration section in a workflow
-            2. oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site
-            3. oozie.action.launcher.mapreduce.job.ubertask.enable in oozie-site
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.shell.launcher.mapreduce.job.ubertask.enable</name>
-        <value>false</value>
-        <description>
-            The Shell action may have issues with the $PATH environment when using Uber Mode, and so Uber Mode is disabled by
-            default for it.  See oozie.action.launcher.mapreduce.job.ubertask.enable
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.launcher.mapreduce.input.format.class</name>
-        <value>org.apache.oozie.action.hadoop.OozieLauncherInputFormat</value>
-        <description>
-            Make the Launcher Mapper map-only job's InputFormat class pluggable in order to provide alternative implementations.
-        </description>
-    </property>
-
-    <property>
         <name>oozie.action.spark.setup.hadoop.conf.dir</name>
         <value>false</value>
         <description>

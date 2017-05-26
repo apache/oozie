@@ -30,6 +30,7 @@ public class LauncherMainTester {
         if (args.length == 0) {
             System.out.println("Hello World!");
         }
+
         if (args.length == 1) {
             if (args[0].equals("throwable")) {
                 throw new Throwable("throwing throwable");

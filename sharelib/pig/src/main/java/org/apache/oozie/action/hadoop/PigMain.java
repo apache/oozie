@@ -131,7 +131,8 @@ public class PigMain extends LauncherMain {
         pigProperties.store(os, "");
         os.close();
 
-        logMasking("pig.properties:", Arrays.asList("password"), pigProperties.entrySet());
+        logMasking("pig.properties:", Arrays.asList("password"),
+                (Iterable<Map.Entry<String, String>>)(Iterable<?>) pigProperties.entrySet());
 
         List<String> arguments = new ArrayList<String>();
         String script = actionConf.get(PigActionExecutor.PIG_SCRIPT);
@@ -148,7 +149,7 @@ public class PigMain extends LauncherMain {
 
         arguments.add("-file");
         arguments.add(script);
-        String[] params = MapReduceMain.getStrings(actionConf, PigActionExecutor.PIG_PARAMS);
+        String[] params = ActionUtils.getStrings(actionConf, PigActionExecutor.PIG_PARAMS);
         for (String param : params) {
             arguments.add("-param");
             arguments.add(param);
@@ -193,7 +194,7 @@ public class PigMain extends LauncherMain {
         arguments.add("-logfile");
         arguments.add(pigLog);
 
-        String[] pigArgs = MapReduceMain.getStrings(actionConf, PigActionExecutor.PIG_ARGS);
+        String[] pigArgs = ActionUtils.getStrings(actionConf, PigActionExecutor.PIG_ARGS);
         for (String pigArg : pigArgs) {
             if (DISALLOWED_PIG_OPTIONS.contains(pigArg)) {
                 throw new RuntimeException("Error: Pig argument " + pigArg + " is not supported");
@@ -212,7 +213,7 @@ public class PigMain extends LauncherMain {
             System.out.println("             " + arg);
         }
 
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();

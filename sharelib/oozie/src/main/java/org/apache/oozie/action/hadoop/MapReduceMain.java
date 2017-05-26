@@ -52,7 +52,7 @@ public class MapReduceMain extends LauncherMain {
 
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
-        LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
+        LauncherMain.killChildYarnJobs(jobConf);
 
         // Run a config class if given to update the job conf
         runConfigClass(jobConf);
@@ -132,31 +132,27 @@ public class MapReduceMain extends LauncherMain {
         return runJob;
     }
 
-    @SuppressWarnings("unchecked")
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
         return new JobClient(jobConf);
     }
 
-    // allows any character in the value, the conf.setStrings() does not allow
-    // commas
-    public static void setStrings(Configuration conf, String key, String[] values) {
-        if (values != null) {
-            conf.setInt(key + ".size", values.length);
-            for (int i = 0; i < values.length; i++) {
-                conf.set(key + "." + i, values[i]);
+    /**
+     * Will run the user specified OozieActionConfigurator subclass (if one is provided) to update the action configuration.
+     *
+     * @param actionConf The action configuration to update
+     * @throws OozieActionConfiguratorException
+     */
+    private static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
+        String configClass = actionConf.get(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
+        if (configClass != null) {
+            try {
+                Class<?> klass = Class.forName(configClass);
+                Class<? extends OozieActionConfigurator> actionConfiguratorKlass = klass.asSubclass(OozieActionConfigurator.class);
+                OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
+                actionConfigurator.configure(actionConf);
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             }
         }
     }
-
-    public static String[] getStrings(Configuration conf, String key) {
-        String[] values = new String[conf.getInt(key + ".size", 0)];
-        for (int i = 0; i < values.length; i++) {
-            values[i] = conf.get(key + "." + i);
-            if (values[i] == null) {
-                values[i] = "";
-            }
-        }
-        return values;
-    }
-
 }

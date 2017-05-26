@@ -18,7 +18,15 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.test.XTestCase;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.ipc.RemoteException;
+import org.apache.hadoop.security.authorize.AuthorizationException;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,7 +42,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.XConfiguration;
 
-public class TestHadoopAccessorService extends XTestCase {
+public class TestHadoopAccessorService extends XFsTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -140,49 +148,83 @@ public class TestHadoopAccessorService extends XTestCase {
          */
         assertEquals("100", conf.get("action.testprop"));
         assertEquals("1", conf.get("default.testprop"));
-
-        // Check that properties load correctly
         assertEquals("org.apache.log4j.ConsoleAppender", conf.get("log4j.appender.oozie"));
         assertEquals("NONE, null", conf.get("log4j.logger.a"));
-
     }
 
-    public void testAccessor() throws Exception {
-        Services services = Services.get();
-        HadoopAccessorService has = services.get(HadoopAccessorService.class);
+    public void testCreateJobClient() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf conf = has.createJobConf(getJobTrackerUri());
-        conf.set("mapred.job.tracker", getJobTrackerUri());
-        conf.set("fs.default.name", getNameNodeUri());
 
-        URI uri = new URI(getNameNodeUri());
-
-        //valid user
-        String user = getTestUser();
-        String group = getTestGroup();
-
-        JobClient jc = has.createJobClient(user, conf);
+        JobClient jc = has.createJobClient(getTestUser(), conf);
         assertNotNull(jc);
-        FileSystem fs = has.createFileSystem(user, new URI(getNameNodeUri()), conf);
-        assertNotNull(fs);
-        fs = has.createFileSystem(user, uri, conf);
-        assertNotNull(fs);
+        jc.getAllJobs();
 
-        //invalid user
+        JobConf conf2 = new JobConf(false);
+        conf2.set("mapred.job.tracker", getJobTrackerUri());
+        try {
+            has.createJobClient(getTestUser(), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
+        }
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
+        }
+    }
 
-        user = "invalid";
+    public void testCreateYarnClient() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        JobConf conf = has.createJobConf(getJobTrackerUri());
+
+        YarnClient yc = has.createYarnClient(getTestUser(), conf);
+        assertNotNull(yc);
+        yc.getApplications();
 
         try {
-            has.createJobClient(user, conf);
-            fail();
+            yc = has.createYarnClient("invalid-user", conf);
+            assertNotNull(yc);
+            yc.getApplications();
+            fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
         }
-        catch (Throwable ex) {
+        catch (AuthorizationException ex) {
         }
 
+        JobConf conf2 = new JobConf(false);
+        conf2.set("yarn.resourcemanager.address", getJobTrackerUri());
         try {
-            has.createFileSystem(user, uri, conf);
-            fail();
+            has.createYarnClient(getTestUser(), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
         }
-        catch (Throwable ex) {
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
+        }
+    }
+
+    public void testCreateFileSystem() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        JobConf conf = has.createJobConf(getJobTrackerUri());
+
+        FileSystem fs = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf);
+        assertNotNull(fs);
+        fs.exists(new Path(getNameNodeUri(), "/foo"));
+
+        try {
+            fs = has.createFileSystem("invalid-user", new URI(getNameNodeUri()), conf);
+            assertNotNull(fs);
+            fs.exists(new Path(getNameNodeUri(), "/foo"));
+            fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
+        }
+        catch (RemoteException ex) {
+            assertEquals(AuthorizationException.class.getName(), ex.getClassName());
+        }
+
+        JobConf conf2 = new JobConf(false);
+        conf2.set("fs.default.name", getNameNodeUri());
+        try {
+            has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
+        }
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
         }
     }
 
@@ -190,7 +232,7 @@ public class TestHadoopAccessorService extends XTestCase {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf jobConf = new JobConf(false);
         assertEquals(new Text("oozie mr token"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf.set("mapred.job.tracker", "localhost:50300");
+        jobConf.set("yarn.resourcemanager.address", "localhost:50300");
         jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
         assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
         jobConf = new JobConf(false);
@@ -297,5 +339,22 @@ public class TestHadoopAccessorService extends XTestCase {
                     s1.equals(hae.getMessage()) || s2.equals(hae.getMessage()));
         }
         has.destroy();
+    }
+
+    public void testCreateLocalResourceForConfigurationFile() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        String filename = "foo.xml";
+        Configuration conf = has.createJobConf(getNameNodeUri());
+        conf.set("foo", "bar");
+        LocalResource lRes = has.createLocalResourceForConfigurationFile(filename, getTestUser(), conf, getFileSystem().getUri(),
+                getFsTestCaseDir());
+        assertNotNull(lRes);
+        assertEquals(LocalResourceType.FILE, lRes.getType());
+        assertEquals(LocalResourceVisibility.APPLICATION, lRes.getVisibility());
+        Path resPath = ConverterUtils.getPathFromYarnURL(lRes.getResource());
+        assertEquals(new Path(getFsTestCaseDir(), "foo.xml"), resPath);
+        Configuration conf2 = new Configuration(false);
+        conf2.addResource(getFileSystem().open(resPath));
+        assertEquals("bar", conf2.get("foo"));
     }
 }

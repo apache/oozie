@@ -21,7 +21,11 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -31,6 +35,14 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -39,7 +51,11 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.json.simple.JSONObject;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Closeables;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
@@ -47,16 +63,16 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     public static final String HADOOP_COUNTERS = "hadoop.counters";
     public static final String OOZIE_MAPREDUCE_UBER_JAR_ENABLE = "oozie.action.mapreduce.uber.jar.enable";
     private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
+    public static final String JOB_END_NOTIFICATION_URL = "job.end.notification.url";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
         super("map-reduce");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(STREAMING_MAIN_CLASS_NAME));
         }
@@ -97,9 +113,25 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context) throws ActionExecutorException {
+    Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
+            throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
         conf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", false);
+
+        return conf;
+    }
+
+    private void injectConfigClass(Configuration conf, Element actionXml) {
+        // Inject config-class for launcher to use for action
+        Element e = actionXml.getChild("config-class", actionXml.getNamespace());
+        if (e != null) {
+            conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
+        }
+    }
+
+    @Override
+    protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
+        Configuration conf = super.createBaseHadoopConf(context, actionXml, loadResources);
         return conf;
     }
 
@@ -108,6 +140,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         boolean regularMR = false;
+
+        injectConfigClass(actionConf, actionXml);
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) != null) {
             Element streamingXml = actionXml.getChild("streaming", ns);
@@ -193,7 +227,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
-                JobConf jobConf = createBaseHadoopConf(context, actionXml);
+                Configuration jobConf = createBaseHadoopConf(context, actionXml);
                 jobClient = createJobClient(context, jobConf);
                 RunningJob runningJob = jobClient.getJob(JobID.forName(action.getExternalChildIDs()));
                 if (runningJob == null) {
@@ -248,7 +282,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     }
 
     // Return the value of the specified configuration property
-    private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue) throws ActionExecutorException {
+    private String evaluateConfigurationProperty(Element actionConf, String key, String defaultValue)
+            throws ActionExecutorException {
         try {
             String ret = defaultValue;
             if (actionConf != null) {
@@ -267,26 +302,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private JSONObject counterstoJson(Counters counters) {
-
-        if (counters == null) {
-            return null;
-        }
-
-        JSONObject groups = new JSONObject();
-        for (String gName : counters.getGroupNames()) {
-            JSONObject group = new JSONObject();
-            for (Counters.Counter counter : counters.getGroup(gName)) {
-                String cName = counter.getName();
-                Long cValue = counter.getCounter();
-                group.put(cName, cValue);
-            }
-            groups.put(gName, group);
-        }
-        return groups;
-    }
-
     /**
      * Return the sharelib name for the action.
      *
@@ -297,25 +312,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     protected String getDefaultShareLibName(Element actionXml) {
         Namespace ns = actionXml.getNamespace();
         return (actionXml.getChild("streaming", ns) != null) ? "mapreduce-streaming" : null;
-    }
-
-    @Override
-    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
-            Configuration actionConf) throws ActionExecutorException {
-        // If the user is using a regular MapReduce job and specified an uber jar, we need to also set it for the launcher;
-        // so we override createLauncherConf to call super and then to set the uber jar if specified. At this point, checking that
-        // uber jars are enabled and resolving the uber jar path is already done by setupActionConf() when it parsed the actionConf
-        // argument and we can just look up the uber jar in the actionConf argument.
-        JobConf launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
-        Namespace ns = actionXml.getNamespace();
-        if (actionXml.getChild("streaming", ns) == null && actionXml.getChild("pipes", ns) == null) {
-            // Set for uber jar
-            String uberJar = actionConf.get(MapReduceMain.OOZIE_MAPREDUCE_UBER_JAR);
-            if (uberJar != null && uberJar.trim().length() > 0) {
-                launcherJobConf.setJar(uberJar);
-            }
-        }
-        return launcherJobConf;
     }
 
     public static void setStreaming(Configuration conf, String mapper, String reducer, String recordReader,
@@ -329,18 +325,93 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         if (recordReader != null) {
             conf.set("oozie.streaming.record-reader", recordReader);
         }
-        MapReduceMain.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
-        MapReduceMain.setStrings(conf, "oozie.streaming.env", env);
+        ActionUtils.setStrings(conf, "oozie.streaming.record-reader-mapping", recordReaderMapping);
+        ActionUtils.setStrings(conf, "oozie.streaming.env", env);
     }
 
     @Override
-    protected RunningJob getRunningJob(Context context, WorkflowAction action, JobClient jobClient) throws Exception{
-        RunningJob runningJob = null;
-        String jobId = getActualExternalId(action);
-        if (jobId != null) {
-            runningJob = jobClient.getJob(JobID.forName(jobId));
+    protected void injectCallback(Context context, Configuration conf) {
+        // add callback for the MapReduce job
+        String callback = context.getCallbackUrl("$jobStatus");
+        String originalCallbackURL = conf.get(JOB_END_NOTIFICATION_URL);
+        if (originalCallbackURL != null) {
+            LOG.warn("Overriding the action job end notification URI. Original value: {0}", originalCallbackURL);
         }
-        return runningJob;
+        conf.set(JOB_END_NOTIFICATION_URL, callback);
+
+        super.injectCallback(context, conf);
+    }
+
+    @Override
+    protected boolean needToAddMapReduceToClassPath() {
+        return true;
+    }
+
+    @Override
+    public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+        Map<String, String> actionData = Collections.emptyMap();
+        Configuration jobConf = null;
+
+        try {
+            FileSystem actionFs = context.getAppFileSystem();
+            Element actionXml = XmlUtils.parseXml(action.getConf());
+            jobConf = createBaseHadoopConf(context, actionXml);
+            Path actionDir = context.getActionDir();
+            actionData = LauncherHelper.getActionData(actionFs, actionDir, jobConf);
+        } catch (Exception e) {
+            LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
+            throw convertException(e);
+        }
+
+        final String newId = actionData.get(LauncherMapper.ACTION_DATA_NEW_ID);
+
+        // check the Hadoop job if newID is defined (which should be the case here) - otherwise perform the normal check()
+        if (newId != null) {
+            boolean jobCompleted;
+            JobClient jobClient = null;
+            boolean exception = false;
+
+            try {
+                jobClient = createJobClient(context, new JobConf(jobConf));
+                RunningJob runningJob = jobClient.getJob(JobID.forName(newId));
+
+                if (runningJob == null) {
+                    context.setExternalStatus(FAILED);
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
+                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
+                            action.getId());
+                }
+
+                jobCompleted = runningJob.isComplete();
+            } catch (Exception e) {
+                LOG.warn("Unable to check the state of a running MapReduce job -"
+                        + " please check the health of the Job History Server!", e);
+                exception = true;
+                throw convertException(e);
+            } finally {
+                if (jobClient != null) {
+                    try {
+                        jobClient.close();
+                    } catch (Exception e) {
+                        if (exception) {
+                            LOG.error("JobClient error (not re-throwing due to a previous error): ", e);
+                        } else {
+                            throw convertException(e);
+                        }
+                    }
+                }
+            }
+
+            // run original check() if the MR action is completed or there are errors - otherwise mark it as RUNNING
+            if (jobCompleted || actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
+                super.check(context, action);
+            } else {
+                context.setExternalStatus(RUNNING);
+                context.setExternalChildIDs(newId);
+            }
+        } else {
+            super.check(context, action);
+        }
     }
 
     @Override

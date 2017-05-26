@@ -21,6 +21,7 @@ package org.apache.oozie.store;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +38,21 @@ public class OozieSchema {
 
     private static final String OOZIE_VERSION = "0.1";
 
-    public static final Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
+    public static final Map<Table, List<Column>> TABLE_COLUMNS;
 
     static {
+        Map<Table, List<Column>> tmpColumns = new HashMap<>();
+
         for (Column column : OozieColumn.values()) {
-            List<Column> tColumns = TABLE_COLUMNS.get(column.table());
+            List<Column> tColumns = tmpColumns.get(column.table());
             if (tColumns == null) {
                 tColumns = new ArrayList<Column>();
-                TABLE_COLUMNS.put(column.table(), tColumns);
+                tmpColumns.put(column.table(), tColumns);
             }
             tColumns.add(column);
         }
+
+        TABLE_COLUMNS = Collections.unmodifiableMap(tmpColumns);
     }
 
     public static void setOozieDbName(String dbName) {

@@ -1452,7 +1452,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         action.setUserRetryMax(2);
         action.setUserRetryInterval(1);
         action.setErrorInfo("dummyErrorCode", "dummyErrorMessage");
-        action.setExternalId("dummy external id");
+        action.setExternalId("application_1234567890123_0001");
         action.setExternalStatus("RUNNING");
 
         return action;

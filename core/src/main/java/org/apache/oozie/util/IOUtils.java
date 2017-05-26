@@ -190,31 +190,34 @@ public abstract class IOUtils {
 
     private static void zipDir(File dir, String relativePath, ZipOutputStream zos, boolean start) throws IOException {
         String[] dirList = dir.list();
-        for (String aDirList : dirList) {
-            File f = new File(dir, aDirList);
-            if (!f.isHidden()) {
-                if (f.isDirectory()) {
-                    if (!start) {
-                        ZipEntry dirEntry = new ZipEntry(relativePath + f.getName() + "/");
-                        zos.putNextEntry(dirEntry);
+
+        if (dirList != null) {
+            for (String aDirList : dirList) {
+                File f = new File(dir, aDirList);
+                if (!f.isHidden()) {
+                    if (f.isDirectory()) {
+                        if (!start) {
+                            ZipEntry dirEntry = new ZipEntry(relativePath + f.getName() + "/");
+                            zos.putNextEntry(dirEntry);
+                            zos.closeEntry();
+                        }
+                        String filePath = f.getPath();
+                        File file = new File(filePath);
+                        zipDir(file, relativePath + f.getName() + "/", zos, false);
+                    }
+                    else {
+                        ZipEntry anEntry = new ZipEntry(relativePath + f.getName());
+                        zos.putNextEntry(anEntry);
+                        InputStream is = new FileInputStream(f);
+                        byte[] arr = new byte[4096];
+                        int read = is.read(arr);
+                        while (read > -1) {
+                            zos.write(arr, 0, read);
+                            read = is.read(arr);
+                        }
+                        is.close();
                         zos.closeEntry();
                     }
-                    String filePath = f.getPath();
-                    File file = new File(filePath);
-                    zipDir(file, relativePath + f.getName() + "/", zos, false);
-                }
-                else {
-                    ZipEntry anEntry = new ZipEntry(relativePath + f.getName());
-                    zos.putNextEntry(anEntry);
-                    InputStream is = new FileInputStream(f);
-                    byte[] arr = new byte[4096];
-                    int read = is.read(arr);
-                    while (read > -1) {
-                        zos.write(arr, 0, read);
-                        read = is.read(arr);
-                    }
-                    is.close();
-                    zos.closeEntry();
                 }
             }
         }

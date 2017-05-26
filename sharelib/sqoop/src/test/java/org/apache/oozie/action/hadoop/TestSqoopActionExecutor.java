@@ -22,21 +22,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,7 +35,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -209,17 +199,12 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         createDB();
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -248,17 +233,11 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         createDB();
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -289,17 +268,11 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         createDB();
 
         Context context = createContext(getActionXmlEval());
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -341,17 +314,11 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         createDB();
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 context.getProtoActionConf());
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         SqoopActionExecutor ae = new SqoopActionExecutor();
         ae.check(context, context.getAction());
@@ -387,7 +354,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     }
 
 
-    private RunningJob submitAction(Context context) throws Exception {
+    private String submitAction(Context context) throws Exception {
         SqoopActionExecutor ae = new SqoopActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -401,24 +368,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobId);
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
-        Element e = XmlUtils.parseXml(action.getConf());
-        Namespace ns = Namespace.getNamespace("uri:oozie:sqoop-action:0.1");
-        XConfiguration conf = new XConfiguration(
-                new StringReader(XmlUtils.prettyPrint(e.getChild("configuration", ns)).toString()));
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker", ns));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node", ns));
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("mapreduce.framework.name", "yarn");
-        conf.set("group.name", getTestGroup());
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+        return jobId;
     }
 
     private Context createContext(String actionXml) throws Exception {

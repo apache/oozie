@@ -43,7 +43,6 @@ public class FsELFunctions {
     private static FileSystem getFileSystem(URI uri) throws HadoopAccessorException {
         WorkflowJob workflow = DagELFunctions.getWorkflow();
         String user = workflow.getUser();
-        String group = workflow.getGroup();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         JobConf conf = has.createJobConf(uri.getAuthority());
         return has.createFileSystem(user, uri, conf);
@@ -98,7 +97,7 @@ public class FsELFunctions {
         boolean isDir = false;
         FileStatus fileStatus = getFileStatus(pathUri);
         if (fileStatus != null) {
-            isDir = fileStatus.isDir();
+            isDir = fileStatus.isDirectory();
         }
         return isDir;
     }
@@ -138,7 +137,7 @@ public class FsELFunctions {
                 size = 0;
                 if (stati != null) {
                     for (FileStatus status : stati) {
-                        if (!status.isDir()) {
+                        if (!status.isDirectory()) {
                             size += status.getLen();
                         }
                     }

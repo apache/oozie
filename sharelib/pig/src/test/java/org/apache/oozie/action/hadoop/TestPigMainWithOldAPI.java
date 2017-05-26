@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.hadoop.MainTestCase;
-import org.apache.oozie.action.hadoop.MapReduceMain;
 import org.apache.oozie.action.hadoop.PigMainWithOldAPI;
 import org.apache.oozie.action.hadoop.SharelibUtils;
 import org.apache.oozie.test.XFsTestCase;
@@ -97,9 +96,9 @@ public class TestPigMainWithOldAPI extends XFsTestCase implements Callable<Void>
         SharelibUtils.addToDistributedCache("pig", fs, getFsTestCaseDir(), jobConfiguration);
 
         String[] params = { "IN=" + inputDir.toUri().getPath(), "OUT=" + outputDir.toUri().getPath() };
-        MapReduceMain.setStrings(jobConfiguration, "oozie.pig.params", params);
+        ActionUtils.setStrings(jobConfiguration, "oozie.pig.params", params);
         String[] args = { "-v" };
-        MapReduceMain.setStrings(jobConfiguration, "oozie.pig.args", args);
+        ActionUtils.setStrings(jobConfiguration, "oozie.pig.args", args);
 
         File actionXml = new File(getTestCaseDir(), "action.xml");
         OutputStream os = new FileOutputStream(actionXml);

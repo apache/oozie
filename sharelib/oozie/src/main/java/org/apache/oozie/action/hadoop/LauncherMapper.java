@@ -34,8 +34,8 @@ import java.security.Permission;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -49,9 +49,12 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
+import org.xml.sax.SAXException;
 
 import com.google.common.base.Strings;
+import javax.xml.parsers.ParserConfigurationException;
 
+// TODO: OYA: Delete :)
 public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
 
     static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
@@ -238,7 +241,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                         // Get what actually caused the exception
                         Throwable cause = ex.getCause();
                         // If we got a JavaMainException from JavaMain, then we need to unwrap it
-                        if (JavaMainException.class.isInstance(cause)) {
+                        if (JavaMain.JavaMainException.class.isInstance(cause)) {
                             cause = cause.getCause();
                         }
                         if (LauncherMainException.class.isInstance(cause)) {
@@ -348,9 +351,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         // loading action conf prepared by Oozie
         Configuration actionConf = LauncherMain.loadActionConf();
 
-        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+        if(actionConf.get(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS) != null) {
             propagationConf.set(LauncherMain.MAPREDUCE_JOB_TAGS,
-                    actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                    actionConf.get(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS));
         }
 
         propagationConf.writeXml(new FileWriter(PROPAGATION_CONF_XML));
@@ -432,9 +435,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
             try {
                 wr = SequenceFile.createWriter(fs, getJobConf(), finalPath, Text.class, Text.class);
                 if (wr != null) {
-                    Set<String> keys = actionData.keySet();
-                    for (String propsKey : keys) {
-                        wr.append(new Text(propsKey), new Text(actionData.get(propsKey)));
+                    for (Entry<String, String> entry : actionData.entrySet()) {
+                        wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
                     }
                 }
                 else {
@@ -469,9 +471,9 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
-        if (getJobConf().get(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME) != null) {
-            System.setProperty(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME,
-                    getJobConf().get(LauncherMainHadoopUtils.OOZIE_JOB_LAUNCH_TIME));
+        if (getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME) != null) {
+            System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME,
+                    getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME));
         }
 
         String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
@@ -481,7 +483,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     }
 
     // Method to execute the prepare actions
-    private void executePrepare() throws IOException, LauncherException {
+    private void executePrepare() throws IOException, LauncherException, ParserConfigurationException, SAXException {
         String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {
@@ -601,20 +603,26 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.out.println("======================");
 
         File[] listOfFiles = folder.listFiles();
-        for (File fileName : listOfFiles) {
-            if (fileName.isFile()) {
-                System.out.println("File: " + fileName.getName());
-            }
-            else if (fileName.isDirectory()) {
-                System.out.println("Dir: " + fileName.getName());
-                File subDir = new File(fileName.getName());
-                File[] moreFiles = subDir.listFiles();
-                for (File subFileName : moreFiles) {
-                    if (subFileName.isFile()) {
-                        System.out.println("  File: " + subFileName.getName());
-                    }
-                    else if (subFileName.isDirectory()) {
-                        System.out.println("  Dir: " + subFileName.getName());
+
+        if (listOfFiles != null) {
+            for (File fileName : listOfFiles) {
+                if (fileName.isFile()) {
+                    System.out.println("File: " + fileName.getName());
+                }
+                else if (fileName.isDirectory()) {
+                    System.out.println("Dir: " + fileName.getName());
+                    File subDir = new File(fileName.getName());
+                    File[] moreFiles = subDir.listFiles();
+
+                    if (moreFiles != null) {
+                        for (File subFileName : moreFiles) {
+                            if (subFileName.isFile()) {
+                                System.out.println("  File: " + subFileName.getName());
+                            }
+                            else if (subFileName.isDirectory()) {
+                                System.out.println("  Dir: " + subFileName.getName());
+                            }
+                        }
                     }
                 }
             }
@@ -709,12 +717,3 @@ class LauncherSecurityManager extends SecurityManager {
     }
 }
 
-/**
- * Used by JavaMain to wrap a Throwable when an Exception occurs
- */
-@SuppressWarnings("serial")
-class JavaMainException extends Exception {
-    public JavaMainException(Throwable t) {
-        super(t);
-    }
-}

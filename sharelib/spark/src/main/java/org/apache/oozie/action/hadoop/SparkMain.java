@@ -91,7 +91,7 @@ public class SparkMain extends LauncherMain {
         prepareHadoopConfig(actionConf);
 
         setYarnTag(actionConf);
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
         String logFile = setUpSparkLog4J(actionConf);
         setHiveSite(actionConf);
         List<String> sparkArgs = new ArrayList<String>();
@@ -361,11 +361,16 @@ public class SparkMain extends LauncherMain {
      */
     private static File getMatchingFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
         File localDir = new File(".");
-        for(String fileName : localDir.list()){
-            if(fileNamePattern.matcher(fileName).find()){
-                return new File(fileName);
+        String[] files = localDir.list();
+
+        if (files != null) {
+            for(String fileName : files){
+                if(fileNamePattern.matcher(fileName).find()){
+                    return new File(fileName);
+                }
             }
         }
+
         return null;
     }
 

@@ -18,43 +18,35 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.URIHandlerService;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.IOUtils;
-import org.codehaus.jackson.JsonParser;
-import org.jdom.Element;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.FileInputStream;
-import java.io.Writer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
+import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.WorkflowAppService;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.jdom.Element;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 public class TestPigActionExecutor extends ActionExecutorTestCase {
 
@@ -144,49 +136,21 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         return new Context(wf, action);
     }
 
-    private RunningJob submitAction(Context context) throws Exception {
+    private String submitAction(Context context) throws Exception {
         PigActionExecutor ae = new PigActionExecutor();
-
         WorkflowAction action = context.getAction();
-
         ae.prepareActionDir(getFileSystem(), context);
         ae.submitLauncher(getFileSystem(), context, action);
-
         String jobId = action.getExternalId();
-        String jobTracker = action.getTrackerUri();
-        String consoleUrl = action.getConsoleUrl();
-        assertNotNull(jobId);
-        assertNotNull(jobTracker);
-        assertNotNull(consoleUrl);
 
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf =
-                new XConfiguration(new StringReader(XmlUtils.prettyPrint(e.getChild("configuration")).toString()));
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
-        conf.set("mapreduce.framework.name", "yarn");
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+        return jobId;
     }
 
     private void _testSubmit(String actionXml, boolean checkForSuccess) throws Exception {
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        String launcherId = context.getAction().getExternalId();
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
-
-        sleep(2000);
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         ae.check(context, context.getAction());
@@ -222,26 +186,25 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to true
         String actionXml = setPigActionXml(PIG_SCRIPT, true);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasStatsData(actionData));
+        assertTrue(LauncherHelper.hasStatsData(actionData));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
         ae.check(context, wfAction);
         ae.end(context, wfAction);
 
-        assertEquals("SUCCEEDED", wfAction.getExternalStatus());
+        assertEquals(JavaActionExecutor.SUCCEEDED, wfAction.getExternalStatus());
         String stats = wfAction.getStats();
         assertNotNull(stats);
         // check for some of the expected key values in the stats
-        Map m = (Map)JSONValue.parse(stats);
+        Map m = (Map) JSONValue.parse(stats);
         // check for expected 1st level JSON keys
         assertTrue(m.containsKey("PIG_VERSION"));
 
@@ -249,7 +212,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         String[] childIDs = expectedChildIDs.split(",");
         assertTrue(m.containsKey(childIDs[0]));
 
-        Map q = (Map)m.get(childIDs[0]);
+        Map q = (Map) m.get(childIDs[0]);
         // check for expected 2nd level JSON keys
         assertTrue(q.containsKey("HADOOP_COUNTERS"));
     }
@@ -275,9 +238,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to false
         String actionXml = setPigActionXml(PIG_SCRIPT, false);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -305,9 +267,8 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to true
         String actionXml = setPigActionXml(PIG_SCRIPT, true);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -327,15 +288,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         // Set the action xml with the option for retrieving stats to false
         String actionXml = setPigActionXml(PIG_SCRIPT, false);
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);
-        evaluateLauncherJob(launcherJob);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasStatsData(actionData));
+        assertFalse(LauncherHelper.hasStatsData(actionData));
 
         PigActionExecutor ae = new PigActionExecutor();
         WorkflowAction wfAction = context.getAction();
@@ -344,16 +304,6 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
 
         assertEquals("SUCCEEDED", wfAction.getExternalStatus());
         assertNotNull(wfAction.getExternalChildIDs());
-    }
-
-    private void evaluateLauncherJob(final RunningJob launcherJob) throws Exception{
-        waitFor(180 * 1000, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        sleep(2000);
     }
 
     protected XConfiguration setPigConfig(boolean writeStats) {

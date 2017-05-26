@@ -18,6 +18,8 @@
 
 package org.apache.oozie.command.wf;
 
+import org.apache.oozie.util.XLog;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -25,14 +27,27 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Servlet that 'hangs' for 200 ms. Used by TestNotificationXCommand
+ * Servlet that 'hangs' for some amount of time (200ms) by default.
+ * The time can be configured by setting {@link HangServlet#SLEEP_TIME_MS} as an init parameter for the servlet.
  */
 public class HangServlet extends HttpServlet {
+
+    public static final String SLEEP_TIME_MS = "sleep_time_ms";
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         try {
-            Thread.sleep(200);
+            long time = 200;
+            String sleeptime = getInitParameter(SLEEP_TIME_MS);
+            if (sleeptime != null) {
+                try {
+                    time = Long.parseLong(sleeptime);
+                } catch (NumberFormatException nfe) {
+                    XLog.getLog(HangServlet.class).error("Invalid sleep time, using default (200)", nfe);
+                }
+            }
+            XLog.getLog(HangServlet.class).info("Sleeping for {0} ms", time);
+            Thread.sleep(time);
         }
         catch (Exception ex) {
             //NOP

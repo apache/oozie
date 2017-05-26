@@ -30,7 +30,10 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -45,7 +48,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 
 public abstract class LauncherMain {
 
@@ -56,6 +67,10 @@ public abstract class LauncherMain {
     public static final String OUTPUT_PROPERTIES = ACTION_PREFIX + "output.properties";
     public static final String HADOOP_JOBS = "hadoopJobs";
     public static final String MAPREDUCE_JOB_TAGS = "mapreduce.job.tags";
+
+    public static final String CHILD_MAPREDUCE_JOB_TAGS = "oozie.child.mapreduce.job.tags";
+    public static final String OOZIE_JOB_LAUNCH_TIME = "oozie.job.launch.time";
+
     public static final String TEZ_APPLICATION_TAGS = "tez.application.tags";
     public static final String SPARK_YARN_TAGS = "spark.yarn.tags";
     protected static String[] HADOOP_SITE_FILES = new String[]
@@ -170,6 +185,81 @@ public abstract class LauncherMain {
         }
     }
 
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf) {
+        return getChildYarnJobs(actionConf, ApplicationsRequestScope.OWN);
+    }
+
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope,
+                                                      long startTime) {
+        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        if (tag == null) {
+            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return childYarnJobs;
+        }
+        System.out.println("tag id : " + tag);
+        GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+        gar.setScope(scope);
+        gar.setApplicationTags(Collections.singleton(tag));
+        long endTime = System.currentTimeMillis();
+        if (startTime > endTime) {
+            System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
+                    "Attempting to work around...");
+            // We don't know which one is wrong (relative to the RM), so to be safe, let's assume they're both wrong and add an
+            // offset in both directions
+            long diff = 2 * (startTime - endTime);
+            startTime = startTime - diff;
+            endTime = endTime + diff;
+        }
+        gar.setStartRange(startTime, endTime);
+        try {
+            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
+            GetApplicationsResponse apps = proxy.getApplications(gar);
+            List<ApplicationReport> appsList = apps.getApplicationList();
+            for(ApplicationReport appReport : appsList) {
+                childYarnJobs.add(appReport.getApplicationId());
+            }
+        } catch (YarnException | IOException ioe) {
+            throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+        }
+
+        System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
+        return childYarnJobs;
+    }
+    public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
+        System.out.println("Fetching child yarn jobs");
+
+        long startTime = 0L;
+        try {
+            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+        } catch(NumberFormatException nfe) {
+            throw new RuntimeException("Could not find Oozie job launch time", nfe);
+        }
+        return getChildYarnJobs(actionConf, scope, startTime);
+    }
+
+    public static void killChildYarnJobs(Configuration actionConf) {
+        try {
+            Set<ApplicationId> childYarnJobs = getChildYarnJobs(actionConf);
+            if (!childYarnJobs.isEmpty()) {
+                System.out.println();
+                System.out.println("Found [" + childYarnJobs.size() + "] Map-Reduce jobs from this launcher");
+                System.out.println("Killing existing jobs and starting over:");
+                YarnClient yarnClient = YarnClient.createYarnClient();
+                yarnClient.init(actionConf);
+                yarnClient.start();
+                for (ApplicationId app : childYarnJobs) {
+                    System.out.print("Killing job [" + app + "] ... ");
+                    yarnClient.killApplication(app);
+                    System.out.println("Done");
+                }
+                System.out.println();
+            }
+        } catch (IOException | YarnException ye) {
+            throw new RuntimeException("Exception occurred while killing child job(s)", ye);
+        }
+    }
+
     protected abstract void run(String[] args) throws Exception;
 
     /**
@@ -181,12 +271,13 @@ public abstract class LauncherMain {
      * @param conf Configuration/Properties object to dump to STDOUT
      * @throws IOException thrown if an IO error ocurred.
      */
-    @SuppressWarnings("unchecked")
-    protected static void logMasking(String header, Collection<String> maskSet, Iterable conf) throws IOException {
+
+    protected static void logMasking(String header, Collection<String> maskSet, Iterable<Map.Entry<String,String>> conf)
+            throws IOException {
         StringWriter writer = new StringWriter();
         writer.write(header + "\n");
         writer.write("--------------------\n");
-        for (Map.Entry entry : (Iterable<Map.Entry>) conf) {
+        for (Map.Entry<String, String> entry : conf) {
             String name = (String) entry.getKey();
             String value = (String) entry.getValue();
             for (String mask : maskSet) {
@@ -221,30 +312,6 @@ public abstract class LauncherMain {
     }
 
     /**
-     * Will run the user specified OozieActionConfigurator subclass (if one is provided) to update the action configuration.
-     *
-     * @param actionConf The action configuration to update
-     * @throws OozieActionConfiguratorException
-     */
-    protected static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
-        String configClass = System.getProperty(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
-        if (configClass != null) {
-            try {
-                Class<?> klass = Class.forName(configClass);
-                Class<? extends OozieActionConfigurator> actionConfiguratorKlass = klass.asSubclass(OozieActionConfigurator.class);
-                OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
-                actionConfigurator.configure(actionConf);
-            } catch (ClassNotFoundException e) {
-                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
-            } catch (InstantiationException e) {
-                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
-            } catch (IllegalAccessException e) {
-                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
-            }
-        }
-    }
-
-    /**
      * Read action configuration passes through action xml file.
      *
      * @return action  Configuration
@@ -268,13 +335,13 @@ public abstract class LauncherMain {
     }
 
     protected static void setYarnTag(Configuration actionConf) {
-        if(actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS) != null) {
+        if(actionConf.get(CHILD_MAPREDUCE_JOB_TAGS) != null) {
             // in case the user set their own tags, appending the launcher tag.
             if(actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
                 actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(MAPREDUCE_JOB_TAGS) + ","
-                        + actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                        + actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
             } else {
-                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(LauncherMainHadoopUtils.CHILD_MAPREDUCE_JOB_TAGS));
+                actionConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
             }
         }
     }
@@ -330,6 +397,27 @@ public abstract class LauncherMain {
             dstFiles[i] = new File(basrDir, HADOOP_SITE_FILES[i]);
         }
         copyFileMultiplex(actionXmlFile, dstFiles);
+    }
+    /**
+     * Print arguments to standard output stream. Mask out argument values to option with name 'password' in them.
+     * @param banner source banner
+     * @param args arguments to be printed
+     */
+    void printArgs(String banner, String[] args) {
+        System.out.println(banner);
+        boolean maskNextArg = false;
+        for (String arg : args) {
+            if (maskNextArg) {
+                System.out.println("             " + "********");
+                maskNextArg = false;
+            }
+            else {
+                System.out.println("             " + arg);
+                if (arg.toLowerCase().contains("password")) {
+                    maskNextArg = true;
+                }
+            }
+        }
     }
 }
 

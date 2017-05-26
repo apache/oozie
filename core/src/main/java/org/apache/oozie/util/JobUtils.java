@@ -138,8 +138,7 @@ public class JobUtils {
     }
 
     /**
-     * This method provides a wrapper around hadoop 0.20/1.x and 0.23/2.x implementations.
-     * TODO: Remove the workaround when we drop the support for hadoop 0.20.
+     * This method provides a wrapper around hadoop 2.x implementations.
      * @param file Path of the file to be added
      * @param conf Configuration that contains the classpath setting
      * @param fs FileSystem with respect to which path should be interpreted (may be null)
@@ -148,25 +147,13 @@ public class JobUtils {
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
         if (fs == null) {
             Configuration defaultConf = Services.get().get(HadoopAccessorService.class)
-                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER));
+                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_YARN_RM));
             XConfiguration.copy(conf, defaultConf);
             // it fails with conf, therefore we pass defaultConf instead
             fs = file.getFileSystem(defaultConf);
         }
-        // Hadoop 0.20/1.x.
-        if (Services.get().get(HadoopAccessorService.class).getCachedConf().get("yarn.resourcemanager.webapp.address") == null) {
-            // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
-            // Refer OOZIE-1806.
-            String filepath = file.toUri().getPath();
-            String classpath = conf.get("mapred.job.classpath.files");
-            conf.set("mapred.job.classpath.files",
-                    classpath == null ? filepath : classpath + System.getProperty("path.separator") + filepath);
-            URI uri = fs.makeQualified(file).toUri();
-            DistributedCache.addCacheFile(uri, conf);
-        }
-        else { // Hadoop 2.x
-            DistributedCache.addFileToClassPath(file, conf, fs);
-        }
+
+        DistributedCache.addFileToClassPath(file, conf, fs);
     }
 
     public static String getRetryKey(WorkflowActionBean wfAction, String key) {

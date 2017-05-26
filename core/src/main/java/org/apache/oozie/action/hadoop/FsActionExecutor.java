@@ -267,7 +267,7 @@ public class FsActionExecutor extends ActionExecutor {
             FileStatus pathStatus = fs.getFileStatus(path);
             List<Path> paths = new ArrayList<Path>();
 
-            if (dirFiles && pathStatus.isDir()) {
+            if (dirFiles && pathStatus.isDirectory()) {
                 if (isRoot) {
                     paths.add(path);
                 }
@@ -275,7 +275,7 @@ public class FsActionExecutor extends ActionExecutor {
                 for (int i = 0; i < filesStatus.length; i++) {
                     Path p = filesStatus[i].getPath();
                     paths.add(p);
-                    if (recursive && filesStatus[i].isDir()) {
+                    if (recursive && filesStatus[i].isDirectory()) {
                         recursiveFsOperation(op, fs, null, p, argsMap, dirFiles, recursive, false);
                     }
                 }
@@ -556,7 +556,7 @@ public class FsActionExecutor extends ActionExecutor {
             FileStatus st;
             if (fs.exists(path)) {
                 st = fs.getFileStatus(path);
-                if (st.isDir()) {
+                if (st.isDirectory()) {
                     throw new Exception(path.toString() + " is a directory");
                 } else if (st.getLen() != 0) {
                     throw new Exception(path.toString() + " must be a zero-length file");

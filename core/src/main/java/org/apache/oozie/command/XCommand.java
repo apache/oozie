@@ -244,7 +244,10 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public final T call() throws CommandException {
         setLogInfo();
-        if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType()) && used.get()) {
+        CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+        Set<String> interruptTypes = callableQueueService.getInterruptTypes();
+
+        if (interruptTypes.contains(this.getType()) && used.get()) {
             LOG.debug("Command [{0}] key [{1}]  already used for [{2}]", getName(), getEntityKey(), this.toString());
             return null;
         }
@@ -271,7 +274,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                 }
 
                 if (!isLockRequired() || (lock != null) || this.inInterruptMode()) {
-                    if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType())
+                    if (interruptTypes.contains(this.getType())
                             && !used.compareAndSet(false, true)) {
                         LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(),
                                 this.toString());
@@ -289,7 +292,6 @@ public abstract class XCommand<T> implements XCallable<T> {
                     instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".execute", executeCron);
                 }
                 if (commandQueue != null) {
-                    CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
                     for (Map.Entry<Long, List<XCommand<?>>> entry : commandQueue.entrySet()) {
                         LOG.debug("Queuing [{0}] commands with delay [{1}]ms", entry.getValue().size(), entry.getKey());
                         if (!callableQueueService.queueSerial(entry.getValue(), entry.getKey())) {

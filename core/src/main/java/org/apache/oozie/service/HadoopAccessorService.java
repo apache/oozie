@@ -18,17 +18,22 @@
 
 package org.apache.oozie.service;
 
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.IOUtils;
@@ -43,7 +48,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
@@ -79,19 +84,16 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
     public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
 
-    protected static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     /** The Kerberos principal for the job tracker.*/
     protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
     /** The Kerberos principal for the resource manager.*/
     protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
-    protected static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    protected static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
     protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
+
+    private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
-
-    private static Configuration cachedConf;
-
     private static final String DEFAULT_ACTIONNAME = "default";
+    private static Configuration cachedConf;
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
@@ -406,18 +408,20 @@ public class HadoopAccessorService implements Service {
             public boolean accept(File dir, String name) {
                 return ActionConfFileType.isSupportedFileType(name);
             }});
-        Arrays.sort(actionConfFiles, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        for (File f : actionConfFiles) {
-            if (f.isFile() && f.canRead()) {
-                updateActionConfigWithFile(actionConf, f);
+
+        if (actionConfFiles != null) {
+            Arrays.sort(actionConfFiles, new Comparator<File>() {
+                @Override
+                public int compare(File o1, File o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+            for (File f : actionConfFiles) {
+                if (f.isFile() && f.canRead()) {
+                    updateActionConfigWithFile(actionConf, f);
+                }
             }
         }
-
     }
 
     private Configuration readActionConfFile(File file) throws IOException {
@@ -505,7 +509,7 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
-        String jobTracker = conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER);
+        String jobTracker = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
         validateJobTracker(jobTracker);
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -516,39 +520,60 @@ public class HadoopAccessorService implements Service {
             });
             return jobClient;
         }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        }
-        catch (IOException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
 
     /**
-     * Get the RM delegation token using jobClient and add it to conf
+     * Return a JobClient created with the provided user/group.
      *
-     * @param jobClient
-     * @param conf
-     * @throws HadoopAccessorException
+     *
+     * @param conf Configuration with all necessary information to create the
+     *        JobClient.
+     * @return JobClient created with the provided user/group.
+     * @throws HadoopAccessorException if the client could not be created.
      */
-    public void addRMDelegationToken(JobClient jobClient, JobConf conf) throws HadoopAccessorException {
-        Token<DelegationTokenIdentifier> mrdt;
+    public JobClient createJobClient(String user, Configuration conf) throws HadoopAccessorException {
+        return createJobClient(user, new JobConf(conf));
+    }
+
+    /**
+     * Return a YarnClient created with the provided user and configuration. The caller is responsible for closing it when done.
+     *
+     * @param user The username to impersonate
+     * @param conf The conf
+     * @return a YarnClient with the provided user and configuration
+     * @throws HadoopAccessorException if the client could not be created.
+     */
+    public YarnClient createYarnClient(String user, final Configuration conf) throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
+        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+            throw new HadoopAccessorException(ErrorCode.E0903);
+        }
+        String rm = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
+        validateJobTracker(rm);
         try {
-            mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
+            UserGroupInformation ugi = getUGI(user);
+            YarnClient yarnClient = ugi.doAs(new PrivilegedExceptionAction<YarnClient>() {
+                @Override
+                public YarnClient run() throws Exception {
+                    YarnClient yarnClient = YarnClient.createYarnClient();
+                    yarnClient.init(conf);
+                    yarnClient.start();
+                    return yarnClient;
+                }
+            });
+            return yarnClient;
+        } catch (IOException | InterruptedException ex) {
+            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
-        catch (IOException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e.getMessage(), e);
-        }
-        catch (InterruptedException e) {
-            throw new HadoopAccessorException(ErrorCode.E0902, e.getMessage(), e);
-        }
-        conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
     }
 
     /**
      * Return a FileSystem created with the provided user for the specified URI.
      *
-     *
+     * @param user The username to impersonate
      * @param uri file system URI.
      * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
@@ -556,8 +581,14 @@ public class HadoopAccessorService implements Service {
      */
     public FileSystem createFileSystem(String user, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
+       return createFileSystem(user, uri, conf, true);
+    }
+
+    private FileSystem createFileSystem(String user, final URI uri, final Configuration conf, boolean checkAccessorProperty)
+            throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+
+        if (checkAccessorProperty && !conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
 
@@ -585,10 +616,7 @@ public class HadoopAccessorService implements Service {
                 }
             });
         }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        }
-        catch (IOException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
@@ -639,10 +667,7 @@ public class HadoopAccessorService implements Service {
             renewer = mrTokenRenewers.get(servicePrincipal);
             if (renewer == null) {
                 // Mimic org.apache.hadoop.mapred.Master.getMasterPrincipal()
-                String target = jobConf.get(HADOOP_YARN_RM, jobConf.get(HADOOP_JOB_TRACKER_2));
-                if (target == null) {
-                    target = jobConf.get(HADOOP_JOB_TRACKER);
-                }
+                String target = jobConf.get(HADOOP_YARN_RM);
                 try {
                     String addr = NetUtils.createSocketAddr(target).getHostName();
                     renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
@@ -703,6 +728,50 @@ public class HadoopAccessorService implements Service {
 
     public Set<String> getSupportedSchemes() {
         return supportedSchemes;
+    }
+
+    /**
+     * Creates a {@link LocalResource} for the Configuration to localize it for a Yarn Container.  This involves also writing it
+     * to HDFS.
+     * Example usage:
+     * * <pre>
+     * {@code
+     * LocalResource res1 = createLocalResourceForConfigurationFile(filename1, user, conf, uri, dir);
+     * LocalResource res2 = createLocalResourceForConfigurationFile(filename2, user, conf, uri, dir);
+     * ...
+     * Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
+     * localResources.put(filename1, res1);
+     * localResources.put(filename2, res2);
+     * ...
+     * containerLaunchContext.setLocalResources(localResources);
+     * }
+     * </pre>
+     *
+     * @param filename The filename to use on the remote filesystem and once it has been localized.
+     * @param user The user
+     * @param conf The configuration to process
+     * @param uri The URI of the remote filesystem (e.g. HDFS)
+     * @param dir The directory on the remote filesystem to write the file to
+     * @return
+     * @throws IOException A problem occurred writing the file
+     * @throws HadoopAccessorException A problem occured with Hadoop
+     * @throws URISyntaxException A problem occurred parsing the URI
+     */
+    public LocalResource createLocalResourceForConfigurationFile(String filename, String user, Configuration conf, URI uri,
+                                                                 Path dir)
+            throws IOException, HadoopAccessorException, URISyntaxException {
+        Path dst = new Path(dir, filename);
+        FileSystem fs = createFileSystem(user, uri, conf, false);
+        try (OutputStream os = fs.create(dst)){
+            conf.writeXml(os);
+        }
+        LocalResource localResource = Records.newRecord(LocalResource.class);
+        localResource.setType(LocalResourceType.FILE); localResource.setVisibility(LocalResourceVisibility.APPLICATION);
+        localResource.setResource(ConverterUtils.getYarnUrlFromPath(dst));
+        FileStatus destStatus = fs.getFileStatus(dst);
+        localResource.setTimestamp(destStatus.getModificationTime());
+        localResource.setSize(destStatus.getLen());
+        return localResource;
     }
 
 }

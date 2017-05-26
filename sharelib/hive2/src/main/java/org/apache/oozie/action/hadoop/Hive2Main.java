@@ -152,8 +152,11 @@ public class Hive2Main extends LauncherMain {
             File localDir = new File("dummy").getAbsoluteFile().getParentFile();
             System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
             System.out.println("------------------------");
-            for (String file : localDir.list()) {
-                System.out.println("  " + file);
+            String[] files = localDir.list();
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("  " + file);
+                }
             }
             System.out.println("------------------------");
             System.out.println();
@@ -183,7 +186,7 @@ public class Hive2Main extends LauncherMain {
         }
 
         // Pass any parameters to Beeline via arguments
-        String[] params = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
+        String[] params = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -208,7 +211,7 @@ public class Hive2Main extends LauncherMain {
         arguments.add("-a");
         arguments.add("delegationToken");
 
-        String[] beelineArgs = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
+        String[] beelineArgs = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
         for (String beelineArg : beelineArgs) {
             if (DISALLOWED_BEELINE_OPTIONS.contains(beelineArg)) {
                 throw new RuntimeException("Error: Beeline argument " + beelineArg + " is not supported");
@@ -233,7 +236,7 @@ public class Hive2Main extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();
@@ -243,13 +246,6 @@ public class Hive2Main extends LauncherMain {
 
         try {
             runBeeline(arguments.toArray(new String[arguments.size()]), logFile);
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
         }
         finally {
             System.out.println("\n<<< Invocation of Beeline command completed <<<\n");
@@ -269,6 +265,7 @@ public class Hive2Main extends LauncherMain {
         BeeLine beeLine = new BeeLine();
         beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile))));
         int status = beeLine.begin(args, null);
+        beeLine.close();
         if (status != 0) {
             System.exit(status);
         }

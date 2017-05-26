@@ -76,7 +76,7 @@ public class HadoopELFunctions {
         if (jsonCounters == null) {
             throw new IllegalArgumentException(XLog.format("Hadoop counters not available for action [{0}]", nodeName));
         }
-        return (Map) JSONValue.parse(jsonCounters);
+        return (Map<String, Map<String, Long>>) JSONValue.parse(jsonCounters);
     }
 
 }

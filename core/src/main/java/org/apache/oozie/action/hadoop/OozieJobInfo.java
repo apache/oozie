@@ -29,9 +29,7 @@ import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.command.wf.JobXCommand;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;

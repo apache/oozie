@@ -40,10 +40,11 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XLog;
 
 public class CallbackServlet extends JsonRestServlet {
+
     private static final String INSTRUMENTATION_NAME = "callback";
 
     private static final ResourceInfo RESOURCE_INFO =
-            new ResourceInfo("", Arrays.asList("POST", "GET"), Collections.EMPTY_LIST);
+            new ResourceInfo("", Arrays.asList("POST", "GET"), Collections.<ParameterInfo>emptyList());
 
     public final static String CONF_MAX_DATA_LEN = "oozie.servlet.CallbackServlet.max.data.len";
 

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +43,9 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 
 import junit.framework.TestCase;
-import org.apache.commons.io.FilenameUtils;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
@@ -56,6 +58,11 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.Shell;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.BundleActionBean;
@@ -69,6 +76,7 @@ import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JPAService;
@@ -82,6 +90,7 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.test.hive.MiniHS2;
+import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
@@ -104,6 +113,8 @@ import org.apache.oozie.util.XLog;
  * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
+    private static EnumSet<YarnApplicationState> YARN_TERMINAL_STATES = EnumSet.of(YarnApplicationState.FAILED,
+            YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
     private Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
@@ -898,6 +909,7 @@ public abstract class XTestCase extends TestCase {
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniDFSCluster dfsCluster2 = null;
+    // TODO: OYA: replace with MiniYarnCluster or MiniMRYarnCluster
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
     private static MiniHS2 hiveserver2 = null;
@@ -905,9 +917,11 @@ public abstract class XTestCase extends TestCase {
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
-			if (System.getProperty("hadoop.log.dir") == null) {
-				System.setProperty("hadoop.log.dir", testCaseDir);
-			}
+            if (System.getProperty("hadoop.log.dir") == null) {
+                System.setProperty("hadoop.log.dir", testCaseDir);
+            }
+            // Tell the ClasspathUtils that we're using a mini cluster
+            ClasspathUtils.setUsingMiniYarnCluster(true);
             int taskTrackers = 2;
             int dataNodes = 2;
             String oozieUser = getOozieUser();
@@ -1216,6 +1230,46 @@ public abstract class XTestCase extends TestCase {
         return services;
     }
 
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates)
+            throws HadoopAccessorException, IOException, YarnException {
+        final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
+        final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
+
+        Configuration conf = Services.get().get(HadoopAccessorService.class).createJobConf(getJobTrackerUri());
+        final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
+
+        try {
+            waitFor(60 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                     YarnApplicationState state = yarnClient.getApplicationReport(appId).getYarnApplicationState();
+                     finalState.setValue(state);
+
+                     return acceptedStates.contains(state);
+                }
+            });
+        } finally {
+            if (yarnClient != null) {
+                yarnClient.close();
+            }
+        }
+
+        log.info("Final state is: {0}", finalState.getValue());
+        return finalState.getValue();
+    }
+
+    protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state", YarnApplicationState.FINISHED, state);
+    }
+
+    protected void waitUntilYarnAppKilledAndAssertSuccess(String externalId)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state", YarnApplicationState.KILLED, state);
+    }
+
     protected class TestLogAppender extends AppenderSkeleton {
         private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
 
@@ -1243,4 +1297,3 @@ public abstract class XTestCase extends TestCase {
     }
 
 }
-

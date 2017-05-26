@@ -19,86 +19,24 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
+import org.apache.hadoop.security.Credentials;
+import org.apache.oozie.action.ActionExecutor.Context;
 
-import java.io.IOException;
+public interface CredentialsProvider {
 
-public class CredentialsProvider {
-    Credentials cred;
-    String type;
-    public static final String CRED_KEY = "oozie.credentials.credentialclasses";
-    private static final XLog LOG = XLog.getLog(CredentialsProvider.class);
-
-    public CredentialsProvider(String type) {
-        this.type = type;
-        this.cred = null;
-        LOG.debug("Credentials Provider is created for Type: " + type);
-    }
-
-    /**
-     * Create Credential object
+     /**
+     * This is the interface for all the Credentials implementation. Any new credential implementation must implement
+     * this function. This function should modify the configuration which will be used further to pass the credentials to the
+     * tasks while running it. Credentials properties and context is also provided by that user can get all the
+     * necessary configuration.
      *
-     * @return Credential object
-     * @throws Exception
-     */
-    public Credentials createCredentialObject() throws Exception {
-        String type;
-        String classname;
-        for (String function : ConfigurationService.getStrings(CRED_KEY)) {
-            function = Trim(function);
-            LOG.debug("Creating Credential class for : " + function);
-            String[] str = function.split("=");
-            if (str.length > 0) {
-                type = str[0];
-                classname = str[1];
-                if (classname != null) {
-                    LOG.debug("Creating Credential type : '" + type + "', class Name : '" + classname + "'");
-                    if (this.type.equalsIgnoreCase(str[0])) {
-                        Class<?> klass = null;
-                        try {
-                            klass = Thread.currentThread().getContextClassLoader().loadClass(classname);
-                        }
-                        catch (ClassNotFoundException ex) {
-                            LOG.warn("Exception while loading the class", ex);
-                            throw ex;
-                        }
-
-                        cred = (Credentials) ReflectionUtils.newInstance(klass, null);
-                    }
-                }
-            }
-        }
-        return cred;
-    }
-
-    /**
-     * Relogs into Kerberos using the Keytab for the Oozie server user.  This should be called before attempting to get delegation
-     * tokens via {@link Credentials} implementations to ensure that the Kerberos credentials are current and won't expire too soon.
+     * @param credentials the credentials object which is updated
+     * @param config launcher AM configuration
+     * @param props properties for getting credential token or certificate
+     * @param context workflow context
+     * @throws Exception thrown if failed
      *
-     * @throws IOException
      */
-    public static void ensureKerberosLogin() throws IOException {
-        LOG.debug("About to relogin from keytab");
-        UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
-        LOG.debug("Relogin from keytab successful");
-    }
-
-    /**
-     * To trim string
-     *
-     * @param str
-     * @return trim string
-     */
-    public String Trim(String str) {
-        if (str != null) {
-            str = str.replaceAll("\\n", "");
-            str = str.replaceAll("\\t", "");
-            str = str.trim();
-        }
-        return str;
-    }
+    public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props, Context context)
+            throws Exception;
 }

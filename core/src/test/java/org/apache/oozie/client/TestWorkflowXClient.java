@@ -29,8 +29,6 @@ import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
 
-import java.io.File;
-
 public class TestWorkflowXClient extends DagServletTestCase {
 
     static {
@@ -60,7 +58,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 Path libPath = new Path(getFsTestCaseDir(), "lib");
                 getFileSystem().mkdirs(libPath);
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
                 String[] params = new String[]{"INPUT=input.txt"};
 
@@ -90,7 +88,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 getFileSystem().mkdirs(libPath);
                 System.out.println(libPath.toString());
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
                 String[] params = new String[]{"NAME=test"};
 
@@ -120,7 +118,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 getFileSystem().mkdirs(libPath);
                 System.out.println(libPath.toString());
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -154,9 +152,9 @@ public class TestWorkflowXClient extends DagServletTestCase {
                     fail("submit client without JT should throw exception");
                 }
                 catch (RuntimeException exception) {
-                    assertEquals("java.lang.RuntimeException: jobtracker is not specified in conf", exception.toString());
+                    assertEquals("java.lang.RuntimeException: Resource manager is not specified in conf", exception.toString());
                 }
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 try {
                     wc.submitMapReduce(conf);
                     fail("submit client without NN should throw exception");

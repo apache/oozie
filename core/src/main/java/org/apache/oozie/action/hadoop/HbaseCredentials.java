@@ -27,14 +27,11 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenIdentifier;
 import org.apache.hadoop.hbase.security.token.TokenUtil;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.oozie.action.ActionExecutor.Context;
-import org.apache.oozie.action.hadoop.Credentials;
-import org.apache.oozie.action.hadoop.CredentialsProperties;
-import org.apache.oozie.util.XLog;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.oozie.action.ActionExecutor.Context;
+import org.apache.oozie.util.XLog;
 
 
 /**
@@ -43,17 +40,16 @@ import org.apache.hadoop.security.token.TokenIdentifier;
  * Oozie server should be configured to use this Credentials class by including it via property 'oozie.credentials.credentialclasses'
  *
  */
-public class HbaseCredentials extends Credentials {
-
-
+public class HbaseCredentials implements CredentialsProvider {
     /* (non-Javadoc)
      * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
      */
     @Override
-    public void addtoJobConf(JobConf jobConf, CredentialsProperties props, Context context) throws Exception {
+    public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,
+            Context context) throws Exception {
         try {
-            copyHbaseConfToJobConf(jobConf, props);
-            obtainToken(jobConf, context);
+            copyHbaseConfToJobConf(config, props);
+            obtainToken(credentials, config, context);
         }
         catch (Exception e) {
             XLog.getLog(getClass()).warn("Exception in receiving hbase credentials", e);
@@ -61,7 +57,7 @@ public class HbaseCredentials extends Credentials {
         }
     }
 
-    void copyHbaseConfToJobConf(JobConf jobConf, CredentialsProperties props) {
+    void copyHbaseConfToJobConf(Configuration jobConf, CredentialsProperties props) {
         // Create configuration using hbase-site.xml/hbase-default.xml
         Configuration hbaseConf = new Configuration(false);
         HBaseConfiguration.addHbaseResources(hbaseConf);
@@ -74,7 +70,8 @@ public class HbaseCredentials extends Credentials {
         injectConf(hbaseConf, jobConf);
     }
 
-    private void obtainToken(final JobConf jobConf, Context context) throws IOException, InterruptedException {
+    private void obtainToken(Credentials credentials, final Configuration jobConf, Context context)
+            throws IOException, InterruptedException {
         String user = context.getWorkflow().getUser();
         UserGroupInformation ugi =  UserGroupInformation.createProxyUser(user, UserGroupInformation.getLoginUser());
         User u = User.create(ugi);
@@ -87,7 +84,7 @@ public class HbaseCredentials extends Credentials {
                 }
             }
         );
-        jobConf.getCredentials().addToken(token.getService(), token);
+        credentials.addToken(token.getService(), token);
     }
 
     private void addPropsConf(CredentialsProperties props, Configuration destConf) {

@@ -18,19 +18,18 @@
 
 package org.apache.oozie.command.wf;
 
-import java.io.StringReader;
 import java.net.URI;
 import java.util.Date;
+import java.util.Set;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.JobStatus;
-import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.hadoop.LauncherMain;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
@@ -42,10 +41,9 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XTestCase.Predicate;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
+
+import com.google.common.collect.Sets;
 
 public class TestWorkflowActionKillXCommand extends XDataTestCase {
     private Services services;
@@ -117,26 +115,6 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         assertEquals(action.getExternalStatus(), "RUNNING");
     }
 
-    public void testWfActionKillChildJob() throws Exception {
-        String externalJobID = launchSleepJob(1000);
-        String childId = launchSleepJob(1000000);
-
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
-                WorkflowAction.Status.KILLED, childId);
-
-        new ActionKillXCommand(action.getId()).call();
-        JobClient jobClient = createJobClient();
-
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
-        waitFor(60 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertEquals(mrJob.getJobState(), JobStatus.KILLED);
-    }
-
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String externalJobID, String actionName,
             WorkflowAction.Status status, String childID) throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
@@ -189,9 +167,18 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         SleepJob sleepjob = new SleepJob();
         sleepjob.setConf(jobConf);
         jobConf = sleepjob.setupJobConf(1, 1, sleep, 1, sleep, 1);
+        jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, "sleepjob");
+        jobConf.set(LauncherMain.MAPREDUCE_JOB_TAGS, "sleepjob");
+        System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
 
-        final RunningJob runningJob = jobClient.submitJob(jobConf);
-        return runningJob.getID().toString();
+        jobClient.submitJob(jobConf);
+        Set<ApplicationId> apps = Sets.newHashSet();
+        apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);
+        assertEquals("Number of YARN apps", apps.size(), 1);
+
+        sleepjob.close();
+
+        return apps.iterator().next().toString();
     }
 
 }

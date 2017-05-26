@@ -1845,10 +1845,6 @@ public class OozieCLI {
 
     private void slaCommand(CommandLine commandLine) throws IOException, OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
-        List<String> options = new ArrayList<String>();
-        for (Option option : commandLine.getOptions()) {
-            options.add(option.getOpt());
-        }
 
         String s = commandLine.getOptionValue(OFFSET_OPTION);
         int start = Integer.parseInt((s != null) ? s : "0");

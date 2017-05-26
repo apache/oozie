@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -32,12 +31,11 @@ import org.jdom.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SparkMain";
-    public static final String TASK_USER_PRECEDENCE = "mapreduce.task.classpath.user.precedence"; // hadoop-2
-    public static final String TASK_USER_CLASSPATH_PRECEDENCE = "mapreduce.user.classpath.first";  // hadoop-1
     public static final String SPARK_MASTER = "oozie.spark.master";
     public static final String SPARK_MODE = "oozie.spark.mode";
     public static final String SPARK_OPTS = "oozie.spark.spark-opts";
@@ -78,7 +76,7 @@ public class SparkActionExecutor extends JavaActionExecutor {
 
         StringBuilder sparkOptsSb = new StringBuilder();
         if (master.startsWith("yarn")) {
-            String resourceManager = actionConf.get(HADOOP_JOB_TRACKER);
+            String resourceManager = actionConf.get(HADOOP_YARN_RM);
             Properties sparkConfig =
                     Services.get().get(SparkConfigurationService.class).getSparkConfig(resourceManager);
             for (String property : sparkConfig.stringPropertyNames()) {
@@ -102,20 +100,6 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    JobConf createLauncherConf(FileSystem actionFs, Context context, WorkflowAction action, Element actionXml,
-                               Configuration actionConf) throws ActionExecutorException {
-
-        JobConf launcherJobConf = super.createLauncherConf(actionFs, context, action, actionXml, actionConf);
-        if (launcherJobConf.get("oozie.launcher." + TASK_USER_PRECEDENCE) == null) {
-            launcherJobConf.set(TASK_USER_PRECEDENCE, "true");
-        }
-        if (launcherJobConf.get("oozie.launcher." + TASK_USER_CLASSPATH_PRECEDENCE) == null) {
-            launcherJobConf.set(TASK_USER_CLASSPATH_PRECEDENCE, "true");
-        }
-        return launcherJobConf;
-    }
-
-    @Override
     Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
             throws ActionExecutorException {
         super.setupLauncherConf(conf, actionXml, appPath, context);
@@ -136,8 +120,8 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
         try {
             classes.add(Class.forName(SPARK_MAIN_CLASS_NAME));
         } catch (ClassNotFoundException e) {
@@ -156,6 +140,16 @@ public class SparkActionExecutor extends JavaActionExecutor {
     @Override
     protected String getDefaultShareLibName(Element actionXml) {
         return "spark";
+    }
+
+    @Override
+    protected boolean needToAddMapReduceToClassPath() {
+        return true;
+    }
+
+    @Override
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        env.put("SPARK_HOME", ".");
     }
 
     @Override

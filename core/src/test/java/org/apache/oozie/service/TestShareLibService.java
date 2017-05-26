@@ -43,13 +43,15 @@ import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.PigActionExecutor;
 import org.apache.oozie.action.hadoop.TestJavaActionExecutor;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.hadoop.utils.HadoopShims;
 import org.apache.oozie.test.XFsTestCase;
+import org.apache.oozie.util.FSUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 public class TestShareLibService extends XFsTestCase {
 
@@ -87,7 +89,7 @@ public class TestShareLibService extends XFsTestCase {
 
     public static class DummyShareLibService extends ShareLibService {
         @Override
-        public String findContainingJar(Class clazz) {
+        public String findContainingJar(Class<?> clazz) {
             if (JavaActionExecutor.getCommonLauncherClasses().contains(clazz)) {
                 return testCaseDirPath + "/" + MyOozie.class.getName() + ".jar";
             }
@@ -100,8 +102,8 @@ public class TestShareLibService extends XFsTestCase {
         }
 
         @Override
-        public List<Class> getLauncherClasses() {
-            return Arrays.asList((Class) MyPig.class);
+        public List<Class<?>> getLauncherClasses() {
+            return Lists.<Class<?>>newArrayList(MyPig.class);
         }
     }
 
@@ -110,8 +112,8 @@ public class TestShareLibService extends XFsTestCase {
         }
 
         @Override
-        public List<Class> getLauncherClasses() {
-            return Arrays.asList((Class) TestHive.class);
+        public List<Class<?>> getLauncherClasses() {
+            return Lists.<Class<?>>newArrayList(TestHive.class);
         }
     }
 
@@ -495,11 +497,8 @@ public class TestShareLibService extends XFsTestCase {
             assertTrue(shareLibService.getShareLibJars("something_new").get(0).getName().endsWith("somethingNew.jar"));
             assertTrue(shareLibService.getShareLibJars("pig").get(0).getName().endsWith("pig.jar"));
             assertTrue(shareLibService.getShareLibJars("directjar").get(0).getName().endsWith("direct.jar"));
-            // Skipping for hadoop - 1.x because symlink is not supported
-            if (HadoopShims.isSymlinkSupported()) {
-                assertTrue(
-                        shareLibService.getShareLibJars("linkFile").get(0).getName().endsWith("targetOfLinkFile.xml"));
-            }
+            assertTrue(shareLibService.getShareLibJars("linkFile").get(0).getName().endsWith("targetOfLinkFile.xml"));
+
             List<Path> listOfPaths = shareLibService.getShareLibJars("directjar");
             for (Path p : listOfPaths) {
                 assertTrue(p.toString().startsWith("hdfs"));
@@ -615,11 +614,6 @@ public class TestShareLibService extends XFsTestCase {
 
     @Test
     public void testMetafileSymlink() throws ServiceException, IOException {
-        // Assume.assumeTrue("Skipping for hadoop - 1.x",HadoopFileSystem.isSymlinkSupported());
-        if (!HadoopShims.isSymlinkSupported()) {
-            return;
-        }
-
         services = new Services();
         setSystemProps();
         Configuration conf = services.get(ConfigurationService.class).getConf();
@@ -651,15 +645,14 @@ public class TestShareLibService extends XFsTestCase {
 
             createFile(hive_site.toString());
 
-            HadoopShims fileSystem = new HadoopShims(fs);
-            fileSystem.createSymlink(basePath, symlink, true);
-            fileSystem.createSymlink(hive_site, symlink_hive_site, true);
+            FSUtils.createSymlink(fs, basePath, symlink, true);
+            FSUtils.createSymlink(fs, hive_site, symlink_hive_site, true);
 
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + symlink.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".hive_conf", "/user/test/" + symlink_hive_site.toString()
                     + "#hive-site.xml");
             createTestShareLibMetaFile(fs, prop);
-            assertEquals(fileSystem.isSymlink(symlink), true);
+            assertEquals(FSUtils.isSymlink(fs, symlink), true);
 
             conf.set(ShareLibService.SHARELIB_MAPPING_FILE, fs.getUri() + "/user/test/config.properties");
             conf.set(ShareLibService.SHIP_LAUNCHER_JAR, "true");
@@ -667,9 +660,9 @@ public class TestShareLibService extends XFsTestCase {
                 ShareLibService shareLibService = Services.get().get(ShareLibService.class);
                 assertEquals(shareLibService.getShareLibJars("pig").size(), 2);
                 assertEquals(shareLibService.getShareLibJars("hive_conf").size(), 1);
-                new HadoopShims(fs).createSymlink(basePath1, symlink, true);
-                new HadoopShims(fs).createSymlink(hive_site1, symlink_hive_site, true);
-                assertEquals(new HadoopShims(fs).getSymLinkTarget(shareLibService.getShareLibJars("hive_conf").get(0)),
+                FSUtils.createSymlink(fs, basePath1, symlink, true);
+                FSUtils.createSymlink(fs, hive_site1, symlink_hive_site, true);
+                assertEquals(FSUtils.getSymLinkTarget(fs, shareLibService.getShareLibJars("hive_conf").get(0)),
                         hive_site1);
                 assertEquals(shareLibService.getShareLibJars("pig").size(), 3);
             }
@@ -781,8 +774,7 @@ public class TestShareLibService extends XFsTestCase {
             String symlinkTarget = linkDir.toString() + Path.SEPARATOR + "targetOfLinkFile.xml";
             createFile(directJarPath);
             createFile(symlinkTarget);
-            HadoopShims fsShim = new HadoopShims(fs);
-            fsShim.createSymlink(new Path(symlinkTarget), new Path(symlink), true);
+            FSUtils.createSymlink(fs, new Path(symlinkTarget), new Path(symlink), true);
 
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".pig", "/user/test/" + basePath.toString());
             prop.put(ShareLibService.SHARE_LIB_CONF_PREFIX + ".something_new", "/user/test/" + somethingNew.toString());
@@ -1018,16 +1010,11 @@ public class TestShareLibService extends XFsTestCase {
     private void verifyFilesInDistributedCache(URI[] cacheFiles, String... files) {
 
         String cacheFilesStr = Arrays.toString(cacheFiles);
-        if (new HadoopShims(getFileSystem()).isYARN()) {
-            // Hadoop 2 has two extra jars
-            assertEquals(cacheFiles.length, files.length + 2);
-            assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
-            assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
+        // Hadoop 2 has the following jars too: MRAppJar.jar and hadoop-mapreduce-client-jobclient-
+        assertEquals(cacheFiles.length, files.length + 2);
+        assertTrue(cacheFilesStr.contains("MRAppJar.jar"));
+        assertTrue(cacheFilesStr.contains("hadoop-mapreduce-client-jobclient-"));
 
-        }
-        else {
-            assertEquals(cacheFiles.length, files.length);
-        }
         for (String file : files) {
             assertTrue(cacheFilesStr.contains(file));
 

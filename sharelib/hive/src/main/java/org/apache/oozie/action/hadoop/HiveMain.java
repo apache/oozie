@@ -233,8 +233,11 @@ public class HiveMain extends LauncherMain {
             File localDir = new File("dummy").getAbsoluteFile().getParentFile();
             System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
             System.out.println("------------------------");
-            for (String file : localDir.list()) {
-                System.out.println("  " + file);
+            String[] files = localDir.list();
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("  " + file);
+                }
             }
             System.out.println("------------------------");
             System.out.println();
@@ -264,7 +267,7 @@ public class HiveMain extends LauncherMain {
         }
 
         // Pass any parameters to Hive via arguments
-        String[] params = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
+        String[] params = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -284,7 +287,7 @@ public class HiveMain extends LauncherMain {
             System.out.println();
         }
 
-        String[] hiveArgs = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
+        String[] hiveArgs = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
         for (String hiveArg : hiveArgs) {
             if (DISALLOWED_HIVE_OPTIONS.contains(hiveArg)) {
                 throw new RuntimeException("Error: Hive argument " + hiveArg + " is not supported");
@@ -298,7 +301,7 @@ public class HiveMain extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(hiveConf);
+        LauncherMain.killChildYarnJobs(hiveConf);
 
         System.out.println("=================================================================");
         System.out.println();
@@ -308,13 +311,6 @@ public class HiveMain extends LauncherMain {
 
         try {
             runHive(arguments.toArray(new String[arguments.size()]));
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
         }
         finally {
             System.out.println("\n<<< Invocation of Hive command completed <<<\n");

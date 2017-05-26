@@ -28,11 +28,16 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that need Hadoop FS access. <p/> As part of its
@@ -175,4 +180,27 @@ public abstract class XFsTestCase extends XTestCase {
         return has.createJobClient(getTestUser(), conf);
     }
 
+    /**
+     * Returns a Path object to a filesystem resource which belongs to a specific workflow on HDFS
+     * Example: /user/test/oozie-abcd/0000003-160913132555310-oozie-abcd-W/hadoop--map-reduce/launcher.xml
+     *
+     * @param userName current username
+     * @param action workflow Action object
+     * @param services Oozie Services class
+     * @param context Executor context
+     * @param fileName the filename
+     * @return the Path object which represents a file on HDFS
+     * @throws Exception
+     */
+    protected Path getPathToWorkflowResource(String userName, WorkflowJob job, Services services,
+            ActionExecutorContext context, String fileName) throws Exception {
+        return new Path(
+                "/user" +
+                "/" + userName +
+                "/" + services.getSystemId() +
+                "/" + job.getId() +
+                "/" + context.getActionDir().getName(),
+                fileName
+                );
+    }
 }

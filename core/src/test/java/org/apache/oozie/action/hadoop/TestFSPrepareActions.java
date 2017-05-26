@@ -59,7 +59,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        LauncherHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertFalse(fs.exists(newDir));
     }
@@ -85,7 +85,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "/201[0-1]/*" + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        LauncherHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertFalse(fs.exists(new Path(newDir + "/2010/10")));
         assertFalse(fs.exists(new Path(newDir + "/2011/10")));
@@ -107,7 +107,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        LauncherHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
         assertTrue(fs.exists(newDir));
     }
@@ -126,7 +126,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         try {
             JobConf conf = createJobConf();
-            LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+            LauncherHelper.setupLauncherURIHandlerConf(conf);
             PrepareActionsDriver.doOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
@@ -153,7 +153,7 @@ public class TestFSPrepareActions extends XFsTestCase {
         String prepareXML = "<prepare>" + "<mkdir path='" + noSchemePath + "'/>" + "</prepare>";
 
         JobConf conf = createJobConf();
-        LauncherMapperHelper.setupLauncherURIHandlerConf(conf);
+        LauncherHelper.setupLauncherURIHandlerConf(conf);
         PrepareActionsDriver.doOperations(prepareXML, conf);
 
         assertTrue(fs.exists(new Path(noSchemePath)));

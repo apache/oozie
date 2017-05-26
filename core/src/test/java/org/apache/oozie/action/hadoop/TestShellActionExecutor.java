@@ -26,16 +26,10 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.PropertiesUtils;
@@ -294,14 +288,8 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
 
         Context context = createContext(actionXml);
         // Submit the action
-        final RunningJob launcherJob = submitAction(context);
-        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
-                    // finish
-                    public boolean evaluate() throws Exception {
-                        return launcherJob.isComplete();
-                    }
-                });
-
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         ShellActionExecutor ae = new ShellActionExecutor();
         WorkflowAction action = context.getAction();
         ae.check(context, action);
@@ -323,24 +311,14 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     private WorkflowAction _testSubmit(String actionXml, boolean checkForSuccess, String capture_output) throws Exception {
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);// Submit the
-        // action
-        String launcherId = context.getAction().getExternalId(); // Get LM id
-        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
-                    // finish
-                    public boolean evaluate() throws Exception {
-                        return launcherJob.isComplete();
-                    }
-                });
-        // Thread.sleep(2000);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);// Submit the action
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        sleep(2000);// Wait more to make sure no ID swap happens
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         ShellActionExecutor ae = new ShellActionExecutor();
         ae.check(context, context.getAction());
@@ -399,14 +377,13 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @return The RunningJob of the Launcher Mapper
      * @throws Exception
      */
-    private RunningJob submitAction(Context context) throws Exception {
+    private String submitAction(Context context) throws Exception {
         ShellActionExecutor ae = new ShellActionExecutor();
 
         WorkflowAction action = context.getAction();
 
         ae.prepareActionDir(getFileSystem(), context);
-        ae.submitLauncher(getFileSystem(), context, action); // Submit the
-        // Launcher Mapper
+        ae.submitLauncher(getFileSystem(), context, action); // Submit the action
 
         String jobId = action.getExternalId();
         String jobTracker = action.getTrackerUri();
@@ -416,41 +393,6 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf = new XConfiguration();
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
-    }
-
-    public void testShellMainPathInUber() throws Exception {
-        Services.get().getConf().setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
-
-        Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
-                + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"
-                + "<argument>a=A</argument>" + "<argument>b=B</argument>" + "</shell>");
-        ShellActionExecutor ae = new ShellActionExecutor();
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-
-        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
-        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
-        action.setType(ae.getType());
-
-        Context context = new Context(wf, action);
-        JobConf launcherConf = new JobConf();
-        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, launcherConf);
-        // env
-        assertEquals("PATH=.:$PATH", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
+        return jobId;
     }
 }

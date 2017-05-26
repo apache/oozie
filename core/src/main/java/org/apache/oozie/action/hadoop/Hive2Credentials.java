@@ -20,9 +20,11 @@ package org.apache.oozie.action.hadoop;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hive.jdbc.HiveConnection;
 import org.apache.oozie.ErrorCode;
@@ -37,14 +39,15 @@ import org.apache.oozie.util.XLog;
  * User can extend the parent class to implement own class as well
  * for handling custom token-based credentials and add to the above server property
  */
-public class Hive2Credentials extends Credentials {
+public class Hive2Credentials implements CredentialsProvider {
 
     private static final String USER_NAME = "user.name";
     private static final String HIVE2_JDBC_URL = "hive2.jdbc.url";
     private static final String HIVE2_SERVER_PRINCIPAL = "hive2.server.principal";
 
     @Override
-    public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
+    public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,
+            Context context) throws Exception {
         try {
             // load the driver
             Class.forName("org.apache.hive.jdbc.HiveDriver");
@@ -66,7 +69,7 @@ public class Hive2Credentials extends Credentials {
                 con = DriverManager.getConnection(url);
                 XLog.getLog(getClass()).debug("Connected successfully to " + url);
                 // get delegation token for the given proxy user
-                tokenStr = ((HiveConnection)con).getDelegationToken(jobconf.get(USER_NAME), principal);
+                tokenStr = ((HiveConnection)con).getDelegationToken(config.get(USER_NAME), principal);
             } finally {
                 if (con != null) {
                     con.close();
@@ -76,7 +79,7 @@ public class Hive2Credentials extends Credentials {
 
             Token<DelegationTokenIdentifier> hive2Token = new Token<DelegationTokenIdentifier>();
             hive2Token.decodeFromUrlString(tokenStr);
-            jobconf.getCredentials().addToken(new Text("hive.server2.delegation.token"), hive2Token);
+            credentials.addToken(new Text("hive.server2.delegation.token"), hive2Token);
             XLog.getLog(getClass()).debug("Added the Hive Server 2 token in job conf");
         }
         catch (Exception e) {
