@@ -2252,4 +2252,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         assertEquals(2048, JavaActionExecutor.getMaxOutputData(conf));
     }
+
+    public void testFileWithSpaces() throws Exception {
+        String actPath = JavaActionExecutor.getTrimmedEncodedPath("/user/map dev/test-case/shell/script/shell 1.sh");
+        assertEquals("/user/map%20dev/test-case/shell/script/shell%201.sh", actPath);
+    }
 }
