@@ -51,7 +51,7 @@ The =host= indicates the user and host where the shell will be executed.
 
 *IMPORTANT:* The =oozie.action.ssh.allow.user.at.host= property, in the =oozie-site.xml= configuration, indicates if
 an alternate user than the one submitting the job can be used for the ssh invocation. By default this property is set
-tot =true=.
+to =true=.
 
 The =command= element indicates the shell command to execute.
 
