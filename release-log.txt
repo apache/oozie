@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2886 Ensure consistent versioning of hadoop jars in sharelibs (dbist13 via rkanter)
 OOZIE-2872 Address backward compatibility issue introduced by OOZIE-2748 (pbacsko)
 OOZIE-2863 SLACalculatorMemory.loadOnRestart causing delay in server start (puru via satishsaley)
 OOZIE-2862 Coord change command doesn't change job to running if job was killed without creating any actions (puru)
