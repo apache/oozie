@@ -839,6 +839,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         Element eSla = XmlUtils.getSLAElement(eAppXml.getChild("action", eAppXml.getNamespace()));
 
         if (eSla != null) {
+            resolveSLAContent(eSla);
             String slaXml = XmlUtils.prettyPrint(eSla).toString();
             try {
                 // EL evaluation
@@ -848,6 +849,27 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             }
             catch (Exception e) {
                 throw new CommandException(ErrorCode.E1004, "Validation ERROR :" + e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Resolve an SLA value.
+     *
+     * @param elem : XML Element where attribute is defiend
+     */
+    private void resolveSLAContent(Element elem) {
+        for (Element tagElem : (List<Element>) elem.getChildren()) {
+            String val = null;
+            if (tagElem != null) {
+                try {
+                    val = CoordELFunctions.evalAndWrap(evalNofuncs, tagElem.getText().trim());
+                    tagElem.setText(val);
+                }
+                catch (Exception e) {
+                    //throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
+                    continue;
+                }
             }
         }
     }
