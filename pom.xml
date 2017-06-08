@@ -339,18 +339,6 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-yarn-api</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-
-            <dependency>
-                 <groupId>org.apache.hadoop</groupId>
-                 <artifactId>hadoop-yarn-common</artifactId>
-                 <version>${hadoop.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-core</artifactId>
                 <version>${hadoop.auth.version}</version>
                 <scope>compile</scope>
