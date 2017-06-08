@@ -31,7 +31,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import org.apache.oozie.action.hadoop.SparkMain.JarFilter;
 import org.junit.Test;
 
 public class TestJarFilter {
