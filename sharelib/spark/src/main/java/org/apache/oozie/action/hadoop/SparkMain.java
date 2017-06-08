@@ -24,20 +24,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -47,243 +40,56 @@ import org.apache.spark.deploy.SparkSubmit;
 import com.google.common.annotations.VisibleForTesting;
 
 public class SparkMain extends LauncherMain {
-    private static final String MASTER_OPTION = "--master";
-    private static final String MODE_OPTION = "--deploy-mode";
-    private static final String JOB_NAME_OPTION = "--name";
-    private static final String CLASS_NAME_OPTION = "--class";
-    private static final String VERBOSE_OPTION = "--verbose";
-    private static final String DRIVER_CLASSPATH_OPTION = "--driver-class-path";
-    private static final String EXECUTOR_CLASSPATH = "spark.executor.extraClassPath=";
-    private static final String DRIVER_CLASSPATH = "spark.driver.extraClassPath=";
-    private static final String EXECUTOR_EXTRA_JAVA_OPTIONS = "spark.executor.extraJavaOptions=";
-    private static final String DRIVER_EXTRA_JAVA_OPTIONS = "spark.driver.extraJavaOptions=";
-    private static final String LOG4J_CONFIGURATION_JAVA_OPTION = "-Dlog4j.configuration=";
-    private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
-    private static final String HBASE_SECURITY_TOKEN = "spark.yarn.security.tokens.hbase.enabled";
-    private static final String CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR = "oozie.action.spark.setup.hadoop.conf.dir";
-    private static final String PWD = "$PWD" + File.separator + "*";
-    private static final Pattern[] PYSPARK_DEP_FILE_PATTERN = { Pattern.compile("py4\\S*src.zip"),
-            Pattern.compile("pyspark.zip") };
-    private static final Pattern SPARK_DEFAULTS_FILE_PATTERN = Pattern.compile("spark-defaults.conf");
-    private static final String SPARK_LOG4J_PROPS = "spark-log4j.properties";
+
     @VisibleForTesting
     static final Pattern[] SPARK_JOB_IDS_PATTERNS = {
             Pattern.compile("Submitted application (application[0-9_]*)") };
-    public static final Pattern SPARK_ASSEMBLY_JAR_PATTERN = Pattern
+    @VisibleForTesting
+    static final Pattern SPARK_ASSEMBLY_JAR_PATTERN = Pattern
             .compile("^spark-assembly((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
-    public static final Pattern SPARK_YARN_JAR_PATTERN = Pattern
+    @VisibleForTesting
+    static final Pattern SPARK_YARN_JAR_PATTERN = Pattern
             .compile("^spark-yarn((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
-    private static final Pattern SPARK_VERSION_1 = Pattern.compile("^1.*");
-    private static final String SPARK_YARN_JAR = "spark.yarn.jar";
-    private static final String SPARK_YARN_JARS = "spark.yarn.jars";
-    public static final String HIVE_SITE_CONF = "hive-site.xml";
-    public static final String FILES_OPTION = "--files";
-    public static final String ARCHIVES_OPTION = "--archives";
+    static final String HIVE_SITE_CONF = "hive-site.xml";
+    static final String SPARK_LOG4J_PROPS = "spark-log4j.properties";
 
-    public static void main(String[] args) throws Exception {
+    private static final String CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR = "oozie.action.spark.setup.hadoop.conf.dir";
+    private static final Pattern[] PYSPARK_DEP_FILE_PATTERN = { Pattern.compile("py4\\S*src.zip"),
+            Pattern.compile("pyspark.zip") };
+
+    public static void main(final String[] args) throws Exception {
         run(SparkMain.class, args);
     }
 
     @Override
-    protected void run(String[] args) throws Exception {
-        boolean isPyspark = false;
-        Configuration actionConf = loadActionConf();
+    protected void run(final String[] args) throws Exception {
+        final Configuration actionConf = loadActionConf();
         prepareHadoopConfig(actionConf);
 
         setYarnTag(actionConf);
         LauncherMain.killChildYarnJobs(actionConf);
-        String logFile = setUpSparkLog4J(actionConf);
+        final String logFile = setUpSparkLog4J(actionConf);
         setHiveSite(actionConf);
-        List<String> sparkArgs = new ArrayList<String>();
 
-        sparkArgs.add(MASTER_OPTION);
-        String master = actionConf.get(SparkActionExecutor.SPARK_MASTER);
-        sparkArgs.add(master);
+        final SparkArgsExtractor sparkArgsExtractor = new SparkArgsExtractor(actionConf);
+        final List<String> sparkArgs = sparkArgsExtractor.extract(args);
 
-        // In local mode, everything runs here in the Launcher Job.
-        // In yarn-client mode, the driver runs here in the Launcher Job and the
-        // executor in Yarn.
-        // In yarn-cluster mode, the driver and executor run in Yarn.
-        String sparkDeployMode = actionConf.get(SparkActionExecutor.SPARK_MODE);
-        if (sparkDeployMode != null) {
-            sparkArgs.add(MODE_OPTION);
-            sparkArgs.add(sparkDeployMode);
-        }
-        boolean yarnClusterMode = master.equals("yarn-cluster")
-                || (master.equals("yarn") && sparkDeployMode != null && sparkDeployMode.equals("cluster"));
-        boolean yarnClientMode = master.equals("yarn-client")
-                || (master.equals("yarn") && sparkDeployMode != null && sparkDeployMode.equals("client"));
-
-        sparkArgs.add(JOB_NAME_OPTION);
-        sparkArgs.add(actionConf.get(SparkActionExecutor.SPARK_JOB_NAME));
-
-        String className = actionConf.get(SparkActionExecutor.SPARK_CLASS);
-        if (className != null) {
-            sparkArgs.add(CLASS_NAME_OPTION);
-            sparkArgs.add(className);
-        }
-
-        appendOoziePropertiesToSparkConf(sparkArgs, actionConf);
-
-        String jarPath = actionConf.get(SparkActionExecutor.SPARK_JAR);
-        if(jarPath!=null && jarPath.endsWith(".py")){
-            isPyspark = true;
-        }
-        boolean addedHiveSecurityToken = false;
-        boolean addedHBaseSecurityToken = false;
-        boolean addedLog4jDriverSettings = false;
-        boolean addedLog4jExecutorSettings = false;
-        StringBuilder driverClassPath = new StringBuilder();
-        StringBuilder executorClassPath = new StringBuilder();
-        String userFiles = null, userArchives = null;
-        String sparkOpts = actionConf.get(SparkActionExecutor.SPARK_OPTS);
-        if (StringUtils.isNotEmpty(sparkOpts)) {
-            List<String> sparkOptions = splitSparkOpts(sparkOpts);
-            for (int i = 0; i < sparkOptions.size(); i++) {
-                String opt = sparkOptions.get(i);
-                boolean addToSparkArgs = true;
-                if (yarnClusterMode || yarnClientMode) {
-                    if (opt.startsWith(EXECUTOR_CLASSPATH)) {
-                        appendWithPathSeparator(opt.substring(EXECUTOR_CLASSPATH.length()), executorClassPath);
-                        addToSparkArgs = false;
-                    }
-                    if (opt.startsWith(DRIVER_CLASSPATH)) {
-                        appendWithPathSeparator(opt.substring(DRIVER_CLASSPATH.length()), driverClassPath);
-                        addToSparkArgs = false;
-                    }
-                    if (opt.equals(DRIVER_CLASSPATH_OPTION)) {
-                        // we need the next element after this option
-                        appendWithPathSeparator(sparkOptions.get(i + 1), driverClassPath);
-                        // increase i to skip the next element.
-                        i++;
-                        addToSparkArgs = false;
-                    }
-                }
-                if (opt.startsWith(HIVE_SECURITY_TOKEN)) {
-                    addedHiveSecurityToken = true;
-                }
-                if (opt.startsWith(HBASE_SECURITY_TOKEN)) {
-                    addedHBaseSecurityToken = true;
-                }
-                if (opt.startsWith(EXECUTOR_EXTRA_JAVA_OPTIONS) || opt.startsWith(DRIVER_EXTRA_JAVA_OPTIONS)) {
-                    if(!opt.contains(LOG4J_CONFIGURATION_JAVA_OPTION)) {
-                        opt += " " + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS;
-                    }else{
-                        System.out.println("Warning: Spark Log4J settings are overwritten." +
-                                " Child job IDs may not be available");
-                    }
-                    if(opt.startsWith(EXECUTOR_EXTRA_JAVA_OPTIONS)) {
-                        addedLog4jExecutorSettings = true;
-                    }else{
-                        addedLog4jDriverSettings = true;
-                    }
-                }
-                if(opt.startsWith(FILES_OPTION)) {
-                    userFiles = sparkOptions.get(i + 1);
-                    i++;
-                    addToSparkArgs = false;
-                }
-                if(opt.startsWith(ARCHIVES_OPTION)) {
-                    userArchives = sparkOptions.get(i + 1);
-                    i++;
-                    addToSparkArgs = false;
-                }
-                if(addToSparkArgs) {
-                    sparkArgs.add(opt);
-                }
-            }
-        }
-
-        if ((yarnClusterMode || yarnClientMode)) {
-            // Include the current working directory (of executor container)
-            // in executor classpath, because it will contain localized
-            // files
-            appendWithPathSeparator(PWD, executorClassPath);
-            appendWithPathSeparator(PWD, driverClassPath);
-
-            sparkArgs.add("--conf");
-            sparkArgs.add(EXECUTOR_CLASSPATH + executorClassPath.toString());
-
-            sparkArgs.add("--conf");
-            sparkArgs.add(DRIVER_CLASSPATH + driverClassPath.toString());
-        }
-
-        if (actionConf.get(MAPREDUCE_JOB_TAGS) != null) {
-            sparkArgs.add("--conf");
-            sparkArgs.add("spark.yarn.tags=" + actionConf.get(MAPREDUCE_JOB_TAGS));
-        }
-
-        if (!addedHiveSecurityToken) {
-            sparkArgs.add("--conf");
-            sparkArgs.add(HIVE_SECURITY_TOKEN + "=false");
-        }
-        if (!addedHBaseSecurityToken) {
-            sparkArgs.add("--conf");
-            sparkArgs.add(HBASE_SECURITY_TOKEN + "=false");
-        }
-        if(!addedLog4jExecutorSettings) {
-            sparkArgs.add("--conf");
-            sparkArgs.add(EXECUTOR_EXTRA_JAVA_OPTIONS + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS);
-        }
-        if(!addedLog4jDriverSettings) {
-            sparkArgs.add("--conf");
-            sparkArgs.add(DRIVER_EXTRA_JAVA_OPTIONS + LOG4J_CONFIGURATION_JAVA_OPTION + SPARK_LOG4J_PROPS);
-        }
-        File defaultConfFile = getMatchingFile(SPARK_DEFAULTS_FILE_PATTERN);
-        if (defaultConfFile != null) {
-            sparkArgs.add("--properties-file");
-            sparkArgs.add(SPARK_DEFAULTS_FILE_PATTERN.toString());
-        }
-
-        if ((yarnClusterMode || yarnClientMode)) {
-            Map<String, URI> fixedFileUrisMap = fixFsDefaultUrisAndFilterDuplicates(DistributedCache.getCacheFiles(actionConf));
-            fixedFileUrisMap.put(SPARK_LOG4J_PROPS, new Path(SPARK_LOG4J_PROPS).toUri());
-            fixedFileUrisMap.put(HIVE_SITE_CONF, new Path(HIVE_SITE_CONF).toUri());
-            addUserDefined(userFiles, fixedFileUrisMap);
-            Collection<URI> fixedFileUris = fixedFileUrisMap.values();
-            JarFilter jarfilter = new JarFilter(fixedFileUris, jarPath);
-            jarfilter.filter();
-            jarPath = jarfilter.getApplicationJar();
-
-            String cachedFiles = StringUtils.join(fixedFileUris, ",");
-            if (cachedFiles != null && !cachedFiles.isEmpty()) {
-                sparkArgs.add("--files");
-                sparkArgs.add(cachedFiles);
-            }
-            Map<String, URI> fixedArchiveUrisMap = fixFsDefaultUrisAndFilterDuplicates(DistributedCache.
-                    getCacheArchives(actionConf));
-            addUserDefined(userArchives, fixedArchiveUrisMap);
-            String cachedArchives = StringUtils.join(fixedArchiveUrisMap.values(), ",");
-            if (cachedArchives != null && !cachedArchives.isEmpty()) {
-                sparkArgs.add("--archives");
-                sparkArgs.add(cachedArchives);
-            }
-            setSparkYarnJarsConf(sparkArgs, jarfilter.getSparkYarnJar(), jarfilter.getSparkVersion());
-        }
-
-        if (!sparkArgs.contains(VERBOSE_OPTION)) {
-            sparkArgs.add(VERBOSE_OPTION);
-        }
-
-        sparkArgs.add(jarPath);
-        for (String arg : args) {
-            sparkArgs.add(arg);
-        }
-        if (isPyspark){
+        if (sparkArgsExtractor.isPySpark()){
             createPySparkLibFolder();
         }
-
 
         System.out.println("Spark Action Main class        : " + SparkSubmit.class.getName());
         System.out.println();
         System.out.println("Oozie Spark action configuration");
         System.out.println("=================================================================");
         System.out.println();
-        PasswordMasker passwordMasker = new PasswordMasker();
-        for (String arg : sparkArgs) {
+
+        final PasswordMasker passwordMasker = new PasswordMasker();
+        for (final String arg : sparkArgs) {
             System.out.println("                    " + passwordMasker.maskPasswordsIfNecessary(arg));
         }
         System.out.println();
+
         try {
             runSpark(sparkArgs.toArray(new String[sparkArgs.size()]));
         }
@@ -293,21 +99,12 @@ public class SparkMain extends LauncherMain {
         }
     }
 
-    private void addUserDefined(String userList, Map<String, URI> urisMap) {
-        if(userList != null) {
-            for (String file : userList.split(",")) {
-                Path p = new Path(file);
-                urisMap.put(p.getName(), p.toUri());
-            }
-        }
-    }
-
-    private void prepareHadoopConfig(Configuration actionConf) throws IOException {
+    private void prepareHadoopConfig(final Configuration actionConf) throws IOException {
         // Copying oozie.action.conf.xml into hadoop configuration *-site files.
         if (actionConf.getBoolean(CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR, false)) {
-            String actionXml = System.getProperty("oozie.action.conf.xml");
+            final String actionXml = System.getProperty("oozie.action.conf.xml");
             if (actionXml != null) {
-                File currentDir = new File(actionXml).getParentFile();
+                final File currentDir = new File(actionXml).getParentFile();
                 writeHadoopConfig(actionXml, currentDir);
             }
         }
@@ -321,15 +118,15 @@ public class SparkMain extends LauncherMain {
      * @throws IOException if there is an error during file copy
      */
     private void createPySparkLibFolder() throws OozieActionConfiguratorException, IOException {
-        File pythonLibDir = new File("python/lib");
+        final File pythonLibDir = new File("python/lib");
         if(!pythonLibDir.exists()){
             pythonLibDir.mkdirs();
             System.out.println("PySpark lib folder " + pythonLibDir.getAbsolutePath() + " folder created.");
         }
 
-        for(Pattern fileNamePattern : PYSPARK_DEP_FILE_PATTERN) {
-            File file = getMatchingPyFile(fileNamePattern);
-            File destination = new File(pythonLibDir, file.getName());
+        for(final Pattern fileNamePattern : PYSPARK_DEP_FILE_PATTERN) {
+            final File file = getMatchingPyFile(fileNamePattern);
+            final File destination = new File(pythonLibDir, file.getName());
             FileUtils.copyFile(file, destination);
             System.out.println("Copied " + file + " to " + destination.getAbsolutePath());
         }
@@ -342,8 +139,8 @@ public class SparkMain extends LauncherMain {
      * @return the file if there is one
      * @throws OozieActionConfiguratorException if there is are no files matching the pattern
      */
-    private File getMatchingPyFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
-        File f = getMatchingFile(fileNamePattern);
+    private File getMatchingPyFile(final Pattern fileNamePattern) throws OozieActionConfiguratorException {
+        final File f = getMatchingFile(fileNamePattern);
         if (f != null) {
             return f;
         }
@@ -359,22 +156,24 @@ public class SparkMain extends LauncherMain {
      * @param fileNamePattern the pattern to look for
      * @return the file if there is one else it returns null
      */
-    private static File getMatchingFile(Pattern fileNamePattern) throws OozieActionConfiguratorException {
-        File localDir = new File(".");
-        String[] files = localDir.list();
+    static File getMatchingFile(final Pattern fileNamePattern) {
+        final File localDir = new File(".");
 
-        if (files != null) {
-            for(String fileName : files){
-                if(fileNamePattern.matcher(fileName).find()){
-                    return new File(fileName);
-                }
+        final String[] localFileNames = localDir.list();
+        if (localFileNames == null) {
+            return null;
+        }
+
+        for (final String fileName : localFileNames){
+            if (fileNamePattern.matcher(fileName).find()){
+                return new File(fileName);
             }
         }
 
         return null;
     }
 
-    private void runSpark(String[] args) throws Exception {
+    private void runSpark(final String[] args) throws Exception {
         System.out.println("=================================================================");
         System.out.println();
         System.out.println(">>> Invoking Spark class now >>>");
@@ -383,49 +182,16 @@ public class SparkMain extends LauncherMain {
         SparkSubmit.main(args);
     }
 
-    /**
-     * Converts the options to be Spark-compatible.
-     * <ul>
-     *     <li>Parameters are separated by whitespace and can be groupped using double quotes</li>
-     *     <li>Quotes should be removed</li>
-     *     <li>Adjacent whitespace separators are treated as one</li>
-     * </ul>
-     * @param sparkOpts the options for Spark
-     * @return the options parsed into a list
-     */
-    static List<String> splitSparkOpts(String sparkOpts){
-        List<String> result = new ArrayList<String>();
-        StringBuilder currentWord = new StringBuilder();
-        boolean insideQuote = false;
-        for (int i = 0; i < sparkOpts.length(); i++) {
-            char c = sparkOpts.charAt(i);
-            if (c == '"') {
-                insideQuote = !insideQuote;
-            } else if (Character.isWhitespace(c) && !insideQuote) {
-                if (currentWord.length() > 0) {
-                    result.add(currentWord.toString());
-                    currentWord.setLength(0);
-                }
-            } else {
-                currentWord.append(c);
-            }
-        }
-        if(currentWord.length()>0) {
-            result.add(currentWord.toString());
-        }
-        return result;
-    }
-
-    private String setUpSparkLog4J(Configuration distcpConf) throws IOException {
+    private String setUpSparkLog4J(final Configuration actionConf) throws IOException {
         // Logfile to capture job IDs
-        String hadoopJobId = System.getProperty("oozie.launcher.job.id");
+        final String hadoopJobId = System.getProperty("oozie.launcher.job.id");
         if (hadoopJobId == null) {
             throw new RuntimeException("Launcher Hadoop Job ID system,property not set");
         }
-        String logFile = new File("spark-oozie-" + hadoopJobId + ".log").getAbsolutePath();
+        final String logFile = new File("spark-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        String logLevel = distcpConf.get("oozie.spark.log.level", "INFO");
-        String rootLogLevel = distcpConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        final String logLevel = actionConf.get("oozie.spark.log.level", "INFO");
+        final String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
 
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         log4jProperties.setProperty("log4j.logger.org.apache.spark", logLevel + ", A, jobid");
@@ -441,7 +207,7 @@ public class SparkMain extends LauncherMain {
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.mapreduce.Job", "INFO, jobid");
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
 
-        String localProps = new File(SPARK_LOG4J_PROPS).getAbsolutePath();
+        final String localProps = new File(SPARK_LOG4J_PROPS).getAbsolutePath();
         try (OutputStream os1 = new FileOutputStream(localProps)) {
             log4jProperties.store(os1, "");
         }
@@ -458,91 +224,18 @@ public class SparkMain extends LauncherMain {
      * @throws IOException
      * @throws URISyntaxException
      */
-    static Map<String, URI> fixFsDefaultUrisAndFilterDuplicates(URI[] files) throws IOException, URISyntaxException {
-        Map<String, URI> map= new HashMap<>();
+    static Map<String, URI> fixFsDefaultUrisAndFilterDuplicates(final URI[] files) throws IOException, URISyntaxException {
+        final Map<String, URI> map= new LinkedHashMap<>();
         if (files == null) {
             return map;
         }
-        FileSystem fs = FileSystem.get(new Configuration(true));
+        final FileSystem fs = FileSystem.get(new Configuration(true));
         for (int i = 0; i < files.length; i++) {
-            URI fileUri = files[i];
-            Path p = new Path(fileUri);
-            map.put(p.getName(), getFixedUri(fs, fileUri));
+            final URI fileUri = files[i];
+            final Path p = new Path(fileUri);
+            map.put(p.getName(), HadoopUriFinder.getFixedUri(fs, fileUri));
         }
         return map;
-    }
-
-    /**
-     * Sets spark.yarn.jars for Spark 2.X. Sets spark.yarn.jar for Spark 1.X.
-     *
-     * @param sparkArgs
-     * @param sparkYarnJar
-     * @param sparkVersion
-     */
-    private void setSparkYarnJarsConf(List<String> sparkArgs, String sparkYarnJar, String sparkVersion) {
-        if (SPARK_VERSION_1.matcher(sparkVersion).find()) {
-            // In Spark 1.X.X, set spark.yarn.jar to avoid
-            // multiple distribution
-            sparkArgs.add("--conf");
-            sparkArgs.add(SPARK_YARN_JAR + "=" + sparkYarnJar);
-                }
-        else {
-            // In Spark 2.X.X, set spark.yarn.jars
-            sparkArgs.add("--conf");
-            sparkArgs.add(SPARK_YARN_JARS + "=" + sparkYarnJar);
-        }
-    }
-
-    private static String getJarVersion(File jarFile) throws IOException {
-        @SuppressWarnings("resource")
-        Manifest manifest = new JarFile(jarFile).getManifest();
-        return manifest.getMainAttributes().getValue("Specification-Version");
-    }
-
-    /*
-     * Get properties that needs to be passed to Spark as Spark configuration from actionConf.
-     */
-    @VisibleForTesting
-    protected void appendOoziePropertiesToSparkConf(List<String> sparkArgs, Configuration actionConf) {
-        for (Map.Entry<String, String> oozieConfig : actionConf
-                .getValByRegex("^oozie\\.(?!launcher|spark).+").entrySet()) {
-            sparkArgs.add("--conf");
-            sparkArgs.add(String.format("spark.%s=%s", oozieConfig.getKey(), oozieConfig.getValue()));
-        }
-    }
-
-    private void appendWithPathSeparator(String what, StringBuilder to){
-        if(to.length() > 0){
-            to.append(File.pathSeparator);
-        }
-        to.append(what);
-    }
-
-    private static URI getFixedUri(URI fileUri) throws URISyntaxException, IOException {
-        FileSystem fs = FileSystem.get(new Configuration(true));
-        return getFixedUri(fs, fileUri);
-    }
-
-    /**
-     * Spark compares URIs based on scheme, host and port. Here we convert URIs
-     * into the default format so that Spark won't think those belong to
-     * different file system. This will avoid an extra copy of files which
-     * already exists on same hdfs.
-     *
-     * @param fs
-     * @param fileUri
-     * @return fixed uri
-     * @throws URISyntaxException
-     */
-    private static URI getFixedUri(FileSystem fs, URI fileUri) throws URISyntaxException {
-        if (fs.getUri().getScheme().equals(fileUri.getScheme())
-                && (fs.getUri().getHost().equals(fileUri.getHost()) || fileUri.getHost() == null)
-                && (fs.getUri().getPort() == -1 || fileUri.getPort() == -1
-                        || fs.getUri().getPort() == fileUri.getPort())) {
-            return new URI(fs.getUri().getScheme(), fileUri.getUserInfo(), fs.getUri().getHost(), fs.getUri().getPort(),
-                    fileUri.getPath(), fileUri.getQuery(), fileUri.getFragment());
-        }
-        return fileUri;
     }
 
     /**
@@ -551,7 +244,7 @@ public class SparkMain extends LauncherMain {
      * @param hiveConf
      * @throws IOException
      */
-    private void setHiveSite(Configuration hiveConf) throws IOException {
+    private void setHiveSite(final Configuration hiveConf) throws IOException {
         // See https://issues.apache.org/jira/browse/HIVE-1411
         hiveConf.set("datanucleus.plugin.pluginRegistryBundleCheck", "LOG");
 
@@ -578,100 +271,5 @@ public class SparkMain extends LauncherMain {
         // If prepare block had a drop partition it would have been initialized
         // to null.
         HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
-    }
-
-    /**
-     * This class is used for filtering out unwanted jars.
-     */
-    static class JarFilter {
-        private String sparkVersion = "1.X.X";
-        private String sparkYarnJar;
-        private String applicationJar;
-        private Collection<URI> listUris = null;
-
-        /**
-         * @param listUris List of URIs to be filtered
-         * @param jarPath Application jar
-         * @throws IOException
-         * @throws URISyntaxException
-         */
-        public JarFilter(Collection<URI> listUris, String jarPath) throws URISyntaxException, IOException {
-            this.listUris = listUris;
-            applicationJar = jarPath;
-            Path p = new Path(jarPath);
-            if (p.isAbsolute()) {
-                applicationJar = getFixedUri(p.toUri()).toString();
-            }
-        }
-
-        /**
-         * Filters out the Spark yarn jar and application jar. Also records
-         * spark yarn jar's version.
-         *
-         * @throws OozieActionConfiguratorException
-         */
-        public void filter() throws OozieActionConfiguratorException {
-            Iterator<URI> iterator = listUris.iterator();
-            File matchedFile = null;
-            Path applJarPath = new Path(applicationJar);
-            while (iterator.hasNext()) {
-                URI uri = iterator.next();
-                Path p = new Path(uri);
-                if (SPARK_YARN_JAR_PATTERN.matcher(p.getName()).find()) {
-                    matchedFile = getMatchingFile(SPARK_YARN_JAR_PATTERN);
-                }
-                else if (SPARK_ASSEMBLY_JAR_PATTERN.matcher(p.getName()).find()) {
-                    matchedFile = getMatchingFile(SPARK_ASSEMBLY_JAR_PATTERN);
-                }
-                if (matchedFile != null) {
-                    sparkYarnJar = uri.toString();
-                    try {
-                        sparkVersion = getJarVersion(matchedFile);
-                        System.out.println("Spark Version " + sparkVersion);
-                    }
-                    catch (IOException io) {
-                        System.out.println(
-                                "Unable to open " + matchedFile.getPath() + ". Default Spark Version " + sparkVersion);
-                    }
-                    iterator.remove();
-                    matchedFile = null;
-                }
-                // Here we skip the application jar, because
-                // (if uris are same,) it will get distributed multiple times
-                // - one time with --files and another time as application jar.
-                if (isApplicationJar(p.getName(), uri, applJarPath)) {
-                    String fragment = uri.getFragment();
-                    applicationJar = fragment != null && fragment.length() > 0 ? fragment : uri.toString();
-                    iterator.remove();
-                }
-            }
-        }
-
-        /**
-         * Checks if a file is application jar
-         *
-         * @param fileName fileName name of the file
-         * @param fileUri fileUri URI of the file
-         * @param applJarPath Path of application jar
-         * @return true if fileName or fileUri is the application jar
-         */
-        private boolean isApplicationJar(String fileName, URI fileUri, Path applJarPath) {
-            return (fileName.equals(applicationJar) || fileUri.toString().equals(applicationJar)
-                    || applJarPath.getName().equals(fileName)
-                    || applicationJar.equals(fileUri.getFragment()));
-        }
-
-        public String getApplicationJar() {
-            return applicationJar;
-        }
-
-        public String getSparkYarnJar() {
-            return sparkYarnJar;
-        }
-
-        public String getSparkVersion() {
-            return sparkVersion;
-        }
-
     }
 }

@@ -1,5 +1,6 @@
 -- Oozie 4.4.0 release (trunk - unreleased)
 
+OOZIE-2923 Improve Spark options parsing (andras.piros via gezapeti)
 OOZIE-2886 Ensure consistent versioning of hadoop jars in sharelibs (dbist13 via rkanter)
 OOZIE-2875 Typo in ssh action twiki docs (Dongying Jiao via gezapeti)
 OOZIE-2387 Oozie is Unable to handle Spaces in file/archive tag. (asasvari via gezapeti)

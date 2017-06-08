@@ -34,13 +34,13 @@ public class TestSparkOptionsSplitter {
     @Parameterized.Parameters
     public static List<Object[]> params() {
         return Arrays.asList(new Object[][]{
-                {"--option1 value1", Arrays.asList(new String[]{"--option1", "value1"})},
-                {"--option1   value1", Arrays.asList(new String[]{"--option1", "value1"})},
-                {"   --option1 value1   ", Arrays.asList(new String[]{"--option1", "value1"})},
-                {"--conf special=value1", Arrays.asList(new String[]{"--conf", "special=value1"})},
-                {"--conf special=\"value1\"", Arrays.asList(new String[]{"--conf", "special=value1"})},
-                {"--conf special=\"value1 value2\"", Arrays.asList(new String[]{"--conf", "special=value1 value2"})},
-                {" --conf special=\"value1 value2\"  ", Arrays.asList(new String[]{"--conf", "special=value1 value2"})},
+                {"--option1 value1", Arrays.asList("--option1", "value1")},
+                {"--option1   value1", Arrays.asList("--option1", "value1")},
+                {"   --option1 value1   ", Arrays.asList("--option1", "value1")},
+                {"--conf special=value1", Arrays.asList("--conf", "special=value1")},
+                {"--conf special=\"value1\"", Arrays.asList("--conf", "special=value1")},
+                {"--conf special=\"value1 value2\"", Arrays.asList("--conf", "special=value1 value2")},
+                {" --conf special=\"value1 value2\"  ", Arrays.asList("--conf", "special=value1 value2")},
         });
     }
 
@@ -55,6 +55,6 @@ public class TestSparkOptionsSplitter {
 
     @Test
     public void test() {
-        assertThat("Error for input >>" + input + "<<", SparkMain.splitSparkOpts(input), is(output));
+        assertThat("Error for input >>" + input + "<<", SparkOptionsSplitter.splitSparkOpts(input), is(output));
     }
 }

@@ -127,19 +127,6 @@ public class TestSparkMain extends MainTestCase {
         }
     }
 
-    public void testAppendOoziePropertiesToSparkConf() throws Exception {
-        SparkMain instance = SparkMain.class.newInstance();
-        List<String> sparkArgs = new ArrayList<String>();
-        Configuration actionConf = new Configuration();
-        actionConf.set("foo", "foo-not-to-include");
-        actionConf.set("oozie.launcher", "launcher-not-to-include");
-        actionConf.set("oozie.spark", "spark-not-to-include");
-        actionConf.set("oozie.bar", "bar");
-
-        instance.appendOoziePropertiesToSparkConf(sparkArgs, actionConf);
-        assertEquals(Lists.newArrayList("--conf", "spark.oozie.bar=bar"), sparkArgs);
-    }
-
     public void testJobIDPattern() {
         List<String> lines = new ArrayList<String>();
         lines.add("Submitted application application_001");
