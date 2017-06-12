@@ -860,9 +860,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     private void resolveSLAContent(Element elem) {
         for (Element tagElem : (List<Element>) elem.getChildren()) {
-            String val = null;
             if (tagElem != null) {
                 try {
+                    String val = null;
                     val = CoordELFunctions.evalAndWrap(evalNofuncs, tagElem.getText().trim());
                     tagElem.setText(val);
                 }
