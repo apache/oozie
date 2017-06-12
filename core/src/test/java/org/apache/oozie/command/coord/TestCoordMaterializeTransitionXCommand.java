@@ -989,5 +989,4 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
         return 0;
     }
-
 }
