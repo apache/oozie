@@ -20,9 +20,10 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,7 +47,7 @@ public class Hive2Main extends LauncherMain {
             Pattern.compile("Submitted application (application[0-9_]*)"),
             Pattern.compile("Running with YARN Application = (application[0-9_]*)")
     };
-    private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
+    private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<>();
 
     static {
         DISALLOWED_BEELINE_OPTIONS.add("-u");
@@ -116,7 +117,7 @@ public class Hive2Main extends LauncherMain {
         }
         String logFile = new File("hive2-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        List<String> arguments = new ArrayList<String>();
+        List<String> arguments = new ArrayList<>();
         String jdbcUrl = actionConf.get(Hive2ActionExecutor.HIVE2_JDBC_URL);
         if (jdbcUrl == null) {
             throw new RuntimeException("Action Configuration does not have [" +  Hive2ActionExecutor.HIVE2_JDBC_URL
@@ -263,7 +264,7 @@ public class Hive2Main extends LauncherMain {
     private void runBeeline(String[] args, String logFile) throws Exception {
         // We do this instead of calling BeeLine.main so we can duplicate the error stream for harvesting Hadoop child job IDs
         BeeLine beeLine = new BeeLine();
-        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile))));
+        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile)), false, "UTF-8"));
         int status = beeLine.begin(args, null);
         beeLine.close();
         if (status != 0) {
@@ -275,7 +276,7 @@ public class Hive2Main extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(filePath));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {
