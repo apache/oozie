@@ -43,6 +43,8 @@ import org.apache.oozie.util.ZKUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 /**
  * Built in service that initializes the services configuration.
  * <p>
@@ -73,6 +75,8 @@ public class ConfigurationService implements Service, Instrumentable {
     public static final String CONF_IGNORE_SYS_PROPS = CONF_PREFIX + "ignore.system.properties";
 
     public static final String CONF_VERIFY_AVAILABLE_PROPS = CONF_PREFIX + "verify.available.properties";
+
+    public static final String CONF_JAVAX_XML_PARSERS_DOCUMENTBUILDERFACTORY = "oozie.javax.xml.parsers.DocumentBuilderFactory";
 
     /**
      * System property that indicates the configuration directory.
@@ -163,6 +167,15 @@ public class ConfigurationService implements Service, Instrumentable {
         configuration = loadConf();
         if (configuration.getBoolean(CONF_VERIFY_AVAILABLE_PROPS, false)) {
             verifyConfigurationName();
+        }
+
+        // Set the javax.xml.parsers.DocumentBuilderFactory property, which should make finding these classes faster, as the JVM
+        // doesn't have to do expensive searching.  This happens quite frequently in Oozie.
+        String docFac = configuration.get(CONF_JAVAX_XML_PARSERS_DOCUMENTBUILDERFACTORY);
+        if (docFac != null && !docFac.trim().isEmpty()) {
+            System.setProperty("javax.xml.parsers.DocumentBuilderFactory", docFac.trim());
+            Class<?> dbfClass = DocumentBuilderFactory.newInstance().getClass();
+            log.debug("Using javax.xml.parsers.DocumentBuilderFactory: {0}", dbfClass.getName());
         }
     }
 

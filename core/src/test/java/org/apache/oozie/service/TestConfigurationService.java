@@ -38,7 +38,9 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLogFilter;
 import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
+import org.apache.xerces.jaxp.DocumentBuilderFactoryImpl;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -288,4 +290,36 @@ public class TestConfigurationService extends XTestCase {
         cl.destroy();
     }
 
+    public void testDocumentBuilderFactorySystemPropertyDefault() throws Exception {
+        verifyDocumentBuilderFactoryClass(DocumentBuilderFactoryImpl.class.getName(), DocumentBuilderFactoryImpl.class);
+    }
+
+    public void testDocumentBuilderFactorySystemPropertyCustom() throws Exception {
+        prepareOozieConfDir("oozie-site-documentbuilderfactory.xml");
+        verifyDocumentBuilderFactoryClass(DummyDocumentBuilderFactoryImpl.class.getName(), DummyDocumentBuilderFactoryImpl.class);
+    }
+
+    public void testDocumentBuilderFactorySystemPropertyEmpty() throws Exception {
+        // Determine the class that the JVM would provide if we don't set the property
+        setSystemProperty("javax.xml.parsers.DocumentBuilderFactory", null);
+        assertNull(System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        Class<?> dbfClass = DocumentBuilderFactory.newInstance().getClass();
+
+        prepareOozieConfDir("oozie-site-documentbuilderfactory-empty.xml");
+        verifyDocumentBuilderFactoryClass(null, dbfClass);
+    }
+
+    private void verifyDocumentBuilderFactoryClass(String expectedPropertyValue, Class<?> expectedClass) throws Exception {
+        setSystemProperty("javax.xml.parsers.DocumentBuilderFactory", null);
+        assertNull(System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        assertEquals(expectedPropertyValue, System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        DocumentBuilderFactory docFac = DocumentBuilderFactory.newInstance();
+        assertTrue("Expected DocumentBuilderFactory to be of class [" + expectedClass.getName() + "] but was ["
+                + docFac.getClass().getName() + "]", expectedClass.isInstance(docFac));
+        cl.destroy();
+    }
+
 }
+
