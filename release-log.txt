@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2935 Fix "concatenates strings using + in a loop" Findbugs error in oozie-sharelib-streaming (Jan Hentschel via rkanter)
 OOZIE-2825 Custom Authentication doc page is not well formatted (Jan Hentschel via rkanter)
 OOZIE-2747 README.txt is out of date (Jan Hentschel via rkanter)
 OOZIE-2926 Update Oozie version to 5.0.0-SNAPSHOT (dbist13 via rkanter)

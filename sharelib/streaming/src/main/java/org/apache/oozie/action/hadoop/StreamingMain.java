@@ -66,10 +66,16 @@ public class StreamingMain extends MapReduceMain {
         if (value.length() > 0) {
             value = value + " ";
         }
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(value);
+
         for (String s : values) {
-            value = value + s + " ";
+            buffer.append(s);
+            buffer.append(" ");
         }
-        jobConf.set("stream.addenvironment", value);
+
+        jobConf.set("stream.addenvironment", buffer.toString());
 
         super.addActionConf(jobConf, actionConf);
     }
