@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2747 README.txt is out of date (Jan Hentschel via rkanter)
 OOZIE-2923 Improve Spark options parsing (andras.piros via gezapeti)
 OOZIE-2886 Ensure consistent versioning of hadoop jars in sharelibs (dbist13 via rkanter)
 OOZIE-2872 Address backward compatibility issue introduced by OOZIE-2748 (pbacsko)

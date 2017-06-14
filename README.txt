@@ -42,13 +42,13 @@ More inforamtion could be found at:
 http://oozie.apache.org/
 
 Oozie Quick Start:
-http://oozie.apache.org/docs/3.2.0-incubating/DG_QuickStart.html
+http://oozie.apache.org/docs/4.3.0/DG_QuickStart.html
 
 
 Supported Hadoop Versions:
 ----------------------------
 
-This version of Oozie was primarily tested against Hadoop 0.20.205.x. This will not work on earlier versions of Hadoop such as 0.20.x. and 0.21.
+This version of Oozie was primarily tested against Hadoop 2.4.x and 2.6.x.
 
 --------------------------------------
 
@@ -59,5 +59,3 @@ user@oozie.apache.org
 Subscribe using the link:
 
 http://oozie.apache.org/mail-lists.html
-
-
