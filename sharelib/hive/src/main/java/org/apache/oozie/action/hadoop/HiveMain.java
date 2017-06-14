@@ -20,11 +20,11 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -181,9 +181,9 @@ public class HiveMain extends LauncherMain {
         Configuration hiveConf = initActionConf();
 
         // Write the action configuration out to hive-site.xml
-        OutputStream os = new FileOutputStream(HIVE_SITE_CONF);
-        hiveConf.writeXml(os);
-        os.close();
+         try (OutputStream os = new FileOutputStream(HIVE_SITE_CONF)) {
+             hiveConf.writeXml(os);
+         }
 
         System.out.println();
         System.out.println("Hive Configuration Properties:");
@@ -333,7 +333,7 @@ public class HiveMain extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(filePath));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

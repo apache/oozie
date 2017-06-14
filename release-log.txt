@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2938 Fix Findbugs warnings in oozie-sharelib-hive module (Jan Hentschel via gezapeti)
 OOZIE-2939 Fix Findbugs warnings related to reliance on default encoding in oozie-sharelib-hive2 module (Jan Hentschel via gezapeti)
 OOZIE-2935 Fix "concatenates strings using + in a loop" Findbugs error in oozie-sharelib-streaming (Jan Hentschel via rkanter)
 OOZIE-2825 Custom Authentication doc page is not well formatted (Jan Hentschel via rkanter)
