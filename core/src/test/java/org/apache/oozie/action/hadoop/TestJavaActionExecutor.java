@@ -31,14 +31,11 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,10 +43,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.Credentials;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -63,7 +58,6 @@ import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.util.IOUtils;
@@ -1111,7 +1105,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "start")).
                 addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         Configuration conf = Services.get().get(HadoopAccessorService.class).
-            createJobConf(new URI(getNameNodeUri()).getAuthority());
+                createConfiguration(new URI(getNameNodeUri()).getAuthority());
         conf.set(OozieClient.APP_PATH, getNameNodeUri() + "/testPath");
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());

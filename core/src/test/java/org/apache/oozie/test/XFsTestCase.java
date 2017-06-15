@@ -25,10 +25,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -37,7 +35,6 @@ import org.apache.oozie.service.Services;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases that need Hadoop FS access. <p/> As part of its
@@ -77,7 +74,7 @@ public abstract class XFsTestCase extends XTestCase {
 
         has = new HadoopAccessorService();
         has.init(conf);
-        JobConf jobConf = has.createJobConf(getNameNodeUri());
+        Configuration jobConf = has.createConfiguration(getNameNodeUri());
         XConfiguration.copy(conf, jobConf);
         fileSystem = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), jobConf);
         fsTestDir = initFileSystem(fileSystem);
@@ -173,7 +170,7 @@ public abstract class XFsTestCase extends XTestCase {
      * @throws HadoopAccessorException thrown if the JobClient could not be obtained.
      */
     protected JobClient createJobClient() throws HadoopAccessorException {
-        JobConf conf = has.createJobConf(getJobTrackerUri());
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
 
@@ -185,7 +182,7 @@ public abstract class XFsTestCase extends XTestCase {
      * Example: /user/test/oozie-abcd/0000003-160913132555310-oozie-abcd-W/hadoop--map-reduce/launcher.xml
      *
      * @param userName current username
-     * @param action workflow Action object
+     * @param job workflow Action object
      * @param services Oozie Services class
      * @param context Executor context
      * @param fileName the filename

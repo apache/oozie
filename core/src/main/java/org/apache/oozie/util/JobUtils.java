@@ -68,7 +68,7 @@ public class JobUtils {
         try {
             URI uri = new Path(appPathStr).toUri();
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             fs = has.createFileSystem(user, uri, fsConf);
         }
         catch (HadoopAccessorException ex) {
@@ -147,7 +147,7 @@ public class JobUtils {
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
         if (fs == null) {
             Configuration defaultConf = Services.get().get(HadoopAccessorService.class)
-                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_YARN_RM));
+                    .createConfiguration(conf.get(JavaActionExecutor.HADOOP_YARN_RM));
             XConfiguration.copy(conf, defaultConf);
             // it fails with conf, therefore we pass defaultConf instead
             fs = file.getFileSystem(defaultConf);

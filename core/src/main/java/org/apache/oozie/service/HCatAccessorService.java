@@ -94,7 +94,7 @@ public class HCatAccessorService implements Service {
                 HadoopAccessorService has = services.get(HadoopAccessorService.class);
                 try {
                     FileSystem fs = has.createFileSystem(
-                            System.getProperty("user.name"), p.toUri(), has.createJobConf(p.toUri().getAuthority()));
+                            System.getProperty("user.name"), p.toUri(), has.createConfiguration(p.toUri().getAuthority()));
                     if (fs.exists(p)) {
                         FSDataInputStream is = null;
                         try {

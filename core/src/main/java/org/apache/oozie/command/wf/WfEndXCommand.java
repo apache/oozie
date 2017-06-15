@@ -80,7 +80,7 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
             URISyntaxException {
         URI uri = new URI(workflow.getAppPath());
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        Configuration fsConf = has.createConfiguration(uri.getAuthority());
         return has.createFileSystem(workflow.getUser(), uri, fsConf);
     }
 

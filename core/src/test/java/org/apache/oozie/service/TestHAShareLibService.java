@@ -65,7 +65,7 @@ public class TestHAShareLibService extends ZKXTestCase {
         Path launcherlibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
-        fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+        fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
         Date time = new Date(System.currentTimeMillis());
 
         Path basePath = new Path(Services.get().getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));

@@ -105,9 +105,9 @@ public class TestHadoopAccessorService extends XFsTestCase {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
-        assertNotNull(has.createJobConf("*"));
-        assertNotNull(has.createJobConf("jt"));
-        assertEquals("bar", has.createJobConf("jt").get("foo"));
+        assertNotNull(has.createConfiguration("*"));
+        assertNotNull(has.createConfiguration("jt"));
+        assertEquals("bar", has.createConfiguration("jt").get("foo"));
         assertNotNull(has.createActionDefaultConf("*", "action"));
         assertNotNull(has.createActionDefaultConf("jt", "action"));
         assertNotNull(has.createActionDefaultConf("jt", "actionx"));
@@ -154,7 +154,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateJobClient() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getJobTrackerUri());
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
 
         JobClient jc = has.createJobClient(getTestUser(), conf);
         assertNotNull(jc);
@@ -173,7 +173,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateYarnClient() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getJobTrackerUri());
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
 
         YarnClient yc = has.createYarnClient(getTestUser(), conf);
         assertNotNull(yc);
@@ -201,7 +201,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
 
     public void testCreateFileSystem() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getJobTrackerUri());
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
 
         FileSystem fs = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf);
         assertNotNull(fs);
@@ -344,7 +344,7 @@ public class TestHadoopAccessorService extends XFsTestCase {
     public void testCreateLocalResourceForConfigurationFile() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         String filename = "foo.xml";
-        Configuration conf = has.createJobConf(getNameNodeUri());
+        Configuration conf = has.createConfiguration(getNameNodeUri());
         conf.set("foo", "bar");
         LocalResource lRes = has.createLocalResourceForConfigurationFile(filename, getTestUser(), conf, getFileSystem().getUri(),
                 getFsTestCaseDir());

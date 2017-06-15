@@ -520,7 +520,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             WorkflowJob workflow = getWorkflow();
             URI uri = new URI(getWorkflow().getAppPath());
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             return has.createFileSystem(workflow.getUser(), uri, fsConf);
 
         }

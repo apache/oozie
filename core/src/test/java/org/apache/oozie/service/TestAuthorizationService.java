@@ -144,7 +144,7 @@ public class TestAuthorizationService extends XDataTestCase {
 
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
-        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        Configuration fsConf = has.createConfiguration(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
 
         Path path = new Path(fileSystem.getWorkingDirectory(), UUID.randomUUID().toString());
@@ -227,7 +227,7 @@ public class TestAuthorizationService extends XDataTestCase {
 
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
-        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        Configuration fsConf = has.createConfiguration(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
         
         try {

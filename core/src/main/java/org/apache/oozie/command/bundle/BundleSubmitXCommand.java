@@ -250,7 +250,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             Path bundleAppPath = new Path(bundleAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(bundleAppPath.toUri().getAuthority());
+            Configuration fsConf = has.createConfiguration(bundleAppPath.toUri().getAuthority());
             FileSystem fs = has.createFileSystem(user, bundleAppPath.toUri(), fsConf);
 
             // app path could be a directory
@@ -307,7 +307,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             URI uri = new URI(appPath);
             LOG.debug("user =" + user);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
             Path appDefPath = null;
 

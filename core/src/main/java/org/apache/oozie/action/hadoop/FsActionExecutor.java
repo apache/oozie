@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,7 +35,6 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.action.ActionExecutor;
@@ -316,7 +316,7 @@ public class FsActionExecutor extends ActionExecutor {
     private FileSystem getFileSystemFor(Path path, Context context, XConfiguration fsConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(path.toUri().getAuthority());
+        Configuration conf = has.createConfiguration(path.toUri().getAuthority());
         XConfiguration.copy(context.getProtoActionConf(), conf);
         if (fsConf != null) {
             XConfiguration.copy(fsConf, conf);
@@ -332,7 +332,7 @@ public class FsActionExecutor extends ActionExecutor {
      */
     private FileSystem getFileSystemFor(Path path, String user) throws HadoopAccessorException {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf jobConf = has.createJobConf(path.toUri().getAuthority());
+        Configuration jobConf = has.createConfiguration(path.toUri().getAuthority());
         return has.createFileSystem(user, path.toUri(), jobConf);
     }
 

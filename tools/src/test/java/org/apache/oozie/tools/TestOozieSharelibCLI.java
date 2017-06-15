@@ -183,7 +183,7 @@ public class TestOozieSharelibCLI extends XTestCase {
         if (fs == null) {
             HadoopAccessorService has = getServices().get(HadoopAccessorService.class);
             URI uri = new Path(outPath).toUri();
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             fs = has.createFileSystem(System.getProperty("user.name"), uri, fsConf);
         }
         return fs;

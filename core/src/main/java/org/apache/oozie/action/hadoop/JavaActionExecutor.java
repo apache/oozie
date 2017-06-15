@@ -57,7 +57,6 @@ import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.Credentials;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
@@ -246,7 +245,7 @@ public class JavaActionExecutor extends ActionExecutor {
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         Configuration conf = null;
         if (loadResources) {
-            conf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
+            conf = Services.get().get(HadoopAccessorService.class).createConfiguration(jobTracker);
         }
         else {
             conf = new Configuration(false);
@@ -339,7 +338,7 @@ public class JavaActionExecutor extends ActionExecutor {
             else {
               if (path.toUri().getAuthority() != null) {
                 fs = has.createFileSystem(context.getWorkflow().getUser(), path.toUri(),
-                        has.createJobConf(path.toUri().getAuthority()));
+                        has.createConfiguration(path.toUri().getAuthority()));
               }
               else {
                 fs = context.getAppFileSystem();

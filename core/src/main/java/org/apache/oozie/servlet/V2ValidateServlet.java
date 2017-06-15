@@ -77,7 +77,7 @@ public class V2ValidateServlet extends JsonRestServlet {
             try {
                 URI uri = new URI(file);
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-                Configuration fsConf = has.createJobConf(uri.getAuthority());
+                Configuration fsConf = has.createConfiguration(uri.getAuthority());
                 FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
                 Path path = new Path(uri.getPath());

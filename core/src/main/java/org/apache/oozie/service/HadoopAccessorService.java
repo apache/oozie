@@ -338,20 +338,20 @@ public class HadoopAccessorService implements Service {
     }
 
     /**
-     * Creates a JobConf using the site configuration for the specified hostname:port.
+     * Creates a Configuration using the site configuration for the specified hostname:port.
      * <p>
      * If the specified hostname:port is not defined it falls back to the '*' site
      * configuration if available. If the '*' site configuration is not available,
      * the JobConf has all Hadoop defaults.
      *
      * @param hostPort hostname:port to lookup Hadoop site configuration.
-     * @return a JobConf with the corresponding site configuration for hostPort.
+     * @return a Configuration with the corresponding site configuration for hostPort.
      */
-    public JobConf createJobConf(String hostPort) {
-        JobConf jobConf = new JobConf(getCachedConf());
-        XConfiguration.copy(getConfiguration(hostPort), jobConf);
-        jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
-        return jobConf;
+    public Configuration createConfiguration(String hostPort) {
+        Configuration appConf = new Configuration(getCachedConf());
+        XConfiguration.copy(getConfiguration(hostPort), appConf);
+        appConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
+        return appConf;
     }
 
     public Configuration getCachedConf() {

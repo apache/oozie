@@ -45,8 +45,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 import org.xml.sax.SAXException;
@@ -55,7 +53,7 @@ import com.google.common.base.Strings;
 import javax.xml.parsers.ParserConfigurationException;
 
 // TODO: OYA: Delete :)
-public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, Runnable {
+public class LauncherMapper<K1, V1, K2, V2> implements Runnable {
 
     static final String CONF_OOZIE_ACTION_MAIN_CLASS = "oozie.launcher.action.main.class";
 
@@ -122,7 +120,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
-    private JobConf jobConf;
+    private Configuration appConf;
     private Path actionDir;
     private ScheduledThreadPoolExecutor timer;
 
@@ -134,16 +132,15 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         actionData = new HashMap<String,String>();
     }
 
-    @Override
-    public void configure(JobConf jobConf) {
+    public void configure(Configuration appConf) {
         System.out.println();
         System.out.println("Oozie Launcher starts");
         System.out.println();
-        this.jobConf = jobConf;
-        actionDir = new Path(getJobConf().get(OOZIE_ACTION_DIR_PATH));
-        String recoveryId = jobConf.get(OOZIE_ACTION_RECOVERY_ID, null);
+        this.appConf = appConf;
+        actionDir = new Path(getAppConf().get(OOZIE_ACTION_DIR_PATH));
+        String recoveryId = appConf.get(OOZIE_ACTION_RECOVERY_ID, null);
         try {
-            setRecoveryId(jobConf, actionDir, recoveryId);
+            setRecoveryId(appConf, actionDir, recoveryId);
         }
         catch (LauncherException ex) {
             System.out.println("Launcher config error "+ex.getMessage());
@@ -152,7 +149,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
-    @Override
+
     public void map(K1 key, V1 value, OutputCollector<K2, V2> collector, Reporter reporter) throws IOException {
         SecurityManager initialSecurityManager = System.getSecurityManager();
         try {
@@ -160,8 +157,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                 throw configureFailureEx;
             }
             else {
-                String mainClass = getJobConf().get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                if (getJobConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false)) {
+                String mainClass = getAppConf().get(CONF_OOZIE_ACTION_MAIN_CLASS);
+                if (getAppConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false)) {
                   System.err.println("WARNING, workaround for Hadoop 2.0.2-alpha distributed cached issue (MAPREDUCE-4820) enabled");
                 }
                 String msgPrefix = "Main class [" + mainClass + "], ";
@@ -193,7 +190,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                         throw new LauncherException(ex.getMessage(), ex);
                     }
 
-                    String[] args = getMainArguments(getJobConf());
+                    String[] args = getMainArguments(getAppConf());
 
                     printContentsOfCurrentDir();
 
@@ -214,7 +211,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.println("Main class        : " + mainClass);
                     System.out.println();
                     System.out.println("Maximum output    : "
-                            + getJobConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024));
+                            + getAppConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024));
                     System.out.println();
                     printArgs("Arguments         :", args);
 
@@ -233,7 +230,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
                     System.out.flush();
 
                     try {
-                        Class klass = getJobConf().getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
+                        Class klass = getAppConf().getClass(CONF_OOZIE_ACTION_MAIN_CLASS, Object.class);
                         Method mainMethod = klass.getMethod("main", String[].class);
                         mainMethod.invoke(null, (Object) args);
                     }
@@ -326,7 +323,6 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         }
     }
 
-    @Override
     public void close() throws IOException {
         System.out.println();
         System.out.println("Oozie Launcher ends");
@@ -361,8 +357,8 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         Configuration.addDefaultResource(PROPAGATION_CONF_XML);
     }
 
-    protected JobConf getJobConf() {
-        return jobConf;
+    protected Configuration getAppConf() {
+        return appConf;
     }
 
     private void handleActionData() throws IOException, LauncherException {
@@ -380,7 +376,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         if (statsProp != null) {
             File actionStatsData = new File(statsProp);
             if (actionStatsData.exists()) {
-                int statsMaxOutputData = getJobConf().getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, Integer.MAX_VALUE);
+                int statsMaxOutputData = getAppConf().getInt(CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, Integer.MAX_VALUE);
                 actionData.put(ACTION_DATA_STATS, getLocalFileContentStr(actionStatsData, "Stats", statsMaxOutputData));
             }
         }
@@ -390,7 +386,7 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         if (outputProp != null) {
             File actionOutputData = new File(outputProp);
             if (actionOutputData.exists()) {
-                int maxOutputData = getJobConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024);
+                int maxOutputData = getAppConf().getInt(CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 2 * 1024);
                 actionData.put(ACTION_DATA_OUTPUT_PROPS,
                         getLocalFileContentStr(actionOutputData, "Output", maxOutputData));
             }
@@ -426,14 +422,14 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     private void uploadActionDataToHDFS() throws IOException {
         if (!actionData.isEmpty()) {
             Path finalPath = new Path(actionDir, ACTION_DATA_SEQUENCE_FILE);
-            FileSystem fs = FileSystem.get(finalPath.toUri(), getJobConf());
+            FileSystem fs = FileSystem.get(finalPath.toUri(), getAppConf());
             // upload into sequence file
             System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: "
                     + new Path(actionDir, ACTION_DATA_SEQUENCE_FILE).toUri());
 
             SequenceFile.Writer wr = null;
             try {
-                wr = SequenceFile.createWriter(fs, getJobConf(), finalPath, Text.class, Text.class);
+                wr = SequenceFile.createWriter(fs, getAppConf(), finalPath, Text.class, Text.class);
                 if (wr != null) {
                     for (Entry<String, String> entry : actionData.entrySet()) {
                         wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
@@ -458,12 +454,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
     private void setupMainConfiguration() throws IOException {
         Path pathNew = new Path(new Path(actionDir, ACTION_CONF_XML),
                 new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
-        FileSystem fs = FileSystem.get(pathNew.toUri(), getJobConf());
+        FileSystem fs = FileSystem.get(pathNew.toUri(), getAppConf());
         fs.copyToLocalFile(new Path(actionDir, ACTION_CONF_XML), new Path(new File(ACTION_CONF_XML).getAbsolutePath()));
 
-        System.setProperty("oozie.launcher.job.id", getJobConf().get("mapred.job.id"));
-        System.setProperty(OOZIE_JOB_ID, getJobConf().get(OOZIE_JOB_ID));
-        System.setProperty(OOZIE_ACTION_ID, getJobConf().get(OOZIE_ACTION_ID));
+        System.setProperty("oozie.launcher.job.id", getAppConf().get("mapred.job.id"));
+        System.setProperty(OOZIE_JOB_ID, getAppConf().get(OOZIE_JOB_ID));
+        System.setProperty(OOZIE_ACTION_ID, getAppConf().get(OOZIE_ACTION_ID));
         System.setProperty("oozie.action.conf.xml", new File(ACTION_CONF_XML).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_EXTERNAL_CHILD_IDS,
                 new File(ACTION_DATA_EXTERNAL_CHILD_IDS).getAbsolutePath());
@@ -471,12 +467,12 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
         System.setProperty(ACTION_PREFIX + ACTION_DATA_NEW_ID, new File(ACTION_DATA_NEW_ID).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_OUTPUT_PROPS, new File(ACTION_DATA_OUTPUT_PROPS).getAbsolutePath());
         System.setProperty(ACTION_PREFIX + ACTION_DATA_ERROR_PROPS, new File(ACTION_DATA_ERROR_PROPS).getAbsolutePath());
-        if (getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME) != null) {
+        if (getAppConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME) != null) {
             System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME,
-                    getJobConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME));
+                    getAppConf().get(LauncherMain.OOZIE_JOB_LAUNCH_TIME));
         }
 
-        String actionConfigClass = getJobConf().get(OOZIE_ACTION_CONFIG_CLASS);
+        String actionConfigClass = getAppConf().get(OOZIE_ACTION_CONFIG_CLASS);
         if (actionConfigClass != null) {
             System.setProperty(OOZIE_ACTION_CONFIG_CLASS, actionConfigClass);
         }
@@ -484,10 +480,10 @@ public class LauncherMapper<K1, V1, K2, V2> implements Mapper<K1, V1, K2, V2>, R
 
     // Method to execute the prepare actions
     private void executePrepare() throws IOException, LauncherException, ParserConfigurationException, SAXException {
-        String prepareXML = getJobConf().get(ACTION_PREPARE_XML);
+        String prepareXML = getAppConf().get(ACTION_PREPARE_XML);
         if (prepareXML != null) {
              if (!prepareXML.equals("")) {
-                 Configuration actionConf = new Configuration(getJobConf());
+                 Configuration actionConf = new Configuration(getAppConf());
                  String actionXml = System.getProperty("oozie.action.conf.xml");
                  actionConf.addResource(new Path("file:///", actionXml));
                  PrepareActionsDriver.doOperations(prepareXML, actionConf);

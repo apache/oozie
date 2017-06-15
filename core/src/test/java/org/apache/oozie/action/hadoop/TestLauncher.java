@@ -70,34 +70,33 @@ public class TestLauncher extends XFsTestCase {
         Path launcherJar = new Path(actionDir, "launcher.jar");
         fs.copyFromLocalFile(new Path(jar.toString()), launcherJar);
 
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
-            createJobConf(new URI(getNameNodeUri()).getAuthority());
-//        jobConf.setJar(jar.getAbsolutePath());
-        jobConf.set("user.name", getTestUser());
-        jobConf.setInt("mapred.map.tasks", 1);
-        jobConf.setInt("mapred.map.max.attempts", 1);
-        jobConf.setInt("mapred.reduce.max.attempts", 1);
+        Configuration appConf = Services.get().get(HadoopAccessorService.class).
+                createConfiguration(new URI(getNameNodeUri()).getAuthority());
+        appConf.set("user.name", getTestUser());
+        appConf.setInt("mapred.map.tasks", 1);
+        appConf.setInt("mapred.map.max.attempts", 1);
+        appConf.setInt("mapred.reduce.max.attempts", 1);
 
-        jobConf.set("mapreduce.framework.name", "yarn");
-        jobConf.set("mapred.job.tracker", getJobTrackerUri());
-        jobConf.set("fs.default.name", getNameNodeUri());
+        appConf.set("mapreduce.framework.name", "yarn");
+        appConf.set("mapred.job.tracker", getJobTrackerUri());
+        appConf.set("fs.default.name", getNameNodeUri());
 
 
-        LauncherHelper.setupMainClass(jobConf, LauncherMainTester.class.getName());
-        LauncherHelper.setupMainArguments(jobConf, arg);
+        LauncherHelper.setupMainClass(appConf, LauncherMainTester.class.getName());
+        LauncherHelper.setupMainArguments(appConf, arg);
 
         Configuration actionConf = new XConfiguration();
-        LauncherHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
-        LauncherHelper.setupYarnRestartHandling(jobConf, jobConf, "1@a", System.currentTimeMillis());
+        LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+        LauncherHelper.setupYarnRestartHandling(appConf, appConf, "1@a", System.currentTimeMillis());
 
         assertEquals("1", actionConf.get("oozie.job.id"));
         assertEquals("1@a", actionConf.get("oozie.action.id"));
 
-        DistributedCache.addFileToClassPath(new Path(launcherJar.toUri().getPath()), jobConf);
+        DistributedCache.addFileToClassPath(new Path(launcherJar.toUri().getPath()), appConf);
 
         JobClient jobClient = createJobClient();
 
-        final RunningJob runningJob = jobClient.submitJob(jobConf);
+        final RunningJob runningJob = jobClient.submitJob(new JobConf(appConf));
 
         System.out.println("Action Dir: " + actionDir);
         System.out.println("LauncherMapper ID: " + runningJob.getJobID().toString());
@@ -108,7 +107,7 @@ public class TestLauncher extends XFsTestCase {
             }
         });
 
-        assertTrue(jobConf.get("oozie.action.prepare.xml").equals(""));
+        assertTrue(appConf.get("oozie.action.prepare.xml").equals(""));
         return runningJob;
 
     }
@@ -304,15 +303,15 @@ public class TestLauncher extends XFsTestCase {
         Path actionDir = getFsTestCaseDir();
 
         // Setting up the job configuration
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
-            createJobConf(new URI(getNameNodeUri()).getAuthority());
-        jobConf.set("user.name", getTestUser());
-        jobConf.set("fs.default.name", getNameNodeUri());
+        Configuration appConf = Services.get().get(HadoopAccessorService.class).
+                createConfiguration(new URI(getNameNodeUri()).getAuthority());
+        appConf.set("user.name", getTestUser());
+        appConf.set("fs.default.name", getNameNodeUri());
 
         Configuration actionConf = new XConfiguration();
         String prepareBlock = "";
-        LauncherHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, prepareBlock);
-        assertTrue(jobConf.get("oozie.action.prepare.xml").equals(""));
+        LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, prepareBlock);
+        assertTrue(appConf.get("oozie.action.prepare.xml").equals(""));
     }
 
     // Test to ensure that the property value "oozie.action.prepare.xml" in the configuration of the job is properly set
@@ -323,15 +322,15 @@ public class TestLauncher extends XFsTestCase {
         Path newDir = new Path(actionDir, "newDir");
 
         // Setting up the job configuration
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).
-            createJobConf(new URI(getNameNodeUri()).getAuthority());
-        jobConf.set("user.name", getTestUser());
-        jobConf.set("fs.default.name", getNameNodeUri());
+        Configuration appConf = Services.get().get(HadoopAccessorService.class).
+                createConfiguration(new URI(getNameNodeUri()).getAuthority());
+        appConf.set("user.name", getTestUser());
+        appConf.set("fs.default.name", getNameNodeUri());
 
         Configuration actionConf = new XConfiguration();
         String prepareBlock = "<prepare>" + "<mkdir path='" + newDir + "'/>" + "</prepare>";
-        LauncherHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, prepareBlock);
-        assertTrue(jobConf.get("oozie.action.prepare.xml").equals(prepareBlock));
+        LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, prepareBlock);
+        assertTrue(appConf.get("oozie.action.prepare.xml").equals(prepareBlock));
     }
 
     public void testSetupMainClass() throws Exception {
@@ -360,22 +359,22 @@ public class TestLauncher extends XFsTestCase {
   public void testSetupLauncherInfoHadoop2_0_2_alphaWorkaround() throws Exception {
     Path actionDir = getFsTestCaseDir();
     // Setting up the job configuration
-    JobConf jobConf = Services.get().get(HadoopAccessorService.class).
-      createJobConf(new URI(getNameNodeUri()).getAuthority());
-    jobConf.set("user.name", getTestUser());
-    jobConf.set("fs.default.name", getNameNodeUri());
+      Configuration appConf = Services.get().get(HadoopAccessorService.class).
+              createConfiguration(new URI(getNameNodeUri()).getAuthority());
+    appConf.set("user.name", getTestUser());
+    appConf.set("fs.default.name", getNameNodeUri());
 
     Configuration actionConf = new XConfiguration();
     actionConf.set("mapreduce.job.cache.files", "a.jar,aa.jar#aa.jar");
-    LauncherHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
-    assertFalse(jobConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
+    LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+    assertFalse(appConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
     assertEquals("a.jar,aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
 
     Services.get().getConf().setBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", true);
     actionConf = new XConfiguration();
     actionConf.set("mapreduce.job.cache.files", "a.jar,aa.jar#aa.jar");
-    LauncherHelper.setupLauncherInfo(jobConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
-    assertTrue(jobConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
+    LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
+    assertTrue(appConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
     assertEquals("aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
   }
 

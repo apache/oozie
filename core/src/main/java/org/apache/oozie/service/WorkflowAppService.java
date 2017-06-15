@@ -23,7 +23,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
@@ -116,8 +115,8 @@ public abstract class WorkflowAppService implements Service {
         try {
             URI uri = new URI(appPath);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            JobConf jobConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, uri, jobConf);
+            Configuration appConf = has.createConfiguration(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, uri, appConf);
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -167,7 +166,7 @@ public abstract class WorkflowAppService implements Service {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
-            Configuration conf = has.createJobConf(uri.getAuthority());
+            Configuration conf = has.createConfiguration(uri.getAuthority());
             XConfiguration protoConf = new XConfiguration();
 
 

@@ -346,7 +346,7 @@ public class EmailActionExecutor extends ActionExecutor {
         URI uri;
         public URIDataSource(URI uri, String user) throws HadoopAccessorException {
             this.uri = uri;
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             fs = has.createFileSystem(user, uri, fsConf);
         }
 

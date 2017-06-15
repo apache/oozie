@@ -47,8 +47,6 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 
-import com.google.common.base.Preconditions;
-
 public class OozieSharelibCLI {
     public static final String[] HELP_INFO = {
             "",
@@ -170,7 +168,7 @@ public class OozieSharelibCLI {
             System.out.println("the destination path for sharelib is: " + dstPath);
 
             URI uri = new Path(hdfsUri).toUri();
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = FileSystem.get(uri, fsConf);
 
 

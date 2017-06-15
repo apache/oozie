@@ -555,7 +555,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             Path coordAppPath = new Path(coordAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(coordAppPath.toUri().getAuthority());
+            Configuration fsConf = has.createConfiguration(coordAppPath.toUri().getAuthority());
             FileSystem fs = has.createFileSystem(user, coordAppPath.toUri(), fsConf);
 
             // app path could be a directory
@@ -1174,7 +1174,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             URI uri = new URI(appPath);
             LOG.debug("user =" + user);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
             Path appDefPath = null;
 

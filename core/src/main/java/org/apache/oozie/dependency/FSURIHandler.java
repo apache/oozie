@@ -180,7 +180,7 @@ public class FSURIHandler implements URIHandler {
         if (user == null) {
             throw new HadoopAccessorException(ErrorCode.E0902, "user has to be specified to access FileSystem");
         }
-        Configuration fsConf = service.createJobConf(uri.getAuthority());
+        Configuration fsConf = service.createConfiguration(uri.getAuthority());
         return service.createFileSystem(user, uri, fsConf);
     }
 

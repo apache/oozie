@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
@@ -160,8 +161,8 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
     }
 
     private String launchSleepJob(int sleep) throws Exception {
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class)
-                .createJobConf(new URI(getNameNodeUri()).getAuthority());
+        Configuration jobConf = Services.get().get(HadoopAccessorService.class)
+                .createConfiguration(new URI(getNameNodeUri()).getAuthority());
         JobClient jobClient = createJobClient();
 
         SleepJob sleepjob = new SleepJob();
@@ -171,7 +172,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         jobConf.set(LauncherMain.MAPREDUCE_JOB_TAGS, "sleepjob");
         System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
 
-        jobClient.submitJob(jobConf);
+        jobClient.submitJob(new JobConf(jobConf));
         Set<ApplicationId> apps = Sets.newHashSet();
         apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);
         assertEquals("Number of YARN apps", apps.size(), 1);

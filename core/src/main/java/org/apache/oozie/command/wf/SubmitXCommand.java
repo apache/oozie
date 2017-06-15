@@ -137,7 +137,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             String user = conf.get(OozieClient.USER_NAME);
             URI uri = new URI(conf.get(OozieClient.APP_PATH));
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path configDefault = null;

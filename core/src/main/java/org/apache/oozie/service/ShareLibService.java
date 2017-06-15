@@ -121,7 +121,7 @@ public class ShareLibService implements Service, Instrumentable {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
         try {
-            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+            fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
             //cache action key sharelib conf list
             cacheActionKeySharelibConfList();
             updateLauncherLib();
@@ -174,7 +174,7 @@ public class ShareLibService implements Service, Instrumentable {
                 Path launcherlibPath = getLauncherlibPath();
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
                 URI uri = launcherlibPath.toUri();
-                fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+                fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
             }
             Path launcherlibPath = getLauncherlibPath();
             setupLauncherLibPath(fs, launcherlibPath);
@@ -527,7 +527,7 @@ public class ShareLibService implements Service, Instrumentable {
             Path launcherlibPath = getLauncherlibPath();
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = launcherlibPath.toUri();
-            fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+            fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
         }
 
         Map<String, List<Path>> tempShareLibMap = new HashMap<String, List<Path>>();
@@ -613,7 +613,7 @@ public class ShareLibService implements Service, Instrumentable {
 
         Path shareFileMappingPath = new Path(sharelibFileMapping);
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        FileSystem filesystem = FileSystem.get(has.createJobConf(shareFileMappingPath.toUri().getAuthority()));
+        FileSystem filesystem = FileSystem.get(has.createConfiguration(shareFileMappingPath.toUri().getAuthority()));
         Properties prop = new Properties();
         prop.load(filesystem.open(new Path(sharelibFileMapping)));
 
