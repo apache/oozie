@@ -1717,7 +1717,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>findbugs-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -1747,7 +1747,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.1</version>
                 <configuration>
                     <excludeSubProjects>false</excludeSubProjects>
                     <xmlOutput>true</xmlOutput>
@@ -1759,6 +1758,13 @@
                     <xmlOutput>true</xmlOutput>
                     <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
                     <excludeFilterFile>findbugs-filter.xml</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.6.0</version>
+                        </plugin>
+                    </plugins>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -1788,6 +1794,9 @@
                             <dir>${project.build.directory}/findbugs</dir>
                             <outputDir>${project.build.directory}/findbugs</outputDir>
                             <stylesheet>fancy-hist.xsl</stylesheet>
+                            <excludes>
+                                <exclude>**/findsecbugs*.jar</exclude>
+                            </excludes>
                             <fileMappers>
                                 <fileMapper
                                        implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
@@ -1809,7 +1818,7 @@
                     <dependency>
                         <groupId>com.google.code.findbugs</groupId>
                         <artifactId>findbugs</artifactId>
-                        <version>2.0.3</version>
+                        <version>3.0.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
