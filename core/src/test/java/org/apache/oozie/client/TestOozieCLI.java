@@ -43,6 +43,7 @@ import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockCoordinatorEngineService;
 import org.apache.oozie.servlet.MockDagEngineService;
+import org.apache.oozie.servlet.SLAServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.servlet.V1JobsServlet;
@@ -63,14 +64,15 @@ public class TestOozieCLI extends DagServletTestCase {
         new V2AdminServlet();
         new V2JobServlet();
         new V2ValidateServlet();
+        new SLAServlet();
     }
 
     static final boolean IS_SECURITY_ENABLED = false;
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*",
-            VERSION + "/validate/*"};
+            VERSION + "/validate/*", "/v1/sla"};
     static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
-            V2JobServlet.class, V2AdminServlet.class, V2ValidateServlet.class, V2JobServlet.class, V2AdminServlet.class};
+            V2JobServlet.class, V2AdminServlet.class, V2ValidateServlet.class, SLAServlet.class};
 
     @Override
     protected void setUp() throws Exception {
@@ -1317,19 +1319,16 @@ public class TestOozieCLI extends DagServletTestCase {
     }
 
     /**
-     * Could not authenticate, Authentication failed, status: 404, message: Not Found
+     * Test response to sla list
      */
     public void testSlaEvents() throws Exception {
         runTest(END_POINTS, SERVLET_CLASSES, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                Path appPath = new Path(getFsTestCaseDir(), "app");
-                getFileSystem().mkdirs(appPath);
                 String oozieUrl = getContextURL();
                 String[] args = new String[] {"sla", "-oozie", oozieUrl, "-len", "1" };
-
-                String out = runOozieCLIAndGetStderr(args);
-                assertTrue(out.contains("Could not authenticate, Authentication failed, status: 404, message: Not Found"));
+                String out = runOozieCLIAndGetStdout(args);
+                assertTrue(out, out.contains("<sla-message>"));
 
                 return null;
             }
