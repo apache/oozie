@@ -97,12 +97,9 @@ public class EmbeddedServletContainer {
      */
     public void start() throws Exception {
         host = InetAddress.getLocalHost().getHostName();
-        ServerSocket ss = new ServerSocket(0);
-        port = ss.getLocalPort();
-        ss.close();
         server.getConnectors()[0].setHost(host);
-        server.getConnectors()[0].setPort(port);
         server.start();
+        port = server.getConnectors()[0].getLocalPort();
         System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
     }
 
