@@ -1488,6 +1488,10 @@ public class JavaActionExecutor extends ActionExecutor {
      * @param actionFs the FileSystem object
      * @param action the Workflow action
      * @param context executor context
+     * @throws org.apache.oozie.service.HadoopAccessorException
+     * @throws org.jdom.JDOMException
+     * @throws java.io.IOException
+     * @throws java.net.URISyntaxException
      *
      */
     protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
@@ -1625,6 +1629,9 @@ public class JavaActionExecutor extends ActionExecutor {
      *
      * @param context executor context
      * @param actionFs the FileSystem object
+     * @throws java.io.IOException
+     * @throws org.apache.oozie.service.HadoopAccessorException
+     * @throws java.net.URISyntaxException
      */
     protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
             HadoopAccessorException, URISyntaxException {

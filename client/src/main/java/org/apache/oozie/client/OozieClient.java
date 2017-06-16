@@ -850,6 +850,8 @@ public class OozieClient {
      * dryrun for a given job
      *
      * @param conf Job configuration.
+     * @return new job.
+     * @throws org.apache.oozie.client.OozieClientException thrown if the job could not be submitted.
      */
     public String dryrun(Properties conf) throws OozieClientException {
         return new JobSubmit(conf, RestConstants.JOB_ACTION_DRYRUN).call();

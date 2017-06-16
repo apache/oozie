@@ -157,6 +157,7 @@ public class XOozieClient extends OozieClient {
      * @param pigScriptFile pig script file.
      * @param pigArgs pig arguments string.
      * @return the job Id.
+     * @throws java.io.IOException thrown if there is a problem with pig script file.
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     @Deprecated
@@ -170,7 +171,9 @@ public class XOozieClient extends OozieClient {
      * @param conf job configuration.
      * @param scriptFile  script file.
      * @param args  arguments string.
+     * @param jobType job type.
      * @return the job Id.
+     * @throws java.io.IOException thrown if there is a problem with script file.
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String jobType)
@@ -185,7 +188,9 @@ public class XOozieClient extends OozieClient {
      * @param scriptFile  script file.
      * @param args  arguments string.
      * @param params parameters string.
+     * @param jobType job type.
      * @return the job Id.
+     * @throws java.io.IOException thrown if there is a problem with file.
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String[] params, String jobType)
