@@ -867,7 +867,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     tagElem.setText(val);
                 }
                 catch (Exception e) {
-                    //throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
+                    LOG.warn(e.getMessage() + " Not defiend in job.properties! ");
                     continue;
                 }
             }
