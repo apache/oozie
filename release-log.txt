@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2815 amend - Oozie not always display job log (andras.piros via gezapeti)
 OOZIE-2946 Include find-sec-bugs plugin (Jan Hentschel via rkanter)
 OOZIE-2950 TestOozieCLI.testSlaEvents is not testing SLAServlet. (gezapeti)
 OOZIE-2924 ./bin/mkdistro.sh reports a number instances of no @throws for Exception (Artem Ervits via gezapeti)

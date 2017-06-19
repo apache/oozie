@@ -28,9 +28,24 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
 public class TestTimestampedMessageParser extends XTestCase {
+    private Services services;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        services = new Services();
+        services.init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        services.destroy();
+        super.tearDown();
+    }
 
     static File prepareFile1(String dir) throws IOException {
         File file = new File(dir + "/test1.log");
