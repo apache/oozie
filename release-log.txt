@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2796 oozie.action.keep.action.dir not getting notice (zgengxb2005 via gezapeti)
 OOZIE-2769 Extend FS action to allow setrep on a file (Artem Ervits via gezapeti)
 OOZIE-2815 amend - Oozie not always display job log (andras.piros via gezapeti)
 OOZIE-2946 Include find-sec-bugs plugin (Jan Hentschel via rkanter)

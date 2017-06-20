@@ -19,6 +19,7 @@
 package org.apache.oozie.command.wf;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -26,12 +27,16 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.XConfiguration;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This Command is expected to be called when a Workflow moves to any terminal
@@ -40,40 +45,58 @@ import org.apache.oozie.service.Services;
  */
 public class WfEndXCommand extends WorkflowXCommand<Void> {
 
-    private WorkflowJob job = null;
+    private WorkflowJobBean jobBean = null;
 
-    public WfEndXCommand(WorkflowJob job) {
+    public WfEndXCommand(WorkflowJobBean jobBean) {
         super("wf_end", "wf_end", 1);
-        this.job = job;
+        this.jobBean = jobBean;
     }
 
     @Override
     protected Void execute() throws CommandException {
-        LOG.debug("STARTED WFEndXCommand " + job.getId());
+        LOG.debug("STARTED WFEndXCommand " + jobBean.getId());
         deleteWFDir();
-        LOG.debug("ENDED WFEndXCommand " + job.getId());
+        LOG.debug("ENDED WFEndXCommand " + jobBean.getId());
         return null;
     }
 
     private void deleteWFDir() throws CommandException {
         FileSystem fs;
         try {
-            fs = getAppFileSystem(job);
-            String wfDir = Services.get().getSystemId() + "/" + job.getId();
+            fs = getAppFileSystem(jobBean);
+            String wfDir = Services.get().getSystemId() + "/" + jobBean.getId();
             Path wfDirPath = new Path(fs.getHomeDirectory(), wfDir);
+
             LOG.debug("WF tmp dir :" + wfDirPath);
-            if (fs.exists(wfDirPath)) {
+            boolean keepActionDir = keepWfActionDir();
+            if (!keepActionDir && fs.exists(wfDirPath)) {
                 fs.delete(wfDirPath, true);
+            }
+            else if (keepActionDir) {
+                LOG.debug(KEEP_WF_ACTION_DIR + " is set to true");
             }
             else {
                 LOG.debug("Tmp dir doesn't exist :" + wfDirPath);
             }
         }
         catch (Exception e) {
-            LOG.error("Unable to delete WF temp dir of wf id :" + job.getId(), e);
-            throw new CommandException(ErrorCode.E0819, job.getId(), e);
+            LOG.error("Unable to delete WF temp dir of wf id :" + jobBean.getId(), e);
+            throw new CommandException(ErrorCode.E0819, jobBean.getId(), e);
         }
+    }
 
+    @VisibleForTesting
+    protected boolean keepWfActionDir() throws IOException {
+        if (jobBean.getProtoActionConf() == null) {
+            return false;
+        }
+        Configuration wfConf = getWfConfiguration();
+        return wfConf.getBoolean(KEEP_WF_ACTION_DIR, false);
+    }
+
+    @VisibleForTesting
+    protected Configuration getWfConfiguration() throws IOException {
+        return new XConfiguration(new StringReader(jobBean.getProtoActionConf()));
     }
 
     protected FileSystem getAppFileSystem(WorkflowJob workflow) throws HadoopAccessorException, IOException,
@@ -86,7 +109,7 @@ public class WfEndXCommand extends WorkflowXCommand<Void> {
 
     @Override
     public String getEntityKey() {
-        return job.getId();
+        return jobBean.getId();
     }
 
     @Override

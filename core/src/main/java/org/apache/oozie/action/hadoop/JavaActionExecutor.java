@@ -84,6 +84,7 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.coord.CoordActionStartXCommand;
+import org.apache.oozie.command.wf.WorkflowXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -511,7 +512,7 @@ public class JavaActionExecutor extends ActionExecutor {
     void cleanUpActionDir(FileSystem actionFs, Context context) throws ActionExecutorException {
         try {
             Path actionDir = context.getActionDir();
-            if (!context.getProtoActionConf().getBoolean("oozie.action.keep.action.dir", false)
+            if (!context.getProtoActionConf().getBoolean(WorkflowXCommand.KEEP_WF_ACTION_DIR, false)
                     && actionFs.exists(actionDir)) {
                 actionFs.delete(actionDir, true);
             }

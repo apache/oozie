@@ -41,6 +41,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.command.wf.WorkflowXCommand;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.service.ConfigurationService;
@@ -630,7 +631,7 @@ public class FsActionExecutor extends ActionExecutor {
         WorkflowAction.Status status = externalStatus.equals("OK") ? WorkflowAction.Status.OK :
                                        WorkflowAction.Status.ERROR;
         context.setEndData(status, getActionSignal(status));
-        if (!context.getProtoActionConf().getBoolean("oozie.action.keep.action.dir", false)) {
+        if (!context.getProtoActionConf().getBoolean(WorkflowXCommand.KEEP_WF_ACTION_DIR, false)) {
             try {
                 FileSystem fs = context.getAppFileSystem();
                 fs.delete(context.getActionDir(), true);

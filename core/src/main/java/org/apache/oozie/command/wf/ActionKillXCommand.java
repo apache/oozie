@@ -208,7 +208,7 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
             FileSystem actionFs = context.getAppFileSystem();
             Path actionDir = context.getActionDir();
             Path jobDir = actionDir.getParent();
-            if (!context.getProtoActionConf().getBoolean("oozie.action.keep.action.dir", false)
+            if (!context.getProtoActionConf().getBoolean(KEEP_WF_ACTION_DIR, false)
                     && actionFs.exists(actionDir)) {
                 actionFs.delete(actionDir, true);
             }
