@@ -862,12 +862,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         for (Element tagElem : (List<Element>) elem.getChildren()) {
             if (tagElem != null) {
                 try {
-                    String val = null;
-                    val = CoordELFunctions.evalAndWrap(evalNofuncs, tagElem.getText().trim());
+                    String val = CoordELFunctions.evalAndWrap(evalNofuncs, tagElem.getText().trim());
                     tagElem.setText(val);
                 }
                 catch (Exception e) {
-                    //throw new CoordinatorJobException(ErrorCode.E1004, e.getMessage(), e);
+                    LOG.warn("Variable is not defined in job.properties. Here is the message: {0}", e.getMessage());
                     continue;
                 }
             }
