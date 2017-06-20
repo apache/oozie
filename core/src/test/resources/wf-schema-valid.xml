@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.1" name="test-wf">
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="test-wf">
     <start to="a"/>
     <decision name="a">
         <switch>
@@ -100,6 +100,9 @@
             <delete path='/tmp2'/>
             <mkdir path='/tmp3'/>
             <delete path='/tmp3'/>
+            <mkdir path='/tmp4'/>
+            <touchz path='/tmp4/file'/>
+            <setrep path='/tmp4/file' replication-factor='2'/>
         </fs>
         <ok to="z"/>
         <error to="b"/>

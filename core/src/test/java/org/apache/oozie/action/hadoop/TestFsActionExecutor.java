@@ -1214,4 +1214,17 @@ public void testChmodRecursive() throws Exception {
             assertEquals(ActionExecutorException.ErrorType.ERROR, ((ActionExecutorException) e).getErrorType());
         }
     }
+
+    public void testSetRep() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Path path = new Path(getFsTestCaseDir(), "dir1");
+        Context context = createContext("<fs/>");
+        fs.mkdirs(path);
+        Path file = new Path(path + "/file");
+        fs.createNewFile(file);
+        final short replicationFactor = (short) 2;
+        ae.setrep(context, path, replicationFactor);
+        assertEquals(replicationFactor, fs.getFileStatus(file).getReplication());
+    }
 }

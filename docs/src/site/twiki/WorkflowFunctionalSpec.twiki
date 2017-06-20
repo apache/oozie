@@ -1139,7 +1139,7 @@ All the above elements can be parameterized (templatized) using EL expressions.
 ---++++ 3.2.4 Fs (HDFS) action
 
 The =fs= action allows to manipulate files and directories in HDFS from a workflow application. The supported commands
-are =move=, =delete=, =mkdir=, =chmod=, =touchz= and =chgrp=.
+are =move=, =delete=, =mkdir=, =chmod=, =touchz=, =setrep= and =chgrp=.
 
 The FS commands are executed synchronously from within the FS action, the workflow job will wait until the specified
 file commands are completed before continuing to the next action.
@@ -1174,6 +1174,8 @@ executed. Thus there is less chance of an error occurring while the =fs= action 
             <touchz path='[PATH]' />
             ...
             <chgrp path='[PATH]' group='[GROUP]' dir-files='false' />
+            ...
+            <setrep path='[PATH]' replication-factor='2'/>
         </fs>
         <ok to="[NODE-NAME]"/>
         <error to="[NODE-NAME]"/>
@@ -1218,6 +1220,9 @@ within the directory. To apply the =chgrp= command to the directory, without aff
 the =dir-files= attribute must be set to =false=.
 To apply the =chgrp= command recursively to all levels within a directory, put a =recursive= element inside the <chgrp> element.
 
+The =setrep= command changes replication factor of an hdfs file(s). Changing RF of directories or symlinks is not
+supported; this action requires an argument for RF.
+
 *Example:*
 
 <verbatim>
@@ -1230,6 +1235,7 @@ To apply the =chgrp= command recursively to all levels within a directory, put a
             <move source='${jobInput}' target='archives/${wf:id()}/processed-input'/>
             <chmod path='${jobOutput}' permissions='-rwxrw-rw-' dir-files='true'><recursive/></chmod>
             <chgrp path='${jobOutput}' group='testgroup' dir-files='true'><recursive/></chgrp>
+            <setrep path='archives/${wf:id()/filename(s)}' replication-factor='2'/>
         </fs>
         <ok to="myotherjob"/>
         <error to="errorcleanup"/>

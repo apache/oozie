@@ -223,6 +223,16 @@ public class FsActionExecutor extends ActionExecutor {
                                         chgrp(context, fsConf, nameNodePath, path, context.getWorkflow().getUser(),
                                                 group, dirFiles, recursive);
                                     }
+                                    else {
+                                        if (command.equals("setrep")) {
+                                            Path path = getPath(commandElement, "path");
+                                            String replicationFactor =
+                                            commandElement.getAttributeValue("replication-factor");
+                                            if (commandElement.getAttributeValue("replication-factor") != null) {
+                                                setrep(context, path, Short.parseShort(replicationFactor));
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -651,6 +661,20 @@ public class FsActionExecutor extends ActionExecutor {
         if(pathArr.length > maxGlobCount) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS013",
                     "too many globbed files/dirs to do FS operation");
+        }
+    }
+
+    void setrep(Context context, Path path, short replicationFactor)
+            throws ActionExecutorException, HadoopAccessorException {
+        try {
+            path = resolveToFullPath(null, path, true);
+            FileSystem fs = getFileSystemFor(path, context, null);
+
+            if (fs.isFile(path)) {
+                fs.setReplication(path, replicationFactor);
+            }
+        } catch (IOException ex) {
+            convertException(ex);
         }
     }
 
