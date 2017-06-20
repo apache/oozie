@@ -867,7 +867,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     tagElem.setText(val);
                 }
                 catch (Exception e) {
-                    LOG.warn(e.getMessage() + " Not defiend in job.properties! ");
+                    LOG.warn("Variable is not defined in job.properties. Here is the message: {0}", e.getMessage());
                     continue;
                 }
             }
