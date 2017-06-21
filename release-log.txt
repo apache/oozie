@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2936 Fix Javadoc warnings from build (Jan Hentschel via gezapeti)
 OOZIE-2920 Document Distcp can copy files within a cluster (Artem Ervits via rkanter)
 OOZIE-2796 oozie.action.keep.action.dir not getting notice (zgengxb2005 via gezapeti)
 OOZIE-2769 Extend FS action to allow setrep on a file (Artem Ervits via gezapeti)

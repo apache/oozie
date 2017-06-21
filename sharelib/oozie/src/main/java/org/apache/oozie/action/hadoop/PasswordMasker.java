@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A generic password masker that masks {@code Map<String, String>} values given that its keys are considered password keys.
  * <p/>
- * Tested with {@see System#getProperties()} and {@see System#getenv()}.
+ * Tested with {@link System#getProperties()} and {@link System#getenv()}.
  */
 public class PasswordMasker {
 

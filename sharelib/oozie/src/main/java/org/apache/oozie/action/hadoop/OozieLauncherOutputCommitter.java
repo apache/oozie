@@ -51,7 +51,7 @@ public class OozieLauncherOutputCommitter extends OutputCommitter {
 
     /**
      * Did this task write any files in the work directory?
-     * @param context the task's context
+     * @param taskContext the task's context
      */
     @Override
     public boolean needsTaskCommit(TaskAttemptContext taskContext) throws IOException {
