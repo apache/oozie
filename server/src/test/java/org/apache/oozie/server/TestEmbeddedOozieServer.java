@@ -24,6 +24,8 @@ import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -33,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -40,7 +43,9 @@ import java.net.URISyntaxException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -54,16 +59,16 @@ public class TestEmbeddedOozieServer {
     @Mock private Services mockServices;
     @Mock private SslContextFactory mockSSLContextFactory;
     @Mock private SSLServerConnectorFactory mockSSLServerConnectorFactory;
-    @Mock private Server mockServer;
+    @Spy private Server mockServer;
     @Mock private ServerConnector mockServerConnector;
     @Mock private ConfigurationService mockConfigService;
     @Mock private Configuration mockConfiguration;
     @Mock private RewriteHandler mockOozieRewriteHandler;
-    @Mock private EmbeddedOozieServer embeddedOozieServer;
     @Mock private WebAppContext servletContextHandler;
     @Mock private ServletMapper oozieServletMapper;
     @Mock private FilterMapper oozieFilterMapper;
     @Mock private ConstraintSecurityHandler constraintSecurityHandler;
+    private EmbeddedOozieServer embeddedOozieServer;
 
     @Before public void setUp() {
         embeddedOozieServer = new EmbeddedOozieServer(mockServer, mockJspHandler, mockServices, mockSSLServerConnectorFactory,
@@ -77,6 +82,11 @@ public class TestEmbeddedOozieServer {
         doReturn("https://localhost:11443/oozie").when(mockConfiguration).get("oozie.base.url");
         doReturn(mockConfiguration).when(mockConfigService).getConf();
         doReturn(mockConfigService).when(mockServices).get(ConfigurationService.class);
+        doNothing().when(mockServer).setConnectors((Connector[]) anyObject());
+        doNothing().when(mockServer).setHandler((Handler) anyObject());
+        doReturn(new Handler[0]).when(mockOozieRewriteHandler).getChildHandlers();
+        doReturn(new Handler[0]).when(servletContextHandler).getChildHandlers();
+        doReturn(new Handler[0]).when(constraintSecurityHandler).getChildHandlers();
     }
 
     @After public void tearDown() {

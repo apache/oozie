@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.apache.oozie.server.HttpConfigurationWrapper.OOZIE_HTTP_REQUEST_HEADER_SIZE;
@@ -53,7 +54,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class TestSSLServerConnectorFactory {
     @Mock private SslContextFactory mockSSLContextFactory;
     @Mock private SSLServerConnectorFactory mockSSLServerConnectorFactory;
-    @Mock private Server mockServer;
+    @Spy  private Server mockServer;
     @Mock private ServerConnector mockServerConnector;
 
     private Configuration testConfig;
