@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2848 Override sharelib.tgz in distro when rebuilding Oozie (asasvari via gezapeti)
 OOZIE-2943 Fix Findbugs warnings in oozie-sharelib-pig (Jan Hentschel via gezapeti)
 OOZIE-2846 TestSSLServerConnectorFactory fails with Jetty 9.3 and 9.4 (gezapeti)
 OOZIE-2936 Fix Javadoc warnings from build (Jan Hentschel via gezapeti)

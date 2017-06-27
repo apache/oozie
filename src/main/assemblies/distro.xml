@@ -138,7 +138,6 @@
         <file>
             <source>${basedir}/../sharelib/target/oozie-sharelib-${project.version}.tar.gz</source>
             <outputDirectory>/</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
     </files>
 </assembly>
