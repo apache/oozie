@@ -1925,6 +1925,7 @@
                     <descriptors>
                         <descriptor>src/main/assemblies/empty.xml</descriptor>
                     </descriptors>
+                    <attach>false</attach>
                 </configuration>
             </plugin>
             <plugin>
