@@ -101,8 +101,6 @@
          <spark.guava.version>14.0.1</spark.guava.version>
          <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop200</sqoop.classifier>
-         <streaming.version>${hadoop.version}</streaming.version>
-         <hadoop.auth.version>${hadoop.version}</hadoop.auth.version>
          <tez.version>0.8.4</tez.version>
 
          <jetty.version>9.2.19.v20160908</jetty.version>
@@ -323,7 +321,7 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop.auth.version}</version>
+                <version>${hadoop.version}</version>
                 <scope>compile</scope>
                 <exclusions>
                     <exclusion>
@@ -340,7 +338,7 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-core</artifactId>
-                <version>${hadoop.auth.version}</version>
+                <version>${hadoop.version}</version>
                 <scope>compile</scope>
                 <exclusions>
                     <exclusion>
@@ -790,7 +788,7 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-streaming</artifactId>
-                <version>${streaming.version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>

@@ -214,8 +214,6 @@ the versions of the dependencies:
 -Dhadoop.version=<version> - default 2.6.0
 -Ptez - Bundle tez jars in hive and pig sharelibs. Useful if you want to use tez
 as the execution engine for those applications.
--Dhadoop.auth.version=<version> - defaults to hadoop version
--Ddistcp.version=<version> - defaults to hadoop version
 -Dpig.version=<version> - default 0.16.0
 -Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2884 consolidate hadoop versions in pomfiles (Artem Ervits via gezapeti)
 OOZIE-2794 Hive and Pig tests failing when multiple pre-commit jobs are running (gezapeti)
 OOZIE-2849 Fix build warnings when assembling directories (asasvari via gezapeti)
 OOZIE-2848 Override sharelib.tgz in distro when rebuilding Oozie (asasvari via gezapeti)
