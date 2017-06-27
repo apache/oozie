@@ -33,15 +33,14 @@ import org.apache.hadoop.fs.Path;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,7 +51,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class PigMain extends LauncherMain {
-    private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
+    private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<>();
     public static final int STRING_BUFFER_SIZE = 100;
     public static final String LOG_EXPANDED_PIG_SCRIPT = LauncherMapper.ACTION_PREFIX + "pig.log.expandedscript";
 
@@ -127,14 +126,14 @@ public class PigMain extends LauncherMain {
         String callerId = "oozie:" + System.getProperty("oozie.job.id");
         pigProperties.setProperty("pig.log.trace.id", callerId);
 
-        OutputStream os = new FileOutputStream("pig.properties");
-        pigProperties.store(os, "");
-        os.close();
+        try (OutputStream os = new FileOutputStream("pig.properties")) {
+            pigProperties.store(os, "");
+        }
 
         logMasking("pig.properties:", Arrays.asList("password"),
                 (Iterable<Map.Entry<String, String>>)(Iterable<?>) pigProperties.entrySet());
 
-        List<String> arguments = new ArrayList<String>();
+        List<String> arguments = new ArrayList<>();
         String script = actionConf.get(PigActionExecutor.PIG_SCRIPT);
 
         if (script == null) {
@@ -247,7 +246,7 @@ public class PigMain extends LauncherMain {
      * @param arguments
      */
     private void logExpandedScript(String script, List<String> arguments) {
-        List<String> dryrunArgs = new ArrayList<String>();
+        List<String> dryrunArgs = new ArrayList<>();
         dryrunArgs.addAll(arguments);
         dryrunArgs.add("-dryrun");
         try {
@@ -304,13 +303,13 @@ public class PigMain extends LauncherMain {
         System.err.println("Pig logfile dump:");
         System.err.println();
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(pigLog));
-            String line = reader.readLine();
-            while (line != null) {
-                System.err.println(line);
-                line = reader.readLine();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pigLog), "UTF-8"))) {
+                String line = reader.readLine();
+                while (line != null) {
+                    System.err.println(line);
+                    line = reader.readLine();
+                }
             }
-            reader.close();
         }
         catch (FileNotFoundException e) {
             System.err.println("pig log file: " + pigLog + "  not found.");
@@ -330,9 +329,9 @@ public class PigMain extends LauncherMain {
     protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager, boolean retrieveStats) throws Exception {
         // running as from the command line
         boolean pigRunnerExists = true;
-        Class klass;
+
         try {
-            klass = Class.forName("org.apache.pig.PigRunner");
+            Class.forName("org.apache.pig.PigRunner");
         }
         catch (ClassNotFoundException ex) {
             pigRunnerExists = false;
@@ -405,7 +404,7 @@ public class PigMain extends LauncherMain {
     private static void writeExternalData(String data, File f) throws IOException {
         BufferedWriter out = null;
         try {
-            out = new BufferedWriter(new FileWriter(f));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
             out.write(data);
         }
         finally {

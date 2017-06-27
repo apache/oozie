@@ -22,11 +22,12 @@ import org.apache.pig.Main;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -37,7 +38,7 @@ import java.util.Properties;
 import java.util.Set;
 
 public class PigMainWithOldAPI extends LauncherMain {
-    private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<String>();
+    private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<>();
 
     static {
         DISALLOWED_PIG_OPTIONS.add("-4");
@@ -98,9 +99,9 @@ public class PigMainWithOldAPI extends LauncherMain {
             System.out.println("Non-kerberos execution");
         }
 
-        OutputStream os = new FileOutputStream("pig.properties");
-        pigProperties.store(os, "");
-        os.close();
+        try (OutputStream os = new FileOutputStream("pig.properties")) {
+            pigProperties.store(os, "");
+        }
 
         System.out.println();
         System.out.println("pig.properties content:");
@@ -110,7 +111,7 @@ public class PigMainWithOldAPI extends LauncherMain {
         System.out.println("------------------------");
         System.out.println();
 
-        List<String> arguments = new ArrayList<String>();
+        List<String> arguments = new ArrayList<>();
         String script = actionConf.get("oozie.pig.script");
 
         if (script == null) {
@@ -123,13 +124,16 @@ public class PigMainWithOldAPI extends LauncherMain {
 
         System.out.println("Pig script [" + script + "] content: ");
         System.out.println("------------------------");
-        BufferedReader br = new BufferedReader(new FileReader(script));
-        String line = br.readLine();
-        while (line != null) {
-            System.out.println(line);
+
+        String line;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(script), "UTF-8"))) {
             line = br.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = br.readLine();
+            }
         }
-        br.close();
+
         System.out.println("------------------------");
         System.out.println();
 
@@ -216,13 +220,14 @@ public class PigMainWithOldAPI extends LauncherMain {
                     System.err.println("Pig logfile dump:");
                     System.err.println();
                     try {
-                        BufferedReader reader = new BufferedReader(new FileReader(pigLog));
-                        line = reader.readLine();
-                        while (line != null) {
-                            System.err.println(line);
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pigLog),
+                                "UTF-8"))) {
                             line = reader.readLine();
+                            while (line != null) {
+                                System.err.println(line);
+                                line = reader.readLine();
+                            }
                         }
-                        reader.close();
                     }
                     catch (FileNotFoundException e) {
                         System.err.println("pig log file: " + pigLog + "  not found.");
@@ -239,9 +244,11 @@ public class PigMainWithOldAPI extends LauncherMain {
         // harvesting and recording Hadoop Job IDs
         Properties jobIds = getHadoopJobIds(logFile);
         File file = new File(System.getProperty(OUTPUT_PROPERTIES));
-        os = new FileOutputStream(file);
-        jobIds.store(os, "");
-        os.close();
+
+        try (OutputStream os = new FileOutputStream(file)) {
+            jobIds.store(os, "");
+        }
+
         System.out.println(" Hadoop Job IDs executed by Pig: " + jobIds.getProperty(HADOOP_JOBS));
         System.out.println();
     }
@@ -254,34 +261,33 @@ public class PigMainWithOldAPI extends LauncherMain {
     private static final String JOB_ID_LOG_PREFIX = "HadoopJobId: ";
 
     protected Properties getHadoopJobIds(String logFile) throws IOException {
-        int jobCount = 0;
         Properties props = new Properties();
         StringBuffer sb = new StringBuffer(100);
-        if (new File(logFile).exists() == false) {
+        if (!new File(logFile).exists()) {
             System.err.println("pig log file: " + logFile + "  not present. Therefore no Hadoop jobids found");
             props.setProperty(HADOOP_JOBS, "");
         }
         else {
-            BufferedReader br = new BufferedReader(new FileReader(logFile));
-            String line = br.readLine();
-            String separator = "";
-            while (line != null) {
-                if (line.contains(JOB_ID_LOG_PREFIX)) {
-                    int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
-                    String jobId = line.substring(jobIdStarts);
-                    int jobIdEnds = jobId.indexOf(" ");
-                    if (jobIdEnds > -1) {
-                        jobId = jobId.substring(0, jobId.indexOf(" "));
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"))) {
+                String line = br.readLine();
+                String separator = "";
+                while (line != null) {
+                    if (line.contains(JOB_ID_LOG_PREFIX)) {
+                        int jobIdStarts = line.indexOf(JOB_ID_LOG_PREFIX) + JOB_ID_LOG_PREFIX.length();
+                        String jobId = line.substring(jobIdStarts);
+                        int jobIdEnds = jobId.indexOf(" ");
+                        if (jobIdEnds > -1) {
+                            jobId = jobId.substring(0, jobId.indexOf(" "));
+                        }
+                        sb.append(separator).append(jobId);
+                        separator = ",";
                     }
-                    sb.append(separator).append(jobId);
-                    separator = ",";
+                    line = br.readLine();
                 }
-                line = br.readLine();
             }
-            br.close();
+
             props.setProperty(HADOOP_JOBS, sb.toString());
         }
         return props;
     }
-
 }

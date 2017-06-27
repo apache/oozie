@@ -119,18 +119,16 @@ public class OoziePigStats extends ActionStats {
         jobStatsGroup.put("MULTI_STORE_COUNTERS", toJSONFromMultiStoreCounters(jobStats.getMultiStoreCounters()));
 
         return jobStatsGroup;
-
     }
 
     // multistorecounters to JSON
     @SuppressWarnings("unchecked")
     private static JSONObject toJSONFromMultiStoreCounters(Map<String, Long> map) {
         JSONObject group = new JSONObject();
-        for (String cName : map.keySet()) {
-            group.put(cName, map.get(cName));
+        for (Map.Entry cName : map.entrySet()) {
+            group.put(cName.getKey(), cName.getValue());
         }
         return group;
-
     }
 
     // hadoop counters to JSON
@@ -151,7 +149,5 @@ public class OoziePigStats extends ActionStats {
             groups.put(gName, group);
         }
         return groups;
-
     }
-
 }
