@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -558,7 +559,7 @@ public abstract class XTestCase extends TestCase {
     /**
      * Return the test working directory.
      * <p/>
-     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
+     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME/UNIQUE_ID</code>.
      *
      * @param testCase testcase instance to obtain the working directory.
      * @return the test working directory.
@@ -569,6 +570,7 @@ public abstract class XTestCase extends TestCase {
         dir = new File(dir, "oozietests").getAbsoluteFile();
         dir = new File(dir, testCase.getClass().getName());
         dir = new File(dir, testCase.getName());
+        dir = new File(dir, UUID.randomUUID().toString());
         return dir.getAbsolutePath();
     }
 
