@@ -34,6 +34,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -338,9 +339,7 @@ public class AuthorizationService implements Service {
                 }
                 fs.open(wfXml).close();
             }
-            // TODO change this when stopping support of 0.18 to the new
-            // Exception
-            catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
+            catch (AccessControlException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
             }
@@ -394,9 +393,7 @@ public class AuthorizationService implements Service {
                     }
                 }
             }
-            // TODO change this when stopping support of 0.18 to the new
-            // Exception
-            catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
+            catch (AccessControlException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
             }
