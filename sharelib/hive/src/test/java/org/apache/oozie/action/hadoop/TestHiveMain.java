@@ -135,7 +135,8 @@ public class TestHiveMain extends MainTestCase {
             setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
             setSystemProperty("oozie.action.externalChildIDs", externalChildIdsFile.getAbsolutePath());
 
-            new LauncherSecurityManager();
+            LauncherAM.LauncherSecurityManager launcherSecurityManager = new LauncherAM.LauncherSecurityManager();
+            launcherSecurityManager.enable();
             String user = System.getProperty("user.name");
             try {
                 os = new FileOutputStream(hiveSite);
@@ -145,10 +146,10 @@ public class TestHiveMain extends MainTestCase {
                 HiveMain.main(null);
             }
             catch (SecurityException ex) {
-                if (LauncherSecurityManager.getExitInvoked()) {
-                    System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                    System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                    if (LauncherSecurityManager.getExitCode() != 0) {
+                if (launcherSecurityManager.getExitInvoked()) {
+                    System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                    System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                    if (launcherSecurityManager.getExitCode() != 0) {
                         fail();
                     }
                 }
@@ -163,7 +164,7 @@ public class TestHiveMain extends MainTestCase {
             }
 
             assertTrue(externalChildIdsFile.exists());
-            assertNotNull(LauncherMapper.getLocalFileContentStr(externalChildIdsFile, "", -1));
+            assertNotNull(LauncherAMUtils.getLocalFileContentStr(externalChildIdsFile, "", -1));
 
 //TODO: I cannot figure out why when log file is not created in this testcase, it works when running in Launcher
 //            Properties props = new Properties();

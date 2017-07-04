@@ -264,7 +264,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("org.apache.oozie.action.hadoop.JavaMain", ae.getLauncherMain(conf, actionXml));
         assertTrue(conf.get("mapred.child.java.opts").contains("JAVA-OPTS"));
         assertTrue(conf.get("mapreduce.map.java.opts").contains("JAVA-OPTS"));
-        assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherMapper.getMainArguments(conf)));
+        assertEquals(Arrays.asList("A1", "A2"), Arrays.asList(LauncherAMUtils.getMainArguments(conf)));
 
         actionXml = XmlUtils.parseXml("<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node> <configuration>" +
@@ -2177,8 +2177,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testSetRootLoggerLevel() throws Exception {
-        String oozieActionRootLogger = "oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL;
-        String oozieActionHiveRootLogger = "oozie.action.hive" + LauncherMapper.ROOT_LOGGER_LEVEL;
+        String oozieActionRootLogger = "oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL;
+        String oozieActionHiveRootLogger = "oozie.action.hive" + LauncherAMUtils.ROOT_LOGGER_LEVEL;
 
         // default should be INFO
         JavaActionExecutor jae = new JavaActionExecutor();
@@ -2211,7 +2211,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     private void testEmptyArgs(boolean nullArgsAllowed, String expectedExternalStatus, WorkflowAction.Status expectedStatus)
             throws Exception {
-        ConfigurationService.setBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED, nullArgsAllowed);
+        ConfigurationService.setBoolean(LauncherAMUtils.CONF_OOZIE_NULL_ARGS_ALLOWED, nullArgsAllowed);
 
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +

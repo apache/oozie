@@ -69,7 +69,7 @@ public class LauncherMainTester {
                 }
                 // by using NULL as permission, if an underlaying SecurityManager is in place
                 // a security exception will be thrown. As there is not underlaying SecurityManager
-                // this tests that the delegation logic of the LauncherMapper SecurityManager is
+                // this tests that the delegation logic of the LauncherAMUtils SecurityManager is
                 // correct for both checkPermission() signatures.
                 sm.checkPermission(null);
                 sm.checkPermission(null, sm.getSecurityContext());

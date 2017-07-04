@@ -74,7 +74,7 @@ public class TestStreamingMain extends MainTestCase {
         StreamingMain.main(null);
 
         assertTrue(newId.exists());
-        assertNotNull(LauncherMapper.getLocalFileContentStr(newId, "", -1));
+        assertNotNull(LauncherAMUtils.getLocalFileContentStr(newId, "", -1));
 
         return null;
     }

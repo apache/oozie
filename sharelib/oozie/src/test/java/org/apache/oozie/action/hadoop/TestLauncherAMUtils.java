@@ -18,17 +18,29 @@
 
 package org.apache.oozie.action.hadoop;
 
-import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_ARG_COUNT;
-import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_ARG_PREFIX;
+import static org.apache.oozie.action.hadoop.LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_ARG_COUNT;
+import static org.apache.oozie.action.hadoop.LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_ARG_PREFIX;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.anyBoolean;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -37,7 +49,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.google.common.collect.Lists;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestLauncherMapper {
+public class TestLauncherAMUtils {
     @Mock
     private Configuration conf;  // we have to use mock, because conf.set(null) throws exception
 
@@ -46,7 +58,7 @@ public class TestLauncherMapper {
        setupConf(Lists.newArrayList("a", "b", "c"));
        setEnableNullArgsAllowed(false);
 
-       String args[] = LauncherMapper.getMainArguments(conf);
+       String args[] = LauncherAMUtils.getMainArguments(conf);
 
        assertTrue(Arrays.equals(new String[] { "a", "b", "c"}, args));
     }
@@ -56,7 +68,7 @@ public class TestLauncherMapper {
         setupConf(Lists.newArrayList("a", null, "b", null, "c"));
         setEnableNullArgsAllowed(false);
 
-        String args[] = LauncherMapper.getMainArguments(conf);
+        String args[] = LauncherAMUtils.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] { "a", "b", "c"}, args));
     }
@@ -66,7 +78,7 @@ public class TestLauncherMapper {
         setupConf(Lists.<String>newArrayList(null, null, null));
         setEnableNullArgsAllowed(false);
 
-        String args[] = LauncherMapper.getMainArguments(conf);
+        String args[] = LauncherAMUtils.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] {}, args));
     }
@@ -76,7 +88,7 @@ public class TestLauncherMapper {
         setupConf(Lists.<String>newArrayList((String) null));
         setEnableNullArgsAllowed(false);
 
-        String args[] = LauncherMapper.getMainArguments(conf);
+        String args[] = LauncherAMUtils.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] {}, args));
     }
@@ -86,7 +98,7 @@ public class TestLauncherMapper {
         setupConf(Lists.newArrayList("a", null, "b", null, "c"));
         setEnableNullArgsAllowed(true);
 
-        String args[] = LauncherMapper.getMainArguments(conf);
+        String args[] = LauncherAMUtils.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] { "a", null, "b", null, "c"}, args));
     }
@@ -96,7 +108,7 @@ public class TestLauncherMapper {
         setupConf(Lists.<String>newArrayList((String) null));
         setEnableNullArgsAllowed(true);
 
-        String args[] = LauncherMapper.getMainArguments(conf);
+        String args[] = LauncherAMUtils.getMainArguments(conf);
 
         assertTrue(Arrays.equals(new String[] { null }, args));
     }
@@ -112,6 +124,6 @@ public class TestLauncherMapper {
     }
 
     private void setEnableNullArgsAllowed(boolean nullArgsAllowed) {
-        given(conf.getBoolean(eq(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED), anyBoolean())).willReturn(nullArgsAllowed);
+        given(conf.getBoolean(eq(LauncherAMUtils.CONF_OOZIE_NULL_ARGS_ALLOWED), anyBoolean())).willReturn(nullArgsAllowed);
     }
 }

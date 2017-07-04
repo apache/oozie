@@ -55,7 +55,7 @@ public class DistcpMain extends JavaMain {
         Configuration actionConf = loadActionConf();
         LauncherMain.killChildYarnJobs(actionConf);
         String logFile = setUpDistcpLog4J(actionConf);
-        Class<?> klass = actionConf.getClass(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS,
+        Class<?> klass = actionConf.getClass(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS,
                 org.apache.hadoop.tools.DistCp.class);
         System.out.println("Main class        : " + klass.getName());
         System.out.println("Arguments         :");
@@ -125,7 +125,7 @@ public class DistcpMain extends JavaMain {
         String logFile = new File("distcp-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         String logLevel = distcpConf.get("oozie.distcp.log.level", "INFO");
-        String rootLogLevel = distcpConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = distcpConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.tools", logLevel + ", A, jobid");

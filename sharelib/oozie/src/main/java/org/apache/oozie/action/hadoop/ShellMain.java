@@ -52,7 +52,7 @@ public class ShellMain extends LauncherMain {
     private static String LOG4J_PROPERTIES = "log4j.properties";
 
     /**
-     * @param args Invoked from LauncherMapper:map()
+     * @param args Invoked from LauncherAMUtils:map()
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {

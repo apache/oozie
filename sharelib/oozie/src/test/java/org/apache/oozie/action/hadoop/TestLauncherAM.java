@@ -137,7 +137,7 @@ public class TestLauncherAM {
     @Before
     public void setup() throws Exception {
         configureMocksForHappyPath();
-        launcherJobConfig.set(LauncherMapper.OOZIE_ACTION_RECOVERY_ID, "1");
+        launcherJobConfig.set(LauncherAMUtils.OOZIE_ACTION_RECOVERY_ID, "1");
         instantiateLauncher();
     }
 
@@ -399,7 +399,7 @@ public class TestLauncherAM {
 
     @Test
     public void testRecoveryIdNotSet() throws Exception {
-        launcherJobConfig.unset(LauncherMapper.OOZIE_ACTION_RECOVERY_ID);
+        launcherJobConfig.unset(LauncherAMUtils.OOZIE_ACTION_RECOVERY_ID);
         instantiateLauncher();
 
         executeLauncher();

@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
 public class PigMain extends LauncherMain {
     private static final Set<String> DISALLOWED_PIG_OPTIONS = new HashSet<>();
     public static final int STRING_BUFFER_SIZE = 100;
-    public static final String LOG_EXPANDED_PIG_SCRIPT = LauncherMapper.ACTION_PREFIX + "pig.log.expandedscript";
+    public static final String LOG_EXPANDED_PIG_SCRIPT = LauncherAMUtils.ACTION_PREFIX + "pig.log.expandedscript";
 
     @VisibleForTesting
     static final Pattern[] PIG_JOB_IDS_PATTERNS = {
@@ -162,7 +162,7 @@ public class PigMain extends LauncherMain {
         String logFile = new File("pig-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
-        String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = actionConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         // append required PIG properties to the default hadoop log4j file
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A, B");
@@ -378,29 +378,12 @@ public class PigMain extends LauncherMain {
             }
         }
         else {
-            try {
                 System.out.println("Run pig script using Main.main() for Pig version before 0.8");
                 Main.main(args);
-            }
-            catch (SecurityException ex) {
-                if (resetSecurityManager) {
-                    LauncherSecurityManager.reset();
-                }
-                else {
-                    if (LauncherSecurityManager.getExitInvoked()) {
-                        if (LauncherSecurityManager.getExitCode() != 0) {
-                            if (pigLog != null) {
-                                handleError(pigLog);
-                            }
-                            throw ex;
-                        }
-                    }
-                }
-            }
         }
     }
 
-    // write external data(stats, hadoopIds) to the file which will be read by the LauncherMapper
+    // write external data(stats, hadoopIds) to the file which will be read by the LauncherAMUtils
     private static void writeExternalData(String data, File f) throws IOException {
         BufferedWriter out = null;
         try {

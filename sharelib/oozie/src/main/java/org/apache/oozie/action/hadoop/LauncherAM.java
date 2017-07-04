@@ -537,7 +537,7 @@ public class LauncherAM {
     }
 
     private String[] getMainArguments(Configuration conf) {
-        return LauncherMapper.getMainArguments(conf);
+        return LauncherAMUtils.getMainArguments(conf);
     }
 
     public static class LauncherSecurityManager extends SecurityManager {
@@ -592,6 +592,11 @@ public class LauncherAM {
             if (System.getSecurityManager() == this) {
                 System.setSecurityManager(originalSecurityManager);
             }
+        }
+
+        public void reset() {
+            exitInvoked = false;
+            exitCode = 0;
         }
     }
 

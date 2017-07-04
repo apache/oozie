@@ -268,7 +268,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     public void testEnvVar() throws Exception {
         Services.get().destroy();
         Services services = new Services();
-        services.getConf().setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
+        services.getConf().setInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
         services.init();
 
         FileSystem fs = getFileSystem();

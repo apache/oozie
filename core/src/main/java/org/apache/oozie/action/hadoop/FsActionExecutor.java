@@ -65,7 +65,7 @@ public class FsActionExecutor extends ActionExecutor {
 
     public FsActionExecutor() {
         super(ACTION_TYPE);
-        maxGlobCount = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+        maxGlobCount = ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX);
     }
 
     /**

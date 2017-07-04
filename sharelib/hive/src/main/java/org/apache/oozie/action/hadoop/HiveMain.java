@@ -136,7 +136,7 @@ public class HiveMain extends LauncherMain {
         String logFile = new File("hive-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         String logLevel = hiveConf.get("oozie.hive.log.level", "INFO");
-        String rootLogLevel = hiveConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = hiveConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");

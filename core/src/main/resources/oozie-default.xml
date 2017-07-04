@@ -1804,7 +1804,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-    <!-- LauncherMapper -->
+    <!-- LauncherAMUtils -->
     <property>
         <name>oozie.action.max.output.data</name>
         <value>2048</value>

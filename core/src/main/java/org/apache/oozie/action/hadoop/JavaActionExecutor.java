@@ -199,7 +199,7 @@ public class JavaActionExecutor extends ActionExecutor {
         maxExternalStatsSize = ConfigurationService.getInt(JavaActionExecutor.MAX_EXTERNAL_STATS_SIZE);
         maxExternalStatsSize = (maxExternalStatsSize == -1) ? Integer.MAX_VALUE : maxExternalStatsSize;
         //Get the limit for the maximum number of globbed files/dirs for FS operation
-        maxFSGlobMax = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+        maxFSGlobMax = ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX);
 
         registerError(UnknownHostException.class.getName(), ActionExecutorException.ErrorType.TRANSIENT, "JA001");
         registerError(AccessControlException.class.getName(), ActionExecutorException.ErrorType.NON_TRANSIENT,
@@ -414,8 +414,8 @@ public class JavaActionExecutor extends ActionExecutor {
      * @param actionConf
      */
     void setRootLoggerLevel(Configuration actionConf) {
-        String oozieActionTypeRootLogger = "oozie.action." + getType() + LauncherMapper.ROOT_LOGGER_LEVEL;
-        String oozieActionRootLogger = "oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL;
+        String oozieActionTypeRootLogger = "oozie.action." + getType() + LauncherAMUtils.ROOT_LOGGER_LEVEL;
+        String oozieActionRootLogger = "oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL;
 
         // check if root log level has already mentioned in action configuration
         String rootLogLevel = actionConf.get(oozieActionTypeRootLogger, actionConf.get(oozieActionRootLogger));
@@ -842,11 +842,8 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             LauncherHelper.setupMainArguments(launcherJobConf, args);
             // backward compatibility flag - see OOZIE-2872
-            if (ConfigurationService.getBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED)) {
-                launcherJobConf.setBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED, true);
-            } else {
-                launcherJobConf.setBoolean(LauncherMapper.CONF_OOZIE_NULL_ARGS_ALLOWED, false);
-            }
+            boolean nullArgsAllowed = ConfigurationService.getBoolean(LauncherAMUtils.CONF_OOZIE_NULL_ARGS_ALLOWED);
+            launcherJobConf.setBoolean(LauncherAMUtils.CONF_OOZIE_NULL_ARGS_ALLOWED, nullArgsAllowed);
 
             // Make mapred.child.java.opts and mapreduce.map.java.opts equal, but give values from the latter priority; also append
             // <java-opt> and <java-opts> and give those highest priority

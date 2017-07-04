@@ -25,8 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,14 +33,6 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
-import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
-import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
-import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
-import org.apache.hadoop.yarn.api.records.ApplicationReport;
-import org.apache.hadoop.yarn.client.ClientRMProxy;
-import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -51,11 +41,6 @@ import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
-import com.google.common.io.Closeables;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
@@ -99,14 +84,14 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         String mainClass;
         Namespace ns = actionXml.getNamespace();
         if (actionXml.getChild("streaming", ns) != null) {
-            mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, STREAMING_MAIN_CLASS_NAME);
+            mainClass = launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, STREAMING_MAIN_CLASS_NAME);
         }
         else {
             if (actionXml.getChild("pipes", ns) != null) {
-                mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, PipesMain.class.getName());
+                mainClass = launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, PipesMain.class.getName());
             }
             else {
-                mainClass = launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, MapReduceMain.class.getName());
+                mainClass = launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, MapReduceMain.class.getName());
             }
         }
         return mainClass;
@@ -125,7 +110,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         // Inject config-class for launcher to use for action
         Element e = actionXml.getChild("config-class", actionXml.getNamespace());
         if (e != null) {
-            conf.set(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
+            conf.set(LauncherAMUtils.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
         }
     }
 
@@ -363,7 +348,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             throw convertException(e);
         }
 
-        final String newId = actionData.get(LauncherMapper.ACTION_DATA_NEW_ID);
+        final String newId = actionData.get(LauncherAMUtils.ACTION_DATA_NEW_ID);
 
         // check the Hadoop job if newID is defined (which should be the case here) - otherwise perform the normal check()
         if (newId != null) {
@@ -403,7 +388,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             }
 
             // run original check() if the MR action is completed or there are errors - otherwise mark it as RUNNING
-            if (jobCompleted || actionData.containsKey(LauncherMapper.ACTION_DATA_ERROR_PROPS)) {
+            if (jobCompleted || actionData.containsKey(LauncherAMUtils.ACTION_DATA_ERROR_PROPS)) {
                 super.check(context, action);
             } else {
                 context.setExternalStatus(RUNNING);

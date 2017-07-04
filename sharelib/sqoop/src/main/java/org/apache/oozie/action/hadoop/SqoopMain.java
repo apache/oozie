@@ -22,9 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
@@ -116,7 +114,7 @@ public class SqoopMain extends LauncherMain {
         String logFile = new File("sqoop-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         String logLevel = sqoopConf.get("oozie.sqoop.log.level", "INFO");
-        String rootLogLevel = sqoopConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = sqoopConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         log4jProperties.setProperty("log4j.logger.org.apache.sqoop", logLevel + ", A");

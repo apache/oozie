@@ -30,7 +30,7 @@ import org.jdom.Namespace;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.oozie.action.hadoop.LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS;
+import static org.apache.oozie.action.hadoop.LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS;
 
 public class HiveActionExecutor extends ScriptLanguageActionExecutor {
 

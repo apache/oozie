@@ -70,7 +70,7 @@ public class TestMapReduceMain extends MainTestCase {
         MapReduceMain.main(new String[0]);
 
         assertTrue(newId.exists());
-        assertNotNull(LauncherMapper.getLocalFileContentStr(newId, "", -1));
+        assertNotNull(LauncherAMUtils.getLocalFileContentStr(newId, "", -1));
         return null;
     }
 

@@ -170,7 +170,7 @@ public class FsELFunctions {
         int count = 0;
         int globMax = Integer.MAX_VALUE;
         public FSPathFilter() {
-            globMax = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+            globMax = ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX);
         }
         @Override
         public boolean accept(Path p) {

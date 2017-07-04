@@ -28,7 +28,7 @@ public class JavaMain extends LauncherMain {
     public static final String JAVA_MAIN_CLASS = "oozie.action.java.main";
 
    /**
-    * @param args Invoked from LauncherMapper:map()
+    * @param args Invoked from LauncherAM:run()
     * @throws Exception
     */
     public static void main(String[] args) throws Exception {

@@ -66,7 +66,7 @@ public class MapReduceMain extends LauncherMain {
 
         logMasking("Map-Reduce job configuration:", new ArrayList<String>(), maskedJobConf);
 
-        File idFile = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_NEW_ID));
+        File idFile = new File(System.getProperty(LauncherAMUtils.ACTION_PREFIX + LauncherAMUtils.ACTION_DATA_NEW_ID));
         System.out.println("Submitting Oozie action Map-Reduce job");
         System.out.println();
         // submitting job
@@ -143,7 +143,7 @@ public class MapReduceMain extends LauncherMain {
      * @throws OozieActionConfiguratorException
      */
     private static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
-        String configClass = actionConf.get(LauncherMapper.OOZIE_ACTION_CONFIG_CLASS);
+        String configClass = actionConf.get(LauncherAMUtils.OOZIE_ACTION_CONFIG_CLASS);
         if (configClass != null) {
             try {
                 Class<?> klass = Class.forName(configClass);

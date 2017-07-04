@@ -616,7 +616,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         final Map<String, String> actionData = LauncherHelper.getActionData(fs, context.getActionDir(),
                 context.getProtoActionConf());
-        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherAMUtils.ACTION_DATA_ERROR_PROPS));
         assertEquals("An Exception occurred while instantiating the action config class",
                 errorProps.getProperty("exception.message"));
         assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
@@ -646,7 +646,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         final Map<String, String> actionData = LauncherHelper.getActionData(fs, context.getActionDir(),
                 context.getProtoActionConf());
-        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherMapper.ACTION_DATA_ERROR_PROPS));
+        Properties errorProps = PropertiesUtils.stringToProperties(actionData.get(LauncherAMUtils.ACTION_DATA_ERROR_PROPS));
         assertEquals("doh", errorProps.getProperty("exception.message"));
         assertTrue(errorProps.getProperty("exception.stacktrace").startsWith(OozieActionConfiguratorException.class.getName()));
     }

@@ -225,7 +225,7 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(actionXml);
         submitAction(context);
         FileSystem fs = getFileSystem();
-        FSDataInputStream os = fs.open(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML));
+        FSDataInputStream os = fs.open(new Path(context.getActionDir(), LauncherAMUtils.ACTION_CONF_XML));
         XConfiguration conf = new XConfiguration();
         conf.addResource(os);
         assertNull(conf.get("oozie.HadoopAccessorService.created"));

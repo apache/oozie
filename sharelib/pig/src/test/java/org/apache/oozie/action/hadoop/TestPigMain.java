@@ -115,27 +115,12 @@ public class TestPigMain extends PigTestCase {
         assertEquals(props.getProperty("oozie.pig.args.size"), "1");
         File pigProps = new File(classPathDir, "pig.properties");
 
-        new LauncherSecurityManager();
         String user = System.getProperty("user.name");
         try {
             Writer wr = new FileWriter(pigProps);
             props.store(wr, "");
             wr.close();
             PigMain.main(null);
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                if (failOnException) {
-                    if (LauncherSecurityManager.getExitCode() != 0) {
-                        fail();
-                    }
-                }
-            }
-            else {
-                throw ex;
-            }
         }
         finally {
             pigProps.delete();

@@ -36,8 +36,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
 import java.net.URL;
+import java.security.Permission;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+
+import static groovy.util.GroovyTestCase.assertEquals;
 
 
 /**
@@ -118,28 +121,17 @@ public class TestPigMainWithOldAPI extends XFsTestCase implements Callable<Void>
         assertEquals(props.getProperty("oozie.pig.args.size"), "1");
         File pigProps = new File(classPathDir, "pig.properties");
 
-        new LauncherSecurityManager();
         String user = System.getProperty("user.name");
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldPrintStream = System.out;
         System.setOut(new PrintStream(data));
+
+
         try {
             Writer wr = new FileWriter(pigProps);
             props.store(wr, "");
             wr.close();
             PigMainWithOldAPI.main(null);
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    fail("Exit code should be 0");
-                }
-            }
-            else {
-                throw ex;
-            }
         }
         finally {
             pigProps.delete();

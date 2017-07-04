@@ -170,7 +170,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             assertNotNull(context.getExternalChildIDs());
             //while this works in a real cluster, it does not with miniMR
             //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
-            //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
+            //assertTrue(!actionData.get(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
@@ -193,7 +193,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             assertNotNull(context.getAction().getExternalChildIDs());
             //while this works in a real cluster, it does not with miniMR
             //assertTrue(outputData.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
-            //assertTrue(!actionData.get(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
+            //assertTrue(!actionData.get(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS).isEmpty());
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
@@ -266,7 +266,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
         Context context = createContext(getActionScriptXml());
         Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
         submitAction(context, ns);
-        FSDataInputStream os = fs.open(new Path(context.getActionDir(), LauncherMapper.ACTION_CONF_XML));
+        FSDataInputStream os = fs.open(new Path(context.getActionDir(), LauncherAMUtils.ACTION_CONF_XML));
         XConfiguration conf = new XConfiguration();
         conf.addResource(os);
         assertNull(conf.get("oozie.HadoopAccessorService.created"));

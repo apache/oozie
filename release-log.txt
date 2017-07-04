@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2918 Delete LauncherMapper and its test (asasvari via pbacsko)
 OOZIE-2733 change org.apache.hadoop.fs.permission.AccessControlException to org.apache.hadoop.security.AccessControlException (gezapeti)
 OOZIE-2884 consolidate hadoop versions in pomfiles (Artem Ervits via gezapeti)
 OOZIE-2794 Hive and Pig tests failing when multiple pre-commit jobs are running (gezapeti)

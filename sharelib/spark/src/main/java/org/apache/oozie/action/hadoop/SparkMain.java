@@ -191,7 +191,7 @@ public class SparkMain extends LauncherMain {
         final String logFile = new File("spark-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         final String logLevel = actionConf.get("oozie.spark.log.level", "INFO");
-        final String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        final String rootLogLevel = actionConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
         log4jProperties.setProperty("log4j.logger.org.apache.spark", logLevel + ", A, jobid");

@@ -55,8 +55,6 @@ public class LauncherHelper {
 
     public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
-    private static final LauncherInputFormatClassLocator launcherInputFormatClassLocator = new LauncherInputFormatClassLocator();
-
     public static String getRecoveryId(Configuration launcherConf, Path actionDir, String recoveryId)
             throws HadoopAccessorException, IOException {
         String jobId = null;
@@ -78,7 +76,7 @@ public class LauncherHelper {
         // Only set the javaMainClass if its not null or empty string, this way the user can override the action's main class via
         // <configuration> property
         if (javaMainClass != null && !javaMainClass.equals("")) {
-            launcherConf.set(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
+            launcherConf.set(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, javaMainClass);
         }
     }
 
@@ -89,14 +87,14 @@ public class LauncherHelper {
     }
 
     public static void setupMainArguments(Configuration launcherConf, String[] args) {
-        launcherConf.setInt(LauncherMapper.CONF_OOZIE_ACTION_MAIN_ARG_COUNT, args.length);
+        launcherConf.setInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_ARG_COUNT, args.length);
         for (int i = 0; i < args.length; i++) {
-            launcherConf.set(LauncherMapper.CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i, args[i]);
+            launcherConf.set(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_ARG_PREFIX + i, args[i]);
         }
     }
 
     public static void setupMaxOutputData(Configuration launcherConf, int maxOutputData) {
-        launcherConf.setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, maxOutputData);
+        launcherConf.setInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, maxOutputData);
     }
 
     /**
@@ -106,7 +104,7 @@ public class LauncherHelper {
      * @param maxStatsData the maximum allowed size of stats data
      */
     public static void setupMaxExternalStatsSize(Configuration launcherConf, int maxStatsData){
-        launcherConf.setInt(LauncherMapper.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, maxStatsData);
+        launcherConf.setInt(LauncherAMUtils.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE, maxStatsData);
     }
 
     /**
@@ -116,20 +114,20 @@ public class LauncherHelper {
      * @param fsGlobMax the maximum number of files/dirs for FS operation
      */
     public static void setupMaxFSGlob(Configuration launcherConf, int fsGlobMax){
-        launcherConf.setInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, fsGlobMax);
+        launcherConf.setInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX, fsGlobMax);
     }
 
     public static void setupLauncherInfo(Configuration launcherConf, String jobId, String actionId, Path actionDir,
             String recoveryId, Configuration actionConf, String prepareXML) throws IOException, HadoopAccessorException {
 
-        launcherConf.set(LauncherMapper.OOZIE_JOB_ID, jobId);
-        launcherConf.set(LauncherMapper.OOZIE_ACTION_ID, actionId);
-        launcherConf.set(LauncherMapper.OOZIE_ACTION_DIR_PATH, actionDir.toString());
-        launcherConf.set(LauncherMapper.OOZIE_ACTION_RECOVERY_ID, recoveryId);
-        launcherConf.set(LauncherMapper.ACTION_PREPARE_XML, prepareXML);
+        launcherConf.set(LauncherAMUtils.OOZIE_JOB_ID, jobId);
+        launcherConf.set(LauncherAMUtils.OOZIE_ACTION_ID, actionId);
+        launcherConf.set(LauncherAMUtils.OOZIE_ACTION_DIR_PATH, actionDir.toString());
+        launcherConf.set(LauncherAMUtils.OOZIE_ACTION_RECOVERY_ID, recoveryId);
+        launcherConf.set(LauncherAMUtils.ACTION_PREPARE_XML, prepareXML);
 
-        actionConf.set(LauncherMapper.OOZIE_JOB_ID, jobId);
-        actionConf.set(LauncherMapper.OOZIE_ACTION_ID, actionId);
+        actionConf.set(LauncherAMUtils.OOZIE_JOB_ID, jobId);
+        actionConf.set(LauncherAMUtils.OOZIE_ACTION_ID, actionId);
 
         if (Services.get().getConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false)) {
           List<String> purgedEntries = new ArrayList<String>();
@@ -171,9 +169,9 @@ public class LauncherHelper {
         if (succeeded) {
             Counters counters = runningJob.getCounters();
             if (counters != null) {
-                Counters.Group group = counters.getGroup(LauncherMapper.COUNTER_GROUP);
+                Counters.Group group = counters.getGroup(LauncherAMUtils.COUNTER_GROUP);
                 if (group != null) {
-                    succeeded = group.getCounter(LauncherMapper.COUNTER_LAUNCHER_ERROR) == 0;
+                    succeeded = group.getCounter(LauncherAMUtils.COUNTER_LAUNCHER_ERROR) == 0;
                 }
             }
         }
@@ -187,7 +185,7 @@ public class LauncherHelper {
      * @throws IOException
      */
     public static boolean hasExternalChildJobs(Map<String, String> actionData) throws IOException {
-        return actionData.containsKey(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS);
+        return actionData.containsKey(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS);
     }
 
     /**
@@ -197,7 +195,7 @@ public class LauncherHelper {
      * @throws IOException
      */
     public static boolean hasOutputData(Map<String, String> actionData) throws IOException {
-        return actionData.containsKey(LauncherMapper.ACTION_DATA_OUTPUT_PROPS);
+        return actionData.containsKey(LauncherAMUtils.ACTION_DATA_OUTPUT_PROPS);
     }
 
     /**
@@ -207,7 +205,7 @@ public class LauncherHelper {
      * @throws IOException
      */
     public static boolean hasStatsData(Map<String, String> actionData) throws IOException{
-        return actionData.containsKey(LauncherMapper.ACTION_DATA_STATS);
+        return actionData.containsKey(LauncherAMUtils.ACTION_DATA_STATS);
     }
 
     /**
@@ -217,7 +215,7 @@ public class LauncherHelper {
      * @throws IOException
      */
     public static boolean hasIdSwap(Map<String, String> actionData) throws IOException {
-        return actionData.containsKey(LauncherMapper.ACTION_DATA_NEW_ID);
+        return actionData.containsKey(LauncherAMUtils.ACTION_DATA_NEW_ID);
     }
 
     /**
@@ -226,7 +224,7 @@ public class LauncherHelper {
      * @return
      */
     public static Path getActionDataSequenceFilePath(Path actionDir) {
-        return new Path(actionDir, LauncherMapper.ACTION_DATA_SEQUENCE_FILE);
+        return new Path(actionDir, LauncherAMUtils.ACTION_DATA_SEQUENCE_FILE);
     }
 
     /**
@@ -269,35 +267,35 @@ public class LauncherHelper {
                             if (file.equals(new Path(actionDir, "externalChildIds.properties"))) {
                                 is = fs.open(file);
                                 reader = new BufferedReader(new InputStreamReader(is));
-                                ret.put(LauncherMapper.ACTION_DATA_EXTERNAL_CHILD_IDS,
+                                ret.put(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS,
                                         IOUtils.getReaderAsString(reader, -1));
                             }
                             else if (file.equals(new Path(actionDir, "newId.properties"))) {
                                 is = fs.open(file);
                                 reader = new BufferedReader(new InputStreamReader(is));
                                 props = PropertiesUtils.readProperties(reader, -1);
-                                ret.put(LauncherMapper.ACTION_DATA_NEW_ID, props.getProperty("id"));
+                                ret.put(LauncherAMUtils.ACTION_DATA_NEW_ID, props.getProperty("id"));
                             }
-                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_OUTPUT_PROPS))) {
-                                int maxOutputData = conf.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
+                            else if (file.equals(new Path(actionDir, LauncherAMUtils.ACTION_DATA_OUTPUT_PROPS))) {
+                                int maxOutputData = conf.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
                                         2 * 1024);
                                 is = fs.open(file);
                                 reader = new BufferedReader(new InputStreamReader(is));
-                                ret.put(LauncherMapper.ACTION_DATA_OUTPUT_PROPS, PropertiesUtils
+                                ret.put(LauncherAMUtils.ACTION_DATA_OUTPUT_PROPS, PropertiesUtils
                                         .propertiesToString(PropertiesUtils.readProperties(reader, maxOutputData)));
                             }
-                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_STATS))) {
-                                int statsMaxOutputData = conf.getInt(LauncherMapper.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
+                            else if (file.equals(new Path(actionDir, LauncherAMUtils.ACTION_DATA_STATS))) {
+                                int statsMaxOutputData = conf.getInt(LauncherAMUtils.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
                                         Integer.MAX_VALUE);
                                 is = fs.open(file);
                                 reader = new BufferedReader(new InputStreamReader(is));
-                                ret.put(LauncherMapper.ACTION_DATA_STATS, PropertiesUtils
+                                ret.put(LauncherAMUtils.ACTION_DATA_STATS, PropertiesUtils
                                         .propertiesToString(PropertiesUtils.readProperties(reader, statsMaxOutputData)));
                             }
-                            else if (file.equals(new Path(actionDir, LauncherMapper.ACTION_DATA_ERROR_PROPS))) {
+                            else if (file.equals(new Path(actionDir, LauncherAMUtils.ACTION_DATA_ERROR_PROPS))) {
                                 is = fs.open(file);
                                 reader = new BufferedReader(new InputStreamReader(is));
-                                ret.put(LauncherMapper.ACTION_DATA_ERROR_PROPS, IOUtils.getReaderAsString(reader, -1));
+                                ret.put(LauncherAMUtils.ACTION_DATA_ERROR_PROPS, IOUtils.getReaderAsString(reader, -1));
                             }
                         }
                     }

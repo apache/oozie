@@ -21,8 +21,7 @@ package org.apache.oozie.service;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.hadoop.CredentialsProviderFactory;
 import org.apache.oozie.action.hadoop.DistcpActionExecutor;
-import org.apache.oozie.action.hadoop.JavaActionExecutor;
-import org.apache.oozie.action.hadoop.LauncherMapper;
+import org.apache.oozie.action.hadoop.LauncherAMUtils;
 import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.wf.JobXCommand;
@@ -210,7 +209,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("300000", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim());
         assertEquals("10", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim());
 
-        assertEquals(2048, ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA));
+        assertEquals(2048, ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA));
         assertEquals("http://0.0.0.0:11000/oozie?job=", ConfigurationService.get(JobXCommand.CONF_CONSOLE_URL));
         assertEquals(false, ConfigurationService.getBoolean(HadoopAccessorService.KERBEROS_AUTH_ENABLED));
 
@@ -245,7 +244,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("org.apache.oozie.dependency.FSURIHandler",
                 ConfigurationService.getStrings(URIHandlerService.URI_HANDLERS)[0]);
         assertEquals(cl.getConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false),
-                ConfigurationService.getBoolean(LauncherMapper.HADOOP2_WORKAROUND_DISTRIBUTED_CACHE));
+                ConfigurationService.getBoolean(LauncherAMUtils.HADOOP2_WORKAROUND_DISTRIBUTED_CACHE));
 
         assertEquals("org.apache.oozie.event.MemoryEventQueue",
                 (ConfigurationService.getClass(cl.getConf(), EventHandlerService.CONF_EVENT_QUEUE).getName()));

@@ -31,8 +31,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.oozie.action.hadoop.DistcpMain;
-
 public class TestDistcpMain extends MainTestCase {
 
     @Override
@@ -49,7 +47,7 @@ public class TestDistcpMain extends MainTestCase {
         writer.close();
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        jobConf.set(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, "org.apache.hadoop.tools.DistCp");
+        jobConf.set(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, "org.apache.hadoop.tools.DistCp");
 
         jobConf.set("mapreduce.job.tags", "" + System.currentTimeMillis());
         setSystemProperty("oozie.job.launch.time", "" + System.currentTimeMillis());
@@ -75,7 +73,7 @@ public class TestDistcpMain extends MainTestCase {
         DistcpMain.main(new String[]{inputDir.toString(), outputDir.toString()});
         assertTrue(getFileSystem().exists(outputDir));
         assertTrue(hadoopIdsFile.exists());
-        assertNotNull(LauncherMapper.getLocalFileContentStr(hadoopIdsFile, "", -1));
+        assertNotNull(LauncherAMUtils.getLocalFileContentStr(hadoopIdsFile, "", -1));
         fs.delete(outputDir,true);
 
         // Check exception handling

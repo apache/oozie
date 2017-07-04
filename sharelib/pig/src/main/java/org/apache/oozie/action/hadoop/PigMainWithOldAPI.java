@@ -153,7 +153,7 @@ public class PigMainWithOldAPI extends LauncherMain {
         String logFile = new File("pig-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
         String pigLogLevel = actionConf.get("oozie.pig.log.level", "INFO");
-        String rootLogLevel = actionConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = actionConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
         // append required PIG properties to the default hadoop log4j file
         log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A, B");
@@ -200,22 +200,24 @@ public class PigMainWithOldAPI extends LauncherMain {
         System.out.println(">>> Invoking Pig command line now >>>");
         System.out.println();
         System.out.flush();
-
+        LauncherAM.LauncherSecurityManager launcherSecurityManager = new LauncherAM.LauncherSecurityManager();
+        launcherSecurityManager.enable();
         try {
             System.out.println();
             runPigJob(new String[] { "-version" });
         }
         catch (SecurityException ex) {
-            LauncherSecurityManager.reset();
+            launcherSecurityManager.reset();
         }
         System.out.println();
         System.out.flush();
+
         try {
             runPigJob(arguments.toArray(new String[arguments.size()]));
         }
         catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
+            if (launcherSecurityManager.getExitInvoked()) {
+                if (launcherSecurityManager.getExitCode() != 0) {
                     System.err.println();
                     System.err.println("Pig logfile dump:");
                     System.err.println();
