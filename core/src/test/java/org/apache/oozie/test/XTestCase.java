@@ -1263,13 +1263,13 @@ public abstract class XTestCase extends TestCase {
     protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId)
             throws HadoopAccessorException, IOException, YarnException {
         YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
-        assertEquals("YARN App state", YarnApplicationState.FINISHED, state);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.FINISHED, state);
     }
 
     protected void waitUntilYarnAppKilledAndAssertSuccess(String externalId)
             throws HadoopAccessorException, IOException, YarnException {
         YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
-        assertEquals("YARN App state", YarnApplicationState.KILLED, state);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.KILLED, state);
     }
 
     protected class TestLogAppender extends AppenderSkeleton {

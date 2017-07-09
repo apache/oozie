@@ -277,14 +277,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         assertEquals("LauncherId", launcherId, externalId);
         assertNotNull(childId);
 
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(childId));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        waitUntilYarnAppDoneAndAssertSuccess(childId);
 
         new ActionCheckXCommand(action.getId()).call();
         action = jpaService.execute(wfActionGetCmd);

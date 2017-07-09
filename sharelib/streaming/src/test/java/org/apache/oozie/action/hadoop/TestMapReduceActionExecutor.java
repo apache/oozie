@@ -51,8 +51,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapreduce.JobStatus;
+import org.apache.hadoop.mapreduce.TypeConverter;
 import org.apache.hadoop.streaming.StreamJob;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
@@ -403,17 +406,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        String externalChildIDs = context.getAction().getExternalChildIDs();
+        waitUntilYarnAppDoneAndAssertSuccess(externalChildIDs);
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -431,7 +425,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         //External Child IDs used to be null, but after 4.0, become Non-Null in case of MR action.
         assertNotNull(context.getExternalChildIDs());
 
-        return mrJob.getID().toString();
+        return externalChildIDs;
     }
 
     private void _testSubmitError(String actionXml, String errorMessage) throws Exception {
@@ -463,17 +457,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        String externalChildIDs = context.getAction().getExternalChildIDs();
+        waitUntilYarnAppDoneAndAssertSuccess(externalChildIDs);
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -481,7 +466,12 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-
+        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        String user = conf.get("user.name");
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
+        org.apache.hadoop.mapreduce.JobID jobID = TypeConverter.fromYarn(
+                ConverterUtils.toApplicationId(externalChildIDs));
+        final RunningJob mrJob = jobClient.getJob(JobID.downgrade(jobID));
         assertTrue(MapperReducerCredentialsForTest.hasCredentials(mrJob));
     }
 
@@ -673,20 +663,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
 
         MapReduceActionExecutor mae = new MapReduceActionExecutor();
         mae.check(context, context.getAction());  // must be called so that externalChildIDs are read from HDFS
-        Configuration conf = mae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
 
         mae.kill(context, context.getAction());
 
-        waitFor(10_000, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertEquals(JobStatus.State.KILLED, mrJob.getJobStatus().getState());
+        waitUntilYarnAppKilledAndAssertSuccess(context.getAction().getExternalChildIDs());
     }
 
     public void testMapReduceWithCredentials() throws Exception {
@@ -767,16 +747,16 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
                 + getMapReduceUberJarConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
-        String jobID = _testSubmit(MAP_REDUCE, actionXml);
+        String appID = _testSubmit(MAP_REDUCE, actionXml);
 
         boolean containsLib1Jar = false;
-        String lib1JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
+        String lib1JarStr = "jobcache/" + appID + "/jars/lib/lib1.jar";
         Pattern lib1JarPatYarn = Pattern.compile(
-                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib1.jar.*");
+                ".*appcache/" + appID + "/filecache/.*/uber.jar/lib/lib1.jar.*");
         boolean containsLib2Jar = false;
-        String lib2JarStr = "jobcache/" + jobID + "/jars/lib/lib1.jar";
+        String lib2JarStr = "jobcache/" + appID + "/jars/lib/lib1.jar";
         Pattern lib2JarPatYarn = Pattern.compile(
-                ".*appcache/application_" + jobID.replaceFirst("job_", "") + "/filecache/.*/uber.jar/lib/lib2.jar.*");
+                ".*appcache/" + appID + "/filecache/.*/uber.jar/lib/lib2.jar.*");
 
         FileStatus[] fstats = getFileSystem().listStatus(outputDir);
         for (FileStatus fstat : fstats) {
@@ -995,17 +975,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        String user = conf.get("user.name");
-        String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalChildIDs());
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -1065,18 +1035,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-        String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalChildIDs());
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -1132,18 +1091,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-        String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalChildIDs());
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -1214,19 +1162,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.check(context, context.getAction());
         assertTrue(launcherId.equals(context.getAction().getExternalId()));
 
-        Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
-        String user = conf.get("user.name");
-
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class)
-                .createJobClient(user, conf);
-        final RunningJob mrJob = jobClient.getJob(JobID.forName(context.getAction().getExternalChildIDs()));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return mrJob.isComplete();
-            }
-        });
-        assertTrue(mrJob.isSuccessful());
+        String externalChildIDs = context.getAction().getExternalChildIDs();
+        waitUntilYarnAppDoneAndAssertSuccess(externalChildIDs);
         ae.check(context, context.getAction());
 
         assertEquals(JavaActionExecutor.SUCCEEDED, context.getAction().getExternalStatus());
@@ -1235,9 +1172,11 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
+        Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
+        final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
+        ApplicationReport report = yarnClient.getApplicationReport(ConverterUtils.toApplicationId(externalChildIDs));
         // Assert Mapred job name has been set
-        System.out.println("Mapred job name: " + mrJob.getJobName());
-        assertTrue(mrJob.getJobName().equals(mapredJobName));
+        assertEquals(mapredJobName, report.getName());
 
         // Assert for stats info stored in the context.
         assertNull(context.getExecutionStats());

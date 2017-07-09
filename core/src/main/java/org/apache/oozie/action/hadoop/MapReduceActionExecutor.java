@@ -33,6 +33,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.TypeConverter;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
@@ -392,7 +393,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 super.check(context, action);
             } else {
                 context.setExternalStatus(RUNNING);
-                context.setExternalChildIDs(newId);
+                String externalAppId = TypeConverter.toYarn(JobID.forName(newId)).getAppId().toString();
+                context.setExternalChildIDs(externalAppId);
             }
         } else {
             super.check(context, action);

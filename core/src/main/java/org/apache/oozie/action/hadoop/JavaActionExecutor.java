@@ -1508,20 +1508,38 @@ public class JavaActionExecutor extends ActionExecutor {
         YarnClient yarnClient = null;
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
-
             final Configuration jobConf = createBaseHadoopConf(context, actionXml);
             String launcherTag = LauncherHelper.getActionYarnTag(jobConf, context.getWorkflow().getParentId(), action);
             jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
             yarnClient = createYarnClient(context, jobConf);
             if(action.getExternalId() != null) {
-                yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
+                try {
+                    LOG.info("Killing action {0}'s external application {1}", action.getId(), action.getExternalId());
+                    yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
+                } catch (Exception e) {
+                    LOG.warn("Could not kill {0}", action.getExternalId(), e);
+                }
+            }
+            String externalChildIDs = action.getExternalChildIDs();
+            if(externalChildIDs != null) {
+                for(String childId : externalChildIDs.split(",")) {
+                    try {
+                        LOG.info("Killing action {0}'s external child application {1}", action.getId(), childId);
+                        yarnClient.killApplication(ConverterUtils.toApplicationId(childId.trim()));
+                    } catch (Exception e) {
+                        LOG.warn("Could not kill external child of {0}, {1}", action.getExternalId(),
+                                childId, e);
+                    }
+                }
             }
             for(ApplicationId id : LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL,
                     action.getStartTime().getTime())){
                 try {
+                    LOG.info("Killing action {0}'s external child application {1} based on tags",
+                            action.getId(), id.toString());
                     yarnClient.killApplication(id);
                 } catch (Exception e) {
-                    LOG.warn("Could not kill child of {0}, {1}", action.getExternalId(), id);
+                    LOG.warn("Could not kill child of {0}, {1}", action.getExternalId(), id, e);
                 }
             }
 

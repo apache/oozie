@@ -44,8 +44,6 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 
-import com.google.common.collect.Sets;
-
 public class TestWorkflowActionKillXCommand extends XDataTestCase {
     private Services services;
 
@@ -160,6 +158,18 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         return action;
     }
 
+    public void testWfActionKillChildJob() throws Exception {
+        String externalJobID = launchSleepJob(1000);
+        String childId = launchSleepJob(1000000);
+
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), externalJobID, "1",
+                WorkflowAction.Status.KILLED, childId);
+        new ActionKillXCommand(action.getId()).call();
+
+        waitUntilYarnAppKilledAndAssertSuccess(childId);
+    }
+
     private String launchSleepJob(int sleep) throws Exception {
         Configuration jobConf = Services.get().get(HadoopAccessorService.class)
                 .createConfiguration(new URI(getNameNodeUri()).getAuthority());
@@ -173,8 +183,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
 
         jobClient.submitJob(new JobConf(jobConf));
-        Set<ApplicationId> apps = Sets.newHashSet();
-        apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);
+        Set<ApplicationId> apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);
         assertEquals("Number of YARN apps", apps.size(), 1);
 
         sleepjob.close();
