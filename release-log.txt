@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2371 Add docs for state transitions for WF Action states (daniel.becker via gezapeti)
 OOZIE-2911 Re-add test testWfActionKillChildJob and adapt it to OYA (gezapeti)
 OOZIE-2918 Delete LauncherMapper and its test (asasvari via pbacsko)
 OOZIE-2733 change org.apache.hadoop.fs.permission.AccessControlException to org.apache.hadoop.security.AccessControlException (gezapeti)

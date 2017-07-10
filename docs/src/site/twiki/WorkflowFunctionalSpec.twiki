@@ -2323,13 +2323,14 @@ immutable for the duration of the workflow job.
 #JobLifecycle
 ---++ 9 Workflow Jobs Lifecycle
 
-A workflow job can have be in any of the following states:
+---+++ 9.1 Workflow Job Lifecycle
+A workflow job can be in any of the following states:
 
- =PREP:= When a workflow job is first create it will be in =PREP= state. The workflow job is defined but it is not
+ =PREP:= When a workflow job is first created it will be in =PREP= state. The workflow job is defined but it is not
 running.
 
  =RUNNING:= When a =CREATED= workflow job is started it goes into =RUNNING= state, it will remain in =RUNNING= state
-while it does not reach its end state, ends in error or it is suspended.
+until it reaches its end state, ends in error or is suspended.
 
  =SUSPENDED:= A =RUNNING= workflow job can be suspended, it will remain in =SUSPENDED= state until the workflow job
  is resumed or it is killed.
@@ -2347,6 +2348,47 @@ request to Oozie the workflow job ends reaching the =KILLED= final state.
    * =PREP= --> =RUNNING= | =KILLED=
    * =RUNNING= --> =SUSPENDED= | =SUCCEEDED= | =KILLED= | =FAILED=
    * =SUSPENDED= --> =RUNNING= | =KILLED=
+
+---+++ 9.2 Workflow Action Lifecycle
+
+When a workflow action is created, it is in the =PREP= state. If an attempt to start it succeeds,
+it transitions to the =RUNNING= state; if the attempt fails in a way that Oozie deems to be transient, and a non-zero
+number of retries is configured, it enters the =START_RETRY= state and Oozie automatically retries the action until
+it either succeeds or the configured number of retries is reached. If the error is not transient or still persists
+after the retries, the job transitions to the =START_MANUAL= state, where the user is expected to either kill the
+action or manually resume it (after fixing any issues).
+
+From the =RUNNING= state, the action normally transitions to the =DONE= state. From =DONE=, it goes to =OK= if it ends
+successfully, otherwise to =ERROR= or =USER_RETRY=.
+
+If an error is encountered while Oozie is trying to end the action, the action transitions to the =END_RETRY= state if
+the error is transient and a non-zero number of retries is configured, or to the =END_MANUAL= state if it is not.
+In the =END_RETRY= state, Oozie automatically retries ending the action until it either succeeds or the configured
+number of retries is reached. If the error persists, the action goes to the =END_MANUAL= state, where the user is
+expected to either kill the action or manually resume it (after fixing any issues).
+
+The =USER_RETRY= state is used when retrying actions where the user has explicitly configured the number (and/or other
+properties) of retries. For more information, see
+[[WorkflowFunctionalSpec#UserRetryWFActions][User-Retry for Workflow Actions]].
+From =USER_RETRY=, the action goes back to =RUNNING= and a retry is attempted. After the configured number of user
+retries, if the action is still failing, it goes to the =ERROR= state.
+
+If an action is killed, it transitions to the =KILLED= state. If there is an error while attempting to kill the action,
+it goes to the =FAILED= state.
+
+*Workflow action state valid transitions:*
+
+   * --> =PREP=
+   * =PREP= --> =START_RETRY= | =START_MANUAL= | =RUNNING= | =KILLED=
+   * =START_RETRY= --> =START_MANUAL= | =RUNNING= | =KILLED=
+   * =START_MANUAL= --> =RUNNING= | =KILLED=
+   * =USER_RETRY= --> =RUNNING= | =DONE= | =KILLED=
+   * =RUNNING= --> =DONE= | =KILLED=
+   * =KILLED= --> =FAILED=
+   * =DONE= --> =OK= | =ERROR= | =USER_RETRY= | =END_RETRY= | =END_MANUAL=
+   * =END_RETRY= --> =END_MANUAL= | =KILLED= | =OK= | =ERROR=
+   * =END_MANUAL= --> =KILLED= | =OK= | =ERROR=
+
 
 #JobReRun
 ---++ 10 Workflow Jobs Recovery (re-run)
@@ -2480,6 +2522,7 @@ More than one share library directory name can be specified for an action by usi
 For example: When using HCatLoader and HCatStorer in pig, =oozie.action.sharelib.for.pig= can be set to =pig,hcatalog= to include
 both pig and hcatalog jars.
 
+#UserRetryWFActions
 ---++ 18 User-Retry for Workflow Actions (since Oozie 3.1)
 
 Oozie provides User-Retry capabilities when an action is in =ERROR= or =FAILED= state.
