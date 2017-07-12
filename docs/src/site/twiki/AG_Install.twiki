@@ -198,6 +198,37 @@ following configuration properties in the oozie-site.xml:
   oozie.service.JPAService.pool.max.active.conn=10
 </verbatim>
 
+If you are interested in fine tuning how Oozie can retry database operations on failing database connectivity or errors, you can
+set following properties to other values. Here are the default ones:
+
+<verbatim>
+  oozie.service.JPAService.retry.initial-wait-time.ms=100
+  oozie.service.JPAService.retry.maximum-wait-time.ms=30000
+  oozie.service.JPAService.retry.max-retries=10
+</verbatim>
+
+If you set either =oozie.service.JPAService.retry.max-retries= or =oozie.service.JPAService.retry.maximum-wait-time.ms= to =0=,
+no retry attempts will be made on any database connectivity issues. Exact settings for these properties depend also on how much load
+is on Oozie regarding workflow and coordinator jobs.
+
+The database operation retry functionality kicks in when there is a =javax.persistence.PersistenceException= those root cause is not
+part of the normal everyday operation - filtered against a blacklist consisting of descendants like =NoSuchResultException=,
+=NonUniqueResultException=, and the like. This way Oozie won't retry database operations on errors that are more related to the
+current query, or otherwise part of the everyday life. This way it's ensured that this blacklist is database agnostic.
+
+It has been tested with a MySQL / failing every minute 10 seconds / an Oozie coordinator job of an Oozie workflow consisting of four
+workflow actions (some of them are asynchronous). On this setup Oozie was recovering after each and every database outage.
+
+To set up such a failing MySQL scenario following has to be performed:
+
+   * Set =oozie.service.JPAService.connection.data.source= to =org.apache.oozie.util.db.BasicDataSourceWrapper=
+   within =oozie-site.xml=
+   * Set =oozie.service.JPAService.jdbc.driver= to =org.apache.oozie.util.db.FailingMySQLDriverWrapper= within =oozie-site.xml=
+   * Restart Oozie server
+   * Submit / start some workflows, coordinators etc.
+   * See how Oozie is retrying on injected database errors by looking at the Oozie server logs, grepping =JPAException= instances
+   with following message prefix: <verbatim>Deliberately failing to prepare statement.</verbatim>
+
 ---++ Database Migration
 
 Oozie provides an easy way to switch between databases without losing any data. Oozie servers should be stopped during the

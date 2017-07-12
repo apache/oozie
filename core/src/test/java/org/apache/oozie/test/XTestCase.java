@@ -41,7 +41,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
-import javax.persistence.Query;
+import javax.persistence.PersistenceException;
+import javax.persistence.TypedQuery;
 
 import junit.framework.TestCase;
 
@@ -96,6 +97,8 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.openjpa.persistence.ArgumentException;
+import org.apache.openjpa.persistence.RollbackException;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -832,71 +835,29 @@ public abstract class XTestCase extends TestCase {
         entityManager.setFlushMode(FlushModeType.COMMIT);
         entityManager.getTransaction().begin();
 
-        Query q = entityManager.createNamedQuery("GET_WORKFLOWS");
-        List<WorkflowJobBean> wfjBeans = q.getResultList();
-        int wfjSize = wfjBeans.size();
-        for (WorkflowJobBean w : wfjBeans) {
-            entityManager.remove(w);
+        final int wfjSize = getCountAndRemoveAll(entityManager, "GET_WORKFLOWS", WorkflowJobBean.class);
+        final int wfaSize = getCountAndRemoveAll(entityManager, "GET_ACTIONS", WorkflowActionBean.class);
+        final int cojSize = getCountAndRemoveAll(entityManager, "GET_COORD_JOBS", CoordinatorJobBean.class);
+        final int coaSize = getCountAndRemoveAll(entityManager, "GET_COORD_ACTIONS", CoordinatorActionBean.class);
+        final int bjSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_JOBS", BundleJobBean.class);
+        final int baSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_ACTIONS", BundleActionBean.class);
+        final int slaSize = getCountAndRemoveAll(entityManager, "GET_SLA_EVENTS", SLAEventBean.class);
+        final int slaRegSize = getCountAndRemoveAll(entityManager, "GET_ACTIONS", SLARegistrationBean.class);
+        final int ssSize = getCountAndRemoveAll(entityManager, "GET_SLA_SUMMARY_ALL", SLASummaryBean.class);
+
+        try {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().commit();
+            }
+
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
+        }
+        catch (final RollbackException e) {
+            log.warn("Cannot commit current transaction. [e.message={0}]", e.getMessage());
         }
 
-        q = entityManager.createNamedQuery("GET_ACTIONS");
-        List<WorkflowActionBean> wfaBeans = q.getResultList();
-        int wfaSize = wfaBeans.size();
-        for (WorkflowActionBean w : wfaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_COORD_JOBS");
-        List<CoordinatorJobBean> cojBeans = q.getResultList();
-        int cojSize = cojBeans.size();
-        for (CoordinatorJobBean w : cojBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_COORD_ACTIONS");
-        List<CoordinatorActionBean> coaBeans = q.getResultList();
-        int coaSize = coaBeans.size();
-        for (CoordinatorActionBean w : coaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_BUNDLE_JOBS");
-        List<BundleJobBean> bjBeans = q.getResultList();
-        int bjSize = bjBeans.size();
-        for (BundleJobBean w : bjBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_BUNDLE_ACTIONS");
-        List<BundleActionBean> baBeans = q.getResultList();
-        int baSize = baBeans.size();
-        for (BundleActionBean w : baBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_SLA_EVENTS");
-        List<SLAEventBean> slaBeans = q.getResultList();
-        int slaSize = slaBeans.size();
-        for (SLAEventBean w : slaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createQuery("select OBJECT(w) from SLARegistrationBean w");
-        List<SLARegistrationBean> slaRegBeans = q.getResultList();
-        int slaRegSize = slaRegBeans.size();
-        for (SLARegistrationBean w : slaRegBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createQuery("select OBJECT(w) from SLASummaryBean w");
-        List<SLASummaryBean> sdBeans = q.getResultList();
-        int ssSize = sdBeans.size();
-        for (SLASummaryBean w : sdBeans) {
-            entityManager.remove(w);
-        }
-
-        entityManager.getTransaction().commit();
-        entityManager.close();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");
@@ -906,7 +867,30 @@ public abstract class XTestCase extends TestCase {
         log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
         log.info(slaRegSize + " entries in SLA_REGISTRATION removed from DB!");
         log.info(ssSize + " entries in SLA_SUMMARY removed from DB!");
+    }
 
+    private <E> int getCountAndRemoveAll(final EntityManager entityManager,
+                                                        final String queryName,
+                                                        final Class<E> entityClass) {
+        try {
+            final TypedQuery<E> getAllQuery = entityManager.createNamedQuery(queryName, entityClass);
+            final List<E> allEntities = getAllQuery.getResultList();
+            final int entitiesCount = allEntities.size();
+
+            for (final E w : allEntities) {
+                entityManager.remove(w);
+            }
+
+            return entitiesCount;
+        } catch (final RollbackException e) {
+            log.warn("Cannot get count or remove all entities. [queryName={0};entityClass.name={1}]",
+                    queryName, entityClass.getName());
+            return 0;
+        } catch (final PersistenceException | ArgumentException e) {
+            log.warn("Cannot get count or remove all entities. [queryName={0};entityClass.name={1}]",
+                    queryName, entityClass.getName());
+            return 0;
+        }
     }
 
     private static MiniDFSCluster dfsCluster = null;

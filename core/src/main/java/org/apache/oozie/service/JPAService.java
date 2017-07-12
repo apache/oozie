@@ -23,14 +23,16 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
-import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -45,6 +47,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonSLAEvent;
+import org.apache.oozie.command.SkipCommitFaultInjection;
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -54,7 +57,10 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.db.OperationRetryHandler;
+import org.apache.oozie.util.db.PersistenceExceptionSubclassFilterRetryPredicate;
 import org.apache.openjpa.lib.jdbc.DecoratingDataSource;
+import org.apache.openjpa.persistence.InvalidStateException;
 import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 
 /**
@@ -63,6 +69,10 @@ import org.apache.openjpa.persistence.OpenJPAEntityManagerFactorySPI;
 @SuppressWarnings("deprecation")
 public class JPAService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP_JPA = "jpa";
+
+    public static final long DEFAULT_INITIAL_WAIT_TIME = 100;
+    public static final long DEFAULT_MAX_WAIT_TIME = 30_000;
+    public static final int DEFAULT_MAX_RETRY_COUNT = 1;
 
     public static final String CONF_DB_SCHEMA = "oozie.db.schema.name";
 
@@ -79,13 +89,16 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL = CONF_PREFIX + "validate.db.connection.eviction.interval";
     public static final String CONF_VALIDATE_DB_CONN_EVICTION_NUM = CONF_PREFIX + "validate.db.connection.eviction.num";
     public static final String CONF_OPENJPA_BROKER_IMPL = CONF_PREFIX + "openjpa.BrokerImpl";
-
-
+    public static final String INITIAL_WAIT_TIME = CONF_PREFIX + "retry.initial-wait-time.ms";
+    public static final String MAX_WAIT_TIME = CONF_PREFIX + "maximum-wait-time.ms";
+    public static final String MAX_RETRY_COUNT = CONF_PREFIX + "retry.max-retries";
+    public static final String SKIP_COMMIT_FAULT_INJECTION_CLASS = SkipCommitFaultInjection.class.getName();
 
     private EntityManagerFactory factory;
     private Instrumentation instr;
 
     private static XLog LOG;
+    private OperationRetryHandler retryHandler;
 
     /**
      * Return the public interface of the service.
@@ -97,7 +110,7 @@ public class JPAService implements Service, Instrumentable {
     }
 
     @Override
-    public void instrument(Instrumentation instr) {
+    public void instrument(final Instrumentation instr) {
         this.instr = instr;
 
         final BasicDataSource dataSource = getBasicDataSource();
@@ -121,10 +134,10 @@ public class JPAService implements Service, Instrumentable {
         // Get the BasicDataSource object; it could be wrapped in a DecoratingDataSource
         // It might also not be a BasicDataSource if the user configured something different
         BasicDataSource basicDataSource = null;
-        OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
-        Object connectionFactory = spi.getConfiguration().getConnectionFactory();
+        final OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
+        final Object connectionFactory = spi.getConfiguration().getConnectionFactory();
         if (connectionFactory instanceof DecoratingDataSource) {
-            DecoratingDataSource decoratingDataSource = (DecoratingDataSource) connectionFactory;
+            final DecoratingDataSource decoratingDataSource = (DecoratingDataSource) connectionFactory;
             basicDataSource = (BasicDataSource) decoratingDataSource.getInnermostDelegate();
         } else if (connectionFactory instanceof BasicDataSource) {
             basicDataSource = (BasicDataSource) connectionFactory;
@@ -137,22 +150,22 @@ public class JPAService implements Service, Instrumentable {
      *
      * @param services services instance.
      */
-    public void init(Services services) throws ServiceException {
+    public void init(final Services services) throws ServiceException {
         LOG = XLog.getLog(JPAService.class);
-        Configuration conf = services.getConf();
-        String dbSchema = ConfigurationService.get(conf, CONF_DB_SCHEMA);
+        final Configuration conf = services.getConf();
+        final String dbSchema = ConfigurationService.get(conf, CONF_DB_SCHEMA);
         String url = ConfigurationService.get(conf, CONF_URL);
-        String driver = ConfigurationService.get(conf, CONF_DRIVER);
-        String user = ConfigurationService.get(conf, CONF_USERNAME);
-        String password = ConfigurationService.getPassword(conf, CONF_PASSWORD).trim();
-        String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
-        String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
-        String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
-        String brokerImplConfig = ConfigurationService.get(conf, CONF_OPENJPA_BROKER_IMPL);
-        boolean autoSchemaCreation = ConfigurationService.getBoolean(conf, CONF_CREATE_DB_SCHEMA);
-        boolean validateDbConn = ConfigurationService.getBoolean(conf, CONF_VALIDATE_DB_CONN);
-        String evictionInterval = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim();
-        String evictionNum = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim();
+        final String driver = ConfigurationService.get(conf, CONF_DRIVER);
+        final String user = ConfigurationService.get(conf, CONF_USERNAME);
+        final String password = ConfigurationService.getPassword(conf, CONF_PASSWORD).trim();
+        final String maxConn = ConfigurationService.get(conf, CONF_MAX_ACTIVE_CONN).trim();
+        final String dataSource = ConfigurationService.get(conf, CONF_CONN_DATA_SOURCE);
+        final String connPropsConfig = ConfigurationService.get(conf, CONF_CONN_PROPERTIES);
+        final String brokerImplConfig = ConfigurationService.get(conf, CONF_OPENJPA_BROKER_IMPL);
+        final boolean autoSchemaCreation = ConfigurationService.getBoolean(conf, CONF_CREATE_DB_SCHEMA);
+        final boolean validateDbConn = ConfigurationService.getBoolean(conf, CONF_VALIDATE_DB_CONN);
+        final String evictionInterval = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim();
+        final String evictionNum = ConfigurationService.get(conf, CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim();
 
         if (!url.startsWith("jdbc:")) {
             throw new ServiceException(ErrorCode.E0608, url, "invalid JDBC URL, must start with 'jdbc:'");
@@ -163,14 +176,14 @@ public class JPAService implements Service, Instrumentable {
         }
         dbType = dbType.substring(0, dbType.indexOf(":"));
 
-        String persistentUnit = "oozie-" + dbType;
+        final String persistentUnit = "oozie-" + dbType;
 
         // Checking existince of ORM file for DB type
-        String ormFile = "META-INF/" + persistentUnit + "-orm.xml";
+        final String ormFile = "META-INF/" + persistentUnit + "-orm.xml";
         try {
             IOUtils.getResourceAsStream(ormFile, -1);
         }
-        catch (IOException ex) {
+        catch (final IOException ex) {
             throw new ServiceException(ErrorCode.E0609, dbType, ormFile);
         }
 
@@ -182,7 +195,7 @@ public class JPAService implements Service, Instrumentable {
 
         String connProps = "DriverClassName={0},Url={1},Username={2},Password={3},MaxActive={4}";
         connProps = MessageFormat.format(connProps, driver, url, user, password, maxConn);
-        Properties props = new Properties();
+        final Properties props = new Properties();
         if (autoSchemaCreation) {
             connProps += ",TestOnBorrow=false,TestOnReturn=false,TestWhileIdle=false";
             props.setProperty("openjpa.jdbc.SynchronizeMappings", "buildSchema(ForeignKeys=true)");
@@ -190,8 +203,8 @@ public class JPAService implements Service, Instrumentable {
         else if (validateDbConn) {
             // validation can be done only if the schema already exist, else a
             // connection cannot be obtained to create the schema.
-            String interval = "timeBetweenEvictionRunsMillis=" + evictionInterval;
-            String num = "numTestsPerEvictionRun=" + evictionNum;
+            final String interval = "timeBetweenEvictionRunsMillis=" + evictionInterval;
+            final String num = "numTestsPerEvictionRun=" + evictionNum;
             connProps += ",TestOnBorrow=true,TestOnReturn=true,TestWhileIdle=true," + interval + "," + num;
             connProps += ",ValidationQuery=select count(*) from VALIDATE_CONN";
             connProps = MessageFormat.format(connProps, dbSchema);
@@ -210,35 +223,75 @@ public class JPAService implements Service, Instrumentable {
             LOG.info("Setting openjpa.BrokerImpl to {0}", brokerImplConfig);
         }
 
+        initRetryHandler();
+
         factory = Persistence.createEntityManagerFactory(persistentUnit, props);
 
-        EntityManager entityManager = getEntityManager();
-        entityManager.find(WorkflowActionBean.class, 1);
-        entityManager.find(WorkflowJobBean.class, 1);
-        entityManager.find(CoordinatorActionBean.class, 1);
-        entityManager.find(CoordinatorJobBean.class, 1);
-        entityManager.find(SLAEventBean.class, 1);
-        entityManager.find(JsonSLAEvent.class, 1);
-        entityManager.find(BundleJobBean.class, 1);
-        entityManager.find(BundleActionBean.class, 1);
-        entityManager.find(SLARegistrationBean.class, 1);
-        entityManager.find(SLASummaryBean.class, 1);
+        final EntityManager entityManager = getEntityManager();
+        findRetrying(entityManager, WorkflowActionBean.class, 1);
+        findRetrying(entityManager, WorkflowJobBean.class, 1);
+        findRetrying(entityManager, CoordinatorActionBean.class, 1);
+        findRetrying(entityManager, CoordinatorJobBean.class, 1);
+        findRetrying(entityManager, SLAEventBean.class, 1);
+        findRetrying(entityManager, JsonSLAEvent.class, 1);
+        findRetrying(entityManager, BundleActionBean.class, 1);
+        findRetrying(entityManager, BundleJobBean.class, 1);
+        findRetrying(entityManager, SLARegistrationBean.class, 1);
+        findRetrying(entityManager, SLASummaryBean.class, 1);
 
         LOG.info(XLog.STD, "All entities initialized");
         // need to use a pseudo no-op transaction so all entities, datasource
         // and connection pool are initialized one time only
         entityManager.getTransaction().begin();
-        OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
+        final OpenJPAEntityManagerFactorySPI spi = (OpenJPAEntityManagerFactorySPI) factory;
         // Mask the password with '***'
-        String logMsg = spi.getConfiguration().getConnectionProperties().replaceAll("Password=.*?,", "Password=***,");
+        final String logMsg = spi.getConfiguration().getConnectionProperties().replaceAll("Password=.*?,", "Password=***,");
         LOG.info("JPA configuration: {0}", logMsg);
         entityManager.getTransaction().commit();
         entityManager.close();
         try {
             CodecFactory.initialize(conf);
         }
-        catch (Exception ex) {
+        catch (final Exception ex) {
             throw new ServiceException(ErrorCode.E0100, getClass().getName(), ex);
+        }
+
+    }
+
+    private void initRetryHandler() {
+        final long initialWaitTime = ConfigurationService.getInt(INITIAL_WAIT_TIME, (int) DEFAULT_INITIAL_WAIT_TIME);
+        final long maxWaitTime = ConfigurationService.getInt(MAX_WAIT_TIME, (int) DEFAULT_MAX_WAIT_TIME);
+        final int maxRetryCount = ConfigurationService.getInt(MAX_RETRY_COUNT, DEFAULT_MAX_RETRY_COUNT);
+
+        LOG.info(XLog.STD, "Failing database operations will be retried {0} times, with an initial sleep time of {1} ms,"
+                + "max sleep time {2} ms", maxRetryCount, initialWaitTime, maxWaitTime);
+        retryHandler = new OperationRetryHandler(maxRetryCount,
+                initialWaitTime,
+                maxWaitTime,
+                new PersistenceExceptionSubclassFilterRetryPredicate());
+    }
+
+    private void findRetrying(final EntityManager entityManager, final Class entityClass, final int primaryKey)
+            throws ServiceException {
+        try {
+            retryHandler.executeWithRetry(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    if (!entityManager.getTransaction().isActive()) {
+                        entityManager.getTransaction().begin();
+                    }
+
+                    entityManager.find(entityClass, primaryKey);
+
+                    if (entityManager.getTransaction().isActive()) {
+                        entityManager.getTransaction().commit();
+                    }
+                    return null;
+                }
+            });
+        }
+        catch (final Exception e) {
+            throw new ServiceException(ErrorCode.E0603, e);
         }
     }
 
@@ -247,7 +300,12 @@ public class JPAService implements Service, Instrumentable {
      */
     public void destroy() {
         if (factory != null && factory.isOpen()) {
-            factory.close();
+            try {
+                factory.close();
+            }
+            catch (final InvalidStateException ise) {
+                LOG.warn("Cannot close EntityManagerFactory. [ise.message={0}]", ise.getMessage());
+            }
         }
     }
 
@@ -258,28 +316,33 @@ public class JPAService implements Service, Instrumentable {
      * @return return value of the JPAExecutor.
      * @throws JPAExecutorException thrown if an jpa executor failed
      */
-    public <T> T execute(JPAExecutor<T> executor) throws JPAExecutorException {
-        EntityManager em = getEntityManager();
-        Instrumentation.Cron cron = new Instrumentation.Cron();
+    public <T> T execute(final JPAExecutor<T> executor) throws JPAExecutorException {
+        final EntityManager em = getEntityManager();
+        final Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
             LOG.trace("Executing JPAExecutor [{0}]", executor.getName());
             if (instr != null) {
                 instr.incr(INSTRUMENTATION_GROUP_JPA, executor.getName(), 1);
             }
             cron.start();
-            em.getTransaction().begin();
-            T t = executor.execute(em);
-            if (em.getTransaction().isActive()) {
-                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
-                    throw new RuntimeException("Skipping Commit for Failover Testing");
-                }
 
-                em.getTransaction().commit();
-            }
-            return t;
+            return retryHandler.executeWithRetry(new Callable<T>() {
+                @Override
+                public T call() throws Exception {
+                    if (!em.getTransaction().isActive()) {
+                        em.getTransaction().begin();
+                    }
+
+                    final T t = executor.execute(em);
+
+                    checkAndCommit(em.getTransaction());
+
+                    return t;
+                }
+            });
         }
-        catch (PersistenceException e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+        catch (final Exception e) {
+            throw getTargetException(e);
         }
         finally {
             cron.stop();
@@ -292,7 +355,7 @@ public class JPAService implements Service, Instrumentable {
                     em.getTransaction().rollback();
                 }
             }
-            catch (Exception ex) {
+            catch (final Exception ex) {
                 LOG.warn("Could not check/rollback transaction after JPAExecutor [{0}], {1}", executor.getName(), ex
                         .getMessage(), ex);
             }
@@ -304,10 +367,20 @@ public class JPAService implements Service, Instrumentable {
                     LOG.warn("JPAExecutor [{0}] closed the EntityManager, it should not!", executor.getName());
                 }
             }
-            catch (Exception ex) {
+            catch (final Exception ex) {
                 LOG.warn("Could not close EntityManager after JPAExecutor [{0}], {1}", executor.getName(), ex
                         .getMessage(), ex);
             }
+        }
+    }
+
+    private void checkAndCommit(final EntityTransaction tx) {
+        if (tx.isActive()) {
+            if (FaultInjection.isActive(SKIP_COMMIT_FAULT_INJECTION_CLASS)) {
+                throw new RuntimeException("Skipping Commit for Failover Testing");
+            }
+
+            tx.commit();
         }
     }
 
@@ -319,8 +392,8 @@ public class JPAService implements Service, Instrumentable {
      * @return Integer that query returns, which corresponds to the number of rows updated
      * @throws JPAExecutorException
      */
-    public int executeUpdate(String namedQueryName, Query query, EntityManager em) throws JPAExecutorException {
-        Instrumentation.Cron cron = new Instrumentation.Cron();
+    public int executeUpdate(final String namedQueryName, final Query query, final EntityManager em) throws JPAExecutorException {
+        final Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
             LOG.trace("Executing Update/Delete Query [{0}]", namedQueryName);
@@ -328,18 +401,23 @@ public class JPAService implements Service, Instrumentable {
                 instr.incr(INSTRUMENTATION_GROUP_JPA, namedQueryName, 1);
             }
             cron.start();
-            em.getTransaction().begin();
-            int ret = query.executeUpdate();
-            if (em.getTransaction().isActive()) {
-                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
-                    throw new RuntimeException("Skipping Commit for Failover Testing");
+
+            return retryHandler.executeWithRetry(new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                    if (!em.getTransaction().isActive()) {
+                        em.getTransaction().begin();
+                    }
+                    final int ret = query.executeUpdate();
+
+                    checkAndCommit(em.getTransaction());
+
+                    return ret;
                 }
-                em.getTransaction().commit();
-            }
-            return ret;
+            });
         }
-        catch (PersistenceException e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+        catch (final Exception e) {
+            throw getTargetException(e);
         }
         finally {
             processFinally(em, cron, namedQueryName, true);
@@ -350,7 +428,7 @@ public class JPAService implements Service, Instrumentable {
         E namedQuery;
         Query query;
 
-        public QueryEntry(E namedQuery, Query query) {
+        public QueryEntry(final E namedQuery, final Query query) {
             this.namedQuery = namedQuery;
             this.query = query;
         }
@@ -364,7 +442,10 @@ public class JPAService implements Service, Instrumentable {
         }
     }
 
-    private void processFinally(EntityManager em, Instrumentation.Cron cron, String name, boolean checkActive) {
+    private void processFinally(final EntityManager em,
+                                final Instrumentation.Cron cron,
+                                final String name,
+                                final boolean checkActive) {
         cron.stop();
         if (instr != null) {
             instr.addCron(INSTRUMENTATION_GROUP_JPA, name, cron);
@@ -376,7 +457,7 @@ public class JPAService implements Service, Instrumentable {
                     em.getTransaction().rollback();
                 }
             }
-            catch (Exception ex) {
+            catch (final Exception ex) {
                 LOG.warn("Could not check/rollback transaction after [{0}], {1}", name,
                         ex.getMessage(), ex);
             }
@@ -389,7 +470,7 @@ public class JPAService implements Service, Instrumentable {
                 LOG.warn("[{0}] closed the EntityManager, it should not!", name);
             }
         }
-        catch (Exception ex) {
+        catch (final Exception ex) {
             LOG.warn("Could not close EntityManager after [{0}], {1}", name, ex.getMessage(), ex);
         }
     }
@@ -402,41 +483,57 @@ public class JPAService implements Service, Instrumentable {
      * @param em Entity Manager
      * @throws JPAExecutorException
      */
-    public void executeBatchInsertUpdateDelete(Collection<JsonBean> insertBeans, List<QueryEntry> updateQueryList,
-            Collection<JsonBean> deleteBeans, EntityManager em) throws JPAExecutorException {
-        Instrumentation.Cron cron = new Instrumentation.Cron();
+    public void executeBatchInsertUpdateDelete(final Collection<JsonBean> insertBeans, final List<QueryEntry> updateQueryList,
+            final Collection<JsonBean> deleteBeans, final EntityManager em) throws JPAExecutorException {
+        final Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
             LOG.trace("Executing Queries in Batch");
             cron.start();
-            em.getTransaction().begin();
-            if (updateQueryList != null && updateQueryList.size() > 0) {
-                for (QueryEntry q : updateQueryList) {
-                    if (instr != null) {
-                        instr.incr(INSTRUMENTATION_GROUP_JPA, q.getQueryName().name(), 1);
+
+            retryHandler.executeWithRetry(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    if (em.getTransaction().isActive()) {
+                        try {
+                            em.getTransaction().rollback();
+                        }
+                        catch (final Exception e) {
+                            LOG.warn("Rollback failed - ignoring");
+                        }
                     }
-                    q.getQuery().executeUpdate();
+
+                    em.getTransaction().begin();
+
+                    if (CollectionUtils.isNotEmpty(updateQueryList)) {
+                        for (final QueryEntry q : updateQueryList) {
+                            if (instr != null) {
+                                instr.incr(INSTRUMENTATION_GROUP_JPA, q.getQueryName().name(), 1);
+                            }
+                            q.getQuery().executeUpdate();
+                        }
+                    }
+
+                    if (CollectionUtils.isNotEmpty(insertBeans)) {
+                        for (final JsonBean bean : insertBeans) {
+                            em.persist(bean);
+                        }
+                    }
+
+                    if (CollectionUtils.isNotEmpty(deleteBeans)) {
+                        for (final JsonBean bean : deleteBeans) {
+                            em.remove(em.merge(bean));
+                        }
+                    }
+
+                    checkAndCommit(em.getTransaction());
+
+                    return null;
                 }
-            }
-            if (insertBeans != null && insertBeans.size() > 0) {
-                for (JsonBean bean : insertBeans) {
-                    em.persist(bean);
-                }
-            }
-            if (deleteBeans != null && deleteBeans.size() > 0) {
-                for (JsonBean bean : deleteBeans) {
-                    em.remove(em.merge(bean));
-                }
-            }
-            if (em.getTransaction().isActive()) {
-                if (FaultInjection.isActive("org.apache.oozie.command.SkipCommitFaultInjection")) {
-                    throw new RuntimeException("Skipping Commit for Failover Testing");
-                }
-                em.getTransaction().commit();
-            }
+            });
         }
-        catch (PersistenceException e) {
-            throw new JPAExecutorException(ErrorCode.E0603, e);
+        catch (final Exception e) {
+            throw getTargetException(e);
         }
         finally {
             processFinally(em, cron, "batchqueryexecutor", true);
@@ -450,24 +547,33 @@ public class JPAService implements Service, Instrumentable {
      * @param em Entity Manager
      * @return object that matches the query
      */
-    public Object executeGet(String namedQueryName, Query query, EntityManager em) {
-        Instrumentation.Cron cron = new Instrumentation.Cron();
+    public Object executeGet(final String namedQueryName, final Query query, final EntityManager em) throws JPAExecutorException {
+        final Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
-
             LOG.trace("Executing Select Query to Get a Single row  [{0}]", namedQueryName);
             if (instr != null) {
                 instr.incr(INSTRUMENTATION_GROUP_JPA, namedQueryName, 1);
             }
 
             cron.start();
-            Object obj = null;
-            try {
-                obj = query.getSingleResult();
-            }
-            catch (NoResultException e) {
-                // return null when no matched result
-            }
-            return obj;
+
+            return retryHandler.executeWithRetry(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    Object obj = null;
+                    try {
+                        obj = query.getSingleResult();
+                    }
+                    catch (final NoResultException e) {
+                        LOG.info("No results found");
+                        // return null when no matched result
+                    }
+                    return obj;
+                }
+            });
+        }
+        catch (final Exception e) {
+            throw getTargetException(e);
         }
         finally {
             processFinally(em, cron, namedQueryName, false);
@@ -481,8 +587,9 @@ public class JPAService implements Service, Instrumentable {
      * @param em Entity Manager
      * @return list containing results that match the query
      */
-    public List<?> executeGetList(String namedQueryName, Query query, EntityManager em) {
-        Instrumentation.Cron cron = new Instrumentation.Cron();
+    public List<?> executeGetList(final String namedQueryName, final Query query, final EntityManager em)
+            throws JPAExecutorException {
+        final Instrumentation.Cron cron = new Instrumentation.Cron();
         try {
 
             LOG.trace("Executing Select Query to Get Multiple Rows [{0}]", namedQueryName);
@@ -491,14 +598,24 @@ public class JPAService implements Service, Instrumentable {
             }
 
             cron.start();
-            List<?> resultList = null;
-            try {
-                resultList = query.getResultList();
-            }
-            catch (NoResultException e) {
-                // return null when no matched result
-            }
-            return resultList;
+
+            return retryHandler.executeWithRetry(new Callable<List<?>>() {
+                @Override
+                public List<?> call() throws Exception {
+                    List<?> resultList = null;
+                    try {
+                        resultList = query.getResultList();
+                    }
+                    catch (final NoResultException e) {
+                        LOG.info("No results found");
+                        // return null when no matched result
+                    }
+                    return resultList;
+                }
+            });
+        }
+        catch (final Exception e) {
+            throw getTargetException(e);
         }
         finally {
             processFinally(em, cron, namedQueryName, false);
@@ -514,4 +631,12 @@ public class JPAService implements Service, Instrumentable {
         return factory.createEntityManager();
     }
 
+    private JPAExecutorException getTargetException(final Exception e) {
+        if (e instanceof JPAExecutorException) {
+            return (JPAExecutorException) e;
+        }
+        else {
+            return new JPAExecutorException(ErrorCode.E0603, e.getMessage());
+        }
+    }
 }

@@ -19,8 +19,12 @@
 -->
 <configuration>
     <property>
+        <name>oozie.service.JPAService.connection.data.source</name>
+        <value>org.apache.oozie.util.db.BasicDataSourceWrapper</value>
+    </property>
+    <property>
         <name>oozie.service.JPAService.jdbc.driver</name>
-        <value>org.hsqldb.jdbcDriver</value>
+        <value>org.apache.oozie.util.db.FailingHSQLDBDriverWrapper</value>
     </property>
     <property>
         <name>oozie.service.JPAService.jdbc.url</name>
