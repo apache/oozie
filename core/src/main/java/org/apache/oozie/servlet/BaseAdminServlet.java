@@ -146,7 +146,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         }
         else if (resource.equals(RestConstants.ADMIN_BUILD_VERSION_RESOURCE)) {
             JSONObject json = new JSONObject();
-            json.put(JsonTags.BUILD_VERSION, BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
+            json.put(JsonTags.BUILD_INFO, BuildInfo.getBuildInfo().toString());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_QUEUE_DUMP_RESOURCE)) {

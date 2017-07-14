@@ -2167,7 +2167,7 @@ public class OozieClient {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                return (String) json.get(JsonTags.BUILD_VERSION);
+                return (String) json.get(JsonTags.BUILD_INFO);
             }
             else {
                 handleError(conn);
@@ -2364,7 +2364,7 @@ public class OozieClient {
      * Return the Oozie server build version.
      *
      * @return the Oozie server build version.
-     * @throws OozieClientException throw if it the server build version could not be retrieved.
+     * @throws OozieClientException throw if the server build version could not be retrieved.
      */
     public String getServerBuildVersion() throws OozieClientException {
         return new GetBuildVersion().call();

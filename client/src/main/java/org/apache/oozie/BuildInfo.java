@@ -18,6 +18,7 @@
 
 package org.apache.oozie;
 
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -42,7 +43,7 @@ public class BuildInfo {
         try {
             BUILD_INFO.load(BuildInfo.class.getClassLoader().getResourceAsStream("oozie-buildinfo.properties"));
         }
-        catch (Exception e) {
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -58,5 +59,4 @@ public class BuildInfo {
     public static Properties getBuildInfo() {
         return BUILD_INFO;
     }
-
 }

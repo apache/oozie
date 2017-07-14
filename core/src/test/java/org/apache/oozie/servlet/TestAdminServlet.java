@@ -212,8 +212,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
-                             json.get(JsonTags.BUILD_VERSION));
+                assertEquals(BuildInfo.getBuildInfo().toString(),
+                             json.get(JsonTags.BUILD_INFO));
                 return null;
             }
         });

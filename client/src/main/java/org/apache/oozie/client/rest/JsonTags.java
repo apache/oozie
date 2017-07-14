@@ -25,7 +25,7 @@ public interface JsonTags {
 
     String OOZIE_SAFE_MODE = "safeMode"; //Applicable for V0 only
     String OOZIE_SYSTEM_MODE = "systemMode";
-    String BUILD_VERSION = "buildVersion";
+    String BUILD_INFO = "buildInfo";
     String QUEUE_DUMP = "queueDump";
     String CALLABLE_DUMP = "callableDump";
     String UNIQUE_MAP_DUMP = "uniqueMapDump";

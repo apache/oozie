@@ -412,7 +412,7 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
+                assertEquals(BuildInfo.getBuildInfo().toString(),
                              wc.getServerBuildVersion());
                 return null;
             }

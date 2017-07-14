@@ -31,7 +31,6 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.cli.OozieCLI;
@@ -984,7 +983,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 String oozieUrl = getContextURL();
                 String[] args = new String[]{"admin", "-version", "-oozie", oozieUrl};
                 String out = runOozieCLIAndGetStdout(args);
-                assertEquals("Oozie server build version: " + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) +
+                assertEquals("Oozie server build version: " + BuildInfo.getBuildInfo() +
                         SYSTEM_LINE_SEPARATOR, out);
 
                 return null;
@@ -1050,8 +1049,19 @@ public class TestOozieCLI extends DagServletTestCase {
     public void testClientBuildVersion() throws Exception {
         String[] args = new String[]{"version"};
         String out = runOozieCLIAndGetStdout(args);
-        assertEquals("Oozie client build version: " + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION) +
-                SYSTEM_LINE_SEPARATOR, out);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Oozie client build version: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION))
+            .append("\nSource code repository: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VC_URL))
+            .append("\nCompiled by ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_USER_NAME))
+            .append(" on ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_TIME))
+            .append("\nFrom source with checksum: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VC_REVISION));
+
+        assertEquals(sb.toString() + SYSTEM_LINE_SEPARATOR, out);
     }
 
     public void testJobInfo() throws Exception {

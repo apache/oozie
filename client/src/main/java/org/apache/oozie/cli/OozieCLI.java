@@ -1960,8 +1960,18 @@ public class OozieCLI {
     }
 
     private void versionCommand() throws OozieCLIException {
-        System.out.println("Oozie client build version: "
-                + BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION));
+        StringBuilder sb = new StringBuilder();
+        sb.append("Oozie client build version: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION))
+            .append("\nSource code repository: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VC_URL))
+            .append("\nCompiled by ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_USER_NAME))
+            .append(" on ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_TIME))
+            .append("\nFrom source with checksum: ")
+            .append(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VC_REVISION));
+        System.out.println(sb.toString());
     }
 
     @VisibleForTesting
