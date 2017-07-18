@@ -928,7 +928,7 @@ public class CoordCommandUtils {
         CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
         CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
         String firstMissingDependencies = coordPullInputDependency.getFirstMissingDependency();
-        if (StringUtils.isEmpty(firstMissingDependencies)) {
+        if (StringUtils.isEmpty(firstMissingDependencies) || firstMissingDependencies.trim().startsWith("${coord:")) {
             firstMissingDependencies = coordPushInputDependency.getFirstMissingDependency();
         }
         return firstMissingDependencies;

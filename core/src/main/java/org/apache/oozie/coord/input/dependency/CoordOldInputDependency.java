@@ -344,9 +344,20 @@ public class CoordOldInputDependency implements CoordInputDependency {
             Map.Entry<String, ActionDependency> entry = it.next();
             ActionDependency dependency = entry.getValue();
             dependency.getMissingDependencies().retainAll(missingSets);
+
+            if (dependency.getUriTemplate() != null) {
+                for (int i = 0; i < dependency.getMissingDependencies().size(); i++) {
+                    if (dependency.getMissingDependencies().get(i).trim().startsWith("${coord:")) {
+                        dependency.getMissingDependencies().set(i,
+                                dependency.getMissingDependencies().get(i) + " -> " + dependency.getUriTemplate());
+                    }
+                }
+            }
+
             if (dependenciesMap.get(entry.getKey()).getMissingDependencies().isEmpty()) {
                 it.remove();
             }
+
         }
         return dependenciesMap;
     }
@@ -376,8 +387,10 @@ public class CoordOldInputDependency implements CoordInputDependency {
                 }
             }
             if (event.getChildTextTrim(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, event.getNamespace()) != null) {
+                ActionDependency unResolvedDependency = getUnResolvedDependency(coordAction, event);
                 dependency.getMissingDependencies()
-                        .addAll(getUnResolvedDependency(coordAction, event).getMissingDependencies());
+                        .addAll(unResolvedDependency.getMissingDependencies());
+                dependency.setUriTemplate(unResolvedDependency.getUriTemplate());
             }
             dependenciesMap.put(event.getAttributeValue("name"), dependency);
         }
@@ -387,10 +400,13 @@ public class CoordOldInputDependency implements CoordInputDependency {
     private ActionDependency getUnResolvedDependency(CoordinatorActionBean coordAction, Element event)
             throws JDOMException, URIHandlerException {
         String tmpUnresolved = event.getChildTextTrim(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, event.getNamespace());
-        ActionDependency dependency = new ActionDependency();
         StringBuilder nonResolvedList = new StringBuilder();
         CoordCommandUtils.getResolvedList(getMissingDependencies(), new StringBuilder(), nonResolvedList);
+        ActionDependency dependency = new ActionDependency();
+
         if (nonResolvedList.length() > 0) {
+            Element eDataset = event.getChild("dataset", event.getNamespace());
+            dependency.setUriTemplate(eDataset.getChild("uri-template", eDataset.getNamespace()).getTextTrim());
             dependency.getMissingDependencies().add(tmpUnresolved);
         }
         return dependency;

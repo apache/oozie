@@ -118,7 +118,8 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
         assertEquals(2, dependencyMap.get("F").getMissingDependencies().size());
         assertEquals(dependencyMap.get("F").getMissingDependencies().get(0),
                 "file://" + getTestCaseDir() + "/input-data/e/2009/01/_SUCCESS");
-        assertEquals(dependencyMap.get("F").getMissingDependencies().get(1), "${coord:latest(0)}");
+        assertEquals(dependencyMap.get("F").getMissingDependencies().get(1),
+                "${coord:latest(0)} -> file://" + getTestCaseDir() + "/input-data/e/${YEAR}/${DAY}");
     }
 
     public void testCoordActionPushDependencyMissing() throws Exception {
@@ -130,14 +131,14 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
-        String datasetPrefix = "/" + TABLE + "/dt=${YEAR}${DAY};country=usa";
-        String datasetSuffix = "hcat://" + getMetastoreAuthority() + "/";
+        String datasetSuffix = "/" + TABLE + "/dt=${YEAR}${DAY};country=usa";
+        String datasetPrefix = "hcat://" + getMetastoreAuthority() + "/";
 
-        conf.set("data_set_a", datasetSuffix.toString() + DB_A + datasetPrefix);
-        conf.set("data_set_b", datasetSuffix.toString() + DB_B + datasetPrefix);
-        conf.set("data_set_c", datasetSuffix.toString() + DB_C + datasetPrefix);
-        conf.set("data_set_d", datasetSuffix.toString() + DB_D + datasetPrefix);
-        conf.set("data_set_e", datasetSuffix.toString() + DB_E + datasetPrefix);
+        conf.set("data_set_a", datasetPrefix.toString() + DB_A + datasetSuffix);
+        conf.set("data_set_b", datasetPrefix.toString() + DB_B + datasetSuffix);
+        conf.set("data_set_c", datasetPrefix.toString() + DB_C + datasetSuffix);
+        conf.set("data_set_d", datasetPrefix.toString() + DB_D + datasetSuffix);
+        conf.set("data_set_e", datasetPrefix.toString() + DB_E + datasetSuffix);
 
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         String jobId = sc.call();
@@ -145,13 +146,16 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
         List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> data = new CoordActionMissingDependenciesXCommand(
                 jobId + "@1").call();
 
-        assertEquals("${coord:latestRange(-5,0)}", CoordCommandUtils.getFirstMissingDependency(data.get(0).getFirst()));
+        assertEquals(datasetPrefix + "db_a/table1/dt=200901;country=usa",
+                CoordCommandUtils.getFirstMissingDependency(data.get(0).getFirst()));
 
         Map<String, ActionDependency> dependencyMap = data.get(0).getSecond();
         assertEquals(6, dependencyMap.size());
         assertEquals(1, dependencyMap.get("A").getMissingDependencies().size());
         assertEquals(6, dependencyMap.get("B").getMissingDependencies().size());
         assertEquals(1, dependencyMap.get("C").getMissingDependencies().size());
+        assertEquals("${coord:latestRange(-5,0)} -> " + datasetPrefix.toString() + DB_C + datasetSuffix,
+                dependencyMap.get("C").getMissingDependencies().get(0));
         assertEquals(1, dependencyMap.get("D").getMissingDependencies().size());
         assertEquals(6, dependencyMap.get("E").getMissingDependencies().size());
 
