@@ -45,6 +45,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsPermission;
@@ -59,6 +60,8 @@ import org.apache.oozie.util.FSUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.jdom.JDOMException;
+
+import static org.apache.oozie.util.FSUtils.isLocalFile;
 
 public class ShareLibService implements Service, Instrumentable {
 
@@ -108,6 +111,7 @@ public class ShareLibService implements Service, Instrumentable {
     private String sharelibDirOld;
 
     FileSystem fs;
+    FileSystem localFs;
 
     final long retentionTime = 1000 * 60 * 60 * 24 * ConfigurationService.getInt(LAUNCHERJAR_LIB_RETENTION);
 
@@ -121,7 +125,9 @@ public class ShareLibService implements Service, Instrumentable {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
         try {
+
             fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
+            localFs = LocalFileSystem.get(new Configuration(false));
             //cache action key sharelib conf list
             cacheActionKeySharelibConfList();
             updateLauncherLib();
@@ -350,24 +356,26 @@ public class ShareLibService implements Service, Instrumentable {
         return shareLibMap.get(shareLibKey);
     }
 
-    private void checkSymlink(String shareLibKey) throws IOException {
+    private void checkSymlink(final String shareLibKey) throws IOException {
         if (symlinkMapping.get(shareLibKey) == null || symlinkMapping.get(shareLibKey).isEmpty()) {
             return;
         }
 
-        for (Path path : symlinkMapping.get(shareLibKey).keySet()) {
-            if (!symlinkMapping.get(shareLibKey).get(path).equals(FSUtils.getSymLinkTarget(fs, path))) {
+        for (final Path symlinkPath : symlinkMapping.get(shareLibKey).keySet()) {
+            final FileSystem fileSystem = getHostFileSystem(symlinkPath);
+            final Path symLinkTarget = FSUtils.getSymLinkTarget(fileSystem, symlinkPath);
+            final boolean symlinkIsNotTarget = !getSymlinkSharelibPath(shareLibKey, symlinkPath).equals(symLinkTarget);
+            if (symlinkIsNotTarget) {
                 synchronized (ShareLibService.class) {
-                    Map<String, List<Path>> tmpShareLibMap = new HashMap<String, List<Path>>(shareLibMap);
+                    final Map<String, List<Path>> tmpShareLibMap = new HashMap<String, List<Path>>(shareLibMap);
 
-                    Map<String, Map<Path, Configuration>> tmpShareLibConfigMap = new HashMap<String, Map<Path, Configuration>>(
-                            shareLibConfigMap);
+                    final Map<String, Map<Path, Configuration>> tmpShareLibConfigMap = new HashMap<>(shareLibConfigMap);
 
-                    Map<String, Map<Path, Path>> tmpSymlinkMapping = new HashMap<String, Map<Path, Path>>(
+                    final Map<String, Map<Path, Path>> tmpSymlinkMapping = new HashMap<String, Map<Path, Path>>(
                             symlinkMapping);
 
                     LOG.info(MessageFormat.format("Symlink target for [{0}] has changed, was [{1}], now [{2}]",
-                            shareLibKey, path, FSUtils.getSymLinkTarget(fs, path)));
+                            shareLibKey, symlinkPath, symLinkTarget));
                     loadShareLibMetaFile(tmpShareLibMap, tmpSymlinkMapping, tmpShareLibConfigMap, sharelibMappingFile,
                             shareLibKey);
                     shareLibMap = tmpShareLibMap;
@@ -375,10 +383,27 @@ public class ShareLibService implements Service, Instrumentable {
                     shareLibConfigMap = tmpShareLibConfigMap;
                     return;
                 }
-
             }
         }
+    }
 
+    private Path getSymlinkSharelibPath(String shareLibKey, Path path) {
+        return symlinkMapping.get(shareLibKey).get(path);
+    }
+
+    private FileSystem getHostFileSystem(String pathStr) {
+        FileSystem fileSystem;
+        if (isLocalFile(pathStr)) {
+            fileSystem = localFs;
+        }
+        else {
+            fileSystem = fs;
+        }
+        return fileSystem;
+    }
+
+    private FileSystem getHostFileSystem(Path path) {
+        return getHostFileSystem(path.toString());
     }
 
     /**
@@ -534,9 +559,13 @@ public class ShareLibService implements Service, Instrumentable {
         Map<String, Map<Path, Path>> tmpSymlinkMapping = new HashMap<String, Map<Path, Path>>();
         Map<String, Map<Path, Configuration>> tmpShareLibConfigMap = new HashMap<String, Map<Path, Configuration>>();
 
-        if (!StringUtils.isEmpty(sharelibMappingFile.trim())) {
+        String trimmedSharelibMappingFile = sharelibMappingFile.trim();
+        if (!StringUtils.isEmpty(trimmedSharelibMappingFile)) {
+            FileSystem fileSystem = getHostFileSystem(trimmedSharelibMappingFile);
+
             String sharelibMetaFileNewTimeStamp = JsonUtils.formatDateRfc822(
-                    new Date(fs.getFileStatus(new Path(sharelibMappingFile)).getModificationTime()), "GMT");
+                    new Date(fileSystem.getFileStatus(new Path(sharelibMappingFile)).getModificationTime()), "GMT");
+
             loadShareLibMetaFile(tempShareLibMap, tmpSymlinkMapping, tmpShareLibConfigMap, sharelibMappingFile, null);
             status.put("sharelibMetaFile", sharelibMappingFile);
             status.put("sharelibMetaFileNewTimeStamp", sharelibMetaFileNewTimeStamp);
@@ -612,8 +641,8 @@ public class ShareLibService implements Service, Instrumentable {
             throws IOException {
 
         Path shareFileMappingPath = new Path(sharelibFileMapping);
-        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        FileSystem filesystem = FileSystem.get(has.createConfiguration(shareFileMappingPath.toUri().getAuthority()));
+        FileSystem filesystem = getHostFileSystem(shareFileMappingPath);
+
         Properties prop = new Properties();
         prop.load(filesystem.open(new Path(sharelibFileMapping)));
 
@@ -634,11 +663,13 @@ public class ShareLibService implements Service, Instrumentable {
         List<Path> listOfPaths = new ArrayList<Path>();
         Map<Path, Path> symlinkMappingforAction = new HashMap<Path, Path>();
 
-        for (String dfsPath : pathList) {
-            Path path = new Path(dfsPath);
-            getPathRecursively(fs, new Path(dfsPath), listOfPaths, shareLibKey, shareLibConfigMap);
-            if (FSUtils.isSymlink(fs, path)) {
-                symlinkMappingforAction.put(path, FSUtils.getSymLinkTarget(fs, path));
+        for (String pathStr : pathList) {
+            Path path = new Path(pathStr);
+            final FileSystem fileSystem = getHostFileSystem(pathStr);
+
+            getPathRecursively(fileSystem, path, listOfPaths, shareLibKey, shareLibConfigMap);
+            if (FSUtils.isSymlink(fileSystem, path)) {
+                symlinkMappingforAction.put(path, FSUtils.getSymLinkTarget(fileSystem, path));
             }
         }
 
@@ -825,21 +856,21 @@ public class ShareLibService implements Service, Instrumentable {
     /**
      * Cache XML conf file
      *
-     * @param hdfsPath the hdfs path
+     * @param propertyFilePath the path of the property file
      * @param shareLibKey the share lib key
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws JDOMException
      */
-    private void cachePropertyFile(Path qualifiedHdfsPath, Path hdfsPath, String shareLibKey,
+    private void cachePropertyFile(Path qualifiedHdfsPath, Path propertyFilePath, String shareLibKey,
             Map<String, Map<Path, Configuration>> shareLibConfigMap) throws IOException, JDOMException {
         Map<Path, Configuration> confMap = shareLibConfigMap.get(shareLibKey);
         if (confMap == null) {
             confMap = new HashMap<Path, Configuration>();
             shareLibConfigMap.put(shareLibKey, confMap);
         }
-        Configuration xmlConf = new XConfiguration(fs.open(hdfsPath));
+        FileSystem fileSystem = getHostFileSystem(propertyFilePath);
+        Configuration xmlConf = new XConfiguration(fileSystem.open(propertyFilePath));
         confMap.put(qualifiedHdfsPath, xmlConf);
-
     }
 
     private void cacheActionKeySharelibConfList() {

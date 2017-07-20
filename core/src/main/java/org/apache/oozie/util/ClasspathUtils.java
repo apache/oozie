@@ -29,6 +29,7 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 
 public class ClasspathUtils {
     private static boolean usingMiniYarnCluster = false;
@@ -138,5 +140,30 @@ public class ClasspathUtils {
                 }
             }
         }
+    }
+
+    public static Configuration addToClasspathFromLocalShareLib(Configuration conf, Path libPath) {
+        if (conf == null) {
+            conf = new Configuration(false);
+        }
+        final String pathStr = normalizedLocalFsPath(libPath);
+
+        String appClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH);
+
+        if (org.apache.commons.lang.StringUtils.isEmpty(appClassPath)) {
+            addPathToYarnClasspathInConfig(conf, pathStr, StringUtils.join(File.pathSeparator,
+                    YarnConfiguration.DEFAULT_YARN_CROSS_PLATFORM_APPLICATION_CLASSPATH));
+        } else {
+            addPathToYarnClasspathInConfig(conf, pathStr, appClassPath);
+        }
+        return conf;
+    }
+
+    private static void addPathToYarnClasspathInConfig(Configuration conf, String pathStr, String appClassPath) {
+        conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, appClassPath + File.pathSeparator + pathStr);
+    }
+
+    private static String normalizedLocalFsPath(Path libPath) {
+        return org.apache.commons.lang.StringUtils.replace(libPath.toString(), FSUtils.FILE_SCHEME_PREFIX, "");
     }
 }

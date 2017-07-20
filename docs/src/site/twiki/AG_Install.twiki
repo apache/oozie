@@ -1120,8 +1120,8 @@ time-stamp directory. While starting, server also purges sharelib directory whic
 (defined as oozie.service.ShareLibService.temp.sharelib.retention.days and 7 days is default).
 
 Sharelib mapping file can be also configured. Configured file is a key value mapping, where key will be the sharelib name for the
-action and value is a comma separated list of DFS directories or jar files.
- This can be configured in oozie-site.xml as :
+action and value is a comma separated list of DFS or local filesystem directories or jar files. Local filesystem refers to the local
+filesystem of the node where the Oozie launcher is running. This can be configured in oozie-site.xml as :
  <verbatim>
   <!-- OOZIE -->
     <property>
@@ -1130,15 +1130,39 @@ action and value is a comma separated list of DFS directories or jar files.
         <description>
             Sharelib mapping files contains list of key=value,
             where key will be the sharelib name for the action and value is a comma separated list of
-            DFS directories or jar files.
+            DFS or local filesystem directories or jar files.
             Example.
             oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
             oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
             oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
             oozie.spark=hdfs:///share/lib/spark/lib/,hdfs:///share/lib/spark/python/lib/pyspark.zip,hdfs:///share/lib/spark/python/lib/py4j-0-9-src.zip
+            oozie.hive=file:///usr/local/oozie/share/lib/hive/
         </description>
     </property>
  </verbatim>
+
+Example mapping file with local filesystem resources:
+
+ <verbatim>
+    <property>
+        <name>oozie.service.ShareLibService.mapping.file</name>
+        <value>
+            oozie.distcp=file:///usr/local/oozie/share/lib/distcp
+            oozie.hcatalog=file:///usr/local/oozie/share/lib/hcatalog
+            oozie.hive=file:///usr/local/oozie/share/lib/hive
+            oozie.hive2=file:///usr/local/oozie/share/lib/hive2
+            oozie.mapreduce-streaming=file:///usr/local/oozie/share/lib/mapreduce-streaming
+            oozie.oozie=file://usr/local/oozie/share/lib/oozie
+            oozie.pig=file:///usr/local/oozie/share/lib/pig
+            oozie.spark=file:///usr/local/oozie/share/lib/spark
+            oozie.sqoop=file:///usr/localoozie/share/lib/sqoop
+        </value>
+    </property>
+  </verbatim>
+
+If you are using local filesystem resources in the mapping file, make sure corresponding jars are already deployed to
+all the nodes where Oozie launcher jobs will be executed, and the files are readable by the launchers. To do this, you
+can extract Oozie sharelib TAR.GZ file in the directory of your choice on the nodes, and set permission of the files.
 
 Oozie sharelib TAR.GZ file bundled with the distribution does not contain pyspark and py4j zip files since they vary
 with Apache Spark version. Therefore, to run pySpark using Spark Action, user need to specify pyspark and py4j zip

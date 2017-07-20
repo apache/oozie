@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URI;
 
 public final class FSUtils {
+    public static final String FILE_SCHEME_PREFIX = "file:";
+
     public static Path getSymLinkTarget(FileSystem fs, Path p) throws IOException {
         try {
             //getSymlink doesn't work with fragment name, need to remove fragment before calling getSymlink
@@ -49,5 +51,17 @@ public final class FSUtils {
 
     public static void createSymlink(FileSystem fs, Path target, Path link, boolean createParent) throws IOException {
         fs.createSymlink(target, link, createParent);
+    }
+
+    public static boolean isLocalFile(String fileName) {
+        return fileName.startsWith(FILE_SCHEME_PREFIX + "/");
+    }
+
+    public static boolean isLocalFile(Path filePath) {
+        return isLocalFile(filePath.toString());
+    }
+
+    public static boolean isNotLocalFile(String fileName) {
+       return !isLocalFile(fileName);
     }
 }

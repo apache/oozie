@@ -2694,11 +2694,12 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Sharelib mapping files contains list of key=value,
             where key will be the sharelib name for the action and value is a comma separated list of
-            DFS directories or jar files.
+            DFS or local filesystem directories or jar files.
             Example.
             oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
             oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
             oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
+            oozie.hive=file:///usr/local/oozie/share/lib/hive/
         </description>
 
     </property>

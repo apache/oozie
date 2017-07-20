@@ -18,44 +18,24 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.commons.io.IOUtils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
@@ -95,6 +75,7 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.FSUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.PropertiesUtils;
@@ -105,8 +86,28 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 
 
 public class JavaActionExecutor extends ActionExecutor {
@@ -463,8 +464,11 @@ public class JavaActionExecutor extends ActionExecutor {
                 else if (fileName.endsWith(".jar")) { // .jar files
                     if (!fileName.contains("#")) {
                         String user = conf.get("user.name");
-                        Path pathToAdd = new Path(uri.normalize());
-                        Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, pathToAdd, conf);
+
+                        if (FSUtils.isNotLocalFile(fileName)) {
+                            Path pathToAdd = new Path(uri.normalize());
+                            Services.get().get(HadoopAccessorService.class).addFileToClassPath(user, pathToAdd, conf);
+                        }
                     }
                     else {
                         DistributedCache.addCacheFile(uri.normalize(), conf);
@@ -585,9 +589,7 @@ public class JavaActionExecutor extends ActionExecutor {
                         }
                     }
                 }
-                for (Path libPath : sharelibList) {
-                    addToCache(conf, libPath, libPath.toUri().getPath(), false);
-                }
+                addLibPathsToCache(conf, sharelibList);
             }
             catch (URISyntaxException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "Error configuring sharelib",
@@ -610,22 +612,43 @@ public class JavaActionExecutor extends ActionExecutor {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "EJ001",
                             "Could not locate Oozie sharelib");
                 }
-                FileSystem fs = listOfPaths.get(0).getFileSystem(conf);
-                for (Path actionLibPath : listOfPaths) {
-                    JobUtils.addFileToClassPath(actionLibPath, conf, fs);
-                    DistributedCache.createSymlink(conf);
-                }
-                listOfPaths = shareLibService.getSystemLibJars(getType());
-                if (!listOfPaths.isEmpty()) {
-                    for (Path actionLibPath : listOfPaths) {
-                        JobUtils.addFileToClassPath(actionLibPath, conf, fs);
-                        DistributedCache.createSymlink(conf);
-                    }
-                }
+                addLibPathsToClassPath(conf, listOfPaths);
+                addLibPathsToClassPath(conf, shareLibService.getSystemLibJars(getType()));
             }
             catch (IOException ex) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "It should never happen",
                         ex.getMessage());
+            }
+        }
+    }
+
+    private void addLibPathsToClassPath(Configuration conf, List<Path> listOfPaths)
+            throws IOException, ActionExecutorException {
+        addLibPathsToClassPathOrCache(conf, listOfPaths, false);
+    }
+
+    private void addLibPathsToCache(Configuration conf, Set<Path> sharelibList)
+            throws IOException, ActionExecutorException {
+        addLibPathsToClassPathOrCache(conf, sharelibList, true);
+    }
+
+
+    private void addLibPathsToClassPathOrCache(Configuration conf, Collection<Path> sharelibList, boolean isAddToCache)
+            throws IOException, ActionExecutorException {
+
+        for (Path libPath : sharelibList) {
+            if (FSUtils.isLocalFile(libPath.toString())) {
+                conf = ClasspathUtils.addToClasspathFromLocalShareLib(conf, libPath);
+            }
+            else {
+                if (isAddToCache) {
+                    addToCache(conf, libPath, libPath.toUri().getPath(), false);
+                }
+                else {
+                    FileSystem fs = libPath.getFileSystem(conf);
+                    JobUtils.addFileToClassPath(libPath, conf, fs);
+                    DistributedCache.createSymlink(conf);
+                }
             }
         }
     }
