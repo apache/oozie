@@ -58,11 +58,8 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
     }
 
     public void testRetryConsoleUrl() throws Exception {
-        Configuration conf = new XConfiguration();
-        File workflowUri = new File(getTestCaseDir(), "workflow.xml");
-
         //@formatter:off
-        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.3\" name=\"wf-fork\">"
+        String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.3\" name=\"wf-fork\">"
                 + "<start to=\"action1\"/>"
                 +"<action name=\"action1\" retry-max=\"2\" retry-interval=\"0\">"
                 + "<test xmlns=\"uri:test\">"
@@ -81,7 +78,55 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
                 + "<end name=\"end\"/>"
                 + "</workflow-app>";
         //@Formatter:on
-        writeToFile(appXml, workflowUri);
+        validateRetryConsoleUrl(wfXml);
+    }
+
+    public void testRetryConsoleUrlForked() throws Exception {
+        //@formatter:off
+        String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.3\" name=\"wf-fork\">"
+                + "<start to=\"fork1\"/>"
+                + "<fork name=\"fork1\">"
+                +    "<path start=\"action1\"/>"
+                +    "<path start=\"action2\"/>"
+                + "</fork>"
+                +"<action name=\"action1\" retry-max=\"2\" retry-interval=\"0\">"
+                + "<test xmlns=\"uri:test\">"
+                +    "<signal-value>${wf:conf('signal-value')}</signal-value>"
+                +    "<external-status>${wf:conf('external-status')}</external-status> "
+                +    "<external-childIds>${wf:conf('external-status')}</external-childIds> "
+                +    "<error>${wf:conf('error')}</error>"
+                +    "<avoid-set-execution-data>${wf:conf('avoid-set-execution-data')}</avoid-set-execution-data>"
+                +    "<avoid-set-end-data>${wf:conf('avoid-set-end-data')}</avoid-set-end-data>"
+                +    "<running-mode>async-error</running-mode>"
+                + "</test>"
+                + "<ok to=\"join\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                +"<action name=\"action2\" retry-max=\"2\" retry-interval=\"0\">"
+                + "<test xmlns=\"uri:test\">"
+                +    "<signal-value>${wf:conf('signal-value')}</signal-value>"
+                +    "<external-status>${wf:conf('external-status')}</external-status> "
+                +    "<external-childIds>${wf:conf('external-status')}</external-childIds> "
+                +    "<error>${wf:conf('error')}</error>"
+                +    "<avoid-set-execution-data>${wf:conf('avoid-set-execution-data')}</avoid-set-execution-data>"
+                +    "<avoid-set-end-data>${wf:conf('avoid-set-end-data')}</avoid-set-end-data>"
+                +    "<running-mode>async-error</running-mode>"
+                + "</test>"
+                + "<ok to=\"join\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<join name=\"join\" to=\"end\"/>"
+                + "<kill name=\"kill\"><message>killed</message></kill>"
+                + "<end name=\"end\"/>"
+                + "</workflow-app>";
+        //@Formatter:on
+        validateRetryConsoleUrl(wfXml);
+    }
+
+    public void validateRetryConsoleUrl(String wfXml) throws Exception {
+        Configuration conf = new XConfiguration();
+        File workflowUri = new File(getTestCaseDir(), "workflow.xml");
+        writeToFile(wfXml, workflowUri);
         conf.set(OozieClient.APP_PATH, workflowUri.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("external-status", "error");
@@ -134,5 +179,4 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
                 JsonUtils.formatDateRfc822(action.getEndTime()));
 
     }
-
 }

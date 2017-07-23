@@ -1,7 +1,8 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3004 Forked action retry info is not working (puru)
 OOZIE-2601 Ability to use local paths for the sharelib
-OOZIE-2987 Coord action missing dependencies should show URI template with unresolved dependencies
+OOZIE-2987 Coord action missing dependencies should show URI template with unresolved dependencies (puru)
 OOZIE-2004 Improve Oozie version info output (Artem Ervits via gezapeti)
 OOZIE-2854 Oozie should handle transient database problems (andras.piros via gezapeti)
 OOZIE-2371 Add docs for state transitions for WF Action states (daniel.becker via gezapeti)

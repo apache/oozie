@@ -559,7 +559,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         }
 
         public void setVar(String name, String value) {
-            if (value != null) {
+            if (value == null) {
                 contextVariableMap.remove(name);
             }
             else {
