@@ -97,9 +97,16 @@ The =class= element if present, indicates the spark's application main class.
 
 The =jar= element indicates a comma separated list of jars or python files.
 
-The =spark-opts= element if present, contains a list of spark options that can be passed to spark driver. Spark configuration
+The =spark-opts= element, if present, contains a list of spark options that can be passed to spark driver. Spark configuration
 options can be passed by specifying '--conf key=value' here, or from =oozie.service.SparkConfigurationService.spark.configurations=
-in oozie-site.xml. Values containing whitespaces should be enclosed by double quotes. The =spark-opts= configs have priority.
+in oozie-site.xml. Values containing whitespaces can be enclosed by double quotes. The =spark-opts= configs have priority.
+
+Some examples of the =spark-opts= element:
+   * '--conf key=value'
+   * '--conf key1=value1 value2'
+   * '--conf key1="value1 value2"'
+   * '--conf key1=value1 key2="value2 value3"'
+   * '--conf key=value --verbose'
 
 The =arg= element if present, contains arguments that can be passed to spark application.
 

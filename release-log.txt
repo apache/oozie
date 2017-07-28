@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2984 Parse spark-defaults.conf values with spaces without needing the quotes (andras.piros via gezapeti)
 OOZIE-2825 Custom Authentication doc page is not well formatted (Jan Hentschel via rkanter)
 OOZIE-2747 README.txt is out of date (Jan Hentschel via rkanter)
 OOZIE-2923 Improve Spark options parsing (andras.piros via gezapeti)

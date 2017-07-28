@@ -18,47 +18,133 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class SparkOptionsSplitter {
 
     /**
-     * Converts the options to be Spark-compatible.
+     * Matches an option key.
+     * <p/>
+     * Some examples:
      * <ul>
-     * <li>Parameters are separated by whitespace and can be groupped using double quotes</li>
-     * <li>Quotes should be removed</li>
-     * <li>Adjacent whitespace separators are treated as one</li>
+     *     <li>{@code key1}</li>
+     *     <li>{@code key2=}</li>
+     *     <li>{@code key3a-key3b}</li>
+     *     <li>{@code key4a-KEY4b=}</li>
      * </ul>
+     */
+    private static final Pattern OPTION_KEY_PREFIX = Pattern.compile("\\s*--[a-zA-Z0-9.]+[\\-a-zA-Z0-9.]*[=]?");
+
+    /**
+     * Matches an option key / value pair, where the whole value part is quoted.
+     * <p/>
+     * Some examples:
+     * <ul>
+     *     <li>{@code spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"}</li>
+     *     <li>{@code spark.executor.extraJavaOptions="-XX:HeapDumpPath=/tmp"}</li>
+     * </ul>
+     */
+    private static final String VALUE_HAS_QUOTES_AT_ENDS_REGEX = "[a-zA-Z0-9.]+=\".+\"";
+
+    /**
+     * Matches an option key / value pair, where the value part has quotes in between.
+     * <p/>
+     * Some examples:
+     * <ul>
+     *     <li>{@code spark.executor.extraJavaOptions=-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp
+     *     -Dlog4j.configuration="/some path/spark-log4j.properties"}</li>
+     *     <li>{@code spark.executor.extraJavaOptions=-XX:+HeapDumpOnOutOfMemoryError
+     *     -Dlog4j.configuration="/some path/spark-log4j.properties" -XX:HeapDumpPath=/tmp}</li>
+     *     <li>{@code spark.executor.extraJavaOptions=-Dlog4j.configuration="/some path/spark-log4j.properties"
+     *     -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp}</li>
+     * </ul>
+     */
+    private static final String VALUE_HAS_QUOTES_IN_BETWEEN_REGEX =
+            "[a-zA-Z0-9.]+=.*(\\w\\s+\"\\w+[\\s+\\w]*\"|\"\\w+[\\s+\\w]*\"\\s+\\w)+.*";
+
+    /**
+     * Converts the options to be Spark-compatible.
+     * <p/>
+     * Following will be considered when converting a single option:
+     *  <ul>
+     *      <li>parameter keys should begin with {@link #OPTION_KEY_PREFIX}</li>
+     *      <li>parameter values should be separated by whitespace(s) and can be grouped using double quotes</li>
+     *      <li>double quotes should be removed when the entire value part of a parameter key / value pair is double quoted,
+     *      and no partial value is quoted. {@see #VALUE_HAS_QUOTES_AT_ENDS_REGEX}
+     *      and {@see #VALUE_HAS_QUOTES_IN_BETWEEN_REGEX}</li>
+     *      <li>double quotes should be kept when only a value part of a parameter key / value pair is double quoted</li>
+     *      <li>adjacent whitespace separators are treated as one</li>
+     *  </ul>
+     * <p/>
+     * Please have a look at the scenarios within {@code TestSparkOptionsSplitter} for details.
      *
      * @param sparkOpts the options for Spark
-     * @return the options parsed into a list
+     * @return the options parsed into a {@link List}
      */
     static List<String> splitSparkOpts(final String sparkOpts) {
-        final List<String> result = new ArrayList<String>();
-        final StringBuilder currentWord = new StringBuilder();
+        final List<String> result = new ArrayList<>();
+        final Matcher matcher = OPTION_KEY_PREFIX.matcher(sparkOpts);
 
-        boolean insideQuote = false;
-        for (int i = 0; i < sparkOpts.length(); i++) {
-            final char c = sparkOpts.charAt(i);
-            if (c == '"') {
-                insideQuote = !insideQuote;
-            }
-            else if (Character.isWhitespace(c) && !insideQuote) {
-                if (currentWord.length() > 0) {
-                    result.add(currentWord.toString());
-                    currentWord.setLength(0);
+        int start = 0, end;
+        while (matcher.find()) {
+            end = matcher.start();
+
+            if (start > 0) {
+                final String maybeQuotedValue = sparkOpts.substring(start, end).trim();
+                if (StringUtils.isNotEmpty(maybeQuotedValue)) {
+                    result.add(unquoteEntirelyQuotedValue(maybeQuotedValue));
                 }
             }
-            else {
-                currentWord.append(c);
+
+            String sparkOpt = matchSparkOpt(sparkOpts, matcher);
+            if (sparkOpt.endsWith("=")) {
+                sparkOpt = sparkOpt.replaceAll("=", "");
             }
+            result.add(sparkOpt);
+
+            start = matcher.end();
         }
 
-        if (currentWord.length() > 0) {
-            result.add(currentWord.toString());
+        final String maybeEntirelyQuotedValue = sparkOpts.substring(start).trim();
+        if (StringUtils.isNotEmpty(maybeEntirelyQuotedValue)) {
+            result.add(unquoteEntirelyQuotedValue(maybeEntirelyQuotedValue));
         }
 
         return result;
+    }
+
+    private static String matchSparkOpt(final String sparkOpts, final Matcher matcher) {
+        return sparkOpts.substring(matcher.start(), matcher.end()).trim();
+    }
+
+    /**
+     * Unquote an option value if and only if it has quotes at both ends, and doesn't have any quotes in between.
+     * <p/>
+     * Some examples:
+     * <ul>
+     *     <li>{@code key=value1 value2}: remains unquoted (isn't quoted at all)</li>
+     *     <li>{@code key=value1 "value2"}: remains quoted (has quotes in between)</li>
+     *     <li>{@code key="value1 value2" "value3 value4"}: remains quoted (has quotes both ends, but has also some in between)</li>
+     *     <li>{@code key="value1 value2 value3 value4"}: gets unquoted (has quotes both ends, and no quotes in between)</li>
+     * </ul>
+     * @param maybeEntirelyQuotedValue a {@code String} that is a parameter value but not necessarily quoted
+     * @return an unquoted version of the input {@String}, when {@code maybeEntirelyQuotedValue} had quotes at both ends, and didn't
+     * have any quotes in between. Else {@code maybeEntirelyQuotedValue}
+     */
+    private static String unquoteEntirelyQuotedValue(final String maybeEntirelyQuotedValue) {
+        final boolean hasQuotesAtEnds = maybeEntirelyQuotedValue.matches(VALUE_HAS_QUOTES_AT_ENDS_REGEX);
+        final boolean hasQuotesInBetween = maybeEntirelyQuotedValue.matches(VALUE_HAS_QUOTES_IN_BETWEEN_REGEX);
+        final boolean isEntirelyQuoted = hasQuotesAtEnds && !hasQuotesInBetween;
+
+        if (isEntirelyQuoted) {
+            return maybeEntirelyQuotedValue.replaceAll("\"", "");
+        }
+
+        return maybeEntirelyQuotedValue;
     }
 }
