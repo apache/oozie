@@ -68,7 +68,7 @@
         <oozie.test.forkMode>once</oozie.test.forkMode>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-        <maven.test.java.opts>-Xmx1024m -da -XX:MaxPermSize=512m</maven.test.java.opts>
+        <maven.test.java.opts>-Xmx1024m -da</maven.test.java.opts>
         <maven.javadoc.opts></maven.javadoc.opts>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
