@@ -27,15 +27,20 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.examples.SleepJob;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -43,8 +48,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -58,6 +69,7 @@ import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.util.IOUtils;
@@ -2251,4 +2263,76 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         String actPath = JavaActionExecutor.getTrimmedEncodedPath("/user/map dev/test-case/shell/script/shell 1.sh");
         assertEquals("/user/map%20dev/test-case/shell/script/shell%201.sh", actPath);
     }
+
+    public void testChildKill() throws Exception {
+        final JobConf clusterConf = createJobConf();
+        FileSystem fileSystem = FileSystem.get(clusterConf);
+        Path confFile = new Path("/tmp/cluster-conf.xml");
+        OutputStream out = fileSystem.create(confFile);
+        clusterConf.writeXml(out);
+        out.close();
+        String confFileName = fileSystem.makeQualified(confFile).toString() + "#core-site.xml";
+        final String actionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class> " + SleepJob.class.getName() + " </main-class>" +
+                "<arg>-mt</arg>" +
+                "<arg>300000</arg>" +
+                "<archive>" + confFileName + "</archive>" +
+                "</java>";
+        final Context context = createContext(actionXml, null);
+        final String runningJob = submitAction(context);
+        YarnApplicationState state = waitUntilYarnAppState(runningJob, EnumSet.of(YarnApplicationState.RUNNING));
+        assertEquals(YarnApplicationState.RUNNING, state);
+
+        WorkflowJob wfJob = context.getWorkflow();
+        Configuration conf = null;
+        if (wfJob.getConf() != null) {
+            conf = new XConfiguration(new StringReader(wfJob.getConf()));
+        }
+        String launcherTag = LauncherHelper.getActionYarnTag(conf, wfJob.getParentId(), context.getAction());
+        JavaActionExecutor ae = new JavaActionExecutor();
+        final Configuration jobConf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
+        jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
+        jobConf.setLong(LauncherMain.OOZIE_JOB_LAUNCH_TIME, context.getAction().getStartTime().getTime());
+
+        // We have to use a proper UGI for retrieving the child apps, because the WF is
+        // submitted as a test user, not as the current login user
+        UserGroupInformationService ugiService = Services.get().get(UserGroupInformationService.class);
+        final UserGroupInformation ugi = ugiService.getProxyUser(getTestUser());
+        final Set<ApplicationId> childSet = new HashSet<>();
+
+        // wait until we have a child MR job
+        waitFor(60_000, new Predicate() {
+          @Override
+          public boolean evaluate() throws Exception {
+            return ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+              @Override
+              public Boolean run() throws Exception {
+                childSet.clear();
+                childSet.addAll(LauncherMain.getChildYarnJobs(jobConf));
+                return childSet.size() > 0;
+              }
+            });
+          }
+        });
+        assertEquals(1, childSet.size());
+
+        // kill the action - based on the job tag, the SleepJob is expected to be killed too
+        ae.kill(context, context.getAction());
+
+        HadoopAccessorService hadoopAccessorService = Services.get().get(HadoopAccessorService.class);
+        Configuration config = hadoopAccessorService.createConfiguration(getJobTrackerUri());
+        YarnClient yarnClient =  hadoopAccessorService.createYarnClient(getTestUser(), config);
+
+        // check that both the launcher & MR job were successfully killed
+        ApplicationId jobId = childSet.iterator().next();
+        assertEquals(YarnApplicationState.KILLED, yarnClient.getApplicationReport(jobId).getYarnApplicationState());
+        assertTrue(ae.isCompleted(context.getAction().getExternalStatus()));
+        assertEquals(WorkflowAction.Status.DONE, context.getAction().getStatus());
+        assertEquals(JavaActionExecutor.KILLED, context.getAction().getExternalStatus());
+        assertEquals(FinalApplicationStatus.KILLED,
+                yarnClient.getApplicationReport(ConverterUtils.toApplicationId(runningJob)).getFinalApplicationStatus());
+    }
+
 }

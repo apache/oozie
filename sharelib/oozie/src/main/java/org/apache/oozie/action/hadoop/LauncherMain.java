@@ -23,10 +23,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,6 +76,8 @@ public abstract class LauncherMain {
 
     public static final String TEZ_APPLICATION_TAGS = "tez.application.tags";
     public static final String SPARK_YARN_TAGS = "spark.yarn.tags";
+    public static final String PROPAGATION_CONF_XML = "propagation-conf.xml";
+
     protected static String[] HADOOP_SITE_FILES = new String[]
             {"core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml"};
 
@@ -93,6 +98,7 @@ public abstract class LauncherMain {
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
         LauncherMain main = klass.newInstance();
         main.setupLog4jProperties();
+        main.propagateToHadoopConf();
         main.run(args);
     }
 
@@ -194,7 +200,7 @@ public abstract class LauncherMain {
         Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
         String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
         if (tag == null) {
-            System.out.print("Could not find Yarn tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            System.out.print("Could not find YARN tags property " + CHILD_MAPREDUCE_JOB_TAGS);
             return childYarnJobs;
         }
         System.out.println("tag id : " + tag);
@@ -223,17 +229,24 @@ public abstract class LauncherMain {
             throw new RuntimeException("Exception occurred while finding child jobs", ioe);
         }
 
-        System.out.println("Child yarn jobs are found - " + StringUtils.join(childYarnJobs, ","));
+        if (childYarnJobs.isEmpty()) {
+            System.out.println("No child applications found");
+        } else {
+            System.out.println("Found child YARN applications: " + StringUtils.join(childYarnJobs, ","));
+        }
+
         return childYarnJobs;
     }
     public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope) {
         System.out.println("Fetching child yarn jobs");
 
-        long startTime = 0L;
-        try {
-            startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
-        } catch(NumberFormatException nfe) {
-            throw new RuntimeException("Could not find Oozie job launch time", nfe);
+        long startTime = actionConf.getLong(OOZIE_JOB_LAUNCH_TIME, 0L);
+        if(startTime == 0) {
+            try {
+                startTime = Long.parseLong(System.getProperty(OOZIE_JOB_LAUNCH_TIME));
+            } catch (NumberFormatException nfe) {
+                throw new RuntimeException("Could not find Oozie job launch time", nfe);
+            }
         }
         return getChildYarnJobs(actionConf, scope, startTime);
     }
@@ -243,13 +256,13 @@ public abstract class LauncherMain {
             Set<ApplicationId> childYarnJobs = getChildYarnJobs(actionConf);
             if (!childYarnJobs.isEmpty()) {
                 System.out.println();
-                System.out.println("Found [" + childYarnJobs.size() + "] Map-Reduce jobs from this launcher");
-                System.out.println("Killing existing jobs and starting over:");
+                System.out.println("Found [" + childYarnJobs.size() + "] YARN application(s) from this launcher");
+                System.out.println("Killing existing applications and starting over:");
                 YarnClient yarnClient = YarnClient.createYarnClient();
                 yarnClient.init(actionConf);
                 yarnClient.start();
                 for (ApplicationId app : childYarnJobs) {
-                    System.out.print("Killing job [" + app + "] ... ");
+                    System.out.print("Killing [" + app + "] ... ");
                     yarnClient.killApplication(app);
                     System.out.println("Done");
                 }
@@ -419,6 +432,38 @@ public abstract class LauncherMain {
             }
         }
     }
+
+    /*
+     * Pushing all important conf to hadoop conf for the action. This is also useful in a situation when a MapReduce job is
+     * submitted from a Java action, because the MR job tags must be set. If it's not set, then it's not possible to kill the
+     * MR job because child jobs are looked up based on tags.
+     */
+    public void propagateToHadoopConf() throws IOException {
+      Configuration propagationConf = new Configuration(false);
+      if (System.getProperty(LauncherAM.OOZIE_ACTION_ID) != null) {
+          propagationConf.set(LauncherAM.OOZIE_ACTION_ID, System.getProperty(LauncherAM.OOZIE_ACTION_ID));
+      }
+      if (System.getProperty(LauncherAM.OOZIE_JOB_ID) != null) {
+          propagationConf.set(LauncherAM.OOZIE_JOB_ID, System.getProperty(LauncherAM.OOZIE_JOB_ID));
+      }
+      if(System.getProperty(LauncherAM.OOZIE_LAUNCHER_JOB_ID) != null) {
+          propagationConf.set(LauncherAM.OOZIE_LAUNCHER_JOB_ID, System.getProperty(LauncherAM.OOZIE_LAUNCHER_JOB_ID));
+      }
+
+      // loading action conf prepared by Oozie
+      Configuration actionConf = LauncherMain.loadActionConf();
+
+      if (actionConf.get(CHILD_MAPREDUCE_JOB_TAGS) != null) {
+          propagationConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
+      }
+
+      try (Writer writer = new FileWriter(PROPAGATION_CONF_XML)) {
+        propagationConf.writeXml(writer);
+      }
+
+      Configuration.dumpConfiguration(propagationConf, new OutputStreamWriter(System.out));
+      Configuration.addDefaultResource(PROPAGATION_CONF_XML);
+  }
 }
 
 class LauncherMainException extends Exception {

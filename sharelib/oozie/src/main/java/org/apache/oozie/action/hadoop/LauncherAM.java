@@ -46,8 +46,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 public class LauncherAM {
-    private static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
-    private static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
+    public static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
+    public static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
 
     public static final String JAVA_CLASS_PATH = "java.class.path";
     public static final String OOZIE_ACTION_ID = "oozie.action.id";
