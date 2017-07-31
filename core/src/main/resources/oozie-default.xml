@@ -1445,6 +1445,16 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <!-- Database import CLI: batch size -->
+
+    <property>
+        <name>oozie.db.import.batch.size</name>
+        <value>1000</value>
+        <description>
+            How many entities are imported in a single transaction by the Oozie DB import CLI tool to avoid OutOfMemoryErrors.
+        </description>
+    </property>
+
    <!-- StoreService -->
 
     <property>

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2662 DB migration fails if database is too big (andras.piros via gezapeti)
 OOZIE-2984 Parse spark-defaults.conf values with spaces without needing the quotes (andras.piros via gezapeti)
 OOZIE-2910 Re-add testChildKill and adapt it to OYA (pbacsko and gezapeti)
 OOZIE-2995 In preparation for Java 8, remove MaxPermSize=512m (Artem Ervits via asasvari)
