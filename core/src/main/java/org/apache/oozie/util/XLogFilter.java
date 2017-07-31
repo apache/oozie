@@ -121,7 +121,7 @@ public class XLogFilter {
     /**
      * Checks if the logLevel and logMessage goes through the logFilter.
      *
-     * @param logParts
+     * @param logParts ArrayList of logParts
      * @return
      */
     public boolean splitsMatches(LogLine logLine) {

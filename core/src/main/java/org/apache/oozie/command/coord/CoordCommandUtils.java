@@ -188,8 +188,8 @@ public class CoordCommandUtils {
     }
 
     /**
-     * @param startInst: EL function name
-     * @param endInst: EL function name
+     * @param startInst EL function name
+     * @param endInst EL function name
      * @throws CommandException if both are not the same function
      */
     public static void checkIfBothSameType(String startInst, String endInst) throws CommandException {
@@ -218,7 +218,7 @@ public class CoordCommandUtils {
      * @param instances
      * @param actionInst
      * @param conf
-     * @param eval: ELEvalautor
+     * @param eval ELEvalautor
      * @throws Exception
      */
     public static void resolveInstances(Element event, StringBuilder instances, SyncCoordAction actionInst,
@@ -241,7 +241,7 @@ public class CoordCommandUtils {
      * @param instances
      * @param appInst
      * @param conf
-     * @param eval: ELEvalautor
+     * @param eval ELEvalautor
      * @throws Exception
      */
     public static void resolveInstanceRange(Element event, StringBuilder instances, SyncCoordAction appInst,

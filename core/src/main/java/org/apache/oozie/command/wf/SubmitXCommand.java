@@ -95,7 +95,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * Constructor for submitting wf through coordinator
      *
      * @param conf : Configuration for workflow job
-     * @param parentId: the coord action id
+     * @param parentId the coord action id
      */
     public SubmitXCommand(Configuration conf, String parentId) {
         this(conf);

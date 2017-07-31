@@ -147,7 +147,7 @@ public class SchemaService implements Service {
     /**
      * Return the schema for XML validation of application definitions.
      *
-     * @param schemaName: Name of schema definition (i.e.
+     * @param schemaName Name of schema definition (i.e.
      *        WORKFLOW/COORDINATOR/BUNDLE)
      * @return the schema for XML validation of application definitions.
      */

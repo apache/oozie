@@ -161,7 +161,7 @@ public class ELService implements Service {
      * EL-functions and variables defined in the configuration. If the group name doesn't exist,
      * IllegalArgumentException is thrown
      *
-     * @param group: Name of the group of required EL Evaluator.
+     * @param group Name of the group of required EL Evaluator.
      * @return a preconfigured {@link ELEvaluator}.
      */
     public ELEvaluator createEvaluator(String group) {

@@ -249,7 +249,7 @@ public class DateUtils {
      * This function returns number of hour in a day when given a Calendar with appropriate TZ. It consider DST to find
      * the number of hours. Generally it is 24. At some tZ, in one day of a year it is 23 and another day it is 25
      *
-     * @param cal: The date for which the number of hours is requested
+     * @param cal The date for which the number of hours is requested
      * @return number of hour in that day.
      */
     public static int hoursInDay(Calendar cal) {
@@ -270,7 +270,7 @@ public class DateUtils {
     /**
      * Determine whether a specific date is on DST change day
      *
-     * @param cal: Date to know if it is DST change day. Appropriate TZ is specified
+     * @param cal Date to know if it is DST change day. Appropriate TZ is specified
      * @return true , if it DST change date otherwise false
      */
     public static boolean isDSTChangeDay(Calendar cal) {

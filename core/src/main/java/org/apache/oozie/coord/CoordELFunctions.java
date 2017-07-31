@@ -161,7 +161,7 @@ public class CoordELFunctions {
      * Used in defining the frequency in 'month' unit and specify the "end of month" property. <p> Every instance will
      * start at first day of each month at 00:00 hour. <p> domain: <code> val &gt; 0</code> and should be integer.
      *
-     * @param val: frequency in number of months.
+     * @param val frequency in number of months.
      * @return number of months and also set the frequency timeunit to "month" and end_of_duration flag to "month"
      */
     public static int ph1_coord_endOfMonths(int val) {
@@ -255,7 +255,7 @@ public class CoordELFunctions {
      * @param n :instance count
      *        <p>
      *        domain: n &gt;= 0, n is integer
-     * @param instance: How many future instance it should check? value should
+     * @param instance How many future instance it should check? value should
      *        be &gt;=0
      * @return date-time in Oozie processing timezone of the n-th instance
      *         <p>
@@ -298,7 +298,7 @@ public class CoordELFunctions {
      * @param end : end instance offset
      *        <p>
      *        domain: end &gt;= 0, end is integer
-     * @param instance: How many future instance it should check? value should
+     * @param instance How many future instance it should check? value should
      *        be &gt;=0
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
      *        delimited by comma.

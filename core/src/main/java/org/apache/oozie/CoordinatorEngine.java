@@ -886,10 +886,10 @@ public class CoordinatorEngine extends BaseEngine {
     /**
      * return a list of killed Coordinator job
      *
-     * @param filter, the filter string for which the coordinator jobs are killed
-     * @param start, the starting index for coordinator jobs
-     * @param length, maximum number of jobs to be killed
-     * @return the list of jobs being killed
+     * @param filter the filter string for which the coordinator jobs are killed
+     * @param start the starting index for coordinator jobs
+     * @param length maximum number of jobs to be killed
+     * @return coordinatorJobInfo the list of jobs being killed
      * @throws CoordinatorEngineException thrown if one or more of the jobs cannot be killed
      */
     public CoordinatorJobInfo killJobs(String filter, int start, int length) throws CoordinatorEngineException {

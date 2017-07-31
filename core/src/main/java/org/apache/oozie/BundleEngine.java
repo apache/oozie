@@ -490,9 +490,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of killed Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are killed
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be killed
+     * @param filter the filter string for which the bundle jobs are killed
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be killed
      * @return the list of jobs being killed
      * @throws BundleEngineException thrown if one or more of the jobs cannot be killed
      */
@@ -513,9 +513,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of suspended Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are suspended
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be suspended
+     * @param filter the filter string for which the bundle jobs are suspended
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be suspended
      * @return the list of jobs being suspended
      * @throws BundleEngineException thrown if one or more of the jobs cannot be suspended
      */
@@ -536,9 +536,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of resumed Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are resumed
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be resumed
+     * @param filter the filter string for which the bundle jobs are resumed
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be resumed
      * @return the list of jobs being resumed
      * @throws BundleEngineException thrown if one or more of the jobs cannot be resumed
      */
