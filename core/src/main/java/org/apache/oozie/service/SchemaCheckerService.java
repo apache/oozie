@@ -49,7 +49,7 @@ public class SchemaCheckerService implements Service, Instrumentable {
         } else {
             String driver = ConfigurationService.get(JPAService.CONF_DRIVER);
             String user = ConfigurationService.get(JPAService.CONF_USERNAME);
-            String pass = ConfigurationService.get(JPAService.CONF_PASSWORD);
+            String pass = ConfigurationService.getPassword(JPAService.CONF_PASSWORD, "");
             boolean ignoreExtras = ConfigurationService.getBoolean(CONF_IGNORE_EXTRAS);
 
             try {

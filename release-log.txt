@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3018 Use Hadoop's CredentialProvider for passwords in SchemaCheckerService (andras.piros via gezapeti)
 OOZIE-2958 TestLauncherAM fails in Share Lib Oozie (pbacsko)
 OOZIE-2662 DB migration fails if database is too big (andras.piros via gezapeti)
 OOZIE-2984 Parse spark-defaults.conf values with spaces without needing the quotes (andras.piros via gezapeti)
