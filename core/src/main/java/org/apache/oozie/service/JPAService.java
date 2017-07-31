@@ -374,10 +374,10 @@ public class JPAService implements Service, Instrumentable {
         }
     }
 
-    private void checkAndCommit(final EntityTransaction tx) {
+    private void checkAndCommit(final EntityTransaction tx) throws JPAExecutorException {
         if (tx.isActive()) {
             if (FaultInjection.isActive(SKIP_COMMIT_FAULT_INJECTION_CLASS)) {
-                throw new RuntimeException("Skipping Commit for Failover Testing");
+                throw new JPAExecutorException(ErrorCode.E0603, "Skipping Commit for Failover Testing");
             }
 
             tx.commit();

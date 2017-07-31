@@ -842,7 +842,7 @@ public abstract class XTestCase extends TestCase {
         final int bjSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_JOBS", BundleJobBean.class);
         final int baSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_ACTIONS", BundleActionBean.class);
         final int slaSize = getCountAndRemoveAll(entityManager, "GET_SLA_EVENTS", SLAEventBean.class);
-        final int slaRegSize = getCountAndRemoveAll(entityManager, "GET_ACTIONS", SLARegistrationBean.class);
+        final int slaRegSize = getCountAndRemoveAll(entityManager, "GET_SLA_REGISTRATIONS", SLARegistrationBean.class);
         final int ssSize = getCountAndRemoveAll(entityManager, "GET_SLA_SUMMARY_ALL", SLASummaryBean.class);
 
         try {

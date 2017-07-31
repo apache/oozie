@@ -203,7 +203,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("sa", ConfigurationService.get(JPAService.CONF_USERNAME));
         assertEquals("", ConfigurationService.get(JPAService.CONF_PASSWORD).trim());
         assertEquals("10", ConfigurationService.get(JPAService.CONF_MAX_ACTIVE_CONN).trim());
-        assertEquals("org.apache.commons.dbcp.BasicDataSource",
+        assertEquals("org.apache.oozie.util.db.BasicDataSourceWrapper",
                 ConfigurationService.get(JPAService.CONF_CONN_DATA_SOURCE));
         assertEquals("", ConfigurationService.get(JPAService.CONF_CONN_PROPERTIES).trim());
         assertEquals("300000", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim());

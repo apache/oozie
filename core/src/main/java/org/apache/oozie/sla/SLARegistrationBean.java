@@ -59,7 +59,9 @@ import org.json.simple.JSONObject;
 
  @NamedQuery(name = "GET_SLA_EXPECTED_VALUE_CONFIG", query = "select w.jobId, w.slaConfig, w.expectedStartTS, w.expectedEndTS, w.expectedDuration, w.nominalTimeTS from SLARegistrationBean w where w.jobId = :id"),
 
- @NamedQuery(name = "GET_SLA_REG_FOR_PARENT_ID", query = "select w.jobId, w.slaConfig from SLARegistrationBean w where w.parentId = :parentId")
+ @NamedQuery(name = "GET_SLA_REG_FOR_PARENT_ID", query = "select w.jobId, w.slaConfig from SLARegistrationBean w where w.parentId = :parentId"),
+
+ @NamedQuery(name = "GET_SLA_REGISTRATIONS", query = "select OBJECT(w) from SLARegistrationBean w")
  })
 
 public class SLARegistrationBean implements JsonBean {

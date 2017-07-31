@@ -19,6 +19,7 @@
 package org.apache.oozie.util.db;
 
 import com.google.common.collect.Sets;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.util.XLog;
 
 import javax.persistence.EntityExistsException;
@@ -40,7 +41,13 @@ import java.util.Set;
  */
 public class PersistenceExceptionSubclassFilterRetryPredicate extends DatabaseRetryPredicate {
     private static final XLog LOG = XLog.getLog(PersistenceExceptionSubclassFilterRetryPredicate.class);
-    private static final Set<Class<? extends PersistenceException>> BLACKLIST = Sets.newHashSet(
+
+    /**
+     * If the {@code Throwable} to be checked has a cause chain, these {@code Exception} classes are used as blacklist: if one of
+     * them appear either at the top level, or down the cause chain, no retry will happen.
+     */
+    @SuppressWarnings("unchecked")
+    private static final Set<Class<? extends PersistenceException>> BLACKLIST_WITH_CAUSE = Sets.newHashSet(
             EntityExistsException.class,
             EntityNotFoundException.class,
             LockTimeoutException.class,
@@ -52,16 +59,35 @@ public class PersistenceExceptionSubclassFilterRetryPredicate extends DatabaseRe
             TransactionRequiredException.class
     );
 
+    /**
+     * If the {@code Throwable} to be checked doesn't have a cause, these {@code Exception} classes are used as blacklist: if one of
+     * them is assignable from the one to be checked, no retry will happen.
+     * <p/>
+     * Note that this blacklist is different from {@link #BLACKLIST_WITH_CAUSE} because this handles the use case where
+     * {@code Exception}s are inserted by a failure injection framework or piece of code rather than the database layer that is
+     * failing.
+     */
+    @SuppressWarnings("unchecked")
+    private static final Set<Class<? extends Exception>> BLACKLIST_WITHOUT_CAUSE = Sets.newHashSet(
+            JPAExecutorException.class,
+            RuntimeException.class
+    );
+
     @Override
     public boolean apply(final Throwable throwable) {
         LOG.trace("Retry predicate investigation started. [throwable.class={0}]", throwable.getClass().getName());
 
         boolean applies = true;
 
-        for (final Class<?> classDownTheStackTrace : getAllExceptions(throwable)) {
-            for (final Class<? extends PersistenceException> blacklistElement : BLACKLIST) {
-                if (blacklistElement.isAssignableFrom(classDownTheStackTrace)) {
-                    applies = false;
+        if ((throwable.getCause() == null) && BLACKLIST_WITHOUT_CAUSE.contains(throwable.getClass())) {
+            applies = false;
+        }
+        else {
+            for (final Class<?> classDownTheStackTrace : getAllExceptions(throwable)) {
+                for (final Class<? extends PersistenceException> blacklistElement : BLACKLIST_WITH_CAUSE) {
+                    if (blacklistElement.isAssignableFrom(classDownTheStackTrace)) {
+                        applies = false;
+                    }
                 }
             }
         }

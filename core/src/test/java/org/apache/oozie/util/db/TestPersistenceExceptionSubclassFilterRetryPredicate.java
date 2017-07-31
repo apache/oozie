@@ -63,7 +63,7 @@ public class TestPersistenceExceptionSubclassFilterRetryPredicate {
 
     @Test
     public void testNonJPAExceptions() {
-        assertTrue(predicate.apply(new RuntimeException()));
+        assertTrue(predicate.apply(new IllegalStateException()));
         assertTrue(predicate.apply(new Exception()));
     }
 
@@ -92,7 +92,23 @@ public class TestPersistenceExceptionSubclassFilterRetryPredicate {
         assertTrue(predicate.apply(wrapCause(new Exception())));
     }
 
+    @Test
+    public void testPlainJPAExecutorExceptionWithMessage() {
+        assertFalse(predicate.apply(wrapMessage("No WorkflowJobBean found in database")));
+        assertFalse(predicate.apply(wrapMessage("Some other message")));
+
+        assertFalse(predicate.apply(wrapMessageRuntime("Some runtime problem")));
+    }
+
     private JPAExecutorException wrapCause(final Throwable cause) {
         return new JPAExecutorException(new XException(ErrorCode.E0603, new PersistenceException(cause)));
+    }
+
+    private JPAExecutorException wrapMessage(final String message) {
+        return new JPAExecutorException(ErrorCode.E0603, message);
+    }
+
+    private RuntimeException wrapMessageRuntime(final String message) {
+        return new RuntimeException(message);
     }
 }

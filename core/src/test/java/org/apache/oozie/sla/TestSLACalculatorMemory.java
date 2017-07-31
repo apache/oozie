@@ -69,26 +69,26 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestSLACalculatorMemory extends XDataTestCase {
-
+    private Services services;
     private JPAService jpaService;
 
     @Override
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
+        services = new Services();
         Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
                 + "org.apache.oozie.sla.service.SLAService");
         conf.setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 600);
         services.init();
-        jpaService = Services.get().get(JPAService.class);
+        jpaService = services.get(JPAService.class);
     }
 
     @Override
     @After
     protected void tearDown() throws Exception {
-        Services.get().destroy();
+        services.destroy();
         super.tearDown();
     }
 
