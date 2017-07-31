@@ -30,15 +30,17 @@ import static org.junit.Assert.assertTrue;
 
 public class TestLauncherMain {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private PrintStream originalStream;
 
     @Before
     public void setUpStreams() {
+        originalStream = System.out;
         System.setOut(new PrintStream(outContent));
     }
 
     @After
     public void cleanUpStreams() {
-        System.setOut(null);
+        System.setOut(originalStream);
     }
 
     @Test
