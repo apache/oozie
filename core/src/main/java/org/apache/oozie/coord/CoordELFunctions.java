@@ -461,7 +461,7 @@ public class CoordELFunctions {
 
     /**
      * Convert from standard date-time formatting to a Unix epoch time.
-     * <p/>
+     * <p>
      * @param dateTimeStr - A timestamp in standard (ISO8601) format.
      * @param millis - "true" to include millis; otherwise will only include seconds
      * @return coordinator action creation or materialization date time

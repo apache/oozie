@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2977 Fix javafoc error: self-closing element not allowed (Artem Ervits via gezapeti)
 OOZIE-2960 Fix warnings for @return tag has no argument (Artem Ervits via gezapeti)
 OOZIE-3019 Remove getPasswordMethod in ConfigurationService (gezapeti)
 OOZIE-3009 Number of Oozie tests executed dropped after OOZIE-2854 (andras.piros via asasvari)

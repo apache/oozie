@@ -206,7 +206,7 @@ public class DateUtils {
 
     /**
      * Formats a {@link Date} as a string containing the seconds (or millis) since the Unix epoch (Jan 1, 1970).
-     * <p/>
+     * <p>
      * The format mask must be a {@link SimpleDateFormat} valid format mask
      *
      * @param d {@link Date} to format.
