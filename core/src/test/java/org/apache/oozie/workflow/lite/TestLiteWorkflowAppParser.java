@@ -54,6 +54,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     private String cleanupXml(String xml) {
         xml = xml.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         xml = xml.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
+        xml = xml.replaceAll("\\s*<final>.*</final>", "");      // remove the <final> added by Hadoop 3
         return xml;
     }
 
