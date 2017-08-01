@@ -221,7 +221,7 @@ public class LauncherHelper {
     /**
      * Get the sequence file path storing all action data
      * @param actionDir
-     * @return
+     * @return Path returns sequence file path storing all action data
      */
     public static Path getActionDataSequenceFilePath(Path actionDir) {
         return new Path(actionDir, LauncherAMUtils.ACTION_DATA_SEQUENCE_FILE);

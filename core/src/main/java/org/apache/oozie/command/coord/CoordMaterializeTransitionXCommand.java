@@ -234,7 +234,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * case it returns now (to materialize all actions in the past)
      *
      * @param currentMatTime
-     * @return
+     * @return Date returns materialization for window for catch-up jobs
      * @throws CommandException
      * @throws JDOMException
      */

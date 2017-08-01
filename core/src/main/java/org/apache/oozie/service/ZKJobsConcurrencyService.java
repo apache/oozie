@@ -134,7 +134,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * index of this server in ZooKeeper's list of servers is equal to the id of the job mod the number of servers.
      *
      * @param ids The list of job ids to check
-     * @return a filtered list of job ids that this server should process
+     * @return filteredIds a filtered list of job ids that this server should process
      */
     @Override
     public List<String> getJobIdsForThisServer(List<String> ids) {
@@ -173,7 +173,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * Return a map of instance id to Oozie server URL.  This implementation always returns a map with where the key is the instance
      * id and the value is the URL of each Oozie server that we can see in the service discovery in ZooKeeper.
      *
-     * @return A map of Oozie instance ids and URLs
+     * @return urls A map of Oozie instance ids and URLs
      */
     @Override
     public Map<String, String> getServerUrls() {
@@ -193,7 +193,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * where the key is the instance id and the value is the URL of each Oozie server that we can see in the service
      * discovery in ZooKeeper.
      *
-     * @return A map of Oozie instance ids and URLs
+     * @return urls A map of Oozie instance ids and URLs
      */
     @Override
     public Map<String, String> getOtherServerUrls() {
@@ -227,7 +227,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     /**
      * Return if it is running in HA mode
      *
-     * @return
+     * @return true Return whether or not it is running in HA mode
      */
     @Override
     public boolean isHighlyAvailableMode() {

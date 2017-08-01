@@ -120,9 +120,8 @@ public class XLogFilter {
 
     /**
      * Checks if the logLevel and logMessage goes through the logFilter.
-     *
      * @param logParts ArrayList of logParts
-     * @return
+     * @return true if line contains the permitted logLevel
      */
     public boolean splitsMatches(LogLine logLine) {
         // Check whether logLine matched with filter
@@ -149,7 +148,7 @@ public class XLogFilter {
      * Checks if the logLevel and logMessage goes through the logFilter.
      *
      * @param logParts
-     * @return
+     * @return true if the logLevel and logMessage goes through the logFilter
      */
     public boolean matches(ArrayList<String> logParts) {
         if (getStartDate() != null) {

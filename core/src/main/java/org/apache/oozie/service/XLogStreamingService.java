@@ -70,7 +70,6 @@ public class XLogStreamingService implements Service, Instrumentable {
      * Stream the log of a job.
      *
      * @param logStreamer the log streamer
-     * @param filter log streamer filter.
      * @param startTime start time for log events to filter.
      * @param endTime end time for log events to filter.
      * @param writer writer to stream the log to.

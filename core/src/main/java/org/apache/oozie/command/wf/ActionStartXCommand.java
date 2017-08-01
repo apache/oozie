@@ -353,7 +353,7 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
      * Get action executor context
      * @param isRetry
      * @param isUserRetry
-     * @return
+     * @return ActionExecutorContext returns action executor context
      */
     protected ActionExecutorContext getContext(boolean isRetry, boolean isUserRetry) {
         return new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);

@@ -720,7 +720,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @param bytesRead The number of bytes read from this stream to date.
      * @param readAll If true, the stream is drained while their is data available in it. Otherwise, only a single chunk
      * of data is read, irrespective of how much is available.
-     * @return
+     * @return bReadSession returns drainBuffer for stream of contents
      * @throws IOException
      */
     private int drainBuffer(BufferedReader br, StringBuffer storageBuf, int maxLength, int bytesRead, boolean readAll)

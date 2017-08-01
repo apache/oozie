@@ -144,7 +144,7 @@ public class JMSTopicService implements Service {
     /**
      * Retrieve topic from Job id
      * @param jobId
-     * @return
+     * @return topicPrefix + topicName Retrieve topic from Job id
      * @throws JPAExecutorException
      */
     public String getTopic(String jobId) throws JPAExecutorException {

@@ -148,7 +148,7 @@ public class Services {
     /**
      * Return active system mode. <p> .
      *
-     * @return
+     * @return systemMode returns active system mode
      */
 
     public SYSTEM_MODE getSystemMode() {

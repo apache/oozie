@@ -596,7 +596,7 @@ public class CoordCommandUtils {
     /**
      * @param eAction the actionXml related element
      * @param actionBean the coordinator action bean
-     * @return
+     * @return actionXml returns actionXml as String
      * @throws Exception
      */
     static String dryRunCoord(Element eAction, CoordinatorActionBean actionBean) throws Exception {

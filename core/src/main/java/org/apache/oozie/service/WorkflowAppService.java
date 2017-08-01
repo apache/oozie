@@ -263,7 +263,7 @@ public abstract class WorkflowAppService implements Service {
      * Parse workflow definition.
      *
      * @param jobConf
-     * @return
+     * @return WorkflowApp
      * @throws WorkflowException
      */
     public abstract WorkflowApp parseDef(Configuration jobConf) throws WorkflowException;

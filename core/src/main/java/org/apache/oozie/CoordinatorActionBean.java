@@ -370,7 +370,7 @@ public class CoordinatorActionBean implements
 
     /**
      * Return the status in string
-     * @return
+     * @return statusStr
      */
     public String getStatusStr() {
         return statusStr;

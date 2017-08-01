@@ -53,7 +53,7 @@ public class MappingRule {
 
     /**
      * Gets the from rule
-     * @return
+     * @return fromString Gets the from rule
      */
     public String getFromRule() {
         return fromString;
@@ -61,7 +61,7 @@ public class MappingRule {
 
     /**
      * Gets the to rule
-     * @return
+     * @return toString Gets the to rule
      */
     public String getToRule() {
         return toString;
@@ -70,7 +70,7 @@ public class MappingRule {
     /**
      * Applies rules based on the input
      * @param input
-     * @return
+     * @return result Applies rules based on the input
      */
     public String applyRule(String input) {
         if (patternMatch) {

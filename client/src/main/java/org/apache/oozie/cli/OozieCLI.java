@@ -862,7 +862,7 @@ public class OozieCLI {
      * Check if configuration has specified
      * @param wc
      * @param commandLine
-     * @return
+     * @return isConf
      * @throws IOException
      */
     private boolean isConfigurationSpecified(OozieClient wc, CommandLine commandLine) throws IOException {

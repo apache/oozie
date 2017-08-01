@@ -174,7 +174,8 @@ public class SLACalculatorMemory implements SLACalculator {
      * Get SLACalcStatus from map if SLARegistration is not null, else create a new SLACalcStatus
      * This function deosn't update  slaMap
      * @param jobId
-     * @return
+     * @return SLACalcStatus returns SLACalcStatus from map if SLARegistration is not null,
+     * else create a new SLACalcStatus
      * @throws JPAExecutorException
      */
     private SLACalcStatus getOrCreateSLACalcStatus(String jobId) throws JPAExecutorException {
@@ -351,6 +352,7 @@ public class SLACalculatorMemory implements SLACalculator {
 
     /**
      * Register a new job into the map for SLA tracking
+     * @return true if successful
      */
     @Override
     public boolean addRegistration(String jobId, SLARegistrationBean reg) throws JPAExecutorException {

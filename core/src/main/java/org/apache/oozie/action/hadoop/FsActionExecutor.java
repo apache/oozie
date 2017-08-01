@@ -649,7 +649,7 @@ public class FsActionExecutor extends ActionExecutor {
 
     /**
      * @param context
-     * @return
+     * @return Path returns recovery path
      * @throws HadoopAccessorException
      * @throws IOException
      * @throws URISyntaxException

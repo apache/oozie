@@ -420,7 +420,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request
      * @param response
-     * @return
+     * @return JSONObject
      * @throws XServletException
      * @throws IOException TODO
      */
@@ -621,7 +621,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request the request
      * @param response the response
-     * @return the JSON object
+     * @return JSONObject the JSON object
      * @throws XServletException the x servlet exception
      * @throws IOException Signals that an I/O exception has occurred.
      */

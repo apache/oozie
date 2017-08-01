@@ -33,7 +33,7 @@ public class Schema {
         /**
          * Name of the Table
          *
-         * @return
+         * @return Name of the Table
          */
         String name();
     }
@@ -73,7 +73,7 @@ public class Schema {
         /**
          * Returns the length of the column
          *
-         * @return
+         * @return Returns the length of the column
          */
         int getLength();
 
@@ -92,7 +92,7 @@ public class Schema {
         /**
          * Column that is to be indexed
          *
-         * @return
+         * @return Column that is to be indexed
          */
         Column column();
     }

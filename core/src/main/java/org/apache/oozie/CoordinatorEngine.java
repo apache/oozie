@@ -912,7 +912,7 @@ public class CoordinatorEngine extends BaseEngine {
      * @param filter Filter for jobs that will be suspended, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be suspended
      * @param length maximum number of jobs that will be suspended
-     * @return
+     * @return coordinatorJobInfo
      * @throws CoordinatorEngineException
      */
     public CoordinatorJobInfo suspendJobs(String filter, int start, int length) throws CoordinatorEngineException {
@@ -935,7 +935,7 @@ public class CoordinatorEngine extends BaseEngine {
      * @param filter Filter for jobs that will be resumed, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be resumed
      * @param length maximum number of jobs that will be resumed
-     * @return
+     * @return coordinatorJobInfo returns resumed jobs
      * @throws CoordinatorEngineException
      */
     public CoordinatorJobInfo resumeJobs(String filter, int start, int length) throws CoordinatorEngineException {
@@ -957,7 +957,8 @@ public class CoordinatorEngine extends BaseEngine {
      * @param id jobID
      * @param actions action list
      * @param dates nominal time list
-     * @return pair of coord action bean and list of missing input dependencies.
+     * @return CoordActionMissingDependenciesXCommand pair of coord action bean and
+     * list of missing input dependencies.
      * @throws CommandException
      */
     public List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> getCoordActionMissingDependencies(String id,
@@ -971,7 +972,7 @@ public class CoordinatorEngine extends BaseEngine {
      * @param wfActionName workflow action name
      * @param offset
      * @param len
-     * @return list of CoordinatorWfActionBean in a coordinator
+     * @return CoordWfActionInfoXCommand list of CoordinatorWfActionBean in a coordinator
      * @throws CoordinatorEngineException
      */
      public List<CoordinatorWfActionBean> getWfActionByJobIdAndName(String jobId, String wfActionName, int offset, int len)

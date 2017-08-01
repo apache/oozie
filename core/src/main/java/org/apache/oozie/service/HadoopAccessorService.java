@@ -752,7 +752,7 @@ public class HadoopAccessorService implements Service {
      * @param conf The configuration to process
      * @param uri The URI of the remote filesystem (e.g. HDFS)
      * @param dir The directory on the remote filesystem to write the file to
-     * @return
+     * @return localResource
      * @throws IOException A problem occurred writing the file
      * @throws HadoopAccessorException A problem occured with Hadoop
      * @throws URISyntaxException A problem occurred parsing the URI

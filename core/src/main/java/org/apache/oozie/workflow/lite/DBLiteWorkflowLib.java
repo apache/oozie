@@ -67,7 +67,7 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
      * Loads the Workflow instance with the given ID.
      *
      * @param id
-     * @return
+     * @return pInstance returns a workflow instance with the given ID
      * @throws WorkflowException
      */
     @Override

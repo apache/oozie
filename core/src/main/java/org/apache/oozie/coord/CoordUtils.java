@@ -280,7 +280,7 @@ public class CoordUtils {
       * @param actionBean
       * @param coordName
       * @param jobConf
-      * @return
+      * @return true if SLA alert is disabled for action
       * @throws ParseException
       */
     public static boolean isSlaAlertDisabled(CoordinatorActionBean actionBean, String coordName, Configuration jobConf)
@@ -332,7 +332,7 @@ public class CoordUtils {
      * @param coordName
      * @param jobConf
      * @param slaAlertType
-     * @return
+     * @return status of coord action SLA alert
      * @throws ParseException
      */
     private static boolean getCoordActionSLAAlertStatus(CoordinatorActionBean actionBean, String coordName,

@@ -50,7 +50,7 @@ public interface ConnectionContext {
     /**
      * Checks whether connection is initialized or not
      *
-     * @return
+     * @return true if connection is initialized
      */
     boolean isConnectionInitialized();
 
@@ -58,7 +58,7 @@ public interface ConnectionContext {
      * Creates session using the specified session opts
      *
      * @param sessionOpts
-     * @return
+     * @return Session returns session using the specified session opts
      * @throws JMSException
      */
     Session createSession(int sessionOpts) throws JMSException;
@@ -68,7 +68,7 @@ public interface ConnectionContext {
      *
      * @param session
      * @param topicName
-     * @return
+     * @return MessageConsumer returns consumer using session and topic name
      * @throws JMSException
      */
     MessageConsumer createConsumer(Session session, String topicName) throws JMSException;
@@ -78,7 +78,7 @@ public interface ConnectionContext {
      *
      * @param session
      * @param topicName
-     * @return
+     * @return MessageConsumer returns consumer using session, topic name and selector
      * @throws JMSException
      */
     MessageConsumer createConsumer(Session session, String topicName, String selector) throws JMSException;
@@ -88,7 +88,7 @@ public interface ConnectionContext {
      *
      * @param session
      * @param topicName
-     * @return
+     * @return MessageProducer returns producer using session and topic name
      * @throws JMSException
      */
     MessageProducer createProducer(Session session, String topicName) throws JMSException;
@@ -97,7 +97,7 @@ public interface ConnectionContext {
      * Creates a threadlocal session using session opts
      *
      * @param sessionOpts
-     * @return
+     * @return Session returns a threadlocal session using session opts
      * @throws JMSException
      */
     Session createThreadLocalSession(final int sessionOpts) throws JMSException;

@@ -120,7 +120,7 @@ public class CoordELEvaluator {
      * @param eAction
      * @param coordAction
      * @param conf
-     * @return
+     * @return eval returns SLA evaluator to be used during Materialization
      * @throws Exception
      */
     public static ELEvaluator createSLAEvaluator(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
@@ -156,7 +156,7 @@ public class CoordELEvaluator {
      * @param conf
      * @param group
      * @param dataNameList
-     * @return
+     * @return eval returns an Evaluator using conf and input/output-data (used for sla)
      * @throws Exception
      */
     public static ELEvaluator createELEvaluatorForDataAndConf(Configuration conf, String group,
@@ -269,7 +269,7 @@ public class CoordELEvaluator {
      * Create Dataset object using the Dataset XML information
      *
      * @param eData
-     * @return
+     * @return ds returns Dataset object using the Dataset XML information
      * @throws Exception
      */
     private static SyncCoordDataset getDSObject(Element eData) throws Exception {

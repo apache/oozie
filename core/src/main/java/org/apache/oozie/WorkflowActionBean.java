@@ -345,7 +345,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Return whether workflow action in terminal state or not
      *
-     * @return
+     * @return isTerminalState Return whether workflow action in terminal state or not
      */
     public boolean inTerminalState() {
         boolean isTerminalState = false;
@@ -581,7 +581,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Get external ChildIds
      *
-     * @return
+     * @return externalChildIDs Get external ChildIds
      */
     public StringBlob getExternalChildIDsBlob() {
         return externalChildIDs;
@@ -682,7 +682,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Get status
      *
-     * @return
+     * @return statusStr Get status
      */
     public String getStatusStr() {
         return statusStr;

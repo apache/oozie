@@ -209,7 +209,7 @@ public class OozieSchema {
      * Gets the query that will be used to validate the connection
      *
      * @param dbName
-     * @return
+     * @return String returns the query that will be used to validate the connection
      */
     public static String getValidationQuery(String dbName) {
         return "select count(" + OozieColumn.VER_versionNumber.columnName() + ") from " + dbName + "."
@@ -220,7 +220,7 @@ public class OozieSchema {
      * Generates the Insert statement to insert the OOZIE_VERSION to table
      *
      * @param dbName
-     * @return
+     * @return String returns the Insert statement for the OOZIE_VERSION to a table
      */
     public static String generateInsertVersionScript(String dbName) {
         return "INSERT INTO " + dbName + "." + OozieTable.VERSION.name().toUpperCase() + "("
@@ -230,7 +230,7 @@ public class OozieSchema {
     /**
      * Gets the Oozie Schema Version
      *
-     * @return
+     * @return String returns the Oozie Schema Version
      */
     public static String getOozieVersion() {
         return OOZIE_VERSION;

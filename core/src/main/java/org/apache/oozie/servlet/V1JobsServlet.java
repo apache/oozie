@@ -434,7 +434,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      * service implementation to bulk kill jobs
      * @param request
      * @param response
-     * @return
+     * @return bulkModifyJobs implementation to bulk kill jobs
      * @throws XServletException
      * @throws IOException
      */
@@ -448,7 +448,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      * service implementation to bulk suspend jobs
      * @param request
      * @param response
-     * @return
+     * @return bulkModifyJobs implementation to bulk suspend jobs
      * @throws XServletException
      * @throws IOException
      */
@@ -462,7 +462,7 @@ public class V1JobsServlet extends BaseJobsServlet {
      * service implementation to bulk resume jobs
      * @param request
      * @param response
-     * @return
+     * @return bulkModifyJobs implementation to bulk resume jobs
      * @throws XServletException
      * @throws IOException
      */

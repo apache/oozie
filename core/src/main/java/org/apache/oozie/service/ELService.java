@@ -160,9 +160,8 @@ public class ELService implements Service {
      * Return an {@link ELEvaluator} pre-configured with the constants and functions for the specific group of
      * EL-functions and variables defined in the configuration. If the group name doesn't exist,
      * IllegalArgumentException is thrown
-     *
-     * @param group Name of the group of required EL Evaluator.
-     * @return a preconfigured {@link ELEvaluator}.
+     * @param group: Name of the group of required EL Evaluator.
+     * @return ELEvaluator a preconfigured {@link ELEvaluator}.
      */
     public ELEvaluator createEvaluator(String group) {
         ELEvaluator.Context context = new ELEvaluator.Context();

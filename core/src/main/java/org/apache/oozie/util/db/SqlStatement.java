@@ -805,7 +805,7 @@ public abstract class SqlStatement {
          *
          * @param column
          * @param value A temporary place holder which will be replaced while preparing
-         * @return
+         * @return retVal Set the VALUES that are to be inserted
          */
         public Insert value(Column column, Object value) {
             Insert retVal = new Insert(this);
@@ -946,7 +946,7 @@ public abstract class SqlStatement {
      * Create the Appropriate SQL Statement with the given values
      *
      * @param temp
-     * @return
+     * @return retVal Create the Appropriate SQL Statement with the given values
      */
     private SqlStatement create(ArrayList<Object> temp) {
         SqlStatement retVal = null;

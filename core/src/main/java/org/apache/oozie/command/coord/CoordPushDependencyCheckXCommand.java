@@ -202,7 +202,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     /**
      * Return the re-queue interval for coord push dependency check
-     * @return
+     * @return requeueInterval returns the requeue interval for coord push dependency check
      */
     public long getCoordPushCheckRequeueInterval() {
         long requeueInterval = ConfigurationService.getLong(CONF_COORD_PUSH_CHECK_REQUEUE_INTERVAL);

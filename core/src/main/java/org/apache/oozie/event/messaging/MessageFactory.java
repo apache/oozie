@@ -56,7 +56,7 @@ public class MessageFactory {
     /**
      * Gets the configured serializer
      *
-     * @return
+     * @return MessageSerializer Gets the configured serializer
      */
     public static MessageSerializer getMessageSerializer() {
         return MessageSerializerHolder.INSTANCE;
@@ -66,7 +66,7 @@ public class MessageFactory {
      * Constructs and returns the workflow job message for workflow job event
      *
      * @param wfJobEvent the workflow job event
-     * @return
+     * @return wfJobMessage returns the workflow job message for the workflow job event
      */
     public static WorkflowJobMessage createWorkflowJobMessage(WorkflowJobEvent wfJobEvent) {
         WorkflowJobMessage wfJobMessage = new WorkflowJobMessage(wfJobEvent.getEventStatus(), wfJobEvent.getId(),
@@ -80,7 +80,7 @@ public class MessageFactory {
      * action event
      *
      * @param coordActionEvent the coordinator action event
-     * @return
+     * @return coordActionMessage returns the coordinator action message for coordinator
      */
     public static CoordinatorActionMessage createCoordinatorActionMessage(CoordinatorActionEvent coordActionEvent) {
         CoordinatorActionMessage coordActionMessage = new CoordinatorActionMessage(coordActionEvent.getEventStatus(),
@@ -94,7 +94,7 @@ public class MessageFactory {
     /**
      * Constructs and returns SLA notification message
      * @param event SLA event
-     * @return
+     * @return slaMessage returns SLA notification message
      */
     public static SLAMessage createSLAMessage(SLAEvent event) {
         SLAMessage slaMessage = new SLAMessage(event.getEventStatus(), event.getSLAStatus(), event.getAppType(),
