@@ -30,6 +30,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.PasswordMasker;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.JobEvent;
@@ -254,6 +255,9 @@ public class EventHandlerService implements Service {
                                 catch (Throwable error) {
                                     XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
                                             error);
+                                    XLog.getLog(EventHandlerService.class).warn("Throwable in EventWorker thread run. " +
+                                                    "Error message: {0}",
+                                            new PasswordMasker().maskPasswordsIfNecessary(error.getMessage()));
                                 }
                             }
                         }
@@ -263,6 +267,9 @@ public class EventHandlerService implements Service {
             catch (Throwable error) {
                 XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
                         error);
+                XLog.getLog(EventHandlerService.class).warn("Throwable in EventWorker thread run. " +
+                                "Error message: {0}",
+                        new PasswordMasker().maskPasswordsIfNecessary(error.getMessage()));
             }
         }
 

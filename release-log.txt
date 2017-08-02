@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3021 Error on job or SLA event listening: WARN logs instead of DEBUG (andras.piros via asasvari)
 OOZIE-2931 Fix warnings during build for "no @param for" (Artem Ervits via gezapeti)
 OOZIE-2974 Change TestLiteWorkflowAppParser so that it works with Hadoop 3 (asasvari via gezapeti)
 OOZIE-2977 Fix javafoc error: self-closing element not allowed (Artem Ervits via gezapeti)
