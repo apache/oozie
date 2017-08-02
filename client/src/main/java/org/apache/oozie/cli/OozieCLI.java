@@ -547,6 +547,7 @@ public class OozieCLI {
 
     /**
      * Create option for command line option 'pig' or 'hive'
+     * @param jobType
      * @return pig or hive options
      */
     @SuppressWarnings("static-access")

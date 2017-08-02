@@ -36,6 +36,7 @@ public abstract class MessageDeserializer {
     /**
      * Constructs the event message from JMS message
      *
+     * @param <T>
      * @param message the JMS message
      * @return EventMessage
      * @throws JMSException

@@ -108,6 +108,7 @@ public class SshActionExecutor extends ActionExecutor {
      *
      * @param context action execution context.
      * @param action action object.
+     * @throws org.apache.oozie.action.ActionExecutorException
      */
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
@@ -167,6 +168,7 @@ public class SshActionExecutor extends ActionExecutor {
      *
      * @param context action execution context.
      * @param action object.
+     * @throws org.apache.oozie.action.ActionExecutorException
      */
     @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
@@ -184,6 +186,7 @@ public class SshActionExecutor extends ActionExecutor {
      *
      * @param context action execution context.
      * @param action action object.
+     * @throws org.apache.oozie.action.ActionExecutorException
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -513,6 +516,7 @@ public class SshActionExecutor extends ActionExecutor {
     /**
      * Get action status.
      *
+     * @param context
      * @param action action object.
      * @return status of the action(RUNNING/OK/ERROR).
      * @throws ActionExecutorException thrown if there is any error in getting status.

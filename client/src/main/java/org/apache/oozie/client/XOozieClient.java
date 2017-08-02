@@ -193,7 +193,8 @@ public class XOozieClient extends OozieClient {
      * @throws java.io.IOException thrown if there is a problem with file.
      * @throws OozieClientException thrown if the job could not be submitted.
      */
-    public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String[] params, String jobType)
+    public String submitScriptLanguage(Properties conf, String scriptFile, String[] args, String[] params,
+        String jobType)
             throws IOException, OozieClientException {
         OozieClient.notNull(conf, "conf");
         OozieClient.notNull(scriptFile, "scriptFile");

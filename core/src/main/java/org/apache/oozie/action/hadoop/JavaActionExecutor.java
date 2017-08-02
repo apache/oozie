@@ -1359,6 +1359,8 @@ public class JavaActionExecutor extends ActionExecutor {
      * Useful for overriding in actions that do subsequent job runs
      * such as the MapReduce Action, where the launcher job is not the
      * actual job that then gets monitored.
+     * @param action
+     * @return external ID.
      */
     protected String getActualExternalId(WorkflowAction action) {
         return action.getExternalId();
@@ -1377,7 +1379,7 @@ public class JavaActionExecutor extends ActionExecutor {
     /**
      * Adds action-specific environment variables. Default implementation is no-op.
      * Subclasses should override this method if necessary.
-     *
+     * @param env action specific environment variables stored as Map of key and value.
      */
     protected void addActionSpecificEnvVars(Map<String, String> env) {
         // nop

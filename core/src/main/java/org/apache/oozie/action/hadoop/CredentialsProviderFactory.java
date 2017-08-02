@@ -75,6 +75,7 @@ public class CredentialsProviderFactory {
     /**
      * Create Credential object
      *
+     * @param type
      * @return Credential object
      * @throws Exception
      */

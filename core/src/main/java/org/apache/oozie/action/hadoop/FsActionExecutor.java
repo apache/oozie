@@ -386,6 +386,7 @@ public class FsActionExecutor extends ActionExecutor {
      * @param fsConf
      * @param nameNodePath
      * @param path
+     * @param skipTrash flag to skip the trash.
      * @throws ActionExecutorException
      */
     public void delete(Context context, XConfiguration fsConf, Path nameNodePath, Path path, boolean skipTrash)

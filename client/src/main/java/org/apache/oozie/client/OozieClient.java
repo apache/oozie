@@ -256,6 +256,7 @@ public class OozieClient {
      * IMPORTANT: impersonation happens only with Oozie client requests done within
      * doAs() calls.
      *
+     * @param <T>
      * @param userName user to impersonate.
      * @param callable callable with {@link OozieClient} calls impersonating the specified user.
      * @return any response returned by the {@link Callable#call()} method.
@@ -1242,6 +1243,7 @@ public class OozieClient {
      * @param jobId
      * @param actionList
      * @param dates
+     * @param ps
      * @throws OozieClientException
      */
     public void getCoordActionMissingDependencies(String jobId, String actionList, String dates, PrintStream ps)
@@ -1829,6 +1831,8 @@ public class OozieClient {
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
      * @param failed true if -failed is given in command option
+     * @param props
+     * @return new coordinator job execution
      * @throws OozieClientException
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
@@ -2022,6 +2026,7 @@ public class OozieClient {
     *
     * @param start starting offset
     * @param len number of results
+     * @param filter
     * @throws OozieClientException
     */
         public void getSlaInfo(int start, int len, String filter) throws OozieClientException {
