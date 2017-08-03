@@ -12,7 +12,7 @@
    * Java JDK 1.7+
    * [[http://maven.apache.org/][Maven 3.0.1+]]
    * [[http://hadoop.apache.org/core/releases.html][Hadoop 2.6.0+]]
-   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.7+]]
+   * [[http://hadoop.apache.org/pig/releases.html][Pig 0.10.1+]]
 
 JDK commands (java, javac) must be in the command path.
 

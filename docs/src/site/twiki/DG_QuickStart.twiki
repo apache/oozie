@@ -17,7 +17,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
    * Java JDK 1.7+
    * Maven 3.0.1+
    * Hadoop 2.6.0+
-   * Pig 0.7+
+   * Pig 0.10.1+
 
 JDK commands (java, javac) must be in the command path.
 

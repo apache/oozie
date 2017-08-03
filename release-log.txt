@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2978 Remove code that handles Pig versions before 0.8 (asasvari)
 OOZIE-2852 Remove simple-json dependency from oozie sharelib (Artem Ervits via gezapeti)
 OOZIE-3021 Error on job or SLA event listening: WARN logs instead of DEBUG (andras.piros via asasvari)
 OOZIE-2931 Fix warnings during build for "no @param for" (Artem Ervits via gezapeti)

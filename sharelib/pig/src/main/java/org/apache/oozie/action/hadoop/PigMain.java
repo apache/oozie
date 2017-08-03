@@ -231,8 +231,7 @@ public class PigMain extends LauncherMain {
         System.out.println("<<< Invocation of Pig command completed <<<");
         System.out.println();
 
-        // For embedded python or for version of pig lower than 0.8, pig stats are not supported.
-        // So retrieving hadoop Ids here
+        // For embedded python, pig stats are not supported. So retrieving hadoop Ids here
         File file = new File(System.getProperty(EXTERNAL_CHILD_IDS));
         if (!file.exists()) {
             writeExternalChildIDs(logFile, PIG_JOB_IDS_PATTERNS, "Pig");
@@ -317,8 +316,7 @@ public class PigMain extends LauncherMain {
     }
 
     /**
-     * Runs the pig script using PigRunner API if version 0.8 or above. Embedded
-     * pig within python is also supported.
+     * Runs the pig script using PigRunner. Embedded pig within python is also supported.
      *
      * @param args pig command line arguments
      * @param pigLog pig log file
@@ -327,59 +325,41 @@ public class PigMain extends LauncherMain {
      * @throws Exception
      */
     protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager, boolean retrieveStats) throws Exception {
-        // running as from the command line
-        boolean pigRunnerExists = true;
-
-        try {
-            Class.forName("org.apache.pig.PigRunner");
-        }
-        catch (ClassNotFoundException ex) {
-            pigRunnerExists = false;
+        PigStats stats = PigRunner.run(args, null);
+        String jobIds = getHadoopJobIds(stats);
+        if (jobIds != null && !jobIds.isEmpty()) {
+            System.out.println("Hadoop Job IDs executed by Pig: " + jobIds);
+            File f = new File(System.getProperty(EXTERNAL_CHILD_IDS));
+            writeExternalData(jobIds, f);
         }
 
-        if (pigRunnerExists) {
-            System.out.println("Run pig script using PigRunner.run() for Pig version 0.8+");
-            PigStats stats = PigRunner.run(args, null);
-            String jobIds = getHadoopJobIds(stats);
-            if (jobIds != null && !jobIds.isEmpty()) {
-                System.out.println("Hadoop Job IDs executed by Pig: " + jobIds);
-                File f = new File(System.getProperty(EXTERNAL_CHILD_IDS));
-                writeExternalData(jobIds, f);
+        if (!stats.isSuccessful()) {
+            if (pigLog != null) {
+                handleError(pigLog);
             }
-            // isSuccessful is the API from 0.9 supported by both PigStats and
-            // EmbeddedPigStats
-            if (!stats.isSuccessful()) {
-                if (pigLog != null) {
-                    handleError(pigLog);
-                }
-                throw new LauncherMainException(PigRunner.ReturnCode.FAILURE);
-            }
-            else {
-                // If pig command is ran with just the "version" option, then
-                // return
-                if (resetSecurityManager) {
-                    return;
-                }
-                // Retrieve stats only if user has specified in workflow
-                // configuration
-                if (retrieveStats) {
-                    ActionStats pigStats;
-                    String JSONString;
-                    try {
-                        pigStats = new OoziePigStats(stats);
-                        JSONString = pigStats.toJSON();
-                    } catch (UnsupportedOperationException uoe) {
-                        throw new UnsupportedOperationException(
-                                "Pig stats are not supported for this type of operation", uoe);
-                    }
-                    File f = new File(System.getProperty(EXTERNAL_ACTION_STATS));
-                    writeExternalData(JSONString, f);
-                }
-            }
+            throw new LauncherMainException(PigRunner.ReturnCode.FAILURE);
         }
         else {
-                System.out.println("Run pig script using Main.main() for Pig version before 0.8");
-                Main.main(args);
+            // If pig command is ran with just the "version" option, then
+            // return
+            if (resetSecurityManager) {
+                return;
+            }
+            // Retrieve stats only if user has specified in workflow
+            // configuration
+            if (retrieveStats) {
+                ActionStats pigStats;
+                String JSONString;
+                try {
+                    pigStats = new OoziePigStats(stats);
+                    JSONString = pigStats.toJSON();
+                } catch (UnsupportedOperationException uoe) {
+                    throw new UnsupportedOperationException(
+                            "Pig stats are not supported for this type of operation", uoe);
+                }
+                File f = new File(System.getProperty(EXTERNAL_ACTION_STATS));
+                writeExternalData(JSONString, f);
+            }
         }
     }
 
