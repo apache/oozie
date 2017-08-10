@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2608 Comma in oozie.service.JPAService.jdbc.password value results in authentication error (gezapeti via asasvari)
 OOZIE-3009 amend Number of Oozie tests executed dropped after OOZIE-2854 (andras.piros via gezapeti)
 OOZIE-2999 minioozie can't compile (Artem Ervits via gezapeti)
 OOZIE-2978 Remove code that handles Pig versions before 0.8 (asasvari)

@@ -193,8 +193,9 @@ public class JPAService implements Service, Instrumentable {
             LOG.info("A jdbc replication url is provided. Url: [{0}]", url);
         }
 
-        String connProps = "DriverClassName={0},Url={1},Username={2},Password={3},MaxActive={4}";
-        connProps = MessageFormat.format(connProps, driver, url, user, password, maxConn);
+
+        String connProps = "DriverClassName={0},Url={1},MaxActive={2}";
+        connProps = MessageFormat.format(connProps, driver, url, maxConn);
         final Properties props = new Properties();
         if (autoSchemaCreation) {
             connProps += ",TestOnBorrow=false,TestOnReturn=false,TestWhileIdle=false";
@@ -216,7 +217,8 @@ public class JPAService implements Service, Instrumentable {
             connProps += "," + connPropsConfig;
         }
         props.setProperty("openjpa.ConnectionProperties", connProps);
-
+        props.setProperty("openjpa.ConnectionPassword", password);
+        props.setProperty("openjpa.ConnectionUserName", user);
         props.setProperty("openjpa.ConnectionDriverName", dataSource);
         if (!StringUtils.isEmpty(brokerImplConfig)) {
             props.setProperty("openjpa.BrokerImpl", brokerImplConfig);
