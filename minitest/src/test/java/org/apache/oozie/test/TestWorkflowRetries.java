@@ -31,4 +31,11 @@ public class TestWorkflowRetries extends TestWorkflow {
 
         super.setUp();
     }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        System.setProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER, Boolean.FALSE.toString());
+    }
 }
