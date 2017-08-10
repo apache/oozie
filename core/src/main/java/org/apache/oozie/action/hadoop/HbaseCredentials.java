@@ -24,6 +24,8 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenIdentifier;
 import org.apache.hadoop.hbase.security.token.TokenUtil;
@@ -80,7 +82,11 @@ public class HbaseCredentials implements CredentialsProvider {
         Token<AuthenticationTokenIdentifier> token = u.runAs(
             new PrivilegedExceptionAction<Token<AuthenticationTokenIdentifier>>() {
                 public Token<AuthenticationTokenIdentifier> run() throws Exception {
-                    return TokenUtil.obtainToken(jobConf);
+                    Token<AuthenticationTokenIdentifier> newToken = null;
+                    try (Connection connection = ConnectionFactory.createConnection(jobConf)) {
+                        newToken = TokenUtil.obtainToken(connection);
+                    }
+                    return newToken;
                 }
             }
         );

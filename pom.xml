@@ -81,7 +81,7 @@
         <hadoop.version>2.6.0</hadoop.version>
         <hadoop.majorversion>2</hadoop.majorversion>
         <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
-        <hbase.version>0.94.27</hbase.version>
+        <hbase.version>1.2.3</hbase.version>
 
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
@@ -514,7 +514,7 @@
 
             <dependency>
                 <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase</artifactId>
+                <artifactId>hbase-client</artifactId>
                 <version>${hbase.version}</version>
                 <scope>provided</scope>
                 <exclusions>
