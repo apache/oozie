@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3028 Oozie Pig Action fails with no python dependencies (dbist13 via rohini)
 OOZIE-2670 Upgrade Hbase to 1.2 (gezapeti via asasvari)
 OOZIE-2608 Comma in oozie.service.JPAService.jdbc.password value results in authentication error (gezapeti via asasvari)
 OOZIE-3009 amend Number of Oozie tests executed dropped after OOZIE-2854 (andras.piros via gezapeti)
