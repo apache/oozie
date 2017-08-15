@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3036 Spark 2.2.0 support: tell Spark not to get any delegation tokens (andras.piros via gezapeti)
 OOZIE-3028 Oozie Pig Action fails with no python dependencies (dbist13 via rohini)
 OOZIE-2670 Upgrade Hbase to 1.2 (gezapeti via asasvari)
 OOZIE-2608 Comma in oozie.service.JPAService.jdbc.password value results in authentication error (gezapeti via asasvari)

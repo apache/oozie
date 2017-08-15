@@ -41,8 +41,12 @@ class SparkArgsExtractor {
     private static final String FILES_OPTION = "--files";
     private static final String ARCHIVES_OPTION = "--archives";
     private static final String LOG4J_CONFIGURATION_JAVA_OPTION = "-Dlog4j.configuration=";
-    private static final String HIVE_SECURITY_TOKEN = "spark.yarn.security.tokens.hive.enabled";
-    private static final String HBASE_SECURITY_TOKEN = "spark.yarn.security.tokens.hbase.enabled";
+    private static final String SECURITY_TOKENS_HADOOPFS = "spark.yarn.security.tokens.hadoopfs.enabled";
+    private static final String SECURITY_TOKENS_HIVE = "spark.yarn.security.tokens.hive.enabled";
+    private static final String SECURITY_TOKENS_HBASE = "spark.yarn.security.tokens.hbase.enabled";
+    private static final String SECURITY_CREDENTIALS_HADOOPFS = "spark.yarn.security.credentials.hadoopfs.enabled";
+    private static final String SECURITY_CREDENTIALS_HIVE = "spark.yarn.security.credentials.hive.enabled";
+    private static final String SECURITY_CREDENTIALS_HBASE = "spark.yarn.security.credentials.hbase.enabled";
     private static final String PWD = "$PWD" + File.separator + "*";
     private static final String MASTER_OPTION = "--master";
     private static final String MODE_OPTION = "--deploy-mode";
@@ -115,8 +119,15 @@ class SparkArgsExtractor {
         if (jarPath != null && jarPath.endsWith(".py")) {
             pySpark = true;
         }
-        boolean addedHiveSecurityToken = false;
-        boolean addedHBaseSecurityToken = false;
+
+        boolean addedSecurityTokensHadoopFS = false;
+        boolean addedSecurityTokensHive = false;
+        boolean addedSecurityTokensHBase = false;
+
+        boolean addedSecurityCredentialsHadoopFS = false;
+        boolean addedSecurityCredentialsHive = false;
+        boolean addedSecurityCredentialsHBase = false;
+
         boolean addedLog4jDriverSettings = false;
         boolean addedLog4jExecutorSettings = false;
         final StringBuilder driverClassPath = new StringBuilder();
@@ -146,12 +157,27 @@ class SparkArgsExtractor {
                         addToSparkArgs = false;
                     }
                 }
-                if (opt.startsWith(HIVE_SECURITY_TOKEN)) {
-                    addedHiveSecurityToken = true;
+
+                if (opt.startsWith(SECURITY_TOKENS_HADOOPFS)) {
+                    addedSecurityTokensHadoopFS = true;
                 }
-                if (opt.startsWith(HBASE_SECURITY_TOKEN)) {
-                    addedHBaseSecurityToken = true;
+                if (opt.startsWith(SECURITY_TOKENS_HIVE)) {
+                    addedSecurityTokensHive = true;
                 }
+                if (opt.startsWith(SECURITY_TOKENS_HBASE)) {
+                    addedSecurityTokensHBase = true;
+                }
+
+                if (opt.startsWith(SECURITY_CREDENTIALS_HADOOPFS)) {
+                    addedSecurityCredentialsHadoopFS = true;
+                }
+                if (opt.startsWith(SECURITY_CREDENTIALS_HIVE)) {
+                    addedSecurityCredentialsHive = true;
+                }
+                if (opt.startsWith(SECURITY_CREDENTIALS_HBASE)) {
+                    addedSecurityCredentialsHBase = true;
+                }
+
                 if (opt.startsWith(EXECUTOR_EXTRA_JAVA_OPTIONS) || opt.startsWith(DRIVER_EXTRA_JAVA_OPTIONS)) {
                     if (!opt.contains(LOG4J_CONFIGURATION_JAVA_OPTION)) {
                         opt += " " + LOG4J_CONFIGURATION_JAVA_OPTION + SparkMain.SPARK_LOG4J_PROPS;
@@ -223,14 +249,32 @@ class SparkArgsExtractor {
             sparkArgs.add(SPARK_YARN_TAGS + OPT_SEPARATOR + actionConf.get(LauncherMain.MAPREDUCE_JOB_TAGS));
         }
 
-        if (!addedHiveSecurityToken) {
+        if (!addedSecurityTokensHadoopFS) {
             sparkArgs.add(CONF_OPTION);
-            sparkArgs.add(HIVE_SECURITY_TOKEN + OPT_SEPARATOR + Boolean.toString(false));
+            sparkArgs.add(SECURITY_TOKENS_HADOOPFS + OPT_SEPARATOR + Boolean.toString(false));
         }
-        if (!addedHBaseSecurityToken) {
+        if (!addedSecurityTokensHive) {
             sparkArgs.add(CONF_OPTION);
-            sparkArgs.add(HBASE_SECURITY_TOKEN + OPT_SEPARATOR + Boolean.toString(false));
+            sparkArgs.add(SECURITY_TOKENS_HIVE + OPT_SEPARATOR + Boolean.toString(false));
         }
+        if (!addedSecurityTokensHBase) {
+            sparkArgs.add(CONF_OPTION);
+            sparkArgs.add(SECURITY_TOKENS_HBASE + OPT_SEPARATOR + Boolean.toString(false));
+        }
+
+        if (!addedSecurityCredentialsHadoopFS) {
+            sparkArgs.add(CONF_OPTION);
+            sparkArgs.add(SECURITY_CREDENTIALS_HADOOPFS + OPT_SEPARATOR + Boolean.toString(false));
+        }
+        if (!addedSecurityCredentialsHive) {
+            sparkArgs.add(CONF_OPTION);
+            sparkArgs.add(SECURITY_CREDENTIALS_HIVE + OPT_SEPARATOR + Boolean.toString(false));
+        }
+        if (!addedSecurityCredentialsHBase) {
+            sparkArgs.add(CONF_OPTION);
+            sparkArgs.add(SECURITY_CREDENTIALS_HBASE + OPT_SEPARATOR + Boolean.toString(false));
+        }
+
         if (!addedLog4jExecutorSettings) {
             sparkArgs.add(CONF_OPTION);
             sparkArgs.add(EXECUTOR_EXTRA_JAVA_OPTIONS + LOG4J_CONFIGURATION_JAVA_OPTION + SparkMain.SPARK_LOG4J_PROPS);
