@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-3036 Spark 2.2.0 support: tell Spark not to get any delegation tokens (andras.piros via gezapeti)
 OOZIE-3028 Oozie Pig Action fails with no python dependencies (dbist13 via rohini)
 OOZIE-2984 Parse spark-defaults.conf values with spaces without needing the quotes (andras.piros via gezapeti)
 OOZIE-2825 Custom Authentication doc page is not well formatted (Jan Hentschel via rkanter)
