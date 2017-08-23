@@ -118,7 +118,7 @@ expressions.
                 </property>
             </configuration>
             <master>local[*]</master>
-            <mode>client<mode>
+            <mode>client</mode>
             <name>Spark Example</name>
             <class>org.apache.spark.examples.mllib.JavaALS</class>
             <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
