@@ -336,10 +336,11 @@ public abstract class XTestCase extends TestCase {
         testCaseConfDir = createTestCaseSubDir("conf");
 
         // load test Oozie site
-        String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
-        String defaultOozieSize =
-            new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieTestDB + "-oozie-site.xml").getAbsolutePath();
-        String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSize);
+        final String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
+        final String oozieSiteFileName = oozieTestDB + "-oozie-site.xml";
+        final String defaultOozieSite =
+            new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieSiteFileName).getAbsolutePath();
+        final String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSite);
         File source = new File(customOozieSite);
         if(!source.isAbsolute()) {
             source = new File(OOZIE_SRC_DIR, customOozieSite);
@@ -347,11 +348,28 @@ public abstract class XTestCase extends TestCase {
         source = source.getAbsoluteFile();
         InputStream oozieSiteSourceStream = null;
         if (source.exists()) {
+            log.info("Reading Oozie test resource from file. [source.name={0}]", source.getName());
             oozieSiteSourceStream = new FileInputStream(source);
         }
         else {
             // If we can't find it, try using the class loader (useful if we're using XTestCase from outside core)
-            URL sourceURL = getClass().getClassLoader().getResource(oozieTestDB + "-oozie-site.xml");
+            log.info("Oozie test resource file doesn't exist. [source.name={0}]", source.getName());
+            final String testResourceName;
+            if (customOozieSite.lastIndexOf(Path.SEPARATOR) > -1) {
+                final String customOozieSiteFileName = customOozieSite.substring(customOozieSite.lastIndexOf(Path.SEPARATOR) + 1);
+                if (customOozieSiteFileName.equals(oozieSiteFileName)) {
+                    testResourceName = oozieSiteFileName;
+                }
+                else {
+                    testResourceName = customOozieSiteFileName;
+                }
+            }
+            else {
+                testResourceName = oozieSiteFileName;
+            }
+            log.info("Reading Oozie test resource from classpath. [testResourceName={0};source.name={1}]",
+                    testResourceName, source.getName());
+            final URL sourceURL = getClass().getClassLoader().getResource(testResourceName);
             if (sourceURL != null) {
                 oozieSiteSourceStream = sourceURL.openStream();
             }

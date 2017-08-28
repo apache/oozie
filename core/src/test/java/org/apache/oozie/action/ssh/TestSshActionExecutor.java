@@ -159,6 +159,10 @@ public class TestSshActionExecutor extends XFsTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        if (!isSshPresent()) {
+            return;
+        }
+
         super.setUp();
         services = new Services();
         services.init();
@@ -168,6 +172,19 @@ public class TestSshActionExecutor extends XFsTestCase {
         Path path = new Path(getNameNodeUri(), getTestCaseDir());
         FileSystem fs = getFileSystem();
         fs.delete(path, true);
+    }
+
+    private boolean isSshPresent() {
+        int exitValue;
+        try {
+            final Process process = Runtime.getRuntime().exec("ssh -V");
+            process.waitFor();
+            exitValue = process.exitValue();
+        } catch (final IOException | InterruptedException e) {
+            exitValue = 1;
+        }
+
+        return exitValue == 0;
     }
 
     protected String getActionXMLSchema() {
@@ -647,7 +664,20 @@ public class TestSshActionExecutor extends XFsTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        if (!isSshPresent()) {
+            return;
+        }
+
         services.destroy();
         super.tearDown();
+    }
+
+    @Override
+    protected void runTest() throws Throwable {
+        if (!isSshPresent()) {
+            return;
+        }
+
+        super.runTest();
     }
 }

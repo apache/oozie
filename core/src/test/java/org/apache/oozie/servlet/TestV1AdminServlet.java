@@ -75,7 +75,10 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER"));
+                assertTrue("USERNAME, USER or HOME property not found in json",
+                        json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER") ||
+                                json.containsKey("HOME")
+                );
                 return null;
             }
         });
