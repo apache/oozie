@@ -122,7 +122,7 @@ public class V2ValidateServlet extends JsonRestServlet {
                 }
                 // Check the root element declaration(workflow-app, coordinator-app, bundle-app).
                 // If invalid, move to next schema validation.
-                if (!e.getMessage().contains("cvc-elt.1.a")) {
+                if (!e.getMessage().contains("cvc-elt.1")) {
                     exception = e;
                     break;
                 }

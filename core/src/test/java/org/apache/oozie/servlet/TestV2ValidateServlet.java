@@ -557,7 +557,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
                 String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
                 assertEquals("E0701", error);
-                assertEquals(true, message.contains("cvc-elt.1.a: Cannot find the declaration of element 'bundle-app-invalid"));
+                assertEquals(true, message.matches("^.*cvc-elt.1(.a)?: " +
+                        "Cannot find the declaration of element 'bundle-app-invalid'.*$"));
                 return null;
 
             }

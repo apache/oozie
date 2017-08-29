@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2746 Several tests failure in TestV2ValidateServlet.java (Dongying Jiao via asasvari)
 OOZIE-3038 Make all Oozie JUnit tests pass on dist_test (andras.piros via gezapeti)
 OOZIE-2940 Possible NullPointerException in WorkflowActionBean (dionusos via gezapeti)
 OOZIE-3036 Spark 2.2.0 support: tell Spark not to get any delegation tokens (andras.piros via gezapeti)
