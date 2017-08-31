@@ -76,6 +76,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
@@ -137,6 +138,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="BlobTypeName=MEDIUMBLOB"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
@@ -196,6 +198,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
@@ -256,6 +259,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="TimestampTypeName=TIMESTAMP"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
@@ -315,6 +319,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
@@ -375,6 +380,7 @@
             <property name="openjpa.jdbc.DBDictionary" value="batchLimit=50"/>
             <property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
             <property name="openjpa.Log" value="log4j"/>
+            <property name="openjpa.Log" value="Tool=WARN"/>
         </properties>
     </persistence-unit>
 
