@@ -18,6 +18,8 @@
 
 package org.apache.oozie.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
@@ -661,23 +663,12 @@ public class HadoopAccessorService implements Service {
     Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
         // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
         // support for renewing/cancelling tokens
-        String servicePrincipal = jobConf.get(RM_PRINCIPAL, jobConf.get(JT_PRINCIPAL));
+        final String servicePrincipal = getServicePrincipal(jobConf);
         Text renewer;
         if (servicePrincipal != null) { // secure cluster
             renewer = mrTokenRenewers.get(servicePrincipal);
             if (renewer == null) {
-                // Mimic org.apache.hadoop.mapred.Master.getMasterPrincipal()
-                String target = jobConf.get(HADOOP_YARN_RM);
-                try {
-                    String addr = NetUtils.createSocketAddr(target).getHostName();
-                    renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
-                    LOG.info("Delegation Token Renewer details: Principal=" + servicePrincipal + ",Target=" + target
-                            + ",Renewer=" + renewer);
-                }
-                catch (IllegalArgumentException iae) {
-                    renewer = new Text(servicePrincipal.split("[/@]")[0]);
-                    LOG.info("Delegation Token Renewer for " + servicePrincipal + " is " + renewer);
-                }
+                renewer = new Text(getServerPrincipal(jobConf, servicePrincipal));
                 mrTokenRenewers.put(servicePrincipal, renewer);
             }
         }
@@ -685,6 +676,43 @@ public class HadoopAccessorService implements Service {
             renewer = MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
         }
         return renewer;
+    }
+
+    public String getServicePrincipal(final Configuration configuration) {
+        return configuration.get(RM_PRINCIPAL, configuration.get(JT_PRINCIPAL));
+    }
+
+    /**
+     * Mimic {@link org.apache.hadoop.mapred.Master#getMasterPrincipal}, get Kerberos principal for use as delegation token renewer.
+     *
+     * @param configuration the {@link Configuration} containing the YARN RM address
+     * @param servicePrincipal the configured service principal
+     * @return the server principal originating from the host name and the service principal
+     * @throws IOException when something goes wrong finding out the local address inside
+     * {@link SecurityUtil#getServerPrincipal(String, String)}
+     */
+    public String getServerPrincipal(final Configuration configuration, final String servicePrincipal) throws IOException {
+        Preconditions.checkNotNull(configuration, "configuration has to be filled");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(servicePrincipal), "servicePrincipal has to be filled");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(configuration.get(HADOOP_YARN_RM)),
+                String.format("configuration entry %s has to be filled", HADOOP_YARN_RM));
+
+        String serverPrincipal;
+        final String target = configuration.get(HADOOP_YARN_RM);
+
+        try {
+            final String addr = NetUtils.createSocketAddr(target).getHostName();
+            serverPrincipal = SecurityUtil.getServerPrincipal(servicePrincipal, addr);
+            LOG.info("Delegation Token Renewer details: Principal={0},Target={1}", serverPrincipal, target);
+        }
+        catch (final IllegalArgumentException iae) {
+            LOG.warn("An error happened while trying to get server principal. Getting it from service principal anyway.", iae);
+
+            serverPrincipal = servicePrincipal.split("[/@]")[0];
+            LOG.info("Delegation Token Renewer for {0} is {1}", target, serverPrincipal);
+        }
+
+        return serverPrincipal;
     }
 
     public void addFileToClassPath(String user, final Path file, final Configuration conf)

@@ -878,7 +878,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
 
         // Setting the credential properties in launcher conf
-        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
+        Map<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
                 action, actionConf);
 
         assertNotNull(credProperties);
@@ -951,8 +951,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
 
         try {
-        // Setting the credential properties in launcher conf should fail
-        ae.setCredentialPropertyToActionConf(context, action, actionConf);
+            // Setting the credential properties in launcher conf should fail
+            ae.setCredentialPropertyToActionConf(context, action, actionConf);
         }
         catch (ActionExecutorException e) {
             assertEquals(e.getErrorCode(), "JA021");
@@ -991,8 +991,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Configuration actionConf = ae.createBaseHadoopConf(context, actionXmlconf);
 
         // should not throw JA021 exception
-        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context, action,
-                    actionConf);
+        ae.setCredentialPropertyToActionConf(context, action, actionConf);
     }
 
     public void testCredentialsSkip() throws Exception {
@@ -1091,7 +1090,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         ConfigurationService.setBoolean("oozie.credentials.skip", skipSite);
 
         // Setting the credential properties in launcher conf
-        HashMap<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
+        Map<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
                 action, actionConf);
 
         // Try to load the token without it being defined in oozie-site; should get an exception

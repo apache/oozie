@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
@@ -962,7 +963,7 @@ public class JavaActionExecutor extends ActionExecutor {
             // Setting the credential properties in launcher conf
             Configuration credentialsConf = null;
 
-            HashMap<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
+            Map<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
                     action, actionConf);
             Credentials credentials = null;
             if (credentialsProperties != null) {
@@ -990,6 +991,11 @@ public class JavaActionExecutor extends ActionExecutor {
             boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
             LOG.debug("Creating yarnClient for action {0}", action.getId());
             yarnClient = createYarnClient(context, launcherJobConf);
+
+            if (UserGroupInformation.isSecurityEnabled()) {
+                credentials = ensureCredentials(credentials);
+                acquireHDFSDelegationToken(actionFs, credentialsConf, credentials);
+            }
 
             if (alreadyRunning && !isUserRetry) {
                 try {
@@ -1064,6 +1070,56 @@ public class JavaActionExecutor extends ActionExecutor {
                 Closeables.closeQuietly(yarnClient);
             }
         }
+    }
+
+    private Credentials ensureCredentials(final Credentials credentials) {
+        if (credentials == null) {
+            LOG.debug("No credentials present, creating a new one.");
+            return new Credentials();
+        }
+
+        return credentials;
+    }
+
+    /**
+     * In a secure environment, when both HDFS HA and log aggregation are turned on, {@link JavaActionExecutor} is not able to call
+     * {@link YarnClient#submitApplication} since {@code HDFS_DELEGATION_TOKEN} is missing.
+     *
+     * @param actionFs the {@link FileSystem} to get the delegation token from
+     * @param credentialsConf the {@link Configuration} to extract the YARN renewer
+     * @param credentials the {@link Credentials} where the delegation token is stored
+     * @throws IOException
+     * @throws ActionExecutorException when security is enabled, but either {@code credentials} are empty, or
+     * {@code serverPrincipal} is empty, or HDFS delegation token is not present within {@code actionFs}
+     */
+    private void acquireHDFSDelegationToken(final FileSystem actionFs,
+                                            final Configuration credentialsConf,
+                                            final Credentials credentials)
+            throws IOException, ActionExecutorException {
+        LOG.debug("Security is enabled, checking credentials to acquire HDFS delegation token.");
+
+        final HadoopAccessorService hadoopAccessorService = Services.get().get(HadoopAccessorService.class);
+        final String servicePrincipal = hadoopAccessorService.getServicePrincipal(credentialsConf);
+        final String serverPrincipal = hadoopAccessorService.getServerPrincipal(
+                credentialsConf,
+                servicePrincipal);
+        if (serverPrincipal == null) {
+            final String errorTemplate = "No server principal present, won't get HDFS delegation token. [servicePrincipal={0}]";
+            LOG.error(errorTemplate, servicePrincipal);
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA022", errorTemplate, servicePrincipal);
+        }
+
+        LOG.debug("Server principal present, getting HDFS delegation token. [serverPrincipal={0}]", serverPrincipal);
+        final Token hdfsDelegationToken = actionFs.getDelegationToken(serverPrincipal);
+        if (hdfsDelegationToken == null) {
+            final String errorTemplate = "No HDFS delegation token present, won't set credentials. [serverPrincipal={0}]";
+            LOG.error(errorTemplate, serverPrincipal);
+            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA022", errorTemplate, serverPrincipal);
+        }
+
+        LOG.debug("Got HDFS delegation token, setting credentials. [hdfsDelegationToken={0}]",
+                hdfsDelegationToken);
+        credentials.addToken(new Text(hdfsDelegationToken.getService().toString()), hdfsDelegationToken);
     }
 
     private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, Configuration launcherJobConf,
@@ -1162,45 +1218,51 @@ public class JavaActionExecutor extends ActionExecutor {
         return appContext;
     }
 
-    protected HashMap<String, CredentialsProperties> setCredentialPropertyToActionConf(Context context,
-            WorkflowAction action, Configuration actionConf) throws Exception {
-        HashMap<String, CredentialsProperties> credPropertiesMap = null;
-        if (context != null && action != null) {
-            if (!"true".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP))) {
-                XConfiguration wfJobConf = getWorkflowConf(context);
-                if ("false".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) ||
-                    !wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))) {
-                    credPropertiesMap = getActionCredentialsProperties(context, action);
-                    if (!credPropertiesMap.isEmpty()) {
-                        for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
-                            if (entry.getValue() != null) {
-                                CredentialsProperties prop = entry.getValue();
-                                LOG.debug("Credential Properties set for action : " + action.getId());
-                                for (Entry<String, String> propEntry : prop.getProperties().entrySet()) {
-                                    String key = propEntry.getKey();
-                                    String value = propEntry.getValue();
-                                    actionConf.set(key, value);
-                                    LOG.debug("property : '" + key + "', value : '" + value + "'");
-                                }
-                            }
-                        }
-                    } else {
-                        LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
-                    }
-                } else {
-                    LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
-                }
-            } else {
-                LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
-            }
-        } else {
+    Map<String, CredentialsProperties> setCredentialPropertyToActionConf(final Context context,
+                                                                         final WorkflowAction action,
+                                                                         final Configuration actionConf) throws Exception {
+        if (context == null || action == null) {
             LOG.warn("context or action is null");
+            return null;
         }
+
+        if (Boolean.TRUE.toString().equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) && !UserGroupInformation.isSecurityEnabled()) {
+            LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+            return null;
+        }
+
+        final XConfiguration wfJobConf = getWorkflowConf(context);
+        if (!Boolean.FALSE.toString().equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) &&
+                wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))  &&
+                !UserGroupInformation.isSecurityEnabled()) {
+            LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+            return null;
+        }
+
+        final Map<String, CredentialsProperties> credPropertiesMap = getActionCredentialsProperties(context, action);
+        if (credPropertiesMap.isEmpty()) {
+            LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
+            return credPropertiesMap;
+        }
+
+        for (final Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
+            if (entry.getValue() != null) {
+                final CredentialsProperties prop = entry.getValue();
+                LOG.debug("Credential Properties set for action : " + action.getId());
+                for (final Entry<String, String> propEntry : prop.getProperties().entrySet()) {
+                    final String key = propEntry.getKey();
+                    final String value = propEntry.getValue();
+                    actionConf.set(key, value);
+                    LOG.debug("property : '" + key + "', value : '" + value + "'");
+                }
+            }
+        }
+
         return credPropertiesMap;
     }
 
     protected void setCredentialTokens(Credentials credentials, Configuration jobconf, Context context, WorkflowAction action,
-            HashMap<String, CredentialsProperties> credPropertiesMap) throws Exception {
+                                       Map<String, CredentialsProperties> credPropertiesMap) throws Exception {
 
         if (context != null && action != null && credPropertiesMap != null) {
             // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
