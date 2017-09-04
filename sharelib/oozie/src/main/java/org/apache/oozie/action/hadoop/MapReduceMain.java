@@ -24,7 +24,6 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.io.FileOutputStream;
@@ -64,7 +63,7 @@ public class MapReduceMain extends LauncherMain {
             maskedJobConf.set(entry.getKey(), passwordMasker.maskPasswordsIfNecessary(entry.getValue()));
         }
 
-        logMasking("Map-Reduce job configuration:", new ArrayList<String>(), maskedJobConf);
+        logMasking("Map-Reduce job configuration:", maskedJobConf);
 
         File idFile = new File(System.getProperty(LauncherAMUtils.ACTION_PREFIX + LauncherAMUtils.ACTION_DATA_NEW_ID));
         System.out.println("Submitting Oozie action Map-Reduce job");

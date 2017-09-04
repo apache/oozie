@@ -18,7 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.pig.Main;
 import org.apache.pig.PigRunner;
 import org.apache.pig.scripting.ScriptEngine;
 import org.apache.pig.tools.pigstats.JobStats;
@@ -31,17 +30,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
@@ -123,14 +120,11 @@ public class PigMain extends LauncherMain {
         }
 
         //setting oozie workflow id as caller context id for pig
-        String callerId = "oozie:" + System.getProperty("oozie.job.id");
+        String callerId = "oozie:" + System.getProperty(LauncherAM.OOZIE_JOB_ID);
         pigProperties.setProperty("pig.log.trace.id", callerId);
 
-        try (OutputStream os = new FileOutputStream("pig.properties")) {
-            pigProperties.store(os, "");
-        }
-
-        logMasking("pig.properties:", Arrays.asList("password"),
+        createFileWithContentIfNotExists("pig.properties", pigProperties);
+        logMasking("pig.properties:",
                 (Iterable<Map.Entry<String, String>>)(Iterable<?>) pigProperties.entrySet());
 
         List<String> arguments = new ArrayList<>();
@@ -178,9 +172,7 @@ public class PigMain extends LauncherMain {
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, B");
 
         String localProps = new File("piglog4j.properties").getAbsolutePath();
-        try (OutputStream os1 = new FileOutputStream(localProps)) {
-            log4jProperties.store(os1, "");
-        }
+        createFileWithContentIfNotExists(localProps, log4jProperties);
 
         arguments.add("-log4jconf");
         arguments.add(localProps);

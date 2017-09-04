@@ -20,18 +20,31 @@ package org.apache.oozie.action.hadoop;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestLauncherMain {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private PrintStream originalStream;
 
+    @Rule
+    public TemporaryFolder tmp = new TemporaryFolder();
     @Before
     public void setUpStreams() {
         originalStream = System.out;
@@ -55,5 +68,46 @@ public class TestLauncherMain {
     private static class NoopLauncherMain extends LauncherMain {
         @Override
         protected void run(String[] args) throws Exception {}
+    }
+
+    @Test
+    public void testDontCreateStreamIfFileExists() throws IOException {
+        File f = tmp.newFile();
+        try (FileOutputStream fos = new FileOutputStream(f)) {
+            fos.write("foo".getBytes());
+        }
+
+        try (FileOutputStream fos = LauncherMain.createStreamIfFileNotExists(f)) {
+            assertNull(fos);
+        }
+    }
+
+    @Test
+    public void testConfigWrite() throws IOException {
+        File f = new File(tmp.newFolder(), "nonExistentFile");
+        assertFalse(f.exists());
+        try (FileOutputStream fos = LauncherMain.createStreamIfFileNotExists(f)) {
+            Configuration c = new Configuration(false);
+            c.set("foo", "bar");
+            c.writeXml(fos);
+        }
+        String contents = new String(Files.readAllBytes(f.toPath()));
+        assertTrue(contents.contains("foo"));
+        assertTrue(contents.contains("bar"));
+        assertTrue(contents.contains("<configuration>"));
+        assertTrue(contents.contains("<property"));
+    }
+
+    @Test
+    public void testPropertiesWrite() throws IOException {
+        File f = new File(tmp.newFolder(), "nonExistentFile");
+        assertFalse(f.exists());
+        try (FileOutputStream fos = LauncherMain.createStreamIfFileNotExists(f)) {
+            Properties p = new Properties();
+            p.setProperty("foo", "bar");
+            p.store(fos, "");
+        }
+        String contents = new String(Files.readAllBytes(f.toPath()));
+        assertTrue(contents.contains("foo=bar"));
     }
 }

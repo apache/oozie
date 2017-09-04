@@ -19,9 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.regex.Pattern;
@@ -143,10 +141,7 @@ public class DistcpMain extends JavaMain {
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
 
         String localProps = new File(DISTCP_LOG4J_PROPS).getAbsolutePath();
-        try (OutputStream os1 = new FileOutputStream(localProps)) {
-            log4jProperties.store(os1, "");
-        }
-
+        createFileWithContentIfNotExists(localProps, log4jProperties);
         PropertyConfigurator.configure(DISTCP_LOG4J_PROPS);
 
         return logFile;

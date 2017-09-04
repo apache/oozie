@@ -32,7 +32,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -280,25 +279,18 @@ public abstract class LauncherMain {
      * any of the strings in the maskSet will be masked when writting it to STDOUT.
      *
      * @param header message for the beginning of the Configuration/Properties dump.
-     * @param maskSet set with substrings of property names to mask.
      * @param conf Configuration/Properties object to dump to STDOUT
      * @throws IOException thrown if an IO error ocurred.
      */
 
-    protected static void logMasking(String header, Collection<String> maskSet, Iterable<Map.Entry<String,String>> conf)
+    protected static void logMasking(String header, Iterable<Map.Entry<String,String>> conf)
             throws IOException {
         StringWriter writer = new StringWriter();
         writer.write(header + "\n");
         writer.write("--------------------\n");
+        PasswordMasker masker = new PasswordMasker();
         for (Map.Entry<String, String> entry : conf) {
-            String name = (String) entry.getKey();
-            String value = (String) entry.getValue();
-            for (String mask : maskSet) {
-                if (name.contains(mask)) {
-                    value = "*MASKED*";
-                }
-            }
-            writer.write(" " + name + " : " + value + "\n");
+            writer.write(" " + entry.getKey() + " : " + masker.mask(entry) + "\n");
         }
         writer.write("--------------------\n");
         writer.close();
@@ -463,7 +455,39 @@ public abstract class LauncherMain {
 
       Configuration.dumpConfiguration(propagationConf, new OutputStreamWriter(System.out));
       Configuration.addDefaultResource(PROPAGATION_CONF_XML);
-  }
+    }
+
+    protected static URL createFileWithContentIfNotExists(String filename, Configuration content) throws IOException {
+        File output = new File(filename);
+        try (OutputStream os = createStreamIfFileNotExists(output)) {
+            if(os != null) {
+                content.writeXml(os);
+            }
+        }
+        return output.toURI().toURL();
+    }
+
+    protected static URL createFileWithContentIfNotExists(String filename, Properties content) throws IOException {
+        File output = new File(filename);
+        try (OutputStream os = createStreamIfFileNotExists(output)) {
+            if(os != null) {
+                content.store(os, "");
+            }
+        }
+        return output.toURI().toURL();
+    }
+
+    static FileOutputStream createStreamIfFileNotExists(File output) throws IOException {
+        if (output.exists()) {
+            System.out.println(output + " exists, skipping. The action will use the "
+                    + output.getName() + " defined in the workflow.");
+            return null;
+        } else {
+            System.out.println("Creating " + output.getAbsolutePath());
+            return new FileOutputStream(output);
+        }
+    }
+
 }
 
 class LauncherMainException extends Exception {

@@ -21,10 +21,9 @@ package org.apache.oozie.action.hadoop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -164,15 +163,8 @@ public class HiveMain extends LauncherMain {
         log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
         log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
 
-        String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
-        try (OutputStream os1 = new FileOutputStream(localProps)) {
-            log4jProperties.store(os1, "");
-        }
-
-        localProps = new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath();
-        try (OutputStream os2 = new FileOutputStream(localProps)) {
-            log4jProperties.store(os2, "");
-        }
+        createFileWithContentIfNotExists(new File(HIVE_L4J_PROPS).getAbsolutePath(), log4jProperties);
+        createFileWithContentIfNotExists(new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath(), log4jProperties);
 
         return logFile;
     }
@@ -181,23 +173,12 @@ public class HiveMain extends LauncherMain {
         Configuration hiveConf = initActionConf();
 
         // Write the action configuration out to hive-site.xml
-         try (OutputStream os = new FileOutputStream(HIVE_SITE_CONF)) {
-             hiveConf.writeXml(os);
-         }
-
-        System.out.println();
-        System.out.println("Hive Configuration Properties:");
-        System.out.println("------------------------");
-        for (Entry<String, String> entry : hiveConf) {
-            System.out.println(entry.getKey() + "=" + entry.getValue());
-        }
-        System.out.flush();
-        System.out.println("------------------------");
-        System.out.println();
+        URL hiveSiteURL = createFileWithContentIfNotExists(HIVE_SITE_CONF, hiveConf);
+        logMasking("Hive Configuration Properties:", hiveConf);
 
         // Reset the hiveSiteURL static variable as we just created hive-site.xml.
         // If prepare block had a drop partition it would have been initialized to null.
-        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
+        HiveConf.setHiveSiteLocation(hiveSiteURL);
         return hiveConf;
     }
 
@@ -219,7 +200,7 @@ public class HiveMain extends LauncherMain {
         arguments.add("hive.exec.log4j.file=" + new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath());
 
         //setting oozie workflow id as caller context id for hive
-        String callerId = "oozie:" + System.getProperty("oozie.job.id");
+        String callerId = "oozie:" + System.getProperty(LauncherAM.OOZIE_JOB_ID);
         arguments.add("--hiveconf");
         arguments.add("hive.log.trace.id=" + callerId);
 
