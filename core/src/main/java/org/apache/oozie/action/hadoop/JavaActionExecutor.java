@@ -147,6 +147,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String JAVA_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.JavaMain";
     private static final String HADOOP_JOB_NAME = "mapred.job.name";
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
+    private static final String OOZIE_ACTION_NAME = "oozie.action.name";
 
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
@@ -944,6 +945,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // action job configuration
             Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
+            addAppNameContext(action, context);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
@@ -1072,6 +1074,19 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    protected void addAppNameContext(WorkflowAction action, Context context) {
+        String oozieActionName = String.format("oozie:launcher:T=%s:W=%s:A=%s:ID=%s",
+                getType(),
+                context.getWorkflow().getAppName(),
+                action.getName(),
+                context.getWorkflow().getId());
+        context.setVar(OOZIE_ACTION_NAME, oozieActionName);
+    }
+
+    protected String getAppName(Context context) {
+        return context.getVar(OOZIE_ACTION_NAME);
+    }
+
     private Credentials ensureCredentials(final Credentials credentials) {
         if (credentials == null) {
             LOG.debug("No credentials present, creating a new one.");
@@ -1129,13 +1144,10 @@ public class JavaActionExecutor extends ActionExecutor {
 
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
 
-        String jobName = XLog.format(
-                "oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
-                context.getWorkflow().getAppName(), actionName,
-                context.getWorkflow().getId());
+        String appName = getAppName(context);
 
         appContext.setApplicationId(appId);
-        appContext.setApplicationName(jobName);
+        appContext.setApplicationName(appName);
         appContext.setApplicationType("Oozie Launcher");
         Priority pri = Records.newRecord(Priority.class);
         int priority = 0; // TODO: OYA: Add a constant or a config

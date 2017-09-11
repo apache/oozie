@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -50,6 +51,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     public static final String OOZIE_MAPREDUCE_UBER_JAR_ENABLE = "oozie.action.mapreduce.uber.jar.enable";
     private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
     public static final String JOB_END_NOTIFICATION_URL = "job.end.notification.url";
+    private static final String MAPREDUCE_JOB_NAME = "mapreduce.job.name";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
@@ -161,6 +163,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 regularMR = true;
             }
         }
+        setJobName(actionConf, context);
         actionConf = super.setupActionConf(actionConf, context, actionXml, appPath);
 
         // For "regular" (not streaming or pipes) MR jobs
@@ -203,6 +206,13 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         actionConf.setBoolean("mapreduce.job.complete.cancel.delegation.tokens", true);
 
         return actionConf;
+    }
+
+    private void setJobName(Configuration actionConf, Context context) {
+        String jobName = getAppName(context);
+        if (jobName != null) {
+            actionConf.set(MAPREDUCE_JOB_NAME, jobName.replace("oozie:launcher", "oozie:action"));
+        }
     }
 
     @Override
