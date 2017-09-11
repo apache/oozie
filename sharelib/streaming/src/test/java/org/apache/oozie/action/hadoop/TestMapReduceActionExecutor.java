@@ -53,7 +53,6 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.TypeConverter;
 import org.apache.hadoop.streaming.StreamJob;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.util.ConverterUtils;
@@ -469,7 +468,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
         Configuration conf = ae.createBaseHadoopConf(context, XmlUtils.parseXml(actionXml));
         String user = conf.get("user.name");
-        JobClient jobClient = getHadoopAccessorService().createJobClient(user, conf);
+        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
         org.apache.hadoop.mapreduce.JobID jobID = TypeConverter.fromYarn(
                 ConverterUtils.toApplicationId(externalChildIDs));
         final RunningJob mrJob = jobClient.getJob(JobID.downgrade(jobID));
@@ -516,7 +515,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
@@ -533,7 +535,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
         w.write("dummy\n");
         w.write("dummy\n");
-        writeDummyInput(fs, outputDir);
+        Writer ow = new OutputStreamWriter(fs.create(new Path(outputDir, "data.txt")));
+        ow.write("dummy\n");
+        ow.write("dummy\n");
+        ow.close();
 
         String actionXml = "<map-reduce>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
@@ -557,7 +562,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         Path jobXml = new Path(getFsTestCaseDir(), "action.xml");
         XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
@@ -582,7 +590,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
@@ -607,7 +618,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         XConfiguration conf = getMapReduceConfig(inputDir.toString(), outputDir.toString());
         conf.setBoolean("oozie.test.throw.exception", true);        // causes OozieActionConfiguratorForTest to throw an exception
@@ -633,7 +647,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
@@ -658,7 +675,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
@@ -719,7 +739,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>"
@@ -776,37 +799,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         }
     }
 
-    public void testJobNameSetForMapReduceChildren() throws Exception {
-        Services serv = Services.get();
-        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
-
-        final FileSystem fs = getFileSystem();
-        final Path inputDir = new Path(getFsTestCaseDir(), "input");
-        final Path outputDir = new Path(getFsTestCaseDir(), "output");
-        writeDummyInput(fs, inputDir);
-
-        final String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
-                + getNameNodeUri() + "</name-node>"
-                + getMapReduceUberJarConfig(inputDir.toString(), outputDir.toString()).toXmlString(false) + "</map-reduce>";
-
-        final String extId = _testSubmit(MAP_REDUCE, actionXml);
-        final ApplicationId appId = ConverterUtils.toApplicationId(extId);
-        final Configuration conf = getHadoopAccessorService().createConfiguration(getJobTrackerUri());
-        final String name = getHadoopAccessorService().createYarnClient(getTestUser(), conf).getApplicationReport(appId).getName();
-        assertTrue(name.contains("oozie:action"));
-    }
-
-    private void writeDummyInput(FileSystem fs, Path inputDir) throws IOException {
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
-        w.write("dummy\n");
-        w.write("dummy\n");
-        w.close();
-    }
-
-    private HadoopAccessorService getHadoopAccessorService() {
-        return Services.get().get(HadoopAccessorService.class);
-    }
-
     public void testMapReduceWithUberJarEnabled() throws Exception {
         Services serv = Services.get();
         boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
@@ -835,7 +827,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         OutputStream os = fs.create(new Path(getAppPath(), streamingJar));
         IOUtils.copyStream(is, os);
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "      <streaming>" + "        <mapper>cat</mapper>"
@@ -922,7 +917,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             Path inputDir = new Path(getFsTestCaseDir(), "input");
             Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-            writeDummyInput(fs, inputDir);
+            Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+            w.write("dummy\n");
+            w.write("dummy\n");
+            w.close();
 
             String actionXml = "<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                     + getNameNodeUri() + "</name-node>" + "      <pipes>" + "        <program>" + programPath
@@ -946,7 +944,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         // set user stats write property as true explicitly in the
         // configuration.
@@ -1005,7 +1006,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         // set user stats write property as false explicitly in the
         // configuration.
@@ -1058,7 +1062,10 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         // set user stats write property as false explicitly in the
         // configuration.
@@ -1125,7 +1132,11 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        writeDummyInput(fs, inputDir);
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir,
+                "data.txt")));
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
 
         XConfiguration mrConfig = getMapReduceConfig(inputDir.toString(),
                 outputDir.toString());
@@ -1161,8 +1172,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
 
-        Configuration conf = getHadoopAccessorService().createConfiguration(getJobTrackerUri());
-        final YarnClient yarnClient = getHadoopAccessorService().createYarnClient(getTestUser(), conf);
+        Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
+        final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
         ApplicationReport report = yarnClient.getApplicationReport(ConverterUtils.toApplicationId(externalChildIDs));
         // Assert Mapred job name has been set
         assertEquals(mapredJobName, report.getName());
