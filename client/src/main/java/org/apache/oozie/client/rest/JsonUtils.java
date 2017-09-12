@@ -73,7 +73,7 @@ public class JsonUtils {
      * @param str string to parse.
      * @return parsed date, &lt;code&gt;null&lt;/code&gt; if the string was &lt;code&gt;null&lt;/code&gt; or in an invalid format.
      */
-    static Date parseDateRfc822(String str) {
+    public static Date parseDateRfc822(String str) {
         if (str != null) {
             try {
                 SimpleDateFormat dateFormater = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);

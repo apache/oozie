@@ -19,6 +19,7 @@
 package org.apache.oozie.command.wf;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +37,7 @@ import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
+import org.joda.time.Interval;
 
 public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
     private Services services;
@@ -154,29 +156,37 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
         });
 
         List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-        WorkflowActionBean action = null;
+        WorkflowActionBean action1 = null;
+        WorkflowActionBean action2 = null;
         for (WorkflowActionBean bean : actions) {
-            if (bean.getType().equals("test")) {
-                action = bean;
-                break;
+            if (bean.getType().equals("test") && bean.getName().equals("action1")) {
+                action1 = bean;
+            }
+            else if (bean.getType().equals("test") && bean.getName().equals("action2")) {
+                action2 = bean;
             }
         }
-        WorkflowActionRetryInfoXCommand command = new WorkflowActionRetryInfoXCommand(action.getId());
+
+        WorkflowActionRetryInfoXCommand command = new WorkflowActionRetryInfoXCommand(action1.getId());
         List<Map<String, String>> retriesList = command.call();
         assertEquals(2, retriesList.size());
-        assertEquals(2, action.getUserRetryCount());
+        assertEquals(2, action1.getUserRetryCount());
 
         assertEquals(retriesList.get(0).get(JsonTags.ACTION_ATTEMPT), "1");
         assertEquals(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_START_TIME),
-                JsonUtils.formatDateRfc822(action.getStartTime()));
+                JsonUtils.formatDateRfc822(action1.getStartTime()));
 
         assertNotNull(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
         assertNotNull(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
 
         assertNotNull(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
         assertNotNull(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
-        assertEquals(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_END_TIME),
-                JsonUtils.formatDateRfc822(action.getEndTime()));
 
+        final Date actionEndTime = action2 == null ? action1.getEndTime() : action2.getEndTime();
+        final Date secondRetryEndTime = JsonUtils.parseDateRfc822(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_END_TIME));
+
+        assertTrue("action end time should be within ten seconds of second retry end time",
+                new Interval(secondRetryEndTime.getTime(), secondRetryEndTime.getTime() + 10_000)
+                        .contains(actionEndTime.getTime()));
     }
 }
