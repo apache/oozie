@@ -151,6 +151,13 @@ public class WritableUtils {
         }
     }
 
+    /**
+     * Write string list.
+     *
+     * @param dataOutput the data output
+     * @param list the list
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     public static void writeStringList(DataOutput dataOutput, List<String> list) throws IOException {
         dataOutput.writeInt(list.size());
         for (String str : list) {
