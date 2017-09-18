@@ -49,7 +49,7 @@ public class MessageReceiver implements MessageListener {
     }
 
     /**
-     * Get the MessageHandler that will process the message
+     * Get the MessageHandler that will processSettings the message
      *
      * @return message handler
      */

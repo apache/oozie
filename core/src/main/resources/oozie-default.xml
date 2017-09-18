@@ -1607,17 +1607,18 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.service.SchemaService.wf.schemas</name>
         <value>
+            oozie-common-1.0.xsd,
             oozie-workflow-0.1.xsd,oozie-workflow-0.2.xsd,oozie-workflow-0.2.5.xsd,oozie-workflow-0.3.xsd,oozie-workflow-0.4.xsd,
-            oozie-workflow-0.4.5.xsd,oozie-workflow-0.5.xsd,
-            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,
+            oozie-workflow-0.4.5.xsd,oozie-workflow-0.5.xsd,oozie-workflow-1.0.xsd,
+            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,shell-action-1.0.xsd,
             email-action-0.1.xsd,email-action-0.2.xsd,
-            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,hive-action-0.6.xsd,
-            sqoop-action-0.2.xsd,sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,
+            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,hive-action-0.6.xsd,hive-action-1.0.xsd,
+            sqoop-action-0.2.xsd,sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,sqoop-action-1.0.xsd,
             ssh-action-0.1.xsd,ssh-action-0.2.xsd,
             distcp-action-0.1.xsd,distcp-action-0.2.xsd,
             oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,
-            hive2-action-0.1.xsd, hive2-action-0.2.xsd,
-            spark-action-0.1.xsd,spark-action-0.2.xsd
+            hive2-action-0.1.xsd,hive2-action-0.2.xsd,hive2-action-1.0.xsd,
+            spark-action-0.1.xsd,spark-action-0.2.xsd,spark-action-1.0.xsd
         </value>
         <description>
             List of schemas for workflows (separated by commas).
@@ -3074,5 +3075,35 @@ will be the requeue interval for the actions which are waiting for a long time w
             Most users should not have to change this.
         </description>
     </property>
+    <property>
+        <name>oozie.launcher.default.vcores</name>
+        <value>1</value>
+        <description>
+            The default number of vcores that are allocated for the Launcher AMs
+        </description>
+    </property>
 
+    <property>
+        <name>oozie.launcher.default.memory.mb</name>
+        <value>2048</value>
+        <description>
+            The default amount of memory in MBs that is allocated for the Launcher AMs
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.priority</name>
+        <value>0</value>
+        <description>
+            The default YARN priority of the Launcher AM
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.queue</name>
+        <value>default</value>
+        <description>
+            The default YARN queue where the Launcher AM is placed
+        </description>
+    </property>
 </configuration>

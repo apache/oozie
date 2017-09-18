@@ -31,8 +31,6 @@ import org.apache.hadoop.conf.Configuration;
 
 import javax.xml.validation.Schema;
 import java.io.StringReader;
-import java.util.Date;
-import java.util.Map;
 
 //TODO javadoc
 public abstract class LiteWorkflowLib implements WorkflowLib {

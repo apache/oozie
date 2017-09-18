@@ -107,7 +107,7 @@
 
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.2</openjpa.version>
-         <xerces.version>2.10.0</xerces.version>
+         <xerces.version>2.11.0</xerces.version>
          <curator.version>2.5.0</curator.version>
          <jackson.version>1.9.13</jackson.version>
          <log4j.version>1.2.17</log4j.version>

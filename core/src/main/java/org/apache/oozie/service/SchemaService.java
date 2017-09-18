@@ -29,15 +29,17 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.schema.ResourceResolver;
 import org.xml.sax.SAXException;
+
 
 /**
  * Service that loads Oozie workflow definition schema and registered extension
  * schemas.
  */
+
 public class SchemaService implements Service {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "SchemaService.";
@@ -95,9 +97,12 @@ public class SchemaService implements Service {
         }
         List<StreamSource> sources = new ArrayList<StreamSource>();
         for (String schemaName : schemaNames) {
-            sources.add(new StreamSource(IOUtils.getResourceAsStream(schemaName, -1)));
+            StreamSource s = new StreamSource(IOUtils.getResourceAsStream(schemaName, -1));
+            s.setSystemId(schemaName);
+            sources.add(s);
         }
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        factory.setResourceResolver(new ResourceResolver());
         return factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
     }
 

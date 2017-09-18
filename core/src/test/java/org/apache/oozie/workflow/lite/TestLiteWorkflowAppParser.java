@@ -25,15 +25,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.LauncherAM;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
+import org.jdom.Element;
+import org.jdom.Namespace;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
     public static String dummyConf = "<java></java>";
@@ -650,6 +655,42 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         catch (Exception ex) {
             fail();
         }
+    }
+
+    public void testParserGlobalLauncherAM() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp workflowApp = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-global-launcherconf.xml", -1), new Configuration());
+
+        XConfiguration xconf = extractConfig(workflowApp, "action1");
+
+        assertEquals("Vcores", 2, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Memory", 1024, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Env", "dummyEnv", xconf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY));
+        assertEquals("Queue", "dummyQueue", xconf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY));
+        assertEquals("Java opts", "dummyJavaOpts", xconf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY));
+        assertEquals("Sharelib", "a,b,c", xconf.get(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY));
+    }
+
+    public void testParserGlobalLauncherAMOverridden() throws Exception {
+        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
+                LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                LiteWorkflowStoreService.LiteDecisionHandler.class,
+                LiteWorkflowStoreService.LiteActionHandler.class);
+
+        LiteWorkflowApp workflowApp = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-global-launcherconf-override.xml", -1), new Configuration());
+
+        XConfiguration xconf = extractConfig(workflowApp, "a");
+
+        assertEquals("Vcores", 1, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Memory", 2048, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Java opts", "dummyJavaOpts", xconf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY));
+        assertNull("Queue", xconf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY));
+        assertNull("Env", xconf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY));
+        assertNull("Sharelib", xconf.get(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY));
     }
 
     /*
@@ -1602,6 +1643,16 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
         assertEquals(app.getNode("retry").getUserRetryMax(), "3");
         assertEquals(app.getNode("retry").getUserRetryInterval(), "10");
+    }
+
+    private XConfiguration extractConfig(LiteWorkflowApp app, String actionNode) throws Exception {
+        String confXML = app.getNode(actionNode).getConf();
+        Element confElement = XmlUtils.parseXml(confXML);
+        Namespace ns = confElement.getNamespace();
+        String configSection = XmlUtils.prettyPrint(confElement.getChild("configuration", ns)).toString();
+        XConfiguration xconf = new XConfiguration(new StringReader(configSection));
+
+        return xconf;
     }
 
 }
