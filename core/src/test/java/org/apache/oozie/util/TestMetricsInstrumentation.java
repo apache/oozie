@@ -228,11 +228,11 @@ public class TestMetricsInstrumentation extends XTestCase {
 
         //Setting the id of the VM unique, so we can find it.
         String uniqueId = UUID.randomUUID().toString();
-        System.setProperty("processSettings.unique.id", uniqueId);
+        System.setProperty("process.unique.id", uniqueId);
 
         //Finding our own VM by the id.
         for(VirtualMachineDescriptor d : VirtualMachine.list()) {
-            String remoteUniqueId = VirtualMachine.attach(d).getSystemProperties().getProperty("processSettings.unique.id");
+            String remoteUniqueId = VirtualMachine.attach(d).getSystemProperties().getProperty("process.unique.id");
             if(remoteUniqueId != null && remoteUniqueId.equals(uniqueId))
             {
                 descriptor = d;

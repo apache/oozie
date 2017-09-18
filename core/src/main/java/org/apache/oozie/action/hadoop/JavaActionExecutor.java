@@ -22,28 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -63,7 +41,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
@@ -121,6 +98,8 @@ import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -128,18 +107,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Set;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 
 
 public class JavaActionExecutor extends ActionExecutor {
+
     public static final String RUNNING = "RUNNING";
     public static final String SUCCEEDED = "SUCCEEDED";
     public static final String KILLED = "KILLED";
@@ -148,11 +121,6 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
     public static final String HADOOP_NAME_NODE = "fs.default.name";
     public static final String OOZIE_COMMON_LIBDIR = "oozie";
-
-    public static final String DEFAULT_LAUNCHER_VCORES = "oozie.launcher.default.vcores";
-    public static final String DEFAULT_LAUNCHER_MEMORY_MB = "oozie.launcher.default.memory.mb";
-    public static final String DEFAULT_LAUNCHER_PRIORITY = "oozie.launcher.default.priority";
-    public static final String DEFAULT_LAUNCHER_QUEUE = "oozie.launcher.default.queue";
 
     public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
@@ -292,12 +260,6 @@ public class JavaActionExecutor extends ActionExecutor {
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
 
-        // FIXME - think about this!
-        Element e = actionXml.getChild("config-class", ns);
-        if (e != null) {
-            conf.set(LauncherAMUtils.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
-        }
-
         return conf;
     }
 
@@ -337,11 +299,6 @@ public class JavaActionExecutor extends ActionExecutor {
                 throw convertException(ex);
             }
             XConfiguration.copy(launcherConf, conf);
-            // Inject config-class for launcher to use for action
-            Element e = actionXml.getChild("config-class", ns);
-            if (e != null) {
-                conf.set(LauncherAMUtils.OOZIE_ACTION_CONFIG_CLASS, e.getTextTrim());
-            }
             checkForDisallowedProps(launcherConf, "launcher configuration");
             return conf;
         }
@@ -919,20 +876,13 @@ public class JavaActionExecutor extends ActionExecutor {
             if (launcherJobConf.get(HADOOP_MAP_JAVA_OPTS) != null) {
                 opts.append(" ").append(launcherJobConf.get(HADOOP_MAP_JAVA_OPTS));
             }
-
             List<Element> javaopts = actionXml.getChildren("java-opt", ns);
-
-            // Either one or more <java-opt> element or one <java-opts> can be present since oozie-workflow-0.4
-            if (!javaopts.isEmpty()) {
-                for (Element opt : javaopts) {
-                    opts.append(" ").append(opt.getTextTrim());
-                }
+            for (Element opt: javaopts) {
+                opts.append(" ").append(opt.getTextTrim());
             }
-            else {
-                Element opt = actionXml.getChild("java-opts", ns);
-                if (opt != null) {
-                    opts.append(" ").append(opt.getTextTrim());
-                }
+            Element opt = actionXml.getChild("java-opts", ns);
+            if (opt != null) {
+                opts.append(" ").append(opt.getTextTrim());
             }
             launcherJobConf.set(HADOOP_CHILD_JAVA_OPTS, opts.toString().trim());
             launcherJobConf.set(HADOOP_MAP_JAVA_OPTS, opts.toString().trim());
@@ -992,7 +942,6 @@ public class JavaActionExecutor extends ActionExecutor {
             }
 
             Element actionXml = XmlUtils.parseXml(action.getConf());
-            LOG.debug("ActionXML: {0}", action.getConf());
 
             // action job configuration
             Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
@@ -1000,14 +949,6 @@ public class JavaActionExecutor extends ActionExecutor {
             setupActionConf(actionConf, context, actionXml, appPathRoot);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
-
-            String jobName = actionConf.get(HADOOP_JOB_NAME);
-            if (jobName == null || jobName.isEmpty()) {
-                jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}",
-                        getType(), context.getWorkflow().getAppName(),
-                        action.getName(), context.getWorkflow().getId());
-                actionConf.set(HADOOP_JOB_NAME, jobName);
-            }
 
             injectActionCallback(context, actionConf);
 
@@ -1111,7 +1052,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
                 ApplicationSubmissionContext appContext =
                         createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf, action.getName(),
-                                credentials, actionXml);
+                                credentials);
                 yarnClient.submitApplication(appContext);
 
                 launcherId = appId.toString();
@@ -1197,19 +1138,22 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, Configuration launcherJobConf,
-                                                                    String user, Context context, Configuration actionConf, String actionName,
-                                                                    Credentials credentials, Element actionXml)
+                                        String user, Context context, Configuration actionConf, String actionName,
+                                        Credentials credentials)
             throws IOException, HadoopAccessorException, URISyntaxException {
 
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
 
-        setResources(launcherJobConf, appContext);
-        setPriority(launcherJobConf, appContext);
-        setQueue(launcherJobConf, appContext);
-        appContext.setApplicationId(appId);
-        setApplicationName(context, actionName, appContext);
-        appContext.setApplicationType("Oozie Launcher");
+        String appName = getAppName(context);
 
+        appContext.setApplicationId(appId);
+        appContext.setApplicationName(appName);
+        appContext.setApplicationType("Oozie Launcher");
+        Priority pri = Records.newRecord(Priority.class);
+        int priority = 0; // TODO: OYA: Add a constant or a config
+        pri.setPriority(priority);
+        appContext.setPriority(pri);
+        appContext.setQueue("default");  // TODO: will be possible to set in <launcher>
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
 
         // Set the resources to localize
@@ -1226,13 +1170,40 @@ public class JavaActionExecutor extends ActionExecutor {
         localResources.put(LauncherAM.ACTION_CONF_XML, actionConfLR);
         amContainer.setLocalResources(localResources);
 
-        setEnvironmentVariables(launcherJobConf, amContainer);
+        // Set the environment variables
+        Map<String, String> env = new HashMap<String, String>();
+        // This adds the Hadoop jars to the classpath in the Launcher JVM
+        ClasspathUtils.setupClasspath(env, launcherJobConf);
 
-        List<String> vargs = createCommand(context);
-        setJavaOpts(launcherJobConf, actionXml, vargs);
+        if (needToAddMapReduceToClassPath()) {
+            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        }
+
+        addActionSpecificEnvVars(env);
+        amContainer.setEnvironment(Collections.unmodifiableMap(env));
+
+        // Set the command
+        List<String> vargs = new ArrayList<String>(6);
+        vargs.add(Apps.crossPlatformify(ApplicationConstants.Environment.JAVA_HOME.toString())
+                + "/bin/java");
+
+        vargs.add("-Dlog4j.configuration=container-log4j.properties");
+        vargs.add("-Dlog4j.debug=true");
+        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_DIR + "=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 0);
+        vargs.add("-Dhadoop.root.logger=INFO,CLA");
+        vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
+        vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
+
+        Path amTmpDir = new Path(Apps.crossPlatformify(ApplicationConstants.Environment.PWD.toString()),
+                YarnConfiguration.DEFAULT_CONTAINER_TEMP_DIR);
+        vargs.add("-Djava.io.tmpdir=" + amTmpDir);
+
         vargs.add(LauncherAM.class.getCanonicalName());
-        vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + Path.SEPARATOR + ApplicationConstants.STDOUT);
-        vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + Path.SEPARATOR + ApplicationConstants.STDERR);
+        vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
+                Path.SEPARATOR + ApplicationConstants.STDOUT);
+        vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR +
+                Path.SEPARATOR + ApplicationConstants.STDERR);
         StringBuilder mergedCommand = new StringBuilder();
         for (CharSequence str : vargs) {
             mergedCommand.append(str).append(" ");
@@ -1250,181 +1221,51 @@ public class JavaActionExecutor extends ActionExecutor {
             amContainer.setTokens(ByteBuffer.wrap(dob.getData(), 0, dob.getLength()));
         }
 
+        // Set Resources
+        // TODO: OYA: make resources allocated for the AM configurable and choose good defaults (memory MB, vcores)
+        Resource resource = Resource.newInstance(2048, 1);
+        appContext.setResource(resource);
         appContext.setCancelTokensWhenComplete(true);
 
         return appContext;
     }
 
-    private List<String> createCommand(Context context) {
-        List<String> vargs = new ArrayList<String>(6);
-        vargs.add(Apps.crossPlatformify(ApplicationConstants.Environment.JAVA_HOME.toString())
-                + "/bin/java");
-
-        vargs.add("-Dlog4j.configuration=container-log4j.properties");
-        vargs.add("-Dlog4j.debug=true");
-        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_DIR + "=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-        vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 1024 * 1024);
-        vargs.add("-Dhadoop.root.logger=INFO,CLA");
-        vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
-        vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
-        return vargs;
-    }
-
-    private void setJavaOpts(Configuration launcherJobConf, Element actionXml, List<String> vargs) {
-        // Note: for backward compatibility reasons, we have to support the <java-opts> tag inside the <java> action
-        // If both java/java-opt(s) and launcher/java-opts are defined, we pick java/java-opts
-        // We also display a warning to let users know that they should migrate their workflow
-        StringBuilder javaOpts = new StringBuilder();
-        boolean oldJavaOpts = handleJavaOpts(actionXml, javaOpts);
-        if (oldJavaOpts) {
-            vargs.add(javaOpts.toString());
+    Map<String, CredentialsProperties> setCredentialPropertyToActionConf(final Context context,
+                                                                         final WorkflowAction action,
+                                                                         final Configuration actionConf) throws Exception {
+        if (context == null || action == null) {
+            LOG.warn("context or action is null");
+            return null;
         }
 
-        final String oozieLauncherJavaOpts = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY);
-        if (oozieLauncherJavaOpts != null) {
-            if (oldJavaOpts) {
-                LOG.warn("<java-opts> was defined inside the <launcher> tag -- ignored");
-            } else {
-                vargs.add(oozieLauncherJavaOpts);
-            }
-        }
-    }
-
-    private boolean handleJavaOpts(Element actionXml, StringBuilder javaOpts) {
-        Namespace ns = actionXml.getNamespace();
-        boolean oldJavaOpts = false;
-        @SuppressWarnings("unchecked")
-        List<Element> javaopts = actionXml.getChildren("java-opt", ns);
-        for (Element opt: javaopts) {
-            javaOpts.append(" ").append(opt.getTextTrim());
-            oldJavaOpts = true;
-        }
-        Element opt = actionXml.getChild("java-opts", ns);
-        if (opt != null) {
-            javaOpts.append(" ").append(opt.getTextTrim());
-            oldJavaOpts = true;
+        if (Boolean.TRUE.toString().equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) && !UserGroupInformation.isSecurityEnabled()) {
+            LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+            return null;
         }
 
-        if (oldJavaOpts) {
-            LOG.warn("Note: <java-opts> inside the action is used in the workflow. Please move <java-opts> tag under"
-                    + " the <launcher> element. See the documentation for details");
-        }
-        return oldJavaOpts;
-    }
-
-    private void setApplicationName(Context context, String actionName, ApplicationSubmissionContext appContext) {
-        String jobName = XLog.format("oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
-                context.getWorkflow().getAppName(), actionName,
-                context.getWorkflow().getId());
-        appContext.setApplicationName(jobName);
-    }
-
-    private void setEnvironmentVariables(Configuration launcherJobConf, ContainerLaunchContext amContainer) throws IOException {
-        Map<String, String> env = new HashMap<>();
-
-        final String oozieLauncherEnvProperty = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY);
-        if (oozieLauncherEnvProperty != null) {
-            Map<String, String> environmentVars = extractEnvVarsFromOozieLauncherProps(oozieLauncherEnvProperty);
-            env.putAll(environmentVars);
+        final XConfiguration wfJobConf = getWorkflowConf(context);
+        if (!Boolean.FALSE.toString().equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) &&
+                wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))  &&
+                !UserGroupInformation.isSecurityEnabled()) {
+            LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+            return null;
         }
 
-        // This adds the Hadoop jars to the classpath in the Launcher JVM
-        ClasspathUtils.setupClasspath(env, launcherJobConf);
-
-        if (needToAddMapReduceToClassPath()) {
-            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        final Map<String, CredentialsProperties> credPropertiesMap = getActionCredentialsProperties(context, action);
+        if (credPropertiesMap.isEmpty()) {
+            LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
+            return credPropertiesMap;
         }
 
-        addActionSpecificEnvVars(env);
-        amContainer.setEnvironment(ImmutableMap.copyOf(env));
-    }
-
-    private void setQueue(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
-        String queue;
-        if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY) != null) {
-            queue = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY);
-        } else {
-            queue = Preconditions.checkNotNull(ConfigurationService.get(DEFAULT_LAUNCHER_QUEUE), "Default queue is undefined");
-        }
-        appContext.setQueue(queue);
-    }
-
-    private void setPriority(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
-        int priority;
-        if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_PRIORITY_PROPERTY) != null) {
-            priority = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_PRIORITY_PROPERTY, -1);
-        } else {
-            int defaultPriority = ConfigurationService.getInt(DEFAULT_LAUNCHER_PRIORITY);
-            priority = defaultPriority;
-        }
-        Priority pri = Records.newRecord(Priority.class);
-        pri.setPriority(priority);
-        appContext.setPriority(pri);
-    }
-
-    private void setResources(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
-        int memory;
-        if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY) != null) {
-            memory = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, -1);
-            Preconditions.checkArgument(memory > 0, "Launcher memory is 0 or negative");
-        } else {
-            int defaultMemory = ConfigurationService.getInt(DEFAULT_LAUNCHER_MEMORY_MB, -1);
-            Preconditions.checkArgument(defaultMemory > 0, "Default launcher memory is 0 or negative");
-            memory = defaultMemory;
-        }
-
-        int vcores;
-        if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY) != null) {
-            vcores = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, -1);
-            Preconditions.checkArgument(vcores > 0, "Launcher vcores is 0 or negative");
-        } else {
-            int defaultVcores = ConfigurationService.getInt(DEFAULT_LAUNCHER_VCORES);
-            Preconditions.checkArgument(defaultVcores > 0, "Default launcher vcores is 0 or negative");
-            vcores = defaultVcores;
-        }
-        Resource resource = Resource.newInstance(memory, vcores);
-        appContext.setResource(resource);
-    }
-
-    private Map<String, String>  extractEnvVarsFromOozieLauncherProps(String oozieLauncherEnvProperty) {
-        Map<String, String> envMap = new LinkedHashMap<>();
-        for (String envVar : StringUtils.split(oozieLauncherEnvProperty, File.pathSeparatorChar)) {
-            String[] env = StringUtils.split(envVar, '=');
-            Preconditions.checkArgument(env.length == 2, "Invalid launcher setting for environment variables: \"%s\". " +
-                                "<env> should contain a list of ENV_VAR_NAME=VALUE separated by the '%s' character. " +
-                                "Example on Unix: A=foo1:B=foo2", oozieLauncherEnvProperty, File.pathSeparator);
-            envMap.put(env[0], env[1]);
-        }
-        return envMap;
-    }
-
-    protected HashMap<String, CredentialsProperties> setCredentialPropertyToActionConf(Context context,
-            WorkflowAction action, Configuration actionConf) throws Exception {
-        HashMap<String, CredentialsProperties> credPropertiesMap = null;
-        if (context != null && action != null) {
-            if (!"true".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP))) {
-                XConfiguration wfJobConf = getWorkflowConf(context);
-                if ("false".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) ||
-                    !wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))) {
-                    credPropertiesMap = getActionCredentialsProperties(context, action);
-                    if (!credPropertiesMap.isEmpty()) {
-                        for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
-                            if (entry.getValue() != null) {
-                                CredentialsProperties prop = entry.getValue();
-                                LOG.debug("Credential Properties set for action : " + action.getId());
-                                for (Entry<String, String> propEntry : prop.getProperties().entrySet()) {
-                                    String key = propEntry.getKey();
-                                    String value = propEntry.getValue();
-                                    actionConf.set(key, value);
-                                    LOG.debug("property : '" + key + "', value : '" + value + "'");
-                                }
-                            }
-                        }
-                    } else {
-                        LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
-                    }
-                } else {
-                    LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+        for (final Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
+            if (entry.getValue() != null) {
+                final CredentialsProperties prop = entry.getValue();
+                LOG.debug("Credential Properties set for action : " + action.getId());
+                for (final Entry<String, String> propEntry : prop.getProperties().entrySet()) {
+                    final String key = propEntry.getKey();
+                    final String value = propEntry.getValue();
+                    actionConf.set(key, value);
+                    LOG.debug("property : '" + key + "', value : '" + value + "'");
                 }
             }
         }

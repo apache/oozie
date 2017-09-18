@@ -49,14 +49,6 @@ public class LauncherAM {
     public static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
     public static final String OOZIE_LAUNCHER_JOB_ID = "oozie.launcher.job.id";
 
-    public static final String OOZIE_LAUNCHER_VCORES_PROPERTY = "oozie.launcher.vcores";
-    public static final String OOZIE_LAUNCHER_MEMORY_MB_PROPERTY = "oozie.launcher.memory.mb";
-    public static final String OOZIE_LAUNCHER_PRIORITY_PROPERTY = "oozie.launcher.priority";
-    public static final String OOZIE_LAUNCHER_QUEUE_PROPERTY = "oozie.launcher.queue";
-    public static final String OOZIE_LAUNCHER_JAVAOPTS_PROPERTY = "oozie.launcher.javaopts";
-    public static final String OOZIE_LAUNCHER_ENV_PROPERTY = "oozie.launcher.env";
-    public static final String OOZIE_LAUNCHER_SHARELIB_PROPERTY = "oozie.launcher.sharelib";
-
     public static final String JAVA_CLASS_PATH = "java.class.path";
     public static final String OOZIE_ACTION_ID = "oozie.action.id";
     public static final String OOZIE_JOB_ID = "oozie.job.id";

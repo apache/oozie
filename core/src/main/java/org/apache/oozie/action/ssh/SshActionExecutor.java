@@ -329,8 +329,8 @@ public class SshActionExecutor extends ActionExecutor {
      *
      * @param command Command to execute as String.
      * @return exit status of the execution.
-     * @throws IOException if processSettings exits with status nonzero.
-     * @throws InterruptedException if processSettings does not run properly.
+     * @throws IOException if process exits with status nonzero.
+     * @throws InterruptedException if process does not run properly.
      */
     public int executeCommand(String command) throws IOException, InterruptedException {
         Runtime runtime = Runtime.getRuntime();
@@ -396,7 +396,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @param action action object.
      * @param recoveryId action id + run number to enable recovery in rerun
      * @param preserveArgs tell the ssh scripts to preserve or flatten the arguments
-     * @return processSettings id of the running command.
+     * @return process id of the running command.
      * @throws IOException thrown if failed to run the command.
      * @throws InterruptedException thrown if any interruption happens.
      */
@@ -468,7 +468,7 @@ public class SshActionExecutor extends ActionExecutor {
     }
 
     /**
-     * Get the return value of a processSettings.
+     * Get the return value of a process.
      *
      * @param command command to be executed.
      * @return zero if execution is successful and any non zero value for failure.
@@ -679,7 +679,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @param errorBuffer The buffer into which STDERR is to be read. Can be null if only draining is required.
      * @param maxLength The maximum data length to be stored in these buffers. This is an indicative value, and the
      * store content may exceed this length.
-     * @return the exit value of the processSettings.
+     * @return the exit value of the process.
      * @throws IOException
      */
     private int drainBuffers(Process p, StringBuffer inputBuffer, StringBuffer errorBuffer, int maxLength)

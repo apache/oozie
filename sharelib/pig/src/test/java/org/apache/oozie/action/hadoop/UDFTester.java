@@ -39,7 +39,7 @@ public class UDFTester extends EvalFunc<String> {
             return query.toLowerCase().trim();
         }
         catch (Exception e) {
-            System.err.println("ToLower: failed to processSettings input; error - " + e.getMessage());
+            System.err.println("ToLower: failed to process input; error - " + e.getMessage());
             return null;
         }
     }

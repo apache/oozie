@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.action.control.EndActionExecutor;
 import org.apache.oozie.action.control.ForkActionExecutor;

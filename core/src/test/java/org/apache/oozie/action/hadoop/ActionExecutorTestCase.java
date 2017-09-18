@@ -35,7 +35,9 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
+import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.test.XHCatTestCase;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -242,7 +244,7 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
     protected WorkflowJobBean createBaseWorkflow(XConfiguration protoConf, String actionName) throws Exception {
         Path appUri = new Path(getAppPath(), "workflow.xml");
 
-        String content = "<workflow-app xmlns='uri:oozie:workflow:1.0'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
+        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
         content += "<start to='end' />";
         content += "<end name='end' /></workflow-app>";
         writeToFile(content, getAppPath(), "workflow.xml");
@@ -288,41 +290,6 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
         wfConf.set(OozieClient.USER_NAME, getTestUser());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
-
-        WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf);
-
-        WorkflowActionBean action = new WorkflowActionBean();
-        action.setName(actionName);
-        action.setId(Services.get().get(UUIDService.class).generateChildId(workflow.getId(), actionName));
-        workflow.getActions().add(action);
-        return workflow;
-    }
-
-    protected WorkflowJobBean createBaseWorkflowWithLauncherConfig(XConfiguration protoConf, String actionName) throws Exception {
-        Path appUri = new Path(getAppPath(), "workflow.xml");
-
-        String content = "<workflow-app xmlns='uri:oozie:workflow:1.0'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
-        content += "<global>"
-                +     "<launcher>"
-                +     "  <vcores>2</vcores>"
-                +     "  <memory.mb>1024</memory.mb>"
-                +     "  <queue>default</queue>"
-                +     "  <priority>1</priority>"
-                +     "  <java-opts>-verbose:class</java-opts>"
-                +     "</launcher>"
-                +   "</global>";
-
-        content += "<start to='end' />";
-        content += "<end name='end' /></workflow-app>";
-        writeToFile(content, getAppPath(), "workflow.xml");
-
-        WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
-                                              new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                                                               "end"))
-                .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
-        XConfiguration wfConf = new XConfiguration();
-        wfConf.set(OozieClient.USER_NAME, getTestUser());
-        wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
         WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf);
 

@@ -68,7 +68,6 @@ import org.xml.sax.SAXException;
  */
 public class LiteWorkflowAppParser {
 
-    private static final String LAUNCHER_E = "launcher";
     private static final String DECISION_E = "decision";
     private static final String ACTION_E = "action";
     private static final String END_E = "end";
@@ -215,7 +214,6 @@ public class LiteWorkflowAppParser {
     private LiteWorkflowApp parse(String strDef, Element root, Configuration configDefault, Configuration jobConf)
             throws WorkflowException {
         Namespace ns = root.getNamespace();
-
         LiteWorkflowApp def = null;
         GlobalSectionData gData = jobConf.get(OOZIE_GLOBAL) == null ?
                 null : getGlobalFromString(jobConf.get(OOZIE_GLOBAL));
@@ -266,10 +264,10 @@ public class LiteWorkflowAppParser {
                         }
                         eActionConf = elem;
                         if (SUBWORKFLOW_E.equals(elem.getName())) {
-                            handleDefaultsAndGlobal(gData, null, elem, ns);
+                            handleDefaultsAndGlobal(gData, null, elem);
                         }
                         else {
-                            handleDefaultsAndGlobal(gData, configDefault, elem, ns);
+                            handleDefaultsAndGlobal(gData, configDefault, elem);
                         }
                     }
                 }
@@ -302,11 +300,9 @@ public class LiteWorkflowAppParser {
             } else if (eNode.getName().equals(GLOBAL)) {
                 if(jobConf.get(OOZIE_GLOBAL) != null) {
                     gData = getGlobalFromString(jobConf.get(OOZIE_GLOBAL));
-                    handleDefaultsAndGlobal(gData, null, eNode, ns);
+                    handleDefaultsAndGlobal(gData, null, eNode);
                 }
-
                 gData = parseGlobalSection(ns, eNode);
-
             } else if (eNode.getName().equals(PARAMETERS)) {
                 // No operation is required
             } else {
@@ -442,7 +438,7 @@ public class LiteWorkflowAppParser {
                 }
             }
 
-            Configuration globalConf = new XConfiguration();
+            Configuration globalConf = null;
             Element globalConfigurationElement = global.getChild(CONFIGURATION, ns);
             if (globalConfigurationElement != null) {
                 try {
@@ -451,18 +447,12 @@ public class LiteWorkflowAppParser {
                     throw new WorkflowException(ErrorCode.E0700, "Error while processing global section conf");
                 }
             }
-
-            Element globalLauncherElement = global.getChild(LAUNCHER_E, ns);
-            if (globalLauncherElement != null) {
-                LauncherConfigHandler launcherConfigHandler = new LauncherConfigHandler(globalConf, globalLauncherElement, ns);
-                launcherConfigHandler.processSettings();
-            }
             gData = new GlobalSectionData(globalJobTracker, globalNameNode, globalJobXmls, globalConf);
         }
         return gData;
     }
 
-    private void handleDefaultsAndGlobal(GlobalSectionData gData, Configuration configDefault, Element actionElement, Namespace ns)
+    private void handleDefaultsAndGlobal(GlobalSectionData gData, Configuration configDefault, Element actionElement)
             throws WorkflowException {
 
         ActionExecutor ae = Services.get().get(ActionService.class).getExecutor(actionElement.getName());
@@ -507,7 +497,7 @@ public class LiteWorkflowAppParser {
         // If this is the global section or ActionExecutor.supportsConfigurationJobXML() returns true, we parse the action's
         // <configuration> and <job-xml> fields.  We also merge this with those from the <global> section, if given.  If none are
         // defined, empty values are placed.  Exceptions are thrown if there's an error parsing, but not if they're not given.
-        if (GLOBAL.equals(actionElement.getName()) || ae.supportsConfigurationJobXML()) {
+        if ( GLOBAL.equals(actionElement.getName()) || ae.supportsConfigurationJobXML()) {
             @SuppressWarnings("unchecked")
             List<Element> actionJobXmls = actionElement.getChildren(JOB_XML, actionNs);
             if (gData != null && gData.jobXmls != null) {
@@ -534,20 +524,12 @@ public class LiteWorkflowAppParser {
                 if (gData != null && gData.conf != null) {
                     XConfiguration.copy(gData.conf, actionConf);
                 }
-
-                Element launcherConfiguration = actionElement.getChild(LAUNCHER_E, actionNs);
-                if (launcherConfiguration != null) {
-                    LauncherConfigHandler launcherConfigHandler = new LauncherConfigHandler(actionConf, launcherConfiguration, actionNs);
-                    launcherConfigHandler.processSettings();
-                }
-
                 Element actionConfiguration = actionElement.getChild(CONFIGURATION, actionNs);
                 if (actionConfiguration != null) {
                     //copy and override
                     XConfiguration.copy(new XConfiguration(new StringReader(XmlUtils.prettyPrint(actionConfiguration).toString())),
                             actionConf);
                 }
-
                 int position = actionElement.indexOf(actionConfiguration);
                 actionElement.removeContent(actionConfiguration); //replace with enhanced one
                 Element eConfXml = XmlUtils.parseXml(actionConf.toXmlString(false));
