@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3058 nocleanup option is missing in oozie-coordinator-0.5.xsd (satishsaley)
 OOZIE-2909 LauncherAM: rewrite UGI calls (gezapeti)
 OOZIE-2687 Create XML schema for launcher configurations (asasvari) 
 OOZIE-3041 TestWorkflowActionRetryInfoXCommand fails in oozie core module (andras.piros via gezapeti)
