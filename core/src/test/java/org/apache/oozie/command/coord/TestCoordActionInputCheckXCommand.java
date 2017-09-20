@@ -873,6 +873,41 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     }
 
+    public void testExceptionOnInvalidElFunction() {
+        try {
+            CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-hdfsinput-invalid-elfunction.xml",
+                    CoordinatorJob.Status.RUNNING, false, true);
+
+            CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                    CoordinatorAction.Status.WAITING, "coord-hdfsinput-invalid-elfunction.xml");
+
+            createTestCaseSubDir("2009/01/29/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/15/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
+            sleep(3000);
+            final String actionId = action.getId();
+            try {
+                new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
+                waitFor(6000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        CoordinatorActionBean action = CoordActionQueryExecutor.getInstance()
+                                .get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION, actionId);
+                        return action.getStatus() == CoordinatorAction.Status.FAILED;
+                    }
+                });
+                fail("Should throw an exception");
+            }
+            catch (Exception e) {
+                assertTrue(e.getMessage().contains("Coord Action Input Check Error"));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace(System.out);
+            fail("Unexpected exception");
+        }
+    }
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
         CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);

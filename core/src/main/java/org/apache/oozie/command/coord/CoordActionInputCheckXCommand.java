@@ -34,6 +34,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.ElException;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
@@ -182,13 +183,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             isChangeInDependency = isChangeInDependency(nonExistList, missingDependencies, nonResolvedList, status);
 
             if (status && isPushDependenciesMet) {
-                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId,
-                        coordPullInputDependency, coordPushInputDependency);
-                actionXml.replace(0, actionXml.length(), newActionXml);
-                coordAction.setActionXml(actionXml.toString());
-                coordAction.setStatus(CoordinatorAction.Status.READY);
-                updateCoordAction(coordAction, true);
-                new CoordActionReadyXCommand(coordAction.getJobId()).call();
+                moveCoordActionToReady(actionXml, actionConf, coordPullInputDependency, coordPushInputDependency);
             }
             else if (!isTimeout(currentTime)) {
                 if (!status) {
@@ -426,6 +421,35 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             }
         }
         return ret;
+    }
+
+    /**
+     * Resolves coordinator configuration and moves CoordAction to READY state
+     *
+     * @param actionXml
+     * @param actionConf
+     * @param coordPullInputDependency
+     * @param coordPushInputDependency
+     * @throws Exception
+     */
+    private void moveCoordActionToReady(StringBuilder actionXml, Configuration actionConf,
+            CoordInputDependency coordPullInputDependency, CoordInputDependency coordPushInputDependency)
+            throws Exception {
+        String newActionXml = null;
+        try {
+            newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId, coordPullInputDependency,
+                    coordPushInputDependency);
+        }
+        catch (ElException e) {
+            coordAction.setStatus(CoordinatorAction.Status.FAILED);
+            updateCoordAction(coordAction, true);
+            throw e;
+        }
+        actionXml.replace(0, actionXml.length(), newActionXml);
+        coordAction.setActionXml(actionXml.toString());
+        coordAction.setStatus(CoordinatorAction.Status.READY);
+        updateCoordAction(coordAction, true);
+        new CoordActionReadyXCommand(coordAction.getJobId()).call();
     }
 
     /**

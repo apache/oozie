@@ -784,7 +784,7 @@ public class CoordELFunctions {
             }
         }
         catch (Exception e) {
-            throw new Exception("Unable to evaluate :" + expr + ":\n", e);
+            throw new ElException(ErrorCode.E1004, "Unable to evaluate :" + expr + ":\n", e);
         }
     }
 

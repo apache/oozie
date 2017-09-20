@@ -34,6 +34,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.coord.ElException;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.DependencyChecker;
@@ -262,6 +263,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                             .getPushInputDependencies());
             actionXml.replace(0, actionXml.length(), newActionXml);
             return actionXml.toString();
+        }
+        catch (ElException e) {
+            coordAction.setStatus(CoordinatorAction.Status.FAILED);
+            updateCoordAction(coordAction, true);
+            throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
