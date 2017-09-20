@@ -89,6 +89,9 @@ public enum ErrorCode {
     E0508(XLog.OPS, "User [{0}] not authorized for WF job [{1}]"),
     E0509(XLog.OPS, "User [{0}] not authorized for Coord job [{1}]"),
     E0510(XLog.OPS, "Unable to get Credential [{0}]"),
+    E0511(XLog.STD, "No HDFS delegation token present, can''t set credentials. [serverPrincipal={0}]"),
+    E0512(XLog.STD, "Could not get RM delegation token: {0}"),
+    E0513(XLog.STD, "No YARN renewer present, can''t get token. [servicePrincipal={0}]"),
 
     E0550(XLog.OPS, "Could not normalize host name [{0}], {1}"),
     E0551(XLog.OPS, "Missing [{0}] property"),

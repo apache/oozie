@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SaslRpcServer;
@@ -63,8 +62,8 @@ public class HCatCredentialHelper {
                     .getLoginUser().getShortUserName());
             Token<DelegationTokenIdentifier> hcatToken = new Token<DelegationTokenIdentifier>();
             hcatToken.decodeFromUrlString(tokenStrForm);
-            credentials.addToken(new Text("HCat Token"), hcatToken);
-            XLog.getLog(getClass()).debug("Added the HCat token to launcher configuration");
+            credentials.addToken(CredentialsProviderFactory.getUniqueAlias(hcatToken), hcatToken);
+            XLog.getLog(getClass()).debug("Added the HCat token to launcher's credentials");
         }
         catch (Exception ex) {
             XLog.getLog(getClass()).debug("set Exception {0}", ex.getMessage());

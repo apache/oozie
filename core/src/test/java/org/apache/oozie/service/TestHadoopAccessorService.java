@@ -228,37 +228,6 @@ public class TestHadoopAccessorService extends XFsTestCase {
         }
     }
 
-    public void testGetMRDelegationTokenRenewer() throws Exception {
-        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf jobConf = new JobConf(false);
-        assertEquals(new Text("oozie mr token"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf.set("yarn.resourcemanager.address", "localhost:50300");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("mapreduce.jobtracker.address", "127.0.0.1:50300");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("yarn.resourcemanager.address", "localhost:8032");
-        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-
-        // Try the above with logical URIs (i.e. for HA)
-        jobConf = new JobConf(false);
-        jobConf.set("mapred.job.tracker", "jt-ha-uri");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("mapreduce.jobtracker.address", "jt-ha-uri");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("yarn.resourcemanager.address", "rm-ha-uri");
-        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-    }
-
     public void testCheckSupportedFilesystem() throws Exception {
         Configuration hConf = Services.get().getConf();
 

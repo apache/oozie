@@ -65,6 +65,7 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.action.hadoop.LauncherAM.LauncherSecurityManager;
 import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,9 +93,6 @@ public class TestLauncherAM {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
-
-    @Mock
-    private UserGroupInformation ugiMock;
 
     @Mock
     private AMRMClientAsyncFactory amRMClientAsyncFactoryMock;
@@ -138,6 +136,7 @@ public class TestLauncherAM {
     public void setup() throws Exception {
         configureMocksForHappyPath();
         launcherJobConfig.set(LauncherAMUtils.OOZIE_ACTION_RECOVERY_ID, "1");
+        launcherJobConfig.set(LauncherAM.OOZIE_SUBMITTER_USER, System.getProperty("user.name"));
         instantiateLauncher();
     }
 
@@ -228,21 +227,10 @@ public class TestLauncherAM {
         assertFailedExecution();
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testLauncherJobConfCannotBeLoaded() throws Exception {
         given(localFsOperationsMock.readLauncherConf()).willThrow(new RuntimeException());
-        thrown.expect(RuntimeException.class);
-
-        try {
-            executeLauncher();
-        } finally {
-            failureDetails.expectedExceptionMessage(null)
-                .expectedErrorCode(EXIT_CODE_0)
-                .expectedErrorReason("Could not load the Launcher AM configuration file")
-                .withStackTrace();
-
-            assertFailedExecution();
-        }
+        LauncherAM.readLauncherConfiguration(localFsOperationsMock);
     }
 
     @Test
@@ -460,15 +448,14 @@ public class TestLauncherAM {
     }
 
     private void instantiateLauncher() {
-        launcherAM = new LauncherAM(ugiMock,
-                amRMClientAsyncFactoryMock,
+        launcherAM = new LauncherAM(amRMClientAsyncFactoryMock,
                 callbackHandlerMock,
                 hdfsOperationsMock,
                 localFsOperationsMock,
                 prepareHandlerMock,
                 launcherCallbackNotifierFactoryMock,
                 launcherSecurityManagerMock,
-                containerId);
+                containerId, launcherJobConfig);
     }
 
      @SuppressWarnings("unchecked")
@@ -480,14 +467,8 @@ public class TestLauncherAM {
 
         given(localFsOperationsMock.readLauncherConf()).willReturn(launcherJobConfig);
         given(localFsOperationsMock.fileExists(any(File.class))).willReturn(true);
-        willReturn(amRmAsyncClientMock).given(amRMClientAsyncFactoryMock).createAMRMClientAsync(anyInt());
-        given(ugiMock.doAs(any(PrivilegedExceptionAction.class))).willAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                PrivilegedExceptionAction<?> action = (PrivilegedExceptionAction<?>) invocation.getArguments()[0];
-                return action.run();
-            }
-        });
+        willReturn(amRmAsyncClientMock).given(amRMClientAsyncFactoryMock)
+                .createAMRMClientAsync(anyInt(), any(AMRMCallBackHandler.class));
         given(launcherCallbackNotifierFactoryMock.createCallbackNotifier(any(Configuration.class)))
             .willReturn(launcherCallbackNotifierMock);
     }
@@ -524,7 +505,6 @@ public class TestLauncherAM {
         verify(amRmAsyncClientMock).registerApplicationMaster(anyString(), anyInt(), anyString());
         verify(amRmAsyncClientMock).unregisterApplicationMaster(FinalApplicationStatus.SUCCEEDED, EMPTY_STRING, EMPTY_STRING);
         verify(amRmAsyncClientMock).stop();
-        verify(ugiMock, times(2)).doAs(any(PrivilegedExceptionAction.class)); // prepare & action main
         verify(hdfsOperationsMock).uploadActionDataToHDFS(any(Configuration.class), any(Path.class), any(Map.class));
         verify(launcherCallbackNotifierFactoryMock).createCallbackNotifier(any(Configuration.class));
         verify(launcherCallbackNotifierMock).notifyURL(actionResult);

@@ -54,9 +54,6 @@ public class TestHdfsOperations {
     private SequenceFile.Writer writerMock;
 
     @Mock
-    private UserGroupInformation ugiMock;
-
-    @Mock
     private Configuration configurationMock;
 
     private Path path = new Path(".");
@@ -102,14 +99,6 @@ public class TestHdfsOperations {
 
     @SuppressWarnings("unchecked")
     private void configureMocksForHappyPath() throws Exception {
-        given(ugiMock.doAs(any(PrivilegedExceptionAction.class))).willAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                PrivilegedExceptionAction<?> action = (PrivilegedExceptionAction<?>) invocation.getArguments()[0];
-                return action.run();
-            }
-        });
-
         given(seqFileWriterFactoryMock.createSequenceFileWriter(eq(configurationMock),
                 any(Path.class), eq(Text.class), eq(Text.class))).willReturn(writerMock);
     }

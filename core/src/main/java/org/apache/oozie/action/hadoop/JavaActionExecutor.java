@@ -51,7 +51,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
@@ -60,8 +59,6 @@ import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -530,9 +527,9 @@ public class JavaActionExecutor extends ActionExecutor {
             return conf;
         }
         catch (Exception ex) {
-            LOG.debug(
-                    "Errors when add to DistributedCache. Path=" + Objects.toString(uri, "<null>") + ", archive="
-                            + archive + ", conf=" + XmlUtils.prettyPrint(conf).toString());
+            LOG.debug("Errors when add to DistributedCache. Path=" +
+                    Objects.toString(uri, "<null>") + ", archive=" + archive + ", conf=" +
+                    XmlUtils.prettyPrint(conf).toString());
             throw convertException(ex);
         }
     }
@@ -1021,42 +1018,33 @@ public class JavaActionExecutor extends ActionExecutor {
                 }
             }
 
-            // Setting the credential properties in launcher conf
-            Configuration credentialsConf = null;
-
+            Credentials credentials = new Credentials();
+            Configuration launcherConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
+            yarnClient = createYarnClient(context, launcherConf);
             Map<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
                     action, actionConf);
-            Credentials credentials = null;
-            if (credentialsProperties != null) {
-                credentials = new Credentials();
-                // Adding if action need to set more credential tokens
-                credentialsConf = new Configuration(false);
-                XConfiguration.copy(actionConf, credentialsConf);
-                setCredentialTokens(credentials, credentialsConf, context, action, credentialsProperties);
+            if (UserGroupInformation.isSecurityEnabled()) {
+                addHadoopCredentialPropertiesToActionConf(credentialsProperties);
+            }
+            // Adding if action need to set more credential tokens
+            Configuration credentialsConf = new Configuration(false);
+            XConfiguration.copy(actionConf, credentialsConf);
+            setCredentialTokens(credentials, credentialsConf, context, action, credentialsProperties);
 
-                // insert conf to action conf from credentialsConf
-                for (Entry<String, String> entry : credentialsConf) {
-                    if (actionConf.get(entry.getKey()) == null) {
-                        actionConf.set(entry.getKey(), entry.getValue());
-                    }
+            // copy back new entries from credentialsConf
+            for (Entry<String, String> entry : credentialsConf) {
+                if (actionConf.get(entry.getKey()) == null) {
+                    actionConf.set(entry.getKey(), entry.getValue());
                 }
             }
-            Configuration launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
-
             String consoleUrl;
-            String launcherId = LauncherHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
+            String launcherId = LauncherHelper.getRecoveryId(launcherConf, context.getActionDir(), context
                     .getRecoveryId());
             boolean alreadyRunning = launcherId != null;
 
             // if user-retry is on, always submit new launcher
             boolean isUserRetry = ((WorkflowActionBean)action).isUserRetry();
             LOG.debug("Creating yarnClient for action {0}", action.getId());
-            yarnClient = createYarnClient(context, launcherJobConf);
-
-            if (UserGroupInformation.isSecurityEnabled()) {
-                credentials = ensureCredentials(credentials);
-                acquireHDFSDelegationToken(actionFs, credentialsConf, credentials);
-            }
 
             if (alreadyRunning && !isUserRetry) {
                 try {
@@ -1066,51 +1054,16 @@ public class JavaActionExecutor extends ActionExecutor {
                 } catch (RemoteException e) {
                     // caught when the application id does not exist
                     LOG.error("Got RemoteException from YARN", e);
-                    String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
+                    String jobTracker = launcherConf.get(HADOOP_YARN_RM);
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA017",
                             "unknown job [{0}@{1}], cannot recover", launcherId, jobTracker);
                 }
             }
             else {
-                // TODO: OYA: do we actually need an MR token?  IIRC, it's issued by the JHS
-//                // setting up propagation of the delegation token.
-//                Token<DelegationTokenIdentifier> mrdt = null;
-//                HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-//                mrdt = jobClient.getDelegationToken(has
-//                        .getMRDelegationTokenRenewer(launcherJobConf));
-//                launcherJobConf.getCredentials().addToken(HadoopAccessorService.MR_TOKEN_ALIAS, mrdt);
-
-                // insert credentials tokens to launcher job conf if needed
-                if (credentialsConf != null) {
-                    for (Token<? extends TokenIdentifier> tk :credentials.getAllTokens()) {
-                        Text fauxAlias = new Text(tk.getKind() + "_" + tk.getService());
-                        LOG.debug("ADDING TOKEN: " + fauxAlias);
-                        credentials.addToken(fauxAlias, tk);
-                    }
-                    if (credentials.numberOfSecretKeys() > 0) {
-                        for (Entry<String, CredentialsProperties> entry : credentialsProperties.entrySet()) {
-                            CredentialsProperties credProps = entry.getValue();
-                            if (credProps != null) {
-                                Text credName = new Text(credProps.getName());
-                                byte[] secKey = credentials.getSecretKey(credName);
-                                if (secKey != null) {
-                                    LOG.debug("ADDING CREDENTIAL: " + credProps.getName());
-                                    credentials.addSecretKey(credName, secKey);
-                                }
-                            }
-                        }
-                    }
-                }
-                else {
-                    LOG.info("No need to inject credentials.");
-                }
-
-                String user = context.getWorkflow().getUser();
-
                 YarnClientApplication newApp = yarnClient.createApplication();
                 ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
                 ApplicationSubmissionContext appContext =
-                        createAppSubmissionContext(appId, launcherJobConf, user, context, actionConf, action.getName(),
+                        createAppSubmissionContext(appId, launcherConf, context, actionConf, action.getName(),
                                 credentials, actionXml);
                 yarnClient.submitApplication(appContext);
 
@@ -1120,7 +1073,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 consoleUrl = appReport.getTrackingUrl();
             }
 
-            String jobTracker = launcherJobConf.get(HADOOP_YARN_RM);
+            String jobTracker = launcherConf.get(HADOOP_YARN_RM);
             context.setStartData(launcherId, jobTracker, consoleUrl);
         }
         catch (Exception ex) {
@@ -1146,58 +1099,19 @@ public class JavaActionExecutor extends ActionExecutor {
         return context.getVar(OOZIE_ACTION_NAME);
     }
 
-    private Credentials ensureCredentials(final Credentials credentials) {
-        if (credentials == null) {
-            LOG.debug("No credentials present, creating a new one.");
-            return new Credentials();
-        }
-
-        return credentials;
+    private void addHadoopCredentialPropertiesToActionConf(Map<String, CredentialsProperties> credentialsProperties) {
+        LOG.info("Adding default credentials for action: hdfs, yarn and jhs");
+        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.HDFS);
+        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.YARN);
+        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.JHS);
     }
 
-    /**
-     * In a secure environment, when both HDFS HA and log aggregation are turned on, {@link JavaActionExecutor} is not able to call
-     * {@link YarnClient#submitApplication} since {@code HDFS_DELEGATION_TOKEN} is missing.
-     *
-     * @param actionFs the {@link FileSystem} to get the delegation token from
-     * @param credentialsConf the {@link Configuration} to extract the YARN renewer
-     * @param credentials the {@link Credentials} where the delegation token is stored
-     * @throws IOException
-     * @throws ActionExecutorException when security is enabled, but either {@code credentials} are empty, or
-     * {@code serverPrincipal} is empty, or HDFS delegation token is not present within {@code actionFs}
-     */
-    private void acquireHDFSDelegationToken(final FileSystem actionFs,
-                                            final Configuration credentialsConf,
-                                            final Credentials credentials)
-            throws IOException, ActionExecutorException {
-        LOG.debug("Security is enabled, checking credentials to acquire HDFS delegation token.");
-
-        final HadoopAccessorService hadoopAccessorService = Services.get().get(HadoopAccessorService.class);
-        final String servicePrincipal = hadoopAccessorService.getServicePrincipal(credentialsConf);
-        final String serverPrincipal = hadoopAccessorService.getServerPrincipal(
-                credentialsConf,
-                servicePrincipal);
-        if (serverPrincipal == null) {
-            final String errorTemplate = "No server principal present, won't get HDFS delegation token. [servicePrincipal={0}]";
-            LOG.error(errorTemplate, servicePrincipal);
-            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA022", errorTemplate, servicePrincipal);
-        }
-
-        LOG.debug("Server principal present, getting HDFS delegation token. [serverPrincipal={0}]", serverPrincipal);
-        final Token hdfsDelegationToken = actionFs.getDelegationToken(serverPrincipal);
-        if (hdfsDelegationToken == null) {
-            final String errorTemplate = "No HDFS delegation token present, won't set credentials. [serverPrincipal={0}]";
-            LOG.error(errorTemplate, serverPrincipal);
-            throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA022", errorTemplate, serverPrincipal);
-        }
-
-        LOG.debug("Got HDFS delegation token, setting credentials. [hdfsDelegationToken={0}]",
-                hdfsDelegationToken);
-        credentials.addToken(new Text(hdfsDelegationToken.getService().toString()), hdfsDelegationToken);
+    private void addHadoopCredentialProperties(Map<String, CredentialsProperties> credentialsProperties, String type) {
+        credentialsProperties.put(type, new CredentialsProperties(type, type));
     }
 
     private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, Configuration launcherJobConf,
-                                                                    String user, Context context, Configuration actionConf, String actionName,
+                                                                    Context context, Configuration actionConf, String actionName,
                                                                     Credentials credentials, Element actionXml)
             throws IOException, HadoopAccessorException, URISyntaxException {
 
@@ -1212,12 +1126,14 @@ public class JavaActionExecutor extends ActionExecutor {
 
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
 
+        final String user = context.getWorkflow().getUser();
         // Set the resources to localize
         Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
         ClientDistributedCacheManager.determineTimestampsAndCacheVisibilities(launcherJobConf);
         MRApps.setupDistributedCache(launcherJobConf, localResources);
         // Add the Launcher and Action configs as Resources
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        launcherJobConf.set(LauncherAM.OOZIE_SUBMITTER_USER, user);
         LocalResource launcherJobConfLR = has.createLocalResourceForConfigurationFile(LauncherAM.LAUNCHER_JOB_CONF_XML, user,
                 launcherJobConf, context.getAppFileSystem().getUri(), context.getActionDir());
         localResources.put(LauncherAM.LAUNCHER_JOB_CONF_XML, launcherJobConfLR);
@@ -1398,37 +1314,38 @@ public class JavaActionExecutor extends ActionExecutor {
         return envMap;
     }
 
-    protected HashMap<String, CredentialsProperties> setCredentialPropertyToActionConf(Context context,
-            WorkflowAction action, Configuration actionConf) throws Exception {
-        HashMap<String, CredentialsProperties> credPropertiesMap = null;
-        if (context != null && action != null) {
-            if (!"true".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP))) {
-                XConfiguration wfJobConf = getWorkflowConf(context);
-                if ("false".equals(actionConf.get(OOZIE_CREDENTIALS_SKIP)) ||
-                    !wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP))) {
-                    credPropertiesMap = getActionCredentialsProperties(context, action);
-                    if (!credPropertiesMap.isEmpty()) {
-                        for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
-                            if (entry.getValue() != null) {
-                                CredentialsProperties prop = entry.getValue();
-                                LOG.debug("Credential Properties set for action : " + action.getId());
-                                for (Entry<String, String> propEntry : prop.getProperties().entrySet()) {
-                                    String key = propEntry.getKey();
-                                    String value = propEntry.getValue();
-                                    actionConf.set(key, value);
-                                    LOG.debug("property : '" + key + "', value : '" + value + "'");
-                                }
-                            }
-                        }
-                    } else {
-                        LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
+   Map<String, CredentialsProperties> setCredentialPropertyToActionConf(final Context context,
+                                                                         final WorkflowAction action,
+                                                                         final Configuration actionConf) throws Exception {
+        final Map<String, CredentialsProperties> credPropertiesMap = new HashMap<>();
+        if (context == null || action == null) {
+            LOG.warn("context or action is null");
+            return credPropertiesMap;
+        }
+        final XConfiguration wfJobConf = getWorkflowConf(context);
+        final boolean skipCredentials = actionConf.getBoolean(OOZIE_CREDENTIALS_SKIP,
+                wfJobConf.getBoolean(OOZIE_CREDENTIALS_SKIP, ConfigurationService.getBoolean(OOZIE_CREDENTIALS_SKIP)));
+        if (skipCredentials) {
+            LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
+        } else {
+            credPropertiesMap.putAll(getActionCredentialsProperties(context, action));
+            if (credPropertiesMap.isEmpty()) {
+                LOG.warn("No credential properties found for action : " + action.getId() + ", cred : " + action.getCred());
+                return credPropertiesMap;
+            }
+            for (final Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
+                if (entry.getValue() != null) {
+                    final CredentialsProperties prop = entry.getValue();
+                    LOG.debug("Credential Properties set for action : " + action.getId());
+                    for (final Entry<String, String> propEntry : prop.getProperties().entrySet()) {
+                        final String key = propEntry.getKey();
+                        final String value = propEntry.getValue();
+                        actionConf.set(key, value);
+                        LOG.debug("property : '" + key + "', value : '" + value + "'");
                     }
-                } else {
-                    LOG.info("Skipping credentials (" + OOZIE_CREDENTIALS_SKIP + "=true)");
                 }
             }
         }
-
         return credPropertiesMap;
     }
 

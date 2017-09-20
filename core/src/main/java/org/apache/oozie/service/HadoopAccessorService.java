@@ -20,23 +20,38 @@ package org.apache.oozie.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Master;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.v2.api.HSClientProtocol;
+import org.apache.hadoop.mapreduce.v2.api.MRClientProtocol;
+import org.apache.hadoop.mapreduce.v2.api.protocolrecords.GetDelegationTokenRequest;
+import org.apache.hadoop.mapreduce.v2.jobhistory.JHAdminConfig;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
 import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
+import org.apache.hadoop.yarn.ipc.YarnRPC;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -55,6 +70,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -84,16 +100,8 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
-    public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
-
-    /** The Kerberos principal for the job tracker.*/
-    protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
-    /** The Kerberos principal for the resource manager.*/
-    protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
-    protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
 
     private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
-    private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
     private static final String DEFAULT_ACTIONNAME = "default";
     private static Configuration cachedConf;
 
@@ -335,7 +343,7 @@ public class HadoopAccessorService implements Service {
         return HadoopAccessorService.class;
     }
 
-    private UserGroupInformation getUGI(String user) throws IOException {
+    UserGroupInformation getUGI(String user) throws IOException {
         return ugiService.getProxyUser(user);
     }
 
@@ -648,71 +656,6 @@ public class HadoopAccessorService implements Service {
                 throw new HadoopAccessorException(error, uri, whitelist);
             }
         }
-    }
-
-    public Text getMRDelegationTokenRenewer(JobConf jobConf) throws IOException {
-        if (UserGroupInformation.isSecurityEnabled()) { // secure cluster
-            return getMRTokenRenewerInternal(jobConf);
-        }
-        else {
-            return MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
-        }
-    }
-
-    // Package private for unit test purposes
-    Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
-        // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
-        // support for renewing/cancelling tokens
-        final String servicePrincipal = getServicePrincipal(jobConf);
-        Text renewer;
-        if (servicePrincipal != null) { // secure cluster
-            renewer = mrTokenRenewers.get(servicePrincipal);
-            if (renewer == null) {
-                renewer = new Text(getServerPrincipal(jobConf, servicePrincipal));
-                mrTokenRenewers.put(servicePrincipal, renewer);
-            }
-        }
-        else {
-            renewer = MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
-        }
-        return renewer;
-    }
-
-    public String getServicePrincipal(final Configuration configuration) {
-        return configuration.get(RM_PRINCIPAL, configuration.get(JT_PRINCIPAL));
-    }
-
-    /**
-     * Mimic {@link org.apache.hadoop.mapred.Master#getMasterPrincipal}, get Kerberos principal for use as delegation token renewer.
-     *
-     * @param configuration the {@link Configuration} containing the YARN RM address
-     * @param servicePrincipal the configured service principal
-     * @return the server principal originating from the host name and the service principal
-     * @throws IOException when something goes wrong finding out the local address inside
-     * {@link SecurityUtil#getServerPrincipal(String, String)}
-     */
-    public String getServerPrincipal(final Configuration configuration, final String servicePrincipal) throws IOException {
-        Preconditions.checkNotNull(configuration, "configuration has to be filled");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(servicePrincipal), "servicePrincipal has to be filled");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(configuration.get(HADOOP_YARN_RM)),
-                String.format("configuration entry %s has to be filled", HADOOP_YARN_RM));
-
-        String serverPrincipal;
-        final String target = configuration.get(HADOOP_YARN_RM);
-
-        try {
-            final String addr = NetUtils.createSocketAddr(target).getHostName();
-            serverPrincipal = SecurityUtil.getServerPrincipal(servicePrincipal, addr);
-            LOG.info("Delegation Token Renewer details: Principal={0},Target={1}", serverPrincipal, target);
-        }
-        catch (final IllegalArgumentException iae) {
-            LOG.warn("An error happened while trying to get server principal. Getting it from service principal anyway.", iae);
-
-            serverPrincipal = servicePrincipal.split("[/@]")[0];
-            LOG.info("Delegation Token Renewer for {0} is {1}", target, serverPrincipal);
-        }
-
-        return serverPrincipal;
     }
 
     public void addFileToClassPath(String user, final Path file, final Configuration conf)

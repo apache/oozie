@@ -1083,7 +1083,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         // Define 'abc' token type in oozie-site
         ConfigurationService.set("oozie.credentials.credentialclasses", "abc=org.apache.oozie.action.hadoop.InsertTestToken");
         ConfigurationService.setBoolean("oozie.credentials.skip", skipSite);
-
         // Setting the credential properties in launcher conf
         Map<String, CredentialsProperties> credProperties = ae.setCredentialPropertyToActionConf(context,
                 action, actionConf);

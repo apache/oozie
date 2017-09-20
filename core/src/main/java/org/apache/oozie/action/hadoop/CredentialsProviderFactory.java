@@ -23,15 +23,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XLog;
 
 public class CredentialsProviderFactory {
     public static final String CRED_KEY = "oozie.credentials.credentialclasses";
     private static final XLog LOG = XLog.getLog(CredentialsProviderFactory.class);
+    public static final String HDFS = "hdfs";
+    public static final String YARN = "yarnRM";
+    public static final String JHS = "jhs";
     private static CredentialsProviderFactory instance;
-    private final Map<String, Class<CredentialsProvider>> providerCache;
+    private final Map<String, Class<? extends CredentialsProvider>> providerCache;
 
     @VisibleForTesting
     static void destroy() {
@@ -70,6 +75,14 @@ public class CredentialsProviderFactory {
                 }
             }
         }
+        providerCache.put(HDFS, HDFSCredentials.class);
+        providerCache.put(YARN, YarnRMCredentials.class);
+        providerCache.put(JHS, JHSCredentials.class);
+    }
+
+    static Text getUniqueAlias(Token<?> token) {
+        return new Text(String.format("%s_%s_%d", token.getKind().toString(),
+                token.getService().toString(), System.currentTimeMillis()));
     }
 
     /**
@@ -80,7 +93,7 @@ public class CredentialsProviderFactory {
      * @throws Exception
      */
     public CredentialsProvider createCredentialsProvider(String type) throws Exception {
-        Class<CredentialsProvider> providerClass = providerCache.get(type);
+        Class<? extends CredentialsProvider> providerClass = providerCache.get(type);
         if(providerClass == null){
             return null;
         }

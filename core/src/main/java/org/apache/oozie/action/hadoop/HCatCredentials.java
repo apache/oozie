@@ -70,7 +70,7 @@ public class HCatCredentials implements CredentialsProvider {
             hcch.set(credentials, config, principal, server);
         }
         catch (Exception e) {
-            XLog.getLog(getClass()).warn("Exception in addtoJobConf", e);
+            XLog.getLog(getClass()).warn("Exception in updateCredentials", e);
             throw e;
         }
     }

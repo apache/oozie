@@ -79,6 +79,7 @@ public class HbaseCredentials implements CredentialsProvider {
         User u = User.create(ugi);
         // A direct doAs is required here vs. User#obtainAuthTokenForJob(...)
         // See OOZIE-2419 for more
+        XLog.getLog(getClass()).debug("Getting Hbase token for user {0}", user);
         Token<AuthenticationTokenIdentifier> token = u.runAs(
             new PrivilegedExceptionAction<Token<AuthenticationTokenIdentifier>>() {
                 public Token<AuthenticationTokenIdentifier> run() throws Exception {
@@ -90,7 +91,8 @@ public class HbaseCredentials implements CredentialsProvider {
                 }
             }
         );
-        credentials.addToken(token.getService(), token);
+        XLog.getLog(getClass()).debug("Got token, adding it to credentials.");
+        credentials.addToken(CredentialsProviderFactory.getUniqueAlias(token), token);
     }
 
     private void addPropsConf(CredentialsProperties props, Configuration destConf) {

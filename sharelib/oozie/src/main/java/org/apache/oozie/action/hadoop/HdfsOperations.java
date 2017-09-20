@@ -40,85 +40,59 @@ import com.google.common.base.Preconditions;
 public class HdfsOperations {
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private final SequenceFileWriterFactory seqFileWriterFactory;
-    private final UserGroupInformation ugi;
 
-    public HdfsOperations(SequenceFileWriterFactory seqFileWriterFactory, UserGroupInformation ugi) {
+    public HdfsOperations(SequenceFileWriterFactory seqFileWriterFactory) {
         this.seqFileWriterFactory = Preconditions.checkNotNull(seqFileWriterFactory, "seqFileWriterFactory should not be null");
-        this.ugi = Preconditions.checkNotNull(ugi, "ugi should not be null");
     }
 
     /**
      * Creates a Sequence file which contains the output from an action and uploads it to HDFS.
      */
     public void uploadActionDataToHDFS(final Configuration launcherJobConf, final Path actionDir,
-            final Map<String, String> actionData) throws IOException, InterruptedException {
-        ugi.doAs(new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Path finalPath = new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE);
-                // upload into sequence file
-                System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: " + finalPath.toUri());
+                                       final Map<String, String> actionData) throws IOException, InterruptedException {
+        Path finalPath = new Path(actionDir, LauncherAM.ACTION_DATA_SEQUENCE_FILE);
+        // upload into sequence file
+        System.out.println("Oozie Launcher, uploading action data to HDFS sequence file: " + finalPath.toUri());
 
-                try (SequenceFile.Writer wr =
-                        seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class)) {
+        try (SequenceFile.Writer wr =
+                     seqFileWriterFactory.createSequenceFileWriter(launcherJobConf, finalPath, Text.class, Text.class)) {
 
-                    if (wr != null) {
-                        for (Entry<String, String> entry : actionData.entrySet()) {
-                            wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
-                        }
-                    } else {
-                        throw new IOException("SequenceFile.Writer is null for " + finalPath);
-                    }
+            if (wr != null) {
+                for (Entry<String, String> entry : actionData.entrySet()) {
+                    wr.append(new Text(entry.getKey()), new Text(entry.getValue()));
                 }
-
-                return null;
+            } else {
+                throw new IOException("SequenceFile.Writer is null for " + finalPath);
             }
-        });
+        }
     }
 
     public boolean fileExists(final Path path, final Configuration launcherJobConf) throws IOException, InterruptedException {
-        return ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
-            @Override
-            public Boolean run() throws Exception {
-                FileSystem fs = FileSystem.get(path.toUri(), launcherJobConf);
-                return fs.exists(path);
-            }
-        });
+        FileSystem fs = FileSystem.get(path.toUri(), launcherJobConf);
+        return fs.exists(path);
     }
 
     public void writeStringToFile(final Path path, final Configuration conf, final String contents)
             throws IOException, InterruptedException {
-        ugi.doAs(new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                try (FileSystem fs = FileSystem.get(path.toUri(), conf);
-                        java.io.Writer writer = new OutputStreamWriter(fs.create(path), DEFAULT_CHARSET)) {
-                    writer.write(contents);
-                }
-
-                return null;
-            }
-        });
+        try (FileSystem fs = FileSystem.get(path.toUri(), conf);
+             java.io.Writer writer = new OutputStreamWriter(fs.create(path), DEFAULT_CHARSET)) {
+            writer.write(contents);
+        }
     }
 
     public String readFileContents(final Path path, final Configuration conf) throws IOException, InterruptedException {
-        return ugi.doAs(new PrivilegedExceptionAction<String>() {
-            @Override
-            public String run() throws Exception {
-                StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-                try (FileSystem fs = FileSystem.get(path.toUri(), conf);
-                        InputStream is = fs.open(path);
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, DEFAULT_CHARSET))) {
+        try (FileSystem fs = FileSystem.get(path.toUri(), conf);
+             InputStream is = fs.open(path);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, DEFAULT_CHARSET))) {
 
-                    String contents;
-                    while ((contents = reader.readLine()) != null) {
-                        sb.append(contents);
-                    }
-                }
-
-                return sb.toString();
+            String contents;
+            while ((contents = reader.readLine()) != null) {
+                sb.append(contents);
             }
-        });
+        }
+
+        return sb.toString();
     }
 }

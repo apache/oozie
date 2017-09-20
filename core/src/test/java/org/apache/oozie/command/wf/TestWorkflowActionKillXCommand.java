@@ -180,7 +180,7 @@ public class TestWorkflowActionKillXCommand extends XDataTestCase {
         jobConf = sleepjob.setupJobConf(1, 1, sleep, 1, sleep, 1);
         jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, "sleepjob");
         jobConf.set(LauncherMain.MAPREDUCE_JOB_TAGS, "sleepjob");
-        System.setProperty(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
+        jobConf.set(LauncherMain.OOZIE_JOB_LAUNCH_TIME, String.valueOf(System.currentTimeMillis()));
 
         jobClient.submitJob(new JobConf(jobConf));
         Set<ApplicationId> apps = LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL);

@@ -22,11 +22,9 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 
 public class AMRMClientAsyncFactory {
 
-    public AMRMClientAsync<?> createAMRMClientAsync(int intervalMs) {
+    public AMRMClientAsync<?> createAMRMClientAsync(int intervalMs, AMRMCallBackHandler callBackHandler) {
         AMRMClient<?> amRmClient = AMRMClient.createAMRMClient();
-        AMRMCallBackHandler callBackHandler = new AMRMCallBackHandler();
         AMRMClientAsync<?> amRmClientAsync = AMRMClientAsync.createAMRMClientAsync(amRmClient, intervalMs, callBackHandler);
-
         return amRmClientAsync;
     }
 }

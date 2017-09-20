@@ -48,7 +48,7 @@ public class TestShellMain extends ShellTestCase {
         jobConf.setInt("mapred.reduce.max.attempts", 1);
         jobConf.set("mapred.job.tracker", getJobTrackerUri());
         jobConf.set("fs.default.name", getNameNodeUri());
-
+        jobConf.setLong(LauncherMain.OOZIE_JOB_LAUNCH_TIME, System.currentTimeMillis());
 
         jobConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, SHELL_COMMAND_NAME);
         String[] args = new String[] { SHELL_COMMAND_SCRIPTFILE_OPTION, script.toString(), "A", "B" };
