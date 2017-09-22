@@ -160,17 +160,17 @@ public class OozieSharelibCLI {
             WorkflowAppService lwas = services.get(WorkflowAppService.class);
             HadoopAccessorService has = services.get(HadoopAccessorService.class);
             Path dstPath = lwas.getSystemLibPath();
+            URI uri = new Path(hdfsUri).toUri();
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
+            FileSystem fs = FileSystem.get(uri, fsConf);
+
+            ECPolicyDisabler.tryDisableECPolicyForPath(fs, dstPath);
 
             if (sharelibAction.equals(CREATE_CMD) || sharelibAction.equals(UPGRADE_CMD)){
                 dstPath= new Path(dstPath.toString() +  Path.SEPARATOR +  SHARE_LIB_PREFIX + getTimestampDirectory()  );
             }
 
             System.out.println("the destination path for sharelib is: " + dstPath);
-
-            URI uri = new Path(hdfsUri).toUri();
-            Configuration fsConf = has.createConfiguration(uri.getAuthority());
-            FileSystem fs = FileSystem.get(uri, fsConf);
-
 
             if (!srcFile.exists()){
                 throw new IOException(srcPath + " cannot be found");
