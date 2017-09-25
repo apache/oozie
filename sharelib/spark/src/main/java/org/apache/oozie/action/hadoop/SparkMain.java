@@ -253,11 +253,6 @@ public class SparkMain extends LauncherMain {
         hiveConf.unset("hive.exec.local.scratchdir");
 
         // Write the action configuration out to hive-site.xml
-        URL hiveSiteURL = createFileWithContentIfNotExists(HIVE_SITE_CONF, hiveConf);
-        // Reset the hiveSiteURL static variable as we just created
-        // hive-site.xml.
-        // If prepare block had a drop partition it would have been initialized
-        // to null.
-        HiveConf.setHiveSiteLocation(hiveSiteURL);
+        createFileWithContentIfNotExists(HIVE_SITE_CONF, hiveConf);
     }
 }
