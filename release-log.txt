@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2885 Running Spark actions should not need Hive on the classpath (satishsaley)
 OOZIE-3058 nocleanup option is missing in oozie-coordinator-0.5.xsd (satishsaley)
 OOZIE-3036 Spark 2.2.0 support: tell Spark not to get any delegation tokens (andras.piros via gezapeti)
 OOZIE-3028 Oozie Pig Action fails with no python dependencies (dbist13 via rohini)
