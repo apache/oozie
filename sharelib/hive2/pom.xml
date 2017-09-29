@@ -44,6 +44,10 @@
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
+                    <artifactId>jetty</artifactId>
+                    <groupId>org.mortbay.jetty</groupId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-core</artifactId>
                 </exclusion>

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3070 Remove references to org.mortbay.jetty (pbacsko)
 OOZIE-2885 Running Spark actions should not need Hive on the classpath (satishsaley)
 OOZIE-2909 amend Fix license headers (andras.piros via gezapeti)
 OOZIE-3054 Disable erasure coding for sharelib if Oozie runs on Hadoop 3 (pbacsko)

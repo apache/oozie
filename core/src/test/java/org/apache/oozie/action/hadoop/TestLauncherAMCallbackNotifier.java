@@ -32,6 +32,8 @@ import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.Servlet;
+
 // A lot of this adapted from org.apache.hadoop.mapreduce.v2.app.TestJobEndNotifier and org.apache.hadoop.mapred.TestJobEndNotifier
 public class TestLauncherAMCallbackNotifier extends XTestCase {
     private EmbeddedServletContainer container;
@@ -170,7 +172,7 @@ public class TestLauncherAMCallbackNotifier extends XTestCase {
         waitForCallbackAndCheckResult(FinalApplicationStatus.FAILED.toString());
     }
 
-    private Configuration setupEmbeddedContainer(Class<?> servletClass, String servletEndPoint,
+    private Configuration setupEmbeddedContainer(Class<? extends Servlet> servletClass, String servletEndPoint,
             String servletUrl, Map<String, String> params) throws Exception {
         container = new EmbeddedServletContainer("test");
         if (servletEndPoint != null) {

@@ -18,14 +18,22 @@
 
 package org.apache.oozie.test;
 
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.FilterHolder;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.Context;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 
 import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.util.EnumSet;
 import java.util.Map;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.Servlet;
 
 /**
  * An embedded servlet container for testing purposes. <p> It provides reduced functionality, it supports only
@@ -36,7 +44,7 @@ public class EmbeddedServletContainer {
     private String host = null;
     private int port = -1;
     private String contextPath;
-    Context context;
+    private ServletContextHandler context;
 
     /**
      * Create a servlet container.
@@ -47,7 +55,7 @@ public class EmbeddedServletContainer {
     public EmbeddedServletContainer(String contextPath) {
         this.contextPath = contextPath;
         server = new Server(0);
-        context = new Context();
+        context = new ServletContextHandler();
         context.setContextPath("/" + contextPath);
         server.setHandler(context);
     }
@@ -60,12 +68,12 @@ public class EmbeddedServletContainer {
      * @param servletClass servlet class
      * @param initParams a mapping of init parameters for the servlet, or null
      */
-    public void addServletEndpoint(String servletPath, Class servletClass, Map<String, String> initParams) {
-        ServletHolder s = new ServletHolder(servletClass);
-        context.addServlet(s, servletPath);
+    public void addServletEndpoint(String servletPath, Class<? extends Servlet> servletClass, Map<String, String> initParams) {
+        ServletHolder holder = new ServletHolder(servletClass);
         if (initParams != null) {
-            s.setInitParameters(initParams);
+            holder.setInitParameters(initParams);
         }
+        context.addServlet(holder, servletPath);
     }
 
     /**
@@ -75,8 +83,20 @@ public class EmbeddedServletContainer {
      * the end.
      * @param servletClass servlet class
      */
-    public void addServletEndpoint(String servletPath, Class servletClass) {
+    public void addServletEndpoint(String servletPath, Class<? extends Servlet> servletClass) {
         addServletEndpoint(servletPath, servletClass, null);
+    }
+
+    /**
+     * Add a servlet instance to the container.
+     *
+     * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
+     * the end.
+     * @param servletClass servlet instance
+     */
+    public void addServletEndpoint(String servletPath, Servlet servlet) {
+        ServletHolder holder = new ServletHolder(servlet);
+        context.addServlet(holder, servletPath);
     }
 
     /**
@@ -86,8 +106,8 @@ public class EmbeddedServletContainer {
      * the end.
      * @param filterClass servlet class
      */
-    public void addFilter(String filterPath, Class filterClass) {
-        context.addFilter(new FilterHolder(filterClass), filterPath, 0);
+    public void addFilter(String filterPath, Class<? extends Filter> filterClass) {
+        context.addFilter(new FilterHolder(filterClass), filterPath, EnumSet.of(DispatcherType.REQUEST));
     }
 
     /**
@@ -97,9 +117,11 @@ public class EmbeddedServletContainer {
      */
     public void start() throws Exception {
         host = InetAddress.getLocalHost().getHostName();
-        server.getConnectors()[0].setHost(host);
+        ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+        connector.setHost(host);
+        server.setConnectors(new Connector[] { connector });
         server.start();
-        port = server.getConnectors()[0].getLocalPort();
+        port = connector.getLocalPort();
         System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
     }
 
@@ -165,5 +187,4 @@ public class EmbeddedServletContainer {
         host = null;
         port = -1;
     }
-
 }

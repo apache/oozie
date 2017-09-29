@@ -70,7 +70,7 @@ public class TestOozieCLI extends DagServletTestCase {
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*",
             VERSION + "/validate/*", "/v1/sla"};
-    static final Class[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
+    static final Class<?>[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
             V2JobServlet.class, V2AdminServlet.class, V2ValidateServlet.class, SLAServlet.class};
 
     @Override
