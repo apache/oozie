@@ -109,6 +109,10 @@
                     <groupId>info.ganglia.gmetric4j</groupId>
                     <artifactId>gmetric4j</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.pentaho</groupId>
+                    <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 

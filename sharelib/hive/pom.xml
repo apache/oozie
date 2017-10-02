@@ -131,7 +131,16 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.pentaho</groupId>
+                    <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+           <groupId>net.hydromatic</groupId>
+           <artifactId>aggdesigner-algorithm</artifactId>
+           <version>6.0</version>
         </dependency>
 
         <dependency>
