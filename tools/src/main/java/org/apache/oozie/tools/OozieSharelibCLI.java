@@ -160,10 +160,14 @@ public class OozieSharelibCLI {
             WorkflowAppService lwas = services.get(WorkflowAppService.class);
             HadoopAccessorService has = services.get(HadoopAccessorService.class);
             Path dstPath = lwas.getSystemLibPath();
+
             URI uri = new Path(hdfsUri).toUri();
             Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = FileSystem.get(uri, fsConf);
 
+            if (!fs.exists(dstPath)) {
+                fs.mkdirs(dstPath);
+            }
             ECPolicyDisabler.tryDisableECPolicyForPath(fs, dstPath);
 
             if (sharelibAction.equals(CREATE_CMD) || sharelibAction.equals(UPGRADE_CMD)){
