@@ -163,8 +163,8 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 regularMR = true;
             }
         }
-        setJobName(actionConf, context);
         actionConf = super.setupActionConf(actionConf, context, actionXml, appPath);
+        setJobName(actionConf, context);
 
         // For "regular" (not streaming or pipes) MR jobs
         if (regularMR) {

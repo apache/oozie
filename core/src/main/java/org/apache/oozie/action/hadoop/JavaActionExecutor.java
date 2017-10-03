@@ -428,7 +428,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaults = has.createActionDefaultConf(actionConf.get(HADOOP_YARN_RM), getType());
-            XConfiguration.injectDefaults(actionDefaults, actionConf);
+            XConfiguration.copy(actionDefaults, actionConf);
             has.checkSupportedFilesystem(appPath.toUri());
 
             // Set the Java Main Class for the Java action to give to the Java launcher
@@ -993,8 +993,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
             // action job configuration
             Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
-            addAppNameContext(action, context);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
+            addAppNameContext(action, context);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
 

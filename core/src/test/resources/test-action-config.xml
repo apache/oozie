@@ -33,4 +33,9 @@
         <name>action.testprop</name>
         <value>100</value>
     </property>
+
+    <property>
+        <name>mapreduce.map.maxattempts</name>
+        <value>1</value>
+    </property>
 </configuration>
