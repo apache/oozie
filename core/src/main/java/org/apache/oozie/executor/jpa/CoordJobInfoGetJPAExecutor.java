@@ -168,6 +168,9 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
         if (arr[15] != null) {
             bean.setTimeout((Integer) arr[15]);
         }
+        if (arr[16] != null) {
+            bean.setBundleId((String) arr[16]);
+        }
         return bean;
     }
 }
