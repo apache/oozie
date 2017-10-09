@@ -25,8 +25,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * A generic password masker that masks {@code Map<String, String>} values given that its keys are considered password keys.
  * <p/>
@@ -116,8 +114,9 @@ public class PasswordMasker {
      * @return The value of the entry changed based on the replace algorithm described above
      */
     private String mask(String key, String value) {
-        checkNotNull(key, "key has to be set");
-        checkNotNull(value, "value has to be set");
+        if (key == null || value == null || value.isEmpty()) {
+            return value;
+        }
 
         if (isPasswordKey(key)) {
             return PASSWORD_MASK;
@@ -147,6 +146,9 @@ public class PasswordMasker {
     }
 
     private boolean containsPasswordFragment(String maybePasswordFragments) {
+        if (maybePasswordFragments == null || maybePasswordFragments.length() == 0) {
+            return false;
+        }
         return PASSWORD_CONTAINING_PATTERN
                 .matcher(maybePasswordFragments)
                 .matches();

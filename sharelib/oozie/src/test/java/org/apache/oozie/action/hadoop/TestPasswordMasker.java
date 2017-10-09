@@ -102,6 +102,16 @@ public class TestPasswordMasker {
                 passwordMasker.maskPasswordsIfNecessary("aa -Djava.sysprop.password=1234 bb DUMMY_PASSWORD=dummy cc"));
     }
 
+    @Test
+    public void testMaskNullArgument() {
+        assertEquals(null, passwordMasker.maskPasswordsIfNecessary(null));
+    }
+
+    @Test
+    public void testMaskEmptyArgument() {
+        assertEquals("", passwordMasker.maskPasswordsIfNecessary(""));
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, String> jsonToMap(String jsonPath) throws IOException {
         return new ObjectMapper().readValue(getClass().getResourceAsStream(jsonPath), HashMap.class);
