@@ -755,6 +755,23 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     @Test
+    public void testTimeoutWithUnResolved() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime, "latest");
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        CoordinatorActionBean action = CoordActionQueryExecutor.getInstance()
+                .get(CoordActionQuery.GET_COORD_ACTION, job.getId() + "@1");
+        assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:latestRange(-3,0)}",
+                action.getMissingDependencies());
+        long timeOutCreationTime = System.currentTimeMillis() - (13 * 60 * 1000);
+        setCoordActionCreationTime(action.getId(), timeOutCreationTime);
+        new CoordActionInputCheckXCommand(action.getId(), action.getJobId()).call();
+        checkCoordActionStatus(action.getId(),  CoordinatorAction.Status.TIMEDOUT);
+    }
+
+    @Test
     public void testTimeoutWithException() throws Exception {
         String missingDeps = "nofs:///dirx/filex";
         String actionId = addInitRecords(missingDeps, null, TZ);
