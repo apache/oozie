@@ -32,7 +32,7 @@ import org.apache.oozie.util.XLog;
 public class StoreStatusFilter {
     public static final String coordSeletStr = "Select w.id, w.appName, w.statusStr, w.user, w.group, w.startTimestamp, " +
             "w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, " +
-            "w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w";
+            "w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut, w.bundleId from CoordinatorJobBean w";
 
     public static final String coordCountStr = "Select count(w) from CoordinatorJobBean w";
 

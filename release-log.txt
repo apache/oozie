@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3079 Filtering coordinators returns bundle id as null (satishsaley)
 OOZIE-3078 PasswordMasker throws NPE with null arguments (asasvari)
 OOZIE-3075 Follow-up on OOZIE-3054: create the lib directory if it doesn't exist (pbacsko)
 OOZIE-3072 oozie.service.HadoopAccessorService.action.configurations   should overwrite default values set in Hadoop's configuration files (gezapeti)
