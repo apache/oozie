@@ -171,7 +171,6 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
 
             boolean status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
-            String nonExistListStr = nonExistList.toString();
             boolean isPushDependenciesMet = coordPushInputDependency.isDependencyMet();
             if (status && nonResolvedList.length() > 0) {
                 status = (isPushDependenciesMet) ? checkUnResolvedInput(actionXml, actionConf) : false;
@@ -201,7 +200,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 updateCoordAction(coordAction, isChangeInDependency);
             }
             else {
-                if (!nonExistListStr.isEmpty() && isPushDependenciesMet) {
+                if (isPushDependenciesMet) {
                     queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                 }
                 else {
