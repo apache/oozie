@@ -354,9 +354,13 @@ SLA Details:
 </verbatim>
 
 ---+++ Changing job SLA definition and alerting
-Following properties can be specified in job.xml to enable/disable SLA alerts.
+Following are ways to enable/disable SLA alerts for coordinator actions.
 
-=oozie.sla.disable.alerts.older.than= this property can be specified in hours, the SLA notification for coord actions will be disabled whose nominal is time older then this value. Default is 24 hours.
+---++++ 1. Specify in Bundle XML during submission.
+Following properties can be specified in bundle xml as properties for coordinator.
+
+=oozie.sla.disable.alerts.older.than= this property can be specified in hours, the SLA notification for
+coord actions will be disabled whose nominal is time older then this value. Default is 48 hours.
 <verbatim>
 <property>
     <name>oozie.sla.disable.alerts.older.than</name>
@@ -373,10 +377,10 @@ Following properties can be specified in job.xml to enable/disable SLA alerts.
 </verbatim>
 Will disable alert for coord actions 1,3,5,7,8,9,10
 
-=oozie.sla.enable.alerts= List of coord actions to be disabled. Value can be specified as list of coord actions or date range.
+=oozie.sla.enable.alerts= List of coord actions to be enabled. Value can be specified as list of coord actions or date range.
 <verbatim>
 <property>
-    <name>oozie.sla.disable.alerts</name>
+    <name>oozie.sla.enable.alerts</name>
     <value>2009-01-01T01:00Z::2009-05-31T23:59Z</value>
 </property>
 </verbatim>
@@ -390,13 +394,16 @@ ALL keyword can be specified to specify all actions. Below property will disable
 </property>
 </verbatim>
 
-SLA alert enabling or disabling can also be modified through commandline or REST API after submission for running jobs.
+---++++ 2. Specify during Coordinator job submission or update
+Above properties can be specified in job.properties in
+[[DG_CommandLineTool#Updating_coordinator_definition_and_properties][Coord job update command]],
+in [[DG_CommandLineTool#Submitting_a_Workflow_Coordinator_or_Bundle_Job][Coord job submit command]]
+or in [[DG_CommandLineTool#Running_a_Workflow_Coordinator_or_Bundle_Job][Coord job run command]]
 
+---++++ 3. Change using command line
 Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]] for commandline usage.
-Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
 
-SLA definition of should-start, should-end, nominal-time and max-duration can be changed for running jobs through commandline or REST API.
-Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]] for commandline usage.
+---++++ 4. Change using REST API
 Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
 
 ---++ Known issues
