@@ -31,7 +31,15 @@ import java.io.Writer;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.examples.SleepJob;
@@ -49,6 +57,7 @@ import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairScheduler;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -2518,7 +2527,17 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         final ApplicationId appId = ConverterUtils.toApplicationId(context.getAction().getExternalId());
         Configuration conf = getHadoopAccessorService().createConfiguration(getJobTrackerUri());
         String queue = getHadoopAccessorService().createYarnClient(getTestUser(), conf).getApplicationReport(appId).getQueue();
-        assertEquals("test", queue);
+
+        if (isFairSchedulerUsed(conf)) {
+            assertEquals("root.test", queue);
+        }
+        else {
+            assertEquals("test", queue);
+        }
+    }
+
+    private boolean isFairSchedulerUsed(Configuration conf) {
+        return conf.get(org.apache.hadoop.yarn.conf.YarnConfiguration.RM_SCHEDULER).contains(FairScheduler.class.getName());
     }
 
     private HadoopAccessorService getHadoopAccessorService() {

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3081 testSubmitWithLauncherQueue fails when FairScheduler is used (asasvari)
 OOZIE-3082 Move org.apache.oozie.action.hadoop.ActionStats to Oozie ShareLib (asasvari)
 OOZIE-3077 SLA documentation fixes (satishsaley)
 OOZIE-3031 Coord job with only unresolved dependencies doesn't timeout (puru via satishsaley)
