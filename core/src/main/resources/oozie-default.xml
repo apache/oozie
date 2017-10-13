@@ -3075,6 +3075,15 @@ will be the requeue interval for the actions which are waiting for a long time w
             Most users should not have to change this.
         </description>
     </property>
+
+    <property>
+        <name>oozie.graphviz.timeout.seconds</name>
+        <value>60</value>
+        <description>
+            The default number of seconds Graphviz graph generation will timeout.
+        </description>
+    </property>
+
     <property>
         <name>oozie.launcher.default.vcores</name>
         <value>1</value>

@@ -20,11 +20,13 @@ package org.apache.oozie.servlet;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
 import org.apache.oozie.client.WorkflowAction;
@@ -38,8 +40,12 @@ import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.util.GraphGenerator;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.graph.GraphGenerator;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.graph.GraphRenderer;
+import org.apache.oozie.util.graph.GraphvizRenderer;
+import org.apache.oozie.util.graph.OutputFormat;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -299,25 +305,83 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
         if (jobId.endsWith("-W")) {
             try {
-                // Applicable only to worflow, for now
-                response.setContentType(RestConstants.PNG_IMAGE_CONTENT_TYPE);
 
-                String showKill = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
-                boolean sK = showKill != null && (showKill.equalsIgnoreCase("yes") || showKill.equals("1") || showKill.equalsIgnoreCase("true"));
+                final String showKillParameter = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
+                final boolean showKill = isShowKillSet(showKillParameter);
+
+                final String formatParameter = request.getParameter(RestConstants.JOB_FORMAT_PARAM);
+                final OutputFormat outputFormat = getOutputFormat(formatParameter);
+
+                final String contentType = getContentType(outputFormat);
+
+                response.setContentType(contentType);
+
+                final Instrumentation.Cron cron = new Instrumentation.Cron();
+                cron.start();
+
+                final GraphRenderer graphRenderer = new GraphvizRenderer();
 
                 new GraphGenerator(
-                        getWorkflowJobDefinition(request, response),
-                        (WorkflowJobBean)getWorkflowJob(request, response),
-                        sK).write(response.getOutputStream());
+                            getWorkflowJobDefinition(request, response),
+                            (WorkflowJobBean)getWorkflowJob(request, response),
+                            showKill,
+                            graphRenderer).write(response.getOutputStream(), outputFormat);
 
+                cron.stop();
+                instrument(outputFormat, cron);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 throw new XServletException(HttpServletResponse.SC_NOT_FOUND, ErrorCode.E0307, e.getMessage(), e);
             }
         }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0306);
         }
+    }
+
+    private boolean isShowKillSet(final String showKillParameter) {
+        return showKillParameter != null &&
+                (showKillParameter.equalsIgnoreCase("yes") ||
+                        showKillParameter.equals("1") ||
+                        showKillParameter.equalsIgnoreCase("true"));
+    }
+
+    private OutputFormat getOutputFormat(final String formatParameter) {
+        final OutputFormat outputFormat;
+        if (Strings.isNullOrEmpty(formatParameter)) {
+            outputFormat = OutputFormat.PNG;
+        }
+        else {
+            outputFormat = OutputFormat.valueOf(formatParameter.toUpperCase(Locale.getDefault()));
+        }
+        return outputFormat;
+    }
+
+    private String getContentType(final OutputFormat outputFormat) {
+        final String contentType;
+
+        switch (outputFormat) {
+            case PNG:
+                contentType = RestConstants.PNG_IMAGE_CONTENT_TYPE;
+                break;
+            case DOT:
+                contentType = RestConstants.TEXT_CONTENT_TYPE;
+                break;
+            case SVG:
+                contentType = RestConstants.SVG_IMAGE_CONTENT_TYPE;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown output format, cannot get content type: " + outputFormat);
+        }
+
+        return contentType;
+    }
+
+    private void instrument(final OutputFormat outputFormat, final Instrumentation.Cron cron) {
+        addCron(INSTRUMENTATION_NAME + "-graph", cron);
+        incrCounter(INSTRUMENTATION_NAME + "-graph", 1);
+        addCron(INSTRUMENTATION_NAME + "-graph-" + outputFormat.toString().toLowerCase(Locale.getDefault()), cron);
+        incrCounter(INSTRUMENTATION_NAME + "-graph-" + outputFormat.toString().toLowerCase(Locale.getDefault()), 1);
     }
 
     /**

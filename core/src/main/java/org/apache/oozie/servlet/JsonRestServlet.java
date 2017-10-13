@@ -189,7 +189,7 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param name name of the timer for the cron.
      * @param cron cron to add to a instrumentation timer.
      */
-    private void addCron(String name, Instrumentation.Cron cron) {
+    protected void addCron(String name, Instrumentation.Cron cron) {
         instrumentation.addCron(INSTRUMENTATION_GROUP, name, cron);
     }
 
@@ -228,7 +228,7 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param name counter name.
      * @param count count to increment the counter.
      */
-    private void incrCounter(String name, int count) {
+    protected void incrCounter(String name, int count) {
         if (instrumentation != null) {
             instrumentation.incr(INSTRUMENTATION_GROUP, name, count);
         }

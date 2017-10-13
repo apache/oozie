@@ -41,6 +41,8 @@ public interface RestConstants {
 
     String PNG_IMAGE_CONTENT_TYPE = "image/png";
 
+    String SVG_IMAGE_CONTENT_TYPE = "image/svg+xml";
+
     String ACTION_PARAM = "action";
 
     String OFFSET_PARAM = "offset";
@@ -100,6 +102,8 @@ public interface RestConstants {
     String JOB_SHOW_GRAPH = "graph";
 
     String JOB_SHOW_KILL_PARAM = "show-kill";
+
+    String JOB_FORMAT_PARAM = "format";
 
     String JOB_SHOW_STATUS = "status";
 

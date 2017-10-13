@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2406 Completely rewrite GraphGenerator code (andras.piros via gezapeti)
 OOZIE-3081 testSubmitWithLauncherQueue fails when FairScheduler is used (asasvari)
 OOZIE-3082 Move org.apache.oozie.action.hadoop.ActionStats to Oozie ShareLib (asasvari)
 OOZIE-3077 SLA documentation fixes (satishsaley)

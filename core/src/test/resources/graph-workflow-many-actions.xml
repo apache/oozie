@@ -10,253 +10,256 @@
     OF ANY KIND, either express or implied. See the License for the specific
     language governing permissions and limitations under the License. -->
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="sm3-segment-3908-251483">
-    <start to="or_0_1" />
+    <start to="pig-0" />
     <kill name="kill">
         <message>killed message</message>
     </kill>
-    <action name="or_0_1">
+    <action name="pig-0">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_2" />
+        <ok to="pig-1" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_2">
+    <action name="pig-1">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_3" />
+        <ok to="pig-2" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_3">
+    <action name="pig-2">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_4" />
+        <ok to="pig-3" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_4">
+    <action name="pig-3">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_5" />
+        <ok to="pig-4" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_5">
+    <action name="pig-4">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_6" />
+        <ok to="pig-5" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_6">
+    <action name="pig-5">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_7" />
+        <ok to="pig-6" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_7">
+    <action name="pig-6">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_8" />
+        <ok to="pig-7" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_8">
+    <action name="pig-7">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_1_9" />
+        <ok to="pig-8" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_1_9">
+    <action name="pig-8">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_0" />
+        <ok to="pig-9" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_0">
+    <action name="pig-9">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_1" />
+        <ok to="pig-10" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_1">
+    <action name="pig-10">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_2" />
+        <ok to="pig-11" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_2">
+    <action name="pig-11">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_3" />
+        <ok to="pig-12" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_3">
+    <action name="pig-12">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_4" />
+        <ok to="pig-13" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_4">
+    <action name="pig-13">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_5" />
+        <ok to="pig-14" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_5">
+    <action name="pig-14">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_6" />
+        <ok to="pig-15" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_6">
+    <action name="pig-15">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_7" />
+        <ok to="pig-16" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_7">
+    <action name="pig-16">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_8" />
+        <ok to="pig-17" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_8">
+    <action name="pig-17">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_2_9" />
+        <ok to="pig-18" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_2_9">
+    <action name="pig-18">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_3_0" />
+        <ok to="pig-19" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_3_0">
+    <action name="pig-19">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_3_1" />
+        <ok to="pig-20" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_3_1">
+    <action name="pig-20">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_3_2" />
+        <ok to="pig-21" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_3_2">
+    <action name="pig-21">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_3_3" />
+        <ok to="pig-22" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_3_3">
+    <action name="pig-22">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="or_or_0_3_4" />
+        <ok to="pig-23" />
         <error to="kill" />
     </action>
 
-    <action name="or_or_0_3_4">
+    <action name="pig-23">
         <pig>
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <script>echo.pig</script>
         </pig>
-        <ok to="cleanup" />
+        <ok to="pig-24" />
         <error to="kill" />
     </action>
 
-    <action name="cleanup">
-        <fs>
-        </fs>
+    <action name="pig-24">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <script>echo.pig</script>
+        </pig>
         <ok to="end" />
         <error to="kill" />
     </action>

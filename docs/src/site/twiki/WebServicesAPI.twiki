@@ -1549,7 +1549,7 @@ Refer to the [[DG_CommandLineTool#Filtering_the_server_logs_with_logfilter_optio
 
 ---++++ Job graph
 
-An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG image).
+An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG or SVG image, or as a DOT string).
    * The nodes that are being executed are painted yellow
    * The nodes that have successfully executed are painted green
    * The nodes that have failed execution are painted red
@@ -1558,21 +1558,52 @@ An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG i
    * An arc painted red marks the failure of the node and highlights the _error_ action
    * An arc painted gray marks a path not taken yet
 
-*Request:*
+*PNG request:*
 <verbatim>
-GET /oozie/v1/job/job-3?show=graph[&show-kill=true]
+GET /oozie/v1/job/job-3?show=graph[&show-kill=true][&format=png]
 </verbatim>
 
-*Response:*
+*PNG response:*
 <verbatim>
 HTTP/1.1 200 OK
 Content-Type: image/png
 Content-Length: {image_size_in_bytes}
 
 {image_bits}
+
+*SVG request:*
+<verbatim>
+GET /oozie/v1/job/job-3?show=graph[&show-kill=true]&format=svg
 </verbatim>
 
-The optional =show-kill= parameter shows =kill= node in the graph. Valid values for this parameter are =1=, =yes=, and =true=. This parameter has no effect when workflow fails and the failure node leads to the =kill= node; in  that case =kill= node is shown always.
+*SVG response:*
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: image/svg+xml
+Content-Length: {image_size_in_bytes}
+
+{image_bits}
+
+*DOT request:*
+<verbatim>
+GET /oozie/v1/job/job-3?show=graph[&show-kill=true]&format=dot
+</verbatim>
+
+*DOT response:*
+<verbatim>
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: {dot_size_in_bytes}
+
+{dot_bytes}
+</verbatim>
+
+The optional =show-kill= parameter shows =kill= node in the graph. Valid values for this parameter are =1=, =yes=, and =true=.
+This parameter has no effect when workflow fails and the failure node leads to the =kill= node; in  that case =kill= node is shown
+always.
+
+The optional =format= parameter describes whether the response has to be rendered as a PNG image, or an SVG image, or a DOT string.
+When omitted, =format= is considered as =png= for backwards compatibility. Oozie Web UI uses the =svg= =format=.
 
 The node labels are the node names provided in the workflow XML.
 

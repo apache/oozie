@@ -1151,7 +1151,7 @@ function jobDetailsPopup(response, request) {
                 if(!isLoadedDAG){
                 var dagImage=   new Ext.ux.Image({
                         id: 'dagImage',
-                        url: getOozieBase() + 'job/' + workflowId + '?show=graph',
+                        url: getOozieBase() + 'job/' + workflowId + '?show=graph&format=svg&show-kill=true',
                         autoScroll: true
                         });
                     dagImage.setAlt('Runtime error : Can\'t display the graph. Number of actions are more than display limit 25');
