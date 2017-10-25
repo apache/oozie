@@ -81,8 +81,9 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
          */
         validateContentType(request, RestConstants.XML_CONTENT_TYPE);
 
-        request.setAttribute(AUDIT_OPERATION, request
-                .getParameter(RestConstants.ACTION_PARAM));
+        String action = request.getParameter(RestConstants.ACTION_PARAM);
+        request.setAttribute(AUDIT_OPERATION,
+                (action != null) ? action : RestConstants.JOB_ACTION_SUBMIT);
 
         XConfiguration conf = new XConfiguration(request.getInputStream());
 

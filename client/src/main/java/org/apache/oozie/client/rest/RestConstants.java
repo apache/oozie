@@ -59,6 +59,8 @@ public interface RestConstants {
 
     String JOB_ACTION_START = "start";
 
+    String JOB_ACTION_SUBMIT = "submit";
+
     String JOB_ACTION_DRYRUN = "dryrun";
 
     String JOB_ACTION_SHOWDIFF = "diff";
