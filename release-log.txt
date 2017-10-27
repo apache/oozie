@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2896 Ensure compatibility for existing LauncherMapper settings (andras.piros)
 OOZIE-3095 Job submit command is not logged in audit log (puru)
 OOZIE-3096 Pre-commit job is timing out regularly (gezapeti)
 OOZIE-2406 Completely rewrite GraphGenerator code (andras.piros via gezapeti)

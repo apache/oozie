@@ -2180,7 +2180,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("AA", conf.get("a"));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
         assertEquals("action.barbar", conf.get("action.foofoo"));
-        assertEquals(5, conf.size());
+        assertEquals("max-attempts", "1", conf.get("oozie.launcher.max.attempts"));
+        assertEquals(6, conf.size());
 
         conf = new Configuration(false);
         Assert.assertEquals(0, conf.size());
@@ -2189,7 +2190,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(getJobTrackerUri(), conf.get(YARN_RESOURCEMANAGER_ADDRESS));
         assertEquals("action.barbar", conf.get("oozie.launcher.action.foofoo"));
         assertEquals("action.barbar", conf.get("action.foofoo"));
-        assertEquals(3, conf.size());
+        assertEquals("max-attempts", "1", conf.get("oozie.launcher.max.attempts"));
+        assertEquals(4, conf.size());
     }
 
     public void testDefaultConfigurationInActionConf() throws Exception {
@@ -2538,6 +2540,36 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     private boolean isFairSchedulerUsed(Configuration conf) {
         return conf.get(org.apache.hadoop.yarn.conf.YarnConfiguration.RM_SCHEDULER).contains(FairScheduler.class.getName());
+    }
+
+    public void testSubmitLauncherConfigurationOverridesLauncherMapperProperties() throws Exception {
+        final String actionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<configuration>" +
+                "  <property><name>oozie.launcher.queue</name><value>default1</value></property>" +
+                "  <property><name>mapreduce.job.queuename</name><value>default2</value></property>" +
+                "</configuration>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
+        final Context context = createContext(actionXml, null);
+
+        submitAction(context);
+
+        final ApplicationId appId = ConverterUtils.toApplicationId(context.getAction().getExternalId());
+        final Configuration conf = getHadoopAccessorService().createConfiguration(getJobTrackerUri());
+
+        final String queue = getHadoopAccessorService().createYarnClient(getTestUser(), conf)
+                .getApplicationReport(appId).getQueue();
+        assertEquals("queue name", "default1", queue);
+
+        final ActionExecutor ae = new JavaActionExecutor();
+        ae.check(context, context.getAction());
+        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
     }
 
     private HadoopAccessorService getHadoopAccessorService() {

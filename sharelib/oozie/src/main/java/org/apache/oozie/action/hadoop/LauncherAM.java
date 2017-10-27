@@ -64,6 +64,8 @@ public class LauncherAM {
     public static final String OOZIE_LAUNCHER_JAVAOPTS_PROPERTY = "oozie.launcher.javaopts";
     public static final String OOZIE_LAUNCHER_ENV_PROPERTY = "oozie.launcher.env";
     public static final String OOZIE_LAUNCHER_SHARELIB_PROPERTY = "oozie.launcher.sharelib";
+    public static final String OOZIE_LAUNCHER_LOG_LEVEL_PROPERTY = "oozie.launcher.log.level";
+    public static final String OOZIE_LAUNCHER_MAX_ATTEMPTS = "oozie.launcher.max.attempts";
 
     public static final String JAVA_CLASS_PATH = "java.class.path";
     public static final String OOZIE_ACTION_ID = "oozie.action.id";

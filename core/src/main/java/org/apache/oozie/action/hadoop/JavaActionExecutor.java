@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
@@ -107,33 +108,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Properties;
 import java.util.Set;
-import java.util.Set;
+
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 
 
 public class JavaActionExecutor extends ActionExecutor {
@@ -150,6 +130,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String DEFAULT_LAUNCHER_MEMORY_MB = "oozie.launcher.default.memory.mb";
     public static final String DEFAULT_LAUNCHER_PRIORITY = "oozie.launcher.default.priority";
     public static final String DEFAULT_LAUNCHER_QUEUE = "oozie.launcher.default.queue";
+    public static final String DEFAULT_LAUNCHER_MAX_ATTEMPS = "oozie.launcher.default.max.attempts";
 
     public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
@@ -302,20 +283,6 @@ public class JavaActionExecutor extends ActionExecutor {
         return createBaseHadoopConf(context, actionXml);
     }
 
-    private static void injectLauncherProperties(Configuration srcConf, Configuration launcherConf) {
-        for (Map.Entry<String, String> entry : srcConf) {
-            if (entry.getKey().startsWith("oozie.launcher.")) {
-                String name = entry.getKey().substring("oozie.launcher.".length());
-                String value = entry.getValue();
-                // setting original KEY
-                launcherConf.set(entry.getKey(), value);
-                // setting un-prefixed key (to allow Hadoop job config
-                // for the launcher job
-                launcherConf.set(name, value);
-            }
-        }
-    }
-
     Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
             throws ActionExecutorException {
         try {
@@ -324,7 +291,9 @@ public class JavaActionExecutor extends ActionExecutor {
             // Inject action defaults for launcher
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             XConfiguration actionDefaultConf = has.createActionDefaultConf(conf.get(HADOOP_YARN_RM), getType());
-            injectLauncherProperties(actionDefaultConf, launcherConf);
+
+            new LauncherConfigurationInjector(actionDefaultConf).inject(launcherConf);
+
             // Inject <job-xml> and <configuration> for launcher
             try {
                 parseJobXmlAndConfiguration(context, actionXml, appPath, launcherConf, true);
@@ -405,7 +374,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             checkForDisallowedProps(jobXmlConf, "job-xml");
             if (isLauncher) {
-                injectLauncherProperties(jobXmlConf, conf);
+                new LauncherConfigurationInjector(jobXmlConf).inject(conf);
             } else {
                 XConfiguration.copy(jobXmlConf, conf);
             }
@@ -416,7 +385,7 @@ public class JavaActionExecutor extends ActionExecutor {
             XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
             checkForDisallowedProps(inlineConf, "inline configuration");
             if (isLauncher) {
-                injectLauncherProperties(inlineConf, conf);
+                new LauncherConfigurationInjector(inlineConf).inject(conf);
             } else {
                 XConfiguration.copy(inlineConf, conf);
             }
@@ -1110,9 +1079,13 @@ public class JavaActionExecutor extends ActionExecutor {
         credentialsProperties.put(type, new CredentialsProperties(type, type));
     }
 
-    private ApplicationSubmissionContext createAppSubmissionContext(ApplicationId appId, Configuration launcherJobConf,
-                                                                    Context context, Configuration actionConf, String actionName,
-                                                                    Credentials credentials, Element actionXml)
+    private ApplicationSubmissionContext createAppSubmissionContext(final ApplicationId appId,
+                                                                    final Configuration launcherJobConf,
+                                                                    final Context actionContext,
+                                                                    final Configuration actionConf,
+                                                                    final String actionName,
+                                                                    final Credentials credentials,
+                                                                    final Element actionXml)
             throws IOException, HadoopAccessorException, URISyntaxException {
 
         ApplicationSubmissionContext appContext = Records.newRecord(ApplicationSubmissionContext.class);
@@ -1121,12 +1094,13 @@ public class JavaActionExecutor extends ActionExecutor {
         setPriority(launcherJobConf, appContext);
         setQueue(launcherJobConf, appContext);
         appContext.setApplicationId(appId);
-        setApplicationName(context, actionName, appContext);
+        setApplicationName(actionContext, actionName, appContext);
         appContext.setApplicationType("Oozie Launcher");
+        setMaxAttempts(launcherJobConf, appContext);
 
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
 
-        final String user = context.getWorkflow().getUser();
+        final String user = actionContext.getWorkflow().getUser();
         // Set the resources to localize
         Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
         ClientDistributedCacheManager.determineTimestampsAndCacheVisibilities(launcherJobConf);
@@ -1135,16 +1109,16 @@ public class JavaActionExecutor extends ActionExecutor {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         launcherJobConf.set(LauncherAM.OOZIE_SUBMITTER_USER, user);
         LocalResource launcherJobConfLR = has.createLocalResourceForConfigurationFile(LauncherAM.LAUNCHER_JOB_CONF_XML, user,
-                launcherJobConf, context.getAppFileSystem().getUri(), context.getActionDir());
+                launcherJobConf, actionContext.getAppFileSystem().getUri(), actionContext.getActionDir());
         localResources.put(LauncherAM.LAUNCHER_JOB_CONF_XML, launcherJobConfLR);
         LocalResource actionConfLR = has.createLocalResourceForConfigurationFile(LauncherAM.ACTION_CONF_XML, user, actionConf,
-                context.getAppFileSystem().getUri(), context.getActionDir());
+                actionContext.getAppFileSystem().getUri(), actionContext.getActionDir());
         localResources.put(LauncherAM.ACTION_CONF_XML, actionConfLR);
         amContainer.setLocalResources(localResources);
 
         setEnvironmentVariables(launcherJobConf, amContainer);
 
-        List<String> vargs = createCommand(context);
+        List<String> vargs = createCommand(launcherJobConf, actionContext);
         setJavaOpts(launcherJobConf, actionXml, vargs);
         vargs.add(LauncherAM.class.getCanonicalName());
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + Path.SEPARATOR + ApplicationConstants.STDOUT);
@@ -1171,8 +1145,44 @@ public class JavaActionExecutor extends ActionExecutor {
         return appContext;
     }
 
-    private List<String> createCommand(Context context) {
-        List<String> vargs = new ArrayList<String>(6);
+    private void setMaxAttempts(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
+        int launcherMaxAttempts;
+        final int defaultLauncherMaxAttempts = ConfigurationService.getInt(DEFAULT_LAUNCHER_MAX_ATTEMPS);
+        if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_MAX_ATTEMPTS) != null) {
+            try {
+                launcherMaxAttempts = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_MAX_ATTEMPTS,
+                        defaultLauncherMaxAttempts);
+            } catch (final NumberFormatException ignored) {
+                launcherMaxAttempts = defaultLauncherMaxAttempts;
+            }
+        } else {
+            LOG.warn("Invalid configuration value [{0}] defined for launcher max attempts count, using default [{1}].",
+                    launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_MAX_ATTEMPTS),
+                    defaultLauncherMaxAttempts);
+            launcherMaxAttempts = defaultLauncherMaxAttempts;
+        }
+
+        LOG.trace("Reading from configuration max attempts count of the Launcher AM. [launcherMaxAttempts={0}]",
+                launcherMaxAttempts);
+
+        if (launcherMaxAttempts > 0) {
+            LOG.trace("Setting max attempts of the Launcher AM. [launcherMaxAttempts={0}]", launcherMaxAttempts);
+            appContext.setMaxAppAttempts(launcherMaxAttempts);
+        }
+        else {
+            LOG.warn("Not setting max attempts of the Launcher AM, value is invalid. [launcherMaxAttempts={0}]",
+                    launcherMaxAttempts);
+        }
+    }
+
+    private List<String> createCommand(final Configuration launcherJobConf, final Context context) {
+        final List<String> vargs = new ArrayList<String>(6);
+
+        String launcherLogLevel = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_LOG_LEVEL_PROPERTY);
+        if (Strings.isNullOrEmpty(launcherLogLevel)) {
+            launcherLogLevel = "INFO";
+        }
+
         vargs.add(Apps.crossPlatformify(ApplicationConstants.Environment.JAVA_HOME.toString())
                 + "/bin/java");
 
@@ -1180,9 +1190,10 @@ public class JavaActionExecutor extends ActionExecutor {
         vargs.add("-Dlog4j.debug=true");
         vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_DIR + "=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
         vargs.add("-D" + YarnConfiguration.YARN_APP_CONTAINER_LOG_SIZE + "=" + 1024 * 1024);
-        vargs.add("-Dhadoop.root.logger=INFO,CLA");
+        vargs.add("-Dhadoop.root.logger=" + launcherLogLevel + ",CLA");
         vargs.add("-Dhadoop.root.logfile=" + TaskLog.LogName.SYSLOG);
         vargs.add("-Dsubmitter.user=" + context.getWorkflow().getUser());
+
         return vargs;
     }
 
@@ -1256,13 +1267,14 @@ public class JavaActionExecutor extends ActionExecutor {
     }
 
     private void setQueue(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
-        String queue;
+        String launcherQueueName;
         if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY) != null) {
-            queue = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY);
+            launcherQueueName = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY);
         } else {
-            queue = Preconditions.checkNotNull(ConfigurationService.get(DEFAULT_LAUNCHER_QUEUE), "Default queue is undefined");
+            launcherQueueName = Preconditions.checkNotNull(
+                    ConfigurationService.get(DEFAULT_LAUNCHER_QUEUE), "Default launcherQueueName is undefined");
         }
-        appContext.setQueue(queue);
+        appContext.setQueue(launcherQueueName);
     }
 
     private void setPriority(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {

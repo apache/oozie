@@ -564,6 +564,7 @@ public class ConfigurationService implements Service, Instrumentable {
     public static long getLong(Configuration conf, String name) {
         return getLong(conf, name, ConfigUtils.LONG_DEFAULT);
     }
+
     public static long getLong(Configuration conf, String name, long defultValue) {
         return conf.getLong(name, defultValue);
     }
@@ -600,4 +601,8 @@ public class ConfigurationService implements Service, Instrumentable {
         return getPassword(conf, name, defaultValue);
     }
 
+    public static Map<String, String> getValByRegex(final String regex) {
+        final Configuration conf = Services.get().getConf();
+        return conf.getValByRegex(regex);
+    }
 }

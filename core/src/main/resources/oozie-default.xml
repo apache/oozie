@@ -3115,4 +3115,114 @@ will be the requeue interval for the actions which are waiting for a long time w
             The default YARN queue where the Launcher AM is placed
         </description>
     </property>
+
+    <property>
+        <name>oozie.launcher.default.max.attempts</name>
+        <value>2</value>
+        <description>
+            The default YARN maximal attempt count of the Launcher AM
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override</name>
+        <value>true</value>
+        <description>
+            Whether oozie.launcher.override.* and oozie.launcher.prepend.* parameters have to be considered when submitting a YARN
+            LauncherAM. That is, existing MapReduce v1, MapReduce v2, or YARN parameters used in the action configuration should be
+            populated to the Application Master launcher configuration, or not. Generally, first &lt;launcher/&gt; tag specific user
+            settings, then YARN configuration settings, then MapReduce v2, and at last, MapReduce v1 properties are copied to
+            launcher configuration.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.max.attempts</name>
+        <value>mapreduce.map.maxattempts,mapred.map.max.attempts</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override the max attempts of the MapReduce
+            Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.memory.mb</name>
+        <value>yarn.app.mapreduce.am.resource.mb,mapreduce.map.memory.mb,mapred.job.map.memory.mb</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the memory amount in MB of the
+            MapReduce Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.vcores</name>
+        <value>yarn.app.mapreduce.am.resource.cpu-vcores,mapreduce.map.cpu.vcores</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the CPU vcore count of the
+            MapReduce Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.log.level</name>
+        <value>mapreduce.map.log.level,mapred.map.child.log.level</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the logging level of the MapReduce
+            Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.javaopts</name>
+        <value>yarn.app.mapreduce.am.command-opts,mapreduce.map.java.opts,mapred.child.java.opts</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override MapReduce Application Master JVM
+            options. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.prepend.javaopts</name>
+        <value>yarn.app.mapreduce.am.admin-command-opts</value>
+        <description>
+            A comma separated list of YARN properties to prepend to MapReduce Application Master JVM options. The first one that is
+            found will be prepended to the list of JVM options.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.env</name>
+        <value>yarn.app.mapreduce.am.env,mapreduce.map.env,mapred.child.env</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override MapReduce Application Master
+            environment variable settings. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.prepend.env</name>
+        <value>yarn.app.mapreduce.am.admin.user.env</value>
+        <description>
+            A comma separated list of YARN properties to prepend to MapReduce Application Master environment settings. The first one
+            that is found will be prepended to the list of environment settings.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.priority</name>
+        <value>mapreduce.job.priority,mapred.job.priority</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 to override MapReduce Application Master job priority. The first
+            one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.queue</name>
+        <value>mapreduce.job.queuename,mapred.job.queue.name</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce Application Master job queue
+            name. The first one that is found will be used.
+        </description>
+    </property>
 </configuration>
