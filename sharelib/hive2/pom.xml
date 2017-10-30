@@ -123,6 +123,10 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-server-web-proxy</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>javax.mail</groupId>
+                    <artifactId>mail</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 

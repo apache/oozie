@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3100 Upgrade javax.mail:mail to 1.4.7 (andras.piros)
 OOZIE-2929 Coordinator SLA should support configuration variable (chiwen via andras.piros)
 OOZIE-2896 Ensure compatibility for existing LauncherMapper settings (andras.piros)
 OOZIE-3095 Job submit command is not logged in audit log (puru)
