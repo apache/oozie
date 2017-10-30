@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-3100 Upgrade javax.mail:mail to 1.4.7 (andras.piros)
 OOZIE-3095 Job submit command is not logged in audit log (puru)
 OOZIE-3077 SLA documentation fixes (satishsaley)
 OOZIE-3031 Coord job with only unresolved dependencies doesn't timeout (puru via satishsaley)
