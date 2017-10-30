@@ -105,6 +105,7 @@ public interface JsonTags {
     String COORDINATOR_JOB_CONF = "conf";
     String COORDINATOR_JOB_STATUS = "status";
     String COORDINATOR_JOB_EXECUTIONPOLICY = "executionPolicy";
+    String COORDINATOR_JOB_CREATED_TIME = "createdTime";
     String COORDINATOR_JOB_START_TIME = "startTime";
     String COORDINATOR_JOB_END_TIME = "endTime";
     String COORDINATOR_JOB_PAUSE_TIME = "pauseTime";

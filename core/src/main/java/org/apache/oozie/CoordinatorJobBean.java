@@ -1117,6 +1117,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME,
                 JsonUtils.formatDateRfc822(getNextMaterializedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));

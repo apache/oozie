@@ -132,6 +132,13 @@ public interface CoordinatorJob extends Job {
     Date getNextMaterializedTime();
 
     /**
+     * Return the creation time for the application.
+     *
+     * @return the creation time for the application.
+     */
+    Date getCreatedTime();
+
+    /**
      * Return the application start time.
      *
      * @return the application start time.

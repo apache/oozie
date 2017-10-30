@@ -266,6 +266,7 @@ public class TestJsonToBean extends TestCase {
         json.put(JsonTags.COORDINATOR_JOB_TIMEOUT, (long)3);
         json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, LAST_ACTION);
         json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, NEXT_MATERIALIZED);
+        json.put(JsonTags.COORDINATOR_JOB_CREATED_TIME, CREATED_TIME);
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, START_TIME);
         json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, PAUSE_TIME);
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, END_TIME);
@@ -305,6 +306,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals(3, job.getTimeout());
         assertEquals(JsonUtils.parseDateRfc822(LAST_ACTION), job.getLastActionTime());
         assertEquals(JsonUtils.parseDateRfc822(NEXT_MATERIALIZED), job.getNextMaterializedTime());
+        assertEquals(JsonUtils.parseDateRfc822(CREATED_TIME), job.getCreatedTime());
         assertEquals(JsonUtils.parseDateRfc822(START_TIME), job.getStartTime());
         assertEquals(JsonUtils.parseDateRfc822(END_TIME), job.getEndTime());
         assertEquals(JsonUtils.parseDateRfc822(PAUSE_TIME), job.getPauseTime());
