@@ -109,7 +109,7 @@ This new schema is much more compact and meaningful, getting rid of redundant an
    * ==alert-events==: Specify the types of events for which *Email* alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not necessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
    * ==alert-contact==: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
 
-NOTE: All tags can be parameterized.
+NOTE: All tags can be parameterized as a EL function or a fixed value.
 
 Same schema can be applied to and embedded under Workflow-Action as well as Coordinator-Action XML.
 

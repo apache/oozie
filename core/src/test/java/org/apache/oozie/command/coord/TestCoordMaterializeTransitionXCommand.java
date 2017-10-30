@@ -989,4 +989,37 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         }
         return 0;
     }
+
+    /**
+     * Test a coordinator SLA define EL functions as variable
+     *
+     * @throws Exception
+     */
+    public void testSuccessedJobSlaParseElFunctionVariableInMaterializeActions() throws Exception {
+        Configuration conf = new XConfiguration();
+        File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
+        String coordXml = "<coordinator-app name=\"NAME\" frequency=\"0 * * * *\""
+                + " start=\"2017-06-12T01:00Z\" end=\"2017-06-12T02:00Z\" timezone=\"Asia/Shanghai\""
+                + " xmlns=\"uri:oozie:coordinator:0.4\" xmlns:sla=\"uri:oozie:sla:0.2\">"
+                + "<controls> <execution>FIFO</execution> </controls>"
+                + "<action>"
+                + " <workflow> <app-path>hdfs:///tmp/workflows/</app-path> </workflow> "
+                + " <sla:info>"
+                + "  <sla:nominal-time>${NOMINAL_TIME}</sla:nominal-time>"
+                + "  <sla:should-start>${SHOULD_START}</sla:should-start>"
+                + "  <sla:should-end>${SHOULD_END}</sla:should-end>"
+                + " </sla:info>"
+                + "</action>"
+                + "</coordinator-app>";
+        writeToFile(coordXml, appPathFile);
+        conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("NOMINAL_TIME", "${coord:nominalTime()}");
+        conf.set("SHOULD_START", "${5 * MINUTES}");
+        conf.set("SHOULD_END", "${ SLA_OFFSET * HOURS}");
+        conf.set("SLA_OFFSET", "10");
+        CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
+        String jobId = sc.call();
+        new CoordMaterializeTransitionXCommand(jobId, 60).call();
+    }
 }
