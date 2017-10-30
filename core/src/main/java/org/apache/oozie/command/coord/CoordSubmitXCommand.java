@@ -839,6 +839,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         Element eSla = XmlUtils.getSLAElement(eAppXml.getChild("action", eAppXml.getNamespace()));
 
         if (eSla != null) {
+            resolveSLAContent(eSla);
             String slaXml = XmlUtils.prettyPrint(eSla).toString();
             try {
                 // EL evaluation
@@ -848,6 +849,26 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             }
             catch (Exception e) {
                 throw new CommandException(ErrorCode.E1004, "Validation ERROR :" + e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Resolve an SLA value.
+     *
+     * @param elem : XML Element where attribute is defiend
+     */
+    private void resolveSLAContent(Element elem) {
+        for (Element tagElem : (List<Element>) elem.getChildren()) {
+            if (tagElem != null) {
+                try {
+                    String val = CoordELFunctions.evalAndWrap(evalNofuncs, tagElem.getText().trim());
+                    tagElem.setText(val);
+                }
+                catch (Exception e) {
+                    LOG.warn("Variable is not defined in job.properties. Here is the message: {0}", e.getMessage());
+                    continue;
+                }
             }
         }
     }
