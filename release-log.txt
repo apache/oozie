@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3097 Change version in pom in master to 5.0.0-beta1 (dbist13 via gezapeti)
 OOZIE-3098 Allow to use the rest api to get the creation time of the Coordinator (chiwen via andras.piros)
 OOZIE-3100 Upgrade javax.mail:mail to 1.4.7 (andras.piros)
 OOZIE-2929 Coordinator SLA should support configuration variable (chiwen via andras.piros)
