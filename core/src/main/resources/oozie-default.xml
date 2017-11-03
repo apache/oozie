@@ -2683,14 +2683,6 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-        <name>oozie.instance.id</name>
-        <value>${oozie.http.hostname}</value>
-        <description>
-            Each Oozie server should have its own unique instance id.
-        </description>
-    </property>
-
-    <property>
         <name>oozie.server.threadpool.max.threads</name>
         <value>150</value>
         <description>

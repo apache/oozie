@@ -27,6 +27,7 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.ZKUtils;
 
 public class TestJobsConcurrencyService extends XTestCase {
 
@@ -86,8 +87,8 @@ public class TestJobsConcurrencyService extends XTestCase {
             jcs.init(Services.get());
             Map<String, String> map = jcs.getServerUrls();
             assertEquals(1, map.size());
-            assertEquals(Services.get().getConf().get("oozie.instance.id"), map.keySet().iterator().next());
-            assertEquals(ConfigUtils.getOozieURL(false), map.get(Services.get().getConf().get("oozie.instance.id")));
+            assertEquals(Services.get().getConf().get(ZKUtils.OOZIE_INSTANCE_ID), map.keySet().iterator().next());
+            assertEquals(ConfigUtils.getOozieURL(false), map.get(Services.get().getConf().get(ZKUtils.OOZIE_INSTANCE_ID)));
         }
         finally {
             jcs.destroy();
@@ -119,7 +120,7 @@ public class TestJobsConcurrencyService extends XTestCase {
         try {
             jcs.init(Services.get());
             jcs.instrument(instr);
-            String servers = ConfigurationService.get("oozie.instance.id") + "=" + ConfigUtils.getOozieEffectiveUrl();
+            String servers = ConfigurationService.get(ZKUtils.OOZIE_INSTANCE_ID) + "=" + ConfigUtils.getOozieEffectiveUrl();
             assertEquals(servers, instr.getVariables().get("oozie").get("servers").getValue());
         } finally {
             jcs.destroy();

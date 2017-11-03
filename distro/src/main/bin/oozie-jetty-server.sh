@@ -73,6 +73,7 @@ setup_jetty_opts() {
   jetty_opts="${jetty_opts} -Doozie.config.dir=${OOZIE_CONFIG}";
   jetty_opts="${jetty_opts} -Doozie.log.dir=${OOZIE_LOG}";
   jetty_opts="${jetty_opts} -Doozie.data.dir=${OOZIE_DATA}";
+  jetty_opts="${jetty_opts} -Doozie.instance.id=${OOZIE_INSTANCE_ID}";
   jetty_opts="${jetty_opts} -Doozie.config.file=${OOZIE_CONFIG_FILE}";
   jetty_opts="${jetty_opts} -Doozie.log4j.file=${OOZIE_LOG4J_FILE}";
   jetty_opts="${jetty_opts} -Doozie.log4j.reload=${OOZIE_LOG4J_RELOAD}";

@@ -160,6 +160,21 @@ else
   print "Using   OOZIE_LOG4J_RELOAD:  ${OOZIE_LOG4J_RELOAD}"
 fi
 
+if [ "${OOZIE_HTTP_HOSTNAME}" = "" ]; then
+  oozieHttpHostname=$(hostname -f)
+  export OOZIE_HTTP_HOSTNAME=${oozieHttpHostname}
+  print "Setting OOZIE_HTTP_HOSTNAME: ${OOZIE_HTTP_HOSTNAME}"
+else
+  print "Using   OOZIE_HTTP_HOSTNAME: ${OOZIE_HTTP_HOSTNAME}"
+fi
+
+if [ "${OOZIE_INSTANCE_ID}" = "" ]; then
+  export OOZIE_INSTANCE_ID="${OOZIE_HTTP_HOSTNAME}"
+  print "Setting OOZIE_INSTANCE_ID:   ${OOZIE_INSTANCE_ID}"
+else
+  print "Using   OOZIE_INSTANCE_ID:   ${OOZIE_INSTANCE_ID}"
+fi
+
 print
 
 setup_ooziedb() {

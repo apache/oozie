@@ -97,6 +97,7 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.ZKUtils;
 import org.apache.openjpa.persistence.ArgumentException;
 import org.apache.openjpa.persistence.RollbackException;
 
@@ -443,6 +444,10 @@ public abstract class XTestCase extends TestCase {
         setSystemProperty(ConfigurationService.OOZIE_DATA_DIR, testCaseDir);
 
         setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS,"*");
+
+        if (System.getProperty(ZKUtils.OOZIE_INSTANCE_ID) == null) {
+            System.setProperty(ZKUtils.OOZIE_INSTANCE_ID, ZKXTestCase.ZK_ID);
+        }
 
         if (mrCluster != null) {
             OutputStream os = new FileOutputStream(new File(hadoopConfDir, "core-site.xml"));

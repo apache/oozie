@@ -976,21 +976,11 @@ their own HA, they should have their own namespace.  The default value is shown 
 </property>
 </verbatim>
 
-6. (Optional) Add the following property to oozie-site.xml in all Oozie servers to specify the each host instance id.
-Each Oozie server in HA should have its own unique instance id. The default is =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+6. (Optional) If using a secure cluster, see [[AG_Install#Security][Security]] below on configuring Kerberos with Oozie HA.
 
-<verbatim>
-<property>
-    <name>oozie.instance.id</name>
-    <value>hostname</value>
-</property>
-</verbatim>
+7. Start the ZooKeeper servers.
 
-7. (Optional) If using a secure cluster, see [[AG_Install#Security][Security]] below on configuring Kerberos with Oozie HA.
-
-8. Start the ZooKeeper servers.
-
-9. Start the Oozie servers.
+8. Start the Oozie servers.
 
 Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
 be missing information until that server comes back up.
