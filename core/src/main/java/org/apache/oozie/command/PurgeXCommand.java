@@ -43,8 +43,10 @@ import org.eclipse.jgit.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
 /**
  * This class is used to purge workflows, coordinators, and bundles.  It takes into account the relationships between workflows and
  * coordinators, and coordinators and bundles.  It also only acts on 'limit' number of items at a time to not overtax the DB and in
@@ -246,8 +248,16 @@ public class PurgeXCommand extends XCommand<Void> {
         List<String> children = new ArrayList<String>();
         long wfOlderThanMS = System.currentTimeMillis() - (wfOlderThan * DAY_IN_MS);
         for (WorkflowJobBean wfjBean : wfBeanList) {
-            if (wfjBean.inTerminalState() && wfjBean.getEndTime().getTime() < wfOlderThanMS) {
-                children.add(wfjBean.getId());
+            final Date wfEndTime = wfjBean.getEndTime();
+            final boolean isFinished = wfjBean.inTerminalState();
+            if (isFinished && wfEndTime != null && wfEndTime.getTime() < wfOlderThanMS) {
+                    children.add(wfjBean.getId());
+            }
+            else {
+                final Date lastModificationTime = wfjBean.getLastModifiedTime();
+                if (isFinished && lastModificationTime != null && lastModificationTime.getTime() < wfOlderThanMS) {
+                    children.add(wfjBean.getId());
+                }
             }
         }
         return children;

@@ -174,10 +174,34 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : purge killed wf job and action successfully
+     * Test : purge failed wf job with null end_time successfully
      *
      * @throws Exception
      */
+    public void testFailedJobNullEndTimePurgeXCommand() throws Exception {
+        final WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
+        final Date endTime = job.getEndTime();
+        job.setLastModifiedTime(endTime);
+        job.setEndTime(null);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+
+        new PurgeXCommand(7, 1, 1, 10).call();
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+            fail("Workflow Job should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+    }
+
+    /**
+    * Test : purge killed wf job and action successfully
+    *
+    * @throws Exception
+    */
     public void testKillJobPurgeXCommand() throws Exception {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
