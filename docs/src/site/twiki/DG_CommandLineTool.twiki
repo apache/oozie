@@ -1939,6 +1939,60 @@ The properties file must specify the =mapred.mapper.class=, =mapred.reducer.clas
 
 The map-reduce job will be created and submitted. All jar files and all other files needed by the mapreduce job need to be uploaded onto HDFS under libpath beforehand. The workflow.xml will be created in Oozie server internally. Users can get the workflow.xml from console or command line(-definition).
 
+---++ Getting Oozie diagnostics bundles
+
+A tool that collects a diagnostic bundle of information from Oozie. Collected information includes available Oozie ShareLibs;
+effective configuration, system properties, environment variables, thread dump of the Oozie server; instrumentation logs;
+dump of queued commands; details about workflow(s) (such as workflow xml, logs, current state, job properties), coordinator(s)
+and bundle(s). When retrieving coordinator information, the tool will also try to fetch information about related child workflow(s).
+
+Syntax:
+
+<verbatim>
+$ oozie-diag-bundle-collector.sh [-jobs <id ...>] [-maxchildactions <n>]
+       [-numbundles <n>] [-numcoordinators <n>] [-numworkflows <n>] -oozie
+       <url> -output <dir>
+</verbatim>
+
+where
+ -jobs <id ...>         Detailed information on the given job IDs will be
+                        collected (default: none)
+ -maxchildactions <n>   Maximum number of Workflow or Coordinator actions
+                        that will be collected (default: 10)
+ -numbundles <n>        Detailed information on the last n Bundles will be
+                        collected (default: 0)
+ -numcoordinators <n>   Detailed information on the last n Coordinators
+                        will be collected (default: 0)
+ -numworkflows <n>      Detailed information on the last n workflows will
+                        be collected (default: 0)
+ -oozie <url>           Required: Oozie URL (or specify with OOZIE_URL env
+                        var)
+ -output <dir>          Required: Directory to output the zip file
+
+Example:
+
+<verbatim>
+$ oozie-diag-bundle-collector.sh -jobs 0000001-170918144116149-oozie-test-W -oozie http://localhost:11000/oozie -output diag
+
+...
+
+Using Temporary Directory: /var/folders/9q/f8p_r6gj0wbck49_dc092q_m0000gp/T/1505748796767-0
+Getting Sharelib Information...Done
+Getting Configuration...Done
+Getting OS Environment Variables...Done
+Getting Java System Properties...Done
+Getting Queue Dump...Done
+Getting Thread Dump...Done
+Getting Instrumentation...Done
+Getting Metrics...Skipping (Metrics are unavailable)
+Getting Details for 0000001-170918144116149-oozie-test-W...Done
+Creating Zip File: /var/lib/oozie/diag/oozie-diag-bundle-1505748797206.zip...Done
+</verbatim>
+
+Before executing the command, make sure OOZIE_HOME environment variable is set correctly. If Oozie authorization is enabled, then
+the user must be an admin user in order to perform admin operations (for example getting a Thread dump of the Oozie server). If the
+output directory does not exist, the tool will create it and store generated bundle there.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

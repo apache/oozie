@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2296 Add an Oozie diagnostic bundle tool (asasvari)
 OOZIE-3125 TestDBLoadDump.testImportInvalidDataLeavesTablesEmpty fails (asasvari)
 OOZIE-3106 upgrade surefire-plugin to 2.20.1 (dbist13 via asasvari)
 OOZIE-2061 Remove CoordJobDeleteJPAExecutor (dbist13 via gezapeti)
