@@ -100,7 +100,8 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                     + numRunningJobs + ", numLeftover=" + numActionsToStart);
             // no actions to start
             if (numActionsToStart == 0) {
-                log.warn("No actions to start for jobId=" + jobId + " as max concurrency reached!");
+                log.info("Not starting any additional actions because max concurrency [{0}]" +
+                        " for coordinator [{1}] has been reached.", jobConcurrency, jobId);
             }
         }
         // get list of actions that are READY and fit in the concurrency and execution
