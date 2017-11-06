@@ -1014,6 +1014,10 @@
                         <groupId>org.apache.hive</groupId>
                     </exclusion>
                     <exclusion>
+                        <artifactId>hive-common</artifactId>
+                        <groupId>org.apache.hive</groupId>
+                    </exclusion>
+                    <exclusion>
                         <artifactId>hive-serde</artifactId>
                         <groupId>org.apache.hive</groupId>
                     </exclusion>

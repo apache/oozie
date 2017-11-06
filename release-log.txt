@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2618 Include hive-common in hive-beeline as compile component for hive-server2 (hive2 action) (wutaklon via andras.piros)
 OOZIE-1401 PurgeCommand should purge the workflow jobs w/o end_time (asasvari)
 OOZIE-3084 Add missing JVM properties to Jetty startup script (andras.piros)
 OOZIE-3097 Change version in pom in master to 5.0.0-beta1 (dbist13 via gezapeti)
