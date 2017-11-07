@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2962 bump maven-javadoc-plugin to 2.10.4 (dbist13 via andras.piros)
 OOZIE-3103 Improve log message regarding max concurrency for coordinators (asasvari via rkanter)
 OOZIE-3102 External Link to "EL Expression Language Quick Reference" not found (asasvari)
 OOZIE-2618 Include hive-common in hive-beeline as compile component for hive-server2 (hive2 action) (wutaklon via andras.piros)
