@@ -255,7 +255,6 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
         wfConf.set(OozieClient.USER_NAME, getTestUser());
         wfConf.set(OozieClient.APP_PATH, appUri.toString());
 
-
         WorkflowJobBean workflow = createWorkflow(app, wfConf, protoConf);
 
         WorkflowActionBean action = new WorkflowActionBean();

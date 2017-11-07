@@ -24,6 +24,8 @@
             <env>dummyEnv</env>
             <queue>dummyQueue</queue>
             <sharelib>a,b,c</sharelib>
+            <view-acl>oozieview</view-acl>
+            <modify-acl>ooziemodify</modify-acl>
         </launcher>
     </global>
 

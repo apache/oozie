@@ -64,6 +64,7 @@ import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairScheduler;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
@@ -1018,21 +1019,46 @@ public abstract class XTestCase extends TestCase {
           sb.append(",").append(i.getCanonicalHostName());
       }
       conf.set("hadoop.proxyuser." + getOozieUser() + ".hosts", sb.toString());
-
       conf.set("hadoop.proxyuser." + getOozieUser() + ".groups", getTestGroup());
       conf.set("mapred.tasktracker.map.tasks.maximum", "4");
       conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
-
       conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
 
-      // Scheduler properties required for YARN CapacityScheduler to work
-      conf.set("yarn.scheduler.capacity.root.queues", "default");
-      conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
-      // Required to prevent deadlocks with YARN CapacityScheduler
-      conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
       // Default value is 90 - if you have low disk space, tests will fail.
       conf.set("yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage", "99");
+      configureYarnACL(conf);
+
       return conf;
+    }
+
+    /*
+     * Sets up YARN ACL - necessary for testing application ACLs
+     *
+     * If we don't configure queue ACLs, then it's always possible for any
+     * user to kill a running application. This is not desired, therefore we
+     * explicitly define what users have the permission to kill applications
+     * submitted to a given queue.
+     */
+    private void configureYarnACL(JobConf conf) {
+        conf.set("yarn.acl.enable", "true");
+        conf.set("yarn.admin.acl", getOozieUser());
+
+        String schedClass = conf.get("yarn.resourcemanager.scheduler.class");
+
+        if (schedClass.contains(FairScheduler.class.getName())) {
+            conf.set("yarn.scheduler.fair.allocation.file", "fair-scheduler-alloc.xml");
+        }
+        else {
+            conf.set("yarn.scheduler.capacity.root.acl_administer_queue", getOozieUser());
+            conf.set("yarn.scheduler.capacity.root.default.acl_administer_queue", getOozieUser());
+
+            // Scheduler properties required for YARN CapacityScheduler to work
+            conf.set("yarn.scheduler.capacity.root.queues", "default,default1");
+            conf.set("yarn.scheduler.capacity.root.default.capacity", "50");
+            conf.set("yarn.scheduler.capacity.root.default1.capacity", "50");
+            // Required to prevent deadlocks with YARN CapacityScheduler
+            conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
+        }
     }
 
     protected void setupHCatalogServer() throws Exception {

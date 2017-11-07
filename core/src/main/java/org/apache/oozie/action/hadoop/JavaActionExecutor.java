@@ -55,6 +55,7 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
+import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
@@ -64,6 +65,7 @@ import org.apache.hadoop.util.DiskChecker;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.records.ApplicationAccessType;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
@@ -131,6 +133,8 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String DEFAULT_LAUNCHER_PRIORITY = "oozie.launcher.default.priority";
     public static final String DEFAULT_LAUNCHER_QUEUE = "oozie.launcher.default.queue";
     public static final String DEFAULT_LAUNCHER_MAX_ATTEMPS = "oozie.launcher.default.max.attempts";
+    public static final String LAUNCER_MODIFY_ACL = "oozie.launcher.modify.acl";
+    public static final String LAUNCER_VIEW_ACL = "oozie.launcher.view.acl";
 
     public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
@@ -1099,6 +1103,8 @@ public class JavaActionExecutor extends ActionExecutor {
         setMaxAttempts(launcherJobConf, appContext);
 
         ContainerLaunchContext amContainer = Records.newRecord(ContainerLaunchContext.class);
+        YarnACLHandler yarnACL = new YarnACLHandler(launcherJobConf);
+        yarnACL.setACLs(amContainer);
 
         final String user = actionContext.getWorkflow().getUser();
         // Set the resources to localize

@@ -114,6 +114,8 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         assertEquals("priority", -1, launcherConf.getInt("priority", -1));
         assertTrue("launcher queue", launcherConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY).contains("default1"));
         assertNull("queue", launcherConf.get("queue"));
+        assertEquals("view ACL", "view", launcherConf.get(JavaActionExecutor.LAUNCER_VIEW_ACL));
+        assertEquals("modify ACL", "modify", launcherConf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL));
     }
 
     public void testMultipleOverrideOrder() {
@@ -196,6 +198,8 @@ public class TestLauncherConfigurationInjector extends XTestCase {
             sourceConf.set("yarn.app.mapreduce.am.env", "PATH=/path1:$PATH");
             sourceConf.set("mapreduce.job.priority", "1");
             sourceConf.set("mapreduce.job.queuename", "default1");
+            sourceConf.set("mapreduce.job.acl-view-job", "view");
+            sourceConf.set("mapreduce.job.acl-modify-job", "modify");
 
             return sourceConf;
         }
@@ -222,6 +226,8 @@ public class TestLauncherConfigurationInjector extends XTestCase {
             sourceConf.set("mapreduce.job.priority", "1");
             sourceConf.set("mapred.job.queue.name", "default2");
             sourceConf.set("mapreduce.job.queuename", "default1");
+            sourceConf.set("mapreduce.job.acl-view-job", "view");
+            sourceConf.set("mapreduce.job.acl-modify-job", "modify");
 
             return sourceConf;
         }

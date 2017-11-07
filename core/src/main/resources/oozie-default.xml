@@ -3217,4 +3217,22 @@ will be the requeue interval for the actions which are waiting for a long time w
             name. The first one that is found will be used.
         </description>
     </property>
+
+    <property>
+        <name>oozie.launcher.override.view.acl</name>
+        <value>mapreduce.job.acl-view-job</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce View ACL settings.
+            The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.modify.acl</name>
+        <value>mapreduce.job.acl-modify-job</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce Modify ACL settings.
+            The first one that is found will be used.
+        </description>
+    </property>
 </configuration>

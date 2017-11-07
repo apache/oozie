@@ -84,6 +84,16 @@ public class LauncherMainTester {
                 sm.checkPermission(null, sm.getSecurityContext());
             }
         }
+
+        checkAndSleep(args);
+    }
+
+    private static void checkAndSleep(String args[]) throws InterruptedException {
+        if (args.length == 2 && args[0].equals("sleep")) {
+            long sleepTime = Long.parseLong(args[1]);
+
+            Thread.sleep(sleepTime);
+        }
     }
 
 }

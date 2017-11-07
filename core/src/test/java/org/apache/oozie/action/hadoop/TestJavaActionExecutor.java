@@ -1656,6 +1656,38 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertNotSame(conf.get(JavaActionExecutor.ACL_MODIFY_JOB), actionConf.get(JavaActionExecutor.ACL_MODIFY_JOB));
     }
 
+    // Only "dummyuser" can kill the app, but we try "test2" instead
+    public void testCannotKillActionWhenACLSpecified() throws Exception {
+        // Only "dummyuser" and the owner have the permission to kill the job
+        String actionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<configuration>" +
+                "  <property><name>oozie.launcher.modify.acl</name><value>dummyuser</value></property>" +
+                "</configuration>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "<arg>sleep</arg>" +
+                "<arg>10000</arg>" +
+                "</java>";
+
+        // Submitting WF as the default "test" user
+        Context context = createContext(actionXml, null);
+        String applicationId = submitAction(context);
+        waitUntilYarnAppState(applicationId, EnumSet.of(YarnApplicationState.RUNNING));
+
+        // Modify the user inside the workflow. It's necessary because the Yarn client is always
+        // retrieved for the owner of the WF and owner always has the permission to kill its
+        // own application
+        WorkflowJobBean wfBean = (WorkflowJobBean) context.getWorkflow();
+        wfBean.setUser(getTestUser2());
+
+        JavaActionExecutor jae = new JavaActionExecutor();
+        jae.kill(context, context.getAction());
+
+        // Kill should fail - wait until the application is finished
+        waitUntilYarnAppDoneAndAssertSuccess(applicationId);
+    }
+
     public void testParseJobXmlAndConfiguration() throws Exception {
         String str = "<java>"
                 + "<job-xml>job1.xml</job-xml>"
@@ -2554,22 +2586,19 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "</java>";
         final Context context = createContext(actionXml, null);
 
-        submitAction(context);
+        String applicationId = submitAction(context);
 
         final ApplicationId appId = ConverterUtils.toApplicationId(context.getAction().getExternalId());
         final Configuration conf = getHadoopAccessorService().createConfiguration(getJobTrackerUri());
 
         final String queue = getHadoopAccessorService().createYarnClient(getTestUser(), conf)
                 .getApplicationReport(appId).getQueue();
-        assertEquals("queue name", "default1", queue);
 
-        final ActionExecutor ae = new JavaActionExecutor();
-        ae.check(context, context.getAction());
-        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
-        assertNull(context.getAction().getData());
+        if (isFairSchedulerUsed(conf)) {
+            assertEquals("queue name", "root.default1", queue);
+        }
 
-        ae.end(context, context.getAction());
-        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+        waitUntilYarnAppDoneAndAssertSuccess(applicationId);
     }
 
     private HadoopAccessorService getHadoopAccessorService() {
@@ -2647,5 +2676,4 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(FinalApplicationStatus.KILLED,
                 yarnClient.getApplicationReport(ConverterUtils.toApplicationId(runningJob)).getFinalApplicationStatus());
     }
-
 }

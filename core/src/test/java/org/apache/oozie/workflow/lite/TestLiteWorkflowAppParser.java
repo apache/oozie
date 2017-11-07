@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.LauncherAM;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
@@ -673,6 +674,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         assertEquals("Queue", "dummyQueue", xconf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY));
         assertEquals("Java opts", "dummyJavaOpts", xconf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY));
         assertEquals("Sharelib", "a,b,c", xconf.get(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY));
+        assertEquals("View ACL", "oozieview", xconf.get(JavaActionExecutor.LAUNCER_VIEW_ACL));
+        assertEquals("Modify ACL", "ooziemodify", xconf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL));
     }
 
     public void testParserGlobalLauncherAMOverridden() throws Exception {

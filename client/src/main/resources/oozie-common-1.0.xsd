@@ -27,6 +27,8 @@
             <xs:element name="env" minOccurs="0" type="xs:string"/>
             <xs:element name="queue" minOccurs="0" type="xs:string"/>
             <xs:element name="sharelib" minOccurs="0" type="xs:string"/>
+            <xs:element name="view-acl" minOccurs="0" type="xs:string"/>
+            <xs:element name="modify-acl" minOccurs="0" type="xs:string"/>
         </xs:choice>
     </xs:complexType>
 

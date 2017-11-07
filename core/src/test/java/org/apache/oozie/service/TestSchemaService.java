@@ -105,6 +105,8 @@ public class TestSchemaService extends XTestCase {
             "            <env>dummyEnv</env>\n" +
             "            <queue>dummyQueue</queue>\n" +
             "            <sharelib>a,b,c</sharelib>\n" +
+            "            <view-acl>oozie</view-acl>\n" +
+            "            <modify-acl>oozie</modify-acl>\n" +
             "        </launcher>\n" +
             "    </global>\n" +
             "    <start to=\"a\"/>\n" +

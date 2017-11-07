@@ -18,6 +18,7 @@
 package org.apache.oozie.workflow.lite;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.LauncherAM;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -30,6 +31,8 @@ class LauncherConfigHandler {
     private static final String LAUNCHER_ENV = "env";
     private static final String LAUNCHER_SHARELIB = "sharelib";
     private static final String LAUNCHER_QUEUE = "queue";
+    private static final String LAUNCHER_VIEW_ACL = "view-acl";
+    private static final String LAUNCHER_MODIFY_ACL = "modify-acl";
 
     private final Configuration entries;
     private final Element xmlLauncherElement;
@@ -63,5 +66,7 @@ class LauncherConfigHandler {
         setStringCfgSetting(LAUNCHER_ENV, LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY);
         setStringCfgSetting(LAUNCHER_QUEUE, LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY);
         setStringCfgSetting(LAUNCHER_SHARELIB, LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY);
+        setStringCfgSetting(LAUNCHER_VIEW_ACL, JavaActionExecutor.LAUNCER_VIEW_ACL);
+        setStringCfgSetting(LAUNCHER_MODIFY_ACL, JavaActionExecutor.LAUNCER_MODIFY_ACL);
     }
 }
