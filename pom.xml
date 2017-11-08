@@ -68,7 +68,8 @@
         <oozie.test.forkMode>once</oozie.test.forkMode>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-        <maven.test.java.opts>-Xmx2048m -da</maven.test.java.opts>
+        <maven.test.java.opts>-Xmx2048m -da -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled
+                              -XX:+UseConcMarkSweepGC</maven.test.java.opts>
         <maven.javadoc.opts></maven.javadoc.opts>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
