@@ -39,12 +39,14 @@ import org.apache.oozie.util.XLog;
 /**
  * Hbase Credentials implementation to store in jobConf
  * The jobConf is used further to pass credentials to the tasks while running
- * Oozie server should be configured to use this Credentials class by including it via property 'oozie.credentials.credentialclasses'
+ * Oozie server should be configured to use this Credentials class by including it via property
+ * 'oozie.credentials.credentialclasses'
  *
  */
 public class HbaseCredentials implements CredentialsProvider {
     /* (non-Javadoc)
-     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
+     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf,
+     * org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
      */
     @Override
     public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,

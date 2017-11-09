@@ -102,12 +102,19 @@ public class BundleKillXCommand extends KillTransitionXCommand {
                 if (action.getCoordId() != null) {
                     queue(new CoordKillXCommand(action.getCoordId()));
                     updateBundleAction(action);
-                    LOG.debug("Killed bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordKillXCommand for [{3}]",
-                            action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
+                    LOG.debug("Killed bundle action = [{0}], new status = [{1}], "
+                            + "pending = [{2}] and queue CoordKillXCommand for [{3}]",
+                            action.getBundleActionId(),
+                            action.getStatus(),
+                            action.getPending(),
+                            action.getCoordId());
                 } else {
                     updateBundleAction(action);
-                    LOG.debug("Killed bundle action = [{0}], current status = [{1}], pending = [{2}]", action.getBundleActionId(), action
-                            .getStatus(), action.getPending());
+                    LOG.debug("Killed bundle action = [{0}], current status = [{1}],"
+                            + "pending = [{2}]",
+                            action.getBundleActionId(),
+                            action.getStatus(),
+                            action.getPending());
                 }
 
             }

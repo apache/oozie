@@ -65,19 +65,23 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
     @Override
     public void resumeChildren() {
         for (BundleActionBean action : bundleActions) {
-            if (action.getStatus() == Job.Status.SUSPENDED || action.getStatus() == Job.Status.SUSPENDEDWITHERROR || action.getStatus() == Job.Status.PREPSUSPENDED) {
+            if (action.getStatus() == Job.Status.SUSPENDED
+                    || action.getStatus() == Job.Status.SUSPENDEDWITHERROR
+                    || action.getStatus() == Job.Status.PREPSUSPENDED) {
                 // queue a CoordResumeXCommand
                 if (action.getCoordId() != null) {
                     queue(new CoordResumeXCommand(action.getCoordId()));
                     updateBundleAction(action);
-                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordResumeXCommand for [{3}]",
-                                    action.getBundleActionId(), action.getStatus(), action.getPending(), action
+                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], "
+                            + "pending = [{2}] and queue CoordResumeXCommand for [{3}]",
+                            action.getBundleActionId(), action.getStatus(), action.getPending(), action
                                             .getCoordId());
                 }
                 else {
                     updateBundleAction(action);
-                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], pending = [{2}] and coord id is null",
-                                    action.getBundleActionId(), action.getStatus(), action.getPending());
+                    LOG.debug("Resume bundle action = [{0}], new status = [{1}], "
+                            + "pending = [{2}] and coord id is null",
+                            action.getBundleActionId(), action.getStatus(), action.getPending());
                 }
             }
         }
@@ -96,7 +100,8 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         }
         action.incrementAndGetPending();
         action.setLastModifiedTime(new Date());
-        updateList.add(new UpdateEntry<BundleActionQuery>(BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME, action));
+        updateList.add(new UpdateEntry<BundleActionQuery>(
+                BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME, action));
     }
 
     /* (non-Javadoc)
@@ -115,8 +120,10 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
         bundleJob.setSuspendedTime(null);
         bundleJob.setLastModifiedTime(new Date());
-        LOG.debug("Resume bundle job id = " + bundleId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
-        updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME, bundleJob));
+        LOG.debug("Resume bundle job id = " + bundleId + ", "
+                + "status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
+        updateList.add(new UpdateEntry<BundleJobQuery>(
+                BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME, bundleJob));
     }
 
     /* (non-Javadoc)
@@ -175,7 +182,8 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (bundleJob.getStatus() != Job.Status.SUSPENDED && bundleJob.getStatus() != Job.Status.SUSPENDEDWITHERROR && bundleJob.getStatus() != Job.Status.PREPSUSPENDED) {
+        if (bundleJob.getStatus() != Job.Status.SUSPENDED && bundleJob.getStatus() != Job.Status.SUSPENDEDWITHERROR
+                && bundleJob.getStatus() != Job.Status.PREPSUSPENDED) {
             throw new PreconditionException(ErrorCode.E1100, "BundleResumeCommand not Resumed - "
                     + "job not in SUSPENDED/SUSPENDEDWITHERROR/PREPSUSPENDED state " + bundleId);
         }

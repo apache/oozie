@@ -678,7 +678,8 @@ public class JavaActionExecutor extends ActionExecutor {
                     {
                         Path actionLibsPath = new Path(actionLibsStr);
                         String user = conf.get("user.name");
-                        FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user, appPath.toUri(), conf);
+                        FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user,
+                                appPath.toUri(), conf);
                         if (fs.exists(actionLibsPath)) {
                             FileStatus[] files = fs.listStatus(actionLibsPath);
                             for (FileStatus file : files) {

@@ -216,9 +216,11 @@ public class EmailActionExecutor extends ActionExecutor {
             from = new InternetAddress(fromAddr);
             message.setFrom(from);
         } catch (AddressException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM002", "Bad from address specified in ${oozie.email.from.address}.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM002",
+                    "Bad from address specified in ${oozie.email.from.address}.", e);
         } catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM003", "Error setting a from address in the message.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM003",
+                    "Error setting a from address in the message.", e);
         }
 
         try {
@@ -292,9 +294,11 @@ public class EmailActionExecutor extends ActionExecutor {
             // (Session+Message has adequate details.)
             Transport.send(message);
         } catch (NoSuchProviderException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM006", "Could not find an SMTP transport provider to email.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM006",
+                    "Could not find an SMTP transport provider to email.", e);
         } catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM007", "Encountered an error while sending the email message over SMTP.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM007",
+                    "Encountered an error while sending the email message over SMTP.", e);
         }
     }
 

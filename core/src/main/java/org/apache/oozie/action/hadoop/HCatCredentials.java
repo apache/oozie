@@ -32,7 +32,8 @@ import org.apache.oozie.util.XLog;
  * Credentials implementation to store in jobConf, HCat-specific properties such as Principal and Uri
  * User specifies these credential properties along with the action configuration
  * The jobConf is used further to pass credentials to the tasks while running
- * Oozie server should be configured to use this Credentials class by including it via property 'oozie.credentials.credentialclasses'
+ * Oozie server should be configured to use this Credentials class by including it via property
+ * 'oozie.credentials.credentialclasses'
  * User can extend the parent class to implement own class as well
  * for handling custom token-based credentials and add to the above server property
  */
@@ -48,7 +49,8 @@ public class HCatCredentials implements CredentialsProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
+     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf,
+     * org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
      */
     @Override
     public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,

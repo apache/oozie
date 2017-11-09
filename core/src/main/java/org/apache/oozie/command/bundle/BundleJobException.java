@@ -28,7 +28,7 @@ public class BundleJobException extends XException {
 
     /**
      * Create an Bundle Job exception from a XException.
-     * 
+     *
      * @param cause the XException cause.
      */
     public BundleJobException(XException cause) {
@@ -37,7 +37,7 @@ public class BundleJobException extends XException {
 
     /**
      * Create a Bundle Job exception.
-     * 
+     *
      * @param errorCode error code.
      * @param params parameters for the error code message template.
      */
