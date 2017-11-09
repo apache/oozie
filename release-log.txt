@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2996 Add options for GC overhead limit error to maven.test.java.opts (dbist13 via andras.piros)
 OOZIE-2897 LauncherAM should support ACLs (pbacsko)
 OOZIE-2962 bump maven-javadoc-plugin to 2.10.4 (dbist13 via andras.piros)
 OOZIE-3103 Improve log message regarding max concurrency for coordinators (asasvari via rkanter)
