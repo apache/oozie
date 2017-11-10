@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2964 Add -Xdoclint:all to javadoc opts (dbist13 via andras.piros)
 OOZIE-3022 Fix for warning has no file and won't be listed in dependency files details (dbist13 via gezapeti and andras.piros)
 OOZIE-3001 Core has many Javadoc warnings (lines with trailing spaces and longer than 132 chars) (dbist13 via andras.piros)
 OOZIE-2996 Add options for GC overhead limit error to maven.test.java.opts (dbist13 via andras.piros)

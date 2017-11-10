@@ -70,7 +70,7 @@
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
         <maven.test.java.opts>-Xmx2048m -da -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled
                               -XX:+UseConcMarkSweepGC</maven.test.java.opts>
-        <maven.javadoc.opts></maven.javadoc.opts>
+        <maven.javadoc.opts>-Xdoclint:all</maven.javadoc.opts>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
         <oozie.test.db.host>localhost</oozie.test.db.host>
