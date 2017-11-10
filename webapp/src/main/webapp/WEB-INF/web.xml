@@ -129,6 +129,13 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>error</servlet-name>
+        <display-name>Errors</display-name>
+        <servlet-class>org.apache.oozie.servlet.ErrorServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
     <!-- servlet-mapping -->
     <servlet-mapping>
         <servlet-name>versions</servlet-name>
@@ -200,6 +207,55 @@
         <url-pattern>/v2/validate</url-pattern>
     </servlet-mapping>
 
+    <servlet-mapping>
+        <servlet-name>error</servlet-name>
+        <url-pattern>/error</url-pattern>
+    </servlet-mapping>
+
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>400</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>401</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>403</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>405</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>409</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error</location>
+    </error-page>
+
+    <error-page>
+        <error-code>501</error-code>
+        <location>/error</location>
+    </error-page>
     <!-- welcome-file -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>

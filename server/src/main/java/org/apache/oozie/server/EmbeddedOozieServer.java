@@ -41,6 +41,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -145,8 +146,16 @@ public class EmbeddedOozieServer {
 
     private void addErrorHandler() {
         ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
-        errorHandler.addErrorPage(404, "/404.html");
-        errorHandler.addErrorPage(403, "/403.html");
+        errorHandler.addErrorPage(HttpServletResponse.SC_BAD_REQUEST, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_UNAUTHORIZED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_FORBIDDEN, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_CONFLICT, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_IMPLEMENTED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "/error");
+        errorHandler.addErrorPage("java.lang.Throwable", "/error");
         servletContextHandler.setErrorHandler(errorHandler);
     }
 

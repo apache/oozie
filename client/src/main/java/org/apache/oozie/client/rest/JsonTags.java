@@ -199,6 +199,8 @@ public interface JsonTags {
     String ERROR_CODE = "code";
     String ERROR_MESSAGE = "message";
 
+    String HTTP_STATUS_CODE = "httpStatusCode";
+
     String INSTR_TIMERS = "timers";
     String INSTR_VARIABLES = "variables";
     String INSTR_SAMPLERS = "samplers";

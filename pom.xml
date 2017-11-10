@@ -116,6 +116,7 @@
          <httpcore.version>4.3.3</httpcore.version>
          <httpclient.version>4.3.6</httpclient.version>
          <kyro.version>2.22</kyro.version>
+         <javax.servlet.api.version>3.0.1</javax.servlet.api.version>
     </properties>
 
     <modules>
@@ -1883,6 +1884,9 @@
                     <parallel>classes</parallel>
                     <threadCount>1</threadCount>
                     <perCoreThreadCount>1</perCoreThreadCount>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>javax.servlet:servlet-api</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
                 </configuration>
             </plugin>
             <plugin>

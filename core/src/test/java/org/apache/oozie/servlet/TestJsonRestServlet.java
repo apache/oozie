@@ -18,16 +18,21 @@
 
 package org.apache.oozie.servlet;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.service.Services;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletResponse;
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.util.concurrent.Callable;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.Callable;
 
 public class TestJsonRestServlet extends XTestCase {
 
@@ -38,10 +43,10 @@ public class TestJsonRestServlet extends XTestCase {
     EmbeddedServletContainer container;
 
     private int invoke(String method, String resource, String queryString) throws Exception {
-        return invoke(method, resource, queryString, "dummy");
+        return invoke(method, resource, queryString, "dummy").getResponseCode();
     }
 
-    private int invoke(String method, String resource, String queryString, String contentType) throws Exception {
+    private HttpURLConnection invoke(String method, String resource, String queryString, String contentType) throws Exception {
         String s = container.getServletURL("/dummy");
         if (resource != null) {
             s += resource;
@@ -53,7 +58,7 @@ public class TestJsonRestServlet extends XTestCase {
         conn.setRequestProperty("content-type", contentType);
         conn.setRequestMethod(method);
         conn.connect();
-        return conn.getResponseCode();
+        return conn;
     }
 
     private String invokeAndGetResponse(String method, String resource, String queryString, String contentType)
@@ -80,7 +85,9 @@ public class TestJsonRestServlet extends XTestCase {
     }
 
     private void runTest(JsonRestServlet.ResourceInfo[] resourceInfo, Callable<Void> assertions) throws Exception {
+
         container = new EmbeddedServletContainer("test");
+
         Services services = new Services();
         try {
             services.init();
@@ -180,7 +187,10 @@ public class TestJsonRestServlet extends XTestCase {
     public void testInvalidResource() throws Exception {
         runTest(MyJsonRestServlet.WILDCARD_RESOURCE, new Callable<Void>() {
             public Void call() throws Exception {
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("GET", "/any/any", ""));
+                HttpURLConnection conn = invoke("GET", "/any/any", "dummy", "dummy");
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertEquals("E0301: Invalid resource [any/any]", conn.getResponseMessage());
+                checkErrorResponse(conn, HttpServletResponse.SC_BAD_REQUEST, "E0301: Invalid resource [any/any]");
                 return null;
             }
         });
@@ -238,10 +248,12 @@ public class TestJsonRestServlet extends XTestCase {
     public void testContentTypeJsonCron() throws Exception {
         runTest(MyJsonRestServlet.CONTENT_TYPE_JSON_CRON_TEST, new Callable<Void>() {
             public Void call() throws Exception {
-                assertEquals(HttpServletResponse.SC_OK, invoke("GET", "", "json=object", "application/xml"));
-                assertEquals(HttpServletResponse.SC_OK, invoke("GET", "", "json=object", "application/xml; param=x"));
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("GET", "", "json=object", ""));
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("GET", "", "json=object", "application/json"));
+                assertEquals(HttpServletResponse.SC_OK, invoke("GET", "", "json=object", "application/xml").getResponseCode());
+                assertEquals(HttpServletResponse.SC_OK, invoke("GET", "", "json=object", "application/xml; param=x")
+                        .getResponseCode());
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("GET", "", "json=object", "").getResponseCode());
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, invoke("GET", "", "json=object", "application/json")
+                        .getResponseCode());
                 String response = invokeAndGetResponse("GET", "", "json=object", "application/xml");
                 assertTrue(response.contains("object"));
                 response = invokeAndGetResponse("GET", "", "json=array", "application/xml");
@@ -251,5 +263,13 @@ public class TestJsonRestServlet extends XTestCase {
         });
     }
 
+    private void checkErrorResponse(HttpURLConnection conn, int responseCode, String responseMessage) throws JSONException,
+            IOException {
+        JSONObject json = new JSONObject(IOUtils.toString(conn.getErrorStream()).trim());
+        assertEquals("Error message is different.", responseMessage,
+                json.getString(JsonTags.WORKFLOW_ACTION_ERROR_MESSAGE));
+        assertEquals("Error code is different", responseCode,
+                json.getInt(JsonTags.HTTP_STATUS_CODE));
+    }
 
 }

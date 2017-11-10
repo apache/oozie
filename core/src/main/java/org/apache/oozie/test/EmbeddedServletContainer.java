@@ -18,22 +18,24 @@
 
 package org.apache.oozie.test;
 
+import org.apache.oozie.servlet.ErrorServlet;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-
-import java.net.InetAddress;
-import java.util.EnumSet;
-import java.util.Map;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletResponse;
+import java.net.InetAddress;
+import java.util.EnumSet;
+import java.util.Map;
 
 /**
  * An embedded servlet container for testing purposes. <p> It provides reduced functionality, it supports only
@@ -57,6 +59,8 @@ public class EmbeddedServletContainer {
         server = new Server(0);
         context = new ServletContextHandler();
         context.setContextPath("/" + contextPath);
+        context.setErrorHandler(getErrorHandler());
+        this.addServletEndpoint("/error/*", ErrorServlet.class);
         server.setHandler(context);
     }
 
@@ -186,5 +190,24 @@ public class EmbeddedServletContainer {
 
         host = null;
         port = -1;
+    }
+
+    /**
+     * Returns an error page handler
+     * @return
+     */
+    private ErrorPageErrorHandler getErrorHandler() {
+        ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+        errorHandler.addErrorPage(HttpServletResponse.SC_BAD_REQUEST, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_UNAUTHORIZED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_FORBIDDEN, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_CONFLICT, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_IMPLEMENTED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "/error");
+        errorHandler.addErrorPage("java.lang.Throwable", "/error");
+        return errorHandler;
     }
 }

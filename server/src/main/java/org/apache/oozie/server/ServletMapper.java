@@ -21,6 +21,7 @@ package org.apache.oozie.server;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.oozie.servlet.CallbackServlet;
+import org.apache.oozie.servlet.ErrorServlet;
 import org.apache.oozie.servlet.SLAServlet;
 import org.apache.oozie.servlet.V0AdminServlet;
 import org.apache.oozie.servlet.V0JobServlet;
@@ -41,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
-
 
 public class ServletMapper {
     private final WebAppContext servletContextHandler;
@@ -90,6 +90,7 @@ public class ServletMapper {
         mapServlet(SLAServlet.class, "/v1/sla/*");
         mapServlet(V2SLAServlet.class, "/v2/sla/*");
         mapServlet(V2ValidateServlet.class, "/v2/validate/*");
+        mapServlet(ErrorServlet.class, "/error/*");
     }
 
     private void mapServlet(final Class<? extends Servlet> servletClass, final String servletPath) {

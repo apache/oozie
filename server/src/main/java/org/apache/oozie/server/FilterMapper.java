@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import org.apache.oozie.servlet.AuthFilter;
 import org.apache.oozie.servlet.HostnameFilter;
 import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import javax.servlet.DispatcherType;
@@ -53,6 +52,7 @@ public class FilterMapper {
         mapFilter(authFilter, "/*.js");
         mapFilter(authFilter, "/ext-2.2/*");
         mapFilter(authFilter, "/docs/*");
+        mapFilter(authFilter, "/error/*");
     }
 
     private void mapFilter(FilterHolder authFilter, String pathSpec) {
