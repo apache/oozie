@@ -162,7 +162,6 @@ public class CLIParser {
 
     /**
      * Print the help for the parser to standard output.
-     * 
      * @param commandLine the command line
      */
     public void showHelp(CommandLine commandLine) {
@@ -213,5 +212,3 @@ public class CLIParser {
     }
 
 }
-
-

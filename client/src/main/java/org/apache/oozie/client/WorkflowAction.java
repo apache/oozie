@@ -62,7 +62,7 @@ public interface WorkflowAction {
      * @return the Credential.
      */
     String getCred();
-    
+
     /**
      * Return the action type.
      *
@@ -91,21 +91,21 @@ public interface WorkflowAction {
      * @return the number of retries of the action.
      */
     int getRetries();
-    
+
     /**
      * Return the number of user retry of the action.
      *
      * @return the number of user retry of the action.
      */
     int getUserRetryCount();
-    
+
     /**
      * Return the max number of user retry of the action.
      *
      * @return the max number of user retry of the action.
      */
     int getUserRetryMax();
-    
+
     /**
      * Return the interval of user retry of the action, in minutes.
      *

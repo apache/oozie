@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2997 files contain trailing white spaces in client lib (dbist13 via gezapeti)
 OOZIE-3101 Oozie should add error message to the response body (satishsaley)
 OOZIE-2964 Add -Xdoclint:all to javadoc opts (dbist13 via andras.piros)
 OOZIE-3022 Fix for warning has no file and won't be listed in dependency files details (dbist13 via gezapeti and andras.piros)

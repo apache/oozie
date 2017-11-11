@@ -288,7 +288,8 @@ public class AuthOozieClient extends XOozieClient {
                 return authClass.newInstance();
             }
             catch (IllegalArgumentException iae) {
-                throw new OozieClientException(OozieClientException.AUTHENTICATION, "Invalid options provided for auth: " + authOption
+                throw new OozieClientException(OozieClientException.AUTHENTICATION,
+                        "Invalid options provided for auth: " + authOption
                         + ", (" + AuthType.KERBEROS + " or " + AuthType.SIMPLE + " expected.)");
             }
             catch (InstantiationException ex) {

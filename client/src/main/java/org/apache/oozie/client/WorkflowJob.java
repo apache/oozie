@@ -135,7 +135,7 @@ public interface WorkflowJob {
      * @return the workflow job console URL.
      */
     String getConsoleUrl();
-    
+
     /**
      * Return the coordinator action ID or the parent workflow ID
      *
