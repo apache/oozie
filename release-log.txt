@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3106 upgrade surefire-plugin to 2.20.1 (dbist13 via asasvari)
 OOZIE-2061 Remove CoordJobDeleteJPAExecutor (dbist13 via gezapeti)
 OOZIE-2997 files contain trailing white spaces in client lib (dbist13 via gezapeti)
 OOZIE-3101 Oozie should add error message to the response body (satishsaley)
