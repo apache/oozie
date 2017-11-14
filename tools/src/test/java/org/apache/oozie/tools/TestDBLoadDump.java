@@ -64,7 +64,6 @@ public class TestDBLoadDump extends XTestCase {
         validZipDump = zipDump("/dumpData/valid", "validZipDumpTest.zip");
         invalidZipDump = zipDump("/dumpData/invalid", "invalidZipDumpTest.zip");
 
-        setSqlStrictEnforce(getEntityManager());
         createOozieSysTable(getEntityManager());
 
         System.setSecurityManager(new NoExitSecurityManager());
@@ -164,26 +163,6 @@ public class TestDBLoadDump extends XTestCase {
         }
 
         return services.get(JPAService.class).getEntityManager();
-    }
-
-    /**
-     * To enforce length checks for {@link String} fields while trying to perform to persist invalid {@link WorkflowActionBean}
-     * instances as part of {@link #testImportInvalidDataLeavesTablesEmpty()}, we have to issue an SQL command to HSQLDB like this:
-     * <tt>SET PROPERTY "sql.enforce_strict_size" TRUE;</tt>
-     * as part of the current {@link EntityTransaction}. Please see the
-     * {@linkplain http://hsqldb.org/doc/guide/ch04.html HSQLDB docs} for details.
-     *
-     * @param entityManager
-     */
-    private void setSqlStrictEnforce(final EntityManager entityManager) {
-        final String sqlStrictEnforce = "SET PROPERTY \"sql.enforce_strict_size\" TRUE";
-
-        final EntityTransaction tx = entityManager.getTransaction();
-        tx.begin();
-
-        entityManager.createNativeQuery(sqlStrictEnforce).executeUpdate();
-
-        tx.commit();
     }
 
     private File zipDump(final String dumpFolderPath, final String zipDumpFileName) throws IOException {
