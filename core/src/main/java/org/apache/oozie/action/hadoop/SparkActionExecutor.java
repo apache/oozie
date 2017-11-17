@@ -141,11 +141,6 @@ public class SparkActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected boolean needToAddMapReduceToClassPath() {
-        return true;
-    }
-
-    @Override
     protected void addActionSpecificEnvVars(Map<String, String> env) {
         env.put("SPARK_HOME", ".");
     }

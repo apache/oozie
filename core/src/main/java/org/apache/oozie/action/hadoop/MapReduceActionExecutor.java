@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -336,11 +335,6 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         conf.set(JOB_END_NOTIFICATION_URL, callback);
 
         super.injectCallback(context, conf);
-    }
-
-    @Override
-    protected boolean needToAddMapReduceToClassPath() {
-        return true;
     }
 
     @Override

@@ -136,6 +136,9 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String LAUNCER_MODIFY_ACL = "oozie.launcher.modify.acl";
     public static final String LAUNCER_VIEW_ACL = "oozie.launcher.view.acl";
 
+    public static final String MAPREDUCE_TO_CLASSPATH = "mapreduce.needed.for";
+    public static final String OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY = ActionExecutor.CONF_PREFIX + MAPREDUCE_TO_CLASSPATH;
+
     public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";
     public static final String ACL_MODIFY_JOB = "mapreduce.job.acl-modify-job";
@@ -1253,20 +1256,20 @@ public class JavaActionExecutor extends ActionExecutor {
         appContext.setApplicationName(jobName);
     }
 
-    private void setEnvironmentVariables(Configuration launcherJobConf, ContainerLaunchContext amContainer) throws IOException {
+    private void setEnvironmentVariables(Configuration launcherConf, ContainerLaunchContext amContainer) throws IOException {
         Map<String, String> env = new HashMap<>();
 
-        final String oozieLauncherEnvProperty = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY);
+        final String oozieLauncherEnvProperty = launcherConf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY);
         if (oozieLauncherEnvProperty != null) {
             Map<String, String> environmentVars = extractEnvVarsFromOozieLauncherProps(oozieLauncherEnvProperty);
             env.putAll(environmentVars);
         }
 
         // This adds the Hadoop jars to the classpath in the Launcher JVM
-        ClasspathUtils.setupClasspath(env, launcherJobConf);
+        ClasspathUtils.setupClasspath(env, launcherConf);
 
-        if (needToAddMapReduceToClassPath()) {
-            ClasspathUtils.addMapReduceToClasspath(env, launcherJobConf);
+        if (needToAddMapReduceToClassPath(launcherConf)) {
+            ClasspathUtils.addMapReduceToClasspath(env, launcherConf);
         }
 
         addActionSpecificEnvVars(env);
@@ -1540,9 +1543,11 @@ public class JavaActionExecutor extends ActionExecutor {
      * Subclasses should override this method if necessary. By default we don't add
      * MR jars to the classpath.
      * @return false by default
+     * @param launcherConf
      */
-    protected boolean needToAddMapReduceToClassPath() {
-        return false;
+    private boolean needToAddMapReduceToClassPath(Configuration launcherConf) {
+        boolean defaultValue = launcherConf.getBoolean(OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY, false);
+        return launcherConf.getBoolean(OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY + "." + getType(), defaultValue);
     }
 
     /**

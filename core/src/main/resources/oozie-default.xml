@@ -3235,4 +3235,46 @@ will be the requeue interval for the actions which are waiting for a long time w
             The first one that is found will be used.
         </description>
     </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.distcp</name>
+        <value>true</value>
+        <description>
+        Whether to add MapReduce jars to the DistCp action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.hive</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Hive action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.map-reduce</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Map-Reduce action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.pig</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Pig action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.sqoop</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Sqoop action's classpath's by default.
+        </description>
+    </property>
+
+
 </configuration>

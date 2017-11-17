@@ -123,11 +123,6 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
     }
 
     @Override
-    protected boolean needToAddMapReduceToClassPath() {
-        return true;
-    }
-
-    @Override
     protected Configuration loadHadoopDefaultResources(Context context, Element actionXml) {
         boolean loadDefaultResources = ConfigurationService
                 .getBoolean(HadoopAccessorService.ACTION_CONFS_LOAD_DEFAULT_RESOURCES);
