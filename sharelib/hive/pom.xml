@@ -268,6 +268,39 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>auto-clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <directory>${basedir}</directory>
+                                    <includes>
+                                        <include>*.log</include>
+                                        <include>hive-site.xml</include>
+                                        <include>*.properties</include>
+                                        <include>hivetmp</include>
+                                        <include>propagation-conf.xml</include>
+                                    </includes>
+                                    <followSymlinks>false</followSymlinks>
+                                    <useDefaultExcludes>true</useDefaultExcludes>
+                                    <excludes>
+                                        <exclude>${basedir}/pom.xml</exclude>
+                                        <exclude>${basedir}/src</exclude>
+                                    </excludes>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
