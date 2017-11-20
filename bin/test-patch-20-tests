@@ -107,13 +107,13 @@ case $OP in
   report)
     failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
     testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    testsFailed=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $5}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    testsErrors=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $7}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsFailed=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $6}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsErrors=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $8}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
     hasFailures=$(expr $testsFailed + $testsErrors)
     testsExitCode=$(cat ${TEMPDIR}/${TASKNAME}.exitCode)
     flakyTests=$(cat ${TEMPDIR}/${TASKNAME}.flakies.out)
-    testsReRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $3}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsReRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
     if [[ $hasFailures != 0 ]] ; then
       echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
       echo ".    Tests run: $testsRun" >> $SUMMARYFILE

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3106 amend upgrade surefire-plugin to 2.20.1 (dbist13 via asasvari)
 OOZIE-2869 Ability to add/remove MapReduce jars from action classpath (gezapeti)
 OOZIE-2296 Add an Oozie diagnostic bundle tool (asasvari)
 OOZIE-3125 TestDBLoadDump.testImportInvalidDataLeavesTablesEmpty fails (asasvari)
