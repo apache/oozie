@@ -22,8 +22,13 @@
         <name>oozie.service.JPAService.jdbc.driver</name>
         <value>org.hsqldb.jdbcDriver</value>
     </property>
+    <!--
+      It is required to enforce length checks for string fields while trying to persist objects with OpenJPA in tests. To this end,
+      we need to set sql.enforce_strict_size to true when creating the EntityManagerFactory object in JPAService.
+      Please see http://hsqldb.org/doc/guide/ch04.html HSQLDB docs for details.
+    -->
     <property>
         <name>oozie.service.JPAService.jdbc.url</name>
-        <value>jdbc:hsqldb:mem:oozie-db;create=true</value>
+        <value>jdbc:hsqldb:mem:oozie-db;create=true;sql.enforce_strict_size=true</value>
     </property>
 </configuration>

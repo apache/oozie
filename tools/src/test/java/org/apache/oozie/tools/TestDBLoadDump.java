@@ -57,6 +57,8 @@ public class TestDBLoadDump extends XTestCase {
 
     @Before
     protected void setUp() throws Exception {
+        // Use hsqldb-tools-oozie-site.xml with sql.enforce_strict_size=true in these tests
+        System.setProperty("oozie.test.db", "hsqldb-tools");
         System.getProperties().remove("oozie.test.config.file");
 
         super.setUp();
