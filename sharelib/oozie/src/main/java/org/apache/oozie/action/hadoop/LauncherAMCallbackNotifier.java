@@ -102,6 +102,7 @@ public class LauncherAMCallbackNotifier {
 
     /**
      * Notify the URL just once. Use best effort.
+     * @return true in case URL is notified successfully.
      */
     protected boolean notifyURLOnce() {
         boolean success = false;

@@ -93,6 +93,8 @@ public class LocalFsOperations {
 
     /**
      * Checks if a given File exists or not. This method helps writing unit tests.
+     * @param file to check whether it exists or not
+     * @return true if file exists
      */
     public boolean fileExists(File file) {
         return file.exists();

@@ -213,9 +213,9 @@ public class OozieClient {
         NORMAL, NOWEBSERVICE, SAFEMODE
     }
 
-    private static final Set<String> COMPLETED_WF_STATUSES = new HashSet<String>();
-    private static final Set<String> COMPLETED_COORD_AND_BUNDLE_STATUSES = new HashSet<String>();
-    private static final Set<String> COMPLETED_COORD_ACTION_STATUSES = new HashSet<String>();
+    private static final Set<String> COMPLETED_WF_STATUSES = new HashSet<>();
+    private static final Set<String> COMPLETED_COORD_AND_BUNDLE_STATUSES = new HashSet<>();
+    private static final Set<String> COMPLETED_COORD_ACTION_STATUSES = new HashSet<>();
     static {
         COMPLETED_WF_STATUSES.add(WorkflowJob.Status.FAILED.toString());
         COMPLETED_WF_STATUSES.add(WorkflowJob.Status.KILLED.toString());
@@ -245,9 +245,9 @@ public class OozieClient {
     private String protocolUrl;
     private boolean validatedVersion = false;
     private JSONArray supportedVersions;
-    private final Map<String, String> headers = new HashMap<String, String>();
+    private final Map<String, String> headers = new HashMap<>();
 
-    private static final ThreadLocal<String> USER_NAME_TL = new ThreadLocal<String>();
+    private static final ThreadLocal<String> USER_NAME_TL = new ThreadLocal<>();
 
     /**
      * Allows to impersonate other users in the Oozie server. The current user
@@ -610,7 +610,7 @@ public class OozieClient {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                Map<String, String> map = new HashMap<String, String>();
+                Map<String, String> map = new HashMap<>();
                 for (Object key : json.keySet()) {
                     map.put((String)key, (String)json.get(key));
                 }
@@ -639,7 +639,7 @@ public class OozieClient {
     }
 
     static Map<String, String> prepareParams(String... params) {
-        Map<String, String> map = new LinkedHashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<>();
         for (int i = 0; i < params.length; i = i + 2) {
             map.put(params[i], params[i + 1]);
         }
@@ -968,6 +968,7 @@ public class OozieClient {
      * @param jobId coord job Id.
      * @param scope list of coord actions to be ignored
      * @throws OozieClientException thrown if the job could not be changed.
+     * @return List<CoordinatorAction> ignore a coordinator job.
      */
     public List<CoordinatorAction> ignore(String jobId, String scope) throws OozieClientException {
         return new CoordIgnore(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, scope).call();
@@ -1816,6 +1817,7 @@ public class OozieClient {
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
      * @throws OozieClientException
+     * @return List<CoordinatorAction> rerun a coordinator action.
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {

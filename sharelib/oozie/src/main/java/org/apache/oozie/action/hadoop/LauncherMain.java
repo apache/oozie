@@ -300,6 +300,8 @@ public abstract class LauncherMain {
 
     /**
      * Get file path from the given environment
+     * @param env environment
+     * @return path given environment returns file path
      */
     protected static String getFilePathFromEnv(String env) {
         String path = System.getenv(env);
