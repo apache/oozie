@@ -52,17 +52,19 @@ import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
 import org.apache.oozie.executor.jpa.sla.SLASummaryGetRecordsOnRestartJPAExecutor;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
-import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.Pair;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.LogUtils;
+import org.apache.oozie.util.Pair;
+import org.apache.oozie.util.XLog;
 
 /**
  * Implementation class for SLACalculator that calculates SLA related to
@@ -79,6 +81,9 @@ public class SLACalculatorMemory implements SLACalculator {
     protected EventHandlerService eventHandler;
     private static int modifiedAfter;
     private static long jobEventLatency;
+    private Instrumentation instrumentation;
+    public static final String INSTRUMENTATION_GROUP = "sla-calculator";
+    public static final String SLA_MAP = "sla-map";
 
     @Override
     public void init(Configuration conf) throws ServiceException {
@@ -88,6 +93,7 @@ public class SLACalculatorMemory implements SLACalculator {
         historySet = Collections.synchronizedSet(new HashSet<String>());
         jpaService = Services.get().get(JPAService.class);
         eventHandler = Services.get().get(EventHandlerService.class);
+        instrumentation = Services.get().get(InstrumentationService.class).get();
         // load events modified after
         modifiedAfter = conf.getInt(SLAService.CONF_EVENTS_MODIFIED_AFTER, 7);
         loadOnRestart();
@@ -139,7 +145,7 @@ public class SLACalculatorMemory implements SLACalculator {
                     .execute(new SLASummaryGetRecordsOnRestartJPAExecutor(modifiedAfter));
             for (SLASummaryBean summaryBean : summaryBeans) {
                 String jobId = summaryBean.getId();
-                slaMap.put(jobId, new SLACalcStatus(summaryBean));
+                putAndIncrement(jobId, new SLACalcStatus(summaryBean));
             }
             LOG.info("Loaded {0} SLASummary object after restart", slaMap.size());
         }
@@ -205,8 +211,10 @@ public class SLACalculatorMemory implements SLACalculator {
 
     @Override
     public void clear() {
+        final int originalSize = slaMap.size();
         slaMap.clear();
         historySet.clear();
+        instrumentation.decr(INSTRUMENTATION_GROUP, SLA_MAP, originalSize);
     }
 
     /**
@@ -229,7 +237,7 @@ public class SLACalculatorMemory implements SLACalculator {
         catch (JPAExecutorException e) {
             if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
                 LOG.debug("job [{0}] is is not in DB, removing from Memory", jobId);
-                slaMap.remove(jobId);
+                removeAndDecrement(jobId);
                 return;
             }
             throw e;
@@ -240,7 +248,7 @@ public class SLACalculatorMemory implements SLACalculator {
             if (eventProc == 7) {
                 historySet.add(jobId);
             }
-            slaMap.remove(jobId);
+            removeAndDecrement(jobId);
             LOG.trace("Removed Job [{0}] from map as SLA processed", jobId);
         }
         else {
@@ -260,7 +268,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 catch (XException e) {
                     if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
                         LOG.debug("job [{0}] is is not in DB, removing from Memory", slaCalc.getId());
-                        slaMap.remove(jobId);
+                        removeAndDecrement(jobId);
                     }
                     else {
                         if (firstCheckAfterRetstart) {
@@ -361,7 +369,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 SLACalcStatus slaCalc = new SLACalcStatus(reg);
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
-                slaMap.put(jobId, slaCalc);
+                putAndIncrement(jobId, slaCalc);
                 List<JsonBean> insertList = new ArrayList<JsonBean>();
                 final SLASummaryBean summaryBean = new SLASummaryBean(slaCalc);
                 final Timestamp currentTime = DateUtils.convertDateToTimestamp(new Date());
@@ -415,7 +423,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 SLACalcStatus slaCalc = new SLACalcStatus(reg);
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
-                slaMap.put(jobId, slaCalc);
+                putAndIncrement(jobId, slaCalc);
 
                 @SuppressWarnings("rawtypes")
                 List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
@@ -445,7 +453,7 @@ public class SLACalculatorMemory implements SLACalculator {
      */
     @Override
     public void removeRegistration(String jobId) {
-        if (slaMap.remove(jobId) == null) {
+        if (!removeAndDecrement(jobId)) {
             historySet.remove(jobId);
         }
     }
@@ -470,7 +478,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 SLASummaryBean slaSummaryBean = SLASummaryQueryExecutor.getInstance().get(
                         SLASummaryQuery.GET_SLA_SUMMARY, jobId);
                 slaCalc = new SLACalcStatus(slaSummaryBean, slaRegBean);
-                slaMap.put(jobId, slaCalc);
+                putAndIncrement(jobId, slaCalc);
             }
         }
         else {
@@ -509,12 +517,12 @@ public class SLACalculatorMemory implements SLACalculator {
     private void checkEventProc(SLACalcStatus slaCalc){
         byte eventProc = slaCalc.getEventProcessed();
         if (slaCalc.getEventProcessed() >= 8) {
-            slaMap.remove(slaCalc.getId());
+            removeAndDecrement(slaCalc.getId());
             LOG.debug("Removed Job [{0}] from map after Event-processed=8", slaCalc.getId());
         }
         if (eventProc == 7) {
             historySet.add(slaCalc.getId());
-            slaMap.remove(slaCalc.getId());
+            removeAndDecrement(slaCalc.getId());
             LOG.debug("Removed Job [{0}] from map after Event-processed=7", slaCalc.getId());
         }
     }
@@ -657,6 +665,28 @@ public class SLACalculatorMemory implements SLACalculator {
                 }
             }
         }
+        return false;
+    }
+
+    private boolean putAndIncrement(final String jobId, final SLACalcStatus newStatus) {
+        if (slaMap.put(jobId, newStatus) == null) {
+            LOG.trace("Added a new item to SLA map. [jobId={0}]", jobId);
+            instrumentation.incr(INSTRUMENTATION_GROUP, SLA_MAP, 1);
+            return true;
+        }
+
+        LOG.trace("Updated an existing item in SLA map. [jobId={0}]", jobId);
+        return false;
+    }
+
+    private boolean removeAndDecrement(final String jobId) {
+        if (slaMap.remove(jobId) != null) {
+            LOG.trace("Removed an existing item from SLA map. [jobId={0}]", jobId);
+            instrumentation.decr(INSTRUMENTATION_GROUP, SLA_MAP, 1);
+            return true;
+        }
+
+        LOG.trace("Tried to remove a non-existing item from SLA map. [jobId={0}]", jobId);
         return false;
     }
 }

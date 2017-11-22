@@ -521,6 +521,18 @@ public class Instrumentation {
     }
 
     /**
+     * Decrement an instrumentation counter. The counter is created if it does not exists. <p> This method is thread
+     * safe.
+     *
+     * @param group counter group.
+     * @param name counter name.
+     * @param count decrement to add to the counter.
+     */
+    public void decr(final String group, final String name, final long count) {
+        incr(group, name, -count);
+    }
+
+    /**
      * Interface for instrumentation variables. <p> For example a the database service could expose the number of
      * currently active connections.
      */

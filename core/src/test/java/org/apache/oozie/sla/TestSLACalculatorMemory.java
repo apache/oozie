@@ -56,11 +56,13 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -71,6 +73,7 @@ import org.junit.Test;
 public class TestSLACalculatorMemory extends XDataTestCase {
     private Services services;
     private JPAService jpaService;
+    private Instrumentation instrumentation;
 
     @Override
     @Before
@@ -78,11 +81,13 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         super.setUp();
         services = new Services();
         Configuration conf = services.get(ConfigurationService.class).getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
-                + "org.apache.oozie.sla.service.SLAService");
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService," +
+                "org.apache.oozie.sla.service.SLAService," +
+                "org.apache.oozie.service.InstrumentationService");
         conf.setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 600);
         services.init();
         jpaService = services.get(JPAService.class);
+        instrumentation = services.get(InstrumentationService.class).get();
     }
 
     @Override
@@ -985,4 +990,93 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertEquals(slaSummaryBean.getJobStatus(), WorkflowInstance.Status.SUCCEEDED.toString());
     }
 
+    public void testSingleAddUpdateRemoveInstrumentedCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
+        slaRegBean.setExpectedStart(startTime); // 1 hour back
+        slaRegBean.setExpectedDuration(1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+
+        long slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+
+        assertEquals("SLA map size after add should be 1", 1, slaMapSize);
+
+        slaCalcMemory.updateJobSla(jobId);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after update should be 1", 1, slaMapSize);
+
+        slaCalcMemory.removeRegistration(jobId);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after remove should be 0", 0, slaMapSize);
+    }
+
+    public void testAddMultipleRestartRemoveMultipleInstrumentedCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+        String jobId1 = slaRegBean1.getId();
+        SLARegistrationBean slaRegBean2 = _createSLARegistration("job-2-W", AppType.WORKFLOW_JOB);
+        String jobId2 = slaRegBean2.getId();
+        SLARegistrationBean slaRegBean3 = _createSLARegistration("job-3-W", AppType.WORKFLOW_JOB);
+        String jobId3 = slaRegBean3.getId();
+        List<String> idList = new ArrayList<String>();
+        idList.add(slaRegBean1.getId());
+        idList.add(slaRegBean2.getId());
+        idList.add(slaRegBean3.getId());
+        createWorkflow(idList);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+        slaRegBean1.setAppName("app-name");
+        slaRegBean1.setExpectedDuration(123);
+        slaRegBean1.setExpectedEnd(sdf.parse("2012-02-07"));
+        slaRegBean1.setExpectedStart(sdf.parse("2011-02-07"));
+        slaRegBean1.setNominalTime(sdf.parse("2012-01-06"));
+        slaRegBean1.setUser("user");
+        slaRegBean1.setParentId("parentId");
+        slaRegBean1.setUpstreamApps("upstreamApps");
+        slaRegBean1.setNotificationMsg("notificationMsg");
+        slaRegBean1.setAlertContact("a@abc.com");
+        slaRegBean1.setAlertEvents("MISS");
+        slaRegBean1.setJobData("jobData");
+
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1 hour back
+        Date endTime = new Date(System.currentTimeMillis() + 2 * 1 * 3600 * 1000); // 1 hour back
+
+        slaRegBean3.setExpectedStart(startTime);
+        slaRegBean3.setExpectedEnd(endTime);
+
+        slaCalcMemory.addRegistration(jobId1, slaRegBean1);
+        slaCalcMemory.addRegistration(jobId2, slaRegBean2);
+        slaCalcMemory.addRegistration(jobId3, slaRegBean3);
+
+        long slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+
+        assertEquals("SLA map size after add all should be 3", 3, slaMapSize);
+
+        slaCalcMemory.updateAllSlaStatus();
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after update all should be 2. An instance of SLACalcStatus was removed", 2, slaMapSize);
+
+        slaCalcMemory.removeRegistration(jobId1);
+        slaCalcMemory.removeRegistration(jobId2);
+        slaCalcMemory.removeRegistration(jobId3);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after remove all should be 0", 0, slaMapSize);
+    }
 }
