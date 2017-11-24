@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XLog;
@@ -34,6 +35,19 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     public static final String CLASS_NAMES = "oozie.actions.main.classnames";
     private static final XLog LOG = XLog.getLog(DistcpActionExecutor.class);
     public static final String DISTCP_TYPE = "distcp";
+
+    /**
+     * Comma separated list of NameNode hosts to obtain delegation token(s) for.
+     */
+    private static final String OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS = "oozie.launcher.mapreduce.job.hdfs-servers";
+
+    /**
+     * Comma separated list to instruct ResourceManagers on either cluster to skip delegation token renewal for NameNode hosts.
+     */
+    private static final String OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS_TOKEN_RENEWAL_EXCLUDE =
+            "oozie.launcher.mapreduce.job.hdfs-servers.token-renewal.exclude";
+    private static final String JOB_NAMENODES_TOKEN_RENEWAL_EXCLUDE = "mapreduce.job.hdfs-servers.token-renewal.exclude";
+
 
     public DistcpActionExecutor() {
         super("distcp");
@@ -109,5 +123,22 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
         return launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS);
+    }
+
+    /**
+     * Extracts information required for DistCp action between secure clusters (in the same or distinct Kerberos realms)
+     *
+     * @param jobconf workflow action configuration
+     */
+    @Override
+    protected void setActionTokenProperties(final Configuration jobconf) {
+        final String hdfsServers = jobconf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS);
+        if (hdfsServers != null) {
+            jobconf.set(MRJobConfig.JOB_NAMENODES, hdfsServers);
+            final String tokenRenewalExclude = jobconf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS_TOKEN_RENEWAL_EXCLUDE);
+            if (tokenRenewalExclude != null) {
+                jobconf.set(JOB_NAMENODES_TOKEN_RENEWAL_EXCLUDE, tokenRenewalExclude);
+            }
+        }
     }
 }

@@ -55,7 +55,7 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
-import org.apache.hadoop.mapreduce.MRConfig;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
@@ -65,7 +65,6 @@ import org.apache.hadoop.util.DiskChecker;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
-import org.apache.hadoop.yarn.api.records.ApplicationAccessType;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
@@ -1373,29 +1372,46 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected void setCredentialTokens(Credentials credentials, Configuration jobconf, Context context, WorkflowAction action,
                                        Map<String, CredentialsProperties> credPropertiesMap) throws Exception {
+        if (!isValidCredentialTokensPreconditions(context, action, credPropertiesMap)) {
+            LOG.debug("Not obtaining delegation token(s) as preconditions do not hold.");
+            return;
+        }
 
-        if (context != null && action != null && credPropertiesMap != null) {
-            // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
-            CredentialsProviderFactory.ensureKerberosLogin();
-            for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
-                String credName = entry.getKey();
-                CredentialsProperties credProps = entry.getValue();
-                if (credProps != null) {
-                    CredentialsProvider tokenProvider = CredentialsProviderFactory.getInstance()
-                            .createCredentialsProvider(credProps.getType());
-                    if (tokenProvider != null) {
-                        tokenProvider.updateCredentials(credentials, jobconf, credProps, context);
-                        LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
-                    }
-                    else {
-                        LOG.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
-                        throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA020",
+        setActionTokenProperties(jobconf);
+        // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
+        CredentialsProviderFactory.ensureKerberosLogin();
+        for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
+            String credName = entry.getKey();
+            CredentialsProperties credProps = entry.getValue();
+            if (credProps != null) {
+                CredentialsProvider tokenProvider = CredentialsProviderFactory.getInstance()
+                        .createCredentialsProvider(credProps.getType());
+                if (tokenProvider != null) {
+                    tokenProvider.updateCredentials(credentials, jobconf, credProps, context);
+                    LOG.debug("Retrieved Credential '" + credName + "' for action " + action.getId());
+                } else {
+                    LOG.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA020",
                             "Could not load credentials of type [{0}] with name [{1}]]; perhaps it was not defined"
-                                + " in oozie-site.xml?", credProps.getType(), credName);
-                    }
+                                    + " in oozie-site.xml?", credProps.getType(), credName);
                 }
             }
         }
+    }
+
+    private boolean isValidCredentialTokensPreconditions(final Context context,
+                                                         final WorkflowAction action,
+                                                         final Map<String, CredentialsProperties> credPropertiesMap) {
+        return context != null && action != null && credPropertiesMap != null;
+    }
+
+    /**
+     * Subclasses may override this method in order to take additional actions required for obtaining credential token(s).
+     *
+     * @param jobconf workflow action configuration
+     */
+    protected void setActionTokenProperties(final Configuration jobconf) {
+        // nop
     }
 
     protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,

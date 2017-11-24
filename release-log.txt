@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2900 Retrieve tokens for oozie.launcher.mapreduce.job.hdfs-servers before submission (asasvari)
 OOZIE-3132 Instrument SLACalculatorMemory (andras.piros)
 OOZIE-2945 Update SpotBugs to stable version after GA (dbist13 via gezapeti)
 OOZIE-3114 Fix javadoc for warning: no @return (dbist13 via gezapeti)
