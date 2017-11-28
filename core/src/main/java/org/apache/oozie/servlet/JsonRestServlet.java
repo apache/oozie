@@ -584,6 +584,17 @@ public abstract class JsonRestServlet extends HttpServlet {
     }
 
     /**
+     * Gets proxy user.
+     * If there is any proxy user, then <code>HttpServletRequest</code> contains proxy user.
+     * Otherwise it is the normal user.
+     * @param request
+     * @return
+     */
+    protected String getProxyUser(HttpServletRequest request) {
+        return (String) request.getAttribute(USER_NAME);
+    }
+
+    /**
      * Set the thread local log info with the given information.
      *
      * @param actionid action ID.

@@ -3242,7 +3242,10 @@ function initConsole() {
     if (isSLAServiceEnabled == "true") {
         tabs.add(slaDashboard);
     }
-    tabs.add(adminGrid);
+    if(showSystemInfo == "true"){
+       tabs.add(adminGrid);
+       viewConfig.execute();
+    }
     if (isInstrumentationServiceEnabled == "true") {
         tabs.add(instrumentationArea);
     }
@@ -3279,7 +3282,6 @@ function initConsole() {
         }
     });
     checkStatus.execute();
-    viewConfig.execute();
     serverVersion.execute();
     if (isInstrumentationServiceEnabled == "true") {
            viewInstrumentation.execute();

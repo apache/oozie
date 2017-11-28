@@ -127,16 +127,19 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_OS_ENV_RESOURCE)) {
+            authorizeForSystemInfo(request);
             JSONObject json = new JSONObject();
             json.putAll(instr.getOSEnv());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_JAVA_SYS_PROPS_RESOURCE)) {
+            authorizeForSystemInfo(request);
             JSONObject json = new JSONObject();
             json.putAll(instr.getJavaSystemProperties());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_CONFIG_RESOURCE)) {
+            authorizeForSystemInfo(request);
             JSONObject json = new JSONObject();
             json.putAll(instr.getConfiguration());
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
@@ -339,6 +342,24 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         try {
             AuthorizationService auth = Services.get().get(AuthorizationService.class);
             auth.authorizeForAdmin(getUser(request), true);
+        }
+        catch (AuthorizationException ex) {
+            throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);
+        }
+    }
+
+    /**
+     * Authorize request.
+     *
+     * @param request the HttpServletRequest
+     * @throws XServletException the x servlet exception
+     */
+    private void authorizeForSystemInfo(HttpServletRequest request) throws XServletException {
+        try {
+            AuthorizationService auth = Services.get().get(AuthorizationService.class);
+            if (auth.isAuthorizedSystemInfo()) {
+                auth.authorizeForSystemInfo(getUser(request), getProxyUser(request));
+            }
         }
         catch (AuthorizationException ex) {
             throw new XServletException(HttpServletResponse.SC_UNAUTHORIZED, ex);

@@ -329,6 +329,14 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.AuthorizationService.system.info.authorized.users</name>
+        <value></value>
+        <description>
+            Comma separated list of users authorized for web service calls to get system configuration.
+        </description>
+    </property>
+
     <!-- InstrumentationService -->
 
     <property>

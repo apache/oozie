@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -79,6 +80,11 @@ public class TestAuthorizationService extends XDataTestCase {
     private Services services;
 
     private void init(boolean useDefaultGroup, boolean useAdminUsersFile) throws Exception {
+        init(useDefaultGroup, useAdminUsersFile, StringUtils.EMPTY);
+    }
+
+    private void init(boolean useDefaultGroup, boolean useAdminUsersFile, String systemInfoAuthUsers) throws
+            Exception {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         services = new Services();
@@ -91,9 +97,10 @@ public class TestAuthorizationService extends XDataTestCase {
         else {
             conf.set(AuthorizationService.CONF_ADMIN_GROUPS, getTestGroup());
         }
+        conf.set(AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS, systemInfoAuthUsers);
         conf.set(Services.CONF_SERVICE_CLASSES,
-                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() +
-                 "," + DummyGroupsService.class.getName());
+                conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() + ","
+                        + DummyGroupsService.class.getName());
         conf.set(AuthorizationService.CONF_DEFAULT_GROUP_AS_ACL, Boolean.toString(useDefaultGroup));
         services.init();
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
@@ -330,5 +337,38 @@ public class TestAuthorizationService extends XDataTestCase {
 
     public void testAdminUsersWithAdminGroup() throws Exception {
         _testAdminUsers(false, getTestUser(), getTestUser2());
+    }
+
+    public void testAuthorizedSystemInfoDefaultSuccess() throws Exception {
+        //AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS is empty
+        init(true, false, StringUtils.EMPTY);
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser", "proxyUser");
+    }
+
+    public void testAuthorizedSystemInfoSuccess() throws Exception {
+        //Set AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS to proxyUser,regularUser
+        init(true, false, "proxyUser,regularUser");
+
+        //Use proxyUser in request
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser");
+
+        //Use regularUser in request
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser", "proxyUser1");
+
+        //The proxy user and regular user used in the request are different. Proxy user belongs to one of the
+        //admin groups in AuthorizationService.CONF_ADMIN_GROUPS
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", getTestUser());
+    }
+
+    public void testAuthorizedSystemInfoFailure() throws Exception {
+        init(true, false, "proxyUser,regularUser");
+        try {
+            services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser1");
+            fail("Should have thrown exception because regularUser1 or proxyUser1 are not authorized to access system info");
+        }
+        catch (AuthorizationException ex) {
+            assertEquals("Exception message is different than expected",
+                    "E0503: User [regularUser1] does not have admin " + "privileges", ex.getMessage());
+        }
     }
 }

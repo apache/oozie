@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -79,6 +80,9 @@ public class AuthorizationService implements Service {
      */
     public static final String CONF_ADMIN_GROUPS = CONF_PREFIX + "admin.groups";
 
+    public static final String CONF_SYSTEM_INFO_AUTHORIZED_USERS = CONF_PREFIX + "system.info.authorized.users";
+
+
     /**
      * File that contains list of admin users for Oozie.
      */
@@ -89,9 +93,10 @@ public class AuthorizationService implements Service {
 
     private Set<String> adminGroups;
     private Set<String> adminUsers;
+    private Set<String> sysInfoAuthUsers;
     private boolean authorizationEnabled;
     private boolean useDefaultGroupAsAcl;
-
+    private boolean authorizedSystemInfo = false;
     private final XLog log = XLog.getLog(getClass());
     private Instrumentation instrumentation;
 
@@ -113,6 +118,14 @@ public class AuthorizationService implements Service {
         authorizationEnabled =
             ConfigUtils.getWithDeprecatedCheck(services.getConf(), CONF_AUTHORIZATION_ENABLED,
                                                CONF_SECURITY_ENABLED, false);
+        String systemInfoAuthUsers = ConfigurationService.get(CONF_SYSTEM_INFO_AUTHORIZED_USERS);
+        if (!StringUtils.isBlank(systemInfoAuthUsers)) {
+            authorizedSystemInfo = true;
+            sysInfoAuthUsers = new HashSet<>();
+            for (String user : getTrimmedStrings(systemInfoAuthUsers)) {
+                sysInfoAuthUsers.add(user);
+            }
+        }
         if (authorizationEnabled) {
             log.info("Oozie running with authorization enabled");
             useDefaultGroupAsAcl = ConfigurationService.getBoolean(CONF_DEFAULT_GROUP_AS_ACL);
@@ -289,6 +302,21 @@ public class AuthorizationService implements Service {
             }
         }
         return admin;
+    }
+
+    /**
+     * Check if the user is authorized to access system information.
+     *
+     * @param user user name.
+     * @param proxyUser proxy user name.
+     * @throws AuthorizationException thrown if user does not have admin priviledges.
+     */
+    public void authorizeForSystemInfo(String user, String proxyUser) throws AuthorizationException {
+        if (authorizationEnabled && authorizedSystemInfo && !(sysInfoAuthUsers.contains(user) || sysInfoAuthUsers
+                .contains(proxyUser) || isAdmin(user) || isAdmin(proxyUser))) {
+            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+            throw new AuthorizationException(ErrorCode.E0503, user);
+        }
     }
 
     /**
@@ -611,5 +639,9 @@ public class AuthorizationService implements Service {
         if (instrumentation != null) {
             instrumentation.incr(INSTRUMENTATION_GROUP, name, count);
         }
+    }
+
+    public boolean isAuthorizedSystemInfo() {
+        return authorizedSystemInfo;
     }
 }

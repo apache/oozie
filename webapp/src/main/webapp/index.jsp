@@ -55,11 +55,15 @@
             import="org.apache.oozie.sla.service.SLAService"
             import="org.apache.oozie.service.InstrumentationService"
             import="org.apache.oozie.service.MetricsInstrumentationService"
+            import="org.apache.oozie.service.AuthorizationService"
+            import="org.apache.oozie.service.Services"
+
         %>
         <%
             boolean isSLAServiceEnabled = SLAService.isEnabled();
             boolean isInstrumentationServiceEnabled = InstrumentationService.isEnabled();
             boolean isMetricsInstrumentationServiceEnabled = MetricsInstrumentationService.isEnabled();
+            boolean showSystemInfo = !Services.get().get(AuthorizationService.class).isAuthorizedSystemInfo();
         %>
         <div id="oozie-body" style="padding:2">
             <div class="x-tab-panel-header x-unselectable x-tab-strip-top" style="width:1048">
@@ -69,6 +73,7 @@
                     var isSLAServiceEnabled = "<%=isSLAServiceEnabled%>";
                     var isInstrumentationServiceEnabled = "<%=isInstrumentationServiceEnabled%>";
                     var isMetricsInstrumentationServiceEnabled = "<%=isMetricsInstrumentationServiceEnabled%>";
+                    var showSystemInfo = "<%=showSystemInfo%>";
                     document.title = msg;
                     document.write(msg);
                  </script>
