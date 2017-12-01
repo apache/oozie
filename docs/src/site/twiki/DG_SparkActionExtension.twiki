@@ -97,16 +97,26 @@ The =class= element if present, indicates the spark's application main class.
 
 The =jar= element indicates a comma separated list of jars or python files.
 
-The =spark-opts= element, if present, contains a list of spark options that can be passed to spark driver. Spark configuration
-options can be passed by specifying '--conf key=value' here, or from =oozie.service.SparkConfigurationService.spark.configurations=
-in oozie-site.xml. Values containing whitespaces can be enclosed by double quotes. The =spark-opts= configs have priority.
+The =spark-opts= element, if present, contains a list of Spark options that can be passed to Spark. Spark configuration
+options can be passed by specifying '--conf key=value' or other Spark CLI options.
+Values containing whitespaces can be enclosed by double quotes.
 
 Some examples of the =spark-opts= element:
    * '--conf key=value'
    * '--conf key1=value1 value2'
    * '--conf key1="value1 value2"'
    * '--conf key1=value1 key2="value2 value3"'
-   * '--conf key=value --verbose'
+   * '--conf key=value --verbose --properties-file user.properties'
+
+There are several ways to define properties that will be passed to Spark. They are processed in the following order:
+    * propagated from =oozie.service.SparkConfigurationService.spark.configurations=
+    * read from a localized =spark-defaults.conf= file
+    * read from a file defined in =spark-opts= via the =--properties-file=
+    * properties defined in =spark-opts= element
+
+(The latter takes precedence over the former.)
+The server propagated properties, the =spark-defaults.conf= and the user-defined properties file are merged together into a
+single properties file as Spark handles only one file in its =--properties-file= option.
 
 The =arg= element if present, contains arguments that can be passed to spark application.
 

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3112 SparkConfigrationService overwrites properties provided via --properties-file option in SparkAction (gezapeti)
 OOZIE-3126 Add option to allow list of users to access system config (satishsaley)
 OOZIE-2900 Retrieve tokens for oozie.launcher.mapreduce.job.hdfs-servers before submission (asasvari)
 OOZIE-3132 Instrument SLACalculatorMemory (andras.piros)

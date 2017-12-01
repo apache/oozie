@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
 
 import java.text.MessageFormat;
@@ -82,12 +83,8 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         Properties sparkConfProps = new Properties();
         sparkConfProps.setProperty("a", "A");
         sparkConfProps.setProperty("b", "B");
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(sparkConf);
+        try (FileOutputStream fos = new FileOutputStream(sparkConf)){
             sparkConfProps.store(fos, "");
-        } finally {
-            IOUtils.closeSafely(fos);
         }
         SparkConfigurationService scs = Services.get().get(SparkConfigurationService.class);
         scs.destroy();
@@ -104,7 +101,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
     }
 
     @SuppressWarnings("unchecked")
-    private void _testSetupMethods(String master, Map<String, String> extraSparkOpts, String mode) throws Exception {
+    private void _testSetupMethods(String master, Map<String, String> defaultSparkOpts, String mode) throws Exception {
         SparkActionExecutor ae = new SparkActionExecutor();
         assertEquals(Arrays.asList(SparkMain.class), ae.getLauncherClasses());
 
@@ -137,16 +134,26 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
         assertEquals(getNameNodeUri() + "/foo.jar", conf.get("oozie.spark.jar"));
         Map<String, String> sparkOpts = new HashMap<String, String>();
         sparkOpts.put("foo", "bar");
-        sparkOpts.putAll(extraSparkOpts);
-        Matcher m = SPARK_OPTS_PATTERN.matcher(conf.get("oozie.spark.spark-opts"));
+        sparkOpts.putAll(defaultSparkOpts);
+        final String configSparkOpts = conf.get("oozie.spark.spark-opts");
         int count = 0;
+        Matcher m = SPARK_OPTS_PATTERN.matcher(configSparkOpts);
         while (m.find()) {
             count++;
             String key = m.group(1);
             String val = m.group(2);
             assertEquals(sparkOpts.get(key), val);
         }
-        assertEquals(sparkOpts.size(), count);
+        if(defaultSparkOpts.size() > 0) {
+            final String defaultCconfigSparkOpts = conf.get("oozie.spark.spark-default-opts");
+            Properties p = new Properties();
+            p.load(new StringReader(defaultCconfigSparkOpts));
+            for(String key : defaultSparkOpts.keySet()){
+                count++;
+                assertEquals(sparkOpts.get(key), p.getProperty(key));
+            }
+        }
+        assertEquals(configSparkOpts, sparkOpts.size(), count);
     }
 
     private String getActionXml() {

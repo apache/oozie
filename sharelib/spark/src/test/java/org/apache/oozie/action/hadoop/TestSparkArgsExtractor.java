@@ -20,11 +20,19 @@ package org.apache.oozie.action.hadoop;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.After;
 import org.junit.Test;
+import scala.util.PropertiesTrait;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
+import static org.apache.oozie.action.hadoop.SparkArgsExtractor.SPARK_DEFAULTS_GENERATED_PROPERTIES;
 import static org.junit.Assert.assertEquals;
 
 public class TestSparkArgsExtractor {
@@ -250,5 +258,78 @@ public class TestSparkArgsExtractor {
                         "arg0",
                         "arg1"),
                 sparkArgs);
+    }
+
+    @Test
+    public void testPropertiesFileMerging() throws Exception {
+        final Configuration actionConf = new Configuration();
+        actionConf.set(SparkActionExecutor.SPARK_MASTER, "yarn");
+        actionConf.set(SparkActionExecutor.SPARK_MODE, "client");
+        actionConf.set(SparkActionExecutor.SPARK_CLASS, "org.apache.oozie.example.SparkFileCopy");
+        actionConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark Copy File");
+        actionConf.set(SparkActionExecutor.SPARK_DEFAULT_OPTS, "defaultProperty=1\ndefaultProperty2=2\ndefaultProperty3=3");
+        actionConf.set(SparkActionExecutor.SPARK_OPTS,
+                "--properties-file foo.properties --conf spark.driver.extraJavaOptions=-Xmx234m");
+        actionConf.set(SparkActionExecutor.SPARK_JAR, "/lib/test.jar");
+        createTemporaryFileWithContent("spark-defaults.conf", "foo2=bar2\ndefaultProperty3=44\nfoo3=nobar");;
+        createTemporaryFileWithContent("foo.properties", "foo=bar\ndefaultProperty2=4\nfoo3=barbar");
+
+        final String[] mainArgs = {"arg0", "arg1"};
+        final List<String> sparkArgs = new SparkArgsExtractor(actionConf).extract(mainArgs);
+
+        Properties p = readMergedProperties();
+        assertEquals("property defaultProperty should've been read from server-propagated config",
+                "1", p.get("defaultProperty"));
+        assertEquals("property defaultProperty2 should've been overwritten by user-defined foo.properties",
+                "4", p.get("defaultProperty2"));
+        assertEquals("property defaultProperty3 should've been overwritten by localized spark-defaults.conf",
+                "44", p.get("defaultProperty3"));
+        assertEquals("property foo should've been read from user-defined foo.properties",
+                "bar", p.get("foo"));
+        assertEquals("property foo2 should've been read from localized spark-defaults.conf",
+                "bar2", p.get("foo2"));
+        assertEquals("property foo3 should've been overwritten by user-defined foo.properties",
+                "barbar", p.get("foo3"));
+        assertEquals("Spark args mismatch",
+                Lists.newArrayList("--master", "yarn", "--deploy-mode", "client", "--name", "Spark Copy File",
+                        "--class", "org.apache.oozie.example.SparkFileCopy", "--conf",
+                        "spark.driver.extraJavaOptions=-Xmx234m -Dlog4j.configuration=spark-log4j.properties", "--conf",
+                        "spark.executor.extraClassPath=$PWD/*", "--conf", "spark.driver.extraClassPath=$PWD/*", "--conf",
+                        "spark.yarn.security.tokens.hadoopfs.enabled=false", "--conf",
+                        "spark.yarn.security.tokens.hive.enabled=false", "--conf", "spark.yarn.security.tokens.hbase.enabled=false",
+                        "--conf", "spark.yarn.security.credentials.hadoopfs.enabled=false", "--conf",
+                        "spark.yarn.security.credentials.hive.enabled=false", "--conf",
+                        "spark.yarn.security.credentials.hbase.enabled=false", "--conf",
+                        "spark.executor.extraJavaOptions=-Dlog4j.configuration=spark-log4j.properties",
+                        "--properties-file", "spark-defaults-oozie-generated.properties", "--files",
+                        "spark-log4j.properties,hive-site.xml", "--conf", "spark.yarn.jar=null", "--verbose", "/lib/test.jar",
+                        "arg0", "arg1"),
+                sparkArgs);
+    }
+
+    private Properties readMergedProperties() throws IOException {
+        final File file = new File(SPARK_DEFAULTS_GENERATED_PROPERTIES);
+        file.deleteOnExit();
+        final Properties properties = new Properties();
+        try(final FileReader reader = new FileReader(file)) {
+            properties.load(reader);
+        }
+        return properties;
+    }
+
+    private void createTemporaryFileWithContent(String filename, String content) throws IOException {
+        final File file = new File(filename);
+        file.deleteOnExit();
+        try(final FileWriter fileWriter = new FileWriter(file)) {
+            fileWriter.write(content);
+        }
+    }
+
+    @After
+    public void cleanUp() throws Exception {
+        File f = new File("spark-defaults.conf");
+        if(f.exists()) {
+            f.delete();
+        }
     }
 }
