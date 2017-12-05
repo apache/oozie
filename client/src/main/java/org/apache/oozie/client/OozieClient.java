@@ -74,7 +74,6 @@ import org.codehaus.jackson.type.TypeReference;
  * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
  * <p>
  * Valid filter names are:
- * <p>
  * <ul>
  * <li>name: the workflow application name from the workflow definition.</li>
  * <li>user: the user that submitted the job.</li>
@@ -256,7 +255,7 @@ public class OozieClient {
      * IMPORTANT: impersonation happens only with Oozie client requests done within
      * doAs() calls.
      *
-     * @param <T>
+     * @param <T> the type of the callable
      * @param userName user to impersonate.
      * @param callable callable with {@link OozieClient} calls impersonating the specified user.
      * @return any response returned by the {@link Callable#call()} method.
@@ -520,12 +519,12 @@ public class OozieClient {
     /**
      * Create retryable http connection to oozie server.
      *
-     * @param url
-     * @param method
+     * @param url URL to create connection to
+     * @param method method to use - GET, POST, PUT
      * @return connection
-     * @throws IOException
+     * @throws IOException in case of an exception during connection setup
      */
-    protected HttpURLConnection createRetryableConnection(final URL url, final String method) throws IOException{
+    protected HttpURLConnection createRetryableConnection(final URL url, final String method) throws IOException {
         return (HttpURLConnection) new ConnectionRetriableClient(getRetryCount()) {
             @Override
             public Object doExecute(URL url, String method) throws IOException, OozieClientException {
@@ -538,11 +537,11 @@ public class OozieClient {
     /**
      * Create http connection to oozie server.
      *
-     * @param url
-     * @param method
+     * @param url URL to create connection to
+     * @param method method to use - GET, POST, PUT
      * @return connection
-     * @throws IOException
-     * @throws OozieClientException
+     * @throws IOException in case of an exception during connection setup
+     * @throws OozieClientException if the connection can't be set up
      */
     protected HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -967,8 +966,9 @@ public class OozieClient {
      *
      * @param jobId coord job Id.
      * @param scope list of coord actions to be ignored
+     * @return the list ignored actions or null if there are none
      * @throws OozieClientException thrown if the job could not be changed.
-     * @return List<CoordinatorAction> ignore a coordinator job.
+     * @return list of ignored coordinator jobs
      */
     public List<CoordinatorAction> ignore(String jobId, String scope) throws OozieClientException {
         return new CoordIgnore(jobId, RestConstants.JOB_COORD_SCOPE_ACTION, scope).call();
@@ -1072,7 +1072,7 @@ public class OozieClient {
     /**
      * Get the JMS Connection info
      * @return JMSConnectionInfo object
-     * @throws OozieClientException
+     * @throws OozieClientException thrown if the JMS info could not be retrieved.
      */
     public JMSConnectionInfo getJMSConnectionInfo() throws OozieClientException {
         return new JMSInfo().call();
@@ -1128,9 +1128,9 @@ public class OozieClient {
     /**
      * Get the audit log of a job.
      *
-     * @param jobId
-     * @param ps
-     * @throws OozieClientException
+     * @param jobId the id of the job
+     * @param ps the stream to write the result into
+     * @throws OozieClientException thrown if the job audit log could not be retrieved.
      */
     public void getJobAuditLog(String jobId, PrintStream ps) throws OozieClientException {
         new JobAuditLog(jobId, ps).call();
@@ -1154,9 +1154,9 @@ public class OozieClient {
     /**
      * Get the error log of a job.
      *
-     * @param jobId
-     * @param ps
-     * @throws OozieClientException
+     * @param jobId the id of the job
+     * @param ps the stream to write the result into
+     * @throws OozieClientException thrown if the job log could not be retrieved.
      */
     public void getJobErrorLog(String jobId, PrintStream ps) throws OozieClientException {
         new JobErrorLog(jobId, ps).call();
@@ -1202,7 +1202,7 @@ public class OozieClient {
      * Gets the JMS topic name for a particular job
      * @param jobId given jobId
      * @return the JMS topic name
-     * @throws OozieClientException
+     * @throws OozieClientException thrown if the JMS topic could not be retrieved.
      */
     public String getJMSTopicName(String jobId) throws OozieClientException {
         return new JMSTopic(jobId).call();
@@ -1241,11 +1241,11 @@ public class OozieClient {
 
     /**
      * Get coord action missing dependencies
-     * @param jobId
-     * @param actionList
-     * @param dates
-     * @param ps
-     * @throws OozieClientException
+     * @param jobId the id of the job
+     * @param actionList the list of coordinator actions
+     * @param dates a comma-separated list of date ranges. Each date range element is specified with two dates separated by '::'
+     * @param ps the stream to write the result into
+     * @throws OozieClientException thrown if the info could not be retrieved.
      */
     public void getCoordActionMissingDependencies(String jobId, String actionList, String dates, PrintStream ps)
             throws OozieClientException {
@@ -1254,10 +1254,10 @@ public class OozieClient {
 
     /**
      * Get coord action missing dependencies
-     * @param jobId
-     * @param actionList
-     * @param dates
-     * @throws OozieClientException
+     * @param jobId the id of the job
+     * @param actionList the list of coordinator actions
+     * @param dates a comma-separated list of date ranges. Each date range element is specified with two dates separated by '::'
+     * @throws OozieClientException thrown if the info could not be retrieved.
      */
     public void getCoordActionMissingDependencies(String jobId, String actionList, String dates)
             throws OozieClientException {
@@ -1816,8 +1816,8 @@ public class OozieClient {
      * @param scope rerun scope for date or actionIds
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
-     * @throws OozieClientException
-     * @return List<CoordinatorAction> rerun a coordinator action.
+     * @return the list of rerun coordinator actions
+     * @throws OozieClientException thrown if the info could not be retrieved.
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
             boolean noCleanup) throws OozieClientException {
@@ -1833,9 +1833,9 @@ public class OozieClient {
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
      * @param failed true if -failed is given in command option
-     * @param props
+     * @param props properties to use during rerun
      * @return new coordinator job execution
-     * @throws OozieClientException
+     * @throws OozieClientException thrown if the info could not be retrieved.
      */
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
                                               boolean noCleanup, boolean failed, Properties props) throws OozieClientException {
@@ -1850,7 +1850,7 @@ public class OozieClient {
      * @param dateScope rerun scope for date
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
-     * @throws OozieClientException
+     * @throws OozieClientException thrown if the info could not be retrieved.
      */
     public Void reRunBundle(String jobId, String coordScope, String dateScope, boolean refresh, boolean noCleanup)
             throws OozieClientException {
@@ -2028,8 +2028,8 @@ public class OozieClient {
     *
     * @param start starting offset
     * @param len number of results
-     * @param filter
-    * @throws OozieClientException
+    * @param filter filters to use. Elements must be semicolon-separated name=value pairs
+    * @throws OozieClientException thrown if the sla info could not be retrieved
     */
         public void getSlaInfo(int start, int len, String filter) throws OozieClientException {
             new SlaInfo(start, len, filter).call();
@@ -2497,7 +2497,7 @@ public class OozieClient {
      *
      * @param jobId given jobId
      * @return the status
-     * @throws OozieClientException
+     * @throws OozieClientException thrown if the status could not be retrieved
      */
     public String getStatus(String jobId) throws OozieClientException {
         return new Status(jobId).call();
@@ -3088,8 +3088,8 @@ public class OozieClient {
     /**
      * Check if the string is not null or not empty.
      *
-     * @param str
-     * @param name
+     * @param str the string to check
+     * @param name the name to present in the error message
      * @return string
      */
     public static String notEmpty(String str, String name) {
@@ -3105,9 +3105,9 @@ public class OozieClient {
     /**
      * Check if the object is not null.
      *
-     * @param <T>
-     * @param obj
-     * @param name
+     * @param <T> the type of the object
+     * @param obj the object to check
+     * @param name the name to present in the error message
      * @return string
      */
     public static <T> T notNull(T obj, String name) {

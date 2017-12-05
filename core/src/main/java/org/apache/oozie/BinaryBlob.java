@@ -35,7 +35,7 @@ public class BinaryBlob {
     /**
      * Construct a binaryblob
      *
-     * @param byteArray
+     * @param byteArray the source byte array
      * @param isUncompressed - true if data is uncompressed
      */
     public BinaryBlob(byte[] byteArray, boolean isUncompressed) {
@@ -51,7 +51,7 @@ public class BinaryBlob {
     /**
      * Set bytes
      *
-     * @param byteArray
+     * @param byteArray the byte array
      */
     public void setBytes(byte[] byteArray) {
         this.bytes = byteArray;

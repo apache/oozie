@@ -1625,7 +1625,6 @@
                     <version>2.10.4</version>
                     <configuration>
                         <additionalparam>${maven.javadoc.opts}</additionalparam>
-                        <failOnError>false</failOnError>
                     </configuration>
                 </plugin>
                 <plugin>

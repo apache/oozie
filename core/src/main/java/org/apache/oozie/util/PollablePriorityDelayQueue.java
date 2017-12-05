@@ -88,6 +88,7 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
      * This method should be overriden for checking purposes.
      *
      * @param element the element to check
+     * @return if the element is eligible to be polled
      */
     protected boolean eligibleToPoll(QueueElement<?> element) {
         return true;

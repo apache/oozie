@@ -433,7 +433,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     }
 
     /**
-     * @param lastModifiedTime
+     * @param lastModifiedTime the lastModifiedTime to set
      */
     public void setLastModifiedTime(Date lastModifiedTime) {
         this.lastModifiedTimestamp = DateUtils.convertDateToTimestamp(lastModifiedTime);

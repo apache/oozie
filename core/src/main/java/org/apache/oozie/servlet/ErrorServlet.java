@@ -55,9 +55,9 @@ public class ErrorServlet extends HttpServlet{
 
     /**
      * Writes error message as JSON to response
-     * @param request
-     * @param response
-     * @throws IOException
+     * @param request the request to get the error message from
+     * @param response the response to write the error to
+     * @throws IOException IOException
      */
     private void handleError(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Object errorMsg = request.getAttribute("javax.servlet.error.message");

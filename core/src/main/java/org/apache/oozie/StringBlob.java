@@ -37,7 +37,7 @@ public class StringBlob {
     /**
      * Construct string blob from compressed byte array
      *
-     * @param byteArray
+     * @param byteArray the byte array
      */
     public StringBlob(byte[] byteArray) {
         this.rawBlob = byteArray;
@@ -46,7 +46,7 @@ public class StringBlob {
     /**
      * Construct StringBlob with uncompressed string
      *
-     * @param inputString
+     * @param inputString the string
      */
     public StringBlob(String inputString) {
         this.string = inputString;
@@ -56,7 +56,7 @@ public class StringBlob {
     /**
      * Set string
      *
-     * @param str
+     * @param str the string
      */
     public void setString(String str) {
         this.string = str;

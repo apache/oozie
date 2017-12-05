@@ -190,6 +190,7 @@ public class ELEvaluator {
     /**
      * Evaluate an EL expression. <p>
      *
+     * @param <T> the return type of the expression
      * @param expr EL expression to evaluate.
      * @param clazz return type of the EL expression.
      * @return the object the EL expression evaluated to.

@@ -96,7 +96,7 @@ public class EmbeddedServletContainer {
      *
      * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
      * the end.
-     * @param servletClass servlet instance
+     * @param servlet servlet instance
      */
     public void addServletEndpoint(String servletPath, Servlet servlet) {
         ServletHolder holder = new ServletHolder(servlet);

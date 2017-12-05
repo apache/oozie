@@ -70,7 +70,9 @@ public interface URIHandler {
      * when the availability is received through notifications from a external
      * entity like a JMS server the type is DependencyType.PUSH
      *
+     * @param uri the URI to get the dependency type from
      * @return dependency type of URI
+     * @throws URIHandlerException in case of error
      */
     DependencyType getDependencyType(URI uri) throws URIHandlerException;
 
@@ -82,7 +84,7 @@ public interface URIHandler {
      * @param user name of the user the URI should be accessed as
      * @param actionID The id of action which depends on the availability of the uri
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     void registerForNotification(URI uri, Configuration conf, String user, String actionID)
             throws URIHandlerException;
@@ -105,7 +107,7 @@ public interface URIHandler {
      * @param readOnly indicate if operation is read-only
      * @return Context to access URIs with same scheme and host
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException;
 
@@ -118,7 +120,7 @@ public interface URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     boolean exists(URI uri, Context context) throws URIHandlerException;
 
@@ -133,7 +135,7 @@ public interface URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
 
@@ -142,7 +144,7 @@ public interface URIHandler {
      *
      * @param uri URI
      * @param context Context to access the URI
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     void delete(URI uri, Context context) throws URIHandlerException;
 
@@ -152,7 +154,7 @@ public interface URIHandler {
      * @param uri URI
      * @param conf Configuration to access the URI
      * @param user name of the user the URI should be accessed as
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     void delete(URI uri, Configuration conf, String user) throws URIHandlerException;
 
@@ -164,7 +166,7 @@ public interface URIHandler {
      *
      * @return the final URI with the doneFlag incorporated
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
@@ -176,15 +178,15 @@ public interface URIHandler {
      *
      * @return the final URI without the doneFlag incorporated
      *
-     * @throws URIHandlerException
+     * @throws URIHandlerException in case of error
      */
     String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
 
     /**
      * Check whether the URI is valid or not
-     * @param uri
-     * @throws URIHandlerException
+     * @param uri the uri
+     * @throws URIHandlerException if the uri is not valid
      */
     void validate(String uri) throws URIHandlerException;
 

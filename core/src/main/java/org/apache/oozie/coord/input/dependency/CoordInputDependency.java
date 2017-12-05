@@ -182,7 +182,7 @@ public interface CoordInputDependency {
      * Check unresolved.
      *
      * @param coordAction the coord action
-     * @param eAction
+     * @param eAction the element for the action
      * @return true, if successful
      * @throws Exception the exception
      */

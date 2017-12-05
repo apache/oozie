@@ -157,7 +157,7 @@ public class ZKUtils {
      *
      * @param user The calling class
      * @return the ZKUtils singleton
-     * @throws Exception
+     * @throws Exception if there is an issue when connecting to ZooKeeper
      */
     public static synchronized ZKUtils register(Object user) throws Exception {
         if (zk == null) {

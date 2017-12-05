@@ -72,7 +72,7 @@ public class XLog implements Log {
         }
 
         /**
-         * Remove all defined context parameters. <p>
+         * Remove all defined context parameters.
          */
         public static void reset() {
             template = "";

@@ -58,7 +58,7 @@ public abstract class EventMessage {
 
     /**
      * Sets the appType for a event
-     * @param appType
+     * @param appType the app type
      */
     public void setAppType(AppType appType) {
         this.appType = appType;
@@ -75,7 +75,7 @@ public abstract class EventMessage {
 
     /**
      * Sets the message type for a event
-     * @param messageType
+     * @param messageType the message type
      */
     public void setMessageType(MessageType messageType) {
         this.messageType = messageType;
@@ -92,8 +92,8 @@ public abstract class EventMessage {
 
     /**
      * Set the JMS selector properties for message object
-     * @param message
-     * @throws JMSException
+     * @param message the message
+     * @throws JMSException in case of a JMS error occurs
      */
     @JsonIgnore
     public void setProperties(Message message) throws JMSException {

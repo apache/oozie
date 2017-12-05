@@ -148,7 +148,7 @@ public class StatusUtils {
     /**
      * Get the status of coordinator job for Oozie versions (3.2 and before) when RUNNINGWITHERROR,
      * SUSPENDEDWITHERROR and PAUSEDWITHERROR are not supported
-     * @param currentJobStatus
+     * @param currentJobStatus the current job status
      * @return newStatus Get the status of coordinator job
      */
     public static Job.Status getStatusIfBackwardSupportTrue(Job.Status currentJobStatus) {

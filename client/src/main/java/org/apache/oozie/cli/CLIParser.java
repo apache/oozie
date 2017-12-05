@@ -64,7 +64,7 @@ public class CLIParser {
      * @param argsHelp command arguments help.
      * @param commandHelp command description.
      * @param commandOptions command options.
-     * @param hasArguments
+     * @param hasArguments true if this command has arguments
      */
     public void addCommand(String command, String argsHelp, String commandHelp, Options commandOptions,
                            boolean hasArguments) {

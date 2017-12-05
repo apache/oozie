@@ -89,10 +89,10 @@ public class XLogStreamer {
      * Gets the files that are modified between startTime and endTime in the given logPath and streams the log after
      * applying the filters.
      *
-     * @param writer
-     * @param startTime
-     * @param endTime
-     * @throws IOException
+     * @param writer the target writer
+     * @param startTime the start time
+     * @param endTime the end time
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     public void streamLog(Writer writer, Date startTime, Date endTime) throws IOException {
         streamLog(writer, startTime, endTime, true);
@@ -131,10 +131,10 @@ public class XLogStreamer {
     /**
      * Returns a BufferedReader configured to read the log files based on the given startTime and endTime.
      *
-     * @param startTime
-     * @param endTime
+     * @param startTime the start time
+     * @param endTime the end time
      * @return A BufferedReader for the log files
-     * @throws IOException
+     * @throws IOException Signals that an I/O exception has occurred.
      */
 
     private MultiFileReader getReader(Date startTime, Date endTime) throws IOException {
@@ -212,11 +212,11 @@ public class XLogStreamer {
     /**
      * Gets the file list that will have the logs between startTime and endTime.
      *
-     * @param dir
-     * @param startTime
-     * @param endTime
-     * @param logRotationTime
-     * @param logFile
+     * @param dir the directory to list
+     * @param startTime the start time
+     * @param endTime the end time
+     * @param logRotationTime the log rotation time
+     * @param logFile the file to look up
      * @return List of files to be streamed
      */
     private ArrayList<File> getFileList(File dir, long startTime, long endTime, long logRotationTime, String logFile) {

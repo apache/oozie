@@ -197,7 +197,7 @@ public class CoordELFunctions {
      * @param offset any number
      * @param unit one of DAY, MONTH, HOUR, MINUTE, MONTH
      * @return the offset date string
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static String ph2_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
         Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
@@ -216,9 +216,9 @@ public class CoordELFunctions {
      * timezone. It will account for daylight saving time based on the given 'strBaseDate' and 'timezone'.
      *
      * @param strBaseDate The base date
-     * @param timezone
+     * @param timezone the timezone
      * @return the offset date string
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static String ph2_coord_dateTzOffset(String strBaseDate, String timezone) throws Exception {
         Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
@@ -259,7 +259,7 @@ public class CoordELFunctions {
      *        be &gt;=0
      * @return date-time in Oozie processing timezone of the n-th instance
      *         <p>
-     * @throws Exception
+     * @throws Exception if the dataset is asynchronous
      */
     public static String ph3_coord_future(int n, int instance) throws Exception {
         ParamChecker.checkGEZero(n, "future:n");
@@ -302,8 +302,7 @@ public class CoordELFunctions {
      *        be &gt;=0
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
      *        delimited by comma.
-     *         <p>
-     * @throws Exception
+     * @throws Exception if the dataset is asynchronous
      */
     public static String ph3_coord_futureRange(int start, int end, int instance) throws Exception {
         ParamChecker.checkGEZero(start, "future:n");
@@ -424,7 +423,6 @@ public class CoordELFunctions {
 
     /**
      * Return nominal time or Action Creation Time.
-     * <p>
      *
      * @return coordinator action creation or materialization date time
      * @throws Exception if unable to format the Date object to String
@@ -442,7 +440,6 @@ public class CoordELFunctions {
 
     /**
      * Convert from standard date-time formatting to a desired format.
-     * <p>
      * @param dateTimeStr - A timestamp in standard (ISO8601) format.
      * @param format - A string representing the desired format.
      * @return coordinator action creation or materialization date time
@@ -461,7 +458,6 @@ public class CoordELFunctions {
 
     /**
      * Convert from standard date-time formatting to a Unix epoch time.
-     * <p>
      * @param dateTimeStr - A timestamp in standard (ISO8601) format.
      * @param millis - "true" to include millis; otherwise will only include seconds
      * @return coordinator action creation or materialization date time
@@ -479,7 +475,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * Return Action Id. <p>
+     * Return Action Id.
      *
      * @return coordinator action Id
      */

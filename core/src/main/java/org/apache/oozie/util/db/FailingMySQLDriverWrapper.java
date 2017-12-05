@@ -26,7 +26,7 @@ import java.util.Properties;
 
 /**
  * Used for runtime database error injection on MySQL.
- * <p/>
+ * <p>
  * Necessary steps:
  * <ul>
  *     <li>set {@code oozie.service.JPAService.connection.data.source} to

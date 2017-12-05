@@ -277,6 +277,8 @@ public class XmlUtils {
      *
      * @param schema for validation
      * @param xml to be validated
+     * @throws SAXException in case of validation error
+     * @throws IOException in case of IO error
      */
     public static void validateXml(Schema schema, String xml) throws SAXException, IOException {
 
@@ -312,9 +314,9 @@ public class XmlUtils {
     /**
      * Convert Properties to string
      *
-     * @param props
+     * @param props the properties to convert
      * @return xml string
-     * @throws IOException
+     * @throws IOException if there is an error during conversion
      */
     public static String writePropToString(Properties props) throws IOException {
         try {
@@ -372,6 +374,9 @@ public class XmlUtils {
      * "'" to "&#039;"
      * <p>
      * Note that JSTL's {@code <c:out>} escapes the exact same set of characters as this method.
+     *
+     * @param aText the text to escape
+     * @return the escaped text
      */
     public static String escapeCharsForXML(String aText) {
         final StringBuilder result = new StringBuilder();

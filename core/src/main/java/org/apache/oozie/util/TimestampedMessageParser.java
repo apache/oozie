@@ -36,7 +36,8 @@ import org.apache.oozie.util.LogLine.MATCHED_PATTERN;
  * Reader. It will return true if there are more messages and false if not. Calling
  * {@link TimestampedMessageParser#getLastMessage()} and {@link TimestampedMessageParser#getLastTimestamp()} will return the last
  * message and timestamp, respectively, that were parsed when {@link TimestampedMessageParser#increment()} was called. Calling
- * {@link TimestampedMessageParser#processRemaining(java.io.Writer)} will write the remaining log messages to the given Writer.
+ * {@link TimestampedMessageParser#processRemaining(java.io.Writer,org.apache.oozie.util.XLogStreamer)} will write the
+ * remaining log messages to the given Writer.
  */
 public class TimestampedMessageParser {
 
@@ -129,7 +130,7 @@ public class TimestampedMessageParser {
     /**
      * Closes the Reader.
      *
-     * @throws IOException
+     * @throws IOException if the reader can't be closed
      */
     public void closeReader() throws IOException {
         reader.close();
@@ -141,7 +142,7 @@ public class TimestampedMessageParser {
      * it returns null, then there are no lines left in the Reader.
      *
      * @return LogLine
-     * @throws IOException
+     * @throws IOException in case of an error in the Reader
      */
     protected LogLine parseNextLogLine() throws IOException {
         String line;
@@ -197,9 +198,9 @@ public class TimestampedMessageParser {
      * Streams log messages to the passed in Writer, with zero bytes already
      * written
      *
-     * @param writer
+     * @param writer the target writer
      * @param logStreamer the log streamer
-     * @throws IOException
+     * @throws IOException in case of IO error
      */
     public void processRemaining(Writer writer, XLogStreamer logStreamer) throws IOException {
         while (increment()) {
@@ -214,7 +215,7 @@ public class TimestampedMessageParser {
     /**
      * Splits the log message into parts
      *
-     * @param line
+     * @param line the line to split
      * @return List of log parts
      */
     protected ArrayList<String> splitLogMessage(String line) {

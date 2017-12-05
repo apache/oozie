@@ -142,7 +142,7 @@ public class JobUtils {
      * @param file Path of the file to be added
      * @param conf Configuration that contains the classpath setting
      * @param fs FileSystem with respect to which path should be interpreted (may be null)
-     * @throws IOException
+     * @throws IOException if the file can't be added to the classpath
      */
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
         if (fs == null) {

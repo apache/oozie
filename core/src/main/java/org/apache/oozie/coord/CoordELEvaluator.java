@@ -49,6 +49,7 @@ public class CoordELEvaluator {
      * 1)
      *
      * @param conf : Configuration containing property variables
+     * @param group  Name of the group of required EL Evaluator.
      * @return configured ELEvaluator
      */
     public static ELEvaluator createELEvaluatorForGroup(Configuration conf, String group) {
@@ -117,11 +118,11 @@ public class CoordELEvaluator {
 
     /**
      * Create a SLA evaluator to be used during Materialization
-     * @param eAction
-     * @param coordAction
-     * @param conf
+     * @param eAction the action
+     * @param coordAction the coordinator action
+     * @param conf the configuration
      * @return eval returns SLA evaluator to be used during Materialization
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static ELEvaluator createSLAEvaluator(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
             throws Exception {
@@ -153,11 +154,11 @@ public class CoordELEvaluator {
 
     /**
      * Create an Evaluator using conf and input/output-data (used for sla)
-     * @param conf
-     * @param group
-     * @param dataNameList
+     * @param conf the configuration
+     * @param group the group for the EL expression
+     * @param dataNameList the name list for the data
      * @return eval returns an Evaluator using conf and input/output-data (used for sla)
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static ELEvaluator createELEvaluatorForDataAndConf(Configuration conf, String group,
             HashMap<String, String> dataNameList) throws Exception {
@@ -171,6 +172,7 @@ public class CoordELEvaluator {
      *
      * @param eJob : XML element for the application instance
      * @param conf :Configuration to substitute any variables
+     * @param actionId the action Id
      * @return configured ELEvaluator
      * @throws Exception : If there is any date-time string in wrong format, the exception is thrown
      */
@@ -268,9 +270,9 @@ public class CoordELEvaluator {
     /**
      * Create Dataset object using the Dataset XML information
      *
-     * @param eData
+     * @param eData the xml
      * @return ds returns Dataset object using the Dataset XML information
-     * @throws Exception
+     * @throws Exception if the Dataset object can't be created
      */
     private static SyncCoordDataset getDSObject(Element eData) throws Exception {
         SyncCoordDataset ds = new SyncCoordDataset();

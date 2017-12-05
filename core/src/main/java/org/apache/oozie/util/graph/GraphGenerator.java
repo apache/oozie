@@ -35,7 +35,7 @@ import java.io.StringReader;
 
 /**
  * Class to generate and plot runtime workflow DAG.
- * <p/>
+ * <p>
  * Since it delegates to {@link WorkflowGraphHandler} and a {@link GraphRenderer}, it is the single entry point when changing graph
  * generation behavior.
  */
@@ -53,7 +53,7 @@ public class GraphGenerator {
      * @param xml The workflow definition XML
      * @param job Current status of the job
      * @param showKill Flag to whether show 'kill' node
-     * @param graphRenderer
+     * @param graphRenderer the renderer
      */
     public GraphGenerator(final String xml, final WorkflowJob job, final boolean showKill, final GraphRenderer graphRenderer) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(xml), "xml can't be empty");
@@ -71,7 +71,9 @@ public class GraphGenerator {
      *
      * @param out the {@link OutputStream} to use on streaming
      * @param outputFormat The output format to apply when rendering
-     * @throws Exception
+     * @throws ParserConfigurationException if the parser is not configured properly
+     * @throws SAXException in case of XML error
+     * @throws IOException in case of any other IO related issues
      */
     public void write(final OutputStream out, final OutputFormat outputFormat)
             throws ParserConfigurationException, SAXException, IOException {

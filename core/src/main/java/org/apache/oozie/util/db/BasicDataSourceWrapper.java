@@ -31,21 +31,21 @@ public class BasicDataSourceWrapper extends BasicDataSource {
 
     /**
      * Fixing a bug within {@link BasicDataSource#createConnectionFactory()} for {@code driverClassName} to have real effect.
-     * <p/>
+     * <p>
      * Because we use currently Apache Commons DBCP 1.4.0 that has a bug not considering {@code driverClassName}, thus, we're unable
      * to create a JDBC driver using a user-provided driver class name (we try to do that by setting explicitly a value for
      * {@code openJpa.connectionProperties="DriverClassName=..."}), unless we perform the exact same fix that is applied by the DBCP
      * patch.
-     * <p/>
+     * <p>
      * Note: when DBCP 1.4.1 will be released, and Oozie will update to 1.4.1, we can remove this class.
-     * <p/>
-     * Please see {@link https://issues.apache.org/jira/browse/DBCP-333 the DBCP bug} and
-     * {@link https://github.com/apache/commons-dbcp/blob/DBCP_1_4_x_BRANCH/src/java/org/apache/commons/dbcp/BasicDataSource.java
-     * #L1588-L1660 the fixed method}
+     * <p>
+     * Please see <a href="https://issues.apache.org/jira/browse/DBCP-333">the DBCP bug</a> and
+     * <a href="https://github.com/apache/commons-dbcp/blob/DBCP_1_4_x_BRANCH/src/java/org/apache/commons/dbcp/BasicDataSource.java#L1588-L1660">
+     * the fixed method </a>
      * for details.
-     * <p/>
+     * <p>
      * Please also see how OpenJPA
-     * {@linkplain http://openjpa.apache.org/builds/2.2.1/apache-openjpa/docs/ref_guide_integration_dbcp.html is integrated}
+     * <a href="http://openjpa.apache.org/builds/2.2.1/apache-openjpa/docs/ref_guide_integration_dbcp.html"> is integrated</a>
      * with DBCP.
      */
     protected ConnectionFactory createConnectionFactory() throws SQLException {

@@ -47,6 +47,11 @@ public class HdfsOperations {
 
     /**
      * Creates a Sequence file which contains the output from an action and uploads it to HDFS.
+     * @param launcherJobConf the configuration
+     * @param actionDir the target directory on HDFS
+     * @param actionData the data to upload
+     * @throws IOException in case of IO error
+     * @throws InterruptedException in case of interruption
      */
     public void uploadActionDataToHDFS(final Configuration launcherJobConf, final Path actionDir,
                                        final Map<String, String> actionData) throws IOException, InterruptedException {

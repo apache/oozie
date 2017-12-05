@@ -39,7 +39,11 @@ public class PrepareActionsHandler {
      * Method to parse the prepare XML and execute the corresponding prepare actions
      *
      * @param prepareXML Prepare XML block in string format
-     * @throws LauncherException
+     * @param conf the configuration
+     * @throws IOException if there is an IO error during prepare action
+     * @throws SAXException in case of xml parsing error
+     * @throws ParserConfigurationException if the parser is not well configured
+     * @throws LauncherException in case of error
      */
     public void prepareAction(String prepareXML, Configuration conf)
             throws IOException, SAXException, ParserConfigurationException, LauncherException {

@@ -47,7 +47,8 @@ public class LocalFsOperations {
 
     /**
      * Print files and directories in current directory. Will list files in the sub-directory (only 2 level deep)
-     * @throws IOException
+     * @param folder the target folder
+     * @throws IOException if the contents could not be listed
      */
     public void printContentsOfDir(File folder) throws IOException {
         System.out.println();

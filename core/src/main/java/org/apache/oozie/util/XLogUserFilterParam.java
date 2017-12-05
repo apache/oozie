@@ -103,7 +103,6 @@ public class XLogUserFilterParam {
      * Parse filter param
      *
      * @param param the param
-     * @param map the map
      * @throws Exception
      */
     private void parseFilterParam(String param) throws Exception {
@@ -195,7 +194,8 @@ public class XLogUserFilterParam {
     /**
      * Validate log level.
      *
-     * @throws CommandException
+     * @param loglevel the log level to validate
+     * @throws CommandException in case of a non-supported log level.
      */
     public void validateLogLevel(String loglevel) throws CommandException {
         if (StringUtils.isEmpty(loglevel)) {

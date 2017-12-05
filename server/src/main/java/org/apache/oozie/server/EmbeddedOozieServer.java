@@ -74,7 +74,7 @@ public class EmbeddedOozieServer {
      * @param servletContextHandler main web application context handler
      * @param oozieServletMapper maps servlets to URLs
      * @param oozieFilterMapper  maps filters
-     * @param constraintSecurityHandler
+     * @param constraintSecurityHandler constraint security handler
      */
     @Inject
     public EmbeddedOozieServer(final Server server,
@@ -102,9 +102,9 @@ public class EmbeddedOozieServer {
     /**
      * Set up the Oozie server by configuring jetty server settings and starts Oozie services
      *
-     * @throws URISyntaxException
-     * @throws IOException
-     * @throws ServiceException
+     * @throws URISyntaxException if the server URI is not well formatted
+     * @throws IOException in case of IO issues
+     * @throws ServiceException if the server could not start
      */
     public void setup() throws URISyntaxException, IOException, ServiceException {
         conf = serviceController.get(ConfigurationService.class).getConf();

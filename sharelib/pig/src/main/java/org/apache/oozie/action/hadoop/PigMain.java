@@ -314,7 +314,7 @@ public class PigMain extends LauncherMain {
      * @param pigLog pig log file
      * @param resetSecurityManager specify if need to reset security manager
      * @param retrieveStats specify if stats are to be retrieved
-     * @throws Exception
+     * @throws Exception in case of error during Pig execution
      */
     protected void runPigJob(String[] args, String pigLog, boolean resetSecurityManager, boolean retrieveStats) throws Exception {
         PigStats stats = PigRunner.run(args, null);

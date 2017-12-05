@@ -101,7 +101,8 @@ public class PropertiesUtils {
      * Validate against DISALLOWED Properties.
      *
      * @param conf : configuration to check.
-     * @throws CommandException
+     * @param set the set containing the disallowed properties
+     * @throws CommandException if a property in the set is not null in the conf
      */
     public static void checkDisallowedProperties(Configuration conf, Set<String> set) throws CommandException {
         ParamChecker.notNull(conf, "conf");

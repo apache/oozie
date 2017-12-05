@@ -141,7 +141,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Bundle Id.
      *
-     * @param bundleId
+     * @param bundleId the bundle Id
      */
     public void setBundleId(String bundleId) {
         this.bundleId = bundleId;
@@ -159,7 +159,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Coordinator name.
      *
-     * @param coordName
+     * @param coordName the Coordinator name
      */
     public void setCoordName(String coordName) {
         this.coordName = coordName;
@@ -177,7 +177,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the coordinator Id.
      *
-     * @param coordId
+     * @param coordId the coordinator id
      */
     public void setCoordId(String coordId) {
         this.coordId = coordId;
@@ -213,7 +213,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Status of the Bundle Action
      *
-     * @param val
+     * @param val the status to set
      */
     public void setStatus(Status val) {
         this.statusStr = val.toString();

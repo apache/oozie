@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 /**
  * A generic password masker that masks {@code Map<String, String>} values given that its keys are considered password keys.
- * <p/>
+ * <p>
  * Tested with {@link System#getProperties()} and {@link System#getenv()}.
  */
 public class PasswordMasker {

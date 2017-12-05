@@ -197,6 +197,7 @@ public class DateUtils {
      * The format mask must be a {@link SimpleDateFormat} valid format mask.
      *
      * @param d {@link Date} to format.
+     * @param format the {@link SimpleDateFormat} format mask to use
      * @return the string for the given date using the specified format mask,
      * <code>NULL</code> if the {@link Date} instance was <code>NULL</code>
      */
@@ -313,10 +314,10 @@ public class DateUtils {
 
     /**
      * Create a Calendar instance using the specified date and Time zone
-     * @param dateString
+     * @param dateString the date
      * @param tz : TimeZone
      * @return appropriate Calendar object
-     * @throws Exception
+     * @throws Exception if the date can't be parsed
      */
     public static Calendar getCalendar(String dateString, TimeZone tz) throws Exception {
         Date date = DateUtils.parseDateOozieTZ(dateString);
@@ -328,9 +329,9 @@ public class DateUtils {
 
     /**
      * Create a Calendar instance for UTC time zone using the specified date.
-     * @param dateString
+     * @param dateString the date
      * @return appropriate Calendar object
-     * @throws Exception
+     * @throws Exception if the date can't be parsed
      */
     public static Calendar getCalendar(String dateString) throws Exception {
         return getCalendar(dateString, ACTIVE_TIMEZONE);

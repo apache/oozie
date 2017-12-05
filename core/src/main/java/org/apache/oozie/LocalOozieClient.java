@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Client API to submit and manage Oozie workflow jobs against an Oozie instance. <p> This class is thread safe. <p>
  * Syntax for filter for the {@link #getJobsInfo(String)}  {@link #getJobsInfo(String, int, int)}  methods:
- * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p> Valid filter names are: <p> <ul> <li>name: the workflow application
+ * <code>[NAME=VALUE][;NAME=VALUE]*</code>. <p> Valid filter names are: <ul> <li>name: the workflow application
  * name from the workflow definition.</li> <li>user: the user that submitted the job.</li> <li>group: the group for the
  * job.</li> <li>status: the status of the job.</li> </ul> <p> The query will do an AND among all the filter names. The
  * query will do an OR among all the filter values for the same name. Multiple values must be specified as different
@@ -38,7 +38,7 @@ public class LocalOozieClient extends BaseLocalOozieClient {
     private DagEngine dagEngine;
 
     /**
-     * Create a workflow client for Oozie local use. <p>
+     * Create a workflow client for Oozie local use.
      *
      * @param dagEngine the dag engine instance to use.
      */

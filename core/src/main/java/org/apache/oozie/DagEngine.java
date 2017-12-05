@@ -127,7 +127,7 @@ public class DagEngine extends BaseEngine {
      * @param conf job conf
      * @param parentId parent of workflow
      * @return jobId returns jobId of the launched workflow
-     * @throws DagEngineException
+     * @throws DagEngineException if the job can't be submitted
      */
     public String submitJobFromCoordinator(Configuration conf, String parentId) throws DagEngineException {
         validateSubmitConfiguration(conf);
@@ -587,7 +587,7 @@ public class DagEngine extends BaseEngine {
      * @param start start index in the database of jobs
      * @param len maximum number of jobs that will be killed
      * @return workflowsInfo return the jobs that've been killed
-     * @throws DagEngineException
+     * @throws DagEngineException if the jobs could not be killed
      */
     public WorkflowsInfo killJobs(String filter, int start, int len) throws DagEngineException {
         try {
@@ -609,7 +609,7 @@ public class DagEngine extends BaseEngine {
      * @param start Offset for the jobs that will be suspended
      * @param len maximum number of jobs that will be suspended
      * @return workflowsInfo return the jobs that've been suspended
-     * @throws DagEngineException
+     * @throws DagEngineException if the jobs cloud not be suspended
      */
     public WorkflowsInfo suspendJobs(String filter, int start, int len) throws DagEngineException {
         try {
@@ -631,7 +631,7 @@ public class DagEngine extends BaseEngine {
      * @param start Offset for the jobs that will be resumed
      * @param len maximum number of jobs that will be resumed
      * @return workflowsInfo returns the jobs that've been resumed
-     * @throws DagEngineException
+     * @throws DagEngineException if the jobs cloud not be resumed
      */
     public WorkflowsInfo resumeJobs(String filter, int start, int len) throws DagEngineException {
         try {

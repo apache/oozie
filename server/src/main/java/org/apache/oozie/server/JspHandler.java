@@ -72,6 +72,9 @@ public class JspHandler {
     /**
      * Setup the basic application "context" for this application at "/"
      * This is also known as the handler tree (in jetty speak)
+     * @param servletContextHandler the context handler
+     * @throws IOException in case of IO errors
+     * @throws URISyntaxException if the server URI is not well formatted
      */
     public void setupWebAppContext(WebAppContext servletContextHandler)
             throws IOException, URISyntaxException

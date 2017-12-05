@@ -43,7 +43,6 @@ import org.apache.oozie.util.XConfiguration;
  * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
  * <p>
  * Valid filter names are:
- * <p>
  * <ul>
  * <li>name: the coordinator application name from the coordinator definition.</li>
  * <li>user: the user that submitted the job.</li>
@@ -79,7 +78,7 @@ public class LocalOozieClientCoord extends BaseLocalOozieClient {
      * @param scope rerun scope for date or actionIds
      * @param refresh true if -refresh is given in command option
      * @param noCleanup true if -nocleanup is given in command option
-     * @throws OozieClientException
+     * @throws OozieClientException if coordinators cannot be rerun
      */
     @Override
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,
@@ -98,7 +97,7 @@ public class LocalOozieClientCoord extends BaseLocalOozieClient {
      * @param noCleanup true if -nocleanup is given in command option
      * @param failed true if -failed is given in command option
      * @param conf configuration information for the rerun
-     * @throws OozieClientException
+     * @throws OozieClientException  if coordinators cannot be rerun
      */
     @Override
     public List<CoordinatorAction> reRunCoord(String jobId, String rerunType, String scope, boolean refresh,

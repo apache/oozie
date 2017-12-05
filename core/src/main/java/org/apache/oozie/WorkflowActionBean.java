@@ -435,6 +435,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set pending flag
+     * @param i the flag
      */
     public void setPending(int i) {
         pending = i;
@@ -572,7 +573,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external child ids
      *
-     * @param externalChildIDs
+     * @param externalChildIDs the external child ids
      */
     public void setExternalChildIDsBlob(StringBlob externalChildIDs) {
         this.externalChildIDs = externalChildIDs;
@@ -659,7 +660,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set status of job
      *
-     * @param val
+     * @param val the status
      */
     public void setStatus(Status val) {
         this.statusStr = val.toString();
@@ -673,7 +674,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set status
      *
-     * @param statusStr
+     * @param statusStr the status
      */
     public void setStatusStr(String statusStr) {
         this.statusStr = statusStr;
@@ -814,7 +815,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set start time
      *
-     * @param startTime
+     * @param startTime the start time
      */
     public void setStartTime(Date startTime) {
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
@@ -828,7 +829,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set end time
      *
-     * @param endTime
+     * @param endTime the end time
      */
     public void setEndTime(Date endTime) {
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
@@ -969,7 +970,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set user retry max
      *
-     * @param retryMax
+     * @param retryMax the maximum retry count
      */
     public void setUserRetryMax(int retryMax) {
         this.userRetryMax = retryMax;
@@ -992,7 +993,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set transition
      *
-     * @param transition
+     * @param transition the transition
      */
     public void setTransition(String transition) {
         this.transition = transition;
@@ -1006,7 +1007,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set data
      *
-     * @param data
+     * @param data the data
      */
     public void setData(String data) {
         if (this.data == null) {
@@ -1033,7 +1034,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set stats
      *
-     * @param stats
+     * @param stats the action stats
      */
     public void setStats(String stats) {
         if (this.stats == null) {
@@ -1060,7 +1061,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external Id
      *
-     * @param externalId
+     * @param externalId the id
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
@@ -1074,7 +1075,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external status
      *
-     * @param externalStatus
+     * @param externalStatus the external status
      */
     public void setExternalStatus(String externalStatus) {
         this.externalStatus = externalStatus;
@@ -1088,7 +1089,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set tracker uri
      *
-     * @param trackerUri
+     * @param trackerUri the URI
      */
     public void setTrackerUri(String trackerUri) {
         this.trackerUri = trackerUri;
@@ -1102,7 +1103,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set console URL
      *
-     * @param consoleUrl
+     * @param consoleUrl the URL
      */
     public void setConsoleUrl(String consoleUrl) {
         this.consoleUrl = consoleUrl;
@@ -1121,8 +1122,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set the error Info
      *
-     * @param errorCode
-     * @param errorMessage
+     * @param errorCode the error code
+     * @param errorMessage the error message
      */
     public void setErrorInfo(String errorCode, String errorMessage) {
         this.errorCode = errorCode;

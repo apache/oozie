@@ -69,7 +69,7 @@ public class MappingRule {
 
     /**
      * Applies rules based on the input
-     * @param input
+     * @param input input to apply the rule to
      * @return result Applies rules based on the input
      */
     public String applyRule(String input) {

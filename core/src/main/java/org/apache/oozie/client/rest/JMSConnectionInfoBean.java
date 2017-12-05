@@ -42,7 +42,7 @@ public class JMSConnectionInfoBean implements JsonBean, JMSConnectionInfoWrapper
 
     /**
      * Set the JNDI properties for jms connection
-     * @param JNDIProperties
+     * @param JNDIProperties the properties
      */
     public void setJNDIProperties(Properties JNDIProperties) {
         this.JNDIProperties = JNDIProperties;
@@ -69,7 +69,7 @@ public class JMSConnectionInfoBean implements JsonBean, JMSConnectionInfoWrapper
 
     /**
      * Sets the topic prefix
-     * @param topicPrefix
+     * @param topicPrefix the prefix
      */
     public void setTopicPrefix(String topicPrefix) {
         this.topicPrefix = topicPrefix;
@@ -77,7 +77,7 @@ public class JMSConnectionInfoBean implements JsonBean, JMSConnectionInfoWrapper
 
     /**
      * Set the topic pattern properties
-     * @param topicProperties
+     * @param topicProperties the properties
      */
     public void setTopicPatternProperties(Properties topicProperties) {
         this.topicProperties = topicProperties;

@@ -29,7 +29,7 @@ public class JavaMain extends LauncherMain {
 
    /**
     * @param args Invoked from LauncherAM:run()
-    * @throws Exception
+    * @throws Exception in case of error
     */
     public static void main(String[] args) throws Exception {
         run(JavaMain.class, args);

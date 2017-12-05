@@ -39,9 +39,9 @@ public final class StringSerializationUtil {
      * Writes out value to dOut. Converts it to byte array if the length of the UTF-8 byte array representation of the
      * string is longer than 60k bytes.
      *
-     * @param dOut
-     * @param value
-     * @throws IOException
+     * @param dOut the targed output stream
+     * @param value the string to write
+     * @throws IOException in case of error during serialization
      */
     public static void writeString(DataOutput dOut, String value) throws IOException {
         if (value == null) {

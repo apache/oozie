@@ -30,7 +30,7 @@ public class ServletUtilities {
      *
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
     protected static void ValidateAppPath(String wfPath, String coordPath) throws XServletException {
         if (wfPath != null && coordPath != null) {
@@ -53,7 +53,7 @@ public class ServletUtilities {
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
      * @param bundlePath bundle app path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
     protected static void ValidateAppPath(String wfPath, String coordPath, String bundlePath) throws XServletException {
         int n = 0;
@@ -83,7 +83,7 @@ public class ServletUtilities {
      * accessory static method to check the lib path parameter for the request
      *
      * @param libPath lib path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
     protected static void ValidateLibPath(String libPath) throws XServletException {
         if (libPath == null) {

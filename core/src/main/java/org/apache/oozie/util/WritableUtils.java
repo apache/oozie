@@ -64,6 +64,7 @@ public class WritableUtils {
     /**
      * Read a writable from a byte array.
      *
+     * @param <T> the object type
      * @param array byte array with the serialized writable.
      * @param clazz writable class.
      * @return writable deserialized from the byte array.

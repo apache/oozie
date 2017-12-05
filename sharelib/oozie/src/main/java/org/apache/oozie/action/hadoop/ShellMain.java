@@ -53,7 +53,7 @@ public class ShellMain extends LauncherMain {
 
     /**
      * @param args Invoked from LauncherAMUtils:map()
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static void main(String[] args) throws Exception {
         run(ShellMain.class, args);
@@ -77,9 +77,9 @@ public class ShellMain extends LauncherMain {
     /**
      * Execute the shell command
      *
-     * @param actionConf
+     * @param actionConf the action configuration
      * @return command exit value
-     * @throws IOException
+     * @throws Exception in case of error during action execution
      */
     private int execute(Configuration actionConf) throws Exception {
         String exec = getExec(actionConf);
@@ -134,7 +134,7 @@ public class ShellMain extends LauncherMain {
      * @param actionConf The action configuration
      * @param envp The environment for the Shell process
      * @param currDir The current working dir
-     * @throws IOException
+     * @throws IOException in case of error
      */
     private void prepareHadoopConfigs(Configuration actionConf, Map<String, String> envp, File currDir) throws IOException {
         if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {
@@ -162,6 +162,7 @@ public class ShellMain extends LauncherMain {
      * Otherwise, logging from commands may go into stdout and make it to the Shell's captured output.
      * @param actionConf the action's configuration, to source log4j contents from
      * @param confDir the directory to write a {@link #LOG4J_PROPERTIES} file under
+     * @throws IOException in case of write error
      */
     private static void writeLoggerProperties(Configuration actionConf, File confDir) throws IOException {
         String log4jContents = actionConf.get(
@@ -182,6 +183,9 @@ public class ShellMain extends LauncherMain {
     /**
      * Return the environment variable to pass to in shell command execution.
      *
+     * @param envp the environment map to fill
+     * @param actionConf the config to work from
+     * @return the filled up map
      */
     private Map<String, String> getEnvMap(Map<String, String> envp, Configuration actionConf) {
         // Adding user-specified environments
@@ -199,8 +203,8 @@ public class ShellMain extends LauncherMain {
     /**
      * Get the shell commands with the arguments
      *
-     * @param exec
-     * @param args
+     * @param exec command to execute
+     * @param args ars of the command
      * @return command and list of args
      */
     private ArrayList<String> getCmdList(String exec, String[] args) {
@@ -333,7 +337,7 @@ public class ShellMain extends LauncherMain {
      * Retrieve the list of arguments that were originally specified to
      * Workflow.xml.
      *
-     * @param actionConf
+     * @param actionConf the configuration
      * @return argument list
      */
     protected List<String> getShellArguments(Configuration actionConf) {
@@ -349,7 +353,7 @@ public class ShellMain extends LauncherMain {
      * Retrieve the executable name that was originally specified to
      * Workflow.xml.
      *
-     * @param actionConf
+     * @param actionConf the configuration
      * @return executable
      */
     protected String getExec(Configuration actionConf) {

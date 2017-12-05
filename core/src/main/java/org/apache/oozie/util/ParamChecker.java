@@ -36,6 +36,7 @@ public class ParamChecker {
     /**
      * Check that a value is not null. If null throws an IllegalArgumentException.
      *
+     * @param <T> the type of the object
      * @param obj value.
      * @param name parameter name for the exception message.
      * @return the given value.
@@ -51,6 +52,7 @@ public class ParamChecker {
      * Check that a list is not null and that none of its elements is null. If null or if the list has emtpy elements
      * throws an IllegalArgumentException.
      *
+     * @param <T> the type of the list
      * @param list the list of strings.
      * @param name parameter name for the exception message.
      * @return the given list.

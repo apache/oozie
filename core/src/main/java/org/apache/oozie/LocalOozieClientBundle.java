@@ -33,7 +33,6 @@ import java.util.List;
  * <code>[NAME=VALUE][;NAME=VALUE]*</code>.
  * <p>
  * Valid filter names are:
- * <p>
  * <ul>
  * <li>name: the bundle application name from the bundle definition.</li>
  * <li>user: the user that submitted the job.</li>

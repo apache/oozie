@@ -381,7 +381,7 @@ public class MetricsInstrumentation extends Instrumentation {
      * Converts the current state of the metrics and writes them to the OutputStream.
      *
      * @param os The OutputStream to write the metrics to
-     * @throws IOException
+     * @throws IOException in case of error during writing to the stream
      */
     public void writeJSONResponse(OutputStream os) throws IOException {
         jsonMapper.writer().writeValue(os, metricRegistry);

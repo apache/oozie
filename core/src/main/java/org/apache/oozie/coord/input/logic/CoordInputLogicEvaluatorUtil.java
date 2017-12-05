@@ -83,7 +83,7 @@ public class CoordInputLogicEvaluatorUtil {
      * Validate input logic.
      *
      * @throws JDOMException the JDOM exception
-     * @throws CommandException
+     * @throws CommandException in case of error
      */
     public void validateInputLogic() throws JDOMException, CommandException {
         JexlEngine jexl = new OozieJexlEngine();

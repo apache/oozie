@@ -53,7 +53,7 @@ public class CoordActionsInDateRange {
      * @param scope the date range for log. format is comma-separated list of date ranges.
      * Each date range element is specified with two dates separated by '::'
      * @return the list of coordinator action Ids for the date range
-     *
+     * @throws XException if the scope is not well formatted
      * Internally involves a database operation by invoking method 'getActionIdsFromDateRange'.
      */
     public static List<String> getCoordActionIdsFromDates(String jobId, String scope) throws XException {
@@ -79,8 +79,9 @@ public class CoordActionsInDateRange {
      * Get the coordinator actions for a given date range
      * @param jobId the coordinator job id
      * @param range the date range separated by '::'
+     * @param active to list only active (non-terminated) actions
      * @return the list of Coordinator actions for the date range
-     * @throws XException
+     * @throws XException if range is not well formatted or invalid
      */
     public static List<CoordinatorActionBean> getCoordActionsFromDateRange(String jobId, String range, boolean active)
             throws XException {
@@ -114,7 +115,7 @@ public class CoordActionsInDateRange {
      * @param jobId the coordinator job id
      * @param range the date range separated by '::'
      * @return the list of Coordinator actions for the date range
-     * @throws XException
+     * @throws XException if range is not well formatted or invalid
      */
     public static List<String> getCoordActionIdsFromDateRange(String jobId, String range) throws XException{
             String[] dateRange = range.split("::");
@@ -153,7 +154,9 @@ public class CoordActionsInDateRange {
      * @param jobId coordinator job id
      * @param start start time
      * @param end end time
+     * @param active to list only active (non-terminated) actions
      * @return a list of coordinator actions that correspond to the date range
+     * @throws XException if the actions can't be retrieved
      */
     private static List<CoordinatorActionBean> getActionsFromDateRange(String jobId, Date start, Date end,
             boolean active) throws XException {

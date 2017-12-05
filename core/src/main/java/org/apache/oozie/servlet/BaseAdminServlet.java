@@ -101,10 +101,10 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
 
     /**
      * Get JMS connection Info
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any IO error
      */
     abstract JsonBean getJMSConnectionInfo(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -226,7 +226,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
      *
      * @param sharelibKey the sharelib key
      * @return the list of supported share lib
-     * @throws IOException
+     * @throws IOException in case of any servlet error
      */
     @SuppressWarnings("unchecked")
     private JSONObject getShareLib(String sharelibKey) throws IOException {

@@ -105,7 +105,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the bundle comprising this bulk response object
-     * @param bj
+     * @param bj the bundle
      */
     public void setBundle(BundleJobBean bj) {
         this.bundle = bj;
@@ -113,7 +113,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coordinator comprising this bulk response object
-     * @param cj
+     * @param cj the coord
      */
     public void setCoordinator(CoordinatorJobBean cj) {
         this.coordinator = cj;
@@ -121,7 +121,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coord action comprising this bulk response object
-     * @param ca
+     * @param ca the action
      */
     public void setAction(CoordinatorActionBean ca) {
         this.action = ca;

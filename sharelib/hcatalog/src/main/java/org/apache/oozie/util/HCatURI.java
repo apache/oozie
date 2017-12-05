@@ -43,7 +43,7 @@ public class HCatURI {
      * Constructor using default configuration
      *
      * @param s HCat URI String
-     * @throws URISyntaxException
+     * @throws URISyntaxException if the parameter is not well formatted
      */
     public HCatURI(String s) throws URISyntaxException {
         this(new URI(s));
@@ -194,11 +194,12 @@ public class HCatURI {
     /**
      * static method to create HCatalog URI String
      *
-     * @param server
-     * @param db
-     * @param table
+     * @param scheme the scheme to use
+     * @param server  the server address
+     * @param db the database name
+     * @param table the table name
      * @param partitions Partition Map
-     * @return
+     * @return the constructed HCat URI
      */
     public static String getHCatURI(String scheme, String server, String db, String table, Map<String, String> partitions) {
 
@@ -289,7 +290,7 @@ public class HCatURI {
      * In case of type hive-export, it can be used to create entire partition value string
      * that can be used in Hive query for partition export/import.
      *
-     * type hive-export
+     * @param type must be "hive-export"
      * @return partition value string
      */
     public String toPartitionValueString(String type) {

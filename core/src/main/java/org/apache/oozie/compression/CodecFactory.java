@@ -48,8 +48,8 @@ public class CodecFactory {
 
     /**
      * Initialize the codec factory to maintain list of codecs
-     * @param conf
-     * @throws Exception
+     * @param conf the configuration
+     * @throws Exception if the codec couldn't be initialized
      */
     public static void initialize(Configuration conf) throws Exception {
         String outputCompressionStr = conf.get(COMPRESSION_OUTPUT_CODEC);
@@ -128,7 +128,7 @@ public class CodecFactory {
      * Get decompression codec after reading from stream
      * @param dais the input stream
      * @return the decompression codec
-     * @throws IOException
+     * @throws IOException in case of IO error
      */
     public static CompressionCodec getDeCompressionCodec(DataInputStream dais) throws IOException {
         byte[] buffer = new byte[COMPRESSION_MAGIC_DATA.length()];

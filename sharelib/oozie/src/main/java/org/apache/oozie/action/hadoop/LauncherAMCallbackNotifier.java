@@ -137,7 +137,7 @@ public class LauncherAMCallbackNotifier {
      * Notify a server of the completion of a submitted job.
      * @param actionResult The Action Result (failed/succeeded/running)
      *
-     * @throws InterruptedException
+     * @throws InterruptedException in case of interruption
      */
     public void notifyURL(OozieActionResult actionResult) throws InterruptedException {
         // Do we need job-end notification?

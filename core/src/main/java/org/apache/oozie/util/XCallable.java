@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 /**
  * Extends Callable adding the concept of priority. <p> The priority is useful when queuing callables for later
  * execution via the {@link org.apache.oozie.service.CallableQueueService}. <p> A higher number means a higher
- * priority. <p>
+ * priority.
  */
 public interface XCallable<T> extends Callable<T> {
 
@@ -73,6 +73,7 @@ public interface XCallable<T> extends Callable<T> {
     /**
      * set the mode of execution for the callable. True if in interrupt, false
      * if not
+     * @param mode the mode to set
      */
     void setInterruptMode(boolean mode);
 

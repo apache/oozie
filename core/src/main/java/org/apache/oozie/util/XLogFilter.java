@@ -120,7 +120,7 @@ public class XLogFilter {
 
     /**
      * Checks if the logLevel and logMessage goes through the logFilter.
-     * @param logParts ArrayList of logParts
+     * @param logLine the log line
      * @return true if line contains the permitted logLevel
      */
     public boolean splitsMatches(LogLine logLine) {
@@ -147,7 +147,7 @@ public class XLogFilter {
     /**
      * Checks if the logLevel and logMessage goes through the logFilter.
      *
-     * @param logParts
+     * @param logParts the arrayList of log parts
      * @return true if the logLevel and logMessage goes through the logFilter
      */
     public boolean matches(ArrayList<String> logParts) {
@@ -172,7 +172,7 @@ public class XLogFilter {
      * Returns array containing timestamp, logLevel, and logMessage if the
      * pattern matches i.e A new log statement, else returns null.
      *
-     * @param logLine
+     * @param logLine the line
      * @return Array containing log level and log message
      */
     public ArrayList<String> splitLogMessage(String logLine) {
@@ -198,8 +198,8 @@ public class XLogFilter {
      * matching in future.</li>
      * <li>Record the pattern to which <code>logLine</code> has matched.</li>
      * </ol>
-     * @param logLine
-     * @param splitPattern
+     * @param logLine the line to split
+     * @param splitPattern the pattern to use
      */
     public void splitLogMessage(LogLine logLine, Pattern splitPattern) {
         Matcher splitterWithJobId = splitPattern.matcher(logLine.getLine());

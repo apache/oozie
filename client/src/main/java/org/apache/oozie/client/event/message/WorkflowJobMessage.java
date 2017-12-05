@@ -72,7 +72,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow job status
-     * @param status
+     * @param status the status
      */
     public void setStatus(WorkflowJob.Status status) {
         this.status = status;
@@ -88,7 +88,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow error code
-     * @param errorCode
+     * @param errorCode the error code
      */
     public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
@@ -104,7 +104,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow error message
-     * @param errorMessage
+     * @param errorMessage the error message
      */
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;

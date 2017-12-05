@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * A {@link DatabaseRetryPredicate} which applies when a given {@link Exception} (or its causes) are NOT blacklisted.
- * <p/>
+ * <p>
  * Blacklisted exceptions in this class do not indicate a network failure, therefore no retry should take place.
  */
 public class PersistenceExceptionSubclassFilterRetryPredicate extends DatabaseRetryPredicate {
@@ -62,7 +62,7 @@ public class PersistenceExceptionSubclassFilterRetryPredicate extends DatabaseRe
     /**
      * If the {@code Throwable} to be checked doesn't have a cause, these {@code Exception} classes are used as blacklist: if one of
      * them is assignable from the one to be checked, no retry will happen.
-     * <p/>
+     * <p>
      * Note that this blacklist is different from {@link #BLACKLIST_WITH_CAUSE} because this handles the use case where
      * {@code Exception}s are inserted by a failure injection framework or piece of code rather than the database layer that is
      * failing.

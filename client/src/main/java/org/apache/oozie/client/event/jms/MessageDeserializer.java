@@ -36,10 +36,10 @@ public abstract class MessageDeserializer {
     /**
      * Constructs the event message from JMS message
      *
-     * @param <T>
+     * @param <T> the type
      * @param message the JMS message
      * @return EventMessage
-     * @throws JMSException
+     * @throws JMSException in case of JMS error
      */
     @SuppressWarnings("unchecked")
     public <T extends EventMessage> T getEventMessage(Message message) throws JMSException {

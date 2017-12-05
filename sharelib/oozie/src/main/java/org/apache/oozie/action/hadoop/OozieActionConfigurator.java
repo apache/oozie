@@ -31,7 +31,7 @@ public interface OozieActionConfigurator {
      * Exceptions need to be thrown, they should be wrapped in an OozieActionConfiguratorException
      *
      * @param actionConf The action configuration
-     * @throws OozieActionConfiguratorException
+     * @throws OozieActionConfiguratorException if the action could not be configured
      */
     void configure(JobConf actionConf) throws OozieActionConfiguratorException;
 }

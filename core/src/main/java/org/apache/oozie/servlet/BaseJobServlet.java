@@ -385,10 +385,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to start a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void startJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -396,10 +396,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to resume a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void resumeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -407,10 +407,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to suspend a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void suspendJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -418,11 +418,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to kill a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @return JSONObject
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -430,35 +429,34 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to change a coordinator job
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
-     */
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
+    */
     abstract void changeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
     /**
      * abstract method to re-run a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @param conf
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @param conf the configuration to use
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject reRunJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException;
 
     /**
      * abstract method to get a job, either workflow or coordinator, in JsonBean representation
-     *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JsonBean representation of a job, either workflow or coordinator
-     * @throws XServletException
-     * @throws IOException TODO
-     * @throws BaseEngineException
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
+     * @throws BaseEngineException thrown if the job could not be retrieved
      */
     abstract JsonBean getJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException, BaseEngineException;
@@ -466,11 +464,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get definition of a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return job, either workflow or coordinator, definition in string format
-     * @throws XServletException
-     * @throws IOException TODO
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract String getJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -478,10 +476,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get and stream log information of job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -489,10 +487,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get and stream error log information of job, either workflow, coordinator or bundle
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
     IOException;
@@ -504,20 +502,20 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to create and stream image for runtime DAG -- workflow only
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 
     /**
      * abstract method to get JMS topic name for a job
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract String getJMSTopicName(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -525,11 +523,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get workflow job ids from the parent id
      * i.e. coordinator action
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return comma-separated list of workflow job ids
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;

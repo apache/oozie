@@ -437,7 +437,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     /**
      * Set original job xml
      *
-     * @param origJobXml
+     * @param origJobXml the job xml
      */
     public void setOrigJobXml(String origJobXml) {
         if (this.origJobXml == null) {
@@ -516,6 +516,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set doneMaterialization
+     * @param i value to set
      */
     public void setDoneMaterialization(int i) {
         this.doneMaterialization = i;
@@ -688,6 +689,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set status
+     * @param status the status to set
      */
     public void setStatusStr(String status) {
         this.statusStr = status;
@@ -709,7 +711,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set time unit
-     *
+     * @param timeunit time unit to set
      */
     public void setTimeUnitStr(String timeunit) {
         this.timeUnitStr = timeunit;
@@ -730,7 +732,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     /**
      * Set order
      *
-     * @param order
+     * @param order execution order to set
      */
     public void setExecutionOrder(Execution order) {
         this.execution = order.toString();
@@ -746,6 +748,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set execution order
+     * @param order order to set
      */
     public void setExecution(String order) {
         this.execution = order;

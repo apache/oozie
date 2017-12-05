@@ -322,7 +322,7 @@ public abstract class LauncherMain {
      * Read action configuration passes through action xml file.
      *
      * @return action  Configuration
-     * @throws IOException
+     * @throws IOException in the configuration could not be read
      */
     public static Configuration loadActionConf() throws IOException {
         // loading action conf prepared by Oozie
@@ -366,7 +366,7 @@ public abstract class LauncherMain {
      *
      * @param src The source file
      * @param dst The destination file(s)
-     * @throws IOException
+     * @throws IOException if the files could not be copied
      */
     protected static void copyFileMultiplex(File src, File... dst) throws IOException {
         InputStream is = null;
