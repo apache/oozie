@@ -14,7 +14,7 @@ For detailed install and configuration instructions refer to [[AG_Install][Oozie
 
 ---+++ System Requirements:
    * Unix box (tested on Mac OS X and Linux)
-   * Java JDK 1.7+
+   * Java JDK 1.8+
    * Maven 3.0.1+
    * Hadoop 2.6.0+
    * Pig 0.10.1+
@@ -64,13 +64,13 @@ More details on building Oozie can be found on the [[ENG_Building][Building Oozi
 ---+++ System Requirements
 
    * Unix (tested in Linux and Mac OS X)
-   * Java 1.7+
+   * Java 1.8+
    * Hadoop
       * [[http://hadoop.apache.org][Apache Hadoop]] (tested with 1.2.1 & 2.6.0+)
    * ExtJS library (optional, to enable Oozie webconsole)
       * [[http://archive.cloudera.com/gplextras/misc/ext-2.2.zip][ExtJS 2.2]]
 
-The Java 1.7+ =bin= directory should be in the command path.
+The Java 1.8+ =bin= directory should be in the command path.
 
 ---+++ Server Installation
 
@@ -200,9 +200,9 @@ Refer to the [[DG_Examples][Running the Examples]] document for details on runni
 ---+++ System Requirements
 
    * Unix (tested in Linux and Mac OS X)
-   * Java 1.7+
+   * Java 1.8+
 
-The Java 1.7+ =bin= directory should be in the command path.
+The Java 1.8+ =bin= directory should be in the command path.
 
 ---+++ Client Installation
 

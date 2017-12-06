@@ -45,9 +45,9 @@
     </organization>
 
     <properties>
-        <targetJavaVersion>1.7</targetJavaVersion>
-        <sourceJavaVersion>1.7</sourceJavaVersion>
-        <minJavaVersion>1.7</minJavaVersion>
+        <targetJavaVersion>1.8</targetJavaVersion>
+        <sourceJavaVersion>1.8</sourceJavaVersion>
+        <minJavaVersion>1.8</minJavaVersion>
 
         <distMgmtSnapshotsName>Apache Development Snapshot Repository</distMgmtSnapshotsName>
         <distMgmtSnapshotsUrl>https://repository.apache.org/content/repositories/snapshots</distMgmtSnapshotsUrl>

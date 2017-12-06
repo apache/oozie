@@ -9,7 +9,7 @@
 ---++ System Requirements
 
    * Unix box (tested on Mac OS X and Linux)
-   * Java JDK 1.7+
+   * Java JDK 1.8+
    * [[http://maven.apache.org/][Maven 3.0.1+]]
    * [[http://hadoop.apache.org/core/releases.html][Hadoop 2.6.0+]]
    * [[http://hadoop.apache.org/pig/releases.html][Pig 0.10.1+]]
@@ -52,8 +52,8 @@ $ ssh localhost
 
 ---++ Building with different Java Versions
 
-Oozie requires a minimum Java version of 1.7. Any newer version can be used but by default bytecode will be generated
-which is compatible with 1.7. This can be changed by specifying the build property *targetJavaVersion*.
+Oozie requires a minimum Java version of 1.8. Any newer version can be used but by default bytecode will be generated
+which is compatible with 1.8. This can be changed by specifying the build property *targetJavaVersion*.
 
 ---++ Building and Testing Oozie
 
