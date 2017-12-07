@@ -40,7 +40,6 @@ import java.util.Map;
  */
 public class DagELFunctions {
 
-    public static final String HADOOP_JOBS_PREFIX = "hadoopJobs:";
     private static final String WORKFLOW = "oozie.el.workflow.bean";
     private static final String ACTION = "oozie.el.action.bean";
     private static final String ACTION_PROTO_CONF = "oozie.el.action.proto.conf";
@@ -51,6 +50,7 @@ public class DagELFunctions {
     private static final String ACTION_ERROR_CODE = "action.error.code";
     private static final String ACTION_ERROR_MESSAGE = "action.error.message";
     private static final String ACTION_EXTERNAL_ID = "action.external.id";
+    private static final String ACTION_EXTERNAL_CHILD_IDS = "action.external.child.ids";
     private static final String ACTION_TRACKER_URI = "action.tracker.uri";
     private static final String ACTION_EXTERNAL_STATUS = "action.external.status";
 
@@ -115,8 +115,8 @@ public class DagELFunctions {
                     .setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_DATA, action.getData());
         }
         if (action.getExternalChildIDs() != null) {
-            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_DATA,
-                    HADOOP_JOBS_PREFIX + action.getExternalChildIDs());
+            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_EXTERNAL_CHILD_IDS,
+                                    action.getExternalChildIDs());
         }
         if (action.getStats() != null) {
             workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + MapReduceActionExecutor.HADOOP_COUNTERS,
@@ -285,6 +285,17 @@ public class DagELFunctions {
     public static String wf_actionExternalId(String actionName) {
         return getWorkflow().getWorkflowInstance()
                 .getVar(actionName + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_EXTERNAL_ID);
+    }
+
+    /**
+     * Return the external child IDs of an action.
+     *
+     * @param actionName action name.
+     * @return the external child IDs of an action.
+     */
+    public static String wf_actionExternalChildIDs(String actionName) {
+        return getWorkflow().getWorkflowInstance()
+                .getVar(actionName + WorkflowInstance.NODE_VAR_SEPARATOR + ACTION_EXTERNAL_CHILD_IDS);
     }
 
     /**

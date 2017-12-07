@@ -82,6 +82,7 @@ public class TestDagELFunctions extends XDataTestCase {
         action.setErrorInfo("ec", "em");
         action.setData("b=B");
         action.setExternalId("ext");
+        action.setExternalChildIDs("extChild");
         action.setTrackerUri("tracker");
         action.setExternalStatus("externalStatus");
 
@@ -122,6 +123,7 @@ public class TestDagELFunctions extends XDataTestCase {
         assertTrue(eval.evaluate("${toConfigurationStr(wf:actionData('actionName'))}", String.class).contains(expected));
 
         assertEquals("ext", eval.evaluate("${wf:actionExternalId('actionName')}", String.class));
+        assertEquals("extChild", eval.evaluate("${wf:actionExternalChildIDs('actionName')}", String.class));
         assertEquals("tracker", eval.evaluate("${wf:actionTrackerUri('actionName')}", String.class));
         assertEquals("externalStatus", eval.evaluate("${wf:actionExternalStatus('actionName')}", String.class));
     }
