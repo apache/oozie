@@ -3261,6 +3261,22 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.mapreduce.needed.for.hive2</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Hive2 action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.java</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Java action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.mapreduce.needed.for.map-reduce</name>
         <value>true</value>
         <description>

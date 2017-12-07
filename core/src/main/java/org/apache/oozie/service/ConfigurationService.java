@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
@@ -535,6 +536,24 @@ public class ConfigurationService implements Service, Instrumentable {
 
     public static boolean getBoolean(Configuration conf, String name) {
         return conf.getBoolean(name, ConfigUtils.BOOLEAN_DEFAULT);
+    }
+
+    /**
+     * Get the {@code boolean} value for {@code name} from {@code conf}, or the default {@link Configuration} coming from
+     * {@code oozie-site.xml}, or {@code defaultValue}, if no previous occurrences present.
+     *
+     * @param conf the {@link Configuration} for primary lookup
+     * @param name name of the parameter to look up
+     * @param defaultValue default value to return when every other possibility is exhausted
+     * @return a {@code boolean} given above lookup order
+     */
+    public static boolean getBooleanOrDefault(final Configuration conf, final String name, final boolean defaultValue) {
+        if (Strings.isNullOrEmpty(conf.get(name))) {
+            final Configuration defaultConf = Services.get().getConf();
+            return defaultConf.getBoolean(name, defaultValue);
+        }
+
+        return conf.getBoolean(name, defaultValue);
     }
 
     public static int getInt(String name) {

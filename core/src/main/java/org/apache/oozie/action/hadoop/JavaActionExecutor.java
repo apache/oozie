@@ -1558,12 +1558,27 @@ public class JavaActionExecutor extends ActionExecutor {
      * If returns true, it means that we have to add Hadoop MR jars to the classpath.
      * Subclasses should override this method if necessary. By default we don't add
      * MR jars to the classpath.
+     *
+     * <p>Configuration properties are read either from {@code launcherConf}, or, if not present, falling back to
+     * {@link ConfigurationService#getBoolean(Configuration, String)}.
+     *
      * @return false by default
-     * @param launcherConf
+     * @param launcherConf the launcher {@link Configuration} that is used on first lookup
      */
-    private boolean needToAddMapReduceToClassPath(Configuration launcherConf) {
-        boolean defaultValue = launcherConf.getBoolean(OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY, false);
-        return launcherConf.getBoolean(OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY + "." + getType(), defaultValue);
+    private boolean needToAddMapReduceToClassPath(final Configuration launcherConf) {
+        LOG.debug("Calculating whether to add MapReduce JARs to classpath. [type={0};this={1}]", getType(), this);
+
+        final boolean defaultValue = ConfigurationService.getBooleanOrDefault(
+                launcherConf,
+                OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY,
+                false);
+        LOG.debug("Default value for [{0}] is [{1}]", OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY, defaultValue);
+
+        final String configurationKey = OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY + "." + getType();
+        final boolean configuredValue = ConfigurationService.getBooleanOrDefault(launcherConf, configurationKey, defaultValue);
+        LOG.debug("Configured value for [{0}] is [{1}]", configurationKey, configuredValue);
+
+        return configuredValue;
     }
 
     /**
