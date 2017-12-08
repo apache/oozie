@@ -264,7 +264,7 @@ public class LiteWorkflowValidator {
         } else if (node instanceof ActionNodeDef) {
             String transition = node.getTransitions().get(0);   // "ok to" transition
             NodeDef okNode = app.getNode(transition);
-            validateForkJoin(app, okNode, currentFork, topDecisionParent, true, path, forkJoins, nodeAndDecisionParents);
+            validateForkJoin(app, okNode, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents);
 
             transition = node.getTransitions().get(1);          // "error to" transition
             NodeDef errorNode = app.getNode(transition);

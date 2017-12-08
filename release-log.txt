@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3139 Oozie validates workflow incorrectly (dionusos via pbacsko)
 OOZIE-2869 amend Ability to add/remove MapReduce jars from action classpath (andras.piros)
 OOZIE-2969 Drop support for Java 1.7 (dbist13 via gezapeti, pbacsko)
 OOZIE-2681 Fix javadoc to compile on JDK8 (dbist13, abhisekbafna, gezapeti)
