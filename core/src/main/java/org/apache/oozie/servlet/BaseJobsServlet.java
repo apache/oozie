@@ -92,7 +92,6 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         conf = conf.trim();
         conf = conf.resolve();
 
-        validateJobConfiguration(conf);
         String requestUser = getUser(request);
         if (!requestUser.equals(UNDEF)) {
             conf.set(OozieClient.USER_NAME, requestUser);
@@ -250,10 +249,4 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     abstract JSONObject getJobs(HttpServletRequest request)
     throws XServletException, IOException;
 
-    static void validateJobConfiguration(Configuration conf) throws XServletException {
-        if (conf.get(OozieClient.USER_NAME) == null) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                    OozieClient.USER_NAME);
-        }
-    }
 }
