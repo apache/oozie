@@ -1,3 +1,5 @@
+-- Oozie 4.3.1 release
+
 -- Oozie 4.3.0 release
 
 OOZIE-2742 Unable to kill applications based on tag (satishsaley via rohini)
