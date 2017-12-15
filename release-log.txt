@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3143 AG_Install.twiki needs some refinement (kmarton via andras.piros)
 OOZIE-3127 Remove redundant check for user (satishsaley)
 OOZIE-3139 Oozie validates workflow incorrectly (dionusos via pbacsko)
 OOZIE-2869 amend Ability to add/remove MapReduce jars from action classpath (andras.piros)

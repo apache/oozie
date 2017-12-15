@@ -72,10 +72,10 @@ Usage  : oozie-setup.sh <Command and OPTIONS>
           (without options prints this usage information)
 </verbatim>
 
-If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script
-include all JARs in the =libext/= directory in Oozie WAR file.
+If a directory =libext/= is present in Oozie installation directory, the =oozie-setup.sh= script will
+include all JARs in Jetty's =webapp/WEB_INF/lib/= directory.
 
-If the ExtJS ZIP file is present in the =libext/= directory, it will be added to Oozie WAR as well.
+If the ExtJS ZIP file is present in the =libext/= directory, it will be added to the Jetty's =webapp/= directory as well.
 The ExtJS library file name be =ext-2.2.zip=.
 
 ---+++ Setting Up Oozie with an Alternate Tomcat
@@ -507,7 +507,7 @@ The oozie-[version]-hcataloglibs.tar.gz in the oozie distribution bundles the re
 needs to be placed in the Oozie server classpath. If using a version of HCatalog bundled in
 Oozie hcataloglibs/, copy the corresponding HCatalog jars from hcataloglibs/ to the libext/ directory. If using a
 different version of HCatalog, copy the required HCatalog jars from such version in the libext/ directory.
-This needs to be done before running the =oozie-setup.sh= script so that these jars get added to the Oozie WAR file.
+This needs to be done before running the =oozie-setup.sh= script so that these jars get added for Oozie.
 
 *Configure HCatalog URI Handling:*
 

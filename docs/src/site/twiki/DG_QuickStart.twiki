@@ -36,7 +36,7 @@ $ bin/mkdistro.sh [-DskipTests]
 Running =mkdistro.sh= will create the binary distribution of Oozie. By default, oozie war will not contain hadoop and
 hcatalog libraries, however they are required for oozie to work. There are 2 options to add these libraries:
 
-1. At install time, copy the hadoop and hcatalog libraries to libext and run oozie-setup.sh to setup oozie war. This is
+1. At install time, copy the hadoop and hcatalog libraries to libext and run oozie-setup.sh to setup Oozie. This is
 suitable when same oozie package needs to be used in multiple set-ups with different hadoop/hcatalog versions.
 
 2. Build with -Puber which will bundle the required libraries in the oozie war. Further, the following options are
