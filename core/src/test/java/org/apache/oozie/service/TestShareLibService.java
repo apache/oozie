@@ -244,6 +244,15 @@ public class TestShareLibService extends XFsTestCase {
                 "pig-10.jar");
     }
 
+    // retentionTime overflows to negative before OOZIE-3142
+    @Test
+    public void testRetentionOverflow() throws Exception {
+        getOozieConfig().set(ShareLibService.LAUNCHERJAR_LIB_RETENTION, "25");
+        services.init();
+        ShareLibService shareLibService = services.get(ShareLibService.class);
+        assertTrue(shareLibService.retentionTime > 0);
+    }
+
     @Test
     public void testPurgeShareLib() throws Exception {
         setShipLauncherInOozieConfig();
