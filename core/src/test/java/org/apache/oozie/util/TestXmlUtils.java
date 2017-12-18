@@ -19,7 +19,7 @@
 package org.apache.oozie.util;
 
 import org.apache.oozie.test.XTestCase;
-import org.jdom.Element;
+import org.jdom.input.JDOMParseException;
 
 public class TestXmlUtils extends XTestCase {
 
@@ -27,8 +27,14 @@ public class TestXmlUtils extends XTestCase {
             + "<foo>&xxe;</foo>";
 
     public void testExternalEntity() throws Exception {
-        Element e = XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
-        assertEquals(0, e.getText().length());
+        try {
+            XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
+            fail("DOCTYPE should not be allowed");
+        } catch (JDOMParseException e) {
+            assertTrue("Exception has different message.", e.getMessage().
+                    contains("DOCTYPE is disallowed when the feature \"http://apache."
+                            + "org/xml/features/disallow-doctype-decl\" set to true"));
+        }
     }
 
     public void testRemoveComments() throws Exception {

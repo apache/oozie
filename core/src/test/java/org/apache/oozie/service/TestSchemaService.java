@@ -119,25 +119,25 @@ public class TestSchemaService extends XTestCase {
 
     public void testWfSchema() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(APP1)));
     }
 
     public void testWfMultipleJavaOpts() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(WF_4_MULTIPLE_JAVA_OPTS)));
     }
 
     public void testWfSchemaV2() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(APP_V2)));
     }
 
     public void testWfSchemaV25() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(APP_V25)));
     }
 
@@ -146,19 +146,19 @@ public class TestSchemaService extends XTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         new Services().init();
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(APP2)));
     }
 
     public void testWfSLASchema() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(WF_SLA_APP)));
     }
 
     public void testWfSLASchemaNW() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         try {
             validator.validate(new StreamSource(new StringReader(WF_SLA_APP_NW)));
             fail("Schema service check does not work");
@@ -170,7 +170,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testCoordSchema() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.COORDINATOR).newValidator();
+        Validator validator = wss.getValidator(SchemaName.COORDINATOR);
         String COORD_APP1 = "<coordinator-app name='NAME' frequency='${coord:days(1)}' start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.1' xmlns:sla='uri:oozie:sla:0.1'> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> <execution>LIFO</execution> </controls> <datasets> <dataset name='a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> <dataset name='local_a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> </datasets> <input-events> <data-in name='A' dataset='a'> <instance>${coord:latest(0)}</instance> </data-in>  </input-events> <output-events> <data-out name='LOCAL_A' dataset='local_a'> <instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> <configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> <property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> </property></configuration> </workflow>  "
                 + "</action> </coordinator-app>";
@@ -182,7 +182,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testCoordSchema2() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.COORDINATOR).newValidator();
+        Validator validator = wss.getValidator(SchemaName.COORDINATOR);
         String COORD_APP1 = "<coordinator-app name='NAME' frequency='${coord:days(1)}' start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1'> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> <execution>LIFO</execution>  <throttle>3</throttle></controls> <datasets> <dataset name='a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> <dataset name='local_a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> </datasets> <input-events> <data-in name='A' dataset='a'> <instance>${coord:latest(0)}</instance> </data-in>  </input-events> <output-events> <data-out name='LOCAL_A' dataset='local_a'> <instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> <configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> <property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> </property></configuration> </workflow>  "
                 + "</action> </coordinator-app>";
@@ -194,8 +194,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testCoordSLASchema() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.COORDINATOR)
-                .newValidator();
+        Validator validator = wss.getValidator(SchemaName.COORDINATOR);
         String COORD_APP1 = "<coordinator-app name='NAME' frequency='${coord:days(1)}' start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1'> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> <execution>LIFO</execution> </controls> <datasets> <dataset name='a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> <dataset name='local_a' frequency='${coord:days(7)}' initial-instance='2009-02-01T01:00Z' timezone='UTC'> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> </dataset> </datasets> <input-events> <data-in name='A' dataset='a'> <instance>${coord:latest(0)}</instance> </data-in>  </input-events> <output-events> <data-out name='LOCAL_A' dataset='local_a'> <instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> <configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> <property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> </property></configuration> </workflow>  "
                 + "<sla:info> <sla:app-name>5</sla:app-name> <sla:nominal-time>2009-03-06T010:00Z</sla:nominal-time> "
@@ -211,7 +210,7 @@ public class TestSchemaService extends XTestCase {
 
     public void testBundleSchema() throws Exception {
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.BUNDLE).newValidator();
+        Validator validator = wss.getValidator(SchemaName.BUNDLE);
         String BUNDLE_APP = "<bundle-app name='NAME' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'> "
                 + "<controls> <kick-off-time>2009-02-02T00:00Z</kick-off-time> </controls> "
                 + "<coordinator name='c12'> "

@@ -137,8 +137,8 @@ public class V2ValidateServlet extends JsonRestServlet {
     }
 
     private void validateSchema(Schema schema, Reader src) throws SAXException, IOException, OozieCLIException{
-            Validator validator = schema.newValidator();
-            validator.validate(new StreamSource(src));
+        Validator validator = SchemaService.getValidator(schema);
+        validator.validate(new StreamSource(src));
     }
 
     private JSONObject createJSON(String content) {

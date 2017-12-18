@@ -348,9 +348,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @throws BundleJobException thrown if failed to validate xml
      */
     private void validateXml(String xmlContent) throws BundleJobException {
-        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.BUNDLE);
-        Validator validator = schema.newValidator();
         try {
+            Validator validator = Services.get().get(SchemaService.class).getValidator(SchemaName.BUNDLE);
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
         catch (SAXException ex) {
