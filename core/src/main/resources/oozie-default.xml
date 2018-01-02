@@ -2570,6 +2570,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.ZKLocksService.lock.release.retry.time.limit.minutes</name>
+        <value>30</value>
+        <description>
+            On exception while releasing the lock, Oozie will exponentially retry till specified minutes before giving up.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.http.hostname</name>
         <value>0.0.0.0</value>
         <description>

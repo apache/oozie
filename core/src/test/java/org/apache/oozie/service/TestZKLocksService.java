@@ -20,13 +20,21 @@ package org.apache.oozie.service;
 
 import java.util.UUID;
 
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.lock.TestMemoryLocks;
 import org.apache.oozie.service.ZKLocksService.ZKLockToken;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
+import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.data.Stat;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import java.util.concurrent.TimeUnit;
 
 public class TestZKLocksService extends ZKXTestCase {
     private XLog log = XLog.getLog(getClass());
@@ -550,6 +558,55 @@ public class TestZKLocksService extends ZKXTestCase {
             lockService.destroy();
         }
     }
+
+    public void testRetriableRelease() throws Exception {
+        final String path = UUID.randomUUID().toString();
+        ZKLocksService zkls = new ZKLocksService();
+        try{
+            zkls.init(Services.get());
+
+            InterProcessReadWriteLock lockEntry = Mockito.mock(InterProcessReadWriteLock.class);
+            final InterProcessMutex writeLock = Mockito.mock(InterProcessMutex.class);
+            Mockito.when(lockEntry.writeLock()).thenReturn(writeLock);
+            Mockito.doThrow(new ConnectionLossException()).when(writeLock).release();
+            Mockito.doNothing().when(writeLock).acquire();
+
+            // put mocked lockEntry
+            zkls.getLocks().putIfAbsent(path,lockEntry);
+
+            LockToken lock = zkls.getWriteLock(path, -1);
+
+            final boolean [] lockReleased = new boolean [] {false};
+            Runnable exceptionStopper = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        // Stop the exception on release() after some time in other thread
+                        Thread.sleep(TimeUnit.SECONDS.toMillis(13));
+                        Mockito.doAnswer(new Answer() {
+                            @Override
+                            public Object answer(InvocationOnMock invocation) throws Throwable {
+                                lockReleased[0] = true;
+                                return null;
+                            }
+                        }).when(writeLock).release();
+                    }
+                    catch (Exception e) {
+                        log.error(e);
+                        fail("Test case failed due to " + e.getMessage());
+                    }
+                }
+            };
+            new Thread(exceptionStopper).start();
+            //Try to release the lock
+            lock.release();
+            assertEquals("Failing the test case. The lock should have been released", true, lockReleased[0]);
+        }
+        finally {
+            zkls.destroy();
+        }
+    }
+
 
     private void checkLockRelease(String path, ZKLocksService zkls) {
         if (zkls.getLocks().get(path) == null) {
