@@ -16,27 +16,28 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
   set -x
 fi
 
-BASEDIR=$(pwd)
 TASKNAME="TESTS"
 OP=""
 TEMPDIR=""
 REPORTDIR=""
 SUMMARYFILE=""
+SUMMARYFILEFULL=""
 STDOUT="/dev/null"
 MVNPASSTHRU=""
+FLAKY_LIMIT=10
 
 ###############################################################################
 cleanupAndExit() {
-  exit $1
+  exit "$1"
 }
-###############################################################################
+
 printUsage() {
-  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE> --summaryfile-full=<FULL SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
   echo
 }
-###############################################################################
+
 parseArgs() {
-  for i in $*
+  for i in "$@"
   do
     case $i in
     --taskname)
@@ -55,7 +56,10 @@ parseArgs() {
     --summaryfile=*)
       SUMMARYFILE=${i#*=}
       ;;
-    --verbose)
+    --summaryfile-full=*)
+      SUMMARYFILEFULL=${i#*=}
+      ;;
+     --verbose)
       STDOUT="/dev/stdout"
       ;;
     -D*)
@@ -79,6 +83,100 @@ parseArgs() {
     cleanupAndExit 1
   fi
 }
+
+count_test_result_type() {
+  local type=$1
+  find . -name "TEST-*.xml" -exec sh -c 'xmllint --xpath "string(//testsuite/@'"${type}"')" $1; echo' _ {} \; \
+  |  awk 'BEGIN {count=0} {count=count+$1} END {print count}';
+}
+
+run_tests() {
+  export MAVEN_OPTS="${MVNPASSTHRU} \
+        -Dmaven.test.failure.ignore=true \
+        -Doozie.test.waitfor.ratio=3 \
+        -Dtest.timeout=7200 \
+        -Dsurefire.rerunFailingTestsCount=1 \
+        ${MAVEN_OPTS}"
+  mvn test -fae | tee "${TEMPDIR}/${TASKNAME}.out" >> "$STDOUT"
+  local exitCode=${PIPESTATUS[0]}
+
+  grep -b1 -e "Run .: PASS" "${TEMPDIR}/${TASKNAME}.out" | grep Test | cut -d':' -f2 \
+  | awk '{print $1}' > "${TEMPDIR}/${TASKNAME}.flakies.out"
+
+  if [ "${PIPESTATUS[0]}" -eq "0" ]; then
+    isTestsFlaky=1
+    sed -i -e "s/\./#/g" "${TEMPDIR}/${TASKNAME}.flakies.out"
+  else
+    isTestsFlaky=0
+  fi
+
+  if [ "${isTestsFlaky}" -eq "1" ]; then
+    echo "There are flaky tests."
+  else
+    rm "${TEMPDIR}/${TASKNAME}.flakies.out"
+
+    if [ "${exitCode}" -eq 0 ]; then
+      echo "All tests passed."
+    else
+      echo "Tests failed."
+    fi
+  fi
+
+  echo "$exitCode" >  "${TEMPDIR}/${TASKNAME}.exitCode"
+}
+
+print_flakies() {
+  if [ -f "${TEMPDIR}/${TASKNAME}.flakies.out" ]; then
+    echo ".    {color:orange}Tests failed at first run:{color}"
+    local limit="${1}"
+    if [ -n "${limit}" ]; then
+      cat "${TEMPDIR}/${TASKNAME}.flakies.out" | head -"${limit}"
+      echo ".    For the complete list of flaky tests, see TEST-SUMMARY-FULL files."
+    else
+      cat "${TEMPDIR}/${TASKNAME}.flakies.out"
+    fi
+  fi
+}
+
+print_flakies_short() {
+  print_flakies "${FLAKY_LIMIT}"
+}
+
+print_flakies_full() {
+  print_flakies
+}
+
+generate_report() {
+    failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
+    testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
+    testsRun=$(grep "Tests run:" "${TEMPDIR}/${TASKNAME}.out" | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsFailed=$(count_test_result_type failures)
+    testsErrors=$(count_test_result_type errors)
+    hasFailures=$((testsFailed + testsErrors))
+    testsExitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
+
+    if [[ ${hasFailures} != 0 ]] ; then
+      echo "{color:red}-1 ${TASKNAME}{color}"
+      echo ".    Tests run: $testsRun"
+      echo ".    Tests failed: $testsFailed"
+      echo ".    Tests errors: $testsErrors"
+      echo ""
+      echo ".    The patch failed the following testcases:"
+      echo ""
+      echo "${failedTests//#/.      /}"
+      echo ""
+      echo ".    Tests failing with errors:"
+      echo "${testsWithError//#/.      /}"
+      echo ""
+    else
+      if [[ "${testsExitCode}" != "0" ]] ; then
+          echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases"
+      else
+        echo "{color:green}+1 ${TASKNAME}{color}"
+        echo ".    Tests run: $testsRun"
+      fi
+    fi
+}
 ###############################################################################
 
 parseArgs "$@"
@@ -87,58 +185,12 @@ case $OP in
   pre)
     ;;
   post)
-    mvn test ${MVNPASSTHRU} -Dmaven.test.failure.ignore=true \
-        -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
-        -Dtest.timeout=7200 | tee ${TEMPDIR}/${TASKNAME}.out >> $STDOUT
-    exitCode=${PIPESTATUS[0]}
-    failures=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<<" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//' | grep -o '(\(.*\))' | tr -d '()'  | uniq | awk '{ sub ("\\\\$", ""); printf "%s", $0"," } END { print "" }')
-    if [ -n "${failures}" ]; then
-       echo "Rerunning failed tests: ${failures}"
-       echo ${failures} > ${TEMPDIR}/${TASKNAME}.flakies.out
-       mvn test ${MVNPASSTHRU} -Dmaven.test.failure.ignore=true \
-        -Dmaven.test.error.ignore=true -fae -Doozie.test.waitfor.ratio=3 \
-        -Dtest.timeout=7200 -Dtest=${failures} | tee ${TEMPDIR}/${TASKNAME}.rerun.out >> $STDOUT
-       exitCode=${PIPESTATUS[0]}
-    else
-       echo "No Reruns required, all tests passed."
-    fi
-    echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
+    run_tests
     ;;
   report)
-    failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.out | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    testsFailed=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $6}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    testsErrors=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $8}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    hasFailures=$(expr $testsFailed + $testsErrors)
-    testsExitCode=$(cat ${TEMPDIR}/${TASKNAME}.exitCode)
-    flakyTests=$(cat ${TEMPDIR}/${TASKNAME}.flakies.out)
-    testsReRun=$(grep "Tests run:" ${TEMPDIR}/${TASKNAME}.rerun.out | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    if [[ $hasFailures != 0 ]] ; then
-      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
-      echo ".    Tests run: $testsRun" >> $SUMMARYFILE
-      echo ".    Tests failed: $testsFailed" >> $SUMMARYFILE
-      echo ".    Tests errors: $testsErrors" >> $SUMMARYFILE
-      echo "" >> ${SUMMARYFILE}
-      echo ".    The patch failed the following testcases:" >> $SUMMARYFILE
-      echo "" >> ${SUMMARYFILE}
-      echo "${failedTests}" | sed 's/^/.      /' >> $SUMMARYFILE
-      echo "" >> ${SUMMARYFILE}
-      echo ".    Tests failing with errors:" >> $SUMMARYFILE
-      echo "${testsWithError}" | sed 's/^/.      /' >> $SUMMARYFILE
-      echo "" >> ${SUMMARYFILE}
-    else
-      if [[ "$testsExitCode" != "0" ]] ; then
-          echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases" >> $SUMMARYFILE
-      else
-        echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
-        echo ".    Tests run: $testsRun" >> $SUMMARYFILE
-        if [ -n "${flakyTests}" ]; then
-          echo ".    Tests rerun: ${testsReRun}" >> $SUMMARYFILE
-          echo ".    Tests failed at first run: ${flakyTests}" >> $SUMMARYFILE
-        fi
-      fi
-    fi
+    generate_report  >> "${SUMMARYFILE}"
+    print_flakies_short >> "${SUMMARYFILE}"
+    print_flakies_full >> "${SUMMARYFILEFULL}"
     ;;
 esac
 

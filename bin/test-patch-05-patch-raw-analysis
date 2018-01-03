@@ -112,13 +112,13 @@ checkLinesLength() {
 }
 ###############################################################################
 checkForTestcases() {
-  testcases=`grep -c -i -e '^+++.*/test' ${PATCHFILE}`
+  testcases=`grep -c -i -e '^+++.*/test.*java' ${PATCHFILE}`
   if [[ ${testcases} == 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch does not add/modify any testcase")
     #reverting for summary +1 calculation
     testcases=1
   else
-    REPORT+=("{color:green}+1{color} the patch does adds/modifies ${testcases} testcase(s)")
+    REPORT+=("{color:green}+1{color} the patch adds/modifies ${testcases} testcase(s)")
     #reverting for summary +1 calculation
     testcases=0
   fi

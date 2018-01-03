@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3148 Rerun Failing Tests through Maven surefire (asasvari)
 OOZIE-3113 Retry for ZK lock release (satishsaley)
 OOZIE-3142 Integer Overflows in Purge retentionTime (Prabhu Joseph via andras.piros)
 OOZIE-3143 AG_Install.twiki needs some refinement (kmarton via andras.piros)
