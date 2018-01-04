@@ -387,7 +387,8 @@
         <name>oozie.service.PurgeService.purge.limit</name>
         <value>100</value>
         <description>
-            Completed Actions purge - limit each purge to this value
+            Batch size of individual DB operations used for building the list of items
+            to be purged and performing actual purge.
         </description>
     </property>
 
