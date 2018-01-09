@@ -39,6 +39,8 @@ import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.servlet.V2SLAServlet;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -412,8 +414,12 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                assertEquals(BuildInfo.getBuildInfo().toString(),
-                             wc.getServerBuildVersion());
+                String buildVersion = wc.getServerBuildVersion();
+                JSONObject buildInfo = (JSONObject) JSONValue.parse(buildVersion);
+                for (String buildInfoKey : BuildInfo.getBuildInfo().stringPropertyNames()) {
+                    assertEquals("Build value difference in key " + buildInfoKey,
+                            BuildInfo.getBuildInfo().getProperty(buildInfoKey), buildInfo.get(buildInfoKey));
+                }
                 return null;
             }
         });

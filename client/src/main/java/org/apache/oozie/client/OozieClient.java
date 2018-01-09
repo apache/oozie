@@ -2174,7 +2174,7 @@ public class OozieClient {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
-                return (String) json.get(JsonTags.BUILD_INFO);
+                return json.get(JsonTags.BUILD_INFO).toString();
             }
             else {
                 handleError(conn);

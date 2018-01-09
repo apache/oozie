@@ -51,6 +51,7 @@ import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.servlet.V2ValidateServlet;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.json.simple.JSONValue;
 
 //hardcoding options instead using constants on purpose, to detect changes to option names if any and correct docs.
 public class TestOozieCLI extends DagServletTestCase {
@@ -981,11 +982,15 @@ public class TestOozieCLI extends DagServletTestCase {
                 HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
 
                 String oozieUrl = getContextURL();
-                String[] args = new String[]{"admin", "-version", "-oozie", oozieUrl};
+                String[] args = new String[] { "admin", "-version", "-oozie", oozieUrl };
                 String out = runOozieCLIAndGetStdout(args);
-                assertEquals("Oozie server build version: " + BuildInfo.getBuildInfo() +
-                        SYSTEM_LINE_SEPARATOR, out);
-
+                assertTrue(out, out.startsWith("Oozie server build version: {"));
+                assertTrue(out, out.endsWith(SYSTEM_LINE_SEPARATOR));
+                assertTrue(out, out.contains("build.time"));
+                assertTrue(out, out.contains("build.version"));
+                assertTrue(out, out.contains("build.user"));
+                assertTrue(out, out.contains("vc.url"));
+                assertTrue(out, out.contains("vc.revision"));
                 return null;
             }
         });
