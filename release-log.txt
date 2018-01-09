@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2150 Shell launcher should print shell script (jtolar via andras.piros)
 OOZIE-3147 Misleading documentation of oozie.service.PurgeService.purge.limit configuration property (okalinin via andras.piros)
 OOZIE-3148 Rerun Failing Tests through Maven surefire (asasvari)
 OOZIE-3113 Retry for ZK lock release (satishsaley)

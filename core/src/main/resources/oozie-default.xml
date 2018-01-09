@@ -1938,6 +1938,15 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.shell.max-print-size-kb</name>
+        <value>128</value>
+        <description>
+            When an oozie shell action starts, the shell script will be printed. Scripts larger than the size configured here
+            (in KiB) will not be printed. If this value is less than or equal to zero, the script will not be printed.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.launcher.yarn.timeline-service.enabled</name>
         <value>false</value>
         <description>

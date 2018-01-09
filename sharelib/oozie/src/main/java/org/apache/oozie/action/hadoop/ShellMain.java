@@ -45,6 +45,10 @@ public class ShellMain extends LauncherMain {
             "oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties";
     public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT =
             "oozie.action.shell.setup.hadoop.conf.dir.log4j.content";
+
+    public static final String CONF_OOZIE_SHELL_MAX_SCRIPT_SIZE_TO_PRINT_KB = "oozie.action.shell.max-print-size-kb";
+    private static final int DEFAULT_MAX_SRIPT_SIZE_TO_PRINT_KB = 128;
+
     public static final String OOZIE_ACTION_CONF_XML = "OOZIE_ACTION_CONF_XML";
     private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
     private static final String YARN_CONF_DIR = "YARN_CONF_DIR";
@@ -96,7 +100,7 @@ public class ShellMain extends LauncherMain {
         // Setup Hadoop *-site files in case the user runs a Hadoop-type program (e.g. hive)
         prepareHadoopConfigs(actionConf, envp, currDir);
 
-        printCommand(cmdArray, envp); // For debugging purpose
+        printCommand(actionConf, cmdArray, envp); // For debugging purpose
 
         System.out.println("=================================================================");
         System.out.println();
@@ -314,13 +318,24 @@ public class ShellMain extends LauncherMain {
      *
      * @param cmdArray :Command Array
      * @param envp :Environment array
+     * @param config :Hadoop configuration
      */
-    protected void printCommand(ArrayList<String> cmdArray, Map<String, String> envp) {
+    protected void printCommand(Configuration config, ArrayList<String> cmdArray, Map<String, String> envp) {
         int i = 0;
         System.out.println("Full Command .. ");
         System.out.println("-------------------------");
         for (String arg : cmdArray) {
             System.out.println(i++ + ":" + arg + ":");
+        }
+
+        if (!cmdArray.isEmpty()) {
+            ShellContentWriter writer = new ShellContentWriter(
+                    config.getInt(CONF_OOZIE_SHELL_MAX_SCRIPT_SIZE_TO_PRINT_KB, DEFAULT_MAX_SRIPT_SIZE_TO_PRINT_KB),
+                    System.out,
+                    System.err,
+                    cmdArray.get(0)
+            );
+            writer.print();
         }
 
         if (envp != null) {
@@ -330,7 +345,6 @@ public class ShellMain extends LauncherMain {
                 System.out.println(entry.getKey() + "=" + entry.getValue() + ":");
             }
         }
-
     }
 
     /**
