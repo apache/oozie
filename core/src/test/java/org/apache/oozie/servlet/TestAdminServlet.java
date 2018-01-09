@@ -18,6 +18,7 @@
 
 package org.apache.oozie.servlet;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
@@ -27,6 +28,7 @@ import org.json.simple.JSONValue;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
@@ -214,9 +216,14 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(BuildInfo.getBuildInfo().toString(),
-                             json.get(JsonTags.BUILD_INFO));
+                final String response = IOUtils.toString(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(new StringReader(response));
+                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION), json.get(JsonTags.BUILD_VERSION));
+                JSONObject buildInfo = (JSONObject) json.get(JsonTags.BUILD_INFO);
+                for (String buildInfoKey : BuildInfo.getBuildInfo().stringPropertyNames()) {
+                    assertEquals("Build value difference in key " + buildInfoKey,
+                            BuildInfo.getBuildInfo().getProperty(buildInfoKey), buildInfo.get(buildInfoKey));
+                }
                 return null;
             }
         });
