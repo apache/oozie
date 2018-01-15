@@ -144,6 +144,7 @@ public class XLogService implements Service, Instrumentable {
         String oozieHome = Services.getOozieHome();
         String oozieLogs = System.getProperty(OOZIE_LOG_DIR, oozieHome + "/logs");
         System.setProperty(OOZIE_LOG_DIR, oozieLogs);
+
         try {
             LogManager.resetConfiguration();
             log4jFileName = System.getProperty(LOG4J_FILE, DEFAULT_LOG4J_PROPERTIES);
@@ -211,7 +212,8 @@ public class XLogService implements Service, Instrumentable {
         Properties props = new Properties();
         props.load(is);
 
-        Configuration conf = new XConfiguration();
+        XConfiguration conf = new XConfiguration();
+        conf.setRestrictSystemProperties(false);
         for (Map.Entry entry : props.entrySet()) {
             conf.set((String) entry.getKey(), (String) entry.getValue());
         }
