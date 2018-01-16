@@ -1480,7 +1480,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
         LogUtils.setLogInfo(action);
         try {
-            LOG.debug("Starting action " + action.getId() + " getting Action File System");
+            LOG.info("Starting action. Getting Action File System");
             FileSystem actionFs = context.getAppFileSystem();
             LOG.debug("Preparing action Dir through copying " + context.getActionDir());
             prepareActionDir(actionFs, context);
@@ -1497,6 +1497,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
         try {
             String externalStatus = action.getExternalStatus();
             WorkflowAction.Status status = externalStatus.equals(SUCCEEDED) ? WorkflowAction.Status.OK

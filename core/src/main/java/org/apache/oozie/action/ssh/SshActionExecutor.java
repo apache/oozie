@@ -86,6 +86,8 @@ public class SshActionExecutor extends ActionExecutor {
     private static int maxLen;
     private static boolean allowSshUserAtHost;
 
+    private final XLog LOG = XLog.getLog(getClass())
+;
     protected SshActionExecutor() {
         super(ACTION_TYPE);
     }
@@ -123,13 +125,12 @@ public class SshActionExecutor extends ActionExecutor {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "ERR_XML_PARSE_FAILED",
                                               "unknown error", ex);
         }
-        XLog log = XLog.getLog(getClass());
-        log.debug("Capture Output: {0}", captureOutput);
+        LOG.debug("Capture Output: {0}", captureOutput);
         if (status == Status.OK) {
             if (captureOutput) {
                 String outFile = getRemoteFileName(context, action, "stdout", false, true);
                 String dataCommand = SSH_COMMAND_BASE + action.getTrackerUri() + " cat " + outFile;
-                log.debug("Ssh command [{0}]", dataCommand);
+                LOG.debug("Ssh command [{0}]", dataCommand);
                 try {
                     Process process = Runtime.getRuntime().exec(dataCommand.split("\\s"));
                     StringBuffer buffer = new StringBuffer();
@@ -172,6 +173,7 @@ public class SshActionExecutor extends ActionExecutor {
      */
     @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Killing action");
         String command = "ssh " + action.getTrackerUri() + " kill  -KILL " + action.getExternalId();
         int returnValue = getReturnValue(command);
         if (returnValue != 0) {
@@ -191,8 +193,7 @@ public class SshActionExecutor extends ActionExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public void start(final Context context, final WorkflowAction action) throws ActionExecutorException {
-        XLog log = XLog.getLog(getClass());
-        log.info("start() begins");
+        LOG.info("Starting action");
         String confStr = action.getConf();
         Element conf;
         try {
@@ -276,7 +277,6 @@ public class SshActionExecutor extends ActionExecutor {
             context.setStartData(pid, host, host);
             check(context, action);
         }
-        log.info("start() ends");
     }
 
     private String checkIfRunning(String host, final Context context, final WorkflowAction action) {
@@ -465,6 +465,7 @@ public class SshActionExecutor extends ActionExecutor {
                 XLog.getLog(getClass()).warn("Cannot delete temp dir {0}", tmpDir);
             }
         }
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     /**

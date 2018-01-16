@@ -36,14 +36,15 @@ public class DecisionActionExecutor extends ActionExecutor {
 
     public static final String XML_ERROR = "XML_ERROR";
 
+    private final XLog LOG = XLog.getLog(getClass());
+
     public DecisionActionExecutor() {
         super(ACTION_TYPE);
     }
 
     @SuppressWarnings("unchecked")
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
-        XLog log = XLog.getLog(getClass());
-        log.trace("start() begins");
+        LOG.info("Starting action");
         try {
             String confStr = action.getConf();
             context.setStartData("-", "-", "-");
@@ -75,13 +76,11 @@ public class DecisionActionExecutor extends ActionExecutor {
         catch (JDOMException ex) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, XML_ERROR, ex.getMessage(), ex);
         }
-        finally {
-            log.trace("start() ends");
-        }
     }
 
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
         context.setEndData(WorkflowAction.Status.OK, action.getExternalStatus());
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {

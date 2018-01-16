@@ -87,7 +87,7 @@ public class EmailActionExecutor extends ActionExecutor {
     private final static String CONTENT_TYPE = "content_type";
 
     private final static String DEFAULT_CONTENT_TYPE = "text/plain";
-    private XLog LOG = XLog.getLog(getClass());
+    private final XLog LOG = XLog.getLog(getClass());
     public static final String EMAIL_ATTACHMENT_ERROR_MSG =
             "\n Note: This email is missing configured email attachments "
             + "as sending attachments in email action is disabled in the Oozie server. "
@@ -104,6 +104,7 @@ public class EmailActionExecutor extends ActionExecutor {
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Starting action");
         try {
             context.setStartData("-", "-", "-");
             Element actionXml = XmlUtils.parseXml(action.getConf());
@@ -300,6 +301,7 @@ public class EmailActionExecutor extends ActionExecutor {
             throw new ActionExecutorException(ErrorType.ERROR, "EM007",
                     "Encountered an error while sending the email message over SMTP.", e);
         }
+        LOG.info("Email sent to [{0}]", to);
     }
 
     @Override
@@ -308,6 +310,7 @@ public class EmailActionExecutor extends ActionExecutor {
         WorkflowAction.Status status = externalStatus.equals("OK") ? WorkflowAction.Status.OK :
                                        WorkflowAction.Status.ERROR;
         context.setEndData(status, getActionSignal(status));
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     @Override
