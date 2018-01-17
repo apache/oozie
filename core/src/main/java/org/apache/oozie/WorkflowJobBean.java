@@ -119,9 +119,9 @@ import java.util.List;
 
     @NamedQuery(name = "GET_WORKFLOWS_WITH_COORD_PARENT_ID", query = "select w.id from WorkflowJobBean w where w.parentId like :parentId"), // when setting parentId parameter, make sure to append a '%' (percent symbol) at the end (e.g. 0000004-130709155224435-oozie-rkan-C%")
 
-    @NamedQuery(name = "GET_WORKFLOWS_BASIC_INFO_BY_PARENT_ID", query = "select w.id, w.statusStr, w.endTimestamp from WorkflowJobBean w where w.parentId = :parentId"),
+    @NamedQuery(name = "GET_WORKFLOWS_BASIC_INFO_BY_PARENT_ID", query = "select w.id, w.statusStr, w.endTimestamp, w.lastModifiedTimestamp from WorkflowJobBean w where w.parentId = :parentId"),
 
-    @NamedQuery(name = "GET_WORKFLOWS_BASIC_INFO_BY_COORD_PARENT_ID", query = "select w.id,  w.statusStr, w.endTimestamp from WorkflowJobBean w where w.parentId like :parentId"),
+    @NamedQuery(name = "GET_WORKFLOWS_BASIC_INFO_BY_COORD_PARENT_ID", query = "select w.id,  w.statusStr, w.endTimestamp, w.lastModifiedTimestamp from WorkflowJobBean w where w.parentId like :parentId"),
 
     @NamedQuery(name = "GET_WORKFLOW_FOR_USER", query = "select w.user from WorkflowJobBean w where w.id = :id"),
 

@@ -42,12 +42,13 @@ import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.QueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
@@ -171,30 +172,6 @@ public class TestPurgeXCommand extends XDataTestCase {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
         }
 
-    }
-
-    /**
-     * Test : purge failed wf job with null end_time successfully
-     *
-     * @throws Exception
-     */
-    public void testFailedJobNullEndTimePurgeXCommand() throws Exception {
-        final WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        final Date endTime = job.getEndTime();
-        job.setLastModifiedTime(endTime);
-        job.setEndTime(null);
-
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
-
-        new PurgeXCommand(7, 1, 1, 10).call();
-
-        try {
-            jpaService.execute(wfJobGetCmd);
-            fail("Workflow Job should have been purged");
-        } catch (JPAExecutorException je) {
-            assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
     }
 
     /**
@@ -2882,6 +2859,66 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
+     * Subworkflow has terminated, last modified time is known, but end time is null
+     *
+     * @throws Exception
+     */
+    public void testPurgeWFWithEndedSubWFWithNullEndTimeValidLastModifiedTime() throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+
+        WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        subwfJob1.setEndTime(null);
+        WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
+
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        final WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
+        final WorkflowJobGetJPAExecutor subwfJob1GetCmd = new WorkflowJobGetJPAExecutor(subwfJob1.getId());
+        final WorkflowActionGetJPAExecutor subwfAction1GetCmd = new WorkflowActionGetJPAExecutor(subwfAction1.getId());
+
+        wfJob = jpaService.execute(wfJobGetCmd);
+        wfAction1 = jpaService.execute(wfAction1GetCmd);
+        subwfJob1 = jpaService.execute(subwfJob1GetCmd);
+        subwfAction1 = jpaService.execute(subwfAction1GetCmd);
+
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, wfAction1.getStatus());
+        assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob1.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction1.getStatus());
+
+        final QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> workflowJobQueryExecutor =
+                WorkflowJobQueryExecutor.getInstance();
+        workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, subwfJob1);
+
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 3;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+            fail("Workflow Job should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(subwfJob1GetCmd);
+            fail("SubWorkflow Job 1 should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+    }
+
+    /**
      * Test : The subworkflow and workflow should get purged, but the coordinator parent shouldn't get purged --> none will get
      * purged
      *
@@ -3068,12 +3105,12 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
-        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
-        WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
-        WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
-        CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
-        CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
+        final WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
+        final WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
+        final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        final CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
 
         wfJob = jpaService.execute(wfJobGetCmd);
         wfAction = jpaService.execute(wfActionGetCmd);
@@ -3089,6 +3126,115 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
 
         new PurgeXCommand(7, 7, 1, 10).call();
+
+        try {
+            jpaService.execute(coordJobGetCmd);
+            fail("Coordinator Job should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(coordActionGetCmd);
+            fail("Coordinator Action should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+            fail("Workflow Job should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(wfActionGetCmd);
+            fail("Workflow Action should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(subwfJobGetCmd);
+            fail("SubWorkflow Job should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+
+        try {
+            jpaService.execute(subwfActionGetCmd);
+            fail("SubWorkflow Action should have been purged");
+        }
+        catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+    }
+
+
+    /**
+     * Test : The subworkflow and workflow should get purged, and the coordinator parent should get purged --> all will get
+     * purged
+     *
+     * Coordinator parent finished Workflow and its subworkflow have terminated, last modified time is known, but end time is null
+     * for workflow and subworkflow
+     *
+     * @throws Exception
+     */
+    public void testPurgeCoordWithWFChildWithSubWFNullEndTimeValidLastModifiedTime() throws Exception {
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+
+        final QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> workflowJobQueryExecutor =
+                WorkflowJobQueryExecutor.getInstance();
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        wfJob.setLastModifiedTime(wfJob.getEndTime());
+        wfJob.setEndTime(null);
+        workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, wfJob);
+
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        subwfJob.setLastModifiedTime(subwfJob.getEndTime());
+        subwfJob.setEndTime(null);
+        workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, subwfJob);
+
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
+
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
+        final WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
+        final WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
+        final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
+        final CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
+
+        wfJob = jpaService.execute(wfJobGetCmd);
+        wfAction = jpaService.execute(wfActionGetCmd);
+        subwfJob = jpaService.execute(subwfJobGetCmd);
+        subwfAction = jpaService.execute(subwfActionGetCmd);
+        coordJob = jpaService.execute(coordJobGetCmd);
+        coordAction = jpaService.execute(coordActionGetCmd);
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
+        assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
+        assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 7;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
         try {
             jpaService.execute(coordJobGetCmd);

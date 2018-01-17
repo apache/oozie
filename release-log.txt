@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-1401 amend PurgeCommand should purge the workflow jobs w/o end_time (andras.piros, asasvari)
 OOZIE-3085 Improve logging in ActionExecutors: add log entry for start(), end() and kill() (kmarton via andras.piros)
 OOZIE-3083 Make improved version Info backward compatible (gezapeti via asasvari)
 OOZIE-2150 Shell launcher should print shell script (jtolar via andras.piros)
