@@ -1,5 +1,6 @@
 -- Oozie 5.0.0-beta1 release
 
+OOZIE-3159 Spark Action fails because of absence of hadoop mapreduce jar(s) (asasvari)
 OOZIE-3083 Make improved version Info backward compatible (gezapeti via asasvari)
 OOZIE-3142 Integer Overflows in Purge retentionTime (Prabhu Joseph via andras.piros)
 OOZIE-3143 AG_Install.twiki needs some refinement (kmarton via andras.piros)
