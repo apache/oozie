@@ -108,22 +108,17 @@ prepareTestPatchDirs() {
 updateJira() {
   if [[ "${JIRAUPDATE}" != "" && "${JIRAISSUE}" != "" ]] ; then
     if [[ "$JIRAPASSWORD" != "" ]] ; then
-      JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
-      if [ ! -e "${JIRACLI}" ] ; then
-        curl -L https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
-        if [ $? != 0 ] ; then
-         echo
-         echo "Could not download jira-cli tool, thus no JIRA updating"
-         echo
-         exit 1
-        fi
-        mkdir ${TEMPDIR}/jira-cli-tmp
-        (cd ${TEMPDIR}/jira-cli-tmp;jar xf ${TEMPDIR}/jira-cli.zip; mv jira-cli-2.6.0 ${TOOLSDIR}/jira-cli)
-        chmod u+x ${JIRACLI}
-      fi
       echo "Adding comment to JIRA"
-      comment=`cat ${SUMMARYFILE}`
-      $JIRACLI -s $JIRAURL -a addcomment -u $JIRAUSER -p "$JIRAPASSWORD" --comment "$comment" --issue $JIRAISSUE
+
+      # Replace newlines with \n so that summary can be sent via JSON to JIRA
+      comment=$(awk '{printf "%s\\n", $0}' ${SUMMARYFILE})
+
+      curl -u "${JIRAUSER}:${JIRAPASSWORD}"\
+           -H "Content-type: application/json"\
+           -H "Accept: application/json"\
+           -X POST\
+           --data '{"body": "'${comment}'"}'\
+           ${JIRAURL}/rest/api/2/issue/${JIRAISSUE}/comment || echo "Failed to add comment to JIRA"
       echo
     else
       echo "Skipping JIRA update"
@@ -366,6 +361,8 @@ parseArgs "$@"
 
 prepareTestPatchDirs
 
+echo -n "PreCommit-OOZIE-Build started" > ${SUMMARYFILE}
+updateJira
 echo "" > ${SUMMARYFILE}
 echo "" > ${SUMMARYFILE_FULL}
 
@@ -384,7 +381,6 @@ else
   summary_both "Testing patch ${PATCHFILE}"
   summary_both ""
 fi
-
 prepareSCM
 
 summary_both ""
