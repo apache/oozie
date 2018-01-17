@@ -198,6 +198,12 @@
             <artifactId>spark-streaming-flume_${spark.scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>jetty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
