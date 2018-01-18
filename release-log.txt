@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3162 amend Precommit build fails to add comment to JIRA (asasvari)
 OOZIE-3159 Spark Action fails because of absence of hadoop mapreduce jar(s) (asasvari)
 OOZIE-3162 Precommit build fails to add comment to JIRA (asasvari)
 OOZIE-1401 amend PurgeCommand should purge the workflow jobs w/o end_time (andras.piros, asasvari)

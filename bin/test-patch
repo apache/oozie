@@ -117,7 +117,7 @@ updateJira() {
            -H "Content-type: application/json"\
            -H "Accept: application/json"\
            -X POST\
-           --data '{"body": "'${comment}'"}'\
+           --data "{\"body\": \"${comment}\"}"\
            ${JIRAURL}/rest/api/2/issue/${JIRAISSUE}/comment || echo "Failed to add comment to JIRA"
       echo
     else
