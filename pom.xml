@@ -1173,19 +1173,19 @@
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-client</artifactId>
-		<version>${activemq.version}</version>
+                <version>${activemq.version}</version>
            </dependency>
 
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-broker</artifactId>
-		<version>${activemq.version}</version>
+                <version>${activemq.version}</version>
            </dependency>
 
            <dependency>
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-kahadb-store</artifactId>
-		<version>${activemq.version}</version>
+                <version>${activemq.version}</version>
            </dependency>
 
             <dependency>
