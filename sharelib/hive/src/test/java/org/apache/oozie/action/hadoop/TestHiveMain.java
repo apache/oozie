@@ -51,6 +51,13 @@ public class TestHiveMain extends MainTestCase {
         super.tearDown();
     }
 
+    @Override
+    protected List<File> getFilesToDelete() {
+        List<File> filesToDelete = super.getFilesToDelete();
+        filesToDelete.add(new File(HiveMain.HIVE_SITE_CONF));
+        return filesToDelete;
+    }
+
     private static final String NEW_LINE =
         System.getProperty("line.separator", "\n");
 

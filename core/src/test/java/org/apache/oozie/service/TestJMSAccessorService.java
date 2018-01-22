@@ -21,7 +21,6 @@ package org.apache.oozie.service;
 import java.net.URI;
 import java.util.Random;
 
-import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.broker.BrokerService;
@@ -141,6 +140,7 @@ public class TestJMSAccessorService extends XTestCase {
             ConnectionContext ctx1 = new DefaultConnectionContext();
             ctx1.createConnection(connInfo.getJNDIProperties());
             BrokerService broker = new BrokerService();
+            broker.setDataDirectory(getTestCaseDir());
             // Without this stop testConnectionRetry fails with
             // javax.management.InstanceAlreadyExistsException: org.apache.activemq:BrokerName=localhost,Type=Broker
             broker.stop();
@@ -177,6 +177,7 @@ public class TestJMSAccessorService extends XTestCase {
         // Start the broker and check if listening to topic now
         BrokerService broker = new BrokerService();
         broker.addConnector(brokerURl);
+        broker.setDataDirectory(getTestCaseDir());
         broker.start();
         Thread.sleep(1000);
         assertTrue(jmsService.isListeningToTopic(connInfo, topic));
@@ -208,6 +209,7 @@ public class TestJMSAccessorService extends XTestCase {
         // Start the broker
         BrokerService broker = new BrokerService();
         broker.addConnector(brokerURL);
+        broker.setDataDirectory(getTestCaseDir());
         broker.start();
         JMSConnectionInfo connInfo = hcatService.getJMSConnectionInfo(new URI("hcat://hcat.server.com:8020"));
         jmsService.registerForNotification(connInfo, topic, new HCatMessageHandler(publisherAuthority));
@@ -228,6 +230,7 @@ public class TestJMSAccessorService extends XTestCase {
         }
         broker = new BrokerService();
         broker.addConnector(brokerURL);
+        broker.setDataDirectory(getTestCaseDir());
         broker.start();
         Thread.sleep(1000);
         assertTrue(jmsService.isListeningToTopic(connInfo, topic));

@@ -1286,8 +1286,8 @@ public class TestOozieCLI extends DagServletTestCase {
                         " <start to=\"end\"/> <end name=\"end\"/> </workflow-app>";
                 String invalidContent = "<workflow-app xmlns=\"uri:oozie:workflow:0.2\" name=\"f\"> "+
                         " <tag=\"end\"/> <tag=\"end\"/> </workflow-app>";
-                File validfile = new File(validFileName);
-                File invalidfile = new File(invalidFileName);
+                File validfile = new File(getTestCaseDir(), validFileName);
+                File invalidfile = new File(getTestCaseDir(), invalidFileName);
                 validfile.delete();
                 invalidfile.delete();
 

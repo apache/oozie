@@ -142,4 +142,11 @@ public class TestSparkMain extends MainTestCase {
         expected.add("job_001");
         assertEquals(expected, jobIds);
     }
+
+    @Override
+    protected List<File> getFilesToDelete() {
+        List<File> filesToDelete = super.getFilesToDelete();
+        filesToDelete.add(new File(SparkMain.HIVE_SITE_CONF));
+        return filesToDelete;
+    }
 }

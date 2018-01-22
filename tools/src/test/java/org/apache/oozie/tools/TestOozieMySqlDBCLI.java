@@ -42,7 +42,7 @@ public class TestOozieMySqlDBCLI extends XTestCase {
         new LauncherSecurityManager();
         this.oozieConfig = System.getProperty("oozie.test.config.file");
 
-      File oozieConfig = new File("src/test/resources/fake-oozie-site.xml");
+      File oozieConfig = new File(getTestCaseConfDir(), "src/test/resources/fake-oozie-site.xml");
         System.setProperty("oozie.test.config.file", oozieConfig.getAbsolutePath());
         Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
         Connection conn = DriverManager.getConnection(url, "sa", "");

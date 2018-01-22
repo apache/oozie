@@ -22,12 +22,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -75,6 +78,7 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.hadoop.LauncherMain;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
 import org.apache.oozie.service.ConfigurationService;
@@ -307,6 +311,8 @@ public abstract class XTestCase extends TestCase {
     protected  void setUp(boolean cleanUpDBTables) throws Exception {
         RUNNING_TESTCASES.incrementAndGet();
         super.setUp();
+        // if for some reason the tearDown didn`t run, check and delete the files
+        deleteCreatedFiles();
         String baseDir = System.getProperty(OOZIE_TEST_DIR, new File("target/test-data").getAbsolutePath());
         String msg = null;
         File f = new File(baseDir);
@@ -481,10 +487,38 @@ public abstract class XTestCase extends TestCase {
         resetSystemProperties();
         sysProps = null;
         testCaseDir = null;
+        deleteCreatedFiles();
         super.tearDown();
         RUNNING_TESTCASES.decrementAndGet();
         LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
     }
+
+    /**
+     * Delete the created files
+     */
+    protected void deleteCreatedFiles() {
+        for (File f : getFilesToDelete()) {
+            if (f.exists()){
+                f.delete();
+            }
+        }
+    }
+
+    /**
+     * Provides a list of files needed to be deleted
+     * @return propagation-conf.xml, log4j.properties, .log files from the working directory
+     */
+    protected List<File> getFilesToDelete() {
+        File root = new File(".");
+        File [] filesToDelete = root.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".log") || name.endsWith("log4j.properties") || name.equals(LauncherMain.PROPAGATION_CONF_XML);
+            }
+        });
+        return new ArrayList<>(Arrays.asList(filesToDelete));
+    }
+
 
     /**
      * Return the test working directory. The directory name is the full class name of the test plus the test method

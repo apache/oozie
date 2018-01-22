@@ -21,11 +21,13 @@ package org.apache.oozie.action.hadoop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
@@ -77,6 +79,8 @@ public class TestJarFilter {
         assertEquals(sparkYarnJarUri.toString(), jarFilter.getSparkYarnJar());
         assertEquals(sparkVersion, jarFilter.getSparkVersion());
         checkFilteredUris(listUris, sparkYarnJarUri.toString(), renamedApplicationJar);
+
+        Files.deleteIfExists(new File(sparkYarnJar).toPath());
     }
 
     private void checkFilteredUris(LinkedList<URI> listUris, String sparkYarnJar, String applicationJar) {

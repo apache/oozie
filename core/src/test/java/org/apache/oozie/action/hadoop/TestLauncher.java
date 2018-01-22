@@ -20,14 +20,9 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.test.XFsTestCase;
-import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -36,7 +31,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.util.Map;
 
 public class TestLauncher extends XFsTestCase {
 
@@ -140,7 +134,8 @@ public class TestLauncher extends XFsTestCase {
         w.write(contents);
         w.close();
 
-        File[] dsts = new File[]{new File("dst1.txt"), new File("dist2.txt"), new File("dist3.txt")};
+        File[] dsts = new File[]{new File(getTestCaseDir(), "dst1.txt"), new File(getTestCaseDir(),"dist2.txt"),
+                new File(getTestCaseDir(), "dist3.txt")};
         for (File dst : dsts) {
             dst.delete();
             assertFalse(dst.exists());

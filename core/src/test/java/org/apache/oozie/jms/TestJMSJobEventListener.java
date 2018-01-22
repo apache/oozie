@@ -335,6 +335,7 @@ public class TestJMSJobEventListener extends XTestCase {
             JMSJobEventListener wfEventListener = new JMSJobEventListener();
             wfEventListener.init(conf);
             BrokerService broker = new BrokerService();
+            broker.setDataDirectory(getTestCaseDir());
             broker.addConnector(brokerURl);
             broker.start();
             ConnectionContext jmsContext = getConnectionContext();
@@ -344,6 +345,7 @@ public class TestJMSJobEventListener extends XTestCase {
             // Exception Listener should have removed the old conn context
             assertNull(jmsContext);
             broker = new BrokerService();
+            broker.setDataDirectory(getTestCaseDir());
             broker.addConnector(brokerURl);
             broker.start();
             WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",

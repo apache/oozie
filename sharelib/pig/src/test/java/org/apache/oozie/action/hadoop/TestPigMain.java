@@ -57,6 +57,13 @@ public class TestPigMain extends PigTestCase {
     }
 
     @Override
+    protected List<File> getFilesToDelete() {
+        List<File> filesToDelete = super.getFilesToDelete();
+        filesToDelete.add(new File("pig.properties"));
+        return filesToDelete;
+    }
+
+    @Override
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
 
