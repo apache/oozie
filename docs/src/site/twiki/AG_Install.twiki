@@ -722,23 +722,23 @@ match; =password= is the default.
 
 For example, if your Oozie server was at oozie.int.example.com, then you would do this:
 <verbatim>
-keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=oozie.int.example.com" -storepass password -keypass password
+keytool -genkeypair -alias jetty -keyalg RSA -dname "CN=oozie.int.example.com" -storepass password -keypass password
 </verbatim>
 If you're going to be using Oozie HA, it's simplest if you have a single certificate that all Oozie servers in the HA group can use.
 To do that, you'll need to use a wildcard on the subdomain it belongs to:
 <verbatim>
-keytool -genkeypair -alias tomcat -keyalg RSA -dname "CN=*.int.example.com" -storepass password -keypass password
+keytool -genkeypair -alias jetty -keyalg RSA -dname "CN=*.int.example.com" -storepass password -keypass password
 </verbatim>
 The above would work on any server in the int.example.com domain.
 
 2. Run the following command (as the Oozie user) to export a certificate file from the keystore file:
 <verbatim>
-keytool -exportcert -alias tomcat -file path/to/anywhere/certificate.cert -storepass password
+keytool -exportcert -alias jetty -file path/to/anywhere/certificate.cert -storepass password
 </verbatim>
 
 3. Run the following command (as any user) to create a truststore containing the certificate we just exported:
 <verbatim>
-keytool -import -alias tomcat -file path/to/certificate.cert -keystore /path/to/anywhere/oozie.truststore -storepass password2
+keytool -import -alias jetty -file path/to/certificate.cert -keystore /path/to/anywhere/oozie.truststore -storepass password2
 </verbatim>
 You'll need the =oozie.truststore= later if you're using the Oozie client (or other Java-based client); otherwise, you can skip
 this step.  The =storepass= value here is only used to verify or change the truststore and isn't typically required when only
