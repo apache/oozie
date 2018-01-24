@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.server.guice.OozieGuiceModule;
 import org.apache.oozie.service.ConfigurationService;
@@ -199,6 +200,19 @@ public class EmbeddedOozieServer {
         LOG.info("Server started.");
     }
 
+    public void shutdown() throws Exception {
+        LOG.info("Shutting down.");
+        if (serviceController != null) {
+            serviceController.destroy();
+            LOG.info("Oozie services stopped.");
+        }
+
+        if (server != null) {
+            server.stop();
+            LOG.info("Server stopped.");
+        }
+    }
+
     public void join() throws InterruptedException {
         server.join();
     }
@@ -206,9 +220,11 @@ public class EmbeddedOozieServer {
     public void addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-                LOG.info("Shutting down.");
-                serviceController.destroy();
-                LOG.info("Oozie services stopped.");
+                try {
+                    shutdown();
+                } catch (final Exception e) {
+                    LOG.error(String.format("There were errors during shutdown. Error message: %s", e.getMessage()));
+                }
             }
         });
     }
@@ -216,14 +232,21 @@ public class EmbeddedOozieServer {
     public static void main(String[] args) throws Exception {
         final Injector guiceInjector = Guice.createInjector(new OozieGuiceModule());
 
-        final EmbeddedOozieServer embeddedOozieServer = guiceInjector.getInstance(EmbeddedOozieServer.class);
+        EmbeddedOozieServer embeddedOozieServer = null;
+        try {
+            embeddedOozieServer = guiceInjector.getInstance(EmbeddedOozieServer.class);
+        }
+        catch (final ProvisionException ex) {
+            LOG.error(ex.getMessage());
+            System.exit(1);
+        }
 
-        embeddedOozieServer.setup();
         embeddedOozieServer.addShutdownHook();
+        embeddedOozieServer.setup();
         try {
             embeddedOozieServer.start();
-        } catch (Exception e) {
-            LOG.error("Could not start EmbeddedOozieServer!", e);
+        } catch (final Exception e) {
+            LOG.error(String.format("Could not start EmbeddedOozieServer! Error message: %s", e.getMessage()));
             System.exit(1);
         }
         embeddedOozieServer.join();
