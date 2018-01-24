@@ -106,7 +106,7 @@
          <hadoop.auth.version>${hadoop.version}</hadoop.auth.version>
 
          <!-- Tomcat version -->
-         <tomcat.version>6.0.47</tomcat.version>
+         <tomcat.version>6.0.53</tomcat.version>
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.1</openjpa.version>
          <xerces.version>2.11.0</xerces.version>
