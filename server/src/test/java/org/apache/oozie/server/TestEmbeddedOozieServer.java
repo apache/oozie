@@ -31,6 +31,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +48,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -69,8 +71,10 @@ public class TestEmbeddedOozieServer {
     @Mock private FilterMapper oozieFilterMapper;
     @Mock private ConstraintSecurityHandler constraintSecurityHandler;
     private EmbeddedOozieServer embeddedOozieServer;
+    private String confTruststoreFile = "oozie.truststore";
 
-    @Before public void setUp() {
+
+    @Before public void setUp() throws IOException {
         embeddedOozieServer = new EmbeddedOozieServer(mockServer, mockJspHandler, mockServices, mockSSLServerConnectorFactory,
                 mockOozieRewriteHandler, servletContextHandler, oozieServletMapper, oozieFilterMapper, constraintSecurityHandler);
 
@@ -87,9 +91,13 @@ public class TestEmbeddedOozieServer {
         doReturn(new Handler[0]).when(mockOozieRewriteHandler).getChildHandlers();
         doReturn(new Handler[0]).when(servletContextHandler).getChildHandlers();
         doReturn(new Handler[0]).when(constraintSecurityHandler).getChildHandlers();
+        doReturn(confTruststoreFile).when(mockConfiguration).get(EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_FILE);
+        System.clearProperty(EmbeddedOozieServer.TRUSTSTORE_PATH_SYSTEM_PROPERTY);
     }
 
     @After public void tearDown() {
+        System.clearProperty(EmbeddedOozieServer.TRUSTSTORE_PATH_SYSTEM_PROPERTY);
+
         verify(mockServices).get(ConfigurationService.class);
 
         verifyNoMoreInteractions(
@@ -105,7 +113,28 @@ public class TestEmbeddedOozieServer {
 
         embeddedOozieServer.setup();
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+
+        // trustore parameters will have to be set even in case of an insecure setup
+        Assert.assertEquals(confTruststoreFile, System.getProperty("javax.net.ssl.trustStore"));
     }
+
+    /**
+     * test case for when the trustore path is set via system property
+     * expected result: the path is used from the system property and the value is not even retrieved from the config file
+     */
+    @Test
+    public void testServerSetupTruststorePathSetViaSystemProperty() throws Exception {
+        final String truststorePath2 = "truststore.jks";
+        doReturn(String.valueOf(false)).when(mockConfiguration).get("oozie.https.enabled");
+        System.setProperty(EmbeddedOozieServer.TRUSTSTORE_PATH_SYSTEM_PROPERTY, truststorePath2);
+
+        embeddedOozieServer.setup();
+        verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+
+        Assert.assertEquals(truststorePath2, System.getProperty("javax.net.ssl.trustStore"));
+        verify(mockConfiguration, never()).get(EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_FILE);
+    }
+
 
     @Test
     public void testSecureServerSetup() throws Exception {
@@ -121,6 +150,7 @@ public class TestEmbeddedOozieServer {
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
         verify(mockSSLServerConnectorFactory).createSecureServerConnector(
                 isA(Integer.class), isA(Configuration.class), isA(Server.class));
+        Assert.assertEquals(confTruststoreFile, System.getProperty("javax.net.ssl.trustStore"));
     }
 
     @Test(expected=NumberFormatException.class)

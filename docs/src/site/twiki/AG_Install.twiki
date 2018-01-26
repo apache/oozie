@@ -763,8 +763,10 @@ The keystore file will be named =.keystore= and located in the Oozie user's home
 2. Configure settings necessary for enabling SSL/TLS support in =oozie-site.xml=.
 
 2a. Set =oozie.https.enabled= to =true=. To revert back to HTTP, set =oozie.https.enabled= to =false=.
-2b. Set location and password for both the keystore and truststore by setting =oozie.https.keystore.file=,
-=oozie.https.keystore.pass=, =oozie.https.truststore.file= and =oozie.https.truststore.pass=.
+2b. Set location and password for the keystore and location for truststore by setting =oozie.https.keystore.file=,
+=oozie.https.keystore.pass=, =oozie.https.truststore.file=.
+
+*Note:* =oozie.https.truststore.file= can be overridden by setting =javax.net.ssl.trustStore= system property.
 
 The default HTTPS port Oozie listens on for secure connections is 11443; it can be changed via =oozie.https.port=.
 

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3157 Setup truststore so that it also works in HTTP only mode (kmarton via asasvari)
 OOZIE-3166 Remove tomcat alias from AG_Install.twiki: To use a Self-Signed Certificate part (kmarton via andras.piros)
 OOZIE-2775 Oozie server does not stop if there is an exception during service initalization at startup (asasvari) 
 OOZIE-3145 >git status< should be clean after >mvn test< was called (kmarton via gezapeti)

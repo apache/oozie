@@ -146,6 +146,11 @@ $ bin/oozie-setup.sh sharelib create -fs <FS_URI> [-locallib <PATH>]
                      db create|upgrade|postupgrade -run [-sqlfile <FILE>]
 </verbatim>
 
+*IMPORTANT*: If the Oozie server needs to establish secure connection with an external server with a self-signed certificate,
+make sure you specify the location of a truststore that contains required certificates. It can be done by configuring
+=oozie.https.truststore.file= in =oozie-site.xml=, or by setting the =javax.net.ssl.trustStore= system property.
+If it is set in both places, the value passed as system property will be used.
+
 The =-secure= option will configure Oozie to use HTTP (SSL); refer to
 [[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Setting Up Oozie with HTTPS (SSL)]] for more details.
 

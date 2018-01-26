@@ -41,8 +41,6 @@ import java.util.Arrays;
  */
 class SSLServerConnectorFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SSLServerConnectorFactory.class);
-    public static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
-    public static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_PASS = "oozie.https.keystore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_FILE = "oozie.https.keystore.file";
     public static final String OOZIE_HTTPS_EXCLUDE_PROTOCOLS = "oozie.https.exclude.protocols";
@@ -78,9 +76,6 @@ class SSLServerConnectorFactory {
 
         setIncludeCipherSuites();
         setExludeCipherSuites();
-
-        setTrustStorePath();
-        setTrustStorePass();
 
         setKeyStoreFile();
         setKeystorePass();
@@ -134,20 +129,8 @@ class SSLServerConnectorFactory {
         LOG.info(String.format("SSL context - excluding protocols: %s", Arrays.toString(excludedProtocols)));
     }
 
-    private void setTrustStorePath() {
-        String trustStorePath = conf.get(OOZIE_HTTPS_TRUSTSTORE_FILE);
-        Preconditions.checkNotNull(trustStorePath, "trustStorePath is null");
-        sslContextFactory.setTrustStorePath(trustStorePath);
-    }
-
-    private void setTrustStorePass() {
-        String trustStorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_TRUSTSTORE_PASS).trim();
-        Preconditions.checkNotNull(trustStorePass, "setTrustStorePass is null");
-        sslContextFactory.setTrustStorePassword(trustStorePass);
-    }
-
     private void setKeystorePass() {
-        String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS).trim();
+        String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS);
         Preconditions.checkNotNull(keystorePass, "keystorePass is null");
         sslContextFactory.setKeyManagerPassword(keystorePass);
     }

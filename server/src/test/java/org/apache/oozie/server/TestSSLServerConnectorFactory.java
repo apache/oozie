@@ -39,8 +39,6 @@ import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCL
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCLUDE_PROTOCOLS;
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_FILE;
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_PASS;
-import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_TRUSTSTORE_FILE;
-import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_TRUSTSTORE_PASS;
 import static org.apache.oozie.util.ConfigUtils.OOZIE_HTTP_PORT;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -62,8 +60,6 @@ public class TestSSLServerConnectorFactory {
 
     @Before public void setUp() {
         testConfig = new Configuration();
-        testConfig.set(OOZIE_HTTPS_TRUSTSTORE_FILE, "test_truststore_file");
-        testConfig.set(OOZIE_HTTPS_TRUSTSTORE_PASS, "trustpass");
         testConfig.set(OOZIE_HTTPS_KEYSTORE_FILE, "test_keystore_file");
         testConfig.set(OOZIE_HTTPS_KEYSTORE_PASS, "keypass");
         testConfig.set(OOZIE_HTTP_PORT, "11000");
@@ -81,8 +77,6 @@ public class TestSSLServerConnectorFactory {
 
     @After
     public void tearDown() {
-        verify(mockSSLContextFactory).setTrustStorePath(anyString());
-        verify(mockSSLContextFactory).setTrustStorePassword(anyString());
         verify(mockSSLContextFactory).setKeyStorePath(anyString());
         verify(mockSSLContextFactory).setKeyManagerPassword(anyString());
         verifyNoMoreInteractions(

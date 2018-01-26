@@ -51,6 +51,8 @@ import java.net.URISyntaxException;
  */
 public class EmbeddedOozieServer {
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOozieServer.class);
+    protected static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
+    protected static final String TRUSTSTORE_PATH_SYSTEM_PROPERTY = "javax.net.ssl.trustStore";
     private static String contextPath;
     protected Server server;
     private int httpPort;
@@ -119,6 +121,7 @@ public class EmbeddedOozieServer {
         connector.setHost(conf.get(ConfigUtils.OOZIE_HTTP_HOSTNAME));
 
         HandlerCollection handlerCollection = new HandlerCollection();
+        setTrustStore();
 
         if (isSecured()) {
             httpsPort =  getConfigPort(ConfigUtils.OOZIE_HTTPS_PORT);
@@ -143,6 +146,21 @@ public class EmbeddedOozieServer {
         handlerCollection.addHandler(servletContextHandler);
         handlerCollection.addHandler(oozieRewriteHandler);
         server.setHandler(handlerCollection);
+    }
+
+    /**
+     * set the truststore path from the config file, if is not set by the user
+     */
+    private void setTrustStore() {
+        if (System.getProperty(TRUSTSTORE_PATH_SYSTEM_PROPERTY) == null) {
+            final String trustStorePath = conf.get(OOZIE_HTTPS_TRUSTSTORE_FILE);
+            if (trustStorePath != null) {
+                LOG.info("Setting javax.net.ssl.trustStore from config file");
+                System.setProperty(TRUSTSTORE_PATH_SYSTEM_PROPERTY, trustStorePath);
+            }
+        } else {
+            LOG.info("javax.net.ssl.trustStore is already set. The value from config file will be ignored");
+        }
     }
 
     private void addErrorHandler() {
