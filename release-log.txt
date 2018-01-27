@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-3171 Revert OOZIE-2771 commit on branch-4.3 (satishsaley)
 OOZIE-2533 Oozie Web UI gives Error 500 with Java 8u91 (asasvari via satishsaley)
 OOZIE-3167 Upgrade tomcat version on Oozie 4.3 branch (satishsaley)
 OOZIE-3161 Spark job failing because of servlet-api-2.5 jar (satishsaley)
@@ -33,7 +34,6 @@ OOZIE-2786 Pass Oozie workflow ID and settings to Spark application configuratio
 OOZIE-2790 log4j configuration is not passed to spark executors (satishsaley)
 OOZIE-2787 Oozie distributes application jar twice making the spark job fail (satishsaley)
 OOZIE-2777 Config-default.xml longer than 64k results in java.io.UTFDataFormatException (gezapeti via harsh)
-OOZIE-2771 Allow retrieving keystore and truststore passwords from Hadoop Credential Provider (asasvari via abhishekbafna)
 OOZIE-2748 NPE in LauncherMapper.printArgs() (pbacsko via rkanter)
 OOZIE-2654 Zookeeper dependent services should not depend on Connectionstate to be valid before cleaning up (venkatnrangan via abhishekbafna)
 OOZIE-2690 OOZIE NPE while executing kill() (abhishekbafna via jaydeepvishwakarma)
