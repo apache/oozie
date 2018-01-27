@@ -143,7 +143,7 @@ public class SchemaService implements Service {
     private SchemaFactory createSchemaFactory() throws SAXNotRecognizedException, SAXNotSupportedException {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING,true);
         return factory;
     }
 
