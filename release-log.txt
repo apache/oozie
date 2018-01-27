@@ -1,5 +1,6 @@
 -- Oozie 4.3.1 release
 
+OOZIE-2533 Oozie Web UI gives Error 500 with Java 8u91 (asasvari via satishsaley)
 OOZIE-3167 Upgrade tomcat version on Oozie 4.3 branch (satishsaley)
 OOZIE-3161 Spark job failing because of servlet-api-2.5 jar (satishsaley)
 OOZIE-3100 Upgrade javax.mail:mail to 1.4.7 (andras.piros)
