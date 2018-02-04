@@ -19,13 +19,15 @@
 package org.apache.oozie.service;
 
 import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.ZKUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,15 +36,11 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
-
-import org.apache.oozie.util.ZKUtils;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -122,6 +120,13 @@ public class ConfigurationService implements Service, Instrumentable {
         // These properties should be masked when displayed because they contain sensitive info (e.g. password)
         MASK_PROPS.add(JPAService.CONF_PASSWORD);
         MASK_PROPS.add("oozie.authentication.signature.secret");
+
+        try {
+            Method method = Configuration.class.getDeclaredMethod("setRestrictSystemPropertiesDefault", boolean
+                    .class);
+            method.invoke(null, true);
+        } catch( NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
+        }
     }
 
     public static final String DEFAULT_CONFIG_FILE = "oozie-default.xml";
@@ -303,6 +308,7 @@ public class ConfigurationService implements Service, Instrumentable {
     private XConfiguration loadConfig(InputStream inputStream, boolean defaultConfig) throws IOException, ServiceException {
         XConfiguration configuration;
         configuration = new XConfiguration(inputStream);
+        configuration.setRestrictSystemProperties(false);
         for(Map.Entry<String,String> entry: configuration) {
             if (defaultConfig) {
                 defaultConfigs.put(entry.getKey(), entry.getValue());
@@ -321,6 +327,10 @@ public class ConfigurationService implements Service, Instrumentable {
                 if (get(entry.getKey()) == null) {
                     setValue(entry.getKey(), entry.getValue());
                 }
+            }
+            if(conf instanceof XConfiguration) {
+                this.setRestrictParser(((XConfiguration)conf).getRestrictParser());
+                this.setRestrictSystemProperties(((XConfiguration)conf).getRestrictSystemProperties());
             }
         }
 

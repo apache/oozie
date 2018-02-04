@@ -18,6 +18,34 @@
 
 package org.apache.oozie.workflow.lite;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Writable;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.hadoop.FsActionExecutor;
+import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
+import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.SchemaService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.util.ELUtils;
+import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.ParameterVerifier;
+import org.apache.oozie.util.ParameterVerifierException;
+import org.apache.oozie.util.WritableUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
+import org.apache.oozie.workflow.WorkflowException;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
+import org.xml.sax.SAXException;
+
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -34,34 +62,6 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
-
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.Validator;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Writable;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.action.hadoop.FsActionExecutor;
-import org.apache.oozie.action.oozie.SubWorkflowActionExecutor;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.util.ELUtils;
-import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.ParameterVerifier;
-import org.apache.oozie.util.ParameterVerifierException;
-import org.apache.oozie.util.WritableUtils;
-import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.workflow.WorkflowException;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
-import org.xml.sax.SAXException;
 
 /**
  * Class to parse and validate workflow xml
@@ -166,7 +166,7 @@ public class LiteWorkflowAppParser {
             String strDef = writer.toString();
 
             if (schema != null) {
-                Validator validator = schema.newValidator();
+                Validator validator = SchemaService.getValidator(schema);
                 validator.validate(new StreamSource(new StringReader(strDef)));
             }
 

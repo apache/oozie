@@ -32,7 +32,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -56,8 +58,6 @@ import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -65,23 +65,12 @@ import org.xml.sax.SAXException;
  */
 public class XmlUtils {
 
-    private static class NoExternalEntityEntityResolver implements EntityResolver {
-
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-            return new InputSource(new ByteArrayInputStream(new byte[0]));
-        }
-
-    }
-
     private static SAXBuilder createSAXBuilder() {
         SAXBuilder saxBuilder = new SAXBuilder();
-
-        //THIS IS NOT WORKING
-        //saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
-
-        //INSTEAD WE ARE JUST SETTING AN EntityResolver that does not resolve entities
-        saxBuilder.setEntityResolver(new NoExternalEntityEntityResolver());
+        saxBuilder.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxBuilder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        saxBuilder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         return saxBuilder;
     }
 
@@ -281,26 +270,8 @@ public class XmlUtils {
      * @throws IOException in case of IO error
      */
     public static void validateXml(Schema schema, String xml) throws SAXException, IOException {
-
-        Validator validator = schema.newValidator();
+        Validator validator = SchemaService.getValidator(schema);
         validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes())));
-    }
-
-    /**
-     * Create schema object for the given xsd
-     *
-     * @param is inputstream to schema.
-     * @return the schema object.
-     */
-    public static Schema createSchema(InputStream is) {
-        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        StreamSource src = new StreamSource(is);
-        try {
-            return factory.newSchema(src);
-        }
-        catch (SAXException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
     }
 
     public static void validateData(String xmlData, SchemaName xsdFile) throws SAXException, IOException {
@@ -320,7 +291,7 @@ public class XmlUtils {
      */
     public static String writePropToString(Properties props) throws IOException {
         try {
-            org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            org.w3c.dom.Document doc = getDocumentBuilder().newDocument();
             org.w3c.dom.Element conf = doc.createElement("configuration");
             doc.appendChild(conf);
             conf.appendChild(doc.createTextNode("\n"));
@@ -361,6 +332,26 @@ public class XmlUtils {
         catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    /**
+     * Returns a DocumentBuilder
+     * @return DocumentBuilder
+     * @throws ParserConfigurationException
+     */
+    private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        docBuilderFactory.setNamespaceAware(true);
+        docBuilderFactory.setXIncludeAware(false);
+        docBuilderFactory.setExpandEntityReferences(false);
+        docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        //Redundant with disallow-doctype, but just in case
+        docBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        docBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        // ignore all comments inside the xml file
+        docBuilderFactory.setIgnoringComments(true);
+        return docBuilderFactory.newDocumentBuilder();
     }
 
     /**

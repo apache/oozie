@@ -18,10 +18,10 @@
 
 package org.apache.oozie.util;
 
-import org.jdom.Element;
 import org.junit.Test;
-
-import static junit.framework.Assert.assertEquals;
+import org.jdom.input.JDOMParseException;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 public class TestXmlUtils {
 
@@ -30,8 +30,14 @@ public class TestXmlUtils {
 
     @Test
     public void testExternalEntity() throws Exception {
-        Element e = XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
-        assertEquals(0, e.getText().length());
+        try {
+            XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
+            fail("DOCTYPE should not be allowed");
+        } catch (JDOMParseException e) {
+            assertTrue("Exception has different message.", e.getMessage().
+                    contains("DOCTYPE is disallowed when the feature \"http://apache."
+                            + "org/xml/features/disallow-doctype-decl\" set to true"));
+        }
     }
 
     @Test

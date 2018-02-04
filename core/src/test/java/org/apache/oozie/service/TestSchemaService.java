@@ -319,9 +319,9 @@ public class TestSchemaService extends XTestCase {
         super.setUp();
         new Services().init();
         wss = Services.get().get(SchemaService.class);
-        workflowValidator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
-        coordinatorValidator = wss.getSchema(SchemaName.COORDINATOR).newValidator();
-        bundleValidator = wss.getSchema(SchemaName.BUNDLE).newValidator();
+        workflowValidator = wss.getValidator(SchemaName.WORKFLOW);
+        coordinatorValidator = wss.getValidator(SchemaName.COORDINATOR);
+        bundleValidator = wss.getValidator(SchemaName.BUNDLE);
     }
 
     @Override
@@ -355,7 +355,7 @@ public class TestSchemaService extends XTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         new Services().init();
         SchemaService wss = Services.get().get(SchemaService.class);
-        Validator validator = wss.getSchema(SchemaName.WORKFLOW).newValidator();
+        Validator validator = wss.getValidator(SchemaName.WORKFLOW);
         validator.validate(new StreamSource(new StringReader(APP2)));
     }
 

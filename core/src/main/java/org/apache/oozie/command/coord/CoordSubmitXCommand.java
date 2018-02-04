@@ -507,9 +507,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @throws CoordinatorJobException thrown if unable to validate coordinator xml
      */
     private void validateXml(String xmlContent) throws CoordinatorJobException {
-        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.COORDINATOR);
-        Validator validator = schema.newValidator();
         try {
+            Validator validator = Services.get().get(SchemaService.class).getValidator(SchemaName.COORDINATOR);
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
         catch (SAXException ex) {
