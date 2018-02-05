@@ -204,6 +204,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     private int lastActionNumber;
 
     @Basic
+    @Index
     @Column(name = "user_name")
     private String user = null;
 
@@ -235,6 +236,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     private java.sql.Timestamp startTimestamp = null;
 
     @Basic
+    @Index
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
 

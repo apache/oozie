@@ -156,6 +156,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     private String statusStr = WorkflowJob.Status.PREP.toString();
 
     @Basic
+    @Index
     @Column(name = "created_time")
     private java.sql.Timestamp createdTimestamp = null;
 
@@ -201,6 +202,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     private StringBlob conf;
 
     @Basic
+    @Index
     @Column(name = "user_name")
     private String user = null;
 

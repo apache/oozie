@@ -52,16 +52,17 @@ import java.util.Map;
  * Command line tool to create/upgrade Oozie Database
  */
 public class OozieDBCLI {
-    public static final String HELP_CMD = "help";
-    public static final String VERSION_CMD = "version";
-    public static final String CREATE_CMD = "create";
-    public static final String UPGRADE_CMD = "upgrade";
-    public static final String POST_UPGRADE_CMD = "postupgrade";
-    public static final String SQL_FILE_OPT = "sqlfile";
-    public static final String RUN_OPT = "run";
+    private static final String HELP_CMD = "help";
+    private static final String VERSION_CMD = "version";
+    private static final String CREATE_CMD = "create";
+    private static final String UPGRADE_CMD = "upgrade";
+    private static final String POST_UPGRADE_CMD = "postupgrade";
+    private static final String SQL_FILE_OPT = "sqlfile";
+    private static final String RUN_OPT = "run";
     private final static String DB_VERSION_PRE_4_0 = "1";
     private final static String DB_VERSION_FOR_4_0 = "2";
-    final static String DB_VERSION_FOR_5_0 = "3";
+    private static String DB_VERSION_FOR_4_1 = "3";
+    final static String DB_VERSION_FOR_5_0 = "4";
     private final static String DISCRIMINATOR_COLUMN = "bean_type";
     private final static String TEMP_COLUMN_PREFIX = "temp_";
     private HashMap <String, List<String>> clobColumnMap;
@@ -120,7 +121,7 @@ public class OozieDBCLI {
                 }
                 CommandLine commandLine = command.getCommandLine();
                 String sqlFile =  commandLine.getOptionValue(SQL_FILE_OPT);
-                if(sqlFile == null || sqlFile.isEmpty()) {
+                if (sqlFile == null || sqlFile.isEmpty()) {
                     File tempFile = File.createTempFile("ooziedb-", ".sql");
                     tempFile.deleteOnExit();
                     sqlFile = tempFile.getAbsolutePath();
@@ -190,6 +191,7 @@ public class OozieDBCLI {
 
         verifyOozieSysTable(false);
         createUpgradeDB(sqlFile, run, true);
+        ddlTweaksFor50(sqlFile, run);
         createOozieSysTable(sqlFile, run, DB_VERSION_FOR_5_0);
         System.out.println();
         if (run) {
@@ -216,6 +218,7 @@ public class OozieDBCLI {
             System.out.println("Oozie DB already upgraded to Oozie version '" + version + "'");
             return;
         }
+
         createUpgradeDB(sqlFile, run, false);
 
         while (!ver.equals(DB_VERSION_FOR_5_0)) {
@@ -225,6 +228,11 @@ public class OozieDBCLI {
                 ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_4_0;
             }
             else if (ver.equals(DB_VERSION_FOR_4_0)) {
+                System.out.println("Upgrading to db schema for Oozie " + version);
+                upgradeDBtoPre50(sqlFile, run, startingVersion);
+                ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_4_1;
+            }
+            else if (ver.equals(DB_VERSION_FOR_4_1)) {
                 System.out.println("Upgrading to db schema for Oozie " + version);
                 upgradeDBto50(sqlFile, run, startingVersion);
                 ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_5_0;
@@ -244,9 +252,14 @@ public class OozieDBCLI {
         ddlTweaks(sqlFile, run);
     }
 
+    private void upgradeDBtoPre50(String sqlFile, boolean run, String startingVersion) throws Exception {
+        upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_4_1);
+        ddlTweaksForPre50(sqlFile, run, startingVersion);
+    }
+
     private void upgradeDBto50(String sqlFile, boolean run, String startingVersion) throws Exception {
         upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_5_0);
-        ddlTweaksFor50(sqlFile, run, startingVersion);
+        ddlTweaksFor50(sqlFile, run);
     }
 
     private final static String UPDATE_OOZIE_VERSION =
@@ -586,8 +599,8 @@ public class OozieDBCLI {
                             && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
                         // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're
                         // going to convert it to
-                        // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // BYTEA in DB_VERSION_FOR_4_1.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_4_1) push_missing_depdencies will already be a
                         // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
                         continue;
                     }
@@ -638,8 +651,8 @@ public class OozieDBCLI {
                     if (startingVersion.equals(DB_VERSION_PRE_4_0)
                             && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
                         // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as a CLOB and we're going to convert
-                        // it to BLOB in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // it to BLOB in DB_VERSION_FOR_4_1.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_4_1) push_missing_depdencies will already be a
                         // BLOB because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
                         continue;
                     }
@@ -692,7 +705,7 @@ public class OozieDBCLI {
         return selectQuery.toString();
     }
 
-    private void ddlTweaksFor50(String sqlFile, boolean run, String startingVersion) throws Exception {
+    private void ddlTweaksForPre50(String sqlFile, boolean run, String startingVersion) throws Exception {
         String dbVendor = getDBVendor();
         Connection conn = (run) ? createConnection() : null;
 
@@ -732,6 +745,41 @@ public class OozieDBCLI {
             conn.close();
         }
     }
+
+    private void ddlTweaksFor50(final String sqlFile, final boolean run) throws Exception {
+        System.out.println("Creating composite indexes");
+        try (final Connection conn = createConnection();
+             final PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+             final Statement stmt = conn.createStatement())
+        {
+            writer.println();
+
+            final String[] createCoveringIndexStatements = {
+            "CREATE INDEX I_WF_JOBS_STATUS_CREATED_TIME ON WF_JOBS (status, created_time)",
+
+            "CREATE INDEX I_COORD_ACTIONS_JOB_ID_STATUS ON COORD_ACTIONS (job_id, status)",
+
+            "CREATE INDEX I_COORD_JOBS_STATUS_CREATED_TIME ON COORD_JOBS (status, created_time)",
+            "CREATE INDEX I_COORD_JOBS_STATUS_LAST_MODIFIED_TIME ON COORD_JOBS (status, last_modified_time)",
+            "CREATE INDEX I_COORD_JOBS_PENDING_DONE_MATERIALIZATION_LAST_MODIFIED_TIME ON COORD_JOBS " +
+                    "(pending, done_materialization, last_modified_time)",
+            "CREATE INDEX I_COORD_JOBS_PENDING_LAST_MODIFIED_TIME ON COORD_JOBS (pending, last_modified_time)",
+
+            "CREATE INDEX I_BUNLDE_JOBS_STATUS_CREATED_TIME ON BUNDLE_JOBS (status, created_time)",
+            "CREATE INDEX I_BUNLDE_JOBS_STATUS_LAST_MODIFIED_TIME ON BUNDLE_JOBS (status, last_modified_time)",
+
+            "CREATE INDEX I_BUNLDE_ACTIONS_PENDING_LAST_MODIFIED_TIME ON BUNDLE_ACTIONS (pending, last_modified_time)"};
+
+            for (final String query : createCoveringIndexStatements) {
+                writer.println(query + ";");
+                if (!run) {
+                    stmt.executeUpdate(query);
+                }
+            }
+            System.out.println("DONE");
+        }
+    }
+
 
     private Map<String, List<String>> getTableClobColumnMap() {
         if (clobColumnMap != null) {
@@ -1104,6 +1152,7 @@ public class OozieDBCLI {
         org.apache.openjpa.jdbc.meta.MappingTool.main(args);
         if (run) {
             args = createMappingToolArguments(null);
+            // OpenJPA MappingTool also adds indices, no need to add them manually
             org.apache.openjpa.jdbc.meta.MappingTool.main(args);
         }
         System.out.println("DONE");

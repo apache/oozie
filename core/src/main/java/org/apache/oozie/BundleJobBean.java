@@ -140,6 +140,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     private int timeOut = 0;
 
     @Basic
+    @Index
     @Column(name = "user_name")
     private String user = null;
 
@@ -164,6 +165,7 @@ public class BundleJobBean implements Writable, BundleJob, JsonBean {
     private java.sql.Timestamp startTimestamp = null;
 
     @Basic
+    @Index
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
 
