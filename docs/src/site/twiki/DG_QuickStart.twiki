@@ -151,9 +151,6 @@ make sure you specify the location of a truststore that contains required certif
 =oozie.https.truststore.file= in =oozie-site.xml=, or by setting the =javax.net.ssl.trustStore= system property.
 If it is set in both places, the value passed as system property will be used.
 
-The =-secure= option will configure Oozie to use HTTP (SSL); refer to
-[[AG_Install#Setting_Up_Oozie_with_HTTPS_SSL][Setting Up Oozie with HTTPS (SSL)]] for more details.
-
 Create the Oozie DB using the 'ooziedb.sh' command line tool:
 
 <verbatim>

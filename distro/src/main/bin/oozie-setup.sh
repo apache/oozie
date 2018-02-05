@@ -123,7 +123,6 @@ additionalDir=""
 extjsHome=""
 jarsPath=""
 prepareWar=""
-secure=""
 
 while [ $# -gt 0 ]
 do
@@ -161,9 +160,6 @@ do
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBImportCLI "${@}"
     fi
     exit $?
-  elif [ "$1" = "-secure" ]; then
-    shift
-    secure=true
   elif [ "$1" = "-d" ]; then
     shift
     additionalDir=$1

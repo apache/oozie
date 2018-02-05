@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3168 Remove -secure option from DG_QuickStart.twiki and from oozie-setup.sh (kmarton via gezapeti)
 OOZIE-1717 Add indexes to speed up db queries (asasvari)
 OOZIE-3157 Setup truststore so that it also works in HTTP only mode (kmarton via asasvari)
 OOZIE-3166 Remove tomcat alias from AG_Install.twiki: To use a Self-Signed Certificate part (kmarton via andras.piros)
