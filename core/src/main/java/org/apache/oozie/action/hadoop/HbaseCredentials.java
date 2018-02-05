@@ -44,7 +44,12 @@ import org.apache.hadoop.security.token.TokenIdentifier;
  *
  */
 public class HbaseCredentials extends Credentials {
+    static final String OOZIE_HBASE_CLIENT_SITE_XML = "oozie-hbase-client-site.xml";
+    static final String HBASE_USE_DYNAMIC_JARS = "hbase.dynamic.jars.dir";
 
+    static {
+        Configuration.addDefaultResource(OOZIE_HBASE_CLIENT_SITE_XML);
+    }
 
     /* (non-Javadoc)
      * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)

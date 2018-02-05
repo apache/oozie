@@ -1135,6 +1135,9 @@ public class JavaActionExecutor extends ActionExecutor {
 
             JobConf launcherJobConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
 
+            removeHBaseSettingFromOozieDefaultResource(launcherJobConf);
+            removeHBaseSettingFromOozieDefaultResource(actionConf);
+
             LOG.debug("Creating Job Client for action " + action.getId());
             jobClient = createJobClient(context, launcherJobConf);
             String launcherId = LauncherMapperHelper.getRecoveryId(launcherJobConf, context.getActionDir(), context
@@ -1216,6 +1219,17 @@ public class JavaActionExecutor extends ActionExecutor {
             }
         }
     }
+
+    private void removeHBaseSettingFromOozieDefaultResource(final Configuration jobConf) {
+        final String[] propertySources = jobConf.getPropertySources(HbaseCredentials.HBASE_USE_DYNAMIC_JARS);
+        if (propertySources != null && propertySources.length > 0 &&
+                propertySources[0].contains(HbaseCredentials.OOZIE_HBASE_CLIENT_SITE_XML)) {
+            jobConf.unset(HbaseCredentials.HBASE_USE_DYNAMIC_JARS);
+            LOG.debug(String.format("Unset [%s] inserted from default Oozie resource XML [%s]",
+                    HbaseCredentials.HBASE_USE_DYNAMIC_JARS, HbaseCredentials.OOZIE_HBASE_CLIENT_SITE_XML));
+        }
+    }
+
     private boolean needInjectCredentials() {
         boolean methodExists = true;
 
