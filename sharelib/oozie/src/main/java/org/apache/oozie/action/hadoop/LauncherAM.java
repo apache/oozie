@@ -467,18 +467,20 @@ public class LauncherAM {
     private void setRecoveryId() throws LauncherException {
         try {
             ApplicationId applicationId = containerId.getApplicationAttemptId().getApplicationId();
-            String applicationIdStr = applicationId.toString();
+            final String applicationIdStr = applicationId.toString();
 
-            String recoveryId = Preconditions.checkNotNull(launcherConf.get(OOZIE_ACTION_RECOVERY_ID),
+            final String recoveryId = Preconditions.checkNotNull(launcherConf.get(OOZIE_ACTION_RECOVERY_ID),
                             "RecoveryID should not be null");
 
-            Path path = new Path(actionDir, recoveryId);
+            final Path path = new Path(actionDir, recoveryId);
             if (!hdfsOperations.fileExists(path, launcherConf)) {
                 hdfsOperations.writeStringToFile(path, launcherConf, applicationIdStr);
             } else {
-                String id = hdfsOperations.readFileContents(path, launcherConf);
+                final String id = hdfsOperations.readFileContents(path, launcherConf);
 
-                if (!applicationIdStr.equals(id)) {
+                if (id == null || id.isEmpty()) {
+                    hdfsOperations.writeStringToFile(path, launcherConf, applicationIdStr);
+                } else if (!applicationIdStr.equals(id)) {
                     throw new LauncherException(MessageFormat.format(
                             "YARN Id mismatch, action file [{0}] declares Id [{1}] current Id [{2}]", path, id,
                             applicationIdStr));

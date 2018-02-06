@@ -1,5 +1,7 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2847 Oozie Ha timing issue (dionusos via asasvari)
+OOZIE-1717 amend Add indexes to speed up db queries (asasvari)
 OOZIE-3168 Remove -secure option from DG_QuickStart.twiki and from oozie-setup.sh (kmarton via gezapeti)
 OOZIE-1717 Add indexes to speed up db queries (asasvari)
 OOZIE-3157 Setup truststore so that it also works in HTTP only mode (kmarton via asasvari)

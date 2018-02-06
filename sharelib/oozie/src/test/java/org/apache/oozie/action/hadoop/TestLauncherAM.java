@@ -17,6 +17,9 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import static org.apache.oozie.action.hadoop.LauncherAM.ACTION_DATA_EXTERNAL_CHILD_IDS;
 import static org.apache.oozie.action.hadoop.LauncherAM.ACTION_DATA_NEW_ID;
 import static org.apache.oozie.action.hadoop.LauncherAM.ACTION_DATA_OUTPUT_PROPS;
@@ -45,36 +48,32 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.PrivilegedExceptionAction;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.action.hadoop.LauncherAM.LauncherSecurityManager;
 import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
+import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestLauncherAM {
@@ -90,6 +89,8 @@ public class TestLauncherAM {
     private static final String EXIT_CODE_1 = "1";
     private static final String EXIT_CODE_0 = "0";
     private static final String DUMMY_XML = "<dummy>dummyXml</dummy>";
+
+    public static final String ACTION_DIR = "/tmp/";
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -617,5 +618,29 @@ public class TestLauncherAM {
             this.hasStackTrace = false;
             return this;
         }
+    }
+
+    @Test
+    public void testRecoveryWritesJobId() throws IOException, InterruptedException, LauncherException,
+            NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        //create empty file on the following path: ACTION_DIR/RECOVERY_ID
+        final Path path = new Path(ACTION_DIR, "1");
+        when(hdfsOperationsMock.readFileContents(any(Path.class), eq(launcherJobConfig))).thenReturn(EMPTY_STRING);
+        when(hdfsOperationsMock.fileExists(any(Path.class), eq(launcherJobConfig))).thenReturn(true);
+
+        //run launchermapper with the same ACTION_DIR/RECOVERY_ID
+        final Field f = launcherAM.getClass().getDeclaredField("actionDir");
+        f.setAccessible(true);
+        f.set(launcherAM, path);
+        final Method m = launcherAM.getClass().getDeclaredMethod("setRecoveryId");
+        m.setAccessible(true);
+        m.invoke(launcherAM);
+
+        //check empty file, launcherMapper should have written RECOVERY_ID into it
+        Mockito.verify(hdfsOperationsMock).writeStringToFile(
+                eq(new Path(path, "1")),
+                eq(launcherJobConfig),
+                eq("application_1479473450392_0001"));
+
     }
 }
