@@ -746,6 +746,23 @@ public class OozieDBCLI {
         }
     }
 
+    static String[] getIndexStatementsFor50() {
+        return new String[]{"CREATE INDEX I_WF_JOBS_STATUS_CREATED_TIME ON WF_JOBS (status, created_time)",
+
+                "CREATE INDEX I_COORD_ACTIONS_JOB_ID_STATUS ON COORD_ACTIONS (job_id, status)",
+
+                "CREATE INDEX I_COORD_JOBS_STATUS_CREATED_TIME ON COORD_JOBS (status, created_time)",
+                "CREATE INDEX I_COORD_JOBS_STATUS_LAST_MODIFIED_TIME ON COORD_JOBS (status, last_modified_time)",
+                "CREATE INDEX I_COORD_JOBS_PENDING_DONE_MATERIALIZATION_LAST_MODIFIED_TIME ON COORD_JOBS " +
+                        "(pending, done_materialization, last_modified_time)",
+                "CREATE INDEX I_COORD_JOBS_PENDING_LAST_MODIFIED_TIME ON COORD_JOBS (pending, last_modified_time)",
+
+                "CREATE INDEX I_BUNLDE_JOBS_STATUS_CREATED_TIME ON BUNDLE_JOBS (status, created_time)",
+                "CREATE INDEX I_BUNLDE_JOBS_STATUS_LAST_MODIFIED_TIME ON BUNDLE_JOBS (status, last_modified_time)",
+
+                "CREATE INDEX I_BUNLDE_ACTIONS_PENDING_LAST_MODIFIED_TIME ON BUNDLE_ACTIONS (pending, last_modified_time)"};
+    }
+
     private void ddlTweaksFor50(final String sqlFile, final boolean run) throws Exception {
         System.out.println("Creating composite indexes");
         try (final Connection conn = createConnection();
@@ -753,26 +770,11 @@ public class OozieDBCLI {
              final Statement stmt = conn.createStatement())
         {
             writer.println();
-
-            final String[] createCoveringIndexStatements = {
-            "CREATE INDEX I_WF_JOBS_STATUS_CREATED_TIME ON WF_JOBS (status, created_time)",
-
-            "CREATE INDEX I_COORD_ACTIONS_JOB_ID_STATUS ON COORD_ACTIONS (job_id, status)",
-
-            "CREATE INDEX I_COORD_JOBS_STATUS_CREATED_TIME ON COORD_JOBS (status, created_time)",
-            "CREATE INDEX I_COORD_JOBS_STATUS_LAST_MODIFIED_TIME ON COORD_JOBS (status, last_modified_time)",
-            "CREATE INDEX I_COORD_JOBS_PENDING_DONE_MATERIALIZATION_LAST_MODIFIED_TIME ON COORD_JOBS " +
-                    "(pending, done_materialization, last_modified_time)",
-            "CREATE INDEX I_COORD_JOBS_PENDING_LAST_MODIFIED_TIME ON COORD_JOBS (pending, last_modified_time)",
-
-            "CREATE INDEX I_BUNLDE_JOBS_STATUS_CREATED_TIME ON BUNDLE_JOBS (status, created_time)",
-            "CREATE INDEX I_BUNLDE_JOBS_STATUS_LAST_MODIFIED_TIME ON BUNDLE_JOBS (status, last_modified_time)",
-
-            "CREATE INDEX I_BUNLDE_ACTIONS_PENDING_LAST_MODIFIED_TIME ON BUNDLE_ACTIONS (pending, last_modified_time)"};
+            final String[] createCoveringIndexStatements = getIndexStatementsFor50();
 
             for (final String query : createCoveringIndexStatements) {
                 writer.println(query + ";");
-                if (!run) {
+                if (run) {
                     stmt.executeUpdate(query);
                 }
             }

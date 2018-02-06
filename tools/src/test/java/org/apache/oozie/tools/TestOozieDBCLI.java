@@ -22,14 +22,24 @@ package org.apache.oozie.tools;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.oozie.test.XTestCase;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Test OozieDBCLI for data base derby
@@ -50,7 +60,7 @@ public class TestOozieDBCLI extends XTestCase {
 
         System.setProperty("oozie.test.config.file", oozieConfig.getAbsolutePath());
         Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
-        Connection conn = DriverManager.getConnection(url, "sa", "");
+        Connection conn = getConnection();
         conn.close();
 
         super.setUp(false);
@@ -71,7 +81,7 @@ public class TestOozieDBCLI extends XTestCase {
 
     private void execSQL(String sql) throws Exception {
         Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
-        Connection conn = DriverManager.getConnection(url, "sa", "");
+        Connection conn = getConnection();
 
         Statement st = conn.createStatement();
         st.executeUpdate(sql);
@@ -87,6 +97,7 @@ public class TestOozieDBCLI extends XTestCase {
         int result = execOozieDBCLICommands(argsCreate);
         assertEquals(0, result);
         assertTrue(createSql.exists());
+        verifyIndexesCreated();
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldOut = System.out;
@@ -128,10 +139,59 @@ public class TestOozieDBCLI extends XTestCase {
         String[] argsUpgrade = { "upgrade", "-sqlfile", upgrade.getAbsolutePath(), "-run" };
         assertEquals(0, execOozieDBCLICommands(argsUpgrade));
 
+        verifyUpgradeScriptContainsIndexStatements(upgrade);
         assertTrue(upgrade.exists());
+
         File postUpgrade = new File(getTestCaseConfDir() + File.separator + "postUpdate.sql");
         String[] argsPostUpgrade = { "postupgrade", "-sqlfile", postUpgrade.getAbsolutePath(), "-run" };
         assertEquals(0, execOozieDBCLICommands(argsPostUpgrade));
+    }
+
+    private void verifyUpgradeScriptContainsIndexStatements(final File upgrade) throws IOException {
+        final Charset charset = Charset.defaultCharset();
+        final List<String> stringList = Files.readAllLines(upgrade.toPath(), charset);
+        final List<String> actualIndexStatements = Arrays.asList(stringList.toArray(new String[]{}));
+        final String[] expectedIndexStatements = OozieDBCLI.getIndexStatementsFor50();
+
+        for (final String indexStmt : expectedIndexStatements) {
+            Assert.assertTrue(actualIndexStatements.contains(indexStmt + ";"));
+        }
+    }
+
+    private void verifyIndexesCreated() throws SQLException {
+        final List<String> indexes = getIndexes();
+        for (final String indexStmt : OozieDBCLI.getIndexStatementsFor50()) {
+            final  String index = indexStmt.split(" ")[2];
+            Assert.assertTrue(indexes.contains(index));
+        }
+    }
+
+    private List<String> getIndexes() throws SQLException {
+        final List<String> indexes = new ArrayList<>();
+        try (final Connection connection = getConnection();
+            final ResultSet rs = connection.getMetaData().getTables(null, "SA", "%", null)) {
+            while (rs.next()) {
+                final String tableName = rs.getString(3);
+                indexes.addAll(getIndexesForTable(connection, tableName));
+            }
+        }
+        return indexes;
+    }
+
+    private List<String> getIndexesForTable(final Connection connection, final String tableName) throws SQLException {
+        final List<String> indexes = new ArrayList<>();
+        final DatabaseMetaData metaData = connection.getMetaData();
+        try (final ResultSet rs = metaData.getIndexInfo(null, "SA", tableName, false, true)) {
+            while (rs.next()) {
+                final String indexName = rs.getString(6);
+                indexes.add(indexName);
+            }
+        }
+        return indexes;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, "sa", "");
     }
 
     private int execOozieDBCLICommands(String[] args) {
