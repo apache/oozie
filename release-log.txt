@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3121 bump all maven plugins to latest versions (dbist13 via gezapeti)
 OOZIE-3163 Improve documentation rendering: use fluido skin and better config (hboutemy via andras.piros)
 OOZIE-2847 Oozie Ha timing issue (dionusos via asasvari)
 OOZIE-1717 amend Add indexes to speed up db queries (asasvari)
