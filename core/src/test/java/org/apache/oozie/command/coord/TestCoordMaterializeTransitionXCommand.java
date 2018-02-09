@@ -328,6 +328,113 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             fail("Job ID " + job.getId() + " was not stored properly in db");
         }
     }
+
+    public void testCronFrequencyCatchupThrottleLessThanDuration() throws Exception {
+        final String startInThePast = "2013-03-10T08:00Z";
+        final String startPlusOneDay = "2013-03-11T08:00Z";
+        final Date startTime = DateUtils.parseDateOozieTZ(startInThePast);
+        final Date endTime = DateUtils.parseDateOozieTZ(startPlusOneDay);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(3);
+        final String everyHour = "0 * * * *";
+        job.setFrequency(everyHour);
+        job.setTimeUnit(Timeunit.CRON);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        final String startPlusOneHour = "2013-03-10T09:00Z";
+        final String startPlusTwoHours = "2013-03-10T10:00Z";
+        final Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
+                DateUtils.parseDateOozieTZ(startPlusOneHour),
+                DateUtils.parseDateOozieTZ(startPlusTwoHours)};
+        checkCoordActionsNominalTime(job.getId(), 3, nominalTimes);
+
+        try {
+            final JPAService jpaService = Services.get().get(JPAService.class);
+            job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+            assertFalse("coordinator job shouldn't have yet been materialized", job.isDoneMaterialization());
+            assertEquals("coordinator action count mismatch", 3, job.getLastActionNumber());
+            final String startPlusThreeHours = "2013-03-10T11:00Z";
+            assertEquals("coordinator next materialization time mismatch",
+                    DateUtils.parseDateOozieTZ(startPlusThreeHours), job.getNextMaterializedTime());
+        }
+        catch (final JPAExecutorException se) {
+            se.printStackTrace();
+            fail("Job ID " + job.getId() + " was not stored properly in db");
+        }
+    }
+
+    public void testCronFrequencyCatchupThrottleEqualsDuration() throws Exception {
+        final String startInThePast = "2013-03-10T08:00Z";
+        final Date startTime = DateUtils.parseDateOozieTZ(startInThePast);
+        final String startPlusTwoHoursAndSome = "2013-03-10T10:01Z";
+        final Date endTime = DateUtils.parseDateOozieTZ(startPlusTwoHoursAndSome);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(3);
+        final String everyHour = "0 * * * *";
+        job.setFrequency(everyHour);
+        job.setTimeUnit(Timeunit.CRON);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        final String startPlusOneHour = "2013-03-10T09:00Z";
+        final String startPlusTwoHours = "2013-03-10T10:00Z";
+        final Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
+                DateUtils.parseDateOozieTZ(startPlusOneHour),
+                DateUtils.parseDateOozieTZ(startPlusTwoHours)};
+        checkCoordActionsNominalTime(job.getId(), 3, nominalTimes);
+
+        try {
+            final JPAService jpaService = Services.get().get(JPAService.class);
+            job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+            assertTrue("coordinator job should have already been materialized", job.isDoneMaterialization());
+            assertEquals("coordinator action count mismatch", 3, job.getLastActionNumber());
+            final String startPlusThreeHours = "2013-03-10T11:00Z";
+            assertEquals("coordinator next materialization time mismatch",
+                    DateUtils.parseDateOozieTZ(startPlusThreeHours), job.getNextMaterializedTime());
+        }
+        catch (final JPAExecutorException se) {
+            se.printStackTrace();
+            fail("Job ID " + job.getId() + " was not stored properly in db");
+        }
+    }
+
+    public void testCronFrequencyCatchupThrottleMoreThanDuration() throws Exception {
+        final String startInThePast = "2013-03-10T08:00Z";
+        final Date startTime = DateUtils.parseDateOozieTZ(startInThePast);
+        final String startPlusOneHourAndSome = "2013-03-10T09:01Z";
+        final Date endTime = DateUtils.parseDateOozieTZ(startPlusOneHourAndSome);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        job.setNextMaterializedTime(startTime);
+        job.setMatThrottling(5);
+        final String everyHour = "0 * * * *";
+        job.setFrequency(everyHour);
+        job.setTimeUnit(Timeunit.CRON);
+        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
+
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        final String startPlusOneHour = "2013-03-10T09:00Z";
+        final Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
+                DateUtils.parseDateOozieTZ(startPlusOneHour)};
+        checkCoordActionsNominalTime(job.getId(), 2, nominalTimes);
+
+        try {
+            final JPAService jpaService = Services.get().get(JPAService.class);
+            job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
+            assertTrue("coordinator job should have already been materialized", job.isDoneMaterialization());
+            assertEquals("coordinator action count mismatch", 2, job.getLastActionNumber());
+            final String startPlusTwoHours = "2013-03-10T10:00Z";
+            assertEquals("coordinator next materialization time mismatch",
+                    DateUtils.parseDateOozieTZ(startPlusTwoHours), job.getNextMaterializedTime());
+        }
+        catch (final JPAExecutorException se) {
+            se.printStackTrace();
+            fail("Job ID " + job.getId() + " was not stored properly in db");
+        }
+    }
+
     public void testActionMaterWithDST1() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2013-03-10T08:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2013-03-10T12:00Z");

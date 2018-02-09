@@ -246,12 +246,14 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE)) {
             return new Date();
         }
-        int frequency = 0;
+        final int frequency;
         try {
             frequency = Integer.parseInt(coordJob.getFrequency());
         }
-        catch (NumberFormatException e) {
-            return currentMatTime;
+        catch (final NumberFormatException e) {
+            // Cron based frequency: catching up at maximum till the coordinator job's end time,
+            // bounded also by the throttle parameter, aka the number of coordinator actions to materialize
+            return coordJob.getEndTime();
         }
 
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());

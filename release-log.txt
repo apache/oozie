@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3173 Coordinator job with frequency using cron syntax creates only one action in catchup mode (andras.piros)
 OOZIE-3121 bump all maven plugins to latest versions (dbist13 via gezapeti)
 OOZIE-3163 Improve documentation rendering: use fluido skin and better config (hboutemy via andras.piros)
 OOZIE-2847 Oozie Ha timing issue (dionusos via asasvari)
