@@ -114,6 +114,7 @@ public class SshActionExecutor extends ActionExecutor {
      */
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.trace("check() start for action={0}", action.getId());
         Status status = getActionStatus(context, action);
         boolean captureOutput = false;
         try {
@@ -132,18 +133,24 @@ public class SshActionExecutor extends ActionExecutor {
                 String dataCommand = SSH_COMMAND_BASE + action.getTrackerUri() + " cat " + outFile;
                 LOG.debug("Ssh command [{0}]", dataCommand);
                 try {
-                    Process process = Runtime.getRuntime().exec(dataCommand.split("\\s"));
-                    StringBuffer buffer = new StringBuffer();
+                    final Process process = Runtime.getRuntime().exec(dataCommand.split("\\s"));
+
+                    final StringBuffer outBuffer = new StringBuffer();
+                    final StringBuffer errBuffer = new StringBuffer();
                     boolean overflow = false;
-                    drainBuffers(process, buffer, null, maxLen);
-                    if (buffer.length() > maxLen) {
+                    drainBuffers(process, outBuffer, errBuffer, maxLen);
+                    LOG.trace("outBuffer={0}", outBuffer);
+                    LOG.trace("errBuffer={0}", errBuffer);
+                    if (outBuffer.length() > maxLen) {
                         overflow = true;
                     }
                     if (overflow) {
                         throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR,
                                                           "ERR_OUTPUT_EXCEED_MAX_LEN", "unknown error");
                     }
-                    context.setExecutionData(status.toString(), PropertiesUtils.stringToProperties(buffer.toString()));
+                    context.setExecutionData(status.toString(), PropertiesUtils.stringToProperties(outBuffer.toString()));
+                    LOG.trace("Execution data set. status={0}, properties={1}", status,
+                            PropertiesUtils.stringToProperties(outBuffer.toString()));
                 }
                 catch (Exception ex) {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "ERR_UNKNOWN_ERROR",
@@ -151,17 +158,21 @@ public class SshActionExecutor extends ActionExecutor {
                 }
             }
             else {
+                LOG.trace("Execution data set to null. status={0}", status);
                 context.setExecutionData(status.toString(), null);
             }
         }
         else {
             if (status == Status.ERROR) {
+                LOG.warn("Execution data set to null in ERROR");
                 context.setExecutionData(status.toString(), null);
             }
             else {
+                LOG.warn("Execution data not set");
                 context.setExternalStatus(status.toString());
             }
         }
+        LOG.trace("check() end for action={0}", action);
     }
 
     /**
@@ -220,6 +231,8 @@ public class SshActionExecutor extends ActionExecutor {
             }
         });
         String pid = "";
+
+        LOG.trace("runningPid={0}", runningPid);
 
         if (runningPid == null) {
             final Element commandElement = conf.getChild("command", nameSpace);
@@ -359,8 +372,7 @@ public class SshActionExecutor extends ActionExecutor {
      * @throws InterruptedException thrown if any interruption happens.
      */
     protected String setupRemote(String host, Context context, WorkflowAction action) throws IOException, InterruptedException {
-        XLog log = XLog.getLog(getClass());
-        log.info("Attempting to copy ssh base scripts to remote host [{0}]", host);
+        LOG.info("Attempting to copy ssh base scripts to remote host [{0}]", host);
         String localDirLocation = Services.get().getRuntimeDir() + "/ssh";
         if (localDirLocation.endsWith("/")) {
             localDirLocation = localDirLocation.substring(0, localDirLocation.length() - 1);
@@ -423,13 +435,14 @@ public class SshActionExecutor extends ActionExecutor {
             System.arraycopy(commandArray, 0, finalCommand, 0, commandArray.length);
             System.arraycopy(args, 0, finalCommand, commandArray.length, args.length);
         }
-        log.trace("Executing ssh command [{0}]", Arrays.toString(finalCommand));
-        Process p = runtime.exec(finalCommand);
-        String pid = "";
 
-        StringBuffer inputBuffer = new StringBuffer();
-        StringBuffer errorBuffer = new StringBuffer();
-        int exitValue = drainBuffers(p, inputBuffer, errorBuffer, maxLen);
+        LOG.trace("Executing SSH command [finalCommand={0}]", Arrays.toString(finalCommand));
+        final Process p = runtime.exec(finalCommand);
+        final String pid;
+
+        final StringBuffer inputBuffer = new StringBuffer();
+        final StringBuffer errorBuffer = new StringBuffer();
+        final int exitValue = drainBuffers(p, inputBuffer, errorBuffer, maxLen);
 
         pid = getFirstLine(inputBuffer);
 
@@ -439,6 +452,9 @@ public class SshActionExecutor extends ActionExecutor {
             throw new IOException(XLog.format("Not able to execute ssh-base.sh on {0}", host) + " | " + "ErrorStream: "
                     + error);
         }
+
+        LOG.trace("After execution pid={0}", pid);
+
         return pid;
     }
 
@@ -476,6 +492,8 @@ public class SshActionExecutor extends ActionExecutor {
      * @throws ActionExecutorException
      */
     private int getReturnValue(String command) throws ActionExecutorException {
+        LOG.trace("Getting return value for command={0}", command);
+
         int returnValue;
         Process ps = null;
         try {
@@ -489,6 +507,9 @@ public class SshActionExecutor extends ActionExecutor {
         finally {
             ps.destroy();
         }
+
+        LOG.trace("returnValue={0}", returnValue);
+
         return returnValue;
     }
 
@@ -647,6 +668,9 @@ public class SshActionExecutor extends ActionExecutor {
                 host = oozieUser + "@" + host;
             }
         }
+
+        LOG.trace("User host is {0}", host);
+
         return host;
     }
 
@@ -697,11 +721,12 @@ public class SshActionExecutor extends ActionExecutor {
         try {
             while (!processEnded) {
                 try {
-                    exitValue = p.exitValue();
+                    exitValue = p.waitFor();
                     processEnded = true;
                 }
-                catch (IllegalThreadStateException ex) {
-                    // Continue to drain.
+                catch (final IllegalThreadStateException | InterruptedException e) {
+                    LOG.warn("An exception occurred while waiting for the process, continuing to drain. " +
+                            "[e.message={0}]", e.getMessage());
                 }
 
                 inBytesRead += drainBuffer(ir, inputBuffer, maxLength, inBytesRead, processEnded);
@@ -712,6 +737,7 @@ public class SshActionExecutor extends ActionExecutor {
             ir.close();
             er.close();
         }
+
         return exitValue;
     }
 

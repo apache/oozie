@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3183 Better logging for SshActionExecutor and extended HA capability when calling to remote host (andras.piros)
 OOZIE-3172 Upgrade non-transitive Jackson dependencies from org.codehaus.jackson to com.fasterxml.jackson (andras.piros)
 OOZIE-3173 Coordinator job with frequency using cron syntax creates only one action in catchup mode (andras.piros)
 OOZIE-3121 bump all maven plugins to latest versions (dbist13 via gezapeti)
