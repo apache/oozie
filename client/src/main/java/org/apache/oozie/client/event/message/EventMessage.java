@@ -18,17 +18,14 @@
 
 package org.apache.oozie.client.event.message;
 
-import java.util.Map;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.MessageType;
-import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.apache.oozie.AppType;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * Base class which holds attributes for event message

@@ -20,11 +20,11 @@ package org.apache.oozie.client.event.message;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * Class holding attributes related to a workflow job message

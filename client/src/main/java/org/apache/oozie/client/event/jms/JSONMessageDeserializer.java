@@ -18,9 +18,9 @@
 
 package org.apache.oozie.client.event.jms;
 
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Message deserializer to convert from JSON to java object
@@ -30,7 +30,7 @@ public class JSONMessageDeserializer extends MessageDeserializer {
     static ObjectMapper mapper = new ObjectMapper(); // Thread-safe.
 
     static {
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Override

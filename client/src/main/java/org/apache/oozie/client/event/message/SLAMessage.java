@@ -23,14 +23,13 @@ import java.util.Date;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
-import org.apache.oozie.client.event.message.EventMessage;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class SLAMessage extends EventMessage {

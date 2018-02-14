@@ -18,7 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 

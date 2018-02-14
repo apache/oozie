@@ -18,7 +18,8 @@
 
 package org.apache.oozie.event.messaging;
 
-import org.codehaus.jackson.map.ObjectMapper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Message Serializer to serialize the java object
