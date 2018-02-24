@@ -1450,6 +1450,12 @@
                 <artifactId>hive-exec</artifactId>
                 <version>${hive.version}</version>
                 <classifier>${hive.classifier}</classifier>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>org.apache.derby</artifactId>
+                        <groupId>derby</groupId>
+                    </exclusion>
+		</exclusions>
             </dependency>
 
             <!-- examples -->
