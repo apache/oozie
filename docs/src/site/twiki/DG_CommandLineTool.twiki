@@ -329,10 +329,16 @@ Example:
 $ oozie job -oozie http://localhost:11000/oozie -start 14-20090525161321-oozie-joe
 </verbatim>
 
-The =start= option starts a previously submitted workflow job, coordinator job or bundle job that is in =PREP= status.
+The =start= option starts a previously submitted workflow job or bundle job that is in =PREP= status.
 
-After the command is executed the workflow job will be in =RUNNING= status, coordinator job will be in =RUNNING= status and
-bundle job will be in =RUNNING=status.
+After the command is executed the workflow job will be in =RUNNING= status and bundle job will be in =RUNNING=status.
+
+A coordinator job does not support the =start= action. It will show the following error message when trying to start it
+via the CLI:
+
+<verbatim>
+Error: E0303 : E0303: Invalid parameter value, [action] = [start]
+</verbatim>
 
 ---+++ Running a Workflow, Coordinator or Bundle Job
 
