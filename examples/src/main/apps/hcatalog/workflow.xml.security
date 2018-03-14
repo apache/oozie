@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.5" name="pig-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="pig-wf">
     <credentials>
       <credential name='hcatauth' type='hcat'>
          <property>
@@ -31,7 +31,7 @@
     <start to="pig-node"/>
     <action name="pig-node" cred="hcatauth">
         <pig>
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <configuration>
                 <property>

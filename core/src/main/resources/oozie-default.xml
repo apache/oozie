@@ -1624,7 +1624,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,hive-action-0.6.xsd,hive-action-1.0.xsd,
             sqoop-action-0.2.xsd,sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,sqoop-action-1.0.xsd,
             ssh-action-0.1.xsd,ssh-action-0.2.xsd,
-            distcp-action-0.1.xsd,distcp-action-0.2.xsd,
+            distcp-action-0.1.xsd,distcp-action-0.2.xsd,distcp-action-1.0.xsd,
             oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,
             hive2-action-0.1.xsd,hive2-action-0.2.xsd,hive2-action-1.0.xsd,
             spark-action-0.1.xsd,spark-action-0.2.xsd,spark-action-1.0.xsd
@@ -3038,6 +3038,17 @@ will be the requeue interval for the actions which are waiting for a long time w
             The default value to use for the &lt;job-tracker&gt; element in applicable action types.  This value will be used when
             neither the action itself nor the global section specifies a &lt;job-tracker&gt;.  As expected, it should be of the form
             "HOST:PORT".
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.actions.default.resource-manager</name>
+        <value> </value>
+        <description>
+            The default value to use for the &lt;resource-manager&gt; element in applicable action types.  This value will be used
+            when neither the action itself nor the global section specifies a &lt;resource-managerr&gt;.  As expected, it should
+            be of the form "HOST:PORT". If both oozie.actions.default.job-tracker and oozie.actions.default.resource-manager are
+            specified, oozie.actions.default.resource-manager takes precedence.
         </description>
     </property>
 

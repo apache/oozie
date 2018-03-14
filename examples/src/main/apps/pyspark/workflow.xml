@@ -16,13 +16,13 @@
   limitations under the License.
 -->
 
-<workflow-app xmlns='uri:oozie:workflow:0.5' name='SparkPythonPi'>
+<workflow-app xmlns='uri:oozie:workflow:1.0' name='SparkPythonPi'>
 
     <start to='spark-node' />
 
     <action name='spark-node'>
         <spark xmlns="uri:oozie:spark-action:0.1">
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <master>${master}</master>
             <name>Python-Spark-Pi</name>

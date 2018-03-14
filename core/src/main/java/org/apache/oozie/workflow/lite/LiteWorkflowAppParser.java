@@ -107,9 +107,12 @@ public class LiteWorkflowAppParser {
 
     public static final String DEFAULT_NAME_NODE = "oozie.actions.default.name-node";
     public static final String DEFAULT_JOB_TRACKER = "oozie.actions.default.job-tracker";
+    public static final String DEFAULT_RESOURCE_MANAGER = "oozie.actions.default.resource-manager";
     public static final String OOZIE_GLOBAL = "oozie.wf.globalconf";
 
     private static final String JOB_TRACKER = "job-tracker";
+    private static final String RESOURCE_MANAGER = "resource-manager";
+
     private static final String NAME_NODE = "name-node";
     private static final String JOB_XML = "job-xml";
     private static final String CONFIGURATION = "configuration";
@@ -120,7 +123,9 @@ public class LiteWorkflowAppParser {
     private Class<? extends ActionNodeHandler> actionHandlerClass;
 
     private String defaultNameNode;
+    private String defaultResourceManager;
     private String defaultJobTracker;
+    private boolean isResourceManagerTagUsed;
 
     public LiteWorkflowAppParser(Schema schema,
                                  Class<? extends ControlNodeHandler> controlNodeHandler,
@@ -131,20 +136,21 @@ public class LiteWorkflowAppParser {
         this.decisionHandlerClass = decisionHandlerClass;
         this.actionHandlerClass = actionHandlerClass;
 
-        defaultNameNode = ConfigurationService.get(DEFAULT_NAME_NODE);
-        if (defaultNameNode != null) {
-            defaultNameNode = defaultNameNode.trim();
-            if (defaultNameNode.isEmpty()) {
-                defaultNameNode = null;
+        defaultNameNode = getPropertyFromConfig(DEFAULT_NAME_NODE);
+        defaultResourceManager = getPropertyFromConfig(DEFAULT_RESOURCE_MANAGER);
+        defaultJobTracker = getPropertyFromConfig(DEFAULT_JOB_TRACKER);
+    }
+
+    private String getPropertyFromConfig(final String configPropertyKey) {
+        String property = ConfigurationService.get(configPropertyKey);
+        if (property != null) {
+            property = property.trim();
+            if (property.isEmpty()) {
+                property = null;
             }
         }
-        defaultJobTracker = ConfigurationService.get(DEFAULT_JOB_TRACKER);
-        if (defaultJobTracker != null) {
-            defaultJobTracker = defaultJobTracker.trim();
-            if (defaultJobTracker.isEmpty()) {
-                defaultJobTracker = null;
-            }
-        }
+
+        return property;
     }
 
     public LiteWorkflowApp validateAndParse(Reader reader, Configuration jobConf) throws WorkflowException {
@@ -421,10 +427,13 @@ public class LiteWorkflowAppParser {
         GlobalSectionData gData = null;
         if (global != null) {
             String globalJobTracker = null;
-            Element globalJobTrackerElement = global.getChild(JOB_TRACKER, ns);
+            Element globalJobTrackerElement = getResourceManager(ns, global);
+            isResourceManagerTagUsed = globalJobTrackerElement != null
+                    && globalJobTrackerElement.getName().equals(RESOURCE_MANAGER);
             if (globalJobTrackerElement != null) {
                 globalJobTracker = globalJobTrackerElement.getValue();
             }
+
 
             String globalNameNode = null;
             Element globalNameNodeElement = global.getChild(NAME_NODE, ns);
@@ -462,6 +471,14 @@ public class LiteWorkflowAppParser {
         return gData;
     }
 
+    private Element getResourceManager(final Namespace ns, final Element element) {
+        final Element resourceManager = element.getChild(RESOURCE_MANAGER, ns);
+        if (resourceManager != null) {
+            return resourceManager;
+        }
+        return element.getChild(JOB_TRACKER, ns);
+    }
+
     private void handleDefaultsAndGlobal(GlobalSectionData gData, Configuration configDefault, Element actionElement, Namespace ns)
             throws WorkflowException {
 
@@ -491,15 +508,17 @@ public class LiteWorkflowAppParser {
                     throw new WorkflowException(ErrorCode.E0701, "No " + NAME_NODE + " defined");
                 }
             }
-            if (actionElement.getChild(JOB_TRACKER, actionNs) == null &&
+            if (getResourceManager(actionNs, actionElement) == null &&
                     !FsActionExecutor.ACTION_TYPE.equals(actionElement.getName())) {
                 if (gData != null && gData.jobTracker != null) {
-                    addChildElement(actionElement, actionNs, JOB_TRACKER, gData.jobTracker);
+                    addResourceManagerOrJobTracker(actionElement, actionNs, gData.jobTracker, isResourceManagerTagUsed);
+                } else if (defaultResourceManager != null) {
+                    addResourceManagerOrJobTracker(actionElement, actionNs, defaultResourceManager, true);
                 } else if (defaultJobTracker != null) {
-                    addChildElement(actionElement, actionNs, JOB_TRACKER, defaultJobTracker);
+                    addResourceManagerOrJobTracker(actionElement, actionNs, defaultJobTracker, false);
                 } else if (!(SubWorkflowActionExecutor.ACTION_TYPE.equals(actionElement.getName()) ||
                         GLOBAL.equals(actionElement.getName()))) {
-                    throw new WorkflowException(ErrorCode.E0701, "No " + JOB_TRACKER + " defined");
+                    throw new WorkflowException(ErrorCode.E0701, "No " + JOB_TRACKER + " or " + RESOURCE_MANAGER + " defined");
                 }
             }
         }
@@ -567,5 +586,18 @@ public class LiteWorkflowAppParser {
                 throw new WorkflowException(ErrorCode.E0700, "Error while processing action conf");
             }
         }
+    }
+
+    private void addResourceManagerOrJobTracker(final Element actionElement, final Namespace actionNs, final String jobTracker,
+                                                boolean isResourceManagerUsed) {
+        if (isResourceManagerUsed) {
+            addChildElement(actionElement, actionNs, RESOURCE_MANAGER, jobTracker);
+        } else {
+            addChildElement(actionElement, actionNs, JOB_TRACKER, jobTracker);
+        }
+    }
+
+    private void addResourceManager(final Element actionElement, final Namespace actionNs, final String jobTracker) {
+            addChildElement(actionElement, actionNs, RESOURCE_MANAGER, jobTracker);
     }
 }

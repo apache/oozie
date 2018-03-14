@@ -261,18 +261,26 @@ public class JavaActionExecutor extends ActionExecutor {
     protected Configuration createBaseHadoopConf(Context context, Element actionXml, boolean loadResources) {
 
         Namespace ns = actionXml.getNamespace();
-        String jobTracker = actionXml.getChild("job-tracker", ns).getTextTrim();
+        String resourceManager;
+        final Element resourceManagerTag = actionXml.getChild("resource-manager", ns);
+        if (resourceManagerTag != null) {
+            resourceManager = resourceManagerTag.getTextTrim();
+        }
+        else {
+            resourceManager = actionXml.getChild("job-tracker", ns).getTextTrim();
+        }
+
         String nameNode = actionXml.getChild("name-node", ns).getTextTrim();
         Configuration conf = null;
         if (loadResources) {
-            conf = Services.get().get(HadoopAccessorService.class).createConfiguration(jobTracker);
+            conf = Services.get().get(HadoopAccessorService.class).createConfiguration(resourceManager);
         }
         else {
             conf = new Configuration(false);
         }
 
         conf.set(HADOOP_USER, context.getProtoActionConf().get(WorkflowAppService.HADOOP_USER));
-        conf.set(HADOOP_YARN_RM, jobTracker);
+        conf.set(HADOOP_YARN_RM, resourceManager);
         conf.set(HADOOP_NAME_NODE, nameNode);
         conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "true");
 

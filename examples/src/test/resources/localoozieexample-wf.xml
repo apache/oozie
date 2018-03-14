@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.1" name="localoozieexample-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="localoozieexample-wf">
     <start to="d"/>
     <decision name="d">
         <switch>

@@ -386,6 +386,25 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
     }
 
+
+    public void testSimplestSubmitWithResourceManagerOK() throws Exception {
+        final String actionXml = "<java>" +
+                "<resource-manager>" + getJobTrackerUri() + "</resource-manager>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "</java>";
+        final Context context = createContext(actionXml, null);
+        submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalId());
+        final ActionExecutor ae = new JavaActionExecutor();
+        ae.check(context, context.getAction());
+        assertEquals("SUCCEEDED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
+    }
+
     public void testOutputSubmitOK() throws Exception {
         String actionXml = "<java>" +
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
@@ -2246,27 +2265,21 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         String config = addConfig ? "<configuration>" +
                 "<property><name>action.foo</name><value>AA</value></property>" +
                 "</configuration>" : "";
-        return "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+        return "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 config +
                 "<main-class>MAIN-CLASS</main-class>" +
                 "</java>";
     }
 
-    private String createTestWorkflowXml() throws IOException {
+    private String createTestWorkflowXml(final String globalXml, final String actionXml) throws IOException {
         String workflowUri = getTestCaseFileUri("workflow.xml");
-        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
-                "<global>" +
-                "   <configuration>" +
-                "        <property>" +
-                "            <name>action.foo</name>" +
-                "            <value>foo2</value>" +
-                "        </property>" +
-                "    </configuration>" +
-                "</global>" +
+        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"workflow\">" +
+                globalXml +
                 "<start to=\"java\"/>" +
                 "<action name=\"java\">" +
-                getJavaActionXml(false)+
+                  actionXml +
                 "     <ok to=\"end\"/>" +
                 "     <error to=\"fail\"/>" +
                 "</action>" +
@@ -2284,7 +2297,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testGlobalConfigurationWithActionDefaults() throws Exception {
         try {
-            String workflowUri = createTestWorkflowXml();
+            String workflowUri = createTestWorkflowXml(getWorkflowGlobalXml(), getJavaActionXml(false));
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
             Properties conf = wfClient.createConfiguration();
@@ -2308,6 +2321,39 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
             assertEquals("Config value set in <global> section is not propagated correctly",
                     "foo2", actionConf.get("action.foo"));
+        } finally {
+            LocalOozie.stop();
+        }
+    }
+
+    public void testResourceManagerInGlobalConfigurationCanBeOverridenWithJobTrackerInAction() throws Exception {
+        try {
+            final String global = "<global>" +
+                    "<resource-manager>RM</resource-manager>"+
+                    "</global>";
+
+            final String workflowUri = createTestWorkflowXml(global, getJavaActionXml(false));
+            LocalOozie.start();
+            final OozieClient wfClient = LocalOozie.getClient();
+            final Properties conf = wfClient.createConfiguration();
+            conf.setProperty(OozieClient.APP_PATH, workflowUri);
+            conf.setProperty(OozieClient.USER_NAME, getTestUser());
+            conf.setProperty("appName", "var-app-name");
+            final String jobId = wfClient.submit(conf);
+            wfClient.start(jobId);
+            WorkflowJob workflow = wfClient.getJobInfo(jobId);
+            waitFor(20 * 1000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    WorkflowAction javaAction = getJavaAction(wfClient.getJobInfo(jobId));
+                    return javaAction != null && !javaAction.getStatus().equals("PREP");
+                }
+            });
+            final WorkflowAction workflowAction = getJavaAction(workflow);
+            final String actualConfig = workflowAction.getConf();
+            final String actualJobTrackerURI = XmlUtils.parseXml(actualConfig).getChildTextNormalize("job-tracker", null);
+            assertEquals(getJobTrackerUri(), actualJobTrackerURI);
+
         } finally {
             LocalOozie.stop();
         }
@@ -2675,5 +2721,16 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals(JavaActionExecutor.KILLED, context.getAction().getExternalStatus());
         assertEquals(FinalApplicationStatus.KILLED,
                 yarnClient.getApplicationReport(ConverterUtils.toApplicationId(runningJob)).getFinalApplicationStatus());
+    }
+
+    public String getWorkflowGlobalXml() {
+        return "<global>" +
+               "   <configuration>" +
+               "        <property>" +
+               "            <name>action.foo</name>" +
+               "            <value>foo2</value>" +
+               "        </property>" +
+               "    </configuration>" +
+               "</global>";
     }
 }

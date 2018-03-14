@@ -15,11 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="coord-input-logic-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="coord-input-logic-wf">
     <start to="aggregator"/>
     <action name="aggregator">
         <map-reduce>
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${outputData}"/>
