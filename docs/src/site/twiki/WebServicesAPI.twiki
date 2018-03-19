@@ -848,7 +848,7 @@ The following properties are required:
 The following properties are optional:
    * =oozie.hive.script.params.size=: The number of parameters you'll be passing to Hive
    * =oozie.hive.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
-   * =oozie.hive.options.size=: The number of options you'll be passing to Pig
+   * =oozie.hive.options.size=: The number of options you'll be passing to Hive
    * =oozie.hive.options.n=: An argument to pass to Hive, the 'n' should be an integer starting with 0 to indicate the option number
 
 The =oozie.hive.options.n= parameters are sent directly to Hive without any modification unless they start with =-D=, in which case
