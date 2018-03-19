@@ -16,20 +16,20 @@
 # limitations under the License.
 
 run() {
-  echo "\$ ${@}"
+  echo "\$ ${*}"
   "${@}"
   exitCode=$?
   if [[ $exitCode != 0 ]]; then
     echo
-    echo "Failed! running ${@} in `pwd`"
+    echo "Failed! running ${*} in $(pwd)"
     echo
     exit $exitCode
   fi
 }
 
-branchUrl=`git ls-remote --get-url`
+branchUrl=$(git ls-remote --get-url)
 
-branchName=`git rev-parse --abbrev-ref HEAD`
+branchName=$(git rev-parse --abbrev-ref HEAD)
 
 tempDir="/tmp/oozie.$$"
 
@@ -37,13 +37,13 @@ run mkdir $tempDir
 
 run cd $tempDir
 
-run git clone $branchUrl -b $branchName oozie-src
+run git clone "$branchUrl" -b "$branchName" oozie-src
 
 run cd oozie-src
 
 rm -rf .git
 
-releaseVersion=`mvn help:evaluate -Dexpression=project.version | grep -v INFO | grep -v WARNING`
+releaseVersion=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
 
 if [ "$releaseVersion}" = "" ]; then
   echo "Could not determine branch version from POM"
@@ -52,32 +52,36 @@ fi
 
 run cd ..
 
-run mv oozie-src oozie-$releaseVersion
+run mv oozie-src "oozie-$releaseVersion"
 
-run tar czf oozie-${releaseVersion}.tar.gz oozie-$releaseVersion
+run tar czf "oozie-${releaseVersion}.tar.gz" "oozie-$releaseVersion"
 
-run cp oozie-$releaseVersion/release-log.txt .
+run cp "oozie-$releaseVersion/release-log.txt" .
 
-run cd oozie-$releaseVersion
+run cd "oozie-$releaseVersion"
 
 run mvn apache-rat:check
 
 run cd ..
 
-run cp oozie-${releaseVersion}/target/rat.txt rat_report
+run cp "oozie-${releaseVersion}"/target/rat.txt rat_report
 
-run rm -rf oozie-${releaseVersion}
+run rm -rf "oozie-${releaseVersion}"
 
-MD5CMD="md5sum"
-which $MD5CMD
-if [[ $? != 0 ]]; then
-  MD5CMD="md5"
+# Our run function doesn't handle this one nicely because of the stdout redirect, so do the echo and exit code check here instead
+echo "\$ gpg --print-md SHA512 oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.sha512"
+gpg --print-md SHA512 "oozie-${releaseVersion}.tar.gz" > "oozie-${releaseVersion}.tar.gz.sha512"
+exitCode=$?
+if [[ $exitCode != 0 ]]; then
+  echo
+  echo "Failed! running gpg --print-md SHA512 oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.sha512 in $(pwd)"
+  echo
+  exit $exitCode
 fi
-run $MD5CMD oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.md5
 
-run gpg --armor --output oozie-${releaseVersion}.tar.gz.asc --detach-sig oozie-${releaseVersion}.tar.gz
+run gpg --armor --output "oozie-${releaseVersion}.tar.gz.asc" --detach-sig "oozie-${releaseVersion}.tar.gz"
 
-run gpg --verify oozie-${releaseVersion}.tar.gz.asc oozie-${releaseVersion}.tar.gz
+run gpg --verify "oozie-${releaseVersion}.tar.gz.asc" "oozie-${releaseVersion}.tar.gz"
 
 echo
 echo

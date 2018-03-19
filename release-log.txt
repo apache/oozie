@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3189 Update the release script and wiki page to use sha512 instead of md5 (rkanter via gezapeti)
 OOZIE-3195 Typo in WebServicesAPI.twiki: Proxy Hive Job Submission (kmarton via andras.piros)
 OOZIE-2814 OYA: Update example workflows to newest schemas (asasvari via gezapeti)
 OOZIE-2585 Remove test case TestPartitionDependencyManagerEhcache.testMemoryUsageAndSpeedOverflowToDisk and testMemoryUsageAndSpeed (pbacsko via gezapeti)
