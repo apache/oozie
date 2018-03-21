@@ -30,7 +30,7 @@ user contains ls -a).
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="[NODE-NAME]">
         <ssh xmlns="uri:oozie:ssh-action:0.1">
@@ -71,7 +71,7 @@ The configuration of the =ssh= action can be parameterized (templatized) using E
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="myssjob">
         <ssh xmlns="uri:oozie:ssh-action:0.1">

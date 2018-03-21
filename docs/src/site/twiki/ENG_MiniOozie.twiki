@@ -54,7 +54,7 @@ $ mvn clean test
 
 ---++ Create Tests Using MiniOozie
 
-MiniOozie is a junit test class to test Oozie applications such as workflow and coordinator. The test case
+MiniOozie is a JUnit test class to test Oozie applications such as workflow and coordinator. The test case
 needs to extend from MiniOozieTestCase and does the same as the example class 'WorkflowTest.java' to create Oozie
 workflow application properties and workflow XML. The example file is under Oozie source tree:
 
@@ -69,6 +69,10 @@ The test directories under MiniOozie are:
 
    * =minitest/src/test/java= : as test-source directory
    * =minitest/src/test/resources= : as test-resource directory
+
+
+Also asynchronous actions like FS action can be used / tested using =LocalOozie= / =OozieClient= API.
+Please see =fs-decision.xml= workflow example.
 
 [[index][::Go back to Oozie Documentation Index::]]
 

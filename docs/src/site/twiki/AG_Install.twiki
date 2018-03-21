@@ -296,6 +296,84 @@ Oozie resolves configuration property values in the following order:
 *NOTE:* The =oozie-default.xml= file found in Oozie's =conf/= directory is not used by Oozie, it is there
 for reference purposes only.
 
+---+++ Precedence of Configuration Properties
+
+For compatibility reasons across Hadoop / Oozie versions, some configuration properties can be defined using multiple keys
+in the launcher configuration. Beginning with Oozie 5.0.0, some of them can be overridden, some others will be prepended to default
+configuration values.
+
+---++++ Overriding Configuration Values
+
+Overriding happens for following configuration entries with =oozie.launcher= prefix, by switching =oozie.launcher.override=
+(on by default).
+
+For those, following is the general approach:
+   * check whether a YARN compatible entry is present. If yes, use it to override default value
+   * check whether a MapReduce v2 compatible entry is present. If yes, use it to override default value
+   * check whether a MapReduce v1 compatible entry is present. If yes, use it to override default value
+   * use default value
+
+Such properties are (legend: YARN / MapReduce v2 / MapReduce v1):
+   * max attempts of the MapReduce Application Master:
+      * N / A
+      * =mapreduce.map.maxattempts=
+      * =mapred.map.max.attempts=
+   * memory amount in MB of the MapReduce Application Master:
+      * =yarn.app.mapreduce.am.resource.mb=
+      * =mapreduce.map.memory.mb=
+      * =mapred.job.map.memory.mb=
+   * CPU vcore count of the MapReduce Application Master:
+      * =yarn.app.mapreduce.am.resource.cpu-vcores=
+      * =mapreduce.map.cpu.vcores=
+      * N / A
+   * logging level of the MapReduce Application Master:
+      * N / A
+      * =mapreduce.map.log.level=
+      * =mapred.map.child.log.level=
+   * MapReduce Application Master JVM options:
+      * =yarn.app.mapreduce.am.command-opts=
+      * =mapreduce.map.java.opts=
+      * =mapred.child.java.opts=
+   * MapReduce Application Master environment variable settings:
+      * =yarn.app.mapreduce.am.env=
+      * =mapreduce.map.env=
+      * =mapred.child.env=
+   * MapReduce Application Master job priority:
+      * N / A
+      * =mapreduce.job.priority=
+      * =mapred.job.priority=
+   * MapReduce Application Master job queue name:
+      * N / A
+      * =mapreduce.job.queuename=
+      * =mapred.job.queue.name=
+   * MapReduce View ACL settings:
+      * N / A
+      * =mapreduce.job.acl-view-job=
+      * N / A
+   * MapReduce Modify ACL settings:
+      * N / A
+      * =mapreduce.job.acl-modify-job=
+      * N / A
+
+This list can be extended or modified by adding new configuration entries or updating existing values
+beginning with =oozie.launcher.override.= within =oozie-site.xml=. Examples can be found in =oozie-default.xml=.
+
+---++++ Prepending Configuration Values
+
+Prepending happens for following configuration entries with =oozie.launcher= prefix, by switching =oozie.launcher.prepend=
+(on by default).
+
+For those, following is the general approach:
+   * check whether a YARN compatible entry is present. If yes, use it to prepend to default value
+   * use default value
+
+Such properties are (legend: YARN only):
+   * MapReduce Application Master JVM options: =yarn.app.mapreduce.am.admin-command-opts=
+   * MapReduce Application Master environment settings: =yarn.app.mapreduce.am.admin.user.env=
+
+This list can be extended or modified by adding new configuration entries or updating existing values
+beginning with =oozie.launcher.prepend.= within =oozie-site.xml=. Examples can be found in =oozie-default.xml=.
+
 ---+++ Logging Configuration
 
 By default, Oozie log configuration is defined in the =oozie-log4j.properties= configuration file.

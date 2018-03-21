@@ -22,11 +22,11 @@ Both Hadoop clusters have to be configured with proxyuser for the Oozie process 
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.4">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="distcp-example">
-        <distcp xmlns="uri:oozie:distcp-action:0.2">
-            <job-tracker>${jobTracker}</job-tracker>
+        <distcp xmlns="uri:oozie:distcp-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode1}</name-node>
             <arg>${nameNode1}/path/to/input.txt</arg>
             <arg>${nameNode2}/path/to/output.txt</arg>
@@ -53,17 +53,17 @@ the action:
 The =DistCp= action is also commonly used to copy files within the same cluster. Cases where copying files within
 a directory to another directory or directories to target directory is supported. Example below will illustrate a
 copy within a cluster, notice the source and target =nameNode= is the same and use of =*= syntax is supported to
-represent only child files or directories within a source directory. For the sake of the example, =jobTracker= and
-=resourceManager= are synonymous.
+represent only child files or directories within a source directory. For the sake of the example, =jobTracker= and =resourceManager=
+are synonymous.
 
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.4">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="copy-example">
-        <distcp xmlns="uri:oozie:distcp-action:0.2">
-            <job-tracker>${resourceManager}</job-tracker>
+        <distcp xmlns="uri:oozie:distcp-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <arg>${nameNode}/path/to/source/*</arg>
             <arg>${nameNode}/path/to/target/</arg>
@@ -78,6 +78,34 @@ represent only child files or directories within a source directory. For the sak
 ---++ Appendix, DistCp XML-Schema
 
 ---+++ AE.A Appendix A, DistCp XML-Schema
+
+---++++ DistCp Action Schema Version 1.0
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:distcp="uri:oozie:distcp-action:1.0" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:distcp-action:1.0">
+.
+    <xs:include schemaLocation="oozie-common-1.0.xsd"/>
+.
+    <xs:element name="distcp" type="distcp:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="resource-manager" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="distcp:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="launcher" type="distcp:LAUNCHER" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="configuration" type="distcp:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="java-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+</xs:schema>
+</verbatim>
 
 ---++++ DistCp Action Schema Version 0.2
 <verbatim>

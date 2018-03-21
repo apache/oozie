@@ -16,7 +16,7 @@ The workflow job will wait until the Spark job completes before
 continuing to the next action.
 
 To run the Spark job, you have to configure the =spark= action with
-the =job-tracker=, =name-node=, Spark =master= elements as
+the =resource-manager=, =name-node=, Spark =master= elements as
 well as the necessary elements, arguments and configuration.
 
 Spark options can be specified in an element called =spark-opts=.
@@ -31,11 +31,11 @@ in the =job-xml= file.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.3">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="[NODE-NAME]">
-        <spark xmlns="uri:oozie:spark-action:0.1">
-            <job-tracker>[JOB-TRACKER]</job-tracker>
+        <spark xmlns="uri:oozie:spark-action:1.0">
+            <resource-manager>[RESOURCE-MANAGER]</resource-manager>
             <name-node>[NAME-NODE]</name-node>
             <prepare>
                <delete path="[PATH]"/>
@@ -126,11 +126,11 @@ expressions.
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="myfirstsparkjob">
-        <spark xmlns="uri:oozie:spark-action:0.1">
-            <job-tracker>foo:8021</job-tracker>
+        <spark xmlns="uri:oozie:spark-action:1.0">
+            <resource-manager>foo:8032</resource-manager>
             <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
@@ -184,11 +184,11 @@ For more information, please refer to [[AG_Install#Oozie_Share_Lib][installation
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:1.0">
     ....
     <action name="myfirstpysparkjob">
-        <spark xmlns="uri:oozie:spark-action:0.1">
-            <job-tracker>foo:8021</job-tracker>
+        <spark xmlns="uri:oozie:spark-action:1.0">
+            <resource-manager>foo:8032</resource-manager>
             <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
@@ -229,7 +229,7 @@ Specifying relative path for symlink:
 
 Make sure that the file is within the application directory i.e. =oozie.wf.application.path= .
 <verbatim>
-        <spark xmlns="uri:oozie:spark-action:0.2">
+        <spark xmlns="uri:oozie:spark-action:1.0">
         ...
             <jar>py-spark-example-symlink.py</jar>
             ...
@@ -241,7 +241,7 @@ Make sure that the file is within the application directory i.e. =oozie.wf.appli
 
 Specifying full path for symlink:
 <verbatim>
-        <spark xmlns="uri:oozie:spark-action:0.2">
+        <spark xmlns="uri:oozie:spark-action:1.0">
         ...
             <jar>spark-example-symlink.jar</jar>
             ...
@@ -257,18 +257,54 @@ Specifying full path for symlink:
 
 ---+++ AE.A Appendix A, Spark XML-Schema
 
----++++ Spark Action Schema Version 0.1
+---++++ Spark Action Schema Version 1.0
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:spark="uri:oozie:spark-action:0.1" elementFormDefault="qualified"
-           targetNamespace="uri:oozie:spark-action:0.1">
+           xmlns:spark="uri:oozie:spark-action:1.0" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:spark-action:1.0">
+.
+    <xs:include schemaLocation="oozie-common-1.0.xsd"/>
+.
+    <xs:element name="spark" type="spark:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="resource-manager" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="spark:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="launcher" type="spark:LAUNCHER" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="spark:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="master" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="mode" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="class" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="jar" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="spark-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+</xs:schema>
+</verbatim>
+
+---++++ Spark Action Schema Version 0.2
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:spark="uri:oozie:spark-action:0.2" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:spark-action:0.2">
 
     <xs:element name="spark" type="spark:ACTION"/>
 
     <xs:complexType name="ACTION">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="prepare" type="spark:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="spark:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
@@ -279,6 +315,8 @@ Specifying full path for symlink:
             <xs:element name="jar" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="spark-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -314,18 +352,18 @@ Specifying full path for symlink:
 </xs:schema>
 </verbatim>
 
----++++ Spark Action Schema Version 0.2
+---++++ Spark Action Schema Version 0.1
 <verbatim>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:spark="uri:oozie:spark-action:0.2" elementFormDefault="qualified"
-           targetNamespace="uri:oozie:spark-action:0.2">
+           xmlns:spark="uri:oozie:spark-action:0.1" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:spark-action:0.1">
 
     <xs:element name="spark" type="spark:ACTION"/>
 
     <xs:complexType name="ACTION">
         <xs:sequence>
-            <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-tracker" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="name-node" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="prepare" type="spark:PREPARE" minOccurs="0" maxOccurs="1"/>
             <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="configuration" type="spark:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
@@ -336,8 +374,6 @@ Specifying full path for symlink:
             <xs:element name="jar" type="xs:string" minOccurs="1" maxOccurs="1"/>
             <xs:element name="spark-opts" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="arg" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 

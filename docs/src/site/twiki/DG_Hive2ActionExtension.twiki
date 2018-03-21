@@ -15,10 +15,8 @@ The =hive2= action runs Beeline to connect to Hive Server 2.
 The workflow job will wait until the Hive Server 2 job completes before
 continuing to the next action.
 
-To run the Hive Server 2 job, you have to configure the =hive2= action with the
-=job-tracker=, =name-node=, =jdbc-url=, =password= elements, and either
-Hive's =script= or =query= element, as well as the necessary parameters
-and configuration.
+To run the Hive Server 2 job, you have to configure the =hive2= action with the =resource-manager=, =name-node=, =jdbc-url=,
+ =password= elements, and either Hive's =script= or =query= element, as well as the necessary parameters and configuration.
 
 A =hive2= action can be configured to create or delete HDFS directories
 before starting the Hive Server 2 job.
@@ -38,11 +36,11 @@ syntax is =${VARIABLES}=.
 *Syntax:*
 
 <verbatim>
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.4">
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="[NODE-NAME]">
-        <hive2 xmlns="uri:oozie:hive2-action:0.1">
-            <job-tracker>[JOB-TRACKER]</job-tracker>
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <resource-manager>[RESOURCE-MANAGER]</resource-manager>
             <name-node>[NAME-NODE]</name-node>
             <prepare>
                <delete path="[PATH]"/>
@@ -115,11 +113,11 @@ expressions.
 *Example:*
 
 <verbatim>
-<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.4">
+<workflow-app name="sample-wf" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="my-hive2-action">
-        <hive2 xmlns="uri:oozie:hive2-action:0.1">
-            <job-tracker>foo:8021</job-tracker>
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <resource-manager>foo:8032</resource-manager>
             <name-node>bar:8020</name-node>
             <prepare>
                 <delete path="${jobOutput}"/>
@@ -154,6 +152,43 @@ with a Kerberized Hive Server 2.
 ---++ Appendix, Hive 2 XML-Schema
 
 ---+++ AE.A Appendix A, Hive 2 XML-Schema
+
+---++++ Hive 2 Action Schema Version 1.0
+<verbatim>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hive2="uri:oozie:hive2-action:1.0" elementFormDefault="qualified"
+           targetNamespace="uri:oozie:hive2-action:1.0">
+.
+    <xs:include schemaLocation="oozie-common-1.0.xsd"/>
+.
+    <xs:element name="hive2" type="hive2:ACTION"/>
+.
+    <xs:complexType name="ACTION">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="job-tracker" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="resource-manager" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="name-node" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="prepare" type="hive2:PREPARE" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="launcher" type="hive2:LAUNCHER" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="job-xml" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="configuration" type="hive2:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="jdbc-url" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="password" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="1" maxOccurs="1">
+                <xs:element name="script" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                <xs:element name="query" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            </xs:choice>
+            <xs:element name="param" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="argument" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="file" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="archive" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+.
+</xs:schema>
+</verbatim>
 
 ---++++ Hive 2 Action Schema Version 0.2
 <verbatim>
