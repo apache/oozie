@@ -4,17 +4,7 @@ the Apache License, Version 2.0,
 in this case for the Oozie, Workflow Engine for Hadoop project
 =======================================================================
 
-Copyright 2011 The Apache Software Foundation
+Copyright 2018 The Apache Software Foundation
 
 This product includes software developed by The Apache Software
 Foundation (http://www.apache.org/).
-
-This product includes org.json (http://www.json.org/java/index.html),
-Copyright (c) 2002 JSON.org
-
-Detailed License information for all components can be found in the
-documentation in the ooziedocs.war at index.html##LicenseInfo
-
-Oozie source contains 3 binaries (wordcount-simple_Linux-amd64-64_h20,
-wordcount-simple_Linux-i386-32_h20, wordcount-simple_Mac_OS_X-x86_64-64_h20) for
-testing purposes, these binaries are compiled artifacts from Apache Hadoop.

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3150 Remove references to not present dependencies within NOTICE.txt (gezapeti via andras.piros)
 OOZIE-3201 Typo in TestCoordActionInputCheckXCommand (gongchuanjie via andras.piros)
 OOZIE-3056 Implement new mechanism to specify ShareLibs for workflow actions (gezapeti via andras.piros)
 OOZIE-2600 OYA: Update Documentation (andras.piros via gezapeti)
