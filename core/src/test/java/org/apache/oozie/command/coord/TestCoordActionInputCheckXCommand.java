@@ -860,7 +860,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
         String missingDeps = "hdfs:///dirx/filex";
 
-        // nominal time is one hour past. So aciton will be skipped
+        // nominal time is one hour past. So action will be skipped
         String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
         Date nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);     // 1 hour ago
         setCoordActionNominalTime(actionId1, nomTime.getTime());

@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-3201 Typo in TestCoordActionInputCheckXCommand (gongchuanjie via andras.piros)
 OOZIE-3056 Implement new mechanism to specify ShareLibs for workflow actions (gezapeti via andras.piros)
 OOZIE-2600 OYA: Update Documentation (andras.piros via gezapeti)
 OOZIE-3189 Update the release script and wiki page to use sha512 instead of md5 (rkanter via gezapeti)
