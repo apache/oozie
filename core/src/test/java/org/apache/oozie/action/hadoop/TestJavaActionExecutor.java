@@ -89,18 +89,27 @@ import org.jdom.Element;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     private static final String YARN_RESOURCEMANAGER_ADDRESS = "yarn.resourcemanager.address";
     private static final String MAPRED_CHILD_JAVA_OPTS = "mapred.child.java.opts";
     private static final String MAPREDUCE_MAP_JAVA_OPTS = "mapreduce.map.java.opts";
-
+    private TestWorkflowHelper helper;
     @Override
     protected void beforeSetUp() throws Exception {
         super.beforeSetUp();
         setSystemProperty("oozie.test.hadoop.minicluster2", "true");
     }
 
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        helper = new TestWorkflowHelper(getJobTrackerUri(), getNameNodeUri(), getTestCaseDir());
+
+    }
     @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
@@ -2247,7 +2256,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
     public void testDefaultConfigurationInActionConf() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor();
-        String xmlStr = getJavaActionXml(true);
+        final String dummyConfiguration = "<configuration>" +
+                "<property><name>action.foo</name><value>AA</value></property>" +
+                "</configuration>";
+        String xmlStr = helper.getJavaActionXml(dummyConfiguration);
         Element actionXml = XmlUtils.parseXml(xmlStr);
         Context context = createContext(xmlStr, getTestGroup());
         Configuration conf = new Configuration(true);
@@ -2261,43 +2273,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 conf.get("mapreduce.map.maxattempts"));
     }
 
-    private String getJavaActionXml(boolean addConfig) {
-        String config = addConfig ? "<configuration>" +
-                "<property><name>action.foo</name><value>AA</value></property>" +
-                "</configuration>" : "";
-        return "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                config +
-                "<main-class>MAIN-CLASS</main-class>" +
-                "</java>";
-    }
-
-    private String createTestWorkflowXml(final String globalXml, final String actionXml) throws IOException {
-        String workflowUri = getTestCaseFileUri("workflow.xml");
-        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"workflow\">" +
-                globalXml +
-                "<start to=\"java\"/>" +
-                "<action name=\"java\">" +
-                  actionXml +
-                "     <ok to=\"end\"/>" +
-                "     <error to=\"fail\"/>" +
-                "</action>" +
-                "<kill name=\"fail\">" +
-                "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
-                "</kill>" +
-                "<end name=\"end\"/>" +
-                "</workflow-app>";
-
-        final File f = new File(URI.create(workflowUri));
-        final ByteArrayInputStream inputStream = new ByteArrayInputStream(appXml.getBytes("UTF-8"));
-        IOUtils.copyStream(inputStream, new FileOutputStream(f));
-        return workflowUri;
-    }
-
     public void testGlobalConfigurationWithActionDefaults() throws Exception {
         try {
-            String workflowUri = createTestWorkflowXml(getWorkflowGlobalXml(), getJavaActionXml(false));
+            String workflowUri = helper.createTestWorkflowXml(getWorkflowGlobalXml(), helper.getJavaActionXml(""));
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
             Properties conf = wfClient.createConfiguration();
@@ -2310,11 +2288,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             waitFor(20 * 1000, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
-                    WorkflowAction javaAction = getJavaAction(wfClient.getJobInfo(jobId));
+                    WorkflowAction javaAction = helper.getJavaAction(wfClient.getJobInfo(jobId));
                     return javaAction != null && !javaAction.getStatus().equals("PREP");
                 }
             });
-            final WorkflowAction workflowAction = getJavaAction(workflow);
+            final WorkflowAction workflowAction = helper.getJavaAction(workflow);
             Element eConf = XmlUtils.parseXml(workflowAction.getConf());
             Element element = eConf.getChild("configuration", eConf.getNamespace());
             Configuration actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(element).toString()));
@@ -2332,7 +2310,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                     "<resource-manager>RM</resource-manager>"+
                     "</global>";
 
-            final String workflowUri = createTestWorkflowXml(global, getJavaActionXml(false));
+            final String workflowUri = helper.createTestWorkflowXml(global, helper.getJavaActionXml(""));
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
             final Properties conf = wfClient.createConfiguration();
@@ -2345,11 +2323,11 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
             waitFor(20 * 1000, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
-                    WorkflowAction javaAction = getJavaAction(wfClient.getJobInfo(jobId));
+                    WorkflowAction javaAction = helper.getJavaAction(wfClient.getJobInfo(jobId));
                     return javaAction != null && !javaAction.getStatus().equals("PREP");
                 }
             });
-            final WorkflowAction workflowAction = getJavaAction(workflow);
+            final WorkflowAction workflowAction = helper.getJavaAction(workflow);
             final String actualConfig = workflowAction.getConf();
             final String actualJobTrackerURI = XmlUtils.parseXml(actualConfig).getChildTextNormalize("job-tracker", null);
             assertEquals(getJobTrackerUri(), actualJobTrackerURI);
@@ -2357,16 +2335,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         } finally {
             LocalOozie.stop();
         }
-    }
-
-    private WorkflowAction getJavaAction(WorkflowJob workflowJob){
-        List<WorkflowAction> actions = workflowJob.getActions();
-        for(WorkflowAction wa : actions){
-            if(wa.getType().equals("java")){
-                return wa;
-            }
-        }
-        return null;
     }
 
     public void testSetRootLoggerLevel() throws Exception {

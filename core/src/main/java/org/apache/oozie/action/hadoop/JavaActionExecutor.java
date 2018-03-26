@@ -55,7 +55,6 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
@@ -164,6 +163,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String HADOOP_JOB_NAME = "mapred.job.name";
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
     private static final String OOZIE_ACTION_NAME = "oozie.action.name";
+    private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
 
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
@@ -1831,53 +1831,25 @@ public class JavaActionExecutor extends ActionExecutor {
 
     /**
      * Return the sharelib names for the action.
-     * <p>
-     * If <code>NULL</code> or empty, it means that the action does not use the action
-     * sharelib.
-     * <p>
-     * If a non-empty string, i.e. <code>foo</code>, it means the action uses the
-     * action sharelib sub-directory <code>foo</code> and all JARs in the sharelib
-     * <code>foo</code> directory will be in the action classpath. Multiple sharelib
-     * sub-directories can be specified as a comma separated list.
-     * <p>
-     * The resolution is done using the following precedence order:
-     * <ul>
-     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the action configuration</li>
-     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the job configuration</li>
-     *     <li><b>action.sharelib.for.#ACTIONTYPE#</b> in the oozie configuration</li>
-     *     <li>Action Executor <code>getDefaultShareLibName()</code> method</li>
-     * </ul>
-     *
+     * See {@link SharelibResolver} for details.
      *
      * @param context executor context.
-     * @param actionXml
+     * @param actionXml the action xml.
      * @param conf action configuration.
      * @return the action sharelib names.
      */
-    protected String[] getShareLibNames(Context context, Element actionXml, Configuration conf) {
-        String[] names = conf.getStrings(ACTION_SHARELIB_FOR + getType());
-        if (names == null || names.length == 0) {
-            try {
-                XConfiguration jobConf = getWorkflowConf(context);
-                names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
-                if (names == null || names.length == 0) {
-                    names = Services.get().getConf().getStrings(ACTION_SHARELIB_FOR + getType());
-                    if (names == null || names.length == 0) {
-                        String name = getDefaultShareLibName(actionXml);
-                        if (name != null) {
-                            names = new String[] { name };
-                        }
-                    }
-                }
-            }
-            catch (IOException ex) {
-                throw new RuntimeException("It cannot happen, " + ex.toString(), ex);
-            }
+    protected String[] getShareLibNames(final Context context, final Element actionXml, Configuration conf) {
+        final String sharelibFromConfigurationProperty = ACTION_SHARELIB_FOR + getType();
+        try {
+            final String defaultShareLibName = getDefaultShareLibName(actionXml);
+            final Configuration oozieServerConfiguration = Services.get().get(ConfigurationService.class).getConf();
+            final XConfiguration workflowConfiguration = getWorkflowConf(context);
+            return new SharelibResolver(sharelibFromConfigurationProperty, conf, workflowConfiguration,
+                    oozieServerConfiguration, defaultShareLibName).resolve();
+        } catch (IOException ex) {
+            throw new RuntimeException("Can't get workflow configuration: " + ex.toString(), ex);
         }
-        return names;
     }
-
-    private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
 
 
     /**
