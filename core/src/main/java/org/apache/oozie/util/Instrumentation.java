@@ -43,7 +43,9 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Instrumentation framework that supports Timers, Counters, Variables and Sampler instrumentation elements. <p> All
  * instrumentation elements have a group and a name.
+ * @deprecated since 5.0.0
  */
+@Deprecated
 public class Instrumentation {
     private ScheduledExecutorService scheduler;
     private Lock counterLock;
@@ -207,7 +209,7 @@ public class Instrumentation {
     /**
      * Counter Instrumentation element.
      */
-    private static class Counter extends AtomicLong implements Element<Long> {
+    public static class Counter extends AtomicLong implements Element<Long> {
 
         /**
          * Return the counter snapshot.

@@ -1375,6 +1375,8 @@ It returns a list of java system properties in the Oozie server.
 
 ---+++ Displaying the Oozie server Instrumentation
 
+Deprecated and by default disabled since 5.0.0.
+
 Example:
 
 <verbatim>
@@ -1431,6 +1433,8 @@ hasn't incremented yet will not show up.
 *Note:* If Instrumentation is enabled, then Metrics is unavailable.
 
 ---+++ Displaying the Oozie server Metrics
+
+By default enabled since 5.0.0.
 
 Example:
 
@@ -1989,8 +1993,8 @@ Getting OS Environment Variables...Done
 Getting Java System Properties...Done
 Getting Queue Dump...Done
 Getting Thread Dump...Done
-Getting Instrumentation...Done
-Getting Metrics...Skipping (Metrics are unavailable)
+Getting Instrumentation...Skipping (Instrumentation is unavailable)
+Getting Metrics...Done
 Getting Details for 0000001-170918144116149-oozie-test-W...Done
 Creating Zip File: /var/lib/oozie/diag/oozie-diag-bundle-1505748797206.zip...Done
 </verbatim>

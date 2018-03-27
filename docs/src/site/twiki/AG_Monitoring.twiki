@@ -11,8 +11,13 @@
 Oozie code is instrumented in several places to collect runtime metrics. The instrumentation data can be used to
 determine the health of the system, performance of the system, and to tune the system.
 
-The instrumentation is accessible via the Admin web-services API and is also written on regular intervals to an
-instrumentation log.
+This comes in two flavors:
+   * metrics (by default enabled since 5.0.0)
+   * instrumentation (deprecated and by default disabled since 5.0.0)
+
+The instrumentation is accessible via the Admin web-services API (see the [[WebServicesAPI#Oozie_Metrics][metrics]] and
+[[WebServicesAPI#Oozie_Instrumentation][instrumentation]] Web Services API documentations for more details) and is also written on
+regular intervals to an instrumentation log.
 
 Instrumentation data includes variables, samplers, timers and counters.
 

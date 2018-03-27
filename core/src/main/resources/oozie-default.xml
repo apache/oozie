@@ -138,7 +138,7 @@
         <name>oozie.services</name>
         <value>
             org.apache.oozie.service.SchedulerService,
-            org.apache.oozie.service.InstrumentationService,
+            org.apache.oozie.service.MetricsInstrumentationService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,

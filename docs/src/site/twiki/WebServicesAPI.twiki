@@ -191,6 +191,8 @@ Content-Type: application/json;charset=UTF-8
 
 _Identical to the corresponding Oozie v0 WS API_
 
+Deprecated and by default disabled since 5.0.0.
+
 A HTTP GET request returns the Oozie instrumentation information.  Keep in mind that timers and counters that the Oozie server
 hasn't incremented yet will not show up.
 
@@ -280,7 +282,10 @@ _Available in the Oozie v2 WS API and later_
 A HTTP GET request returns the Oozie metrics information.  Keep in mind that timers and counters that the Oozie server
 hasn't incremented yet will not show up.
 
+
 *Note:* If Metrics is enabled, then Instrumentation is unavailable.
+
+*Note:* by default enabled since 5.0.0.
 
 *Request:*
 

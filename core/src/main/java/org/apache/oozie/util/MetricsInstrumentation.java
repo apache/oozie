@@ -45,8 +45,10 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +68,7 @@ public class MetricsInstrumentation extends Instrumentation {
     private final MetricRegistry metricRegistry;
     private transient ObjectMapper jsonMapper;
     private ScheduledExecutorService scheduler;
-    private final LoadingCache<String, Counter> counters;
+    private final LoadingCache<String, com.codahale.metrics.Counter> counters;
     private final Map<String, Gauge> gauges;
     private final LoadingCache<String, com.codahale.metrics.Timer> timers;
     private final Map<String, Histogram> histograms;
@@ -173,10 +175,10 @@ public class MetricsInstrumentation extends Instrumentation {
 
         // By setting this up as a cache, if a counter doesn't exist when we try to retrieve it, it will automatically be created
         counters = CacheBuilder.newBuilder().build(
-                new CacheLoader<String, Counter>() {
+                new CacheLoader<String, com.codahale.metrics.Counter>() {
                     @Override
-                    public Counter load(String key) throws Exception {
-                        Counter counter = new Counter();
+                    public com.codahale.metrics.Counter load(String key) throws Exception {
+                        com.codahale.metrics.Counter counter = new com.codahale.metrics.Counter();
                         metricRegistry.register(key, counter);
                         return counter;
                     }
@@ -408,13 +410,39 @@ public class MetricsInstrumentation extends Instrumentation {
     }
 
     /**
-     * Not Supported: throws {@link UnsupportedOperationException}
+     * For backwards compatibility reasons with {@link Instrumentation}, create a deep copy of {@link #counters}:
+     * <ul>
+     *     <li>counter groups and names are separated by {@code "."}. Here we use Codahale Metrics internals to concatenate group
+     *     and name pairs with {@code "."}</li>
+     *     <li>no synchronization is done on {@link #counters} between calls to {@link LoadingCache#asMap()},
+     *     {@link ConcurrentMap#keySet()}, and {@link ConcurrentMap#get(Object)}. Hence it's possible to get values that are
+     *     not present anymore. It's also possible to get values that have been updated in the meanwhile, and not to get values
+     *     that have been inserted in the meanwhile</li>
+     * </ul>
      *
-     * @return nothing
+     * @return a deep copy of counter groups, names, and values
      */
     @Override
     public Map<String, Map<String, Element<Long>>> getCounters() {
-        throw new UnsupportedOperationException();
+        final ConcurrentMap<String, com.codahale.metrics.Counter> countersAsMap = counters.asMap();
+        final Map<String, Map<String, Element<Long>>> countersAsDeepMap = new HashMap<>();
+
+        for (final Map.Entry<String, com.codahale.metrics.Counter> counterEntry : countersAsMap.entrySet()) {
+            final String groupAndName = counterEntry.getKey();
+            final com.codahale.metrics.Counter value = counterEntry.getValue();
+            final String group = groupAndName.substring(0, groupAndName.indexOf("."));
+            final String name = groupAndName.substring(groupAndName.indexOf(".") + 1);
+
+            if (!countersAsDeepMap.containsKey(group)) {
+                countersAsDeepMap.put(group, new HashMap<>());
+            }
+
+            final Instrumentation.Counter counter = new Counter();
+            counter.set(value.getCount());
+            countersAsDeepMap.get(group).put(name, counter);
+        }
+
+        return countersAsDeepMap;
     }
 
     /**

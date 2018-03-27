@@ -112,16 +112,16 @@ public class TestAdminServlet extends DagServletTestCase {
         });
     }
 
-    public void testInstrumentation() throws Exception {
-        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+    public void testMetrics() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
-                URL url = createURL(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE, Collections.EMPTY_MAP);
+                URL url = createURL(RestConstants.ADMIN_METRICS_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey(JsonTags.INSTR_VARIABLES));
+                assertTrue(json.containsKey(JsonTags.INSTR_COUNTERS));
                 return null;
             }
         });

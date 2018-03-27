@@ -906,25 +906,45 @@ address.  This will allow clients to use https while the ApplicationMaster uses 
 
 Refer to the [[./oozie-default.xml][oozie-default.xml]] for details.
 
----+++ Using Metrics instead of Instrumentation
+---+++ Using Instrumentation instead of Metrics
 
 As of version 4.1.0, Oozie includes a replacement for the Instrumentation based on Codahale's Metrics library.  It includes a
 number of improvements over the original Instrumentation included in Oozie.  They both report most of the same information, though
 the formatting is slightly different and there's some additional information in the Metrics version; the format of the output to the
-oozie-instrumentation log is also different.  The Metrics version can be enabled by adding the =MetricsInstrumentationService= to
-the list of services:
-     <verbatim>
-     <property>
-        <name>oozie.services.ext</name>
+oozie-instrumentation log is also different.
+
+As of version 5.0.0, =MetricsInstrumentationService= is the default one, it's enlisted in =oozie.services=:
+    <verbatim>
+    <property>
+        <name>oozie.services</name>
         <value>
-            org.apache.oozie.service.MetricsInstrumentationService
+            ...
+            org.apache.oozie.service.MetricsInstrumentationService,
+            ...
         </value>
      </property>
      </verbatim>
 
-Once enabled, the =admin/instrumentation= REST endpoint will no longer be available and instead the =admin/metrics= endpoint should
-be used (see the [[WebServicesAPI#Oozie_Metrics][Web Services API]] documentation for more details); the Oozie Web UI will also
-replace the "Instrumentation" tab with a "Metrics" tab.
+The deprecated =InstrumentationService= can be enabled by adding =InstrumentationService= reference to the list of
+=oozie.services.ext=:
+    <verbatim>
+    <property>
+        <name>oozie.services.ext</name>
+        <value>
+            ...
+            org.apache.oozie.service.InstrumentationService,
+            ...
+        </value>
+     </property>
+     </verbatim>
+
+By default the =admin/instrumentation= REST endpoint is no longer be available and instead the =admin/metrics= endpoint can
+be used (see the [[WebServicesAPI#Oozie_Metrics][Web Services API]] documentation for more details); the Oozie Web UI also replaces
+the "Instrumentation" tab with a "Metrics" tab.
+
+If the deprecated =InstrumentationService= is used, the =admin/instrumentation= REST endpoint gets enabled, the =admin/metrics=
+REST endpoint is no longer available (see the [[WebServicesAPI#Oozie_Metrics][Web Services API]] documentation for more details);
+the Oozie Web UI also replaces the "Metrics" tab with the "Instrumentation" tab.
 
 We can also publish the instrumentation metrics to the external server graphite or ganglia. For this the following
 properties should be specified in oozie-site.xml :

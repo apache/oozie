@@ -22,7 +22,7 @@
         <name>oozie.services</name>
         <value>
             org.apache.oozie.service.SchedulerService,
-            org.apache.oozie.service.InstrumentationService
+            org.apache.oozie.service.MetricsInstrumentationService
         </value>
     </property>
 

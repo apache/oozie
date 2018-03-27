@@ -36,10 +36,14 @@ import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.Services;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.junit.internal.AssumptionViolatedException;
+
+import static org.junit.Assume.assumeTrue;
 
 public class TestV1AdminServlet extends DagServletTestCase {
 
@@ -118,6 +122,13 @@ public class TestV1AdminServlet extends DagServletTestCase {
     }
 
     public void testInstrumentation() throws Exception {
+        try {
+            assumeTrue("Instrumentation is disabled by default since 5.0.0", InstrumentationService.isEnabled());
+        } catch (final AssumptionViolatedException ex) {
+            log.info("Istrumentation is disabled");
+            return;
+        }
+
         runTest("/v1/admin/*", V1AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
                 URL url = createURL(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE, Collections.EMPTY_MAP);

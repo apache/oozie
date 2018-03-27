@@ -79,6 +79,10 @@ public class TestMetricsInstrumentation extends XTestCase {
         assertEquals(1L, inst.getMetricRegistry().getCounters().get("a.1").getCount());
         assertEquals(2L, inst.getMetricRegistry().getCounters().get("a.2").getCount());
         assertEquals(3L, inst.getMetricRegistry().getCounters().get("b.1").getCount());
+
+        assertEquals(1L, inst.getCounters().get("a").get("1").getValue().longValue());
+        assertEquals(2L, inst.getCounters().get("a").get("2").getValue().longValue());
+        assertEquals(3L, inst.getCounters().get("b").get("1").getValue().longValue());
     }
 
     private long getTimerValue(Timer timer) {
@@ -196,11 +200,6 @@ public class TestMetricsInstrumentation extends XTestCase {
         MetricsInstrumentation instr = new MetricsInstrumentation();
         try {
             instr.getAll();
-            fail();
-        } catch (UnsupportedOperationException uoe) {
-        }
-        try {
-            instr.getCounters();
             fail();
         } catch (UnsupportedOperationException uoe) {
         }
