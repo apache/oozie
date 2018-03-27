@@ -540,9 +540,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithSameKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -566,9 +569,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithSameKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
@@ -612,9 +618,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithDiffKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -638,9 +647,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithDiffKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 

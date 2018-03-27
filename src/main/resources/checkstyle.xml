@@ -26,10 +26,6 @@
 		<property name="message" value="Line has trailing spaces."/>
 	</module>
 
-	<module name="Header">
-		<property name="headerFile" value="${checkstyle.header.file}"/>
-	</module>
-
     <module name="TreeWalker">
 
 		<module name="LineLength">

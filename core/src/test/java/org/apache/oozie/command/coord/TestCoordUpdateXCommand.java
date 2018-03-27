@@ -271,7 +271,8 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
             @Override
             public boolean evaluate() throws Exception {
                 CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
-                return (bean.getStatus() == CoordinatorAction.Status.WAITING || bean.getStatus() == CoordinatorAction.Status.SUBMITTED);
+                return (bean.getStatus() == CoordinatorAction.Status.WAITING || bean.getStatus()
+                        == CoordinatorAction.Status.SUBMITTED);
             }
         });
         CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);

@@ -22,7 +22,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.command.PurgeXCommand;
 
 /**
- * The PurgeService schedules purging of completed jobs and associated action older than a specified age for workflow, coordinator and bundle.
+ * The PurgeService schedules purging of completed jobs and associated action older than a specified age for workflow,
+ *  coordinator and bundle.
  */
 public class PurgeService implements Service {
 

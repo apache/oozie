@@ -31,7 +31,7 @@ public interface JsonBean {
      * @return the JSONObject for the bean with GMT time zone.
      */
     JSONObject toJSONObject();
-    
+
     /**
      * Return the JSONObject for the bean with the given time zone.
      *

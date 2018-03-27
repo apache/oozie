@@ -236,7 +236,7 @@ public class TestAuthorizationService extends XDataTestCase {
         URI uri = getFileSystem().getUri();
         Configuration fsConf = has.createConfiguration(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
-        
+
         try {
             as.authorizeForGroup(getTestUser3(), getTestGroup());
             fail();

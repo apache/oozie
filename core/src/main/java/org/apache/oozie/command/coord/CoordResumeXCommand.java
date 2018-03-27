@@ -97,7 +97,8 @@ public class CoordResumeXCommand extends ResumeTransitionXCommand {
 
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
-        if (coordJob.getStatus() != CoordinatorJob.Status.SUSPENDED && coordJob.getStatus() != CoordinatorJob.Status.SUSPENDEDWITHERROR && coordJob.getStatus() != Job.Status.PREPSUSPENDED) {
+        if (coordJob.getStatus() != CoordinatorJob.Status.SUSPENDED && coordJob.getStatus() != CoordinatorJob.Status
+                .SUSPENDEDWITHERROR && coordJob.getStatus() != Job.Status.PREPSUSPENDED) {
             throw new PreconditionException(ErrorCode.E1100, "CoordResumeXCommand not Resumed - "
                     + "job not in SUSPENDED/SUSPENDEDWITHERROR/PREPSUSPENDED state, job = " + jobId);
         }

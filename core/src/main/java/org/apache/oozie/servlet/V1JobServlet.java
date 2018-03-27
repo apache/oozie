@@ -88,7 +88,8 @@ public class V1JobServlet extends BaseJobServlet {
             startBundleJob(request, response);
         }
         else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_ACTION_START);
         }
 
     }

@@ -227,7 +227,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 wfAction.setErrorInfo(null, null);
                 incrActionCounter(wfAction.getType(), 1);
 
-                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
+                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval"
+                        + " [{3}]",
                                 wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
                                         .getUserRetryInterval());
 
@@ -237,7 +238,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 if (wfAction.getStartTime() == null) {
                     context.setStartTime();
                 }
-                context.setVar(JobUtils.getRetryKey(wfAction, JsonTags.WORKFLOW_ACTION_START_TIME), String.valueOf(new Date().getTime()));
+                context.setVar(JobUtils.getRetryKey(wfAction, JsonTags.WORKFLOW_ACTION_START_TIME),
+                        String.valueOf(new Date().getTime()));
                 executor.start(context, wfAction);
                 cron.stop();
                 FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
@@ -309,7 +311,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                     try {
                         failJob(context);
                         endWF();
-                        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
+                                Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
                         if(slaEvent1 != null) {
                             insertList.add(slaEvent1);

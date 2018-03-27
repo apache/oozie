@@ -98,7 +98,8 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
         ParamChecker.notNull(instance, "instance");
         try {
             SqlStatement.update(OozieTable.WF_PROCESS_INSTANCE).set(OozieColumn.PI_state,
-                                                                    WritableUtils.toByteArray((LiteWorkflowInstance) instance)).where(
+                                                                    WritableUtils
+                                                                    .toByteArray((LiteWorkflowInstance) instance)).where(
                     SqlStatement.isEqual(OozieColumn.PI_wfId, instance.getId())).
                     prepareAndSetValues(connection).executeUpdate();
         }

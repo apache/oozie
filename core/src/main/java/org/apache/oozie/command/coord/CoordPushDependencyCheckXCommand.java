@@ -185,7 +185,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 if (isTimeout()) {
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
-                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
+                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(),
+                            coordJob.getAppName()));
                     unregisterMissingDependencies(missingDependenciesArray, actionId);
                 }
                 else if (coordPullInputDependency.getMissingDependenciesAsList().size() > 0) {

@@ -208,7 +208,8 @@ public class TestReRunXCommand extends XDataTestCase {
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", conf.getProperty("nnbase"));
-        // setting the variables "srcDir" and "dstDir", used as a file paths in the workflow, to parameterized expressions to test resolution.
+        // setting the variables "srcDir" and "dstDir", used as a file paths in the workflow,
+        // to parameterized expressions to test resolution.
         conf.setProperty("srcDir", "${base}/p1");
         conf.setProperty("dstDir", "${base}/p2");
 

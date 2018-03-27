@@ -111,7 +111,8 @@ public class TestSqlStatement extends XTestCase {
         assertEquals(5, checkIdAndName(rsReader));
 
         rsReader = parse(selectColumns(TEST_STRING, TEST_LONG).where(isLike(TEST_STRING, names[0])).orderBy(TEST_LONG,
-                                                                                                            true).prepareAndSetValues(conn).executeQuery());
+                                                                                                            true)
+                .prepareAndSetValues(conn).executeQuery());
         assertEquals(1, checkIdAndName(rsReader));
 
         rsReader = parse(selectColumns(TEST_STRING, TEST_LONG).where(isNotLike(TEST_STRING, names[4])).orderBy(
@@ -131,7 +132,8 @@ public class TestSqlStatement extends XTestCase {
         assertEquals(3, checkIdAndName(rsReader));
 
         rsReader = parse(selectColumns(TEST_STRING, TEST_LONG).where(lessThanOrEqual(TEST_LONG, 3)).orderBy(TEST_LONG,
-                                                                                                            true).prepareAndSetValues(conn).executeQuery());
+                                                                                                            true)
+                .prepareAndSetValues(conn).executeQuery());
         assertEquals(4, checkIdAndName(rsReader));
 
         ResultSet rs = getCount(TEST_TABLE).where(greaterThan(TEST_LONG, 3)).prepareAndSetValues(conn).executeQuery();
@@ -208,7 +210,8 @@ public class TestSqlStatement extends XTestCase {
 
         currTime = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
         SqlStatement stmt = insertInto(TEST_TABLE).value(TEST_LONG, "1").value(TEST_STRING, "2").value(TEST_BOOLEAN,
-                                                                                                       "3").value(TEST_TIMESTAMP, "4").value(TEST_BLOB, "5");
+                                                                                                       "3")
+                .value(TEST_TIMESTAMP, "4").value(TEST_BLOB, "5");
         Map<Object, Object> values = new HashMap<Object, Object>();
         values.put("1", i);
         values.put("2", names[i]);

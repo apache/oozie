@@ -79,13 +79,21 @@ public class TestXLogFilter extends XTestCase {
     private int matches(XLogFilter xf) {
         xf.constructPattern();
         ArrayList<String> a = new ArrayList<String>();
-        a.add("2009-06-24 02:43:13,958 DEBUG WorkflowRunnerCallable:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
-        a.add("2009-06-24 02:43:13,961  INFO WorkflowRunnerCallable:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf] JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core.command.WorkflowRunnerCallable] released lock");
-        a.add("2009-06-24 02:43:13,986  WARN JobClient:539 - Use GenericOptionsParser for parsing the arguments. Applications should implement Tool for the same.");
-        a.add("2009-06-24 02:43:14,431  WARN JobClient:661 - No job jar file set.  User classes may not be found. See JobConf(Class) or JobConf#setJar(String).");
-        a.add("2009-06-24 02:43:14,505  INFO ActionExecutorCallable:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] ACTION[-] Released Lock");
-        a.add("2009-06-24 02:43:19,344 DEBUG PendingSignalsCallable:323 - USER[oozie] GROUP[oozie] TOKEN[MYtoken] APP[-] JOB[-] ACTION[-] Number of pending signals to check [0]");
-        a.add("2009-06-24 02:43:29,151 DEBUG PendingActionsCallable:323 - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[-] ACTION[-] Number of pending actions [0] ");
+        a.add("2009-06-24 02:43:13,958 DEBUG WorkflowRunnerCallable:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf]"
+                + " JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
+        a.add("2009-06-24 02:43:13,961  INFO WorkflowRunnerCallable:317 - USER[-] GROUP[-] TOKEN[-] APP[example-forkjoinwf]"
+                + " JOB[14-200904160239--example-forkjoinwf] ACTION[-] [org.apache.oozie.core.command.WorkflowRunnerCallable]"
+                + " released lock");
+        a.add("2009-06-24 02:43:13,986  WARN JobClient:539 - Use GenericOptionsParser for parsing the arguments. Applications"
+                + " should implement Tool for the same.");
+        a.add("2009-06-24 02:43:14,431  WARN JobClient:661 - No job jar file set.  User classes may not be found. See JobConf"
+                + "(Class) or JobConf#setJar(String).");
+        a.add("2009-06-24 02:43:14,505  INFO ActionExecutorCallable:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-]"
+                + " ACTION[-] Released Lock");
+        a.add("2009-06-24 02:43:19,344 DEBUG PendingSignalsCallable:323 - USER[oozie] GROUP[oozie] TOKEN[MYtoken] APP[-] JOB[-]"
+                + " ACTION[-] Number of pending signals to check [0]");
+        a.add("2009-06-24 02:43:29,151 DEBUG PendingActionsCallable:323 - USER[-] GROUP[-] TOKEN[-] APP[-] JOB[-] ACTION[-]"
+                + " Number of pending actions [0] ");
         int matchCnt = 0;
         for (int i = 0; i < a.size(); i++) {
             if (xf.matches(xf.splitLogMessage(a.get(i)))) {

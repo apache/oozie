@@ -129,7 +129,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         }
         if (wfAction.isPending()
                 && (wfAction.getStatus() == WorkflowActionBean.Status.DONE
-                        || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY || wfAction.getStatus() == WorkflowActionBean.Status.END_MANUAL)) {
+                        || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY || wfAction.getStatus()
+                        == WorkflowActionBean.Status.END_MANUAL)) {
 
             if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
                 throw new PreconditionException(ErrorCode.E0811,  WorkflowJob.Status.RUNNING.toString());
@@ -217,7 +218,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                         break;
                 }
                 if (!shouldHandleUserRetry || !handleUserRetry(context, wfAction)) {
-                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus,
+                            SlaAppType.WORKFLOW_ACTION);
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }

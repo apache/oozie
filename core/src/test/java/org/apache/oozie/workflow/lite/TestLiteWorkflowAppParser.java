@@ -603,7 +603,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     public void testParserGlobalLauncherAM() throws Exception {
         LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
-        LiteWorkflowApp workflowApp = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-global-launcherconf.xml", -1), new Configuration());
+        LiteWorkflowApp workflowApp = parser.validateAndParse(
+                IOUtils.getResourceAsReader("wf-schema-global-launcherconf.xml", -1), new Configuration());
 
         XConfiguration xconf = extractConfig(workflowApp, "action1");
 
@@ -620,7 +621,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     public void testParserGlobalLauncherAMOverridden() throws Exception {
         LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
-        LiteWorkflowApp workflowApp = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-global-launcherconf-override.xml", -1), new Configuration());
+        LiteWorkflowApp workflowApp = parser.validateAndParse(
+                IOUtils.getResourceAsReader("wf-schema-global-launcherconf-override.xml", -1), new Configuration());
 
         XConfiguration xconf = extractConfig(workflowApp, "a");
 

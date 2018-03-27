@@ -242,7 +242,9 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
     }
 
     @Override
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
+    protected CoordinatorJobBean createCoordJob(
+            CoordinatorJob.Status status, Date start, Date end, boolean pending, boolean doneMatd, int lastActionNum)
+                    throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath);
 

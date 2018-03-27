@@ -983,7 +983,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00" + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00"
+        + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
@@ -991,7 +992,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         if (dataInType.equals("future")) {
@@ -1010,7 +1012,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";

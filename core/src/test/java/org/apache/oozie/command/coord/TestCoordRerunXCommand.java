@@ -452,7 +452,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
             @Override
             public boolean evaluate() throws Exception {
                 CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
-                return (bean.getStatus() == CoordinatorAction.Status.READY || bean.getStatus() == CoordinatorAction.Status.SUBMITTED);
+                return (bean.getStatus() == CoordinatorAction.Status.READY || bean.getStatus() == CoordinatorAction.Status
+                        .SUBMITTED);
             }
         });
 
@@ -563,7 +564,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         // after cleanup
         assertFalse(fs.exists(success));
     }
-    
+
     /**
      * Test : rerun with refresh option when input dependency is hcat partition
      *

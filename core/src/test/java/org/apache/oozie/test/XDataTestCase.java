@@ -417,7 +417,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
      * @return coord job bean
      * @throws IOException
      */
-    protected CoordinatorJobBean createCoordJob(CoordinatorJob.Status status, Date start, Date end, Date createTime, boolean pending,
+    protected CoordinatorJobBean createCoordJob(
+            CoordinatorJob.Status status, Date start, Date end, Date createTime, boolean pending,
             boolean doneMatd, int lastActionNum) throws Exception {
         Path appPath = new Path(getFsTestCaseDir(), "coord");
         String appXml = writeCoordXml(appPath, start, end);

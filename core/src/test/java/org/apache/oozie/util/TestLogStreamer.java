@@ -256,7 +256,8 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         XLogStreamer str2 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         Calendar calendarEntry = Calendar.getInstance();
-        // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January), and end time is current time
+        // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January),
+        // and end time is current time
         calendarEntry.set(2012, 3, 24, 19, 0);
         str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()));
         String[] out = sw2.toString().split("\n");

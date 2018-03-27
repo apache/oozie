@@ -110,7 +110,8 @@ public class TestFutureActionsTimeOut extends XTestCase {
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:"
+                + "///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";

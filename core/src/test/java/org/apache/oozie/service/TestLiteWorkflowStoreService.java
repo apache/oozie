@@ -57,7 +57,7 @@ public class TestLiteWorkflowStoreService extends XTestCase {
         testConf.set(LiteWorkflowStoreService.CONF_USER_RETRY_ERROR_CODE_EXT, " ");
         // Retrieval to enlist the codes properly, otherwise whitespaces cause the key-value lookup to return false
         Set<String> allowedRetryCodes = LiteWorkflowStoreService.getUserRetryErrorCode();
-        assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));   
+        assertTrue(allowedRetryCodes.contains(ForTestingActionExecutor.TEST_ERROR));
     }
 
     public void testRetryAllErrorCode() throws Exception {

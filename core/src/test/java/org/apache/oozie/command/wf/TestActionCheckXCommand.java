@@ -89,7 +89,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         long counterVal;
 
         try {
-            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                    .getValue();
         } catch (NullPointerException e){
             //counter might be null
             counterVal = 0L;
@@ -100,7 +101,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         checkCmd.call();
 
         //precondition failed because of actionCheckDelay > 0
-        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                .getValue();
         assertEquals(1L, counterVal);
     }
 
@@ -120,7 +122,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         long counterVal;
 
         try {
-            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                    .getValue();
         } catch (NullPointerException e){
             //counter might be null
             counterVal = 0L;
@@ -131,7 +134,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         checkCmd.call();
 
         //precondition failed because of pending = false
-        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                .getValue();
         assertEquals(1L, counterVal);
     }
 
@@ -151,7 +155,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         long counterVal;
 
         try{
-            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                    .getValue();
         } catch (NullPointerException e){
             //counter might be null
             counterVal = 0L;
@@ -162,7 +167,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         checkCmd.call();
 
         //precondition failed because of action != RUNNING
-        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+        counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                .getValue();
         assertEquals(1L, counterVal);
     }
 
@@ -182,7 +188,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         long counterVal;
 
         try {
-            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+            counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed")
+                    .getValue();
         } catch (NullPointerException e){
             //counter might be null
             counterVal = 0L;
@@ -598,7 +605,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status) throws Exception {
+    protected WorkflowActionBean addRecordToWfActionTable(
+            String wfId, String actionName, WorkflowAction.Status status) throws Exception {
         WorkflowActionBean action = createWorkflowActionSetPending(wfId, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);

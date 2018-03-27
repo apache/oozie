@@ -28,7 +28,7 @@ public class CoordinatorJobInfo {
 
     /**
      * Create a coordinator info bean.
-     * 
+     *
      * @param jobs jobs being returned.
      * @param start coordiantor jobs offset.
      * @param len number of coordiantor jobs.

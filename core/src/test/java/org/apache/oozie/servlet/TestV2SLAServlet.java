@@ -245,7 +245,8 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 for(int i=0; i < array.size(); i++) {
                     json = (JSONObject) array.get(i);
                     id = (String)json.get(JsonTags.SLA_SUMMARY_ID);
-                    assertTrue(id.equals(cjBean1.getId()+"@2") || id.equals(cjBean2.getId()+"@1") || id.equals(cjBean2.getId()+"@2"));
+                    assertTrue(id.equals(cjBean1.getId()+"@2") || id.equals(cjBean2.getId()+"@1")
+                            || id.equals(cjBean2.getId()+"@2"));
                     parentId = (String) json.get(JsonTags.SLA_SUMMARY_PARENT_ID);
                     assertTrue(parentId.equals(cjBean1.getId()) || parentId.equals(cjBean2.getId()));
                 }

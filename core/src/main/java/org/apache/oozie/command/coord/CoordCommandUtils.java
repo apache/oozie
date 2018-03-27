@@ -198,7 +198,8 @@ public class CoordCommandUtils {
                     || getFuncType(startInst) == ENDOFWEEKS || getFuncType(startInst) == ENDOFDAYS) {
                 if (getFuncType(endInst) != CURRENT) {
                     throw new CommandException(ErrorCode.E1010,
-                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays and end-instance as current is supported."
+                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays and end-instance as current is"
+                            + " supported."
                                     + " start = " + startInst + "  end = " + endInst);
                 }
             }

@@ -202,7 +202,8 @@ public class CoordUtils {
                 String[] range = s.split("-");
                 // Check the format for action's range
                 if (range.length != 2) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of correct format is 1-5");
+                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of"
+                            + " correct format is 1-5");
                 }
                 int start;
                 int end;

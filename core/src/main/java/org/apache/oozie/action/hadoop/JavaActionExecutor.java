@@ -135,7 +135,8 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String LAUNCER_VIEW_ACL = "oozie.launcher.view.acl";
 
     public static final String MAPREDUCE_TO_CLASSPATH = "mapreduce.needed.for";
-    public static final String OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY = ActionExecutor.CONF_PREFIX + MAPREDUCE_TO_CLASSPATH;
+    public static final String OOZIE_LAUNCHER_ADD_MAPREDUCE_TO_CLASSPATH_PROPERTY = ActionExecutor.CONF_PREFIX
+            + MAPREDUCE_TO_CLASSPATH;
 
     public static final String MAX_EXTERNAL_STATS_SIZE = "oozie.external.stats.max.size";
     public static final String ACL_VIEW_JOB = "mapreduce.job.acl-view-job";

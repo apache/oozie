@@ -556,7 +556,8 @@ public class LiteWorkflowAppParser {
 
                 Element launcherConfiguration = actionElement.getChild(LAUNCHER_E, actionNs);
                 if (launcherConfiguration != null) {
-                    LauncherConfigHandler launcherConfigHandler = new LauncherConfigHandler(actionConf, launcherConfiguration, actionNs);
+                    LauncherConfigHandler launcherConfigHandler = new LauncherConfigHandler(
+                            actionConf, launcherConfiguration, actionNs);
                     launcherConfigHandler.processSettings();
                 }
 

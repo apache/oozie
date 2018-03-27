@@ -48,7 +48,8 @@ public class TestLiteWorkflowApp extends XTestCase {
     @Test
     public void testReadWrite() throws Exception{
         String definition = "test"+ RandomStringUtils.random(100 * 1024);
-        LiteWorkflowApp app = new LiteWorkflowApp("name", definition, new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "foo"));
+        LiteWorkflowApp app = new LiteWorkflowApp(
+                "name", definition, new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "foo"));
         app.addNode(new EndNodeDef("foo", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         ByteArrayOutputStream baos= new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
@@ -68,7 +69,8 @@ public class TestLiteWorkflowApp extends XTestCase {
     @Test
     public void testOldFormatRead() throws Exception{
         String definition = Strings.repeat("abcdefghijk", 6234);
-        LiteWorkflowApp app = new LiteWorkflowApp("name", definition, new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "foo"));
+        LiteWorkflowApp app = new LiteWorkflowApp(
+                "name", definition, new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "foo"));
         app.addNode(new EndNodeDef("foo", LiteWorkflowStoreService.LiteControlNodeHandler.class));
         DataInputStream in = new DataInputStream(IOUtils.getResourceAsStream("oldWorkFlowApp.serialized", -1));
         LiteWorkflowApp app2 = new LiteWorkflowApp();

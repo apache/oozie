@@ -82,18 +82,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testBasicSubmit() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"${appName}-foo\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -134,8 +138,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>"
-                + "hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -152,18 +156,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testBasicSubmitWithStartTimeAfterEndTime() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2010-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2010-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -364,7 +372,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             assertTrue(e.getMessage().contains(sc.COORD_INPUT_EVENTS) && e.getMessage().contains("per data-in instance"));
         }
 
-        // CASE 2: Multiple data-in instances specified as separate <instance> tags, but one or more tags are empty. Check works for whitespace in the tags too
+        // CASE 2: Multiple data-in instances specified as separate <instance> tags, but one or more tags are empty.
+        // Check works for whitespace in the tags too
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance2.xml", -1);
         writer = new FileWriter(appPathFile);
         IOUtils.copyCharStream(reader, writer);
@@ -538,7 +547,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
             assertTrue(e.getMessage().contains(sc.COORD_OUTPUT_EVENTS) && e.getMessage().contains("is empty"));
         }
 
-        // CASE 3: Multiple <instance> tags within data-out should fail coordinator schema validation - different error than above is expected
+        // CASE 3: Multiple <instance> tags within data-out should fail coordinator schema validation -
+        // different error than above is expected
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance3.xml", -1);
         writer = new FileWriter(appPathFile);
         IOUtils.copyCharStream(reader, writer);
@@ -612,18 +622,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         BundleJobBean coordJob = addRecordToBundleJobTable(Job.Status.PREP, false);
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -655,18 +669,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testBasicSubmitWithWrongNamespace() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -695,15 +713,18 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testBasicSubmitWithSLA() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:coordinator:0.2' "
                 +       "xmlns:sla='uri:oozie:sla:0.1'> <controls> <timeout>${coord:minutes(10)}</timeout> "
                 +       "<concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"Stats\" frequency=\"${coord:days(1)}\" initial-instance=\"2009-01-01T01:00Z\" "
                 + "timezone=\"UTC\"><uri-template>hcat://foo:11002/myOutputDatabase/myOutputTable/datestamp=${YEAR}${MONTH}${DAY}"
                 + "</uri-template></dataset>"
@@ -755,18 +776,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitFixedValues() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"60\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"120\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -788,18 +813,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSchemaError() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequencyERROR=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequencyERROR=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"60\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"120\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -824,7 +853,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitNoDatasets() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> "
@@ -849,7 +879,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitNoUsername() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> "
                 + "<controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> "
@@ -877,7 +908,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitNoControls() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> "
                 + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>blah</value> </property> "
@@ -901,11 +933,13 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitWithDoneFlag() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> "
                 + "<done-flag>consume_me</done-flag> </dataset>"
@@ -917,7 +951,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + "<data-in name=\"B\" dataset=\"local_b\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -940,11 +975,13 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitWithVarAppName() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"${NAME}\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"${NAME}\" frequency=\"${coord:days(1)}\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.3\"> <controls> <timeout>10</timeout> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
                 + "timezone=\"UTC\"> <uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template> "
                 + "<done-flag>consume_me</done-flag> </dataset>"
@@ -956,7 +993,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
                 + "<data-in name=\"B\" dataset=\"local_b\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";
@@ -983,7 +1021,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     public void testSubmitReservedVars() throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"10\" start=\"2009-02-01T01:00Z\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> "
                 + "<action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>blah</value> </property> "
@@ -1221,18 +1260,22 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     private void _testConfigDefaults(boolean withDefaults) throws Exception {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
-        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${startTime}\" end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:days(1)}\" start=\"${startTime}\""
+                + " end=\"2009-02-03T23:59Z\" timezone=\"UTC\" "
                 + "xmlns=\"uri:oozie:coordinator:0.2\"> <controls> <concurrency>2</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:days(7)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>  </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>"
+                        + "  </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  "
                 + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
-                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow> <app-path>hdfs:///tmp/workflows/</app-path> "
+                + "<instance>${coord:current(-1)}</instance> </data-out> </output-events> <action> <workflow>"
+                + " <app-path>hdfs:///tmp/workflows/</app-path> "
                 + "<configuration> <property> <name>inputA</name> <value>${coord:dataIn('A')}</value> </property> "
                 + "<property> <name>inputB</name> <value>${coord:dataOut('LOCAL_A')}</value> "
                 + "</property></configuration> </workflow> </action> </coordinator-app>";

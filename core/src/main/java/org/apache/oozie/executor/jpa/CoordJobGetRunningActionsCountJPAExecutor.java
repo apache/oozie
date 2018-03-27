@@ -25,7 +25,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ParamChecker;
 
 /**
- * Load the number of running actions for a coordinator job. 
+ * Load the number of running actions for a coordinator job.
  */
 public class CoordJobGetRunningActionsCountJPAExecutor implements JPAExecutor<Integer> {
 

@@ -56,7 +56,8 @@ public class V0JobsServlet extends BaseJobsServlet {
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
             if (action != null && !action.equals(RestConstants.JOB_ACTION_START)) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM, action);
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM,
+                        action);
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
@@ -75,7 +76,8 @@ public class V0JobsServlet extends BaseJobsServlet {
      * v0 service implementation to get a JSONObject representation of a job from its external ID
      */
     @Override
-    protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException, IOException {
+    protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException,
+    IOException {
         JSONObject json = new JSONObject();
         try {
             DagEngine dagEngine = Services.get().get(DagEngineService.class)

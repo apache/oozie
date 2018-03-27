@@ -91,8 +91,10 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
                 + "\"NUMBER_JOBS\":\"2\","
                 + "\"RECORD_WRITTEN\":\"33\","
                 + "\"JOB_GRAPH\":\"job_201111300933_0004,job_201111300933_0005\","
-                + "\"job_201111300933_0004\":{\"MAP_INPUT_RECORDS\":\"33\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0004\"},"
-                + "\"job_201111300933_0005\":{\"MAP_INPUT_RECORDS\":\"37\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0005\"},"
+                + "\"job_201111300933_0004\":{\"MAP_INPUT_RECORDS\":\"33\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},"
+                + "\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0004\"},"
+                + "\"job_201111300933_0005\":{\"MAP_INPUT_RECORDS\":\"37\",\"MIN_REDUCE_TIME\":\"0\",\"MULTI_STORE_COUNTERS\":{},"
+                + "\"ERROR_MESSAGE\":null,\"JOB_ID\":\"job_201111300933_0005\"},"
                 + "\"BYTES_WRITTEN\":\"1410\"," + "\"HADOOP_VERSION\":\"0.20.2\"," + "\"RETURN_CODE\":\"0\","
                 + "\"ERROR_CODE\":\"-1\"," + "}";
 

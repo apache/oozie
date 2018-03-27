@@ -281,7 +281,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                     if (SLAService.isEnabled()) {
                         Services.get().get(SLAService.class).removeRegistration(actionId);
                     }
-                    SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
+                    SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL,
+                            actionId);
                     if (slaReg != null) {
                         LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
                         deleteList.add(slaReg);
@@ -446,7 +447,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 }
             }
 
-            if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime().compareTo(coordJob.getNextMaterializedTime()) <= 0) {
+            if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime()
+                    .compareTo(coordJob.getNextMaterializedTime()) <= 0) {
                 LOG.info("[" + coordJob.getId() + "]: all actions have been materialized, job status = " + coordJob.getStatus()
                         + ", set pending to true");
                 // set doneMaterialization to true when materialization is done

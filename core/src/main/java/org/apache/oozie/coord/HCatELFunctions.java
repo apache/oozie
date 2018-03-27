@@ -319,7 +319,8 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.
+     * <p> Look for two evaluator-level
      * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
      * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
      * unresolved, this function will echo back the original function <p> otherwise it sends the max partition value.
@@ -364,7 +365,8 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.
+     * <p> Look for two evaluator-level
      * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
      * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
      * unresolved, this function will echo back the original function <p> otherwise it sends the min partition value.

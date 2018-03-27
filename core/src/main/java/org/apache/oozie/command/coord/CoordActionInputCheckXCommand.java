@@ -510,7 +510,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             return;
         }
 
-        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR && coordJob.getStatus() != Job.Status.PAUSED
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR
+                && coordJob.getStatus() != Job.Status.PAUSED
                 && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(
                     ErrorCode.E1100, "["+ actionId + "]::CoordActionInputCheck:: Ignoring action." +

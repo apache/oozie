@@ -972,7 +972,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"5\" start='2009-02-01T01:00Z' end='2009-02-01T01:09Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"5\" start='2009-02-01T01:00Z'"
+                + " end='2009-02-01T01:09Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
@@ -980,7 +981,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE'"
+                + " end_of_duration='NONE'>";
         appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:latest(0)}</instance>";
@@ -988,7 +990,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit="
+                + "'MINUTE' end_of_duration='NONE'>";
         appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(-1)}</instance>";

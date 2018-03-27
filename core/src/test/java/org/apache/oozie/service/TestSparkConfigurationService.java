@@ -85,8 +85,10 @@ public class TestSparkConfigurationService extends XTestCase {
         assertEquals("A", sparkConfigs.get("a"));
         assertEquals("B", sparkConfigs.get("b"));
         assertEquals("foo", sparkConfigs.get("spark.yarn.jar"));
-        ConfigurationService.setBoolean("oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar", true);
-        ConfigurationService.set("oozie.service.SparkConfigurationService.spark.configurations.blacklist", "spark.yarn.jar,spark.yarn.jars");
+        ConfigurationService.setBoolean(
+                "oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar", true);
+        ConfigurationService.set(
+                "oozie.service.SparkConfigurationService.spark.configurations.blacklist", "spark.yarn.jar,spark.yarn.jars");
         scs.destroy();
         ConfigurationService.set("oozie.service.SparkConfigurationService.spark.configurations",
                 "rm1=" + sparkConf1Dir.getAbsolutePath() +   // define

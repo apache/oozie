@@ -164,7 +164,8 @@ public class CoordSuspendXCommand extends SuspendTransitionXCommand {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
         coordJob.setLastModifiedTime(new Date());
         coordJob.setSuspendedTime(new Date());
-        LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = " + coordJob.isPending());
+        LOG.debug("Suspend coordinator job id = " + jobId + ", status = " + coordJob.getStatus() + ", pending = "
+        + coordJob.isPending());
         updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING_TIME, coordJob));
     }
 

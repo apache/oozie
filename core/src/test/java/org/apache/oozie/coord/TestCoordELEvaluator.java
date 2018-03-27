@@ -121,13 +121,16 @@ public class TestCoordELEvaluator extends XTestCase {
     }
 
     public void testCreateDataEvaluator() throws Exception {
-        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\" end=\"2009-02-03T23:59GMT\" timezone=\"UTC\"";
+        String jobXml = "<coordinator-app name=\"mycoordinator-app\" start=\"2009-02-01T01:00GMT\""
+                + " end=\"2009-02-03T23:59GMT\" timezone=\"UTC\"";
         jobXml += " frequency=\"720\" freq_timeunit=\"MINUTE\"";
         jobXml += " action-nominal-time='2009-09-01T00:00Z' action-actual-time='2010-10-01T00:00Z'>";
-        jobXml += "<input-events><data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
+        jobXml += "<input-events><data-in name=\"A\" dataset=\"a\">"
+                + "<uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
         jobXml += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\">";
         jobXml += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in></input-events>";
-        jobXml += "<action><workflow><url>http://foobar.com:8080/oozie</url><app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
+        jobXml += "<action><workflow><url>http://foobar.com:8080/oozie</url>"
+                + "<app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
         jobXml += "<configuration><property><name>inputA</name><value>${coord:dataIn('A')}</value></property>";
         jobXml += "<property><name>ACTIONID</name><value>${coord:actionId()}</value></property>";
         jobXml += "<property><name>NAME</name><value>${coord:name()}</value></property>";
@@ -135,8 +138,10 @@ public class TestCoordELEvaluator extends XTestCase {
         jobXml += "<property><name>ACTUALTIME</name><value>${coord:actualTime()}</value></property>";
         jobXml += "</configuration></workflow></action></coordinator-app>";
 
-        String reply = "<action><workflow><url>http://foobar.com:8080/oozie</url><app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
-        reply += "<configuration><property><name>inputA</name><value>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</value></property>";
+        String reply = "<action><workflow><url>http://foobar.com:8080/oozie</url>"
+                + "<app-path>hdfs://foobarfoobar.com:9000/usr/tucu/mywf</app-path>";
+        reply += "<configuration><property><name>inputA</name>"
+                + "<value>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</value></property>";
         reply += "<property><name>ACTIONID</name><value>00000-oozie-C@1</value></property>";
         reply += "<property><name>NAME</name><value>mycoordinator-app</value></property>";
         reply += "<property><name>NOMINALTIME</name><value>2009-09-01T00:00Z</value></property>";
@@ -151,8 +156,10 @@ public class TestCoordELEvaluator extends XTestCase {
     }
 
     public void testCreateInstancesELEvaluator() throws Exception {
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
-        dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\" freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\">"
+                + "<uris>file:///tmp/coord/US/2009/1/30|file:///tmp/coord/US/2009/1/31</uris>";
+        dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\""
+                + " freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
         dataEvntXML += "<uri-template>file:///tmp/coord/US/${YEAR}/${MONTH}/${DAY}</uri-template></dataset></data-in>";
         Element event = XmlUtils.parseXml(dataEvntXML);
         SyncCoordAction appInst = new SyncCoordAction();
@@ -180,8 +187,10 @@ public class TestCoordELEvaluator extends XTestCase {
 
         Date actualTime = DateUtils.parseDateOozieTZ("2009-09-01T01:00Z");
         Date nominalTime = DateUtils.parseDateOozieTZ("2009-09-01T00:00Z");
-        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>" + getTestCaseFileUri("US/2009/1/30") + "|file:///tmp/coord/US/2009/1/31</uris>";
-        dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\"  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
+        String dataEvntXML = "<data-in name=\"A\" dataset=\"a\"><uris>" + getTestCaseFileUri("US/2009/1/30")
+                + "|file:///tmp/coord/US/2009/1/31</uris>";
+        dataEvntXML += "<dataset name=\"a\" frequency=\"1440\" initial-instance=\"2009-01-01T00:00Z\""
+                + "  freq_timeunit=\"MINUTE\" timezone=\"UTC\" end_of_duration=\"NONE\">";
         dataEvntXML += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}") + "</uri-template></dataset></data-in>";
         Element dEvent = XmlUtils.parseXml(dataEvntXML);
         ELEvaluator eval = CoordELEvaluator.createLazyEvaluator(actualTime, nominalTime, dEvent, conf);
@@ -219,7 +228,8 @@ public class TestCoordELEvaluator extends XTestCase {
                         + "<property> <name>timeout</name>  <value>180</value>  </property> "
                         + "<property> <name>concurrency_level</name> <value>1</value> </property> "
                         + "<property> <name>execution_order</name> <value>LIFO</value> </property>"
-                        + "<property> <name>include_ds_files</name>  <value>file:///homes/" + getTestUser() + "/workspace/oozie-main/core/src/main/java/org/apache/oozie/coord/datasets.xml</value>"
+                        + "<property> <name>include_ds_files</name>  <value>file:///homes/" + getTestUser()
+                        + "/workspace/oozie-main/core/src/main/java/org/apache/oozie/coord/datasets.xml</value>"
                         + " </property></configuration>");
         return conf.toString();
     }

@@ -222,7 +222,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         if (endMatdTime.compareTo(jobEndTime) > 0) {
             endMatdTime = jobEndTime;
         }
-        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end=" + DateUtils.formatDateOozieTZ(endMatdTime)
+
+        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end="
+                + DateUtils.formatDateOozieTZ(endMatdTime)
                 + ", window=" + materializationWindow);
     }
 

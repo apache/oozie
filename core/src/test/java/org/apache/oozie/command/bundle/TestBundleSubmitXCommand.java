@@ -59,7 +59,7 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
 
     /**
      * https://issues.apache.org/jira/browse/OOZIE-945
-     * 
+     *
      * @throws Exception
      */
     public void testJobXmlCommentRemoved() throws Exception {

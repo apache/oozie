@@ -119,7 +119,8 @@ public class Schema {
                 retVal = (dbType.equals(DBType.HSQL) ? "VARCHAR" : (dbType.equals(DBType.ORACLE) ? "CLOB" : "TEXT"));
             }
             else {
-                retVal = (dbType.equals(DBType.ORACLE) ? "VARCHAR2(" + column.getLength() + ")" : "VARCHAR(" + column.getLength() + ")");
+                retVal = (dbType.equals(DBType.ORACLE) ? "VARCHAR2(" + column.getLength() + ")" : "VARCHAR("
+            + column.getLength() + ")");
             }
         }
         else {
@@ -136,7 +137,8 @@ public class Schema {
                     }
                     else {
                         if (Blob.class.equals(column.getType())) {
-                            retVal = (dbType.equals(DBType.MySQL) ? "MEDIUMBLOB" : (dbType.equals(DBType.ORACLE) ? "BLOB" : "LONGVARBINARY"));
+                            retVal = (dbType.equals(DBType.MySQL) ? "MEDIUMBLOB" : (dbType.equals(DBType.ORACLE)
+                                    ? "BLOB" : "LONGVARBINARY"));
                         }
                         else {
                             throw new RuntimeException("Column Type[" + column.getType() + "] not mapped to any DB Data Type !!");

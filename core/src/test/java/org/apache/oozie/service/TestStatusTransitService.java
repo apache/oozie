@@ -558,7 +558,8 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
     /**
-     * Test : Keep the backward support for states on. 2 coord actions are running, 1 killed, check if job pending is reset and state changed to
+     * Test : Keep the backward support for states on. 2 coord actions are running, 1 killed, check if job pending is reset
+     *  and state changed to
      * RUNNING. Make sure the status is not RUNNINGWITHERROR
      *
      * @throws Exception
@@ -1422,7 +1423,8 @@ public class TestStatusTransitService extends XDataTestCase {
 
     /**
      * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
-     * pending true and coordinator actions for that job with pending false. Insert a coordinator action with a stale coord job id. Then, runs the StatusTransitService runnable and ensures
+     * pending true and coordinator actions for that job with pending false. Insert a coordinator action with a stale coord
+     *  job id. Then, runs the StatusTransitService runnable and ensures
      * the job status of the good job changes to SUCCEEDED.
      *
      * @throws Exception

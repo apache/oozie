@@ -59,12 +59,12 @@ public class TestBundlePauseUnpauseXCommand extends XDataTestCase {
 
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PREPPAUSED);
-        
+
         new BundleUnpauseXCommand(job).call();
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PREP);
     }
-    
+
     /**
      * Test : Pause a RUNNING bundle
      *
@@ -83,7 +83,7 @@ public class TestBundlePauseUnpauseXCommand extends XDataTestCase {
 
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PAUSED);
-        
+
         new BundleUnpauseXCommand(job).call();
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.RUNNING);
@@ -107,7 +107,7 @@ public class TestBundlePauseUnpauseXCommand extends XDataTestCase {
 
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.PAUSEDWITHERROR);
-        
+
         new BundleUnpauseXCommand(job).call();
         job = jpaService.execute(bundleJobGetCmd);
         assertEquals(job.getStatus(), Job.Status.RUNNINGWITHERROR);

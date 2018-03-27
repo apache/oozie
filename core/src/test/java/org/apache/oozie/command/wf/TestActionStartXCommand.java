@@ -182,7 +182,8 @@ public class TestActionStartXCommand extends XDataTestCase {
 
     public void testActionReuseWfJobAppPath() throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
-        WorkflowJobBean job = this.addRecordToWfJobTableWithCustomAppPath(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowJobBean job = this.addRecordToWfJobTableWithCustomAppPath(
+                WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTableWithAppPathConfig(job.getId(), "1", WorkflowAction.Status.PREP);
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -206,14 +207,16 @@ public class TestActionStartXCommand extends XDataTestCase {
      * <p/>
      * Escaped string needs to be 'escaped' before converting to XML Document, otherwise,
      * exception will be thrown.
-     * @see org.apache.oozie.DagELFunctions#configureEvaluator(org.apache.oozie.util.ELEvaluator.ELEvaluator evaluator, org.apache.oozie.WorkflowJobBean, org.apache.oozie.WorkflowActionBean)
+     * @see org.apache.oozie.DagELFunctions#configureEvaluator(org.apache.oozie.util.ELEvaluator.ELEvaluator evaluator,
+     *  org.apache.oozie.WorkflowJobBean, org.apache.oozie.WorkflowActionBean)
      *
      * @throws Exception thrown if failed to execute test case
      */
     public void testActionWithEscapedStringAndCDATA() throws Exception {
         // create workflow job and action beans with escaped parameters and CDATA value
         JPAService jpaService = Services.get().get(JPAService.class);
-        WorkflowJobBean job = this.addRecordToWfJobTableWithEscapedStringAndCDATA(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowJobBean job = this.addRecordToWfJobTableWithEscapedStringAndCDATA(
+                WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTableWithEscapedStringAndCDATA(job.getId(), WorkflowAction.Status.PREP);
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -243,7 +246,8 @@ public class TestActionStartXCommand extends XDataTestCase {
      * @return workflow job bean
      * @throws Exception thrown if failed to create workflow job
      */
-    protected WorkflowJobBean addRecordToWfJobTableWithCustomAppPath(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
+    protected WorkflowJobBean addRecordToWfJobTableWithCustomAppPath(
+            WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
     throws Exception {
         WorkflowApp app = new LiteWorkflowApp("testApp", "<workflow-app/>",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
@@ -279,7 +283,8 @@ public class TestActionStartXCommand extends XDataTestCase {
      * @return workflow action bean
      * @throws Exception thrown if failed to create workflow action
      */
-    protected WorkflowActionBean addRecordToWfActionTableWithAppPathConfig(String wfId, String actionName, WorkflowAction.Status status)
+    protected WorkflowActionBean addRecordToWfActionTableWithAppPathConfig(
+            String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {
         WorkflowActionBean action = createWorkflowActionWithAppPathConfig(wfId, status);
         try {
@@ -345,7 +350,8 @@ public class TestActionStartXCommand extends XDataTestCase {
 
 
     /* (non-Javadoc)
-     * @see org.apache.oozie.test.XDataTestCase#addRecordToWfActionTable(java.lang.String, java.lang.String, org.apache.oozie.client.WorkflowAction.Status)
+     * @see org.apache.oozie.test.XDataTestCase#addRecordToWfActionTable(
+     * java.lang.String, java.lang.String, org.apache.oozie.client.WorkflowAction.Status)
      */
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
@@ -448,7 +454,8 @@ public class TestActionStartXCommand extends XDataTestCase {
         // The properties should not be escaped here. It will be escaped when set to configuration.
         conf.set("testAmpSign", "http://test.apache.com/a-webservices?urlSigner=signUrl&namespace=nova.proxy");
         conf.set("testCDATA",
-                        "<![CDATA[?redirect=http%3A%2F%2Ftest.apache.com%2Fa-webservices%2Fv1%2FurlSigner%2FsignUrl&amp;namespace=nova.proxy&amp;keyDBHash=Vsy6n_C7K6NG0z4R2eBlKg--]]>");
+                        "<![CDATA[?redirect=http%3A%2F%2Ftest.apache.com%2Fa-webservices%2Fv1%2FurlSigner%2FsignUrl&amp;namespace"
+                        + "=nova.proxy&amp;keyDBHash=Vsy6n_C7K6NG0z4R2eBlKg--]]>");
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 

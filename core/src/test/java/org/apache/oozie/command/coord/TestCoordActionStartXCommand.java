@@ -229,7 +229,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "</controls>";
         actionXml += "<input-events>";
         actionXml += "<data-in name='A' dataset='a'>";
-        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY'"
+                + " end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:latest(0)}</instance>";
@@ -237,7 +238,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "</input-events>";
         actionXml += "<output-events>";
         actionXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit="
+                + "'DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:current(-1)}</instance>";

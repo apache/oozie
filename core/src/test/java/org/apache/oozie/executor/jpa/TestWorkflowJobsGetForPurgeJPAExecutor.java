@@ -97,7 +97,8 @@ public class TestWorkflowJobsGetForPurgeJPAExecutor extends XDataTestCase {
     }
 
     @Override
-    protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus) throws Exception {
+    protected WorkflowJobBean addRecordToWfJobTable(WorkflowJob.Status jobStatus, WorkflowInstance.Status instanceStatus)
+            throws Exception {
         WorkflowApp app =
             new LiteWorkflowApp("testApp", "<workflow-app/>",
                 new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).

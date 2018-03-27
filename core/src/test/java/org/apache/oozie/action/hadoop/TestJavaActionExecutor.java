@@ -2526,7 +2526,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<configuration>" +
-                "  <property><name>oozie.launcher.env</name><value>LAUNCHER_ENVIRON=foo1" + File.pathSeparator + "B=foo2</value></property>" +
+                "  <property><name>oozie.launcher.env</name><value>LAUNCHER_ENVIRON=foo1" + File.pathSeparator +
+                "B=foo2</value></property>" +
                 "</configuration>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";

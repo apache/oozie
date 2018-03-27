@@ -53,19 +53,30 @@ import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath, w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTime, w.origJobXml = :origJobXml, w.startTimestamp = :startTime, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB", query = "update BundleJobBean w set w.appName = :appName, w.appPath = :appPath,"
+                + " w.conf = :conf, w.externalId = :externalId, w.timeOut = :timeOut, w.createdTimestamp = :createdTime,"
+                + " w.endTimestamp = :endTime, w.jobXml = :jobXml, w.lastModifiedTimestamp = :lastModifiedTime, w.origJobXml"
+                + " = :origJobXml, w.startTimestamp = :startTime, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.pending"
+                + " = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS", query = "update BundleJobBean w set w.statusStr = :status,"
+                + " w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING", query = "update BundleJobBean w set w.statusStr = :status, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING", query = "update BundleJobBean w set w.statusStr = :status,"
+                + " w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_MODTIME", query = "update BundleJobBean w set w.statusStr = :status,"
+                + " w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME", query = "update BundleJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending, w.suspendedTimestamp = :suspendedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME", query = "update BundleJobBean w set w.statusStr "
+                + "= :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending, w.suspendedTimestamp "
+                + "= :suspendedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME", query = "update BundleJobBean w set w.statusStr = :status, w.pauseTimestamp = :pauseTime, w.endTimestamp = :endTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_STATUS_PAUSE_ENDTIME", query = "update BundleJobBean w set w.statusStr = :status,"
+                + " w.pauseTimestamp = :pauseTime, w.endTimestamp = :endTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_JOB_PAUSE_KICKOFF", query = "update BundleJobBean w set w.kickoffTimestamp = :kickoffTime, w.pauseTimestamp = :pauseTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_BUNDLE_JOB_PAUSE_KICKOFF", query = "update BundleJobBean w set w.kickoffTimestamp "
+                + "= :kickoffTime, w.pauseTimestamp = :pauseTime where w.id = :id"),
 
         @NamedQuery(name = "DELETE_BUNDLE_JOB", query = "delete from BundleJobBean w where w.id IN (:id)"),
 
@@ -75,39 +86,60 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "GET_BUNDLE_JOB_STATUS", query = "select w.statusStr from BundleJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME", query = "select w.id, w.statusStr, w.pending, w.lastModifiedTimestamp, w.pauseTimestamp, w.suspendedTimestamp from BundleJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_BUNDLE_JOB_ID_STATUS_PENDING_MOD_PAUSE_SUSPEND_TIME", query = "select w.id, w.statusStr,"
+                + " w.pending, w.lastModifiedTimestamp, w.pauseTimestamp, w.suspendedTimestamp from BundleJobBean w where"
+                + " w.id = :id"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOB_ID_JOBXML_CONF", query = "select w.id, w.jobXml, w.conf from BundleJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_BUNDLE_JOB_ID_JOBXML_CONF", query = "select w.id, w.jobXml, w.conf from BundleJobBean w"
+                + " where w.id = :id"),
 
         @NamedQuery(name = "GET_BUNDLE_JOBS_COUNT", query = "select count(w) from BundleJobBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.statusStr, w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group, w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_COLUMNS", query = "select w.id, w.appName, w.appPath, w.conf, w.statusStr,"
+                + " w.kickoffTimestamp, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.createdTimestamp, w.user, w.group,"
+                + " w.timeUnitStr, w.timeOut from BundleJobBean w order by w.createdTimestamp desc"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING_OR_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.pending = 1 order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_RUNNING_OR_PENDING", query = "select OBJECT(w) from BundleJobBean w where w.statusStr"
+                + " = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.pending = 1 order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'PREP' AND (w.kickoffTimestamp IS NULL OR (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp <= :currentTime)) order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_NEED_START", query = "select OBJECT(w) from BundleJobBean w where w.statusStr "
+                + "= 'PREP' AND (w.kickoffTimestamp IS NULL OR (w.kickoffTimestamp IS NOT NULL AND w.kickoffTimestamp "
+                + "<= :currentTime)) order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_PAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'PAUSED'"
+                + " OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_UNPAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_UNPAUSED", query = "select OBJECT(w) from BundleJobBean w where w.statusStr "
+                + "= 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR')  order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN", query = "select OBJECT(w) from BundleJobBean w where w.startTimestamp "
+                + "<= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR')  "
+                + "order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.statusStr = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from BundleJobBean w where w.statusStr"
+                + " = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' OR w.statusStr = 'KILLED' OR w.statusStr = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_BUNDLE_JOBS_OLDER_THAN", query = "select w.id from BundleJobBean w where ( w.statusStr"
+                + " = 'SUCCEEDED' OR w.statusStr = 'FAILED' OR w.statusStr = 'KILLED' OR w.statusStr = 'DONEWITHERROR') "
+                + "AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.appName, b.statusStr, b.user FROM BundleJobBean b"),
+        @NamedQuery(name = "BULK_MONITOR_BUNDLE_QUERY", query = "SELECT b.id, b.appName, b.statusStr, b.user "
+                + "FROM BundleJobBean b"),
 
         // Join query
-        @NamedQuery(name = "BULK_MONITOR_ACTIONS_QUERY", query = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage, a.externalId, " +
+        @NamedQuery(name = "BULK_MONITOR_ACTIONS_QUERY", query = "SELECT a.id, a.actionNumber, a.errorCode, a.errorMessage,"
+                + " a.externalId, " +
                 "a.externalStatus, a.statusStr, a.createdTimestamp, a.nominalTimestamp, a.missingDependencies, " +
                 "c.id, c.appName, c.statusStr FROM CoordinatorActionBean a, CoordinatorJobBean c " +
                 "WHERE a.jobId = c.id AND c.bundleId = :bundleId ORDER BY a.jobId, a.createdTimestamp"),
 
-        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a, CoordinatorJobBean c"),
+        @NamedQuery(name = "BULK_MONITOR_COUNT_QUERY", query = "SELECT COUNT(a) FROM CoordinatorActionBean a,"
+                + " CoordinatorJobBean c"),
 
-        @NamedQuery(name = "GET_BUNDLE_IDS_FOR_STATUS_TRANSIT", query = "select DISTINCT w.id from BundleActionBean a , BundleJobBean w where a.lastModifiedTimestamp >= :lastModifiedTime and w.id = a.bundleId and (w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'SUSPENDED' OR w.statusStr = 'SUSPENDEDWITHERROR' OR w.pending = 1)"),
+        @NamedQuery(name = "GET_BUNDLE_IDS_FOR_STATUS_TRANSIT", query = "select DISTINCT w.id from BundleActionBean a ,"
+                + " BundleJobBean w where a.lastModifiedTimestamp >= :lastModifiedTime and w.id = a.bundleId and (w.statusStr"
+                + " = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR'"
+                + " OR w.statusStr = 'SUSPENDED' OR w.statusStr = 'SUSPENDEDWITHERROR' OR w.pending = 1)"),
 
 
         @NamedQuery(name = "GET_BUNDLE_JOB_FOR_USER", query = "select w.user from BundleJobBean w where w.id = :id") })

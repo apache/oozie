@@ -30,7 +30,7 @@ public abstract class CoordXTestCase extends XTestCase {
         super.setUp();
         services = new Services();
         services.init();
-        
+
         jpaService = Services.get().get(JPAService.class);
         if (jpaService == null) {
             fail("jpaService can not be null");

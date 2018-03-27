@@ -58,23 +58,47 @@ import org.json.simple.JSONObject;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl,"
+            + " a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode,"
+            + " a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name,"
+            + " a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type,"
+            + " a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken "
+            + "= :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml "
+            + "= :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_FOR_LAST_CHECKED_TIME", query = "update WorkflowActionBean a set a.lastCheckTimestamp = :lastCheckTime where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_FOR_LAST_CHECKED_TIME", query = "update WorkflowActionBean a set a.lastCheckTimestamp "
+            + "= :lastCheckTime where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_START", query = "update WorkflowActionBean a set a.startTimestamp = :startTime, a.externalChildIDs = :externalChildIDs, a.conf = :conf, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.startTimestamp = :startTime, a.externalId = :externalId, a.trackerUri = :trackerUri, a.consoleUrl = :consoleUrl, a.lastCheckTimestamp = :lastCheckTime, a.statusStr = :status, a.externalStatus = :externalStatus, a.data = :data, a.retries = :retries, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.userRetryCount = :userRetryCount where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_START", query = "update WorkflowActionBean a set a.startTimestamp = :startTime,"
+            + " a.externalChildIDs = :externalChildIDs, a.conf = :conf, a.errorCode = :errorCode, a.errorMessage = :errorMessage,"
+            + " a.startTimestamp = :startTime, a.externalId = :externalId, a.trackerUri = :trackerUri, a.consoleUrl "
+            + "= :consoleUrl, a.lastCheckTimestamp = :lastCheckTime, a.statusStr = :status, a.externalStatus = :externalStatus,"
+            + " a.data = :data, a.retries = :retries, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.userRetryCount"
+            + " = :userRetryCount where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_CHECK", query = "update WorkflowActionBean a set a.userRetryCount = :userRetryCount, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.externalStatus = :externalStatus, a.statusStr = :status, a.data = :data, a.pending = :pending, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.lastCheckTimestamp = :lastCheckTime, a.retries = :retries, a.pendingAgeTimestamp = :pendingAge, a.startTimestamp = :startTime where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_CHECK", query = "update WorkflowActionBean a set a.userRetryCount = :userRetryCount,"
+            + " a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.externalStatus = :externalStatus, a.statusStr "
+            + "= :status, a.data = :data, a.pending = :pending, a.errorCode = :errorCode, a.errorMessage = :errorMessage,"
+            + " a.lastCheckTimestamp = :lastCheckTime, a.retries = :retries, a.pendingAgeTimestamp = :pendingAge,"
+            + " a.startTimestamp = :startTime where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_END", query = "update WorkflowActionBean a set a.stats = :stats, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.retries = :retries, a.endTimestamp = :endTime, a.statusStr = :status, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.userRetryCount = :userRetryCount, a.externalStatus = :externalStatus where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_END", query = "update WorkflowActionBean a set a.stats = :stats, a.errorCode = :errorCode,"
+            + " a.errorMessage = :errorMessage, a.retries = :retries, a.endTimestamp = :endTime, a.statusStr = :status, a.pending"
+            + " = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.userRetryCount "
+            + "= :userRetryCount, a.externalStatus = :externalStatus where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.executionPath = :executionPath where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.executionPath = :executionPath where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_STATUS_PENDING", query = "update WorkflowActionBean a set a.statusStr = :status, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_STATUS_PENDING", query = "update WorkflowActionBean a set a.statusStr = :status, a.pending"
+            + " = :pending, a.pendingAgeTimestamp = :pendingAge where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.transition = :transition where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.transition = :transition where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS_ERROR", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.transition = :transition, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.statusStr = :status where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS_ERROR", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.transition = :transition, a.errorCode = :errorCode, a.errorMessage "
+            + "= :errorMessage, a.statusStr = :status where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id IN (:id)"),
 
@@ -84,33 +108,53 @@ import org.json.simple.JSONObject;
 
     @NamedQuery(name = "GET_ACTION", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_ID_TYPE_LASTCHECK", query = "select a.id, a.type, a.lastCheckTimestamp from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_ID_TYPE_LASTCHECK", query = "select a.id, a.type, a.lastCheckTimestamp "
+            + "from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_FAIL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.type, a.logToken, a.transition, a.errorCode, a.errorMessage from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_FAIL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.type, a.logToken,"
+            + " a.transition, a.errorCode, a.errorMessage from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_SIGNAL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.errorCode, a.errorMessage, a.executionPath, a.signalValue, a.slaXml, a.externalId from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_SIGNAL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.errorCode, a.errorMessage, a.executionPath, a.signalValue, a.slaXml,"
+            + " a.externalId from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_CHECK", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.retries, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.trackerUri, a.startTimestamp, a.endTimestamp, a.lastCheckTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus, a.externalChildIDs, a.conf from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_CHECK", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.retries, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.trackerUri,"
+            + " a.startTimestamp, a.endTimestamp, a.lastCheckTimestamp, a.errorCode, a.errorMessage, a.externalId,"
+            + " a.externalStatus, a.externalChildIDs, a.conf from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_END", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.retries, a.trackerUri, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.startTimestamp, a.endTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus, a.externalChildIDs, a.conf, a.data, a.stats from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_END", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.retries, a.trackerUri, a.userRetryCount, a.userRetryMax, a.userRetryInterval,"
+            + " a.startTimestamp, a.endTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus,"
+            + " a.externalChildIDs, a.conf, a.data, a.stats from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_COMPLETED", query = "select a.id, a.wfId, a.statusStr, a.type, a.logToken from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_COMPLETED", query = "select a.id, a.wfId, a.statusStr, a.type, a.logToken "
+            + "from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "GET_ACTION_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.statusStr, a.startTimestamp, a.endTimestamp from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.statusStr, a.startTimestamp, a.endTimestamp "
+            + "from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId "
+            + "order by a.startTimestamp"),
 
-    @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+    @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId "
+            + "= :wfId order by a.startTimestamp"),
 
-    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select a.id, a.wfId, a.statusStr, a.type, a.pendingAgeTimestamp from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.statusStr <> 'RUNNING' AND a.createdTimeTS >= :createdTime"),
+    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select a.id, a.wfId, a.statusStr, a.type, a.pendingAgeTimestamp from"
+            + " WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.statusStr <> 'RUNNING' "
+            + "AND a.createdTimeTS >= :createdTime"),
 
-    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select a.id from WorkflowActionBean a where a.pending = 1 AND a.statusStr = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
+    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select a.id from WorkflowActionBean a where a.pending = 1 AND a.statusStr"
+            + " = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
 
-    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr = 'END_MANUAL')"),
+    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId "
+            + "AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr "
+            + "= 'END_MANUAL')"),
 
-    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW_RERUN", query = "select a.id, a.name, a.statusStr, a.endTimestamp, a.type from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp") })
+    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW_RERUN", query = "select a.id, a.name, a.statusStr, a.endTimestamp, a.type "
+            + "from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp") })
 @Table(name = "WF_ACTIONS")
 public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Id

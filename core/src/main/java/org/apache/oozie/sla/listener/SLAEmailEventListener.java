@@ -84,8 +84,10 @@ public class SLAEmailEventListener extends SLAEventListener {
         EVENT_STATUS("SLA Status"), APP_TYPE("App Type"), APP_NAME("App Name"), USER("User"), JOBID("Job ID"), PARENT_JOBID(
                 "Parent Job ID"), JOB_URL("Job URL"), PARENT_JOB_URL("Parent Job URL"), NOMINAL_TIME("Nominal Time"),
                 EXPECTED_START_TIME("Expected Start Time"), ACTUAL_START_TIME("Actual Start Time"),
-                EXPECTED_END_TIME("Expected End Time"), ACTUAL_END_TIME("Actual End Time"), EXPECTED_DURATION("Expected Duration (in mins)"),
-                ACTUAL_DURATION("Actual Duration (in mins)"), NOTIFICATION_MESSAGE("Notification Message"), UPSTREAM_APPS("Upstream Apps"),
+                EXPECTED_END_TIME("Expected End Time"), ACTUAL_END_TIME("Actual End Time"),
+                EXPECTED_DURATION("Expected Duration (in mins)"),
+                ACTUAL_DURATION("Actual Duration (in mins)"), NOTIFICATION_MESSAGE("Notification Message"),
+                UPSTREAM_APPS("Upstream Apps"),
                 JOB_STATUS("Job Status");
         private String name;
 

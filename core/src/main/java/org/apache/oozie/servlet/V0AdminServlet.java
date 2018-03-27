@@ -42,7 +42,8 @@ public class V0AdminServlet extends BaseAdminServlet {
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
-                                             Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SAFE_MODE_PARAM, Boolean.class, true,
+                                             Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SAFE_MODE_PARAM, Boolean.class,
+                                                     true,
                                                                              Arrays.asList("PUT"))));
         RESOURCES_INFO[1] = new ResourceInfo(RestConstants.ADMIN_OS_ENV_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);

@@ -25,7 +25,7 @@ import java.util.Arrays;
 
 /**
  * Node definition for workflow action. This node definition is serialized object and should provide
- * readFields() and write() for read and write of fields in this class.  
+ * readFields() and write() for read and write of fields in this class.
  *
  */
 public class ActionNodeDef extends NodeDef {
@@ -37,12 +37,12 @@ public class ActionNodeDef extends NodeDef {
                          String onError) {
         super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError));
     }
-    
+
     public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
             String onError, String cred) {
         super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred);
     }
-    
+
     public ActionNodeDef(String name, String conf, Class<? extends ActionNodeHandler> actionHandlerClass, String onOk,
             String onError, String cred, String userRetryMax, String userRetryInterval, String userRetryPolicy) {
         super(name, ParamChecker.notNull(conf, "conf"), actionHandlerClass, Arrays.asList(onOk, onError), cred,

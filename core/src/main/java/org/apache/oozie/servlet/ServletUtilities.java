@@ -71,11 +71,13 @@ public class ServletUtilities {
         }
 
         if (n == 0) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a workflow, coordinator, or bundle app path is required");
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a workflow, coordinator,"
+                    + " or bundle app path is required");
         }
 
         if (n != 1) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Multiple app paths specified, only one is allowed");
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Multiple app paths specified,"
+                    + " only one is allowed");
         }
     }
 

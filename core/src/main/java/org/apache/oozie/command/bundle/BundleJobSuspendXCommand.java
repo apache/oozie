@@ -131,7 +131,8 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
                 || bundleJob.getStatus() == Job.Status.KILLED || bundleJob.getStatus() == Job.Status.DONEWITHERROR) {
-            LOG.info("BundleJobSuspendXCommand is not going to execute because job either succeeded, failed, killed, or donewitherror; id = "
+            LOG.info("BundleJobSuspendXCommand is not going to execute because job either succeeded, failed, killed,"
+                    + " or donewitherror; id = "
                             + jobId + ", status = " + bundleJob.getStatus());
             throw new PreconditionException(ErrorCode.E1312, jobId, bundleJob.getStatus().toString());
         }
@@ -146,7 +147,8 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         bundleJob.setSuspendedTime(new Date());
         bundleJob.setLastModifiedTime(new Date());
 
-        LOG.debug("Suspend bundle job id = " + jobId + ", status = " + bundleJob.getStatus() + ", pending = " + bundleJob.isPending());
+        LOG.debug("Suspend bundle job id = " + jobId + ", status = " + bundleJob.getStatus() + ", pending = "
+        + bundleJob.isPending());
         updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME, bundleJob));
     }
 
@@ -160,7 +162,8 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
                 if (action.getCoordId() != null) {
                     queue(new CoordSuspendXCommand(action.getCoordId()));
                     updateBundleAction(action);
-                    LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordSuspendXCommand for [{3}]",
+                    LOG.debug("Suspend bundle action = [{0}], new status = [{1}], pending = [{2}] and queue CoordSuspendXCommand"
+                            + " for [{3}]",
                             action.getBundleActionId(), action.getStatus(), action.getPending(), action.getCoordId());
                 } else {
                     updateBundleAction(action);

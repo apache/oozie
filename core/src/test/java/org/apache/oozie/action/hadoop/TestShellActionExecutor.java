@@ -283,7 +283,8 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
                 + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
-                + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>" + script.toString()
+                + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>"
+                + script.toString()
                 + "#" + script.getName() + "</file>" + "<capture-output />" + "</shell>";
 
         Context context = createContext(actionXml);

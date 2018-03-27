@@ -28,7 +28,7 @@ import org.apache.log4j.LogManager;
 import org.apache.oozie.test.XTestCase;
 
 public class TestOozieRollingPolicy extends XTestCase {
-    
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -61,8 +61,8 @@ public class TestOozieRollingPolicy extends XTestCase {
 
     private void _testDeletingOldFiles(String oozieLogName, int calendarUnit) throws IOException{
         // OozieRollingPolicy gets the log path and log name from XLogService by calling Services.get.get(XLogService.class) so we
-        // use a mock version where we overwrite the XLogService.getOozieLogName() and XLogService.getOozieLogPath() to simply 
-        // return these values instead of involving Services.  We then overwrite OozieRollingPolicy.getXLogService() to return the 
+        // use a mock version where we overwrite the XLogService.getOozieLogName() and XLogService.getOozieLogPath() to simply
+        // return these values instead of involving Services.  We then overwrite OozieRollingPolicy.getXLogService() to return the
         // mock one instead.
         String oozieLogPath = getTestCaseDir();
 
@@ -76,7 +76,7 @@ public class TestOozieRollingPolicy extends XTestCase {
 
         }
         orp.setMaxHistory(3);   // only keep 3 newest logs
-        
+
         Calendar cal = new GregorianCalendar();
         final File f0 = new File(oozieLogPath, oozieLogName);
         f0.createNewFile();
@@ -93,7 +93,7 @@ public class TestOozieRollingPolicy extends XTestCase {
         cal.add(calendarUnit, 1);
         final File f4 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit) + ".gz");
         f4.createNewFile();
-        
+
         // Test that it only deletes the oldest file (f1)
         orp.isTriggeringEvent(null, null, null, 0);
         waitFor(60 * 1000, new Predicate() {
@@ -103,17 +103,17 @@ public class TestOozieRollingPolicy extends XTestCase {
             }
         });
         assertTrue(f0.exists() && !f1.exists() && f2.exists() && f3.exists() && f4.exists());
-        
+
         cal.add(calendarUnit, 1);
         final File f5 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
         f5.createNewFile();
         f5.setLastModified(cal.getTimeInMillis());
-        
+
         cal.add(calendarUnit, -15);
         final File f6 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
         f6.createNewFile();
         f6.setLastModified(cal.getTimeInMillis());
-        
+
         // Test that it can delete more than one file when necessary and that it works with non .gz files
         orp.isTriggeringEvent(null, null, null, 0);
         waitFor(60 * 1000, new Predicate() {
@@ -123,18 +123,18 @@ public class TestOozieRollingPolicy extends XTestCase {
             }
         });
         assertTrue(f0.exists() && !f1.exists() && !f2.exists() && f3.exists() && f4.exists() && f5.exists() && !f6.exists());
-        
+
         final File f7 = new File(oozieLogPath, "blah.txt");
         f7.createNewFile();
         f7.setLastModified(cal.getTimeInMillis());
-        
+
         cal.add(calendarUnit, 1);
         final File f8 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
         cal.add(calendarUnit, 15);
         f8.createNewFile();
         f8.setLastModified(cal.getTimeInMillis());
-        
-        // Test that it ignores "other" files even if they are oldest and test that it uses the modified time for non .gz files 
+
+        // Test that it ignores "other" files even if they are oldest and test that it uses the modified time for non .gz files
         // (instead of the time from the filename)
         orp.isTriggeringEvent(null, null, null, 0);
         waitFor(60 * 1000, new Predicate() {
@@ -144,11 +144,11 @@ public class TestOozieRollingPolicy extends XTestCase {
                         f7.exists() && f8.exists());
             }
         });
-        assertTrue(f0.exists() && !f1.exists() && !f2.exists() && !f3.exists() && f4.exists() && f5.exists() && !f6.exists() && 
+        assertTrue(f0.exists() && !f1.exists() && !f2.exists() && !f3.exists() && f4.exists() && f5.exists() && !f6.exists() &&
                    f7.exists() && f8.exists());
     }
 
-    
+
     private String formatDateForFilename(Calendar cal, int calendarUnit) {
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH) + 1;

@@ -30,14 +30,14 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * Utility class to parse and verify the &lt;parameters&gt; section in a workflow or coordinator job
  */
-public abstract class ParameterVerifier 
+public abstract class ParameterVerifier
 {
     private static final Pattern nsVersionPattern = Pattern.compile("uri:oozie:(workflow|coordinator|bundle):(\\d+.\\d+)");
-    
+
     private static final double workflowMinVersion = 0.4;
     private static final double coordinatorMinVersion = 0.4;
     private static final double bundleMinVersion = 0.2;
-    
+
     /**
      * Verify the parameters section (if supported in the schema)
      *
@@ -50,7 +50,7 @@ public abstract class ParameterVerifier
         if (rootElement == null) {
             return;
         }
-        
+
         if (supportsParameters(rootElement.getNamespaceURI())) {
             Element params = rootElement.getChild("parameters", rootElement.getNamespace());
             if (params != null) {
@@ -88,15 +88,15 @@ public abstract class ParameterVerifier
             }
         }
     }
-    
+
     static boolean supportsParameters(String namespaceURI) {
         boolean supports = false;
         Matcher m = nsVersionPattern.matcher(namespaceURI);
         if (m.matches() && m.groupCount() == 2) {
             String type = m.group(1);
             double ver = Double.parseDouble(m.group(2));
-            supports = ((type.equals("workflow") && ver >= workflowMinVersion) || 
-                    (type.equals("coordinator") && ver >= coordinatorMinVersion) || 
+            supports = ((type.equals("workflow") && ver >= workflowMinVersion) ||
+                    (type.equals("coordinator") && ver >= coordinatorMinVersion) ||
                     (type.equals("bundle") && ver >= bundleMinVersion));
         }
         return supports;

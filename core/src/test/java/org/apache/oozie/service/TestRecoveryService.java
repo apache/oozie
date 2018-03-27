@@ -377,7 +377,8 @@ public class TestRecoveryService extends XDataTestCase {
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorActionBean bean = ce.getCoordAction(actionId);
-                return (bean.getStatus() == CoordinatorAction.Status.RUNNING || bean.getStatus() == CoordinatorAction.Status.SUCCEEDED);
+                return (bean.getStatus() == CoordinatorAction.Status.RUNNING || bean.getStatus()
+                        == CoordinatorAction.Status.SUCCEEDED);
             }
         });
 
@@ -536,7 +537,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with SUSPENDED and
-     * action with SUSPENDED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to SUSPENDED.
+     * action with SUSPENDED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status
+     *  changes to SUSPENDED.
      *
      * @throws Exception
      */
@@ -573,7 +575,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with KILLED and
-     * action with KILLED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to KILLED.
+     * action with KILLED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow
+     *  status changes to KILLED.
      *
      * @throws Exception
      */
@@ -610,7 +613,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
-     * action with RUNNING and workflow with SUSPENDED. Then, runs the recovery runnable and ensures the workflow status changes to RUNNING.
+     * action with RUNNING and workflow with SUSPENDED. Then, runs the recovery runnable and ensures the workflow status
+     *  changes to RUNNING.
      *
      * @throws Exception
      */
@@ -693,7 +697,9 @@ public class TestRecoveryService extends XDataTestCase {
         action.setLastModifiedTime(new Date());
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         String appPath = getTestCaseFileUri("one-op/workflow.xml");
-        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
+        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME'"
+                + " frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY'"
+                + " end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
         actionXml += "<controls>";
         actionXml += "<timeout>10</timeout>";
         actionXml += "<concurrency>2</concurrency>";
@@ -701,7 +707,8 @@ public class TestRecoveryService extends XDataTestCase {
         actionXml += "</controls>";
         actionXml += "<input-events>";
         actionXml += "<data-in name='A' dataset='a'>";
-        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("workflows/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:latest(0)}</instance>";
@@ -709,7 +716,8 @@ public class TestRecoveryService extends XDataTestCase {
         actionXml += "</input-events>";
         actionXml += "<output-events>";
         actionXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:current(-1)}</instance>";
@@ -795,7 +803,8 @@ public class TestRecoveryService extends XDataTestCase {
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z'";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z'"
+                + " end='2009-02-03T23:59Z'";
         appXml += " timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
@@ -804,7 +813,8 @@ public class TestRecoveryService extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:latest(0)}</instance>";
@@ -812,7 +822,8 @@ public class TestRecoveryService extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(-1)}</instance>";

@@ -155,7 +155,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfJob.setLastModifiedTime(new Date());
                     updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_MODTIME, wfJob));
                     // Add SLA status event (KILLED) for WF_ACTION
-                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.KILLED,
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
+                            Status.KILLED,
                             SlaAppType.WORKFLOW_ACTION);
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
@@ -174,7 +175,8 @@ public class ActionKillXCommand extends ActionXCommand<Void> {
                     wfJob.setLastModifiedTime(new Date());
                     updateList.add(new UpdateEntry<WorkflowJobQuery>(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_MODTIME, wfJob));
                     // What will happen to WF and COORD_ACTION, NOTIFICATION?
-                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
+                            Status.FAILED,
                             SlaAppType.WORKFLOW_ACTION);
                     if(slaEvent != null) {
                         insertList.add(slaEvent);

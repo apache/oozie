@@ -374,7 +374,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
   /*
   * Check against multiple data instance values inside a single <instance> <start-instance> or <end-instance> tag
-  * If found, the job is not submitted and user is informed to correct the error, instead of defaulting to the first instance value in the list
+  * If found, the job is not submitted and user is informed to correct the error,
+  *  instead of defaulting to the first instance value in the list
   */
     private void checkMultipleTimeInstances(Element eCoordJob, String eventType, String dataType) throws CoordinatorJobException {
         Element eventsSpec, dataSpec, instance;
@@ -385,7 +386,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (eventsSpec != null) {
             dataSpec = eventsSpec.getChild(dataType, ns);
             if (dataSpec != null) {
-                // In case of input-events, there can be multiple child <instance> datasets. Iterating to ensure none of them have errors
+                // In case of input-events, there can be multiple child <instance> datasets.
+                // Iterating to ensure none of them have errors
                 instanceSpecList = dataSpec.getChildren("instance", ns);
                 Iterator instanceIter = instanceSpecList.iterator();
                 while(instanceIter.hasNext()) {
@@ -405,13 +407,15 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     }
                 }
 
-                // In case of input-events, there can be multiple child <start-instance> datasets. Iterating to ensure none of them have errors
+                // In case of input-events, there can be multiple child <start-instance> datasets.
+                // Iterating to ensure none of them have errors
                 instanceSpecList = dataSpec.getChildren("start-instance", ns);
                 instanceIter = instanceSpecList.iterator();
                 while(instanceIter.hasNext()) {
                     instance = ((Element) instanceIter.next());
                     if(instance.getContentSize() == 0) { //empty string or whitespace
-                        throw new CoordinatorJobException(ErrorCode.E1021, "<start-instance> tag within " + eventType + " is empty!");
+                        throw new CoordinatorJobException(ErrorCode.E1021, "<start-instance> tag within " + eventType
+                                + " is empty!");
                     }
                     instanceValue = instance.getContent(0).toString();
                     boolean isInvalid = false;
@@ -425,7 +429,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     }
                 }
 
-                // In case of input-events, there can be multiple child <end-instance> datasets. Iterating to ensure none of them have errors
+                // In case of input-events, there can be multiple child <end-instance> datasets.
+                // Iterating to ensure none of them have errors
                 instanceSpecList = dataSpec.getChildren("end-instance", ns);
                 instanceIter = instanceSpecList.iterator();
                 while(instanceIter.hasNext()) {

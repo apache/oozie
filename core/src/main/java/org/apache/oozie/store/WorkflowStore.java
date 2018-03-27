@@ -319,12 +319,15 @@ public class WorkflowStore extends Store {
         ParamChecker.notEmpty(wfId, "WorkflowID");
         List<WorkflowActionBean> actions = doOperation("getActionsForWorkflow",
                                                        new Callable<List<WorkflowActionBean>>() {
-                                                           public List<WorkflowActionBean> call() throws SQLException, StoreException, WorkflowException,
+                                                           public List<WorkflowActionBean> call() throws SQLException,
+                                                                   StoreException, WorkflowException,
                                                                    InterruptedException {
                                                                List<WorkflowActionBean> actions;
-                                                               List<WorkflowActionBean> actionList = new ArrayList<WorkflowActionBean>();
+                                                               List<WorkflowActionBean> actionList
+                                                                       = new ArrayList<WorkflowActionBean>();
                                                                try {
-                                                                   Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_WORKFLOW");
+                                                                   Query q = entityManager.createNamedQuery(
+                                                                           "GET_ACTIONS_FOR_WORKFLOW");
 
                                                                    /*
                                                                    * OpenJPAQuery oq = OpenJPAPersistence.cast(q);
@@ -368,12 +371,15 @@ public class WorkflowStore extends Store {
         ParamChecker.notEmpty(wfId, "WorkflowID");
         List<WorkflowActionBean> actions = doOperation("getActionsForWorkflow",
                                                        new Callable<List<WorkflowActionBean>>() {
-                                                           public List<WorkflowActionBean> call() throws SQLException, StoreException, WorkflowException,
+                                                           public List<WorkflowActionBean> call() throws SQLException,
+                                                                   StoreException, WorkflowException,
                                                                    InterruptedException {
                                                                List<WorkflowActionBean> actions;
-                                                               List<WorkflowActionBean> actionList = new ArrayList<WorkflowActionBean>();
+                                                               List<WorkflowActionBean> actionList
+                                                                       = new ArrayList<WorkflowActionBean>();
                                                                try {
-                                                                   Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_WORKFLOW");
+                                                                   Query q = entityManager.createNamedQuery(
+                                                                           "GET_ACTIONS_FOR_WORKFLOW");
                                                                    OpenJPAQuery oq = OpenJPAPersistence.cast(q);
                                                                    q.setParameter("wfId", wfId);
                                                                    q.setFirstResult(start - 1);
@@ -792,7 +798,8 @@ public class WorkflowStore extends Store {
                         actionDeleted += g.executeUpdate();
                     }
                 }
-                XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions " + actionDeleted);
+                XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions "
+                            + actionDeleted);
                 return null;
             }
         });

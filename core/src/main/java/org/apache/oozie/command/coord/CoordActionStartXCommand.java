@@ -193,7 +193,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(),
+                        Status.STARTED,
                         SlaAppType.COORDINATOR_ACTION, log);
                 if(slaEvent != null) {
                     insertList.add(slaEvent);
@@ -221,7 +222,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
                     log.debug("Updating WF record for WFID :" + coordAction.getExternalId() + " with parent id: " + actionId);
-                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, coordAction.getExternalId());
+                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME,
+                            coordAction.getExternalId());
                     wfJob.setParentId(actionId);
                     wfJob.setLastModifiedTime(new Date());
                     BatchQueryExecutor executor = BatchQueryExecutor.getInstance();
@@ -281,7 +283,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                                     CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction));
                     insertList = new ArrayList<JsonBean>();
 
-                    SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
+                    SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(),
+                            Status.FAILED,
                             SlaAppType.COORDINATOR_ACTION, log);
                     if(slaEvent != null) {
                         insertList.add(slaEvent); //Update SLA events
