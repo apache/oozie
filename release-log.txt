@@ -1,4 +1,4 @@
--- Oozie 5.0.0 release (trunk - unreleased)
+-- Oozie 5.0.0 release
 
 OOZIE-3176 Oozie-core fails with checkstyle errors (alishap via andras.piros)
 OOZIE-2726 Flaky test due to daylight saving changes (sasishsaley, andras.piros via gezapeti)
