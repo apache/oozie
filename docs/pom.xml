@@ -24,7 +24,7 @@
         <artifactId>oozie-main</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.apache.oozie</groupId>
+
     <artifactId>oozie-docs</artifactId>
     <version>5.1.0-SNAPSHOT</version>
     <description>Apache Oozie Docs</description>

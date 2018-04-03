@@ -1,5 +1,6 @@
 -- Oozie 5.0.0 release (trunk - unreleased)
 
+OOZIE-2937 Remove redundant groupId from the child POMs (Jan Hentschel via andras.piros)
 OOZIE-3176 Oozie-core fails with checkstyle errors (alishap via andras.piros)
 OOZIE-2726 Flaky test due to daylight saving changes (sasishsaley, andras.piros via gezapeti)
 OOZIE-2645 Deprecate Instrumentation in favor of Metrics (andras.piros via gezapeti)
