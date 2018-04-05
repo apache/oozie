@@ -24,7 +24,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -47,6 +51,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
@@ -65,10 +70,16 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
+import org.apache.oozie.util.db.AlwaysFailingHSQLDriverMapper;
+import org.apache.oozie.util.db.FailingHSQLDBDriverWrapper;
+import org.apache.oozie.util.db.FailingDBHelperForTest;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
 
 public class TestSLACalculatorMemory extends XDataTestCase {
     private Services services;
@@ -1079,4 +1090,114 @@ public class TestSLACalculatorMemory extends XDataTestCase {
                 get(SLACalculatorMemory.SLA_MAP).getValue();
         assertEquals("SLA map size after remove all should be 0", 0, slaMapSize);
     }
+
+
+    public void testWhenSLARegistrationIsAddedBeanIsStoredCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+        Assert.assertNotNull(slaCalcMemory.get(slaRegBean.getId()));
+        Assert.assertEquals(slaRegBean, slaCalcMemory.get(slaRegBean.getId()).getSLARegistrationBean());
+    }
+
+    public void testWhenSLARegistrationIsAddedAndAllDBCallsAreDisruptedBeanIsNotStored() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+
+        try {
+            FailingDBHelperForTest.setDbPredicate(new SLARegistrationDmlPredicate());
+            prepareFailingDB();
+            slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+            fail("Expected JPAExecutorException not thrown");
+        } catch (JPAExecutorException ex) {
+            Assert.assertNull(slaCalcMemory.get(slaRegBean.getId()));
+        } finally {
+            FailingDBHelperForTest.resetDbPredicate();
+            System.clearProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER);
+        }
+
+    }
+
+    public void testWhenSLARegistrationIsUpdatedBeanIsStoredCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        final String jobId = "job-1-W";
+        SLARegistrationBean slaRegBean = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        SLARegistrationBean slaRegBean2 = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+
+        addAndUpdateRegistration(slaCalcMemory, jobId, slaRegBean, slaRegBean2);
+
+        Assert.assertNotNull(slaCalcMemory.get(jobId));
+        Assert.assertEquals("The updated SLA registration bean should be in the cache",
+                slaRegBean2, slaCalcMemory.get(jobId).getSLARegistrationBean());
+    }
+
+    public void testWhenSLARegistrationIsUpdatedAndAllDBCallsAreDisruptedBeanIsNotStored() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        final String jobId = "job-1-W";
+        SLARegistrationBean slaRegBean = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        SLARegistrationBean slaRegBean2 = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        final int expectedDuration = 1000;
+        slaRegBean2.setExpectedDuration(expectedDuration);
+
+        try {
+            addAndUpdateRegistrationWithDBCrushSimulation(slaCalcMemory, jobId, slaRegBean, slaRegBean2);
+            fail("Expected JPAExecutorException not thrown");
+        } catch (JPAExecutorException ex) {
+            Assert.assertNotNull(slaCalcMemory.get(slaRegBean.getId()));
+            // the update failed
+            Assert.assertEquals(slaRegBean, slaCalcMemory.get(jobId).getSLARegistrationBean());
+        } finally {
+            FailingDBHelperForTest.resetDbPredicate();
+            System.clearProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER);
+        }
+
+    }
+
+    private void addAndUpdateRegistration(final SLACalculatorMemory slaCalcMemory, final String jobId,
+                                          final SLARegistrationBean slaRegBean, final SLARegistrationBean slaRegBean2)
+            throws JPAExecutorException {
+        slaCalcMemory.addRegistration(jobId, slaRegBean);
+        slaCalcMemory.updateRegistration(jobId, slaRegBean2);
+    }
+
+    private void addAndUpdateRegistrationWithDBCrushSimulation(final SLACalculatorMemory slaCalcMemory, final String jobId,
+                                                               final SLARegistrationBean slaRegBean,
+                                                               final SLARegistrationBean slaRegBean2) throws Exception {
+        slaCalcMemory.addRegistration(jobId, slaRegBean);
+        FailingDBHelperForTest.setDbPredicate(new SLARegistrationDmlPredicate());
+        prepareFailingDB();
+        slaCalcMemory.updateRegistration(jobId, slaRegBean2);
+    }
+
+    private void prepareFailingDB() throws Exception {
+        System.setProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER, Boolean.TRUE.toString());
+        Configuration conf = services.get(ConfigurationService.class).getConf();
+        conf.set(JPAService.CONF_DRIVER, AlwaysFailingHSQLDriverMapper.class.getCanonicalName());
+        conf.setInt(JPAService.MAX_RETRY_COUNT, 2);
+        jpaService.destroy();
+        jpaService.init(services);
+    }
+
+    static class SLARegistrationDmlPredicate implements com.google.common.base.Predicate<String> {
+        private static final String TABLE_NAME = "SLA_REGISTRATION";
+        private static final Set<String> OPERATIONS = Sets.newHashSet("INSERT INTO ", "UPDATE ");
+
+        @Override
+        public boolean apply(@Nullable String input) {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(input));
+            boolean operationMatch = false;
+            for (String s: OPERATIONS) {
+                if (input.startsWith(s)) {
+                    operationMatch = true;
+                    break;
+                }
+            }
+            return operationMatch && input.toUpperCase().contains(TABLE_NAME);
+        }
+    }
+
 }

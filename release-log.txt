@@ -1,7 +1,11 @@
--- Oozie 5.0.0 release (trunk - unreleased)
+-- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3134 Potential inconsistency between the in-memory SLA map and the Oozie database (kmarton via andras.piros)
 OOZIE-3209 XML schema error when submitting pyspark example (kmarton via andras.piros)
 OOZIE-2937 Remove redundant groupId from the child POMs (Jan Hentschel via andras.piros)
+
+-- Oozie 5.0.0 release
+
 OOZIE-3176 Oozie-core fails with checkstyle errors (alishap via andras.piros)
 OOZIE-2726 Flaky test due to daylight saving changes (sasishsaley, andras.piros via gezapeti)
 OOZIE-2645 Deprecate Instrumentation in favor of Metrics (andras.piros via gezapeti)

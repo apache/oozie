@@ -50,13 +50,18 @@ public class FailingConnectionWrapper implements Connection {
     private static final XLog LOG = XLog.getLog(FailingConnectionWrapper.class);
 
     private final Connection delegate;
-    private static final RuntimeExceptionInjector<PersistenceException> injector =
-            new RuntimeExceptionInjector<>(PersistenceException.class, 5);
-    private static final OozieDmlStatementPredicate oozieDmlStatementPredicate =
-            new OozieDmlStatementPredicate();
+    private RuntimeExceptionInjector<PersistenceException> injector;
+    private Predicate<String> predicate;
 
-    public FailingConnectionWrapper(final Connection delegate) throws SQLException {
+    public FailingConnectionWrapper(final Connection delegate, final int failurePercent,
+                                    @Nullable final Predicate<String> predicate) {
         this.delegate = delegate;
+        injector = new RuntimeExceptionInjector<>(PersistenceException.class, failurePercent);
+        if (predicate == null) {
+            this.predicate = new OozieDmlStatementPredicate();
+        } else {
+            this.predicate = predicate;
+        }
     }
 
     @Override
@@ -162,8 +167,8 @@ public class FailingConnectionWrapper implements Connection {
     @Override
     public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency)
             throws SQLException {
-        if (oozieDmlStatementPredicate.apply(sql)) {
-            LOG.trace("Injecting random failure. It's a DML statement of an Oozie table, preparing this statement might fail.");
+        if (predicate.apply(sql)) {
+            LOG.trace("Injecting random failure. Preparing this statement might fail.");
             injector.inject(String.format("Deliberately failing to prepare statement. [sql=%s]", sql));
         }
 

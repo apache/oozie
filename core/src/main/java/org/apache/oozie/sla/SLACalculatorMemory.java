@@ -369,7 +369,6 @@ public class SLACalculatorMemory implements SLACalculator {
                 SLACalcStatus slaCalc = new SLACalcStatus(reg);
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
-                putAndIncrement(jobId, slaCalc);
                 List<JsonBean> insertList = new ArrayList<JsonBean>();
                 final SLASummaryBean summaryBean = new SLASummaryBean(slaCalc);
                 final Timestamp currentTime = DateUtils.convertDateToTimestamp(new Date());
@@ -378,6 +377,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 insertList.add(reg);
                 insertList.add(summaryBean);
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
+                putAndIncrement(jobId, slaCalc);
                 LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }
@@ -423,7 +423,6 @@ public class SLACalculatorMemory implements SLACalculator {
                 SLACalcStatus slaCalc = new SLACalcStatus(reg);
                 slaCalc.setSLAStatus(SLAStatus.NOT_STARTED);
                 slaCalc.setJobStatus(getJobStatus(reg.getAppType()));
-                putAndIncrement(jobId, slaCalc);
 
                 @SuppressWarnings("rawtypes")
                 List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
@@ -431,6 +430,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 updateList.add(new UpdateEntry<SLASummaryQuery>(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL,
                         new SLASummaryBean(slaCalc)));
                 BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(null, updateList, null);
+                putAndIncrement(jobId, slaCalc);
                 LOG.trace("SLA Registration Event - Job:" + jobId);
                 return true;
             }

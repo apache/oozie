@@ -46,6 +46,6 @@ public class FailingMySQLDriverWrapper extends Driver {
 
     public Connection connect(final String url,
                               final Properties info) throws SQLException {
-        return new FailingConnectionWrapper(super.connect(url, info));
+        return new FailingConnectionWrapper(super.connect(url, info), FailingHSQLDBDriverWrapper.DEFAULT_FAILURE_PERCENT, null);
     }
 }
