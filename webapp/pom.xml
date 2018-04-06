@@ -21,11 +21,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.3.5-SNAPSHOT</version>
+        <version>4.3.5</version>
     </parent>
     <groupId>org.apache.oozie</groupId>
     <artifactId>oozie-webapp</artifactId>
-    <version>4.3.5-SNAPSHOT</version>
+    <version>4.3.5</version>
     <description>Apache Oozie WebApp</description>
     <name>Apache Oozie WebApp</name>
     <packaging>war</packaging>
@@ -275,6 +275,21 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-client</artifactId>
                     <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aws</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk</artifactId>
+                    <version>1.7.4</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.inmobi.grid</groupId>
+                    <artifactId>BlobFS</artifactId>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.oozie</groupId>

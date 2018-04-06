@@ -198,6 +198,9 @@ else
     sudo cp $OOZIE_CURRENT/share/lib/hive2/* $OOZIE_CURRENT/temp_sharelib/lib/hive2/ || true
     sudo cp $OOZIE_CURRENT/share/lib/spark/* $OOZIE_CURRENT/temp_sharelib/lib/spark/ || true
     sudo cp $OOZIE_CURRENT/share/lib/spark2/* $OOZIE_CURRENT/temp_sharelib/lib/spark2/ || true
+    sudo cp $OOZIE_CURRENT/libext/s4*jar $OOZIE_CURRENT/temp_sharelib/lib/oozie/ || true
+    sudo cp $OOZIE_CURRENT/libext/s4*jar $OOZIE_CURRENT/libext/ || true
+    sudo cp $OOZIE_CURRENT/libext/falcon*jar $OOZIE_CURRENT/libext/ || true
 
     sudo cp $OOZIE_CURRENT/share/lib/hcatalog/*.jar $OOZIE_CURRENT/libext/ || true
     sudo cp $OOZIE_CURRENT/share/lib/pig/*.jar $OOZIE_CURRENT/libext/ || true
