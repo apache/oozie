@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3192 OozieDBCLI does not clean up temporary files (Prabhu Joseph via gezapeti)
 OOZIE-3134 Potential inconsistency between the in-memory SLA map and the Oozie database (kmarton via andras.piros)
 OOZIE-3209 XML schema error when submitting pyspark example (kmarton via andras.piros)
 OOZIE-2937 Remove redundant groupId from the child POMs (Jan Hentschel via andras.piros)

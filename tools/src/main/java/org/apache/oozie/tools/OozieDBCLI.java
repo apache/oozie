@@ -165,7 +165,7 @@ public class OozieDBCLI {
         }
     }
 
-    private Map<String, String> getJdbcConf() throws Exception {
+    protected Map<String, String> getJdbcConf() throws Exception {
         Services services = new Services();
         Configuration conf = services.getConf();
         Map<String, String> jdbcConf = new HashMap<String, String>();
@@ -180,6 +180,7 @@ public class OozieDBCLI {
         }
         dbType = dbType.substring(0, dbType.indexOf(":"));
         jdbcConf.put("dbtype", dbType);
+        services.destroy();
         return jdbcConf;
     }
 
