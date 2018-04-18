@@ -20,7 +20,7 @@ Oozie is a server based Workflow Engine specialized in running workflow jobs wit
 
 Oozie is a Java Web-Application that runs in a Java servlet-container.
 
-For the purposes of Oozie, a workflow is a collection of actions (i.e. Hadoop Map/Reduce jobs, Pig jobs) arranged in a control dependency DAG (Direct Acyclic Graph). "control dependency" from one action to another means that the second action can't run until the first action has completed.
+For the purposes of Oozie, a workflow is a collection of actions (i.e. Hadoop Map/Reduce jobs, Pig jobs) arranged in a control dependency DAG (Directed Acyclic Graph). "control dependency" from one action to another means that the second action can't run until the first action has completed.
 
 Oozie workflows definitions are written in hPDL (a XML Process Definition Language similar to JBOSS JBPM jPDL).
 
