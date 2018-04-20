@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3221 Rename DEFAULT_LAUNCHER_MAX_ATTEMPS (dbist13 via andras.piros)
 OOZIE-3222 The description for DAG is not accurate in the documentation (gongchuanjie via gezapeti)
 OOZIE-3192 OozieDBCLI does not clean up temporary files (Prabhu Joseph via gezapeti)
 OOZIE-3134 Potential inconsistency between the in-memory SLA map and the Oozie database (kmarton via andras.piros)

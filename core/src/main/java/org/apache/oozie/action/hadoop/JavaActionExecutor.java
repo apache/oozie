@@ -130,7 +130,7 @@ public class JavaActionExecutor extends ActionExecutor {
     public static final String DEFAULT_LAUNCHER_MEMORY_MB = "oozie.launcher.default.memory.mb";
     public static final String DEFAULT_LAUNCHER_PRIORITY = "oozie.launcher.default.priority";
     public static final String DEFAULT_LAUNCHER_QUEUE = "oozie.launcher.default.queue";
-    public static final String DEFAULT_LAUNCHER_MAX_ATTEMPS = "oozie.launcher.default.max.attempts";
+    public static final String DEFAULT_LAUNCHER_MAX_ATTEMPTS = "oozie.launcher.default.max.attempts";
     public static final String LAUNCER_MODIFY_ACL = "oozie.launcher.modify.acl";
     public static final String LAUNCER_VIEW_ACL = "oozie.launcher.view.acl";
 
@@ -1180,7 +1180,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     private void setMaxAttempts(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
         int launcherMaxAttempts;
-        final int defaultLauncherMaxAttempts = ConfigurationService.getInt(DEFAULT_LAUNCHER_MAX_ATTEMPS);
+        final int defaultLauncherMaxAttempts = ConfigurationService.getInt(DEFAULT_LAUNCHER_MAX_ATTEMPTS);
         if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_MAX_ATTEMPTS) != null) {
             try {
                 launcherMaxAttempts = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_MAX_ATTEMPTS,
