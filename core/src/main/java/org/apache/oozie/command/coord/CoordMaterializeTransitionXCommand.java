@@ -472,9 +472,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     effStart.add(Calendar.MINUTE, -1);
                     firstMater = false;
                 }
-
                 nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob);
+                Date prevTime = new Date(effStart.getTimeInMillis());
                 effStart.setTime(nextTime);
+                addDSTChangeToNominalTime(prevTime, nextTime, coordJob);
             }
 
             if (effStart.compareTo(end) < 0) {
@@ -531,6 +532,31 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
+    /**
+     * Apply DST correction according the job`s timezone, if the difference between the previous nominal time and the actual one
+     * is greater or equal than 24 hours.
+     * Calendar uses a similar approach: applies DST change if the TimeUnit is lower or equal than TimeUnit.DAY. With this approach
+     * a similar behaviour can be achieved.
+     *
+     * @see {@http://oozie.apache.org/docs/5.0.0/CoordinatorFunctionalSpec.html#a7._Handling_Timezones_and_Daylight_Saving_Time}
+     *
+     * @param prevTime nominal time of the previous coordinator action
+     * @param nextTime nominal time of the actual coordinator action
+     * @param coordJob the coordinator job
+     */
+    private void addDSTChangeToNominalTime(Date prevTime, Date nextTime, CoordinatorJobBean coordJob) {
+        final long differenceBetweenTwoActionsInSec = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds
+                (Math.abs(prevTime.getTime() - nextTime.getTime()));
+        final long oneDayInSeconds = java.util.concurrent.TimeUnit.DAYS.toSeconds(1);
+        if (differenceBetweenTwoActionsInSec < oneDayInSeconds) {
+            return;
+        }
+        final long dstOffset = DaylightOffsetCalculator.getDSTOffset(DateUtils
+                .getTimeZone(coordJob.getTimeZone()), coordJob.getStartTime(), nextTime);
+        LOG.debug("[{0}] ms DST offset applied to nominal time for coordinator job: [{1}]", dstOffset, coordJob.getId());
+        nextTime.setTime(nextTime.getTime() + dstOffset);
+    }
+
     private void storeToDB(CoordinatorActionBean actionBean, String actionXml, Configuration jobConf) throws Exception {
         LOG.debug("In storeToDB() coord action id = " + actionBean.getId() + ", size of actionXml = "
                 + actionXml.length());
@@ -559,7 +585,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         job.setLastActionNumber(lastActionNumber);
         // if the job endtime == action endtime, we don't need to materialize this job anymore
         Date jobEndTime = job.getEndTime();
-
 
         if (job.getStatus() == CoordinatorJob.Status.PREP){
             LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");

@@ -20,7 +20,9 @@ package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,6 +61,9 @@ import org.jdom.Element;
 
 @SuppressWarnings("deprecation")
 public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
+
+    private int oneHourInSeconds = (int) java.util.concurrent.TimeUnit.HOURS.toSeconds(1);
+
 
     @Override
     protected void setUp() throws Exception {
@@ -480,7 +485,9 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2012-11-04T07:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T08:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T09:00Z"),
-                DateUtils.parseDateOozieTZ("2012-11-04T10:00Z"), DateUtils.parseDateOozieTZ("2012-11-04T11:00Z") };
+                DateUtils.parseDateOozieTZ("2012-11-04T10:00Z"),
+                DateUtils.parseDateOozieTZ("2012-11-04T11:00Z"),
+        };
         final int expectedNominalTimeCount = 5;
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
@@ -557,7 +564,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
         Date pauseTime = null;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
-                pauseTime, 300, "5");
+                pauseTime, 300, "5", Timeunit.MINUTE);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         checkCoordActionsTimeout(job.getId() + "@1", 300);
     }
@@ -651,7 +658,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testMaterizationLookup() throws Exception {
+    public void testMaterializationLookup() throws Exception {
         long TIME_IN_MIN = 60 * 1000;
         long TIME_IN_HOURS = TIME_IN_MIN * 60;
         long TIME_IN_DAY = TIME_IN_HOURS * 24;
@@ -811,6 +818,276 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         return standard;
     }
 
+    public void testWhenChangingDSTCronAndELMonthlyFrequenciesEqual() throws Exception {
+        String dstAwareMonthlyCron = "10 23 1 1-12 *";
+        Date startTime = DateUtils.parseDateOozieTZ("2016-03-01T23:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-12-03T00:00Z");;
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-04-01T15:10")),  // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-05-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-06-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-07-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-08-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-09-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-10-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-01T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-12-01T15:10")),  // DST ended
+        };
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithTwoDstChange, dstAwareMonthlyCron, "1", Timeunit.MONTH);
+    }
+
+    public void testWhenChangingDSTCronAndELDailyFrequenciesEqual() throws Exception {
+        String dstAwareDailyCron = "10 23 * * *";
+        Date startTime = DateUtils.parseDateOozieTZ("2016-03-11T23:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-03-15T02:00Z");
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-11T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T15:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-14T15:10")),
+        };
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithTwoDstChange, dstAwareDailyCron, "1", Timeunit.DAY);
+    }
+
+    public void testWhenChangingDSTELEveryTwentyFourthHour() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-03-11T23:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-03-15T02:00Z");
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-11T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T15:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T16:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-14T16:10")),
+        };
+        testELNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange,"24", Timeunit.HOUR);
+    }
+
+    public void testWhenBeginningDSTCronAndELHourlyFrequenciesEqual() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2017-03-12T07:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2017-03-12T12:30Z");
+        String everyHourAtTen = "10 * * * *";
+        Date[] nominalTimesWithOneDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-11T23:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T00:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T01:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T03:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T04:10")),
+        };
+
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithOneDstChange, everyHourAtTen, "1", Timeunit.HOUR);
+    }
+
+    public void testWhenEndingDSTCronAndELHourlyFrequenciesEqual() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2017-11-05T07:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2017-11-05T10:30Z");
+        String everyHourAtTen = "10 * * * *";
+        Date[] nominalTimesWithOneDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ("2017-11-05T07:10Z"), // LA time: 2017-11-05T00:10
+                DateUtils.parseDateOozieTZ("2017-11-05T08:10Z"), // LA time: 2017-11-05T01:10
+                DateUtils.parseDateOozieTZ("2017-11-05T09:10Z"), // LA time: 2017-11-05T01:10, DST ended
+                DateUtils.parseDateOozieTZ("2017-11-05T10:10Z"), // LA time: 2017-11-05T02:10
+                DateUtils.parseDateOozieTZ("2017-11-05T11:10Z"), // LA time: 2017-11-05T03:10
+        };
+
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithOneDstChange, everyHourAtTen, "1", Timeunit.HOUR);
+    }
+
+    public void testWhenChangingDSTELEveryTwentiethDay() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-02-01T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-12-03T00:00Z");
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-02-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-02-21T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-04-01T05:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-04-21T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-05-11T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-05-31T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-06-20T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-07-10T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-07-30T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-08-19T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-09-08T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-09-28T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-10-18T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-07T05:10")), // DST ended
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-27T05:10")),
+        };
+
+        testELNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange,"20", Timeunit.DAY);
+    }
+
+    public void testWhenChangingDSTCronEveryTwentiethDay() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-02-01T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-12-03T00:00Z");
+        String everyTwentiethDayAroundDstShift = "10 13 */20 2-3,11,12 *";
+
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-02-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-02-21T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-21T05:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-21T05:10")), // DST ended
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-12-01T05:10")),
+        };
+        testCronNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange, everyTwentiethDayAroundDstShift);
+    }
+
+    public void testWhenChangingDSTCronAndELEveryThirdMonthFrequenciesEqual() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-01-01T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2017-12-03T00:00Z");
+        String everyThirdMonth = "10 13 1 */3 *";
+
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-01-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-04-01T05:10")), // DST started on 13th March
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-07-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-10-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-01-01T05:10")), // DST ended on 6th of November
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-04-01T05:10")), // DST started again on 12th March
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-07-01T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-10-01T05:10")),
+        };
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithTwoDstChange, everyThirdMonth, "3", Timeunit.MONTH);
+    }
+
+    public void testWhenDSTStartsCronFrequencyEveryTwentiethHour() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-01-01T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-12-03T00:00Z");
+        String everyTwentiethHourNearDSTShift = "10 */20 12-14 3 *";
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-11T16:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T12:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T16:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T13:10")), // DST change
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T17:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-14T13:10")),
+        };
+        testCronNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange, everyTwentiethHourNearDSTShift);
+    }
+
+    public void testWhenDSTStartsELFrequencyEveryTwentiethHour() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-03-12T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-03-16T00:00Z");
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-12T05:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T01:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T22:10")), // DST started
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-14T18:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-15T14:10")),
+        };
+
+        testELNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange, "20", Timeunit.HOUR);
+    }
+
+    public void testWhenDSTSEndsCronFrequencyEveryTwentiethHour() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-01-01T13:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-12-03T00:00Z");
+        String everyTwentiethHourNearDSTShift = "10 */20 5-7 11 *";
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-04T16:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-05T13:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-05T17:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-06T12:10")), // DST change
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-06T16:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-07T12:10")),
+        };
+
+        testCronNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange, everyTwentiethHourNearDSTShift);
+    }
+
+    public void testWhenDSTEndsELFrequencyEveryTwentiethHour() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-11-04T23:10Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-11-08T22:00Z");
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-04T16:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-05T12:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-06T07:10")), // DST ended
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-07T03:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-11-07T23:10")),
+        };
+
+        testELNominalTimes(startTime, endTime, nominalTimesWithTwoDstChange, "20", Timeunit.HOUR);
+    }
+
+    public void testWhenDSTSwitchELAndCronFrequencyEveryThirtiethMinute() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2016-03-13T08:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2016-03-13T13:00Z");
+        String everyThirtiethMinuteCron = "*/30 * * * *";
+        Date[] nominalTimesWithTwoDstChange = new Date[]{
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T00:00")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T00:30")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T01:00")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T01:30")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T02:00")), // DST change
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T02:30")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T04:00")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T04:30")),
+        };
+
+        testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithTwoDstChange,everyThirtiethMinuteCron,
+                "30", Timeunit.MINUTE);
+    }
+
+    private String convertLATimeToUTC (String localTime) throws Exception {
+        DateFormat LATimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+        LATimeFormat.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+        Date date = LATimeFormat.parse(localTime);
+
+        DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        return utcFormat.format(date);
+
+    }
+
+    private void testELAndCronNominalTimesEqual (Date startTime, Date endTime, Date[] nominalTimes, String cronFrequency,
+                                                 String elFrequency, Timeunit elTimeUnit) throws Exception {
+        CoordinatorJobBean elJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
+                elFrequency, elTimeUnit);
+        CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
+                cronFrequency);
+
+        new CoordMaterializeTransitionXCommand(elJob.getId(), oneHourInSeconds).call();
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), oneHourInSeconds).call();
+
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+
+        elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
+        cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
+
+        checkCoordActionsNominalTime(cronJob.getId(), nominalTimes.length, nominalTimes);
+        checkCoordActionsNominalTime(elJob.getId(), nominalTimes.length, nominalTimes);
+
+        assertTrue("Cron and EL job materialization should both be complete",
+                elJob.isDoneMaterialization() && cronJob.isDoneMaterialization());
+    }
+
+    private void testCronNominalTimes (Date startTime, Date endTime, Date[] nominalTimes, String cronFrequency) throws Exception {
+        CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
+                cronFrequency);
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), oneHourInSeconds).call();
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
+        checkCoordActionsNominalTime(cronJob.getId(), nominalTimes.length, nominalTimes);
+        assertTrue("Cron job materialization should be complete", cronJob.isDoneMaterialization());
+    }
+
+    private void testELNominalTimes (Date startTime, Date endTime, Date[] nominalTimes, String elFrequency, Timeunit elTimeUnit)
+            throws Exception {
+        CoordinatorJobBean elJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
+                elFrequency, elTimeUnit);
+        new CoordMaterializeTransitionXCommand(elJob.getId(), oneHourInSeconds).call();
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
+        checkCoordActionsNominalTime(elJob.getId(), nominalTimes.length, nominalTimes);
+        assertTrue("EL job materialization should be complete", elJob.isDoneMaterialization());
+    }
+
     public void testLastOnlyMaterialization() throws Exception {
 
         long now = System.currentTimeMillis();
@@ -968,35 +1245,39 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, String freq) throws Exception {
-        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq);
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, Timeunit.MINUTE);
+    }
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, String freq, Timeunit timeUnit) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, timeUnit);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, String freq, int matThrottling) throws Exception {
-        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, CoordinatorJob.Execution.FIFO,
-                matThrottling);
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, Timeunit.MINUTE,
+                CoordinatorJob.Execution.FIFO, matThrottling);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
-            Date pauseTime, int timeout, String freq) throws Exception {
-        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq,
+            Date pauseTime, int timeout, String freq, Timeunit timeUnit) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, timeUnit,
                 CoordinatorJob.Execution.FIFO, 20);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
             Date pauseTime, int timeout, String freq, CoordinatorJob.Execution execution) throws Exception {
-        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, execution, 20);
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, Timeunit.MINUTE, execution, 20);
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
-            Date pauseTime, int timeout, String freq, CoordinatorJob.Execution execution, int matThrottling)
+            Date pauseTime, int timeout, String freq, Timeunit timeUnit, CoordinatorJob.Execution execution, int matThrottling)
             throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
         coordJob.setStartTime(startTime);
         coordJob.setEndTime(endTime);
         coordJob.setPauseTime(pauseTime);
         coordJob.setFrequency(freq);
-        coordJob.setTimeUnit(Timeunit.MINUTE);
+        coordJob.setTimeUnit(timeUnit);
         coordJob.setTimeout(timeout);
         coordJob.setConcurrency(3);
         coordJob.setMatThrottling(matThrottling);

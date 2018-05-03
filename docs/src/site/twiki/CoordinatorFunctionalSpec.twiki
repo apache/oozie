@@ -3661,6 +3661,24 @@ Each nested operation can be named and passed into the workflow using coord:data
 
 As mentioned in section #4.1.1 'Timezones and Daylight-Saving', the coordinator engine works exclusively in UTC, and dataset and application definitions are always expressed in UTC.
 
+
+*%GREEN% Example of nominal times in case of DST change: %ENDCOLOR%*
+
+| *Frequency* | *Timezone* | *Nominal times in local time* | *Comments* |
+| =${coord:months(1)}= or =${10 23 1 1-12 *}= | America/Los_Angeles | 2016-03-01T15:10 <br/> 2016-04-01T15:10 <br/> 2016-05-01T15:10  <br/> ...  <br/> 2016-11-01T15:10 <br/> 2016-12-01T15:10 | <br/>DST Start on March 13, 2:00 am <br/><br/><br/><br/> DST End on November 6, 2:00 am|
+| =${coord:month(3)} or =${10 13 1 */3 *}= | America/Los_Angeles |2016-01-01T05:10 <br/> 2016-04-01T05:10 <br/> 2016-07-01T05:10 <br/> 2016-10-01T05:10 <br/> 2017-01-01T05:10 <br/> 2017-04-01T05:10 <br/> 2017-07-01T05:10 | <br/> DST Start on 2016 March 13, 2:00 am <br/><br/><br/>DST End on 2016 November 6, 2:00 am <br/> DST Start on 2017 March 12, 2:00 am|
+| =${coord:days(20)}=| America/Los_Angeles | 2016-03-12T05:10 <br/> 2016-04-01T05:10 <br/> 2016-04-21T05:10 <br/> ... <br/> 2016-11-07T05:10 <br/> 2016-11-27T05:10 |<br/> DST Start on March 13, 2:00 am <br/><br/><br/> DST End on November 6, 2:00 am|
+| =${10 13 */20 * *}= | America/Los_Angeles | 2016-03-01T05:10 <br/> 2016-03-21T05:10 <br/> 2016-11-01T05:10 <br/> 2016-11-21T05:10 <br/> 2016-12-01T05:10 | <br/> DST Start on March 13, 2:00 am <br/><br/> DST End on November 6, 2:00|
+| =${coord:days(1)}= or =${10 23 * * *}= | America/Los_Angeles | 2016-03-11T15:10 <br/> 2016-03-12T15:10 <br/> 2016-03-13T15:10 <br/> 2016-03-14T15:10 | <br/> DST Start on March 13, 2:00 am|
+| =${coord:hours(24)}=| America/Los_Angeles | 2016-03-11T15:10 <br/> 2016-03-12T15:10 <br/> 2016-03-13T16:10 <br/> 2016-03-14T16:10 | <br/><br/> DST Start on March 13, 2:00 am, but since the time unit is in hours, there will be a shift in local time|
+| =${coord:hours(1)}= or =${10 * * * *}= | America/Los_Angeles | 2017-03-12T00:10 <br/> 2017-03-12T01:10 <br/> 2017-03-12T03:10 <br/> 2017-03-12T04:10 | <br/><br/> DST Start on March 12, 2:00 am, so hour 2 will be skipped|
+| =${coord:hours(1)}= or =${10 * * * *}= | America/Los_Angeles | 2017-11-05T00:10 <br/> 2017-11-05T01:10 <br/> 2017-11-05T01:10 <br/> 2017-11-05T02:10 <br/> 2017-11-05T03:10 | <br/><br/> DST End on November 5, 2:00 am, so hour 1 will be doubled|
+| =${10 */20 12-14 3 *}= | America/Los_Angeles | 2016-03-12T12:10  <br/> 2016-03-12T16:10 <br/> 2016-03-13T13:10 <br/> 2016-03-13T17:10 <br/> 2016-03-14T13:10 <br/> ... <br/> 2016-11-05T17:10 <br/> 2016-11-06T12:10 <br/> 2016-11-06T16:10 | <br/> <br/> DST Start on March 13, 2:00 am, so after this time the nominal times will be shifted <br/><br/><br/> <br/> DST End on November 6, 2:00 am|
+| =${coord:hours(20)}= | America/Los_Angeles |2016-03-12T05:10 <br/> 2016-03-13T01:10 <br/> 2016-03-13T22:10 <br/> 2016-03-14T18:10 <br/> 2016-03-15T14:10 <br/> ... <br/> 2016-11-05T12:10 <br/> 2016-11-06T07:10 <br/> 2016-11-07T03:10 <br/> 2016-11-07T23:10 | <br/><br/> DST Start on March 13, 2:00, so here will be 21 hours in local time between the two materialization times <br/><br/><br/><br/><br/> DST End on November 6, 2:00 am, so here will be a 19 hour difference in local time|
+| =${coord:minutes(30)}= or =${*/30 * * * *}= | America/Los_Angeles | 2016-03-13T01:00 <br/> 2016-03-13T01:30 <br/> 2016-03-13T02:00 <br/> 2016-03-13T02:30 <br/> 2016-03-13T04:00 <br/> 2016-03-13T04:30 | <br/><br/><br/> DST Start on March 13, 2:00 am|
+
+*IMPORTANT:* Please note, that in the actual implementation, DST corrections are not applied in case of higher frequencies than one day, so for this frequencies, some shifting in nominal times are expected.
+
 ---+++ 7.1. Handling Timezones with No Day Light Saving Time
 
 For timezones that don't observe day light saving time, handling timezones offsets is trivial.
