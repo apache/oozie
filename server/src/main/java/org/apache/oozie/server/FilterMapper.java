@@ -56,6 +56,7 @@ public class FilterMapper {
     }
 
     private void mapFilter(FilterHolder authFilter, String pathSpec) {
-        servletContextHandler.addFilter(authFilter, pathSpec, EnumSet.of(DispatcherType.REQUEST));
+        servletContextHandler.addFilter(authFilter, pathSpec,
+                EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.INCLUDE));
     }
 }

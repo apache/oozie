@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3225 [Kerberos] Webconsole disabled message shown instead of 401 error (kmarton via andras.piros)
 OOZIE-2494 Cron syntax not handling DST properly (kmarton via andras.piros)
 OOZIE-2427 [Kerberos] Authentication failure for the javascript resources under /ext-2.2 (lianggz via andras.piros)
 OOZIE-3221 Rename DEFAULT_LAUNCHER_MAX_ATTEMPS (dbist13 via andras.piros)
