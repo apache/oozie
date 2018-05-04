@@ -119,8 +119,13 @@ public class SparkMain extends LauncherMain {
     private void createPySparkLibFolder() throws OozieActionConfiguratorException, IOException {
         final File pythonLibDir = new File("python/lib");
         if(!pythonLibDir.exists()){
-            pythonLibDir.mkdirs();
-            System.out.println("PySpark lib folder " + pythonLibDir.getAbsolutePath() + " folder created.");
+            boolean pythonLibDirCreated = pythonLibDir.mkdirs();
+
+            if (pythonLibDirCreated) {
+                System.out.println("PySpark lib folder " + pythonLibDir.getAbsolutePath() + " folder created.");
+            } else {
+                System.out.println("PySpark lib folder not created at " + pythonLibDir.getAbsolutePath());
+            }
         }
 
         for(final Pattern fileNamePattern : PYSPARK_DEP_FILE_PATTERN) {
