@@ -19,13 +19,10 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
-import org.jdom.Element;
 import org.json.simple.JSONValue;
 
-import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Date;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
@@ -161,7 +158,7 @@ public class ELConstantsFunctions {
      * @return the trimmed version of the given string or the empty string if the given string was <code>null</code>
      */
     public static String trim(String input) {
-        return (input == null) ? "" : input.trim();
+        return org.apache.commons.lang.StringUtils.trimToEmpty(input);
     }
 
     /**

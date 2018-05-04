@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 
@@ -63,7 +64,7 @@ public class DistcpActionExecutor extends JavaActionExecutor{
 
     @Override
     public List<Class<?>> getLauncherClasses() {
-        List<Class<?>> classes = new ArrayList<Class<?>>();
+        List<Class<?>> classes = new ArrayList<>();
         try {
             classes.add(Class.forName(CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS));
         }
@@ -82,7 +83,7 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     public static String getClassNamebyType(String type){
         String classname = null;
         for (String function : ConfigurationService.getStrings(CLASS_NAMES)) {
-            function = DistcpActionExecutor.Trim(function);
+            function = StringUtils.trim(function);
             LOG.debug("class for Distcp Action: " + function);
             String[] str = function.split("=");
             if (str.length > 0) {
@@ -92,21 +93,6 @@ public class DistcpActionExecutor extends JavaActionExecutor{
             }
         }
         return classname;
-    }
-
-    /**
-     * To trim string
-     *
-     * @param str
-     * @return trim string
-     */
-    public static String Trim(String str) {
-        if (str != null) {
-            str = str.replaceAll("\\n", "");
-            str = str.replaceAll("\\t", "");
-            str = str.trim();
-        }
-        return str;
     }
 
     /**
