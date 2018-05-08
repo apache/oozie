@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3232 Reduce heap waste by reducing duplicate string count (Misha Dmitriev via andras.piros)
 OOZIE-2914 Consolidate trim calls (Jan Hentschel via andras.piros)
 OOZIE-2934 [sharelib/spark] Fix Findbugs error (Jan Hentschel via andras.piros)
 OOZIE-3225 [Kerberos] Webconsole disabled message shown instead of 401 error (kmarton via andras.piros)

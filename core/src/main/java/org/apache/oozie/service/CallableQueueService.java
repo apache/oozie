@@ -45,6 +45,7 @@ import org.apache.oozie.util.NamedThreadFactory;
 import org.apache.oozie.util.PollablePriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
 
@@ -279,7 +280,7 @@ public class CallableQueueService implements Service, Instrumentable {
                 separator = ",";
             }
             sb.append("]");
-            name = sb.toString();
+            name = StringUtils.intern(sb.toString());
         }
 
         @Override

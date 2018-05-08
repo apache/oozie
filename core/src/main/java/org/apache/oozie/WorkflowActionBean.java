@@ -44,6 +44,7 @@ import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
 import org.apache.openjpa.persistence.jdbc.Strategy;
@@ -372,7 +373,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         setTrackerUri(WritableUtils.readStr(dataInput));
         setConsoleUrl(WritableUtils.readStr(dataInput));
         setErrorInfo(WritableUtils.readStr(dataInput), WritableUtils.readStr(dataInput));
-        wfId = WritableUtils.readStr(dataInput);
+        setJobId(WritableUtils.readStr(dataInput));
         executionPath = WritableUtils.readStr(dataInput);
         pending = dataInput.readInt();
         d = dataInput.readLong();
@@ -677,7 +678,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param id jobId;
      */
     public void setJobId(String id) {
-        this.wfId = id;
+        this.wfId = StringUtils.intern(id);
     }
 
     public void setSlaXml(String slaXmlStr) {
@@ -707,7 +708,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param val the status
      */
     public void setStatus(Status val) {
-        this.statusStr = val.toString();
+        this.statusStr = StringUtils.intern(val.toString());
     }
 
     @Override
@@ -721,7 +722,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param statusStr the status
      */
     public void setStatusStr(String statusStr) {
-        this.statusStr = statusStr;
+        this.statusStr = StringUtils.intern(statusStr);
     }
 
     /**
@@ -920,7 +921,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setId(String id) {
-        this.id = id;
+        this.id = StringUtils.intern(id);
     }
 
     public Timestamp getCreatedTimestamp() {
@@ -941,7 +942,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.intern(name);
     }
 
     @Override
@@ -959,7 +960,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setType(String type) {
-        this.type = type;
+        this.type = StringUtils.intern(type);
     }
 
     @Override
@@ -1108,7 +1109,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param externalId the id
      */
     public void setExternalId(String externalId) {
-        this.externalId = externalId;
+        this.externalId = StringUtils.intern(externalId);
     }
 
     @Override
@@ -1122,7 +1123,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param externalStatus the external status
      */
     public void setExternalStatus(String externalStatus) {
-        this.externalStatus = externalStatus;
+        this.externalStatus = StringUtils.intern(externalStatus);
     }
 
     @Override
@@ -1136,7 +1137,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param trackerUri the URI
      */
     public void setTrackerUri(String trackerUri) {
-        this.trackerUri = trackerUri;
+        this.trackerUri = StringUtils.intern(trackerUri);
     }
 
     @Override

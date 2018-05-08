@@ -25,6 +25,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
@@ -437,13 +438,9 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         return endTimestamp;
     }
 
-    public void setStatusStr (String statusStr) {
-        this.statusStr = statusStr;
-    }
+    public void setStatusStr (String statusStr) { this.statusStr = StringUtils.intern(statusStr); }
 
-    public void setStatus(Status val) {
-        this.statusStr = val.toString();
-    }
+    public void setStatus(Status val) { this.statusStr = StringUtils.intern(val.toString()); }
 
     @Override
     public Status getStatus() {
@@ -455,7 +452,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     }
 
     public void setExternalId(String externalId) {
-        this.externalId = externalId;
+        this.externalId = StringUtils.intern(externalId);
     }
 
     @Override
@@ -533,25 +530,19 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         return appPath;
     }
 
-    public void setAppPath(String appPath) {
-        this.appPath = appPath;
-    }
+    public void setAppPath(String appPath) { this.appPath = StringUtils.intern(appPath); }
 
     public String getAppName() {
         return appName;
     }
 
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
+    public void setAppName(String appName) { this.appName = StringUtils.intern(appName); }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public void setId(String id) { this.id = StringUtils.intern(id); }
 
     public String getConf() {
         return conf == null ? null : conf.getString();
@@ -578,9 +569,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
         return user;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
+    public void setUser(String user) { this.user = StringUtils.intern(user); }
 
     public String getGroup() {
         return group;
@@ -592,7 +581,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
     }
 
     public void setGroup(String group) {
-        this.group = group;
+        this.group = StringUtils.intern(group);
     }
 
     public int getRun() {
@@ -628,9 +617,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
      *
      * @param parentId the Parent Action id
      */
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
-    }
+    public void setParentId(String parentId) { this.parentId = StringUtils.intern(parentId); }
 
     /**
      * Set the workflow job console URL.
@@ -638,7 +625,7 @@ public class WorkflowJobBean implements Writable, WorkflowJob, JsonBean {
      * @param consoleUrl the workflow job console URL.
      */
     public void setConsoleUrl(String consoleUrl) {
-        this.consoleUrl = consoleUrl;
+        this.consoleUrl = StringUtils.intern(consoleUrl);
     }
 
     @SuppressWarnings("unchecked")

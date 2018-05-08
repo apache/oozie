@@ -37,4 +37,17 @@ public class StringUtils {
         }
         return str;
     }
+
+    /**
+     * Return the internalized string, or null if the given string is null.
+     * @param str The string to intern
+     * @return The identical string cached in the JVM string pool.
+     */
+    public static String intern(String str) {
+        if (str == null) {
+            return null;
+        }
+        return str.intern();
+    }
 }
+
