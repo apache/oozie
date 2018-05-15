@@ -20,8 +20,8 @@ package org.apache.oozie.util.db;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
-import org.apache.directory.api.util.Strings;
 import org.apache.oozie.util.XLog;
 
 import javax.annotation.Nullable;
@@ -354,7 +354,7 @@ public class FailingConnectionWrapper implements Connection {
 
         @Override
         public boolean apply(@Nullable String input) {
-            Preconditions.checkArgument(Strings.isNotEmpty(input));
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(input));
 
             boolean isDmlStatement = false;
             for (final String dmlPrefix : DML_PREFIXES) {

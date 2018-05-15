@@ -19,6 +19,7 @@
 package org.apache.oozie.tools;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -26,7 +27,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.directory.api.util.Strings;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -166,7 +166,7 @@ public class OozieDBImportCLI {
     }
 
     private static void setImportBatchSize() {
-        if (Strings.isNotEmpty(System.getProperty(OOZIE_DB_IMPORT_BATCH_SIZE_KEY))) {
+        if (!Strings.isNullOrEmpty(System.getProperty(OOZIE_DB_IMPORT_BATCH_SIZE_KEY))) {
             try {
                 IMPORT_BATCH_SIZE = Integer.parseInt(System.getProperty(OOZIE_DB_IMPORT_BATCH_SIZE_KEY));
             }
