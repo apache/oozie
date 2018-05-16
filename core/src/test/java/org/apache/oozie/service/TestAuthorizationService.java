@@ -80,10 +80,12 @@ public class TestAuthorizationService extends XDataTestCase {
     private Services services;
 
     private void init(boolean useDefaultGroup, boolean useAdminUsersFile) throws Exception {
-        init(useDefaultGroup, useAdminUsersFile, StringUtils.EMPTY);
+        boolean useAdminGroups = !useAdminUsersFile;
+        init(useDefaultGroup, StringUtils.EMPTY, useAdminUsersFile, false, useAdminGroups);
     }
 
-    private void init(boolean useDefaultGroup, boolean useAdminUsersFile, String systemInfoAuthUsers) throws
+    private void init(boolean useDefaultGroup, String systemInfoAuthUsers,
+                      boolean useAdminUsersFile, boolean useOozieSiteForAdminUsers, boolean useAdminGroups) throws
             Exception {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
@@ -94,14 +96,20 @@ public class TestAuthorizationService extends XDataTestCase {
             Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
             IOUtils.copyCharStream(adminListReader, adminListWriter);
         }
-        else {
+        if (useAdminGroups) {
             conf.set(AuthorizationService.CONF_ADMIN_GROUPS, getTestGroup());
         }
+
+        if (useOozieSiteForAdminUsers) {
+            conf.set(AuthorizationService.CONF_ADMIN_USERS, getAdminUser());
+        }
+
         conf.set(AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS, systemInfoAuthUsers);
         conf.set(Services.CONF_SERVICE_CLASSES,
                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() + ","
                         + DummyGroupsService.class.getName());
         conf.set(AuthorizationService.CONF_DEFAULT_GROUP_AS_ACL, Boolean.toString(useDefaultGroup));
+        conf.setBoolean(AuthorizationService.CONF_AUTHORIZATION_ENABLED, true);
         services.init();
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
@@ -311,8 +319,10 @@ public class TestAuthorizationService extends XDataTestCase {
         }
     }
 
-    private void _testAdminUsers(boolean useAdminFile, String adminUser, String regularUser) throws Exception {
-        init(true, useAdminFile);
+
+    private void _testAdminUsers(boolean useAdminFile, String adminUser, String regularUser,
+                                 boolean adminUserFromOozieSite, boolean useAdminGroup) throws Exception {
+        init(true, StringUtils.EMPTY, useAdminFile, adminUserFromOozieSite, useAdminGroup );
 
         AuthorizationService as = services.get(AuthorizationService.class);
         as.authorizeForAdmin(adminUser, false);
@@ -323,31 +333,25 @@ public class TestAuthorizationService extends XDataTestCase {
         }
         catch (AuthorizationException ex) {
         }
-        try {
-            as.authorizeForAdmin(regularUser, true);
-            fail();
-        }
-        catch (AuthorizationException ex) {
-        }
     }
 
     public void testAdminUsersWithAdminFile() throws Exception {
-        _testAdminUsers(true, "admin", getTestUser());
+        _testAdminUsers(true, "admin", getTestUser(), false, false);
     }
 
     public void testAdminUsersWithAdminGroup() throws Exception {
-        _testAdminUsers(false, getTestUser(), getTestUser2());
+        _testAdminUsers(false, getTestUser(), getTestUser2(), false, true);
     }
 
     public void testAuthorizedSystemInfoDefaultSuccess() throws Exception {
         //AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS is empty
-        init(true, false, StringUtils.EMPTY);
+        init(true, StringUtils.EMPTY, false, false, true);
         services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser", "proxyUser");
     }
 
     public void testAuthorizedSystemInfoSuccess() throws Exception {
         //Set AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS to proxyUser,regularUser
-        init(true, false, "proxyUser,regularUser");
+        init(true, "proxyUser,regularUser", false, false, true);
 
         //Use proxyUser in request
         services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser");
@@ -361,7 +365,7 @@ public class TestAuthorizationService extends XDataTestCase {
     }
 
     public void testAuthorizedSystemInfoFailure() throws Exception {
-        init(true, false, "proxyUser,regularUser");
+        init(true, "proxyUser,regularUser", false, false, true);
         try {
             services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser1");
             fail("Should have thrown exception because regularUser1 or proxyUser1 are not authorized to access system info");
@@ -370,5 +374,27 @@ public class TestAuthorizationService extends XDataTestCase {
             assertEquals("Exception message is different than expected",
                     "E0503: User [regularUser1] does not have admin " + "privileges", ex.getMessage());
         }
+    }
+
+    public void testWhenDefinedInConfigurationThenAdminPrivilegesAllowed() throws Exception {
+        _testAdminUsers(false, getAdminUser(), getTestUser(), true, false);
+    }
+
+    public void testWhenDefinedInAdminFileAndConfigurationThenAllowBothAdmins() throws Exception {
+        init(true, StringUtils.EMPTY, true, true, false );
+
+        AuthorizationService as = services.get(AuthorizationService.class);
+        as.authorizeForAdmin(getAdminUser(), false);
+        as.authorizeForAdmin(getAdminUser(), true);
+        as.authorizeForAdmin("admin", false);
+        as.authorizeForAdmin("admin", true);
+        try {
+            as.authorizeForAdmin(getTestUser(), true);
+            fail();
+        }
+        catch (AuthorizationException ex) {
+        }
+
+
     }
 }

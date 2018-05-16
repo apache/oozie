@@ -330,6 +330,14 @@
     </property>
 
     <property>
+        <name>oozie.serviceAuthorizationService.admin.users</name>
+        <value></value>
+        <description>
+            Comma separated list of users with admin access for the Authorization service.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.AuthorizationService.system.info.authorized.users</name>
         <value></value>
         <description>

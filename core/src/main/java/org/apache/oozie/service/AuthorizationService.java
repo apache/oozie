@@ -25,12 +25,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Set;
-
+import java.util.LinkedHashSet;
+import com.google.common.collect.Sets;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -82,6 +85,11 @@ public class AuthorizationService implements Service {
 
     public static final String CONF_SYSTEM_INFO_AUTHORIZED_USERS = CONF_PREFIX + "system.info.authorized.users";
 
+    /**
+     * Configuration parameter to define admin users in oozie-site.xml.
+     * These admin users shall be added to the admin users found in adminusers.txt
+     */
+    public static final String CONF_ADMIN_USERS = CONF_PREFIX + "admin.users";
 
     /**
      * File that contains list of admin users for Oozie.
@@ -140,7 +148,8 @@ public class AuthorizationService implements Service {
             else {
                 log.info("Admin users will be checked against the 'adminusers.txt' file contents");
                 adminUsers = new HashSet<String>();
-                loadAdminUsers();
+                loadAdminUsersFromFile();
+                loadAdminUsersFromConfiguration();
             }
         }
         else {
@@ -177,13 +186,15 @@ public class AuthorizationService implements Service {
      *
      * @throws ServiceException if the admin user list could not be loaded.
      */
-    private void loadAdminUsers() throws ServiceException {
+    private void loadAdminUsersFromFile() throws ServiceException {
         String configDir = Services.get().get(ConfigurationService.class).getConfigDir();
         if (configDir != null) {
-            File file = new File(configDir, ADMIN_USERS_FILE);
+            File file = new File(FilenameUtils.getFullPath(configDir)+FilenameUtils.getBaseName(configDir),
+                    FilenameUtils.getName(ADMIN_USERS_FILE));
             if (file.exists()) {
                 try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                    BufferedReader br = new BufferedReader(
+                            new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                     try {
                         String line = br.readLine();
                         while (line != null) {
@@ -197,17 +208,29 @@ public class AuthorizationService implements Service {
                     catch (IOException ex) {
                         throw new ServiceException(ErrorCode.E0160, file.getAbsolutePath(), ex);
                     }
+                    finally {
+                        br.close();
+                    }
                 }
-                catch (FileNotFoundException ex) {
+                catch (IOException ex) {
                     throw new ServiceException(ErrorCode.E0160, file.getAbsolutePath(), ex);
                 }
             }
             else {
-                log.warn("Admin users file not available in config dir [{0}], running without admin users", configDir);
+                log.warn("Admin users file not available in config dir [{0}]", configDir);
             }
         }
         else {
             log.warn("Reading configuration from classpath, running without admin users");
+        }
+    }
+
+    private void loadAdminUsersFromConfiguration() {
+        LinkedHashSet<String> adminsFromOozieSite = Sets.newLinkedHashSet();
+        adminsFromOozieSite.addAll(Services.get().get(ConfigurationService.class).getConf().getStringCollection(CONF_ADMIN_USERS));
+        if (!adminsFromOozieSite.isEmpty()) {
+            log.info("{0} admin users found in oozie-site.xml", adminsFromOozieSite.size());
+            adminUsers.addAll(adminsFromOozieSite);
         }
     }
 

@@ -258,6 +258,12 @@ public abstract class XTestCase extends TestCase {
     public static final String TEST_GROUP_PROP = "oozie.test.group";
 
     /**
+     * System property that specifies the test admin user used in the tests.
+     * The default value of this property is myAdmin
+     */
+    public static final String TEST_ADMIN_PROP = "oozie.test.admin.user";
+
+    /**
      * System property that specifies the test groiup used by the tests.
      * The default value of this property is <tt>testg</tt>.
      */
@@ -606,6 +612,14 @@ public abstract class XTestCase extends TestCase {
      */
     protected static String getTestGroup() {
         return System.getProperty(TEST_GROUP_PROP, "testg");
+    }
+
+    /**
+     * Return Admin user
+     * @return the admin user
+     */
+    protected static String getAdminUser(){
+        return System.getProperty(TEST_ADMIN_PROP,"myAdmin");
     }
 
     /**
