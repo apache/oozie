@@ -22,12 +22,12 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Test;
-import scala.util.PropertiesTrait;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -36,6 +36,8 @@ import static org.apache.oozie.action.hadoop.SparkArgsExtractor.SPARK_DEFAULTS_G
 import static org.junit.Assert.assertEquals;
 
 public class TestSparkArgsExtractor {
+
+    private static final String SPARK_DEFAULTS_PROPERTIES = "spark-defaults.conf";
 
     @Test
     public void testAppendOoziePropertiesToSparkConf() throws Exception {
@@ -307,6 +309,46 @@ public class TestSparkArgsExtractor {
                 sparkArgs);
     }
 
+    @Test
+    public void testPropertiesArePrependedToSparkArgs() throws IOException, OozieActionConfiguratorException, URISyntaxException {
+        final Configuration actionConf = new Configuration();
+        actionConf.set(SparkActionExecutor.SPARK_MASTER, "yarn");
+        actionConf.set(SparkActionExecutor.SPARK_MODE, "client");
+        actionConf.set(SparkActionExecutor.SPARK_CLASS, "org.apache.oozie.example.SparkFileCopy");
+        actionConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark Copy File");
+        actionConf.set(SparkActionExecutor.SPARK_JAR, "/lib/test.jar");
+
+        createTemporaryFileWithContent(SPARK_DEFAULTS_PROPERTIES, "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf\n" +
+                "spark.driver.extraClassPath=/etc/hbase/conf:/etc/hive/conf\n" +
+                "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions\n" +
+                "spark.driver.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions");
+
+        final List<String> sparkArgs = new SparkArgsExtractor(actionConf).extract(new String[0]);
+
+        assertEquals("Spark args mismatch",
+                Lists.newArrayList("--master", "yarn",
+                        "--deploy-mode", "client",
+                        "--name", "Spark Copy File",
+                        "--class", "org.apache.oozie.example.SparkFileCopy",
+                        "--conf", "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*",
+                        "--conf", "spark.driver.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*",
+                        "--conf", "spark.yarn.security.tokens.hadoopfs.enabled=false",
+                        "--conf", "spark.yarn.security.tokens.hive.enabled=false",
+                        "--conf", "spark.yarn.security.tokens.hbase.enabled=false",
+                        "--conf", "spark.yarn.security.credentials.hadoopfs.enabled=false",
+                        "--conf", "spark.yarn.security.credentials.hive.enabled=false",
+                        "--conf", "spark.yarn.security.credentials.hbase.enabled=false",
+                        "--conf", "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions " +
+                                "-Dlog4j.configuration=spark-log4j.properties",
+                        "--conf", "spark.driver.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions " +
+                                "-Dlog4j.configuration=spark-log4j.properties",
+                        "--properties-file", "spark-defaults-oozie-generated.properties",
+                        "--files", "spark-log4j.properties,hive-site.xml",
+                        "--conf", "spark.yarn.jar=null",
+                        "--verbose", "/lib/test.jar"),
+                sparkArgs);
+    }
+
     private Properties readMergedProperties() throws IOException {
         final File file = new File(SPARK_DEFAULTS_GENERATED_PROPERTIES);
         file.deleteOnExit();
@@ -327,8 +369,13 @@ public class TestSparkArgsExtractor {
 
     @After
     public void cleanUp() throws Exception {
-        File f = new File("spark-defaults.conf");
-        if(f.exists()) {
+        checkAndDeleteFile(SPARK_DEFAULTS_GENERATED_PROPERTIES);
+        checkAndDeleteFile(SPARK_DEFAULTS_PROPERTIES);
+    }
+
+    private void checkAndDeleteFile(final String filename) {
+        final File f = new File(filename);
+        if (f.exists()) {
             f.delete();
         }
     }
