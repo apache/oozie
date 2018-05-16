@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3235 Upgrade ActiveMQ to 5.15.3 (matijhs via andras.piros)
 OOZIE-3217 Enable definition of admin users using oozie-site.xml (orova via andras.piros)
 OOZIE-3219 Cannot compile with hadoop 3.1.0 (dbist13, andras.piros)
 OOZIE-3232 Reduce heap waste by reducing duplicate string count (Misha Dmitriev via andras.piros)
