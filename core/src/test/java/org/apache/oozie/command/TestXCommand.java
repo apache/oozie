@@ -18,6 +18,9 @@
 
 package org.apache.oozie.command;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.Services;
@@ -39,7 +42,7 @@ public class TestXCommand extends XTestCase {
         super.tearDown();
     }
 
-    public static class AXCommand extends XCommand {
+    public static class AXCommand extends XCommand<Void> {
         private boolean lockRequired;
         public boolean eagerLoadState;
         public boolean eagerVerifyPrecondition;
@@ -133,7 +136,7 @@ public class TestXCommand extends XTestCase {
         }
 
         @Override
-        protected Object execute() throws CommandException {
+        protected Void execute() throws CommandException {
             assertTrue(eagerLoadState);
             assertTrue(eagerVerifyPrecondition);
             assertTrue(loadState);
@@ -153,7 +156,7 @@ public class TestXCommand extends XTestCase {
     }
 
     public void testXCommandGetters() throws Exception {
-        XCommand command = new AXCommand(false);
+        XCommand<Void> command = new AXCommand(false);
         assertEquals("name", command.getName());
         assertEquals("type", command.getType());
         assertEquals(1, command.getPriority());
@@ -162,12 +165,13 @@ public class TestXCommand extends XTestCase {
     }
 
     public void testXCommandLifecycleNotLocking() throws Exception {
-        Thread t = new LockGetter();
+        LockGetter t = new LockGetter();
         t.start();
+        t.awaitLockAcquired();
         AXCommand command = new AXCommand(false);
         command.call();
         assertTrue(command.execute);
-        t.interrupt();
+        assertTrue("Lock acquisition failed in the test thread", t.isLockSuccessful());
     }
 
     public void testXCommandLifecycleLocking() throws Exception {
@@ -177,9 +181,10 @@ public class TestXCommand extends XTestCase {
     }
 
     public void testXCommandLifecycleLockingFailingToLock() throws Exception {
-        Thread t = new LockGetter();
+        LockGetter t = new LockGetter();
         t.start();
-        sleep(150);
+        t.awaitLockAcquired();
+
         AXCommand command = new AXCommand(true);
         try {
             command.call();
@@ -189,7 +194,8 @@ public class TestXCommand extends XTestCase {
         }
         catch (Exception ex) {
         }
-        t.interrupt();
+
+        assertTrue("Lock acquisition failed in the test thread", t.isLockSuccessful());
     }
 
     public void testXCommandeagerVerifyPreconditionFailing() throws Exception {
@@ -231,22 +237,32 @@ public class TestXCommand extends XTestCase {
     }
 
     private static class LockGetter extends Thread {
+        private CountDownLatch lockAcquired = new CountDownLatch(1);
+        private volatile boolean lockSuccessful = false;
 
         @Override
         public void run() {
             try {
                 LockToken lock = Services.get().get(MemoryLocksService.class).getWriteLock("key", 1);
-                if (lock == null) {
-                    fail();
+                if (lock != null) {
+                    lockSuccessful = true;
                 }
-                sleep(150);
+                lockAcquired.countDown();
             }
             catch (InterruptedException ex) {
                 // NOP
             }
             catch (Exception ex) {
-                fail();
+                lockSuccessful = false;
             }
+        }
+
+        public void awaitLockAcquired() throws InterruptedException {
+            lockAcquired.await(10, TimeUnit.SECONDS);
+        }
+
+        public boolean isLockSuccessful() {
+            return lockSuccessful;
         }
     }
 }
