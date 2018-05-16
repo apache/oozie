@@ -24,7 +24,6 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.oozie.test.XTestCase;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -50,26 +49,30 @@ public class TestOozieDBCLI extends XTestCase {
     private SecurityManager SECURITY_MANAGER;
     private static String url = "jdbc:derby:target/test-data/oozietests/org.apache.oozie.tools.TestOozieDBCLI/data.db;create=true";
     private String oozieConfig;
+    private static boolean databaseCreated = false;
 
-    @BeforeClass
+    @Override
     protected void setUp() throws Exception {
-        SECURITY_MANAGER = System.getSecurityManager();
-        new LauncherSecurityManager();
-        // remove an old variant
-        FileUtil.fullyDelete(new File("target/test-data/oozietests/org.apache.oozie.tools.TestOozieDBCLI/data.db"));
         this.oozieConfig = System.getProperty("oozie.test.config.file");
         File oozieConfig = new File("src/test/resources/hsqldb-oozie-site.xml");
-
         System.setProperty("oozie.test.config.file", oozieConfig.getAbsolutePath());
-        Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
-        Connection conn = getConnection();
-        conn.close();
+        SECURITY_MANAGER = System.getSecurityManager();
+        new LauncherSecurityManager();
+
+        if (!databaseCreated) {
+            // remove an old variant
+            FileUtil.fullyDelete(new File("target/test-data/oozietests/org.apache.oozie.tools.TestOozieDBCLI/data.db"));
+
+            Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+            Connection conn = getConnection();
+            conn.close();
+            databaseCreated = true;
+        }
 
         super.setUp(false);
-
     }
 
-    @AfterClass
+    @Override
     protected void tearDown() throws Exception {
         System.setSecurityManager(SECURITY_MANAGER);
         if(oozieConfig!=null){
@@ -95,7 +98,7 @@ public class TestOozieDBCLI extends XTestCase {
     public void testServicesDestroy() throws Exception {
         Services services = new Services();
         File runtimeDir = new File(services.getRuntimeDir()).getParentFile();
-        String systemId = services.getSystemId();
+        final String systemId = services.getSystemId();
 
         File[] dirsBefore = runtimeDir.listFiles(new FilenameFilter() {
            public boolean accept(final File dir, final String name) {
