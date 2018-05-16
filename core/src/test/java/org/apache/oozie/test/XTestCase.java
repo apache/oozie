@@ -125,6 +125,7 @@ import org.apache.openjpa.persistence.RollbackException;
 public abstract class XTestCase extends TestCase {
     private static EnumSet<YarnApplicationState> YARN_TERMINAL_STATES = EnumSet.of(YarnApplicationState.FAILED,
             YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+    private static final int DEFAULT_YARN_TIMEOUT = 60_000;
     private Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
@@ -1313,8 +1314,8 @@ public abstract class XTestCase extends TestCase {
         return services;
     }
 
-    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates)
-            throws HadoopAccessorException, IOException, YarnException {
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates,
+            int timeoutMs) throws HadoopAccessorException, IOException, YarnException {
         final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
         final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
 
@@ -1322,7 +1323,7 @@ public abstract class XTestCase extends TestCase {
         final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
 
         try {
-            waitFor(60 * 1000, new Predicate() {
+            waitFor(timeoutMs, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
                      YarnApplicationState state = yarnClient.getApplicationReport(appId).getYarnApplicationState();
@@ -1341,9 +1342,20 @@ public abstract class XTestCase extends TestCase {
         return finalState.getValue();
     }
 
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates)
+            throws HadoopAccessorException, IOException, YarnException {
+        return waitUntilYarnAppState(externalId, acceptedStates, DEFAULT_YARN_TIMEOUT);
+    }
+
     protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId)
             throws HadoopAccessorException, IOException, YarnException {
         YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.FINISHED, state);
+    }
+
+    protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId, int timeout)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES, timeout);
         assertEquals("YARN App state for app " + externalId, YarnApplicationState.FINISHED, state);
     }
 

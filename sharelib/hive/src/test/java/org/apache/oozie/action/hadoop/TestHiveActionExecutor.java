@@ -18,9 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.MessageFormat;
@@ -36,8 +33,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.util.ClassUtils;
-import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.jdom.Namespace;
 
@@ -55,7 +50,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
     private static final String OUTPUT_DIRNAME = "output";
     private static final String DATA_FILENAME = "data.txt";
 
-    @SuppressWarnings("unchecked")
     public void testSetupMethods() throws Exception {
         HiveActionExecutor ae = new HiveActionExecutor();
         assertEquals(Arrays.asList(HiveMain.class), ae.getLauncherClasses());
@@ -155,7 +149,7 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
             Context context = createContext(getActionScriptXml());
             Namespace ns = Namespace.getNamespace("uri:oozie:hive-action:0.2");
             final String launcherId = submitAction(context, ns);
-            waitUntilYarnAppDoneAndAssertSuccess(launcherId);
+            waitUntilYarnAppDoneAndAssertSuccess(launcherId, 180 * 1000);
             Configuration conf = new XConfiguration();
             conf.set("user.name", getTestUser());
             Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
@@ -216,19 +210,6 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
 
 
         return jobId;
-    }
-
-    private String copyJar(String targetFile, Class<?> anyContainedClass)
-            throws Exception {
-        String file = ClassUtils.findContainingJar(anyContainedClass);
-        System.out.println("[copy-jar] class: " + anyContainedClass
-                + ", local jar ==> " + file);
-        Path targetPath = new Path(getAppPath(), targetFile);
-        FileSystem fs = getFileSystem();
-        InputStream is = new FileInputStream(file);
-        OutputStream os = fs.create(new Path(getAppPath(), targetPath));
-        IOUtils.copyStream(is, os);
-        return targetPath.toString();
     }
 
     private Context createContext(String actionXml) throws Exception {
