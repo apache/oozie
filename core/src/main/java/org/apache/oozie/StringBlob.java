@@ -24,6 +24,7 @@ import java.io.IOException;
 
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.compression.CompressionCodec;
+import org.apache.oozie.util.ByteArrayUtils;
 import org.apache.oozie.util.StringUtils;
 
 /**
@@ -40,7 +41,7 @@ public class StringBlob {
      * @param byteArray the byte array
      */
     public StringBlob(byte[] byteArray) {
-        this.rawBlob = byteArray;
+        this.rawBlob = ByteArrayUtils.weakIntern(byteArray);
     }
 
     /**
@@ -109,14 +110,14 @@ public class StringBlob {
         if (CodecFactory.isCompressionEnabled()) {
             byte[] bytes = CodecFactory.getHeaderBytes();
             try {
-                rawBlob = CodecFactory.getCompressionCodec().compressString(bytes, string);
+                rawBlob = ByteArrayUtils.weakIntern(CodecFactory.getCompressionCodec().compressString(bytes, string));
             }
             catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
         else {
-            rawBlob = string.getBytes();
+            rawBlob = ByteArrayUtils.weakIntern(string.getBytes());
         }
         return rawBlob;
     }
