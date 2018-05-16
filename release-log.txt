@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2968 TestJavaActionExecutor.testCredentialsSkip fails intermittently (pbacsko via gezapeti)
 OOZIE-3228 [Spark action] Can't load properties from spark-defaults.conf (andras.piros)
 OOZIE-3250 Reduce heap waste by reducing duplicate byte[] count (andras.piros)
 OOZIE-3240 Flaky test TestJMSAccessorService#testConnectionRetry (pbacsko via gezapeti)

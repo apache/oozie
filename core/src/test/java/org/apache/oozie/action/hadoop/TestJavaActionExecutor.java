@@ -18,11 +18,9 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -36,7 +34,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -1029,6 +1026,9 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testCredentialsSkip() throws Exception {
+        // providerCache must be re-initialized
+        CredentialsProviderFactory.destroy();
+
         // Try setting oozie.credentials.skip at different levels, and verifying the correct behavior
         // oozie-site: false -- job-level: null -- action-level: null
         _testCredentialsSkip(false, null, null, true);
