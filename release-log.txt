@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3246 Flaky test TestJMSJobEventListener#testConnectionDrop (pbacsko via gezapeti)
 OOZIE-3236 Fix flaky test TestHiveActionExecutor#testHiveAction (pbacsko via gezapeti)
 OOZIE-3235 Upgrade ActiveMQ to 5.15.3 (matijhs via andras.piros)
 OOZIE-3217 Enable definition of admin users using oozie-site.xml (orova via andras.piros)
