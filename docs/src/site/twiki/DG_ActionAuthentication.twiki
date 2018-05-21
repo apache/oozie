@@ -117,8 +117,8 @@ HCatCredentials requires these two properties:
 *Note:* The HCatalog Metastore and Hive Metastore are one and the same and so the "hcat" type credential can also be used to talk
 to a secure Hive Metastore, though the property names would still start with "hcat.".
 
-HBase does not require any additional properties since the hbase-site.xml on the Oozie server provides necessary information to the
-obtain delegation token; though properties can be overwritten here if desired.
+HBase does not require any additional properties since the hbase-site.xml on the Oozie server provides necessary information
+to obtain a delegation token; though properties can be overwritten here if desired.
 
 Hive2Credentials requires these two properties:
 
