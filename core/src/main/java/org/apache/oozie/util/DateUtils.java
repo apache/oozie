@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -29,7 +30,6 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.ConfigurationService;
@@ -38,9 +38,9 @@ import org.apache.oozie.service.ConfigurationService;
  * Date utility classes to parse and format datetimes in Oozie expected datetime formats.
  */
 public class DateUtils {
-
+    private static final XLog LOG = XLog.getLog(DateUtils.class);
     private static final Pattern GMT_OFFSET_COLON_PATTERN = Pattern.compile("^GMT(\\-|\\+)(\\d{2})(\\d{2})$");
-
+    private static final Pattern THREE_LETTER_ID_PATTERN = Pattern.compile("[A-Z]{3}");
     public static final TimeZone UTC = getTimeZone("UTC");
 
     public static final String ISO8601_UTC_MASK = "yyyy-MM-dd'T'HH:mm'Z'";
@@ -141,11 +141,30 @@ public class DateUtils {
         }
         tzId = handleGMTOffsetTZNames(tzId);    // account for GMT-####
         TimeZone tz = TimeZone.getTimeZone(tzId);
+
+        // Check whether tzID can handle DST shifts
+        if (!isThreeLetterTZName(tzId)) {
+            LOG.warn("GMT, UTC or Region/City Timezone formats are preferred instead of " + tzId);
+        }
+
         // If these are not equal, it means that the tzId is not valid (invalid tzId's return GMT)
         if (!tz.getID().equals(tzId)) {
             throw new IllegalArgumentException("Invalid TimeZone: " + tzId);
         }
         return tz;
+    }
+
+    /**
+     * Check whether 3-letter timezone ID is in preferred format,
+     * UTC, GMT or Region/City, the other three-letter codes may not handle
+     * DST shifts properly.
+     * @param tzId
+     * @return true if format is not appropriate for DST shift
+     */
+    @VisibleForTesting
+    static boolean isThreeLetterTZName(String tzId) {
+        Matcher m = THREE_LETTER_ID_PATTERN.matcher(tzId);
+        return m.matches() && !tzId.equalsIgnoreCase("UTC") && !tzId.equalsIgnoreCase("GMT");
     }
 
     /**

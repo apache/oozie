@@ -136,7 +136,7 @@ time zone is other than =UTC=, the qualifier must be the GMT offset, =(+/-)####=
 
 For example, a datetime in =UTC=  is =2012-08-12T00:00Z=, the same datetime in =GMT+5:30= is =2012-08-12T05:30+0530=.
 
-For simplicity, there rest of this specification uses =UTC= datetimes.
+For simplicity, the rest of this specification uses =UTC= datetimes.
 
 #datetime
 ---+++ 4.1. Datetime
@@ -166,7 +166,12 @@ There is no widely accepted standard to identify timezones.
 Oozie Coordinator will understand the following timezone identifiers:
 
    * Generic NON-DST timezone identifier: =GMT[+/-]##:##= (i.e.: GMT+05:30)
+   * UTC timezone identifier: =UTC= (i.e.: 2009-06-06T00:00Z)
    * ZoneInfo identifiers, with DST support, understood by Java JDK (about 600 IDs) (i.e.: America/Los_Angeles)
+
+Due to DST shift from PST to PDT, it is preferred that GMT, UTC or Region/City timezone notation is used in
+favor of direct three-letter ID (PST, PDT, BST, etc.). For example, America/Los_Angeles switches from PST to PDT
+at a DST shift. If used directly, PST will not handle DST shift when time is switched to PDT.
 
 Oozie Coordinator must provide a tool for developers to list all supported timezone identifiers.
 
@@ -3445,12 +3450,12 @@ In other words, it offsets the =baseDate= by the difference from Oozie processin
 account for daylight saving time based on the given =baseDate= and =timezone=.
 
 The =timezone= argument accepts any timezone or GMT offset that is returned by the
-[[DG_CommandLineTool#Getting_a_list_of_time_zones]["info -timezones"]] command.  For example, "America/Los_Angeles" or "PST".
+[[DG_CommandLineTool#Getting_a_list_of_time_zones]["info -timezones"]] command.  For example, "America/Los_Angeles".
 
 For example, if =baseDate= is '2012-06-13T00:00Z' and =timezone= is 'America/Los_Angeles', the return date will be
 '2012-06-12T17:00Z'. But if =baseDate= is '2012-12-13T00:00Z', then the return date will be '2012-12-12T16:00Z'.  The difference
 in return dates occurs because the former occurs during Summer when DST is in effect (UTC-0700) and the latter occurs during Winter
-when DST is no in effect (UTC-0800).
+when DST is not in effect (UTC-0800).
 
 *%GREEN% Example: %ENDCOLOR%*:
 

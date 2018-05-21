@@ -2267,7 +2267,8 @@ public class OozieCLI {
     }
 
     private void printAvailableTimeZones() {
-        System.out.println("The format is \"SHORT_NAME (ID)\"\nGive the ID to the -timezone argument");
+        System.out.println("The format is \"SHORT_NAME (ID)\"\nGive the ID (GMT, UTC or Region/City)" +
+        "to the -timezone argument");
         System.out.println("GMT offsets can also be used (e.g. GMT-07:00, GMT-0700, GMT+05:30, GMT+0530)");
         System.out.println("Available Time Zones:");
         for (String tzId : TimeZone.getAvailableIDs()) {

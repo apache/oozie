@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2867 [Coordinators] Emphasize Region/City timezone format (dbist13 via rkanter, andras.piros)
 OOZIE-3242 Flaky test TestXCommand#testXCommandLifecycleLockingFailingToLock (pbacsko via gezapeti)
 OOZIE-3226 [tools] TestOozieDBCLI#testOozieDBCLI() fails (pbacsko via gezapeti)
 OOZIE-2968 TestJavaActionExecutor.testCredentialsSkip fails intermittently (pbacsko via gezapeti)
