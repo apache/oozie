@@ -19,18 +19,17 @@
 package org.apache.oozie.lock;
 
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.MemoryLocksService.Type;
+import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.LockerCoordinator;
+import org.apache.oozie.util.Locker;
 import org.apache.oozie.util.XLog;
 
 public class TestMemoryLocks extends XTestCase {
-    private static final int LATCH_TIMEOUT = 10;
     private XLog log = XLog.getLog(getClass());
     public static final int DEFAULT_LOCK_TIMEOUT = 5 * 1000;
 
@@ -46,72 +45,6 @@ public class TestMemoryLocks extends XTestCase {
         super.tearDown();
     }
 
-    public abstract class LatchHandler {
-        protected CountDownLatch startLatch = new CountDownLatch(1);
-        protected CountDownLatch acquireLockLatch = new CountDownLatch(1);
-        protected CountDownLatch proceedingLatch = new CountDownLatch(1);
-        protected CountDownLatch terminationLatch = new CountDownLatch(1);
-
-        public void awaitStart() throws InterruptedException {
-            startLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
-        }
-
-        public void awaitTermination() throws InterruptedException {
-            terminationLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
-        }
-
-        public void awaitLockAcquire() throws InterruptedException {
-            acquireLockLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
-        }
-
-        public void proceed() {
-            proceedingLatch.countDown();
-        }
-    }
-
-    public abstract class Locker extends LatchHandler implements Runnable {
-        protected String name;
-        private String nameIndex;
-        private StringBuffer sb;
-        protected long timeout;
-
-        public Locker(String name, int nameIndex, long timeout, StringBuffer buffer) {
-            this.name = name;
-            this.nameIndex = name + ":" + nameIndex;
-            this.sb = buffer;
-            this.timeout = timeout;
-        }
-
-        public void run() {
-            try {
-                log.info("Getting lock [{0}]", nameIndex);
-                startLatch.countDown();
-                MemoryLocks.MemoryLockToken token = getLock();
-                if (token != null) {
-                    log.info("Got lock [{0}]", nameIndex);
-                    sb.append(nameIndex + "-L ");
-
-                    acquireLockLatch.countDown();
-                    proceedingLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
-
-                    sb.append(nameIndex + "-U ");
-                    token.release();
-                    log.info("Release lock [{0}]", nameIndex);
-                }
-                else {
-                    proceedingLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
-                    sb.append(nameIndex + "-N ");
-                    log.info("Did not get lock [{0}]", nameIndex);
-                }
-                terminationLatch.countDown();
-            }
-            catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        protected abstract MemoryLocks.MemoryLockToken getLock() throws InterruptedException;
-    }
 
     public class ReadLocker extends Locker {
 
@@ -119,6 +52,7 @@ public class TestMemoryLocks extends XTestCase {
             super(name, nameIndex, timeout, buffer);
         }
 
+        @Override
         protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {
             return locks.getLock(name, Type.READ, timeout);
         }
@@ -130,6 +64,7 @@ public class TestMemoryLocks extends XTestCase {
             super(name, nameIndex, timeout, buffer);
         }
 
+        @Override
         protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {
             return locks.getLock(name, Type.WRITE, timeout);
         }
@@ -275,11 +210,12 @@ public class TestMemoryLocks extends XTestCase {
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
-    public class SameThreadWriteLocker extends LatchHandler implements Runnable {
+    public class SameThreadWriteLocker implements Runnable {
         protected String name;
         private String nameIndex;
         private StringBuffer sb;
         protected long timeout;
+        private final LockerCoordinator coordinator = new LockerCoordinator();
 
         public SameThreadWriteLocker(String name, int nameIndex, long timeout, StringBuffer buffer) {
             this.name = name;
@@ -290,13 +226,13 @@ public class TestMemoryLocks extends XTestCase {
 
         public void run() {
             try {
-                startLatch.countDown();
+                coordinator.startDone();
                 log.info("Getting lock [{0}]", nameIndex);
                 MemoryLocks.MemoryLockToken token = getLock();
                 MemoryLocks.MemoryLockToken token2 = getLock();
 
                 if (token != null) {
-                    acquireLockLatch.countDown();
+                    coordinator.lockAcquireDone();
 
                     log.info("Got lock [{0}]", nameIndex);
                     sb.append(nameIndex + "-L1 ");
@@ -305,7 +241,7 @@ public class TestMemoryLocks extends XTestCase {
                     }
                     sb.append(nameIndex + "-U1 ");
 
-                    proceedingLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
+                    coordinator.awaitContinueSignal();
 
                     token.release();
                     sb.append(nameIndex + "-U2 ");
@@ -313,15 +249,31 @@ public class TestMemoryLocks extends XTestCase {
                     log.info("Release lock [{0}]", nameIndex);
                 }
                 else {
-                    proceedingLatch.await(LATCH_TIMEOUT, TimeUnit.SECONDS);
+                    coordinator.awaitContinueSignal();
                     sb.append(nameIndex + "-N ");
                     log.info("Did not get lock [{0}]", nameIndex);
                 }
-                terminationLatch.countDown();
+                coordinator.terminated();
             }
             catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        public void awaitLockAcquire() throws InterruptedException {
+            coordinator.awaitLockAcquire();
+        }
+
+        public void awaitStart() throws InterruptedException {
+            coordinator.awaitStart();
+        }
+
+        public void proceed() {
+            coordinator.signalLockerContinue();
+        }
+
+        public void awaitTermination() throws InterruptedException {
+            coordinator.awaitTermination();
         }
 
         protected MemoryLocks.MemoryLockToken getLock() throws InterruptedException {

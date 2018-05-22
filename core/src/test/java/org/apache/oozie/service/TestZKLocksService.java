@@ -26,6 +26,7 @@ import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.lock.TestMemoryLocks;
 import org.apache.oozie.service.ZKLocksService.ZKLockToken;
 import org.apache.oozie.test.ZKXTestCase;
+import org.apache.oozie.util.Locker;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.ZKUtils;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
@@ -64,59 +65,12 @@ public class TestZKLocksService extends ZKXTestCase {
         }
     }
 
-    public abstract class Locker implements Runnable {
-        protected String name;
-        private String nameIndex;
-        private StringBuffer sb;
-        protected long timeout;
-        protected ZKLocksService zkls;
-
-        public Locker(String name, int nameIndex, long timeout, StringBuffer buffer, ZKLocksService zkls) {
-            this.name = name;
-            this.nameIndex = name + ":" + nameIndex;
-            this.sb = buffer;
-            this.timeout = timeout;
-            this.zkls = zkls;
-        }
-
-        @Override
-        public void run() {
-            try {
-                log.info("Getting lock [{0}]", nameIndex);
-                LockToken token = getLock();
-                if (token != null) {
-                    log.info("Got lock [{0}]", nameIndex);
-                    sb.append(nameIndex).append("-L ");
-                    synchronized (this) {
-                        wait();
-                    }
-                    sb.append(nameIndex).append("-U ");
-                    token.release();
-                    log.info("Release lock [{0}]", nameIndex);
-                }
-                else {
-                    sb.append(nameIndex).append("-N ");
-                    log.info("Did not get lock [{0}]", nameIndex);
-                }
-            }
-            catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        public void finish() {
-            synchronized (this) {
-                notify();
-            }
-        }
-
-        protected abstract ZKLocksService.ZKLockToken getLock() throws InterruptedException;
-    }
-
     public class ReadLocker extends Locker {
+        private final ZKLocksService zkls;
 
         public ReadLocker(String name, int nameIndex, long timeout, StringBuffer buffer, ZKLocksService zkls) {
-            super(name, nameIndex, timeout, buffer, zkls);
+            super(name, nameIndex, timeout, buffer);
+            this.zkls = zkls;
         }
 
         @Override
@@ -126,9 +80,11 @@ public class TestZKLocksService extends ZKXTestCase {
     }
 
     public class WriteLocker extends Locker {
+        private final ZKLocksService zkls;
 
         public WriteLocker(String name, int nameIndex, long timeout, StringBuffer buffer, ZKLocksService zkls) {
-            super(name, nameIndex, timeout, buffer, zkls);
+            super(name, nameIndex, timeout, buffer);
+            this.zkls = zkls;
         }
 
         @Override
@@ -169,13 +125,16 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l1.proceed();
+        l2.proceed();
+
+        l1.awaitTermination();
+        l2.awaitTermination();
+
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -211,13 +170,17 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, 0, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
+
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l2.proceed();
+        l2.awaitTermination();
+
+        l1.proceed();
+        l1.awaitTermination();
+
         assertEquals("a:1-L a:2-N a:1-U", sb.toString().trim());
     }
 
@@ -253,13 +216,16 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, (long) (WAITFOR_RATIO * 2000), sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l1.proceed();
+        l1.awaitTermination();
+
+        l2.proceed();
+        l2.awaitTermination();
+
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -295,13 +261,16 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, 50, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l2.proceed();
+        l2.awaitTermination();
+
+        l1.proceed();
+        l1.awaitTermination();
+
         assertEquals("a:1-L a:2-N a:1-U", sb.toString().trim());
     }
 
@@ -337,13 +306,16 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitLockAcquire();
+
+        l1.proceed();
+        l1.awaitTermination();
+
+        l2.proceed();
+        l2.awaitTermination();
+
         assertEquals("a:1-L a:2-L a:1-U a:2-U", sb.toString().trim());
     }
 
@@ -379,13 +351,16 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new WriteLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l1.proceed();
+        l1.awaitTermination();
+
+        l2.proceed();
+        l2.awaitTermination();
+
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -421,13 +396,15 @@ public class TestZKLocksService extends ZKXTestCase {
         Locker l2 = new ReadLocker("a", 2, -1, sb, zkls2);
 
         new Thread(l1).start();
-        sleep(1000);
+        l1.awaitLockAcquire();
         new Thread(l2).start();
-        sleep(1000);
-        l1.finish();
-        sleep(1000);
-        l2.finish();
-        sleep(1000);
+        l2.awaitStart();
+
+        l1.proceed();
+        l1.awaitTermination();
+
+        l2.proceed();
+        l2.awaitTermination();
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
     }
 
@@ -583,9 +560,9 @@ public class TestZKLocksService extends ZKXTestCase {
                     try {
                         // Stop the exception on release() after some time in other thread
                         Thread.sleep(TimeUnit.SECONDS.toMillis(13));
-                        Mockito.doAnswer(new Answer() {
+                        Mockito.doAnswer(new Answer<Void>() {
                             @Override
-                            public Object answer(InvocationOnMock invocation) throws Throwable {
+                            public Void answer(InvocationOnMock invocation) throws Throwable {
                                 lockReleased[0] = true;
                                 return null;
                             }
