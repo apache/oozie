@@ -288,6 +288,7 @@ public class TestJMSJobEventListener extends XTestCase {
             broker = new BrokerService();
             broker.setDataDirectory(getTestCaseDir());
             broker.addConnector(brokerURl);
+            broker.setUseJmx(false);
             broker.start();
             ConnectionContext jmsContext = getConnectionContext();
             assertNotNull(jmsContext);
@@ -298,6 +299,7 @@ public class TestJMSJobEventListener extends XTestCase {
             broker = new BrokerService();
             broker.setDataDirectory(getTestCaseDir());
             broker.addConnector(brokerURl);
+            broker.setUseJmx(false);
             broker.start();
             WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
                     "wf-app-name1", new Date(), new Date());

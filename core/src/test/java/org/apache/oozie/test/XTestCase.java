@@ -137,7 +137,7 @@ public abstract class XTestCase extends TestCase {
     protected static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
-    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
+    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false&broker.useJmx=false";
     protected static final String ActiveMQConnFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
 
     static {

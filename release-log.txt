@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3251 Disable JMX for ActiveMQ in the tests (pbacsko)
 OOZIE-2826 Upgrade joda-time to 2.9.9 (dbist13 via andras.piros)
 OOZIE-3094 [Docs] Fix for grammar mistake in DG_ActionAuthentication.twiki (dbist13 via andras.piros)
 OOZIE-2867 [Coordinators] Emphasize Region/City timezone format (dbist13 via rkanter, andras.piros)

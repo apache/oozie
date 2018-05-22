@@ -155,6 +155,7 @@ public class TestJMSAccessorService extends XTestCase {
         try {
             broker.addConnector(brokerURl);
             broker.setDataDirectory(getTestCaseDir());
+            broker.setUseJmx(false);
             broker.start();
 
             waitFor(JMS_TIMEOUT_MS, new Predicate() {
@@ -195,6 +196,7 @@ public class TestJMSAccessorService extends XTestCase {
             broker = new BrokerService();
             broker.addConnector(brokerURL);
             broker.setDataDirectory(getTestCaseDir());
+            broker.setUseJmx(false);
             broker.start();
             JMSConnectionInfo connInfo = hcatService.getJMSConnectionInfo(new URI("hcat://hcat.server.com:8020"));
             jmsService.registerForNotification(connInfo, topic, new HCatMessageHandler(publisherAuthority));
@@ -223,6 +225,7 @@ public class TestJMSAccessorService extends XTestCase {
 
             broker.addConnector(brokerURL);
             broker.setDataDirectory(getTestCaseDir());
+            broker.setUseJmx(false);
             broker.start();
             waitFor(JMS_TIMEOUT_MS, new Predicate() {
                 @Override
