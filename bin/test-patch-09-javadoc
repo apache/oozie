@@ -81,7 +81,7 @@ checkForWarnings() {
   patchWarns=`grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-patch.txt | awk '/Javadoc Warnings/,EOF' | grep warning | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
   newWarns=`expr $patchWarns - $cleanWarns`
   if [[ $newWarns -le 0 ]] ; then
-    REPORT+=("{color:green}+1{color} the patch does not seem to introduce new Javadoc warnings")
+    REPORT+=("{color:green}+1{color} the patch does not seem to introduce new Javadoc warning(s)")
     newWarns=0
   else
     REPORT+=("{color:red}-1{color} the patch seems to introduce $newWarns new Javadoc warning(s)")
@@ -89,6 +89,22 @@ checkForWarnings() {
   fi
   if [[ $cleanWarns != 0 ]] ; then
     REPORT+=("{color:red}WARNING{color}: the current HEAD has $cleanWarns Javadoc warning(s)")
+  fi
+}
+###############################################################################
+checkForErrors() {
+  cleanErrs=`grep '\[ERROR\]' ${REPORTDIR}/${TASKNAME}-clean.txt | grep error | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
+  patchErrs=`grep '\[ERROR\]' ${REPORTDIR}/${TASKNAME}-patch.txt | grep error | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
+  newErrs=`expr $patchErrs - $cleanErrs`
+  if [[ $newErrs -le 0 ]] ; then
+    REPORT+=("{color:green}+1{color} the patch does not seem to introduce new Javadoc error(s)")
+    newErrs=0
+  else
+    REPORT+=("{color:red}-1{color} the patch seems to introduce $newErrs new Javadoc error(s)")
+    newErrs=1
+  fi
+  if [[ $cleanErrs != 0 ]] ; then
+    REPORT+=("{color:red}ERROR{color}: the current HEAD has $cleanErrs Javadoc error(s)")
   fi
 }
 ###############################################################################
@@ -105,6 +121,12 @@ case $OP in
   report)
     checkForWarnings
     if [[ $newWarns == 0 ]] ; then
+      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
+    else
+      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
+    fi
+    checkForErrors
+    if [[ $newErrs == 0 ]] ; then
       echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
     else
       echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE

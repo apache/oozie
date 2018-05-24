@@ -43,7 +43,7 @@ public class CodecFactory {
     public static final String COMPRESSION_KEY_HEADER = "codec";
     public static final String UTF_8_ENCODING = "UTF-8";
     private static boolean isEnabled;
-    private static XLog LOG = XLog.getLog(CodecFactory.class);;
+    private static XLog LOG = XLog.getLog(CodecFactory.class);
     private static byte[] headerBytes;
 
     /**

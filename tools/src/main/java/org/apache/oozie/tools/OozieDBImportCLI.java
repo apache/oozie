@@ -79,13 +79,11 @@ import static org.apache.oozie.tools.OozieDBExportCLI.OOZIEDB_WF_JSON;
 
 /**
  * This class provides the following functionality:
- * <p/>
  *  <ul>
  *      <li>imports the data from json files created by {@link OozieDBExportCLI} the specified target zip file</li>
  *      <li>this class uses the current Oozie configuration in {oozie-site.xml}</li>
  *      <li></li>
  *  </ul>
- * <p/>
  */
 public class OozieDBImportCLI {
     private static final String[] HELP_INFO = {

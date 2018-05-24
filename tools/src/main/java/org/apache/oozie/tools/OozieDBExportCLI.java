@@ -41,12 +41,10 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * This class provides the following functionality:
- * <p/>
  * <ul>
  * <li>Exports the data from the Oozie database to a specified target zip file</li>
  * <li>This class uses the current oozie configuration in oozie-site.xml</li>
  * </ul>
- * <p/>
  */
 
 public class OozieDBExportCLI {
