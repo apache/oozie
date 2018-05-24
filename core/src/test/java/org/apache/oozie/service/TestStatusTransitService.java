@@ -19,6 +19,7 @@ package org.apache.oozie.service;
 
 import java.util.Date;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BundleActionBean;
@@ -58,6 +59,8 @@ import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.LockerCoordinator;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.EndNodeDef;
@@ -1576,22 +1579,22 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(bundleId, "action2-C", 0, Job.Status.RUNNING);
         addRecordToBundleActionTable(bundleId, "action3-C", 0, Job.Status.DONEWITHERROR);
 
-        JobLock lockThread = new JobLock(jobId);
+        LockerCoordinator coordinator = new LockerCoordinator();
+        JobLock lockThread = new JobLock(jobId, coordinator);
         new Thread(lockThread).start();
+        coordinator.awaitLockAcquire();
 
-        sleep(1000);
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
-        synchronized (lockThread) {
-            lockThread.notifyAll();
-        }
-        sleep(1000);
+
+        coordinator.signalLockerContinue();
+        coordinator.awaitTermination();
+
         runnable.run();
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.RUNNINGWITHERROR, bundleJob.getStatus());
-
     }
 
     public void testCoordStatusTransitWithLock() throws Exception {
@@ -1610,21 +1613,22 @@ public class TestStatusTransitService extends XDataTestCase {
                 "KILLED", 0);
 
         final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
-        JobLock lockThread = new JobLock(coordJob.getId());
+        LockerCoordinator coordinator = new LockerCoordinator();
+        JobLock lockThread = new JobLock(coordJob.getId(), coordinator);
         new Thread(lockThread).start();
+        coordinator.awaitLockAcquire();
+
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        sleep(1000);
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
 
-        synchronized (lockThread) {
-            lockThread.notifyAll();
-        }
+        coordinator.signalLockerContinue();
+        coordinator.awaitTermination();
+
         runnable.run();
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNINGWITHERROR, coordJob.getStatus());
-
     }
 
     public void testBundleStatusCoordSubmitFails() throws Exception {
@@ -1682,32 +1686,28 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
   static class JobLock implements Runnable {
-        String jobId;
+        private static XLog log = new XLog(LogFactory.getLog(JobLock.class));
+        private final String jobId;
+        private final LockerCoordinator coordinator;
 
-        public JobLock(String jobId) {
+        public JobLock(String jobId, LockerCoordinator coordinator) {
             this.jobId = jobId;
-        }
-
-        LockToken lock = null;
-
-        public void acquireLock() throws InterruptedException {
-            lock = Services.get().get(MemoryLocksService.class).getWriteLock(jobId, 0);
-        }
-
-        public void release() {
-            lock.release();
+            this.coordinator = coordinator;
         }
 
         @Override
         public void run() {
             try {
-                acquireLock();
-                synchronized (this) {
-                    this.wait();
-                }
-                release();
+                LockToken lock = Services.get().get(MemoryLocksService.class).getWriteLock(jobId, 0);
+                coordinator.lockAcquireDone();
+                coordinator.awaitContinueSignal();
+                lock.release();
             }
             catch (InterruptedException e) {
+                log.error("InterruptedException caught", e);
+            }
+            finally {
+                coordinator.terminated();
             }
         }
     }

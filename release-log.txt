@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3238 Flaky test TestStatusTransitService#testBundleStatusTransitWithLock (pbacsko via gezapeti, andras.piros)
 OOZIE-3185 Upgrade org.apache.derby to 10.11.1.1 (PandaMonkey via andras.piros)
 OOZIE-2883 ProxyUserService: invalid configuration error message is misleading (yangfang via andras.piros)
 OOZIE-3237 Flaky test TestZKLocksService#testWriteReadLockThreads (pbacsko via andras.piros)
