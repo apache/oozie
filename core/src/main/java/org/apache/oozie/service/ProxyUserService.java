@@ -79,7 +79,7 @@ public class ProxyUserService implements Service {
             if (key.startsWith(CONF_PREFIX) && key.endsWith(GROUPS)) {
                 String proxyUser = key.substring(0, key.lastIndexOf(GROUPS));
                 if (services.getConf().get(proxyUser + HOSTS) == null) {
-                    throw new ServiceException(ErrorCode.E0551, CONF_PREFIX + proxyUser + HOSTS);
+                    throw new ServiceException(ErrorCode.E0551, proxyUser + HOSTS);
                 }
                 proxyUser = proxyUser.substring(CONF_PREFIX.length());
                 String value = entry.getValue().trim();
@@ -93,7 +93,7 @@ public class ProxyUserService implements Service {
             if (key.startsWith(CONF_PREFIX) && key.endsWith(HOSTS)) {
                 String proxyUser = key.substring(0, key.lastIndexOf(HOSTS));
                 if (services.getConf().get(proxyUser + GROUPS) == null) {
-                    throw new ServiceException(ErrorCode.E0551, CONF_PREFIX + proxyUser + GROUPS);
+                    throw new ServiceException(ErrorCode.E0551, proxyUser + GROUPS);
                 }
                 proxyUser = proxyUser.substring(CONF_PREFIX.length());
                 String value = entry.getValue().trim();

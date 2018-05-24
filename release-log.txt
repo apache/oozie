@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2883 ProxyUserService: invalid configuration error message is misleading (yangfang via andras.piros)
 OOZIE-3237 Flaky test TestZKLocksService#testWriteReadLockThreads (pbacsko via andras.piros)
 OOZIE-3251 Disable JMX for ActiveMQ in the tests (pbacsko)
 OOZIE-2826 Upgrade joda-time to 2.9.9 (dbist13 via andras.piros)
