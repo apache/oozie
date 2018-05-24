@@ -1633,8 +1633,6 @@ public class TestStatusTransitService extends XDataTestCase {
 
     public void testBundleStatusCoordSubmitFails() throws Exception {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        services = new Services();
-        services.init();
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
 
         final String bundleId = bundleJob.getId();
@@ -1644,14 +1642,13 @@ public class TestStatusTransitService extends XDataTestCase {
         // First try will kill the job.
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.FAILED, bundleJob.getStatus());
-        sleep(1000);
+
         bundleJob.setStatus(Job.Status.RUNNING);
         BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
         runnable.run();
         // second try will change the status.
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.FAILED, bundleJob.getStatus());
-
     }
 
     public void testBundleRunningAfterCoordResume() throws Exception {
