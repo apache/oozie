@@ -50,14 +50,9 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -2077,117 +2072,11 @@ public class OozieCLI {
             XOozieClient wc = createXOozieClient(commandLine);
             String result = wc.validateXML(args[0].toString());
             if (result == null) {
-                // TODO This is only for backward compatibility. Need to remove after 4.2.0 higher version.
-                System.out.println("Using client-side validation. Check out Oozie server version.");
-                validateCommandV41(commandLine);
                 return;
             }
             System.out.println(result);
         } catch (OozieClientException e) {
             throw new OozieCLIException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Validate on client-side. This is only for backward compatibility. Need to removed after <tt>4.2.0</tt> higher version.
-     * @param commandLine
-     * @throws OozieCLIException
-     */
-    @Deprecated
-    @VisibleForTesting
-    void validateCommandV41(CommandLine commandLine) throws OozieCLIException {
-        String[] args = commandLine.getArgs();
-        if (args.length != 1) {
-            throw new OozieCLIException("One file must be specified");
-        }
-        File file = new File(args[0]);
-        if (file.exists()) {
-            try {
-                List<StreamSource> sources = new ArrayList<StreamSource>();
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "shell-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "shell-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "shell-action-0.3.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "email-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "email-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "distcp-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "distcp-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.2.5.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.3.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.4.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.4.5.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-workflow-0.5.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-coordinator-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-coordinator-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-coordinator-0.3.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-coordinator-0.4.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-bundle-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-bundle-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-sla-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "oozie-sla-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive-action-0.3.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive-action-0.4.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive-action-0.5.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive-action-0.6.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "sqoop-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "sqoop-action-0.3.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "sqoop-action-0.4.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "ssh-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "ssh-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive2-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "hive2-action-0.2.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "spark-action-0.1.xsd")));
-                sources.add(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                        "spark-action-0.2.xsd")));
-                SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                Schema schema = factory.newSchema(sources.toArray(new StreamSource[sources.size()]));
-                Validator validator = schema.newValidator();
-                validator.validate(new StreamSource(new FileReader(file)));
-                System.out.println("Valid workflow-app");
-            }
-            catch (Exception ex) {
-                throw new OozieCLIException("Invalid app definition, " + ex.toString(), ex);
-            }
-        }
-        else {
-            throw new OozieCLIException("File does not exists");
         }
     }
 

@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2211 Remove OozieCLI#validateCommandV41 (dbist13 via andras.piros)
 OOZIE-3178 ./bin/mkdistro.sh -Papache-release fails due to javadoc errors (dbist13 via gezapeti)
 OOZIE-2967 TestStatusTransitService.testBundleStatusCoordSubmitFails fails intermittently in Apache Oozie Core 5.0.0-SNAPSHOT (pbacsko)
 OOZIE-3238 Flaky test TestStatusTransitService#testBundleStatusTransitWithLock (pbacsko via gezapeti, andras.piros)
