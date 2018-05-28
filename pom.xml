@@ -1906,6 +1906,7 @@
                     <classpathDependencyExcludes>
                         <classpathDependencyExclude>javax.servlet:servlet-api</classpathDependencyExclude>
                     </classpathDependencyExcludes>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
             </plugin>
             <plugin>
