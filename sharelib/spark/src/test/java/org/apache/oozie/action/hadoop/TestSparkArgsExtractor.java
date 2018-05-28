@@ -29,11 +29,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
 import static org.apache.oozie.action.hadoop.SparkArgsExtractor.SPARK_DEFAULTS_GENERATED_PROPERTIES;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TestSparkArgsExtractor {
 
@@ -318,35 +321,42 @@ public class TestSparkArgsExtractor {
         actionConf.set(SparkActionExecutor.SPARK_JOB_NAME, "Spark Copy File");
         actionConf.set(SparkActionExecutor.SPARK_JAR, "/lib/test.jar");
 
-        createTemporaryFileWithContent(SPARK_DEFAULTS_PROPERTIES, "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf\n" +
+        createTemporaryFileWithContent(SPARK_DEFAULTS_PROPERTIES,
+                "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf\n" +
                 "spark.driver.extraClassPath=/etc/hbase/conf:/etc/hive/conf\n" +
                 "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions\n" +
                 "spark.driver.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions");
 
         final List<String> sparkArgs = new SparkArgsExtractor(actionConf).extract(new String[0]);
 
-        assertEquals("Spark args mismatch",
-                Lists.newArrayList("--master", "yarn",
-                        "--deploy-mode", "client",
-                        "--name", "Spark Copy File",
-                        "--class", "org.apache.oozie.example.SparkFileCopy",
-                        "--conf", "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*",
-                        "--conf", "spark.driver.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*",
-                        "--conf", "spark.yarn.security.tokens.hadoopfs.enabled=false",
-                        "--conf", "spark.yarn.security.tokens.hive.enabled=false",
-                        "--conf", "spark.yarn.security.tokens.hbase.enabled=false",
-                        "--conf", "spark.yarn.security.credentials.hadoopfs.enabled=false",
-                        "--conf", "spark.yarn.security.credentials.hive.enabled=false",
-                        "--conf", "spark.yarn.security.credentials.hbase.enabled=false",
-                        "--conf", "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions " +
-                                "-Dlog4j.configuration=spark-log4j.properties",
-                        "--conf", "spark.driver.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC -XX:+UnlockExperimentalVMOptions " +
-                                "-Dlog4j.configuration=spark-log4j.properties",
-                        "--properties-file", "spark-defaults-oozie-generated.properties",
-                        "--files", "spark-log4j.properties,hive-site.xml",
-                        "--conf", "spark.yarn.jar=null",
-                        "--verbose", "/lib/test.jar"),
+        assertContainsSublist(
+                Lists.newArrayList("--conf", "spark.executor.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*"),
                 sparkArgs);
+        assertContainsSublist(
+                Lists.newArrayList("--conf", "spark.driver.extraClassPath=/etc/hbase/conf:/etc/hive/conf:$PWD/*"),
+                sparkArgs);
+        assertContainsSublist(
+                Lists.newArrayList("--conf", "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC " +
+                        "-XX:+UnlockExperimentalVMOptions -Dlog4j.configuration=spark-log4j.properties"),
+                sparkArgs);
+        assertContainsSublist(
+                Lists.newArrayList("--conf", "spark.driver.extraJavaOptions=-XX:+UseG1GC -XX:+PrintGC " +
+                        "-XX:+UnlockExperimentalVMOptions -Dlog4j.configuration=spark-log4j.properties"),
+                sparkArgs);
+    }
+
+    private void assertContainsSublist(final List<String> expected, final List<String> actual) {
+        final int sublistSize = expected.size();
+        assertTrue("actual size is below expected size", actual.size() >= sublistSize);
+
+        for (int ixActual = 0; ixActual <= actual.size() - sublistSize; ixActual++) {
+            final List<String> actualSublist = actual.subList(ixActual, ixActual + sublistSize);
+            if (Arrays.deepEquals(expected.toArray(), actualSublist.toArray())) {
+                return;
+            }
+        }
+
+        fail(String.format("actual:\n%s does not contain expected:\n%s", actual, expected));
     }
 
     private Properties readMergedProperties() throws IOException {

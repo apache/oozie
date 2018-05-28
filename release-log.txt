@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3228 amend [Spark action] Can't load properties from spark-defaults.conf (andras.piros)
 OOZIE-3257 TestHiveActionExecutor#testHiveAction still fails (pbacsko via andras.piros)
 OOZIE-2352 Unportable shebang in shell scripts (dbist13 via andras.piros)
 OOZIE-2211 Remove OozieCLI#validateCommandV41 (dbist13 via andras.piros)
