@@ -56,6 +56,7 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
         services = new Services();
         services.init();
         jpaService = Services.get().get(JPAService.class);
+        Services.get().get(SchedulerService.class).destroy(); // disable background services
     }
 
     @Override
