@@ -64,17 +64,11 @@ public class BundleJobInfoGetJPAExecutor implements JPAExecutor<BundleJobInfo> {
         this.len = len;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobInfoGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public BundleJobInfo execute(EntityManager em) throws JPAExecutorException {

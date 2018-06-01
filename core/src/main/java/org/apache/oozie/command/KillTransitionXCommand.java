@@ -32,9 +32,6 @@ public abstract class KillTransitionXCommand<T> extends TransitionXCommand<T> {
 
     public abstract void killChildren() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public void transitToNext() {
         if (job == null) {
@@ -44,9 +41,6 @@ public abstract class KillTransitionXCommand<T> extends TransitionXCommand<T> {
         job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#execute()
-     */
     @Override
     protected T execute() throws CommandException {
         try {

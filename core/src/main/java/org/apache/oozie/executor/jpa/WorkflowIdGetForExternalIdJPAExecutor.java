@@ -37,17 +37,11 @@ public class WorkflowIdGetForExternalIdJPAExecutor implements JPAExecutor<String
         this.externalId = externalId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowIdGetForExternalIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public String execute(EntityManager em) throws JPAExecutorException {

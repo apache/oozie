@@ -35,17 +35,11 @@ public class WorkflowJobInsertJPAExecutor implements JPAExecutor<String> {
         this.wfJob = wfJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(wfJob);

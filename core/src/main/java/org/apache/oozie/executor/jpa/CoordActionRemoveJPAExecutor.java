@@ -42,9 +42,6 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
         this.coordActionId = coordActionId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
         Query g = em.createNamedQuery("DELETE_UNSCHEDULED_ACTION");
@@ -62,9 +59,6 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionRemoveJPAExecutor";

@@ -347,11 +347,6 @@ public class CallableQueueService implements Service, Instrumentable {
             return null;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
             if (callables.size() == 0) {

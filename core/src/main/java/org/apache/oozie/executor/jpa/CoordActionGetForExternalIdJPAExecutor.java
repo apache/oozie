@@ -43,17 +43,11 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
         this.externalId = externalId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionGetForExternalIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {

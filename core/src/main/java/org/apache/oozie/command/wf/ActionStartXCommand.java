@@ -391,9 +391,6 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
         return;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
     @Override
     public String getKey(){
         return getName() + "_" + actionId;

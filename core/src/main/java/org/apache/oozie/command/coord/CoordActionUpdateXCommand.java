@@ -161,17 +161,11 @@ public class CoordActionUpdateXCommand extends CoordinatorXCommand<Void> {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return workflow.getParentId().substring(0, workflow.getParentId().indexOf("@"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;

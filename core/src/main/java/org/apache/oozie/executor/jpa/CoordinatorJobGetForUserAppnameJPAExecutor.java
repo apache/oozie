@@ -38,22 +38,11 @@ public class CoordinatorJobGetForUserAppnameJPAExecutor implements JPAExecutor<C
         this.coordJobId = coordJobId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordinatorJobGetForUserAppnameJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public CoordinatorJobBean execute(EntityManager em) throws JPAExecutorException {
         try {

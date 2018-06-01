@@ -48,17 +48,11 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
         this.isNullAcceptable = isNullAcceptable;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowActionGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public WorkflowActionBean execute(EntityManager em) throws JPAExecutorException {

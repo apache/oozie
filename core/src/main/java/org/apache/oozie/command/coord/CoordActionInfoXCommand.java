@@ -40,9 +40,6 @@ public class CoordActionInfoXCommand extends CoordinatorXCommand<CoordinatorActi
         this.id = ParamChecker.notEmpty(id, "id");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected CoordinatorActionBean execute() throws CommandException {
         JPAService jpaService = Services.get().get(JPAService.class);
@@ -62,31 +59,19 @@ public class CoordActionInfoXCommand extends CoordinatorXCommand<CoordinatorActi
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;

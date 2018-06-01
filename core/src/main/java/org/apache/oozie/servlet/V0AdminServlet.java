@@ -62,13 +62,6 @@ public class V0AdminServlet extends BaseAdminServlet {
         modeTag = RestConstants.ADMIN_SAFE_MODE_PARAM;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#populateOozieMode(org.json.
-     * simple.JSONObject)
-     */
     @Override
     protected void populateOozieMode(JSONObject json) {
         if (Services.get().getSystemMode() != SYSTEM_MODE.NORMAL) {
@@ -79,14 +72,6 @@ public class V0AdminServlet extends BaseAdminServlet {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#setOozieMode(javax.servlet.
-     * http.HttpServletRequest, javax.servlet.http.HttpServletResponse,
-     * java.lang.String)
-     */
     @Override
     protected void setOozieMode(HttpServletRequest request, HttpServletResponse response, String resourceName)
             throws XServletException {
@@ -96,13 +81,6 @@ public class V0AdminServlet extends BaseAdminServlet {
         response.setStatus(HttpServletResponse.SC_OK);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
-     */
     @Override
     protected void getQueueDump(JSONObject json) throws XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, "cannot get queue dump");

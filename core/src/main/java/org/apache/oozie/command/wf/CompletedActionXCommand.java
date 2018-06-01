@@ -63,11 +63,6 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         LogUtils.setLogInfo(actionId);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
         try {
@@ -80,11 +75,6 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         LogUtils.setLogInfo(this.wfactionBean);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (this.wfactionBean.getStatus() != WorkflowActionBean.Status.RUNNING
@@ -93,11 +83,6 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         // If the action is still in PREP, we probably received a callback before Oozie was able to update from PREP to RUNNING;
@@ -124,41 +109,21 @@ public class CompletedActionXCommand extends WorkflowXCommand<Void> {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         eagerLoadState();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();

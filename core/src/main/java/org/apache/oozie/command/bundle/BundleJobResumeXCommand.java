@@ -59,9 +59,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         this.bundleId = ParamChecker.notNull(jobId, "BundleId");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.ResumeTransitionXCommand#resumeChildren()
-     */
     @Override
     public void resumeChildren() {
         for (BundleActionBean action : bundleActions) {
@@ -104,17 +101,11 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
                 BundleActionQuery.UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME, action));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() {
         InstrumentUtils.incrJobCounter("bundle_resume", 1, null);
@@ -126,9 +117,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
                 BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING_SUSP_MOD_TIME, bundleJob));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.ResumeTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -139,25 +127,16 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return bundleId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -177,9 +156,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         LogUtils.setLogInfo(bundleJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() != Job.Status.SUSPENDED && bundleJob.getStatus() != Job.Status.SUSPENDEDWITHERROR
@@ -189,9 +165,6 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleJob;

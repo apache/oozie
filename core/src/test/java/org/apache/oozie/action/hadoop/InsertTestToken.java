@@ -31,11 +31,6 @@ public class InsertTestToken implements CredentialsProvider {
     public InsertTestToken() {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf,
-     *  org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
-     */
-
     @Override
     public void updateCredentials(Credentials  credentials, Configuration config, CredentialsProperties props, Context context)
             throws Exception {

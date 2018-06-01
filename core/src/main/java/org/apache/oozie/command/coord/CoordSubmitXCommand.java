@@ -197,9 +197,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         this.dryrun = dryrun;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected String submit() throws CommandException {
         LOG.info("STARTED Coordinator Submit");
@@ -1294,25 +1291,16 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -1334,17 +1322,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
         // update bundle action
@@ -1355,16 +1337,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return coordJob;

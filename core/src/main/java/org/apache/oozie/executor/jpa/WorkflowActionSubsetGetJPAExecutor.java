@@ -54,9 +54,6 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
         this.length = length;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<WorkflowActionBean> execute(EntityManager em) throws JPAExecutorException {
@@ -76,9 +73,6 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
         return actions;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowActionSubsetGetJPAExecutor";

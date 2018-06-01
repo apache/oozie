@@ -322,26 +322,14 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             this(workflow, action, false, false);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getCallbackUrl(java.lang.String)
-         */
         public String getCallbackUrl(String externalStatusVar) {
             return Services.get().get(CallbackService.class).createCallBackUrl(action.getId(), externalStatusVar);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getProtoActionConf()
-         */
         public Configuration getProtoActionConf() {
             return protoConf;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getWorkflow()
-         */
         public WorkflowJob getWorkflow() {
             return workflow;
         }
@@ -355,20 +343,12 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return action;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getELEvaluator()
-         */
         public ELEvaluator getELEvaluator() {
             ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator("workflow");
             DagELFunctions.configureEvaluator(evaluator, workflow, action);
             return evaluator;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setVar(java.lang.String, java.lang.String)
-         */
         public void setVar(String name, String value) {
             setVarToWorkflow(name, value);
         }
@@ -385,19 +365,11 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             workflow.setWorkflowInstance(wfInstance);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getVar(java.lang.String)
-         */
         public String getVar(String name) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             return workflow.getWorkflowInstance().getVar(name);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setStartData(java.lang.String, java.lang.String, java.lang.String)
-         */
         public void setStartData(String externalId, String trackerUri, String consoleUrl) {
             setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_CONSOLE_URL), consoleUrl);
             action.setStartData(externalId, trackerUri, consoleUrl);
@@ -412,48 +384,27 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             action.setStartTime(now);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionData(java.lang.String, java.util.Properties)
-         */
         public void setExecutionData(String externalStatus, Properties actionData) {
             action.setExecutionData(externalStatus, actionData);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionStats(java.lang.String)
-         */
         public void setExecutionStats(String jsonStats) {
             action.setExecutionStats(jsonStats);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExternalChildIDs(java.lang.String)
-         */
         public void setExternalChildIDs(String externalChildIDs) {
             setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS), externalChildIDs);
             action.setExternalChildIDs(externalChildIDs);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setEndData(org.apache.oozie.client.WorkflowAction.Status,
-         * java.lang.String)
-         */
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#isRetry()
-         */
         public boolean isRetry() {
             return isRetry;
         }
@@ -503,9 +454,6 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return action.getId() + RECOVERY_ID_SEPARATOR + workflow.getRun();
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getActionDir()
-         */
         public Path getActionDir() throws HadoopAccessorException, IOException, URISyntaxException {
             String name = getWorkflow().getId() + "/" + action.getName() + "--" + action.getType();
             FileSystem fs = getAppFileSystem();
@@ -514,9 +462,6 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return fqActionDir;
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getAppFileSystem()
-         */
         public FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException {
             WorkflowJob workflow = getWorkflow();
             URI uri = new URI(getWorkflow().getAppPath());
@@ -526,9 +471,6 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
 
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setErrorInfo(java.lang.String, java.lang.String)
-         */
         @Override
         public void setErrorInfo(String str, String exMsg) {
             action.setErrorInfo(str, exMsg);

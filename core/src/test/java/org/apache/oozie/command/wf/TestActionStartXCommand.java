@@ -348,11 +348,6 @@ public class TestActionStartXCommand extends XDataTestCase {
         return action;
     }
 
-
-    /* (non-Javadoc)
-     * @see org.apache.oozie.test.XDataTestCase#addRecordToWfActionTable(
-     * java.lang.String, java.lang.String, org.apache.oozie.client.WorkflowAction.Status)
-     */
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(String wfId, String actionName, WorkflowAction.Status status)
             throws Exception {

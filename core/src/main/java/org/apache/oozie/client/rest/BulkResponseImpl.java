@@ -79,25 +79,16 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
         return json;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getBundle()
-     */
     @Override
     public BundleJobBean getBundle() {
         return bundle;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getCoordinator()
-     */
     @Override
     public CoordinatorJobBean getCoordinator() {
         return coordinator;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getAction()
-     */
     @Override
     public CoordinatorActionBean getAction() {
         return action;

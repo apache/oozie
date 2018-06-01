@@ -158,9 +158,6 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         StringBuffer changeReport = new StringBuffer();
@@ -210,17 +207,11 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;

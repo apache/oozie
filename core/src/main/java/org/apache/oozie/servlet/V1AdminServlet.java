@@ -82,27 +82,12 @@ public class V1AdminServlet extends BaseAdminServlet {
         this(INSTRUMENTATION_NAME);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#populateOozieMode(org.json.
-     * simple.JSONObject)
-     */
     @SuppressWarnings("unchecked")
     @Override
     protected void populateOozieMode(JSONObject json) {
         json.put(JsonTags.OOZIE_SYSTEM_MODE, Services.get().getSystemMode().toString());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#setOozieMode(javax.servlet.
-     * http.HttpServletRequest, javax.servlet.http.HttpServletResponse,
-     * java.lang.String)
-     */
     @Override
     protected void setOozieMode(HttpServletRequest request,
                                 HttpServletResponse response, String resourceName)

@@ -35,17 +35,11 @@ public class CoordJobInsertJPAExecutor implements JPAExecutor<String> {
         this.coordJob = coordJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
     	return "CoordJobInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(coordJob);

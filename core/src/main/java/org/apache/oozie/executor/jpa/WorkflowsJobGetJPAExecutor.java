@@ -66,9 +66,6 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         this.len = len;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public WorkflowsInfo execute(EntityManager em) throws JPAExecutorException {
@@ -330,9 +327,6 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         return new WorkflowsInfo(wfBeansList, start, len, realLen);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowsJobGetJPAExecutor";

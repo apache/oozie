@@ -37,21 +37,10 @@ public class BundleJobGetForUserJPAExecutor implements JPAExecutor<String> {
         this.bundleJobId = bundleJobId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     public String getName() {
         return "BundleJobGetForUserJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         try {

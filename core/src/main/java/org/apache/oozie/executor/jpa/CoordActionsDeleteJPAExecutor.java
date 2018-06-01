@@ -50,22 +50,11 @@ public class CoordActionsDeleteJPAExecutor implements JPAExecutor<Integer> {
         this.deleteList = deleteList;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionsDeleteJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public Integer execute(EntityManager em) throws JPAExecutorException {
         int actionsDeleted = 0;

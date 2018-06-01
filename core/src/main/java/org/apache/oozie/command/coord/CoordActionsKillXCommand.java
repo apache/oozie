@@ -139,11 +139,6 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
         ret = coordInfo;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.KillTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {

@@ -59,9 +59,6 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         transitToNext();

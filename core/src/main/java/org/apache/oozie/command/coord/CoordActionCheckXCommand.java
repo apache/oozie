@@ -77,9 +77,6 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(actionId);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         try {
@@ -151,9 +148,6 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return actionId.substring(0, actionId.indexOf("@"));
@@ -164,17 +158,11 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         return getName() + "_" + actionId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -197,9 +185,6 @@ public class CoordActionCheckXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         // if the action has been updated, quit this command

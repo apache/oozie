@@ -35,17 +35,11 @@ public class CoordActionInsertJPAExecutor implements JPAExecutor<String> {
         this.coordAction = coordAction;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(coordAction);

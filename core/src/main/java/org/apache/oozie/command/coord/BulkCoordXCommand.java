@@ -55,40 +55,25 @@ public class BulkCoordXCommand extends XCommand<CoordinatorJobInfo> {
         this.operation = operation;
     }
 
-    /* (non-Javadoc)
-    * @see org.apache.oozie.command.XCommand#isLockRequired()
-    */
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-    * @see org.apache.oozie.command.XCommand#loadState()
-    */
     @Override
     protected void loadState() throws CommandException {
         loadJobs();
     }
 
-    /* (non-Javadoc)
-    * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-    */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected CoordinatorJobInfo execute() throws CommandException {
         List<CoordinatorJobBean> jobs = this.coordinatorJobInfo.getCoordJobs();

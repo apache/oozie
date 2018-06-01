@@ -175,9 +175,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
         return configuration;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected String execute() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());

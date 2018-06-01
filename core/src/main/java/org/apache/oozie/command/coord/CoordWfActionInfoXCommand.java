@@ -93,10 +93,6 @@ public class CoordWfActionInfoXCommand extends CoordinatorXCommand<List<Coordina
         return coordWfActions;
     }
 
-    /**
-     *  (non-Javadoc)
-     *  @see org.apache.oozie.command.XCommand#loadState()
-     **/
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -114,31 +110,17 @@ public class CoordWfActionInfoXCommand extends CoordinatorXCommand<List<Coordina
         }
     }
 
-    /**
-     * (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     * no-op
-     **/
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /**
-     *  (non-Javadoc)
-     *  @see org.apache.oozie.command.XCommand#isLockRequired()
-     **/
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /**
-     *  (non-Javadoc)
-     *  @see org.apache.oozie.command.XCommand#getEntityKey()
-     **/
     @Override
     public String getEntityKey() {
         return null;
     }
-
 }

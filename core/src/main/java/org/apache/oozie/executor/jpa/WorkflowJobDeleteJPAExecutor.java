@@ -36,9 +36,6 @@ public class WorkflowJobDeleteJPAExecutor implements JPAExecutor<Void>{
         this.wfJobId = wfJobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
         WorkflowJobBean job = em.find(WorkflowJobBean.class, this.wfJobId);
@@ -48,9 +45,6 @@ public class WorkflowJobDeleteJPAExecutor implements JPAExecutor<Void>{
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobDeleteJPAExecutor";

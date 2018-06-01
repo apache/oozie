@@ -117,9 +117,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         this.dryrun = dryrun;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.SubmitTransitionXCommand#submit()
-     */
     @Override
     protected String submit() throws CommandException {
         LOG.info("STARTED Bundle Submit");
@@ -181,24 +178,15 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
@@ -406,9 +394,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleBean;
@@ -507,9 +492,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
     }

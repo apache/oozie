@@ -35,18 +35,12 @@ public class BundleJobInsertJPAExecutor implements JPAExecutor<String> {
         this.bundleJob = bundleJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(this.bundleJob);
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobInsertJPAExecutor";

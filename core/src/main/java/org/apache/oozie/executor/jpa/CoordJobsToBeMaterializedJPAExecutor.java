@@ -48,9 +48,6 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public List<CoordinatorJobBean> execute(EntityManager em) throws JPAExecutorException {

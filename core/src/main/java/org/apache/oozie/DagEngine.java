@@ -264,9 +264,6 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws DagEngineException {
         // This code should not be reached.
@@ -535,9 +532,6 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
-     */
     @Override
     public String dryRunSubmit(Configuration conf) throws BaseEngineException {
         try {

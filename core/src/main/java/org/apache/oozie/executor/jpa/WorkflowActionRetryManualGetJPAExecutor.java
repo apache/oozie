@@ -43,9 +43,6 @@ public class WorkflowActionRetryManualGetJPAExecutor implements JPAExecutor<List
         this.actions = null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public List<WorkflowActionBean> execute(EntityManager em) throws JPAExecutorException {
         try {
@@ -59,9 +56,6 @@ public class WorkflowActionRetryManualGetJPAExecutor implements JPAExecutor<List
         return actions;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowActionRetryManualGetJPAExecutor";

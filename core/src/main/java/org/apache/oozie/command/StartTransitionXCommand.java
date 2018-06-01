@@ -60,9 +60,6 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
      */
     public abstract void StartChildren() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public final void transitToNext() {
         if (job == null) {
@@ -72,9 +69,6 @@ public abstract class StartTransitionXCommand extends TransitionXCommand<Void> {
         job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         transitToNext();

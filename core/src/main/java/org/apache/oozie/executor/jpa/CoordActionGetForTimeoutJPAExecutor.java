@@ -42,17 +42,11 @@ public class CoordActionGetForTimeoutJPAExecutor implements JPAExecutor<Coordina
         this.coordActionId = coordActionId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionGetForTimeoutJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
         try {

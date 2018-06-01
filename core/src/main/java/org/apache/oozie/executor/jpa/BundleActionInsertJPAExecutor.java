@@ -40,17 +40,11 @@ public class BundleActionInsertJPAExecutor implements JPAExecutor<Void> {
         this.bundleAction = bundleAction;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleActionInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
         em.persist(bundleAction);

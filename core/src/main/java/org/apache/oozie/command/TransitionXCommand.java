@@ -97,9 +97,6 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      */
     public abstract void performWrites() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected T execute() throws CommandException {
         transitToNext();

@@ -44,17 +44,11 @@ public class CoordJobsGetFromParentIdJPAExecutor implements JPAExecutor<List<Str
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordJobsGetFromParentIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<String> execute(EntityManager em) throws JPAExecutorException {

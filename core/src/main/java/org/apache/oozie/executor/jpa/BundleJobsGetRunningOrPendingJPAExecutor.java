@@ -38,17 +38,11 @@ public class BundleJobsGetRunningOrPendingJPAExecutor implements JPAExecutor<Lis
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobsGetRunningOrPendingJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {

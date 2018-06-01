@@ -124,11 +124,6 @@ public class CoordinatorEngine extends BaseEngine {
         this.user = ParamChecker.notEmpty(user, "user");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
-     */
     @Override
     public String getDefinition(String jobId) throws BaseEngineException {
         CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
@@ -163,11 +158,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
-     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId) throws BaseEngineException {
         try {
@@ -178,11 +168,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, java.lang.String, int, int)
-     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, String filter, int offset, int length, boolean desc)
             throws BaseEngineException {
@@ -195,21 +180,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
-     */
     @Override
     public String getJobIdForExternalId(String externalId) throws CoordinatorEngineException {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
-     */
     @Override
     public void kill(String jobId) throws CoordinatorEngineException {
         try {
@@ -230,9 +205,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws CoordinatorEngineException {
         try {
@@ -286,11 +258,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
-     */
     @Override
     public void resume(String jobId) throws CoordinatorEngineException {
         try {
@@ -500,13 +467,6 @@ public class CoordinatorEngine extends BaseEngine {
                 endTime, writer);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.BaseEngine#submitJob(org.apache.hadoop.conf.Configuration
-     * , boolean)
-     */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws CoordinatorEngineException {
         try {
@@ -518,12 +478,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
-     */
     @Override
     public String dryRunSubmit(Configuration conf) throws CoordinatorEngineException {
         try {
@@ -535,11 +489,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
-     */
     @Override
     public void suspend(String jobId) throws CoordinatorEngineException {
         try {
@@ -551,21 +500,11 @@ public class CoordinatorEngine extends BaseEngine {
 
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
-     */
     @Override
     public WorkflowJob getJob(String jobId) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
-     */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));

@@ -66,11 +66,6 @@ public class MessageReceiver implements MessageListener {
         return session;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
-     */
     @Override
     public void onMessage(Message msg) {
         LOG.trace("Received a JMS message ");

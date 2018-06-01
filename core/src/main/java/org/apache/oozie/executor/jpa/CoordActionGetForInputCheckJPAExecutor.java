@@ -41,17 +41,11 @@ public class CoordActionGetForInputCheckJPAExecutor implements JPAExecutor<Coord
         this.coordActionId = coordActionId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionGetForInputCheckJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
         try {

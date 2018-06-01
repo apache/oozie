@@ -38,17 +38,11 @@ public class CoordJobGetActionByActionNumberJPAExecutor implements JPAExecutor<S
         this.actionNumber = actionNumber;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordJobGetActionByActionNumberJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         try {

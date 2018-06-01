@@ -39,17 +39,11 @@ public class BundleJobGetJPAExecutor implements JPAExecutor<BundleJobBean> {
         this.bundleJobId = bundleJobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public BundleJobBean execute(EntityManager em) throws JPAExecutorException {

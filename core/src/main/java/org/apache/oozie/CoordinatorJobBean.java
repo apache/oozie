@@ -794,9 +794,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.timeUnitStr = timeUnit.toString();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getTimeUnit()
-     */
     @Override
     public Timeunit getTimeUnit() {
         return Timeunit.valueOf(this.timeUnitStr);
@@ -811,9 +808,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.execution = order.toString();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getExecutionOrder()
-     */
     @Override
     public Execution getExecutionOrder() {
         return Execution.valueOf(this.execution);
@@ -840,9 +834,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.lastActionTimestamp = DateUtils.convertDateToTimestamp(lastAction);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getLastActionTime()
-     */
     @Override
     public Date getLastActionTime() {
         return DateUtils.toDate(lastActionTimestamp);
@@ -861,9 +852,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.nextMaterializedTimestamp = DateUtils.convertDateToTimestamp(nextMaterializedTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getNextMaterializedTime()
-     */
     @Override
     public Date getNextMaterializedTime() {
         return DateUtils.toDate(nextMaterializedTimestamp);
@@ -909,9 +897,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getStartTime()
-     */
     @Override
     public Date getStartTime() {
         return DateUtils.toDate(startTimestamp);

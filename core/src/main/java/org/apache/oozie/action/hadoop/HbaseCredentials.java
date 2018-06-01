@@ -51,10 +51,6 @@ public class HbaseCredentials implements CredentialsProvider {
         Configuration.addDefaultResource(OOZIE_HBASE_CLIENT_SITE_XML);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf,
-     * org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
-     */
     @Override
     public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,
             Context context) throws Exception {

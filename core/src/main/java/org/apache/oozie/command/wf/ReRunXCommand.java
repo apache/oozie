@@ -120,9 +120,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         LogUtils.setLogInfo(jobId);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         setupReRun();
@@ -398,25 +395,16 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         newWfInstance.setAllVars(newVars);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -429,9 +417,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();

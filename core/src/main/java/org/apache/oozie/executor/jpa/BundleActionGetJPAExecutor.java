@@ -46,17 +46,11 @@ public class BundleActionGetJPAExecutor implements JPAExecutor<BundleActionBean>
         this.bundleActionId = bundleId + "_" + coordName;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleActionGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public BundleActionBean execute(EntityManager em) throws JPAExecutorException {

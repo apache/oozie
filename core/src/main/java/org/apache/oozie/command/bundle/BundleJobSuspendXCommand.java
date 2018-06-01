@@ -50,31 +50,19 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         this.jobId = ParamChecker.notEmpty(id, "id");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#setJob(org.apache.oozie.client.Job)
-     */
     @Override
     public void setJob(Job job) {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.SuspendTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -85,25 +73,16 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -124,9 +103,6 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         LogUtils.setLogInfo(bundleJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (bundleJob.getStatus() == Job.Status.SUCCEEDED || bundleJob.getStatus() == Job.Status.FAILED
@@ -138,9 +114,6 @@ public class BundleJobSuspendXCommand extends SuspendTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() {
         InstrumentUtils.incrJobCounter("bundle_suspend", 1, null);

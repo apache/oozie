@@ -341,9 +341,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         LOG.info("STARTED CoordChangeXCommand for jobId=" + jobId);
@@ -479,17 +476,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException{
         jpaService = Services.get().get(JPAService.class);
@@ -510,17 +501,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(this.coordJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException,PreconditionException {
         check(this.coordJob, newEndTime, newConcurrency, newPauseTime, jobStatus);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;

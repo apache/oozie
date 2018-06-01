@@ -38,17 +38,11 @@ public class BundleJobGetCoordinatorsJPAExecutor implements JPAExecutor<List<Coo
         this.bundleId = bundleId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobGetCoordinatorsJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<CoordinatorJobBean> execute(EntityManager em) throws JPAExecutorException {

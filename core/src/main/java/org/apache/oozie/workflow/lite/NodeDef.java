@@ -209,9 +209,6 @@ public class NodeDef implements Writable {
         userRetryInterval = dataInput.readUTF();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
-     */
     @Override
     public void readFields(DataInput dataInput) throws IOException {
         String firstField = dataInput.readUTF();
@@ -320,9 +317,6 @@ public class NodeDef implements Writable {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
-     */
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         if (getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {

@@ -81,9 +81,6 @@ public class BundleEngine extends BaseEngine {
         this.user = ParamChecker.notEmpty(user, "user");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws BundleEngineException {
         try {
@@ -95,9 +92,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
-     */
     @Override
     public String dryRunSubmit(Configuration conf) throws BundleEngineException {
         BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf);
@@ -110,9 +104,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
-     */
     @Override
     public CoordinatorJob getCoordJob(String jobId) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
@@ -127,9 +118,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
-     */
     @Override
     public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc)
             throws BundleEngineException {
@@ -137,9 +125,6 @@ public class BundleEngine extends BaseEngine {
                 "cannot get a coordinator job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
-     */
     @Override
     public String getDefinition(String jobId) throws BundleEngineException {
         BundleJobBean job;
@@ -152,33 +137,21 @@ public class BundleEngine extends BaseEngine {
         return job.getOrigJobXml();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
-     */
     @Override
     public WorkflowJob getJob(String jobId) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
-     */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
-     */
     @Override
     public String getJobIdForExternalId(String externalId) throws BundleEngineException {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
-     */
     @Override
     public void kill(String jobId) throws BundleEngineException {
         try {
@@ -189,9 +162,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#reRun(java.lang.String, org.apache.hadoop.conf.Configuration)
-     */
     @Override
     @Deprecated
     public void reRun(String jobId, Configuration conf) throws BundleEngineException {
@@ -218,9 +188,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
-     */
     @Override
     public void resume(String jobId) throws BundleEngineException {
         BundleJobResumeXCommand resume = new BundleJobResumeXCommand(jobId);
@@ -232,9 +199,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#start(java.lang.String)
-     */
     @Override
     public void start(String jobId) throws BundleEngineException {
         try {
@@ -266,9 +230,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#submitJob(org.apache.hadoop.conf.Configuration, boolean)
-     */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
         try {
@@ -284,9 +245,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
-     */
     @Override
     public void suspend(String jobId) throws BundleEngineException {
         BundleJobSuspendXCommand suspend = new BundleJobSuspendXCommand(jobId);

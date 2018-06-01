@@ -39,17 +39,11 @@ public class CoordJobGetJPAExecutor implements JPAExecutor<CoordinatorJobBean> {
         this.coordJobId = coordJobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordJobGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public CoordinatorJobBean execute(EntityManager em) throws JPAExecutorException {

@@ -37,22 +37,11 @@ public class WorkflowJobGetForUserJPAExecutor implements JPAExecutor<String> {
         this.wfJobId = wfJobId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobGetForUserJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         try {

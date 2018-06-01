@@ -46,9 +46,6 @@ import org.apache.oozie.util.XmlUtils;
 public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
     Services services;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.test.XFsTestCase#setUp()
-     */
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -56,9 +53,6 @@ public class TestCoordJobsGetForPurgeJPAExecutor extends XFsTestCase {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.test.XFsTestCase#tearDown()
-     */
     @Override
     protected void tearDown() throws Exception {
         LocalOozie.stop();
