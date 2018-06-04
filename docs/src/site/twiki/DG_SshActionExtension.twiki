@@ -27,6 +27,11 @@ command must follow the following requirements:
 Note: Ssh Action will fail if any output is written to standard error / output upon login (e.g. .bashrc of the remote
 user contains ls -a).
 
+Note: Ssh Action will fail if oozie fails to ssh connect to host for action status check
+(e.g., the host is under heavy load, or network is bad) after a configurable number (3 by default) of retries.
+The first retry will wait a configurable period of time ( 3 seconds by default) before check.
+The following retries will wait 2 times of previous wait time.
+
 *Syntax:*
 
 <verbatim>

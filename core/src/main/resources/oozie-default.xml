@@ -2059,6 +2059,22 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>ooozie.action.ssh.check.retries.max</name>
+        <value>3</value>
+        <description>
+            Maximal retry count for ssh action status check
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.ssh.check.initial.retry.wait.time</name>
+        <value>3000</value>
+        <description>
+            init wait time that the first retry check needs to wait
+        </description>
+    </property>
+
     <!-- SubworkflowActionExecutor -->
 
     <property>

@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3156 Retry SSH action check when cannot connect to remote host (txsing via andras.piros)
 OOZIE-3227 Eliminate duplicate dependencies when using Hadoop 3 DistributedCache (dionusos via andras.piros)
 OOZIE-2097 Get rid of non-Javadoc comments (Jan Hentschel via andras.piros)
 OOZIE-3269 Flaky tests in TestCoordMaterializeTriggerService class (pbacsko via andras.piros)

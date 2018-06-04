@@ -81,7 +81,13 @@ public class SshActionExecutor extends ActionExecutor {
 
     public static final String HTTP_COMMAND_OPTIONS = "oozie.action.ssh.http.command.post.options";
 
+    public static final String CHECK_MAX_RETRIES = "oozie.action.ssh.check.retries.max";
+
+    public static final String CHECK_INITIAL_RETRY_WAIT_TIME = "oozie.action.ssh.check.initial.retry.wait.time";
+
     private static final String EXT_STATUS_VAR = "#status";
+
+    private static final int SSH_CONNECT_ERROR_CODE = 255;
 
     private static int maxLen;
     private static boolean allowSshUserAtHost;
@@ -547,6 +553,21 @@ public class SshActionExecutor extends ActionExecutor {
         String command = SSH_COMMAND_BASE + action.getTrackerUri() + " ps -p " + action.getExternalId();
         Status aStatus;
         int returnValue = getReturnValue(command);
+        if (returnValue == SSH_CONNECT_ERROR_CODE) {
+            int maxRetryCount = ConfigurationService.getInt(CHECK_MAX_RETRIES, 3);
+            long waitTime = ConfigurationService.getLong(CHECK_INITIAL_RETRY_WAIT_TIME, 3000);
+            for (int retries = 1; retries <= maxRetryCount; retries++) {
+                waitTime = handleRetry(waitTime, retries);
+                returnValue = getReturnValue(command);
+                if (returnValue != SSH_CONNECT_ERROR_CODE) {
+                    break;
+                }
+            }
+            if (returnValue == SSH_CONNECT_ERROR_CODE) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, ERR_COULD_NOT_CONNECT,
+                        "Failed to connect to host [" + action.getTrackerUri() + "] for ssh action status check.");
+            }
+        }
         if (returnValue == 0) {
             aStatus = Status.RUNNING;
         }
@@ -562,6 +583,18 @@ public class SshActionExecutor extends ActionExecutor {
             }
         }
         return aStatus;
+    }
+
+    private long handleRetry(long sleepBeforeRetryMs, final int retries) {
+        LOG.warn("failed to check ssh action status, sleeping {0} milliseconds before retry #{1}", sleepBeforeRetryMs,
+                retries);
+        try {
+            Thread.sleep(sleepBeforeRetryMs);
+        } catch (InterruptedException e) {
+            LOG.error("ssh action status check retry get interrupted during wait, caused by {0}", e.getMessage());
+        }
+        sleepBeforeRetryMs *= 2;
+        return sleepBeforeRetryMs;
     }
 
     /**
