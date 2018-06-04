@@ -88,6 +88,19 @@
     </property>
 
     <property>
+        <name>oozie.action.dependency.deduplicate</name>
+        <value>false</value>
+        <description>
+            If true, then Oozie will remove all the duplicates from the list of dependencies when they are passed to
+            the jobtracker. Higher priority dependencies will remain as the following:
+            Original list: "/a/a.jar#a.jar,/a/b.jar#b.jar,/b/a.jar,/b/b.jar,/c/d.jar"
+            Deduplicated list: "/a/a.jar#a.jar,/a/b.jar#b.jar,/c/d.jar"
+            With other words, priority order is: action jar > user workflow libs > action libs > system lib,
+            where dependency with greater prio is used.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.processing.timezone</name>
         <value>UTC</value>
         <description>

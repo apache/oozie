@@ -50,6 +50,36 @@ The action configuration files use the Hadoop configuration syntax.
 
 By default Oozie does not define any default action configurations.
 
+---++ Dependency deduplication
+
+Using Oozie with Hadoop 3 may require to have dependency file names distinguishable,
+ which means having two files on sharelib and in your app's dependencies with identical names, leads to job submission failure.
+To avoid this you can enable the deduplicator by setting oozie.action.dependency.deduplicate=true in oozie-site.xml
+(false, by default).
+Dependencies which are closer to your application has higher priority: action jar > user workflow libs > action libs > system lib,
+where dependency with greater prio is used.
+
+Real world example:
+You have an application workflow which is uploaded to HDFS in /apps/app directory. You have your app.jar and dependency jars.
+You also define a spark action in your workflow and set use system libs; the HDFS tree is similar to this:
+<verbatim>
+ + /apps/app/
+   - app.jar
+   - workflow.xml
+   + libs
+     - app.jar
+     - jackson-annotations-1.0.jar
+ + share/lib/
+   + spark
+     - app.jar
+     - jackson-annotations-1.0.jar
+   + oozie
+     - jackson-annotations-1.0.jar
+</verbatim>
+The deduplicator code will create the following list of files:
+=/apps/app/app.jar,/apps/app/libs/jackson-annotations-1.0.jar=
+And no other files will be passed at job submission.
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

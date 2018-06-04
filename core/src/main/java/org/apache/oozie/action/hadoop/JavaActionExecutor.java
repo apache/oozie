@@ -55,6 +55,7 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.TaskLog;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.AccessControlException;
@@ -165,6 +166,7 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final Set<String> DISALLOWED_PROPERTIES = new HashSet<String>();
     private static final String OOZIE_ACTION_NAME = "oozie.action.name";
     private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
+    public static final String OOZIE_ACTION_DEPENDENCY_DEDUPLICATE = "oozie.action.dependency.deduplicate";
 
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
@@ -174,6 +176,8 @@ public class JavaActionExecutor extends ActionExecutor {
 
     protected XLog LOG = XLog.getLog(getClass());
     private static final String JAVA_TMP_DIR_SETTINGS = "-Djava.io.tmpdir=";
+
+    private static DependencyDeduplicator dependencyDeduplicator = new DependencyDeduplicator();
 
     public XConfiguration workflowConf = null;
 
@@ -875,6 +879,7 @@ public class JavaActionExecutor extends ActionExecutor {
                     prepareXML = XmlUtils.prettyPrint(prepareElement).toString().trim();
                 }
             }
+            checkAndDeduplicate(actionConf);
             LauncherHelper.setupLauncherInfo(launcherJobConf, jobId, actionId, actionDir, recoveryId, actionConf,
                     prepareXML);
 
@@ -925,10 +930,18 @@ public class JavaActionExecutor extends ActionExecutor {
             // maybe we should add queue to the WF schema, below job-tracker
             actionConfToLauncherConf(actionConf, launcherJobConf);
 
+            checkAndDeduplicate(launcherJobConf);
             return launcherJobConf;
         }
         catch (Exception ex) {
             throw convertException(ex);
+        }
+    }
+
+    private void checkAndDeduplicate(final Configuration conf) {
+        if(ConfigurationService.getBoolean(OOZIE_ACTION_DEPENDENCY_DEDUPLICATE, false)) {
+            dependencyDeduplicator.deduplicate(conf, MRJobConfig.CACHE_FILES);
+            dependencyDeduplicator.deduplicate(conf, MRJobConfig.CACHE_ARCHIVES);
         }
     }
 
