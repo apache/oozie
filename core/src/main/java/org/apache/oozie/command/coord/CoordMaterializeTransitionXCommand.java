@@ -437,8 +437,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         boolean firstMater = true;
 
-        end = new DaylightOffsetCalculator(startMatdTime, endMatdTime).calculate(appTz, end);
-
         while (effStart.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
@@ -573,8 +571,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         Calendar end = Calendar.getInstance();
         end.setTime(jobEndTime);
 
-        end = calculateEndTimeWithDSTOffset(end);
-
         if (end.getTime().compareTo(endMatdTime) <= 0) {
             LOG.info("[" + job.getId() + "]: all actions have been materialized, set pending to true");
             // set doneMaterialization to true when materialization is done
@@ -583,14 +579,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         job.setStatus(StatusUtils.getStatus(job));
         LOG.info("Coord Job status updated to = " + job.getStatus());
         job.setNextMaterializedTime(endMatdTime);
-    }
-
-    private Calendar calculateEndTimeWithDSTOffset(final Calendar endTime) {
-        final TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
-        final Calendar start = Calendar.getInstance(appTz);
-        start.setTime(startMatdTime);
-
-        return new DaylightOffsetCalculator(startMatdTime, endMatdTime).calculate(appTz, endTime);
     }
 
     @Override

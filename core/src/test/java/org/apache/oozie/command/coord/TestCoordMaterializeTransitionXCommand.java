@@ -404,22 +404,26 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
 
         final String startPlusOneHour = "2013-03-10T09:00Z";
+        final String startPlusTwoHours = "2013-03-10T10:00Z";
         final Date[] nominalTimesWithDSTChange = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
-                DateUtils.parseDateOozieTZ(startPlusOneHour)};
-        checkCoordActionsNominalTime(job.getId(), 2, nominalTimesWithDSTChange);
+                DateUtils.parseDateOozieTZ(startPlusOneHour),
+                DateUtils.parseDateOozieTZ(startPlusTwoHours)
+        };
+        final int expectedNominalTimeCount = 3;
+        checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimesWithDSTChange);
 
-        checkTwoActionsAfterCatchup(job);
+        checkTwoActionsAfterCatchup(job, expectedNominalTimeCount, "2013-03-10T11:00Z");
     }
 
-    private void checkTwoActionsAfterCatchup(CoordinatorJobBean job) throws ParseException {
+    private void checkTwoActionsAfterCatchup(CoordinatorJobBean job, int expectedJobCount, String nextMaterialization)
+            throws ParseException {
         try {
             final JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue("coordinator job should have already been materialized", job.isDoneMaterialization());
-            assertEquals("coordinator action count mismatch", 2, job.getLastActionNumber());
-            final String startPlusThreeHours = "2013-03-10T10:00Z";
+            assertEquals("coordinator action count mismatch", expectedJobCount, job.getLastActionNumber());
             assertEquals("coordinator next materialization time mismatch",
-                    DateUtils.parseDateOozieTZ(startPlusThreeHours), job.getNextMaterializedTime());
+                    DateUtils.parseDateOozieTZ(nextMaterialization), job.getNextMaterializedTime());
         }
         catch (final JPAExecutorException se) {
             se.printStackTrace();
@@ -445,9 +449,10 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         final String startPlusOneHour = "2013-03-10T09:00Z";
         final Date[] nominalTimesWithoutDSTChange = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
                 DateUtils.parseDateOozieTZ(startPlusOneHour)};
-        checkCoordActionsNominalTime(job.getId(), 2, nominalTimesWithoutDSTChange);
+        final int expectedNominalTimeCount = 2;
+        checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimesWithoutDSTChange);
 
-        checkTwoActionsAfterCatchup(job);
+        checkTwoActionsAfterCatchup(job, expectedNominalTimeCount, "2013-03-10T10:00Z");
     }
 
     public void testActionMaterWithDST1() throws Exception {
@@ -459,8 +464,9 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-03-10T08:00Z"),
                 DateUtils.parseDateOozieTZ("2013-03-10T09:00Z"),
                 DateUtils.parseDateOozieTZ("2013-03-10T10:00Z"),
+                DateUtils.parseDateOozieTZ("2013-03-10T11:00Z"),
         };
-        final int expectedNominalTimeCount = 3;
+        final int expectedNominalTimeCount = 4;
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
@@ -468,7 +474,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(expectedNominalTimeCount, job.getLastActionNumber());
-            assertEquals(DateUtils.parseDateOozieTZ("2013-03-10T11:00Z"), job.getNextMaterializedTime());
+            assertEquals(DateUtils.parseDateOozieTZ("2013-03-10T12:00Z"), job.getNextMaterializedTime());
         }
         catch (JPAExecutorException se) {
             se.printStackTrace();
@@ -486,9 +492,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 DateUtils.parseDateOozieTZ("2012-11-04T08:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T09:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T10:00Z"),
-                DateUtils.parseDateOozieTZ("2012-11-04T11:00Z"),
         };
-        final int expectedNominalTimeCount = 5;
+        final int expectedNominalTimeCount = 4;
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
@@ -496,7 +501,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
-            assertEquals(job.getNextMaterializedTime(), DateUtils.parseDateOozieTZ("2012-11-04T12:00Z"));
+            assertEquals(job.getNextMaterializedTime(), DateUtils.parseDateOozieTZ("2012-11-04T11:00Z"));
         }
         catch (JPAExecutorException se) {
             se.printStackTrace();
@@ -797,7 +802,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         // If the startTime and endTime straddle a DST shift (the Coord is in
         // "America/Los_Angeles"), then we need to adjust for
         // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        next = new Date(startTime.getTime() + TIME_IN_DAY * 4);
         tz = TimeZone.getTimeZone(job.getTimeZone());
         next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
         assertEquals(next, job.getNextMaterializedTime());
@@ -872,6 +877,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T01:10")),
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T03:10")), // DST started
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T04:10")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2017-03-12T05:10")),
         };
 
         testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithOneDstChange, everyHourAtTen, "1", Timeunit.HOUR);
@@ -886,7 +892,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 DateUtils.parseDateOozieTZ("2017-11-05T08:10Z"), // LA time: 2017-11-05T01:10
                 DateUtils.parseDateOozieTZ("2017-11-05T09:10Z"), // LA time: 2017-11-05T01:10, DST ended
                 DateUtils.parseDateOozieTZ("2017-11-05T10:10Z"), // LA time: 2017-11-05T02:10
-                DateUtils.parseDateOozieTZ("2017-11-05T11:10Z"), // LA time: 2017-11-05T03:10
         };
 
         testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithOneDstChange, everyHourAtTen, "1", Timeunit.HOUR);
@@ -1024,6 +1029,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T02:30")),
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T04:00")),
                 DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T04:30")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T05:00")),
+                DateUtils.parseDateOozieTZ(convertLATimeToUTC("2016-03-13T05:30")),
         };
 
         testELAndCronNominalTimesEqual(startTime, endTime, nominalTimesWithTwoDstChange,everyThirtiethMinuteCron,
