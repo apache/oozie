@@ -38,6 +38,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_AUTH;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_PASS;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_PORT;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_SOCKET_TIMEOUT_MS;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_USER;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
@@ -68,7 +73,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
-        Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
+        Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_PORT, server.getSmtp().getPort());
         // Use default host 'localhost'. Hence, do not set the smtp host.
         // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.host", "localhost");
         // Use default from address, 'oozie@localhost'.
@@ -76,9 +81,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.from.address", "oozie@localhost");
 
         // Disable auth tests by default.
-        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", false);
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "");
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean(EMAIL_SMTP_AUTH, false);
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_USER, "");
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_PASS, "");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -96,9 +101,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Context ctx = createNormalContext(actionXml);
 
         // Override and enable auth.
-        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", true);
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "oozie@localhost");
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "oozie");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean(EMAIL_SMTP_AUTH, true);
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_USER, "oozie@localhost");
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_PASS, "oozie");
         return ctx;
     }
 
@@ -196,9 +201,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
             serverThread.start();
             EmailActionExecutor email = new EmailActionExecutor();
             Context ctx = createNormalContext("email-action");
-            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", srvPort);
+            Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_PORT, srvPort);
             // Apply a 0.1s timeout to induce a very quick "Read timed out" error
-            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.socket.timeout.ms", 100);
+            Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS, 100);
             try {
               email.validateAndMail(ctx, prepareEmailElement(false, false));
               fail("Should have failed with a socket timeout error!");

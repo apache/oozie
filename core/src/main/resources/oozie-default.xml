@@ -3027,6 +3027,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.email.smtp.starttls.enable</name>
+        <value>false</value>
+        <description>
+            Boolean property that toggles if use TLS in communication or not.
+        </description>
+    </property>
+
+    <property>
       <name>oozie.email.smtp.username</name>
       <value></value>
       <description>

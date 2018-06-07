@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-1393 Allow sending emails via TLS (mbalakrishnan, dionusos via andras.piros)
 OOZIE-3156 Retry SSH action check when cannot connect to remote host (txsing via andras.piros)
 OOZIE-3227 Eliminate duplicate dependencies when using Hadoop 3 DistributedCache (dionusos via andras.piros)
 OOZIE-2097 Get rid of non-Javadoc comments (Jan Hentschel via andras.piros)

@@ -50,21 +50,23 @@ The =subject= and =body= commands are used to specify subject and body of the ma
 From uri:oozie:email-action:0.2 one can also specify mail content type as <content_type>text/html</content_type>.
 "text/plain" is default.
 
-The =attachment= is used to attach a file(s) on HDFS to the mail. Multiple attachment can be provided using comma-separated values. Non fully qualified path is considered as a file on default HDFS. A local file cannot be attached.
+The =attachment= is used to attach a file(s) on HDFS to the mail. Multiple attachment can be provided using comma-separated values.
+Non fully qualified path is considered as a file on default HDFS. A local file cannot be attached.
 
 *Configuration*
 
 The =email= action requires some SMTP server configuration to be present (in oozie-site.xml). The following are the values
 it looks for:
-
-=oozie.email.smtp.host= - The host where the email action may find the SMTP server (localhost by default).
-=oozie.email.smtp.port= - The port to connect to for the SMTP server (25 by default).
-=oozie.email.from.address= - The from address to be used for mailing all emails (oozie@localhost by default).
-=oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
-=oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
-=oozie.email.smtp.password= - If authentication is enabled, the username's password (empty by default).
-=oozie.email.attachment.enabled= - Boolean property that toggles if configured attachments are to be placed into the emails. (false by default).
-=oozie.email.smtp.socket.timeout.ms= - The timeout to apply over all SMTP server socket operations (10000ms by default).
+   * =oozie.email.smtp.host= - The host where the email action may find the SMTP server (localhost by default).
+   * =oozie.email.smtp.port= - The port to connect to for the SMTP server (25 by default).
+   * =oozie.email.from.address= - The from address to be used for mailing all emails (oozie@localhost by default).
+   * =oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
+   * =oozie.email.smtp.starttls.enable= - Boolean property that toggles if use TLS communication or not. (false by default).
+   * =oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
+   * =oozie.email.smtp.password= - If authentication is enabled, the username's password (empty by default).
+   * =oozie.email.attachment.enabled= - Boolean property that toggles if configured attachments are to be placed into the emails.
+   (false by default).
+   * =oozie.email.smtp.socket.timeout.ms= - The timeout to apply over all SMTP server socket operations (10000ms by default).
 
 *Example:*
 
@@ -110,6 +112,18 @@ with the subject and body both containing the workflow ID after substitution.
         </xs:sequence>
     </xs:complexType>
 </xs:schema>
+</verbatim>
+
+*GMail example to oozie-site.xml*
+
+<verbatim>
+oozie.email.smtp.host=smtp.gmail.com
+oozie.email.smtp.port=587
+oozie.email.from.address=<some email address>
+oozie.email.smtp.auth=true
+oozie.email.smtp.starttls.enable=true
+oozie.email.smtp.username=<Gmail Id>
+oozie.email.smtp.password=<Gmail Pass>
 </verbatim>
 
 [[index][::Go back to Oozie Documentation Index::]]

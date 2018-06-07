@@ -74,6 +74,7 @@ public class EmailActionExecutor extends ActionExecutor {
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
     public static final String EMAIL_SMTP_PASS = CONF_PREFIX + "smtp.password";
     public static final String EMAIL_SMTP_FROM = CONF_PREFIX + "from.address";
+    public static final String EMAIL_SMTP_STARTTLS = CONF_PREFIX + "smtp.starttls.enable";
     public static final String EMAIL_SMTP_SOCKET_TIMEOUT_MS = CONF_PREFIX + "smtp.socket.timeout.ms";
     public static final String EMAIL_ATTACHMENT_ENABLED = CONF_PREFIX + "attachment.enabled";
 
@@ -185,6 +186,7 @@ public class EmailActionExecutor extends ActionExecutor {
         Boolean smtpAuthBool = ConfigurationService.getBoolean(EMAIL_SMTP_AUTH);
         String smtpUser = ConfigurationService.get(EMAIL_SMTP_USER);
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
+        Boolean smtpStarttlsBool = ConfigurationService.getBoolean(EMAIL_SMTP_STARTTLS);
         String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
         Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
 
@@ -192,6 +194,7 @@ public class EmailActionExecutor extends ActionExecutor {
         properties.setProperty("mail.smtp.host", smtpHost);
         properties.setProperty("mail.smtp.port", smtpPortInt.toString());
         properties.setProperty("mail.smtp.auth", smtpAuthBool.toString());
+        properties.setProperty("mail.smtp.starttls.enable", smtpStarttlsBool.toString());
 
         // Apply sensible timeouts, as defaults are infinite. See https://s.apache.org/javax-mail-timeouts
         properties.setProperty("mail.smtp.connectiontimeout", timeoutMillisInt.toString());

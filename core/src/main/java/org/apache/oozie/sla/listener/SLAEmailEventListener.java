@@ -71,6 +71,7 @@ public class SLAEmailEventListener extends SLAEventListener {
     private final String SMTP_HOST_DEFAULT = "localhost";
     private final String SMTP_PORT_DEFAULT = "25";
     private final boolean SMTP_AUTH_DEFAULT = false;
+    private final boolean SMTP_STARTTLS_DEFAULT = false;
     private final String SMTP_SOURCE_DEFAULT = "oozie@localhost";
     private final String SMTP_CONNECTION_TIMEOUT_DEFAULT = "5000";
     private final String SMTP_TIMEOUT_DEFAULT = "5000";
@@ -109,6 +110,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         String smtpHost = conf.get(EmailActionExecutor.EMAIL_SMTP_HOST, SMTP_HOST_DEFAULT);
         String smtpPort = conf.get(EmailActionExecutor.EMAIL_SMTP_PORT, SMTP_PORT_DEFAULT);
         Boolean smtpAuth = conf.getBoolean(EmailActionExecutor.EMAIL_SMTP_AUTH, SMTP_AUTH_DEFAULT);
+        Boolean smtpStarttls = conf.getBoolean(EmailActionExecutor.EMAIL_SMTP_STARTTLS, SMTP_STARTTLS_DEFAULT);
         String smtpUser = conf.get(EmailActionExecutor.EMAIL_SMTP_USER, "");
         String smtpPassword = ConfigurationService.getPassword(EmailActionExecutor.EMAIL_SMTP_PASS, "");
         String smtpConnectTimeout = conf.get(SMTP_CONNECTION_TIMEOUT, SMTP_CONNECTION_TIMEOUT_DEFAULT);
@@ -132,6 +134,7 @@ public class SLAEmailEventListener extends SLAEventListener {
         properties.setProperty("mail.smtp.host", smtpHost);
         properties.setProperty("mail.smtp.port", smtpPort);
         properties.setProperty("mail.smtp.auth", smtpAuth.toString());
+        properties.setProperty("mail.smtp.starttls.enable", smtpStarttls.toString());
         properties.setProperty("mail.smtp.connectiontimeout", smtpConnectTimeout);
         properties.setProperty("mail.smtp.timeout", smtpTimeout);
 
