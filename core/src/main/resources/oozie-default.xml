@@ -2566,6 +2566,17 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.sla.service.SLAService.maximum.retry.count</name>
+        <value>3</value>
+        <description>
+            Number of times an SLA calculator status will be tried to get updated when any database related error occurs.
+            It's possible that multiple WorkflowJobBean / CoordActionBean instances being inserted won't have SLACalcStatus entries
+            inside SLACalculatorMemory#slaMap by the time written to database, and thus, no SLA will be tracked.
+            In those rare cases, preconfigured maximum retry count can be extended.
+        </description>
+    </property>
+
     <!-- ZooKeeper configuration -->
     <property>
         <name>oozie.zookeeper.connection.string</name>

@@ -74,7 +74,7 @@ public class SLACalculatorMemory implements SLACalculator {
 
     private static XLog LOG = XLog.getLog(SLACalculatorMemory.class);
     // TODO optimization priority based insertion/processing/bumping up-down
-    protected Map<String, SLACalcStatus> slaMap;
+    private Map<String, SLACalcStatus> slaMap;
     protected Set<String> historySet;
     private static int capacity;
     private static JPAService jpaService;
@@ -84,11 +84,13 @@ public class SLACalculatorMemory implements SLACalculator {
     private Instrumentation instrumentation;
     public static final String INSTRUMENTATION_GROUP = "sla-calculator";
     public static final String SLA_MAP = "sla-map";
+    private int maxRetryCount;
 
     @Override
     public void init(Configuration conf) throws ServiceException {
         capacity = ConfigurationService.getInt(conf, SLAService.CONF_CAPACITY);
         jobEventLatency = ConfigurationService.getInt(conf, SLAService.CONF_JOB_EVENT_LATENCY);
+        maxRetryCount = ConfigurationService.getInt(conf, SLAService.CONF_MAXIMUM_RETRY_COUNT);
         slaMap = new ConcurrentHashMap<String, SLACalcStatus>();
         historySet = Collections.synchronizedSet(new HashSet<String>());
         jpaService = Services.get().get(JPAService.class);
@@ -218,9 +220,14 @@ public class SLACalculatorMemory implements SLACalculator {
     }
 
     /**
-     * Invoked via periodic run, update the SLA for registered jobs
+     * Invoked via periodic run, update the SLA for registered jobs.
+     * <p>
+     * Track the number of times the {@link SLACalcStatus} entry has not been processed successfully, and when a preconfigured
+     * {code oozie.sla.service.SLAService.maximum.retry.count} is reached, remove any {@link SLACalculatorMemory#slaMap} entries
+     * that are causing {@code JPAExecutorException}s of certain {@link ErrorCode}s.
+     * @param jobId the workflow or coordinator job or action ID the SLA is tracked against
      */
-    protected void updateJobSla(String jobId) throws Exception {
+    void updateJobSla(String jobId) throws Exception {
         SLACalcStatus slaCalc = slaMap.get(jobId);
 
         if (slaCalc == null) {
@@ -231,13 +238,16 @@ public class SLACalculatorMemory implements SLACalculator {
         // get eventProcessed on DB for validation in HA
         SLASummaryBean summaryBean = null;
         try {
-            summaryBean = ((SLASummaryQueryExecutor) SLASummaryQueryExecutor.getInstance())
+            summaryBean = SLASummaryQueryExecutor.getInstance()
                     .get(SLASummaryQuery.GET_SLA_SUMMARY_EVENTPROCESSED_LAST_MODIFIED, jobId);
+            resetRetryCount(jobId);
         }
-        catch (JPAExecutorException e) {
-            if (e.getErrorCode().equals(ErrorCode.E0604) || e.getErrorCode().equals(ErrorCode.E0605)) {
-                LOG.debug("job [{0}] is is not in DB, removing from Memory", jobId);
-                removeAndDecrement(jobId);
+        catch (final JPAExecutorException e) {
+            if (e.getErrorCode().equals(ErrorCode.E0603)
+                    || e.getErrorCode().equals(ErrorCode.E0604)
+                    || e.getErrorCode().equals(ErrorCode.E0605)) {
+                LOG.debug("job [{0}] is not in DB, removing from Memory", jobId);
+                incrementRetryCountAndRemove(jobId);
                 return;
             }
             throw e;
@@ -688,5 +698,30 @@ public class SLACalculatorMemory implements SLACalculator {
 
         LOG.trace("Tried to remove a non-existing item from SLA map. [jobId={0}]", jobId);
         return false;
+    }
+
+    private void resetRetryCount(final String jobId) {
+        if (slaMap.containsKey(jobId)) {
+            LOG.debug("Resetting retry count on [{0}]", jobId);
+            final SLACalcStatus existingStatus = slaMap.get(jobId);
+            existingStatus.resetRetryCount();
+            putAndIncrement(jobId, existingStatus);
+        }
+    }
+
+    private void incrementRetryCountAndRemove(final String jobId) {
+        LOG.debug("Checking SLA calculator status [{0}] for retry count", jobId);
+        if (slaMap.containsKey(jobId)) {
+            final SLACalcStatus existingStatus = slaMap.get(jobId);
+            if (existingStatus.getRetryCount() < maxRetryCount) {
+                existingStatus.incrementRetryCount();
+                LOG.debug("Retrying with SLA calculator status [{0}] retry count [{1}]", jobId, existingStatus.getRetryCount());
+                putAndIncrement(jobId, existingStatus);
+            }
+            else {
+                LOG.debug("Removing [{0}] from SLA map as maximum retry count reached", jobId);
+                removeAndDecrement(jobId);
+            }
+        }
     }
 }

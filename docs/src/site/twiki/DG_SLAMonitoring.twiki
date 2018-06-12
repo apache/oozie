@@ -408,6 +408,17 @@ Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing jo
 ---++++ 4. Change using REST API
 Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
 
+---++ In-memory SLA entries and database content
+
+There are special circumstances when the in-memory =SLACalcStatus= entries can exist without the workflow or coordinator job or
+action instances in database. For example:
+   * SLA tracked database content may already have been deleted, and =SLA_SUMMARY= entry is not present anymore in database
+   * SLA tracked database content and =SLA_SUMMARY= entry aren't yet present in database
+
+By the time =SLAService= scheduled job will be running, SLA map contents are checked. When the =SLA_SUMMARY= entry for the in-memory
+SLA entry is missing, a counter is increased. When this counter reaches the server-wide preconfigured value
+=oozie.sla.service.SLAService.maximum.retry.count= (by default =3=), in-memory SLA entry will get purged.
+
 ---++ Known issues
 There are two known issues when you define SLA for a workflow action.
    * If there are decision nodes and SLA is defined for a workflow action not in the execution path because of the decision node, you will still get an SLA_MISS notification.

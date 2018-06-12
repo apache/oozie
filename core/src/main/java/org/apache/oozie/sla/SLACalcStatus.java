@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.sla;
 
 import java.util.Date;
@@ -46,6 +45,7 @@ public class SLACalcStatus extends SLAEvent {
     private Date lastModifiedTime;
     private byte eventProcessed;
     private String jobId;
+    private int retryCount = 0;
 
     private XLog LOG;
 
@@ -307,4 +307,15 @@ public class SLACalcStatus extends SLAEvent {
         setSLARegistrationBean(reg);
     }
 
+    int getRetryCount() {
+        return retryCount;
+    }
+
+    void incrementRetryCount() {
+        this.retryCount++;
+    }
+
+    void resetRetryCount() {
+        this.retryCount = 0;
+    }
 }
