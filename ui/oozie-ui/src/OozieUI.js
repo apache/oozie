@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { Layout, Menu, Icon } from 'antd';
 import WorkflowList from './workflows/WorkflowList';
-import './App.css';
+import './OozieUI.css';
 
 const { Header, Footer, Sider } = Layout;
 
-class App extends Component {
+class OozieUI extends Component {
   state = {
     collapsed: false,
   };
@@ -57,4 +57,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default OozieUI;
