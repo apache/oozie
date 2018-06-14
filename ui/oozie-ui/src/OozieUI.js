@@ -36,15 +36,19 @@ class OozieUI extends React.Component {
                  onCollapse={this.toggle}>
             <div className="logo" align="center"><img id="logo" src={logo} alt="Apache Oozie" height="40px"/></div>
             <Menu mode="inline" style={{ minHeight: '100vh' }} defaultSelectedKeys={['2']}>
+              <Menu.Item key="1">
+                <Icon type="dashboard" />
+                <span>Dashboard</span>
+              </Menu.Item>
               <Menu.Item key="2">
                 <Icon type="file-word" />
                 <span>Workflows</span>
               </Menu.Item>
-              <Menu.Item key="1">
+              <Menu.Item key="3">
                 <Icon type="folder" />
                 <span>Coordinators</span>
               </Menu.Item>
-              <Menu.Item key="3">
+              <Menu.Item key="4">
                 <Icon type="book" />
                 <span>Bundles</span>
               </Menu.Item>
