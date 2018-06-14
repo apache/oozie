@@ -104,7 +104,7 @@
          <sqoop.classifier>hadoop200</sqoop.classifier>
          <tez.version>0.8.4</tez.version>
 
-         <jetty.version>9.2.19.v20160908</jetty.version>
+         <jetty.version>9.3.20.v20170531</jetty.version>
 
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.2</openjpa.version>

@@ -48,7 +48,7 @@ available to customise the versions of the dependencies:
 -Dpig.classifier=<classifier> - default h2
 -Dsqoop.version=<version> - default 1.4.3
 -Dsqoop.classifier=<classifier> - default hadoop100
--Djetty.version=<version> - default 9.2.19.v20160908
+-Djetty.version=<version> - default 9.3.20.v20170531
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
