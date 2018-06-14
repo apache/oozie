@@ -1,19 +1,20 @@
 import React, { Component } from 'react';
-import { Layout, Menu, Icon, Breadcrumb } from 'antd';
+import { Layout, Menu, Icon } from 'antd';
+import WorkflowList from './workflows/WorkflowList';
 import './App.css';
 
-const { Header, Footer, Sider, Content } = Layout;
+const { Header, Footer, Sider } = Layout;
 
 class App extends Component {
   state = {
-    collapsed: false
+    collapsed: false,
   };
 
   toggle = () => {
     this.setState({
       collapsed: !this.state.collapsed,
     });
-  }
+  };
 
   render() {
     return (
@@ -22,18 +23,18 @@ class App extends Component {
           <Sider trigger={null} collapsible collapsed={this.state.collapsed}
                  style={{ overflow: 'auto', height: '100vh', position: 'fixed', left:0 }}>
             <div className="logo" />
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-              <Menu.Item key="1">
-                <Icon type="user" />
-                <span>Nav 1</span>
-              </Menu.Item>
+            <Menu theme="dark" mode="inline" defaultSelectedKeys={['2']}>
               <Menu.Item key="2">
-                <Icon type="video-camera" />
-                <span>Nav 2</span>
+                <Icon type="file-word" />
+                <span>Workflows</span>
+              </Menu.Item>
+              <Menu.Item key="1">
+                <Icon type="folder" />
+                <span>Coordinators</span>
               </Menu.Item>
               <Menu.Item key="3">
-                <Icon type="upload" />
-                <span>Nav 3</span>
+                <Icon type="book" />
+                <span>Bundles</span>
               </Menu.Item>
             </Menu>
           </Sider>
@@ -45,15 +46,7 @@ class App extends Component {
                 onClick={this.toggle}
               />
             </Header>
-            <Content style={{ margin: '24px 16px 0' }}>
-              <Breadcrumb style={{ margin: '16px 0' }}>
-                <Breadcrumb.Item>User</Breadcrumb.Item>
-                <Breadcrumb.Item>Bill</Breadcrumb.Item>
-              </Breadcrumb>
-              <div style={{ padding: 24, background: '#fff', minHeight: 360 }}>
-                content
-              </div>
-            </Content>
+            <WorkflowList />
             <Footer style={{ textAlign: 'center' }}>
               Apache Oozie © 2018
             </Footer>
