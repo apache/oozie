@@ -1,29 +1,41 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Layout, Menu, Icon } from 'antd';
-import WorkflowList from './workflows/WorkflowList';
+import Workflow from './workflow/Workflow';
 import './OozieUI.css';
 
-const { Header, Footer, Sider } = Layout;
+const { Footer, Sider } = Layout;
 
-class OozieUI extends Component {
+const collapsed_logos = {
+  true: "/img/logo.png",
+  false: "/img/logo-full.png"
+};
+
+class OozieUI extends React.Component {
   state = {
     collapsed: false,
+    logo: collapsed_logos[false]
   };
 
   toggle = () => {
+    const collapsed = !this.state.collapsed;
     this.setState({
-      collapsed: !this.state.collapsed,
+      collapsed: collapsed,
+      logo: collapsed_logos[collapsed]
     });
   };
 
   render() {
+    const { logo } = this.state;
+
     return (
       <div className="App">
         <Layout>
-          <Sider trigger={null} collapsible collapsed={this.state.collapsed}
-                 style={{ overflow: 'auto', height: '100vh', position: 'fixed', left:0 }}>
-            <div className="logo" />
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['2']}>
+          <Sider collapsible
+                 collapsed={this.state.collapsed}
+                 theme="light"
+                 onCollapse={this.toggle}>
+            <div className="logo" align="center"><img id="logo" src={logo} alt="Apache Oozie" height="40px"/></div>
+            <Menu mode="inline" style={{ minHeight: '100vh' }} defaultSelectedKeys={['2']}>
               <Menu.Item key="2">
                 <Icon type="file-word" />
                 <span>Workflows</span>
@@ -38,15 +50,8 @@ class OozieUI extends Component {
               </Menu.Item>
             </Menu>
           </Sider>
-          <Layout style={{ marginLeft: this.state.collapsed ? 80 : 200 }}>
-            <Header style={{ background: '#fff', padding: 0 }}>
-              <Icon
-                className="trigger"
-                type={this.state.collapsed ? 'menu-unfold' : 'menu-fold'}
-                onClick={this.toggle}
-              />
-            </Header>
-            <WorkflowList />
+          <Layout>
+            <Workflow />
             <Footer style={{ textAlign: 'center' }}>
               Apache Oozie © 2018
             </Footer>

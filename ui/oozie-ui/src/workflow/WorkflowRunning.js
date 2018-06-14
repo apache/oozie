@@ -14,7 +14,7 @@ class WorkflowRunning extends React.Component {
 
   componentDidMount = () => {
     var dataSource = [];
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 5; i++) {
       dataSource.push({
         key: i,
         submission: 'Fri, 08 Jun 2018 22:30:00',
@@ -87,7 +87,8 @@ class WorkflowRunning extends React.Component {
         title: 'Coordinator',
         dataIndex: 'parent',
         key: 'parent',
-        render: (text) => <span><a href={`#coordinators/${text}`}>{text}</a></span>
+        align: 'center',
+        render: (text) => <span><a href={`#coordinators/${text}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
       },
       {
         title: 'Action',

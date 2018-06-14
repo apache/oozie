@@ -76,7 +76,8 @@ class WorkflowCompleted extends React.Component {
         title: 'Coordinator',
         dataIndex: 'parent',
         key: 'parent',
-        render: (text) => <span><a href={`#coordinators/${text}`}>{text}</a></span>
+        align: 'center',
+        render: (text) => <span><a href={`#coordinators/${text}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
       },
       {
         title: 'Action',
