@@ -2,6 +2,15 @@
 
 ## Development environment
 
+### Overview
+
+The project is bootstrapped with [create-react-app](https://github.com/facebook/create-react-app/tree/master). See
+- [Creating an App](https://github.com/facebook/create-react-app#creating-an-app) for more information regarding development
+environment and the project structure.
+- [User Guide](https://github.com/facebook/create-react-app#user-guide) for more in-depth topics for future development and setup.
+
+### Try it out
+
 Inside oozie-ui/ directory, you can run several commands:
 
 ```bash
@@ -13,10 +22,6 @@ Inside oozie-ui/ directory, you can run several commands:
 
   # Starts the test runner.
   npm test
-
-  # Removes this tool and copies build dependencies, configuration files
-  # and scripts into the app directory. If you do this, you can’t go back!
-  npm run eject
 ```
 
 We suggest that you begin by typing:
@@ -25,5 +30,3 @@ We suggest that you begin by typing:
   cd oozie-ui
   npm start
 ```
-
-Happy hacking!
