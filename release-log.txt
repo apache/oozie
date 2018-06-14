@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3278 Oozie fails to start with Hadoop 2.6.0 (kmarton via andras.piros)
 OOZIE-3260 [sla] Remove stale item above max retries on JPA related errors from in-memory SLA map (andras.piros)
 OOZIE-3233 Remove DST shift from the coordinator job's end time (kmarton via andras.piros)
 OOZIE-1393 Allow sending emails via TLS (mbalakrishnan, dionusos via andras.piros)

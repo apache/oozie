@@ -227,6 +227,8 @@ as the execution engine for those applications.
 -Dtez.version=<version> - default 0.8.4
 </verbatim>
 
+*IMPORTANT:* Profile hadoop-3 must be activated if building against Hadoop 3
+
 The following properties should be specified when building a release:
 
    * -DgenerateDocs : forces the generation of Oozie documentation

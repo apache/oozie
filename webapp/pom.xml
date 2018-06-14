@@ -148,12 +148,6 @@
             <artifactId>hadoop-client</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -306,6 +300,18 @@
                     <groupId>org.apache.hive.hcatalog</groupId>
                     <artifactId>hive-hcatalog-server-extensions</artifactId>
                     <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-3</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
                 </dependency>
             </dependencies>
         </profile>

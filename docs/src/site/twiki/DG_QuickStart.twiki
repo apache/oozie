@@ -55,6 +55,8 @@ available to customise the versions of the dependencies:
 -Dhive.version=<version - default 1.2.0
 -Dhbase.version=<version> - default 1.2.3
 -Dtez.version=<version> - default 0.8.4
+
+*IMPORTANT:* Profile hadoop-3 must be activated if building against Hadoop 3
 </verbatim>
 
 More details on building Oozie can be found on the [[ENG_Building][Building Oozie]] page.
