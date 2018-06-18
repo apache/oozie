@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-type lcc || "license-compatibility-check not found. Please install devDependencies with 'npm install -only=dev'";
+type lcc || "license-compatibility-check not found. Please install devDependencies with 'npm install --only=dev'";
 
 check_license() {
   lcc | grep incompatible | grep -v `cat .known-license | awk '{print "-e " $2}' | paste -sd " " -`
