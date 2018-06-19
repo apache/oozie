@@ -161,7 +161,9 @@ public class TestJMSAccessorService extends XTestCase {
             waitFor(JMS_TIMEOUT_MS, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
-                    return jmsService.isListeningToTopic(connInfo, topic);
+                    return jmsService.isListeningToTopic(connInfo, topic)
+                            && !jmsService.isConnectionInRetryList(connInfo)
+                            && !jmsService.isTopicInRetryList(connInfo, topic);
                 }
             });
             assertTrue(jmsService.isListeningToTopic(connInfo, topic));
@@ -214,7 +216,9 @@ public class TestJMSAccessorService extends XTestCase {
                 waitFor(JMS_TIMEOUT_MS, new Predicate() {
                     @Override
                     public boolean evaluate() throws Exception {
-                        return !jmsService.isListeningToTopic(connInfo, topic);
+                        return !jmsService.isListeningToTopic(connInfo, topic)
+                                && jmsService.isConnectionInRetryList(connInfo)
+                                && jmsService.isTopicInRetryList(connInfo, topic);
                     }
                 });
                 assertFalse(jmsService.isListeningToTopic(connInfo, topic));
@@ -230,7 +234,9 @@ public class TestJMSAccessorService extends XTestCase {
             waitFor(JMS_TIMEOUT_MS, new Predicate() {
                 @Override
                 public boolean evaluate() throws Exception {
-                    return jmsService.isListeningToTopic(connInfo, topic);
+                    return jmsService.isListeningToTopic(connInfo, topic)
+                            && !jmsService.isConnectionInRetryList(connInfo)
+                            && !jmsService.isTopicInRetryList(connInfo, topic);
                 }
             });
             assertTrue(jmsService.isListeningToTopic(connInfo, topic));
@@ -270,7 +276,11 @@ public class TestJMSAccessorService extends XTestCase {
         waitFor(JMS_TIMEOUT_MS, new Predicate() {
             @Override
             public boolean evaluate() throws Exception {
-                return jmsService.getNumConnectionAttempts(connInfo) == 1;
+                return jmsService.getNumConnectionAttempts(connInfo) == 1
+                        && jmsService.isConnectionInRetryList(connInfo)
+                        && jmsService.isTopicInRetryList(connInfo, topic)
+                        && !jmsService.isListeningToTopic(connInfo, topic)
+                        && !jmsService.retryConnection(connInfo);
             }
         });
 
