@@ -524,6 +524,8 @@ in =oozie-site.xml=:
   oozie.service.AuthorizationService.default.group.as.acl=true
 </verbatim>
 
+---++++ Defining Admin Users
+
 Admin users are determined from the list of admin groups, specified in
  =oozie.service.AuthorizationService.admin.groups= property. Use commas to separate multiple groups, spaces, tabs
 and ENTER characters are trimmed.
@@ -541,6 +543,38 @@ and ENTER characters are trimmed.
 In case there are admin users defined using both methods, the effective list of admin users will be the union
 of the admin users found in the adminusers.txt and those specified with =oozie.serviceAuthorizationService.admin.users=.
 
+---++++ Defining Access Control Lists
+
+Access Control Lists are defined in the following ways:
+   * workflow job submission over CLI: configuration property =group.name= of =job.properties=
+   * workflow job submission over HTTP: configuration property =group.name= of the XML submitted over HTTP
+   * workflow job re-run: configuration property =oozie.job.acl= (preferred) or configuration property =group.name= of
+   =job.properties=
+   * coordinator job submission over CLI: configuration property =oozie.job.acl= (preferred) or configuration property =group.name=
+   of =job.properties=
+   * bundle job submission over CLI: configuration property =oozie.job.acl= (preferred) or configuration property =group.name= of
+   =job.properties=
+
+For all other workflow, coordinator, or bundle actions the ACL set in beforehand will be used as basis.
+
+Once the ACL for the job is defined, Oozie will check over HDFS whether the user trying to perform a specific action is part of the
+necessary group(s). For implementation details please check out =org.apache.hadoop.security.Groups#getGroups(String user)=.
+
+Note that it's enough that the submitting user be part of at least one group of the ACL. Note also that the ACL can contain user
+names as well. If there is an ACL defined and the submitting user isn't part of any group or user name present in the ACL, an
+=AuthorizationException= is thrown.
+
+*Example: A typical ACL setup*
+
+Detail of =job.properties= on workflow job submission:
+<verbatim>
+user.name=joe
+group.name=marketing,admin,qa,root
+<verbatim>
+
+HDFS group membership of HDFS user =joe= is =qa=. That is, the check to =org.apache.hadoop.security.Groups#getGroups("joe")= returns
+=qa=. Hence, ACL check will pass inside =AuthorizationService=, because the =user.name= provided belongs to at least of the ACL list
+elements provided as =group.name=.
 
 ---+++ Oozie System ID Configuration
 
