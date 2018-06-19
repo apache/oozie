@@ -23,7 +23,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.Permission;
 import java.security.PrivilegedExceptionAction;
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -37,7 +36,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
-import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
@@ -52,6 +50,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 
 public class LauncherAM {
     public static final String OOZIE_ACTION_CONF_XML = "oozie.action.conf.xml";
@@ -151,7 +150,6 @@ public class LauncherAM {
                         new LauncherSecurityManager(),
                         System.getenv(ApplicationConstants.Environment.CONTAINER_ID.name()),
                         launcherConf);
-
                     launcher.run();
                     return null;
             }
@@ -410,7 +408,6 @@ public class LauncherAM {
             // Enable LauncherSecurityManager to catch System.exit calls
             launcherSecurityManager.enable();
             mainMethod.invoke(null, (Object) mainArgs);
-
             System.out.println();
             System.out.println("<<< Invocation of Main class completed <<<");
             System.out.println();
@@ -579,66 +576,6 @@ public class LauncherAM {
 
     private String[] getMainArguments(Configuration conf) {
         return LauncherAMUtils.getMainArguments(conf);
-    }
-
-    public static class LauncherSecurityManager extends SecurityManager {
-        private boolean exitInvoked;
-        private int exitCode;
-        private SecurityManager originalSecurityManager;
-
-        public LauncherSecurityManager() {
-            exitInvoked = false;
-            exitCode = 0;
-            originalSecurityManager = System.getSecurityManager();
-        }
-
-        @Override
-        public void checkPermission(Permission perm, Object context) {
-            if (originalSecurityManager != null) {
-                // check everything with the original SecurityManager
-                originalSecurityManager.checkPermission(perm, context);
-            }
-        }
-
-        @Override
-        public void checkPermission(Permission perm) {
-            if (originalSecurityManager != null) {
-                // check everything with the original SecurityManager
-                originalSecurityManager.checkPermission(perm);
-            }
-        }
-
-        @Override
-        public void checkExit(int status) throws SecurityException {
-            exitInvoked = true;
-            exitCode = status;
-            throw new SecurityException("Intercepted System.exit(" + status + ")");
-        }
-
-        public boolean getExitInvoked() {
-            return exitInvoked;
-        }
-
-        public int getExitCode() {
-            return exitCode;
-        }
-
-        public void enable() {
-            if (System.getSecurityManager() != this) {
-                System.setSecurityManager(this);
-            }
-        }
-
-        public void disable() {
-            if (System.getSecurityManager() == this) {
-                System.setSecurityManager(originalSecurityManager);
-            }
-        }
-
-        public void reset() {
-            exitInvoked = false;
-            exitCode = 0;
-        }
     }
 
     public enum OozieActionResult {

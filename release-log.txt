@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3270 Upgrade Derby to 10.14.1.0 (gezapeti)
 OOZIE-3275 [docs] Update AG_Install.twiki with Access Control List documentation (andras.piros)
 OOZIE-2339 [fluent-job] Minimum Viable Fluent Job API (daniel.becker, andras.piros via rkanter, gezapeti, pbacsko)
 OOZIE-3224 Upgrade Jetty to 9.3 (kmarton via andras.piros)

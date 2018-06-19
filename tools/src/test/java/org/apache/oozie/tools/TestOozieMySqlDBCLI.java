@@ -19,6 +19,7 @@
 
 package org.apache.oozie.tools;
 
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.test.XTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,15 +32,15 @@ import java.sql.DriverManager;
  *  Test OozieDBCLI for mysql
  */
 public class TestOozieMySqlDBCLI extends XTestCase {
-    private SecurityManager SECURITY_MANAGER;
     private static String url = "jdbc:mysql:fake";
     private String oozieConfig;
+    private LauncherSecurityManager launcherSecurityManager;
 
     @BeforeClass
     protected void setUp() throws Exception {
-        SECURITY_MANAGER = System.getSecurityManager();
         DriverManager.registerDriver(new FakeDriver());
-        new LauncherSecurityManager();
+        launcherSecurityManager = new LauncherSecurityManager();
+        launcherSecurityManager.enable();
         this.oozieConfig = System.getProperty("oozie.test.config.file");
 
       File oozieConfig = new File(getTestCaseConfDir(), "src/test/resources/fake-oozie-site.xml");
@@ -54,7 +55,7 @@ public class TestOozieMySqlDBCLI extends XTestCase {
 
     @AfterClass
     protected void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
+        launcherSecurityManager.disable();
         DriverManager.registerDriver(new FakeDriver());
         if(oozieConfig!=null){
             System.setProperty("oozie.test.config.file", oozieConfig);
@@ -108,10 +109,10 @@ public class TestOozieMySqlDBCLI extends XTestCase {
 
         }
         catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                return LauncherSecurityManager.getExitCode();
+            if (launcherSecurityManager.getExitInvoked()) {
+                System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                return launcherSecurityManager.getExitCode();
 
             }
             else {

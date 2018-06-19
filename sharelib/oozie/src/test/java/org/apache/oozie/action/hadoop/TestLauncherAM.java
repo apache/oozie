@@ -64,7 +64,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.util.ConverterUtils;
-import org.apache.oozie.action.hadoop.LauncherAM.LauncherSecurityManager;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
 import org.junit.Before;
 import org.junit.Rule;

@@ -19,7 +19,7 @@
 package org.apache.oozie.tools.diag;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.oozie.tools.LauncherSecurityManager;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -35,23 +35,18 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 public class TestArgParser {
-    private static SecurityManager SECURITY_MANAGER;
     private CommandLine mockCommandLine = mock(CommandLine.class);
     private final ArgParser argParser =  new ArgParser();
-
+    private static LauncherSecurityManager launcherSecurityManager;
     @BeforeClass
     public static void setUp() throws Exception {
-        SECURITY_MANAGER = System.getSecurityManager();
-        interceptSecurityManager();
-    }
-
-    private static void interceptSecurityManager() {
-        new LauncherSecurityManager();
+        launcherSecurityManager = new LauncherSecurityManager();
+        launcherSecurityManager.enable();
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
+        launcherSecurityManager.disable();
     }
 
     @Before

@@ -19,10 +19,10 @@
 
 package org.apache.oozie.tools;
 
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.service.Services;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.oozie.test.XTestCase;
-import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -46,19 +46,17 @@ import java.util.List;
  * Test OozieDBCLI for data base derby
  */
 public class TestOozieDBCLI extends XTestCase {
-    private SecurityManager SECURITY_MANAGER;
     private static String url = "jdbc:derby:target/test-data/oozietests/org.apache.oozie.tools.TestOozieDBCLI/data.db;create=true";
     private String oozieConfig;
     private static boolean databaseCreated = false;
-
+    private LauncherSecurityManager launcherSecurityManager;
     @Override
     protected void setUp() throws Exception {
         this.oozieConfig = System.getProperty("oozie.test.config.file");
         File oozieConfig = new File("src/test/resources/hsqldb-oozie-site.xml");
         System.setProperty("oozie.test.config.file", oozieConfig.getAbsolutePath());
-        SECURITY_MANAGER = System.getSecurityManager();
-        new LauncherSecurityManager();
-
+        launcherSecurityManager = new LauncherSecurityManager();
+        launcherSecurityManager.enable();
         if (!databaseCreated) {
             // remove an old variant
             FileUtil.fullyDelete(new File("target/test-data/oozietests/org.apache.oozie.tools.TestOozieDBCLI/data.db"));
@@ -74,7 +72,7 @@ public class TestOozieDBCLI extends XTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
+        launcherSecurityManager.disable();
         if(oozieConfig!=null){
             System.setProperty("oozie.test.config.file", oozieConfig);
         }else{
@@ -228,10 +226,10 @@ public class TestOozieDBCLI extends XTestCase {
 
         }
         catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                return LauncherSecurityManager.getExitCode();
+            if (launcherSecurityManager.getExitInvoked()) {
+                System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                return launcherSecurityManager.getExitCode();
 
             }
             else {

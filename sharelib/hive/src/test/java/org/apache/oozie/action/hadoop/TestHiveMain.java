@@ -33,21 +33,18 @@ import java.util.Set;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.test.MiniHCatServer;
 import org.apache.oozie.util.XConfiguration;
 
 public class TestHiveMain extends MainTestCase {
-    private SecurityManager SECURITY_MANAGER;
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        SECURITY_MANAGER = System.getSecurityManager();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
         super.tearDown();
     }
 
@@ -142,7 +139,7 @@ public class TestHiveMain extends MainTestCase {
             setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
             setSystemProperty("oozie.action.externalChildIDs", externalChildIdsFile.getAbsolutePath());
 
-            LauncherAM.LauncherSecurityManager launcherSecurityManager = new LauncherAM.LauncherSecurityManager();
+            LauncherSecurityManager launcherSecurityManager = new LauncherSecurityManager();
             launcherSecurityManager.enable();
             String user = System.getProperty("user.name");
             try {
@@ -168,6 +165,7 @@ public class TestHiveMain extends MainTestCase {
                 System.setProperty("user.name", user);
                 hiveSite.delete();
                 MiniHCatServer.resetHiveConfStaticVariables();
+                launcherSecurityManager.disable();
             }
 
             assertTrue(externalChildIdsFile.exists());

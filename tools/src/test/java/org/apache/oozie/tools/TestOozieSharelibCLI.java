@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -43,17 +44,16 @@ import org.junit.rules.TemporaryFolder;
  * Test OozieSharelibCLI
  */
 public class TestOozieSharelibCLI extends XTestCase {
-    private SecurityManager SECURITY_MANAGER;
     private final String outPath = "outFolder";
     private Services services = null;
     private Path dstPath = null;
     private FileSystem fs;
     private final TemporaryFolder tmpFolder = new TemporaryFolder();
-
+    private LauncherSecurityManager launcherSecurityManager;
     @Override
     protected void setUp() throws Exception {
-        SECURITY_MANAGER = System.getSecurityManager();
-        new LauncherSecurityManager();
+        launcherSecurityManager = new LauncherSecurityManager();
+        launcherSecurityManager.enable();
         tmpFolder.create();
         super.setUp(false);
 
@@ -61,7 +61,7 @@ public class TestOozieSharelibCLI extends XTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
+        launcherSecurityManager.disable();
         if (services != null) {
             services.destroy();
         }
@@ -225,10 +225,10 @@ public class TestOozieSharelibCLI extends XTestCase {
             OozieSharelibCLI.main(args);
         }
         catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                return LauncherSecurityManager.getExitCode();
+            if (launcherSecurityManager.getExitInvoked()) {
+                System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                return launcherSecurityManager.getExitCode();
             }
             else {
                 throw ex;
