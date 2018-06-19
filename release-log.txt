@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2339 [fluent-job] Minimum Viable Fluent Job API (daniel.becker, andras.piros via rkanter, gezapeti, pbacsko)
 OOZIE-3224 Upgrade Jetty to 9.3 (kmarton via andras.piros)
 OOZIE-3284 Upgrade maven-javadoc-plugin to 3.0.1 (kmarton via pbacsko, andras.piros)
 OOZIE-3278 Oozie fails to start with Hadoop 2.6.0 (kmarton via andras.piros)

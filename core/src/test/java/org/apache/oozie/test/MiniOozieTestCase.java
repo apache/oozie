@@ -61,12 +61,16 @@ public abstract class MiniOozieTestCase extends XFsTestCase {
     protected void setUp() throws Exception {
         System.setProperty("hadoop20", "true");
         super.setUp();
-        LocalOozie.start();
+        if (!LocalOozie.isStarted()) {
+            LocalOozie.start();
+        }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
+        if (LocalOozie.isStarted()) {
+            LocalOozie.stop();
+        }
         super.tearDown();
     }
 

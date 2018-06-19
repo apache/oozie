@@ -87,6 +87,10 @@ public class LocalOozie {
         XLog.getLog(LocalOozie.class).info("LocalOozie started callback set to [{0}]", callbackUrl);
     }
 
+    public static boolean isStarted() {
+        return localOozieActive;
+    }
+
     /**
      * Stop LocalOozie.
      */

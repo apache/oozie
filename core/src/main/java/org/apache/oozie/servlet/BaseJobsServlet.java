@@ -18,26 +18,33 @@
 
 package org.apache.oozie.servlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
 
 public abstract class BaseJobsServlet extends JsonRestServlet {
+    private static final XLog LOG = XLog.getLog(BaseJobsServlet.class);
 
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
 
@@ -96,13 +103,49 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         if (!requestUser.equals(UNDEF)) {
             conf.set(OozieClient.USER_NAME, requestUser);
         }
+
+        final String fsUser = request.getParameter(RestConstants.USER_PARAM) == null
+                ? conf.get(OozieClient.USER_NAME)
+                : request.getParameter(RestConstants.USER_PARAM);
+
+        checkAndWriteApplicationXMLToHDFS(fsUser, ensureJobApplicationPath(conf));
+
         BaseJobServlet.checkAuthorizationForApp(conf);
+
         JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
 
         JSONObject json = submitJob(request, conf);
         startCron();
         sendJsonResponse(response, HttpServletResponse.SC_CREATED, json);
     }
+
+    private XConfiguration ensureJobApplicationPath(final XConfiguration configuration) {
+        if (!Strings.isNullOrEmpty(configuration.get(XOozieClient.IS_PROXY_SUBMISSION))
+                && Boolean.valueOf(configuration.get(XOozieClient.IS_PROXY_SUBMISSION))) {
+            LOG.debug("Proxy submission in progress, no need to set application path.");
+            return configuration;
+        }
+
+        if (Strings.isNullOrEmpty(configuration.get(OozieClient.APP_PATH))
+                && Strings.isNullOrEmpty(configuration.get(OozieClient.LIBPATH))
+                && Strings.isNullOrEmpty(configuration.get(OozieClient.COORDINATOR_APP_PATH))
+                && Strings.isNullOrEmpty(configuration.get(OozieClient.BUNDLE_APP_PATH))) {
+            final String generatedJobApplicationPath = ConfigurationService.get("oozie.fluent-job-api.generated.path")
+                    + File.separator + "gen_app_" + new Date().getTime();
+            LOG.debug("Parameters [{0}], [{1}], [{2}], and [{3}] were all missing, setting to generated path [{4}]",
+                    OozieClient.APP_PATH,
+                    OozieClient.LIBPATH,
+                    OozieClient.COORDINATOR_APP_PATH,
+                    OozieClient.BUNDLE_APP_PATH,
+                    generatedJobApplicationPath);
+            configuration.set(OozieClient.APP_PATH, generatedJobApplicationPath);
+        }
+
+        return configuration;
+    }
+
+    protected abstract void checkAndWriteApplicationXMLToHDFS(final String requestUser, final Configuration conf)
+            throws XServletException;
 
     /**
      * Return information about jobs.

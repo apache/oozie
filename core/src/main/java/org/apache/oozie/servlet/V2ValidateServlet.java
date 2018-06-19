@@ -53,6 +53,7 @@ public class V2ValidateServlet extends JsonRestServlet {
             new ResourceInfo("", Arrays.asList("POST"), Arrays.asList(
                     new ParameterInfo(RestConstants.FILE_PARAM, String.class, true, Arrays.asList("POST")),
                     new ParameterInfo(RestConstants.USER_PARAM, String.class, true, Arrays.asList("POST"))));
+    public static final String VALID_WORKFLOW_APP = "Valid workflow-app";
 
 
     public V2ValidateServlet() {
@@ -98,12 +99,12 @@ public class V2ValidateServlet extends JsonRestServlet {
                     file + ", " + e.toString());
         }
 
-        JSONObject json = createJSON("Valid workflow-app");
+        JSONObject json = createJSON(VALID_WORKFLOW_APP);
         startCron();
         sendJsonResponse(response, HttpServletResponse.SC_OK, json);
     }
 
-    private void validate(String xml) throws Exception{
+    public void validate(String xml) throws Exception {
         SchemaService schemaService = Services.get().get(SchemaService.class);
         Schema[] schemas = {schemaService.getSchema(SchemaService.SchemaName.WORKFLOW),
                 schemaService.getSchema(SchemaService.SchemaName.COORDINATOR),

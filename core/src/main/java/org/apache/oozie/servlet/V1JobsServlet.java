@@ -18,7 +18,13 @@
 
 package org.apache.oozie.servlet;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +33,12 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.BulkResponseInfo;
 import org.apache.oozie.BundleEngine;
@@ -43,19 +54,24 @@ import org.apache.oozie.OozieJsonFactory;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class V1JobsServlet extends BaseJobsServlet {
+    private static final XLog LOG = XLog.getLog(V1JobsServlet.class);
 
     private static final String INSTRUMENTATION_NAME = "v1jobs";
     private static final Set<String> httpJobType = new HashSet<String>(){{
@@ -84,7 +100,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             String coordPath = conf.get(OozieClient.COORDINATOR_APP_PATH);
             String bundlePath = conf.get(OozieClient.BUNDLE_APP_PATH);
 
-            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
+            ServletUtilities.validateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 json = submitWorkflowJob(request, conf);
@@ -106,6 +122,129 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
         }
         return json;
+    }
+
+    @Override
+    protected void checkAndWriteApplicationXMLToHDFS(final String userName, final Configuration conf) throws XServletException {
+        if (!Strings.isNullOrEmpty(conf.get(XOozieClient.IS_PROXY_SUBMISSION))
+                && Boolean.valueOf(conf.get(XOozieClient.IS_PROXY_SUBMISSION))) {
+            LOG.debug("Proxy submission in progress, no need to write application XML.");
+            return;
+        }
+
+        final List<String> appPathsWithFileNames;
+        if (!findAppPathsWithFileNames(conf.get(OozieClient.APP_PATH), "workflow.xml").isEmpty()) {
+            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.APP_PATH), "workflow.xml");
+        }
+        else if (!findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml").isEmpty()) {
+            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml");
+        }
+        else if (!findAppPathsWithFileNames(conf.get(OozieClient.COORDINATOR_APP_PATH), "coordinator.xml").isEmpty()) {
+            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.COORDINATOR_APP_PATH), "coordinator.xml");
+        }
+        else {
+            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.BUNDLE_APP_PATH), "bundle.xml");
+        }
+
+        LOG.debug("Checking whether XML exists on HDFS. [appPathsWithFileNames={0}]", appPathsWithFileNames);
+
+        for (final String appPathWithFileName : appPathsWithFileNames) {
+            if (existsOnDFS(userName, appPathWithFileName)) {
+                return;
+            }
+        }
+
+        for (final String appPathWithFileName : appPathsWithFileNames) {
+            final String sourceContent = conf.get(OozieClient.CONFIG_KEY_GENERATED_XML);
+            if (sourceContent == null) {
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307,
+                        String.format("Configuration entry %s not present", OozieClient.CONFIG_KEY_GENERATED_XML));
+            }
+
+            if (tryCreateOnDFS(userName, appPathWithFileName, sourceContent)) {
+                return;
+            }
+        }
+
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307,
+                String.format("Could not create on HDFS any of the missing application XMLs [%s]",
+                        appPathsWithFileNames));
+    }
+
+    private List<String> findAppPathsWithFileNames(final String appPaths, final String defaultFileName) {
+        final List<String> appPathsWithFileNames = Lists.newArrayList();
+
+        if (Strings.isNullOrEmpty(appPaths)) {
+            return appPathsWithFileNames;
+        }
+
+        for (final String appPath : appPaths.split(",")) {
+            if (appPath.endsWith(".xml")) {
+                appPathsWithFileNames.add(appPath);
+            }
+            else {
+                appPathsWithFileNames.add(appPath + File.separator + defaultFileName);
+            }
+        }
+
+        return appPathsWithFileNames;
+    }
+
+    private boolean existsOnDFS(final String userName, final String appPathWithFileName) throws XServletException {
+        try {
+            final URI uri = new URI(appPathWithFileName);
+            final HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            final Configuration fsConf = has.createConfiguration(uri.getAuthority());
+            final FileSystem dfs = has.createFileSystem(userName, uri, fsConf);
+
+            final Path path = new Path(uri.getPath());
+
+            if (dfs.exists(path)) {
+                if (!dfs.isFile(path)) {
+                    final String errorMessage = String.format("HDFS path [%s] exists but is not a file.", path.toString());
+                    LOG.error(errorMessage);
+                    throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, errorMessage);
+                }
+
+                LOG.debug("HDFS path [{0}] is an existing file, no need to create.", path.toString());
+                return true;
+            }
+
+            LOG.debug("HDFS path [{0}] is not an existing file.", path.toString());
+            return false;
+        }
+        catch (final URISyntaxException | IOException | HadoopAccessorException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307,
+                    String.format("Could not check whether file [%s] exists on HDFS. Error message: %s",
+                            appPathWithFileName,  e.getMessage()));
+        }
+    }
+
+    private boolean tryCreateOnDFS(final String userName, final String appPathWithFileName, final String sourceContent) {
+        try {
+            final URI uri = new URI(appPathWithFileName);
+            final HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+            final Configuration fsConf = has.createConfiguration(uri.getAuthority());
+            final FileSystem dfs = has.createFileSystem(userName, uri, fsConf);
+
+            final Path path = new Path(uri.getPath());
+
+            LOG.debug("HDFS path [{0}] does not exist, will try to create.", path.toString());
+
+            try (final FSDataOutputStream target = dfs.create(path)) {
+                LOG.debug("HDFS path [{0}] created.", path.toString());
+
+                IOUtils.copyCharStream(new StringReader(sourceContent), new OutputStreamWriter(target, StandardCharsets.UTF_8));
+            }
+
+            LOG.debug("XML written to HDFS file [{0}].", path.toString());
+
+            return true;
+        }
+        catch (final URISyntaxException | IOException | HadoopAccessorException e) {
+            LOG.warn("Could not write XML [%s] to HDFS. Error message: %s", appPathWithFileName, e.getMessage());
+            return false;
+        }
     }
 
     /**

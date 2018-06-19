@@ -29,6 +29,7 @@ import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.servlet.V2ValidateServlet;
 import org.apache.oozie.util.XConfiguration;
 import org.json.simple.JSONObject;
 
@@ -555,8 +556,16 @@ abstract class BaseLocalOozieClient extends OozieClient {
     }
 
     @Override
-    public String validateXML(String file) throws OozieClientException {
-        return throwNoOp();
+    public String validateXML(final String xmlContent) throws OozieClientException {
+        final V2ValidateServlet validateServlet = new V2ValidateServlet();
+
+        try {
+            validateServlet.validate(xmlContent);
+            return V2ValidateServlet.VALID_WORKFLOW_APP;
+        }
+        catch (final Exception e) {
+            throw new OozieClientException("Cannot validate XML.", e);
+        }
     }
 
     @Override

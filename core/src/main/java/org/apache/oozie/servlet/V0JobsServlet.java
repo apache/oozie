@@ -119,6 +119,11 @@ public class V0JobsServlet extends BaseJobsServlet {
     }
 
 
+    @Override
+    protected void checkAndWriteApplicationXMLToHDFS(String requestUser, Configuration conf) throws XServletException {
+        // NOP
+    }
+
     /**
      * service implementation to bulk kill jobs
      * @param request

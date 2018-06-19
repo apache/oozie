@@ -20,6 +20,9 @@ package org.apache.oozie.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import org.apache.commons.io.IOUtils;
 import com.google.common.collect.Lists;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.ValidationUtil;
@@ -194,6 +197,8 @@ public class OozieClient {
     public static final String OOZIE_SUSPEND_ON_NODES = "oozie.suspend.on.nodes";
 
     public static final String FILTER_SORT_BY = "sortby";
+
+    public static final String CONFIG_KEY_GENERATED_XML = "oozie.jobs.api.generated.xml";
 
     public enum SORT_BY {
         createdTime("createdTimestamp"), lastModifiedTime("lastModifiedTimestamp");
@@ -424,11 +429,7 @@ public class OozieClient {
      */
     public Properties createConfiguration() {
         Properties conf = new Properties();
-        String userName = USER_NAME_TL.get();
-        if (userName == null) {
-            userName = System.getProperty("user.name");
-        }
-        conf.setProperty(USER_NAME, userName);
+        conf.setProperty(USER_NAME, getUserName());
         return conf;
     }
 
@@ -690,36 +691,54 @@ public class OozieClient {
 
     private class JobSubmit extends ClientCallable<String> {
         private final Properties conf;
+        private final String generatedXml;
 
-        JobSubmit(Properties conf, boolean start) {
-            super("POST", RestConstants.JOBS, "", (start) ? prepareParams(RestConstants.ACTION_PARAM,
-                    RestConstants.JOB_ACTION_START) : prepareParams());
+        JobSubmit(final Properties conf, final boolean start, final String generatedXml) {
+            super("POST", RestConstants.JOBS, "",
+                    (start)
+                            ? prepareParams(RestConstants.ACTION_PARAM,
+                                    RestConstants.JOB_ACTION_START,
+                                    RestConstants.USER_PARAM,
+                                    getUserName())
+                            : prepareParams(RestConstants.USER_PARAM,
+                                    getUserName()));
             this.conf = notNull(conf, "conf");
+            this.generatedXml = generatedXml;
         }
 
         JobSubmit(String jobId, Properties conf) {
             super("PUT", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.ACTION_PARAM,
-                    RestConstants.JOB_ACTION_RERUN));
+                    RestConstants.JOB_ACTION_RERUN, RestConstants.USER_PARAM, getUserName()));
             this.conf = notNull(conf, "conf");
+            this.generatedXml = null;
         }
 
         public JobSubmit(Properties conf, String jobActionDryrun) {
             super("POST", RestConstants.JOBS, "", prepareParams(RestConstants.ACTION_PARAM,
-                    RestConstants.JOB_ACTION_DRYRUN));
+                    RestConstants.JOB_ACTION_DRYRUN, RestConstants.USER_PARAM, getUserName()));
             this.conf = notNull(conf, "conf");
+            this.generatedXml = null;
         }
 
         @Override
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+
+            if (!Strings.isNullOrEmpty(generatedXml)) {
+                conf.setProperty(CONFIG_KEY_GENERATED_XML, generatedXml);
+            }
+
             writeToXml(conf, conn.getOutputStream());
+
             if (conn.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 return (String) json.get(JsonTags.JOB_ID);
             }
+
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 handleError(conn);
             }
+
             return null;
         }
     }
@@ -732,7 +751,11 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     public String submit(Properties conf) throws OozieClientException {
-        return (new JobSubmit(conf, false)).call();
+        return (new JobSubmit(conf, false, null)).call();
+    }
+
+    public String submit(final Properties conf, final String generatedXml) throws OozieClientException {
+        return (new JobSubmit(conf, false, generatedXml)).call();
     }
 
     private class JobAction extends ClientCallable<Void> {
@@ -875,7 +898,11 @@ public class OozieClient {
      * @throws OozieClientException thrown if the job could not be submitted.
      */
     public String run(Properties conf) throws OozieClientException {
-        return (new JobSubmit(conf, true)).call();
+        return (new JobSubmit(conf, true, null)).call();
+    }
+
+    public String run(final Properties conf, final String generatedXml) throws OozieClientException {
+        return (new JobSubmit(conf, true, generatedXml)).call();
     }
 
     /**
@@ -2188,7 +2215,7 @@ public class OozieClient {
         String file = null;
 
         ValidateXML(String file, String user) {
-            super("POST", RestConstants.VALIDATE, "",
+            super("POST", WS_PROTOCOL_VERSION, RestConstants.VALIDATE, "",
                     prepareParams(RestConstants.FILE_PARAM, file, RestConstants.USER_PARAM, user));
             this.file = file;
         }
@@ -2219,6 +2246,21 @@ public class OozieClient {
         }
     }
 
+    private class SubmitXML extends ClientCallable<String> {
+        SubmitXML(final String xml, final String user) {
+            super("POST",
+                    WS_PROTOCOL_VERSION,
+                    RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_ACTION_SUBMIT,
+                    prepareParams());
+        }
+
+        @Override
+        protected String call(final HttpURLConnection conn) throws IOException, OozieClientException {
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            return null;
+        }
+    }
 
     private  class UpdateSharelib extends ClientCallable<String> {
 
@@ -2405,11 +2447,15 @@ public class OozieClient {
             }
             fileName = f.getAbsolutePath();
         }
-        String user = USER_NAME_TL.get();
-        if (user == null) {
-            user = System.getProperty("user.name");
+        return new ValidateXML(fileName, getUserName()).call();
+    }
+
+    private String getUserName() {
+        String userName = USER_NAME_TL.get();
+        if (userName == null) {
+            userName = System.getProperty("user.name");
         }
-        return new ValidateXML(fileName, user).call();
+        return userName;
     }
 
     /**

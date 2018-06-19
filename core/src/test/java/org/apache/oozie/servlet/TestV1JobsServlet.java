@@ -72,7 +72,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
 
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 URL url = createURL("", params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -90,7 +90,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
@@ -112,7 +112,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf = new XConfiguration();
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -129,14 +129,13 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.LIBPATH, libPath1.toString());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -150,14 +149,13 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.LIBPATH, libPath1.toString() + "," + libPath2.toString());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,

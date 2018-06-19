@@ -404,6 +404,17 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-fluent-job-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-fluent-job-api</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <scope>test</scope>

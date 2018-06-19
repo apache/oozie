@@ -257,7 +257,8 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                     throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0405);
                 }
             }
-            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
+
+            ServletUtilities.validateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 auth.authorizeForApp(user, acl, wfPath, "workflow.xml", conf);

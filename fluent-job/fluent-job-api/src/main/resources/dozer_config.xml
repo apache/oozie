@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<mappings xmlns="http://dozer.sourceforge.net"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://dozer.sourceforge.net
+          http://dozer.sourceforge.net/schema/beanmapping.xsd">
+
+    <configuration>
+        <stop-on-errors>true</stop-on-errors>
+        <wildcard>false</wildcard>
+
+        <custom-converters>
+            <converter type="org.apache.oozie.fluentjob.api.mapping.GraphToWORKFLOWAPPConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.Graph</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.WORKFLOWAPP</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.GraphNodesToWORKFLOWAPPConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.mapping.GraphNodes</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.WORKFLOWAPP</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.DecisionConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.Decision</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.DECISION</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.StartConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.Start</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.START</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.ForkConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.Fork</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.FORK</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.JoinConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.Join</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.JOIN</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.MapToConfigurationPropertyConverter" >
+                <class-a>java.util.Map</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.CONFIGURATION</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.ExplicitNodeConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.dag.ExplicitNode</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.ACTION</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.ParametersConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.workflow.Parameters</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.PARAMETERS</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.GlobalConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.workflow.Global</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.GLOBAL</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowLauncherConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.action.Launcher</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.LAUNCHER</class-b>
+            </converter>
+
+            <converter type="org.apache.oozie.fluentjob.api.mapping.CredentialsConverter" >
+                <class-a>org.apache.oozie.fluentjob.api.workflow.Credentials</class-a>
+                <class-b>org.apache.oozie.fluentjob.api.generated.workflow.CREDENTIALS</class-b>
+            </converter>
+        </custom-converters>
+
+    </configuration>
+
+</mappings>

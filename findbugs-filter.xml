@@ -29,4 +29,16 @@
        <Method name="toString" />
        <Bug pattern="WMI_WRONG_MAP_ITERATOR" />
      </Match>
+
+    <!-- Don't have much control on generated JAXB2 classes -->
+    <Match>
+        <Package name="~org\.apache\.oozie\.fluentjob\.api\.generated.*" />
+        <Bug pattern="EQ_UNUSUAL" />
+    </Match>
+
+    <!-- Directory name is private static final -->
+    <Match>
+        <Class name="org.apache.oozie.fluentjob.api.GraphVisualization" />
+        <Bug pattern="WEAK_FILENAMEUTILS" />
+    </Match>
 </FindBugsFilter>

@@ -66,6 +66,9 @@ Any configuration properties to be made available to this class should also be a
 
 The XML schema (XSD) for the new Actions should be added to oozie-site.xml, under the property 'oozie.service.WorkflowSchemaService.ext.schemas'. A comma separated list for multiple Action schemas.
 
+The XML schema (XSD) for the new action should be also added to Fluent Job API. Please refer to
+[[DG_FluentJobAPI#AE.C_Appendix_C_How_To_Extend][Fluent Job API :: How To Extend]] for details.
+
 The executor class should be placed along with the oozie webapp in the correct path. Once Oozie is restarted, the custom action node can be used in workflows.
 
 

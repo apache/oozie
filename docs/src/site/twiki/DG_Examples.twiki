@@ -186,6 +186,13 @@ import java.util.Properties;
 Also asynchronous actions like FS action can be used / tested using =LocalOozie= / =OozieClient= API. Please see the module
 =oozie-mini= for details like =fs-decision.xml= workflow example.
 
+
+---++ Fluent Job API Examples
+
+There are some elaborate examples how to use the [[DG_FluentJobAPI][Fluent Job API]], under =examples/fluentjob/=. There are two
+simple examples covered under [[DG_FluentJobAPI#A_Simple_Example][Fluent Job API :: A Simple Example]] and
+[[DG_FluentJobAPI#A_More_Verbose_Example][Fluent Job API :: A More Verbose Example]].
+
 [[index][::Go back to Oozie Documentation Index::]]
 
 </noautolink>

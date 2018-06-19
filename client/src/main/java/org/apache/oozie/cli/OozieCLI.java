@@ -19,13 +19,16 @@
 package org.apache.oozie.cli;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.oozie.BuildInfo;
+import org.apache.oozie.client.ApiJarLoader;
 import org.apache.oozie.client.AuthOozieClient;
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
@@ -40,6 +43,8 @@ import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonToBean;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.fluentjob.api.serialization.WorkflowMarshaller;
+import org.apache.oozie.fluentjob.api.workflow.Workflow;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.w3c.dom.DOMException;
@@ -50,6 +55,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,6 +65,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -113,6 +123,9 @@ public class OozieCLI {
     public static final String LOG_OPTION = "log";
     public static final String ERROR_LOG_OPTION = "errorlog";
     public static final String AUDIT_LOG_OPTION = "auditlog";
+    public static final String VALIDATE_JAR_OPTION = "validatejar";
+    public static final String SUBMIT_JAR_OPTION = "submitjar";
+    public static final String RUN_JAR_OPTION = "runjar";
 
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
@@ -344,6 +357,9 @@ public class OozieCLI {
         Option log = new Option(LOG_OPTION, true, "job log");
         Option errorlog = new Option(ERROR_LOG_OPTION, true, "job error log");
         Option auditlog = new Option(AUDIT_LOG_OPTION, true, "job audit log");
+        final Option generateAndCheck = new Option(VALIDATE_JAR_OPTION, true, "generate and check job definition");
+        final Option generateAndSubmit = new Option(SUBMIT_JAR_OPTION, true, "generate and submit job definition");
+        final Option generateAndRun = new Option(RUN_JAR_OPTION, true, "generate and run job definition");
         Option logFilter = new Option(
                 RestConstants.LOG_FILTER_OPTION, true,
                 "job log search parameter. Can be specified as -logfilter opt1=val1;opt2=val1;opt3=val1. "
@@ -407,6 +423,9 @@ public class OozieCLI {
         actions.addOption(log);
         actions.addOption(errorlog);
         actions.addOption(auditlog);
+        actions.addOption(generateAndCheck);
+        actions.addOption(generateAndSubmit);
+        actions.addOption(generateAndRun);
         actions.addOption(definition);
         actions.addOption(config_content);
         actions.addOption(ignore);
@@ -1348,11 +1367,103 @@ public class OozieCLI {
                 wc.getCoordActionMissingDependencies(commandLine.getOptionValue(COORD_ACTION_MISSING_DEPENDENCIES),
                         actions, dates, System.out);
             }
-
+            else if (options.contains(VALIDATE_JAR_OPTION)) {
+                checkApiJar(wc, commandLine, options.contains(VERBOSE_OPTION));
+            }
+            else if (options.contains(SUBMIT_JAR_OPTION)) {
+                submitApiJar(wc, commandLine, options.contains(VERBOSE_OPTION));
+            }
+            else if (options.contains(RUN_JAR_OPTION)) {
+                runApiJar(wc, commandLine, options.contains(VERBOSE_OPTION));
+            }
         }
-        catch (OozieClientException ex) {
+        catch (final OozieClientException ex) {
             throw new OozieCLIException(ex.toString(), ex);
         }
+    }
+
+    private void checkApiJar(final XOozieClient wc, final CommandLine commandLine, final boolean verbose)
+            throws OozieClientException {
+        final String apiJarPath = commandLine.getOptionValue(VALIDATE_JAR_OPTION);
+        logIfVerbose(verbose, "Checking API jar: " + apiJarPath);
+
+        final String generatedXml = loadApiJarAndGenerateXml(apiJarPath, verbose);
+
+        final Path workflowXml;
+        try {
+            workflowXml = Files.createTempFile("workflow", ".xml");
+            Files.write(workflowXml, generatedXml.getBytes(StandardCharsets.UTF_8));
+
+            logIfVerbose(verbose, "API jar was written to " + workflowXml.toString());
+        }
+        catch (final IOException e) {
+            throw new OozieClientException(e.getMessage(), e);
+        }
+
+        logIfVerbose(verbose, "Servlet response is: ");
+        System.out.println(wc.validateXML(workflowXml.toString()));
+
+        logIfVerbose(verbose, "API jar is valid.");
+    }
+
+    private void logIfVerbose(final boolean verbose, final String message) {
+        if (verbose) {
+            System.out.println(message);
+        }
+    }
+
+    @SuppressFBWarnings(value = {"PATH_TRAVERSAL_IN", "WEAK_FILENAMEUTILS"},
+            justification = "FilenameUtils is used to filter user input. JDK8+ is used.")
+    private String loadApiJarAndGenerateXml(final String apiJarPath, final boolean verbose) throws OozieClientException {
+        final String generatedXml;
+        try {
+            logIfVerbose(verbose, "Loading API jar " + apiJarPath);
+
+            final Workflow generatedWorkflow = new ApiJarLoader(new File(
+                    FilenameUtils.getFullPath(apiJarPath) + FilenameUtils.getName(apiJarPath)))
+                    .loadAndGenerate();
+            generatedXml = WorkflowMarshaller.marshal(generatedWorkflow);
+
+            logIfVerbose(verbose, "Workflow job definition generated from API jar: \n" + generatedXml);
+        }
+        catch (final IOException | ClassNotFoundException | IllegalAccessException | NoSuchMethodException |
+                InvocationTargetException | InstantiationException | JAXBException e) {
+            throw new OozieClientException(e.getMessage(), e);
+        }
+
+        return generatedXml;
+    }
+
+    private void submitApiJar(final XOozieClient wc, final CommandLine commandLine, final boolean verbose)
+            throws OozieClientException {
+        final String apiJarPath = commandLine.getOptionValue(SUBMIT_JAR_OPTION);
+        logIfVerbose(verbose, "Submitting a job based on API jar: " + apiJarPath);
+
+        try {
+            System.out.println(JOB_ID_PREFIX + wc.submit(getConfiguration(wc, commandLine),
+                    loadApiJarAndGenerateXml(apiJarPath, verbose)));
+        }
+        catch (final IOException e) {
+            throw new OozieClientException(e.getMessage(), e);
+        }
+
+        logIfVerbose(verbose, "Job based on API jar submitted successfully.");
+    }
+
+    private void runApiJar(final XOozieClient wc, final CommandLine commandLine, final boolean verbose)
+            throws OozieClientException {
+        final String apiJarPath = commandLine.getOptionValue(RUN_JAR_OPTION);
+        logIfVerbose(verbose, "Running a job based on API jar: " + apiJarPath);
+
+        try {
+            System.out.println(JOB_ID_PREFIX + wc.run(getConfiguration(wc, commandLine),
+                    loadApiJarAndGenerateXml(apiJarPath, verbose)));
+        }
+        catch (final IOException e) {
+            throw new OozieClientException(e.getMessage(), e);
+        }
+
+        logIfVerbose(verbose, "Job based on API jar run successfully.");
     }
 
     @VisibleForTesting
