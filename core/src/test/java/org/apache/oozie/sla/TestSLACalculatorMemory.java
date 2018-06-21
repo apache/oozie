@@ -1050,7 +1050,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         slaRegBean1.setAppName("app-name");
-        slaRegBean1.setExpectedDuration(123);
+        slaRegBean1.setExpectedDuration(10000);
         slaRegBean1.setExpectedEnd(sdf.parse("2012-02-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2011-02-07"));
         slaRegBean1.setNominalTime(sdf.parse("2012-01-06"));

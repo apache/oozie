@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3295 Flaky test TestSLACalculatorMemory#testAddMultipleRestartRemoveMultipleInstrumentedCorrectly (pbacsko via andras.piros)
 OOZIE-3289 TestJMSAccessorService#testConnectionRetry is still flaky (pbacsko via andras.piros)
 OOZIE-3270 Upgrade Derby to 10.14.1.0 (gezapeti)
 OOZIE-3275 [docs] Update AG_Install.twiki with Access Control List documentation (andras.piros)
