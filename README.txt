@@ -38,7 +38,7 @@ Documentations :
 -----------------
 Oozie web service is bundle with the built-in details documentation.
 
-More inforamtion could be found at:
+More information could be found at:
 http://oozie.apache.org/
 
 Oozie Quick Start:
