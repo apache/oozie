@@ -26,6 +26,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
@@ -49,7 +50,6 @@ import org.apache.oozie.util.graph.OutputFormat;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-
 @SuppressWarnings("serial")
 public class V1JobServlet extends BaseJobServlet {
 
@@ -57,7 +57,6 @@ public class V1JobServlet extends BaseJobServlet {
     public static final String COORD_ACTIONS_DEFAULT_LENGTH = "oozie.coord.actions.default.length";
 
     final static String NOT_SUPPORTED_MESSAGE = "Not supported in v1";
-
 
     public V1JobServlet() {
         super(INSTRUMENTATION_NAME);
@@ -91,7 +90,6 @@ public class V1JobServlet extends BaseJobServlet {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM,
                     RestConstants.JOB_ACTION_START);
         }
-
     }
 
     /*
@@ -227,10 +225,10 @@ public class V1JobServlet extends BaseJobServlet {
         ServletInputStream is = request.getInputStream();
         byte[] b = new byte[101];
         while (is.readLine(b, 0, 100) != -1) {
-            XLog.getLog(getClass()).warn("Printing :" + new String(b));
+            XLog.getLog(getClass()).warn("Printing :" + new String(b, Charsets.UTF_8));
         }
 
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         String jobId = getResourceName(request);
         if (jobId.endsWith("-B")) {
             jobBean = getBundleJob(request, response);
@@ -591,10 +589,7 @@ public class V1JobServlet extends BaseJobServlet {
                 coordEngine.kill(jobId);
             }
         }
-        catch (CoordinatorEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (CoordinatorEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
         return json;
@@ -690,7 +685,6 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
-        JSONObject json = new JSONObject();
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
@@ -753,17 +747,12 @@ public class V1JobServlet extends BaseJobServlet {
             }
             json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
         }
-        catch (BaseEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (BaseEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 
         return json;
     }
-
-
 
     /**
      * Get workflow job
@@ -789,7 +778,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @throws XServletException
      */
     protected JsonBean getWorkflowJobBean(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
@@ -829,7 +818,7 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     private String getConsoleBase(String url) {
-        String consoleBase = null;
+        String consoleBase;
         if (url.indexOf("application") != -1) {
             consoleBase = url.split("application_[0-9]+_[0-9]+")[0];
         }
@@ -849,7 +838,6 @@ public class V1JobServlet extends BaseJobServlet {
      */
     protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
-
         JsonBean actionBean = getWorkflowActionBean(request, response);
         // for backward compatibility (OOZIE-1231)
         swapMRActionID((WorkflowAction)actionBean);
@@ -882,7 +870,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     protected JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request));
         String jobId = getResourceName(request);
@@ -931,12 +919,12 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             BaseEngineException {
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
         try {
-            jobBean = (JsonBean) bundleEngine.getBundleJob(jobId);
+            jobBean = bundleEngine.getBundleJob(jobId);
 
             return jobBean;
         }
@@ -956,7 +944,7 @@ public class V1JobServlet extends BaseJobServlet {
      */
     private JsonBean getCoordinatorAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
-        JsonBean actionBean = null;
+        JsonBean actionBean;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request));
         String actionId = getResourceName(request);
@@ -1098,10 +1086,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             coordEngine.streamLog(jobId, logRetrievalScope, logRetrievalType, response.getWriter(), request.getParameterMap());
         }
-        catch (BaseEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (BaseEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }

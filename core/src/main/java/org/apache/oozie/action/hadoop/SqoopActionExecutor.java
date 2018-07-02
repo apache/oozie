@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.Counters;
@@ -51,7 +52,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
 
     @Override
     public List<Class<?>> getLauncherClasses() {
-        List<Class<?>> classes = new ArrayList<Class<?>>();
+        List<Class<?>> classes = new ArrayList<>();
         try {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }
@@ -182,7 +183,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                     // do not store the action stats
                     if (Boolean.parseBoolean(evaluateConfigurationProperty(actionXml,
                             OOZIE_ACTION_EXTERNAL_STATS_WRITE, "true"))
-                            && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
+                            && (statsJsonString.getBytes(Charsets.UTF_8).length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         LOG.debug(
                           "Printing stats for sqoop action as a JSON string : [{0}]", statsJsonString);

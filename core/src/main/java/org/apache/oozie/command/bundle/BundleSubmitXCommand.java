@@ -34,6 +34,7 @@ import java.util.Set;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Validator;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -80,8 +81,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
-    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<>();
+    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<>();
 
     static {
         String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
@@ -159,8 +160,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 catch (IOException e1) {
                     LOG.warn("Configuration parse error. read from DB :" + bundleBean.getConf(), e1);
                 }
-                String output = bundleBean.getJobXml() + System.getProperty("line.separator");
-                return output;
+
+                return bundleBean.getJobXml() + System.getProperty("line.separator");
             }
             else {
                 if (bundleBean.getKickoffTime() == null) {
@@ -297,7 +298,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
-            Path appDefPath = null;
+            Path appDefPath;
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -307,7 +308,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 appDefPath = path;
             }
 
-            Reader reader = new InputStreamReader(fs.open(appDefPath));
+            Reader reader = new InputStreamReader(fs.open(appDefPath), Charsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
@@ -353,7 +354,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Write a Bundle Job into database
      *
-     * @param Bundle job bean
+     * @param bundleJob job bean
      * @return job id
      * @throws CommandException thrown if failed to store bundle job bean to db
      */
@@ -456,19 +457,19 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Verify the uniqueness of coordinator names
      *
-     * @param resolved job xml
+     * @param resolvedJobXml job xml
      * @throws CommandException thrown if failed to verify the uniqueness of coordinator names
      */
     @SuppressWarnings("unchecked")
     private Void verifyCoordNameUnique(String resolvedJobXml) throws CommandException {
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         try {
             Element bAppXml = XmlUtils.parseXml(resolvedJobXml);
             List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
             for (Element elem : coordElems) {
                 Attribute name = elem.getAttribute("name");
                 if (name != null) {
-                    String coordName = name.getValue();
+                    String coordName;
                     try {
                         coordName = ELUtils.resolveAppName(name.getValue(), conf);
                     }

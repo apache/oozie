@@ -18,6 +18,7 @@
 
 package org.apache.oozie.servlet;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -55,7 +56,6 @@ public class V2ValidateServlet extends JsonRestServlet {
                     new ParameterInfo(RestConstants.USER_PARAM, String.class, true, Arrays.asList("POST"))));
     public static final String VALID_WORKFLOW_APP = "Valid workflow-app";
 
-
     public V2ValidateServlet() {
         super(INSTRUMENTATION_NAME, RESOURCE_INFO);
     }
@@ -82,15 +82,14 @@ public class V2ValidateServlet extends JsonRestServlet {
                 FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
                 Path path = new Path(uri.getPath());
-                IOUtils.copyCharStream(new InputStreamReader(fs.open(path)), stringWriter);
-
+                IOUtils.copyCharStream(new InputStreamReader(fs.open(path), Charsets.UTF_8), stringWriter);
             } catch (Exception e) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0505,
                         "File does not exist, "+ file);
             }
         }
         else {
-            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream()), stringWriter);
+            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream(), Charsets.UTF_8), stringWriter);
         }
         try {
             validate(stringWriter.toString());
@@ -147,5 +146,4 @@ public class V2ValidateServlet extends JsonRestServlet {
         jsonObject.put(JsonTags.VALIDATE, content);
         return jsonObject;
     }
-
 }

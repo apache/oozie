@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
@@ -283,10 +284,7 @@ public class XConfiguration extends Configuration {
             parseDocument(doc);
 
         }
-        catch (SAXException e) {
-            throw new IOException(e);
-        }
-        catch (ParserConfigurationException e) {
+        catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
         }
     }
@@ -297,10 +295,7 @@ public class XConfiguration extends Configuration {
             Document doc = getDocumentBuilder().parse(new InputSource(reader));
             parseDocument(doc);
         }
-        catch (SAXException e) {
-            throw new IOException(e);
-        }
-        catch (ParserConfigurationException e) {
+        catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
         }
     }
@@ -351,7 +346,6 @@ public class XConfiguration extends Configuration {
                     set(attr, value);
                 }
             }
-
         }
         catch (DOMException e) {
             throw new IOException(e);
@@ -373,7 +367,7 @@ public class XConfiguration extends Configuration {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             this.writeXml(baos);
             baos.close();
-            xml = new String(baos.toByteArray());
+            xml = new String(baos.toByteArray(), Charsets.UTF_8);
         }
         catch (IOException ex) {
             throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);

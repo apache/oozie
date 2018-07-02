@@ -21,7 +21,9 @@ package org.apache.oozie;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
+import com.google.common.base.Charsets;
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.compression.CompressionCodec;
 import org.apache.oozie.util.ByteArrayUtils;
@@ -117,7 +119,7 @@ public class StringBlob {
             }
         }
         else {
-            rawBlob = ByteArrayUtils.weakIntern(string.getBytes());
+            rawBlob = ByteArrayUtils.weakIntern(string.getBytes(Charsets.UTF_8));
         }
         return rawBlob;
     }

@@ -18,6 +18,8 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.base.Charsets;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -79,11 +81,11 @@ public class MultiFileReader extends Reader {
             // gzip files
             if (files.get(index).getName().endsWith(".gz")) {
                 GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(files.get(index)));
-                reader = new InputStreamReader(gzipInputStream);
+                reader = new InputStreamReader(gzipInputStream, Charsets.UTF_8);
             }
             // regular files
             else {
-                reader = new FileReader(files.get(index));
+                reader = new InputStreamReader(new FileInputStream(files.get(index)), Charsets.UTF_8);
             }
             index++;
         }

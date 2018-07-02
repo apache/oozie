@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Validator;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -113,8 +114,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     public final String COORD_INPUT_EVENTS_DATA_IN ="data-in";
     public final String COORD_OUTPUT_EVENTS_DATA_OUT = "data-out";
 
-    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<>();
+    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<>();
 
     protected CoordinatorJobBean coordJob = null;
     /**
@@ -206,7 +207,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     }
 
     protected String submitJob() throws CommandException {
-        String jobId = null;
+        String jobId;
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
 
         boolean exceptionOccured = false;
@@ -315,9 +316,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         }
         String action = new CoordMaterializeTransitionXCommand(coordJob, materializationWindow, startTime,
                 endTime).materializeActions(true);
-        String output = coordJob.getJobXml() + System.getProperty("line.separator")
-        + "***actions for instance***" + action;
-        return output;
+
+        return coordJob.getJobXml() + System.getProperty("line.separator") + "***actions for instance***" + action;
     }
 
     /**
@@ -488,6 +488,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         throw new CoordinatorJobException(ErrorCode.E1021, eventType + " end-instance '" + instanceValue
                 + "' contains more than one date end-instance. Coordinator job NOT SUBMITTED. " + correctAction);
     }
+
     /**
      * Read the application XML and validate against coordinator Schema
      *
@@ -606,7 +607,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      * @throws Exception thrown if failed to resolve basic entities or include referred datasets
      */
     public Element basicResolveAndIncludeDS(String appXml, Configuration conf, CoordinatorJobBean coordJob)
-    throws CoordinatorJobException, Exception {
+            throws Exception {
         Element basicResolvedApp = resolveInitial(conf, appXml, coordJob);
         includeDataSets(basicResolvedApp, conf);
         return basicResolvedApp;
@@ -666,7 +667,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
         evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
         evalInitialInstance = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-initial-instance");
-
     }
 
     /**
@@ -681,12 +681,11 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     @SuppressWarnings("unchecked")
     protected Element resolveInitial(Configuration conf, String appXml, CoordinatorJobBean coordJob)
-    throws CoordinatorJobException, Exception {
+            throws Exception {
         Element eAppXml = XmlUtils.parseXml(appXml);
         // job's main attributes
         // frequency
         String val = resolveAttribute("frequency", eAppXml, evalFreq);
-        int ival = 0;
 
         val = ParamChecker.checkFrequency(val);
         coordJob.setFrequency(val);
@@ -755,7 +754,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             val = ConfigurationService.get(CONF_DEFAULT_TIMEOUT_NORMAL);
         }
 
-        ival = ParamChecker.checkInteger(val, "timeout");
+        int ival = ParamChecker.checkInteger(val, "timeout");
         if (ival < 0 || ival > ConfigurationService.getInt(CONF_DEFAULT_MAX_TIMEOUT)) {
             ival = ConfigurationService.getInt(CONF_DEFAULT_MAX_TIMEOUT);
         }
@@ -770,8 +769,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
 
         val = resolveTagContents("throttle", eAppXml.getChild("controls", eAppXml.getNamespace()), evalNofuncs);
         if (val == null || val.isEmpty()) {
-            int defaultThrottle = ConfigurationService.getInt(CONF_DEFAULT_THROTTLE);
-            ival = defaultThrottle;
+            ival = ConfigurationService.getInt(CONF_DEFAULT_THROTTLE);
         }
         else {
             ival = ParamChecker.checkInteger(val, "throttle");
@@ -887,7 +885,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         Element eJob = (Element) eJobOrg.clone();
         Element inputList = eJob.getChild("input-events", eJob.getNamespace());
         if (inputList != null) {
-            TreeSet<String> eventNameSet = new TreeSet<String>();
+            TreeSet<String> eventNameSet = new TreeSet<>();
             for (Element dataIn : (List<Element>) inputList.getChildren("data-in", eJob.getNamespace())) {
                 String dataInName = dataIn.getAttributeValue("name");
                 dataNameList.put(dataInName, "data-in");
@@ -907,7 +905,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         // Resolving output-events/data-out
         Element outputList = eJob.getChild("output-events", eJob.getNamespace());
         if (outputList != null) {
-            TreeSet<String> eventNameSet = new TreeSet<String>();
+            TreeSet<String> eventNameSet = new TreeSet<>();
             for (Element dataOut : (List<Element>) outputList.getChildren("data-out", eJob.getNamespace())) {
                 String dataOutName = dataOut.getAttributeValue("name");
                 dataNameList.put(dataOutName, "data-out");
@@ -948,7 +946,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Resolve input-events/dataset and output-events/dataset tags.
      *
-     * @param eJob : Job element
+     * @param eAppXml : Job element
      * @throws CoordinatorJobException thrown if failed to resolve input and output events
      */
     @SuppressWarnings("unchecked")
@@ -966,10 +964,8 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         if (outputList != null) {
             for (Element dataOut : (List<Element>) outputList.getChildren("data-out", eAppXml.getNamespace())) {
                 resolveAttribute("dataset", dataOut, evalInst);
-
             }
         }
-
     }
 
 
@@ -994,7 +990,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private void resolveDataSets(Element eAppXml) throws Exception {
         Element datasetList = eAppXml.getChild("datasets", eAppXml.getNamespace());
         if (datasetList != null) {
-
             List<Element> dsElems = datasetList.getChildren("dataset", eAppXml.getNamespace());
             resolveDataSets(dsElems);
             resolveTagContents("app-path", eAppXml.getChild("action", eAppXml.getNamespace()).getChild("workflow",
@@ -1018,9 +1013,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             int ival = ParamChecker.checkInteger(val, "frequency");
             ParamChecker.checkGTZero(ival, "frequency");
             addAnAttribute("freq_timeunit", dsElem, evalFreq.getVariable("timeunit") == null ? TimeUnit.MINUTE
-                    .toString() : ((TimeUnit) evalFreq.getVariable("timeunit")).toString());
+                    .toString() : evalFreq.getVariable("timeunit").toString());
             addAnAttribute("end_of_duration", dsElem, evalFreq.getVariable("endOfDuration") == null ? TimeUnit.NONE
-                    .toString() : ((TimeUnit) evalFreq.getVariable("endOfDuration")).toString());
+                    .toString() : evalFreq.getVariable("endOfDuration").toString());
             val = resolveAttribute("initial-instance", dsElem, evalInitialInstance);
             ParamChecker.checkDateOozieTZ(val, "initial-instance");
             checkInitialInstance(val);
@@ -1098,7 +1093,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     protected void includeDataSets(Element resolvedXml, Configuration conf) throws CoordinatorJobException {
         Element datasets = resolvedXml.getChild("datasets", resolvedXml.getNamespace());
         Element allDataSets = new Element("all_datasets", resolvedXml.getNamespace());
-        List<String> dsList = new ArrayList<String>();
+        List<String> dsList = new ArrayList<>();
         if (datasets != null) {
             for (Element includeElem : (List<Element>) datasets.getChildren("include", datasets.getNamespace())) {
                 String incDSFile = includeElem.getTextTrim();
@@ -1132,7 +1127,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     @SuppressWarnings("unchecked")
     private void includeOneDSFile(String incDSFile, List<String> dsList, Element allDataSets, Namespace dsNameSpace)
     throws CoordinatorJobException {
-        Element tmpDataSets = null;
+        Element tmpDataSets;
         try {
             String dsXml = readDefinition(incDSFile);
             LOG.debug("DSFILE :" + incDSFile + "\n" + dsXml);
@@ -1198,7 +1193,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
-            Path appDefPath = null;
+            Path appDefPath;
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -1212,7 +1207,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                 appDefPath = path;
             }
 
-            Reader reader = new InputStreamReader(fs.open(appDefPath));
+            Reader reader = new InputStreamReader(fs.open(appDefPath), Charsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
@@ -1319,12 +1314,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
             coordJob.setAppName(this.coordName);
         }
         setJob(coordJob);
-
     }
 
     @Override
     protected void verifyPrecondition() throws CommandException {
-
     }
 
     @Override

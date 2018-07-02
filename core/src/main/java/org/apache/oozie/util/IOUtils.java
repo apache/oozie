@@ -18,6 +18,8 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -116,7 +118,7 @@ public abstract class IOUtils {
      * @throws IOException thrown if the resource could not be read.
      */
     public static Reader getResourceAsReader(String path, int maxLen) throws IOException {
-        return new InputStreamReader(getResourceAsStream(path, maxLen));
+        return new InputStreamReader(getResourceAsStream(path, maxLen), Charsets.UTF_8);
     }
 
     /**
@@ -133,7 +135,7 @@ public abstract class IOUtils {
         if (is == null) {
             throw new IllegalArgumentException(XLog.format("resource [{0}] not found", path));
         }
-        Reader reader = new InputStreamReader(is);
+        Reader reader = new InputStreamReader(is, Charsets.UTF_8);
         return getReaderAsString(reader, maxLen);
     }
 

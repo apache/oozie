@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.util;
 
 import java.io.BufferedReader;
@@ -30,6 +29,7 @@ import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -64,13 +64,7 @@ public class AuthUrlClient {
         try {
             conn = new AuthenticatedURL(AuthenticatorClass.newInstance()).openConnection(url, token);
         }
-        catch (AuthenticationException ex) {
-            throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
-        }
-        catch (InstantiationException ex) {
-            throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
-        }
-        catch (IllegalAccessException ex) {
+        catch (AuthenticationException | InstantiationException | IllegalAccessException ex) {
             throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
         }
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -94,14 +88,16 @@ public class AuthUrlClient {
             throw new IOException("Authentication type must be specified: simple|kerberos|<class>");
         }
         authName = authName.trim();
-        if (authName.equals("simple")) {
-            authClassName = PseudoAuthenticator.class.getName();
-        }
-        else if (authName.equals("kerberos")) {
-            authClassName = KerberosAuthenticator.class.getName();
-        }
-        else {
-            authClassName = authName;
+        switch (authName) {
+            case "simple":
+                authClassName = PseudoAuthenticator.class.getName();
+                break;
+            case "kerberos":
+                authClassName = KerberosAuthenticator.class.getName();
+                break;
+            default:
+                authClassName = authName;
+                break;
         }
 
         authClass = (Class<? extends Authenticator>) Thread.currentThread().getContextClassLoader()
@@ -123,7 +119,7 @@ public class AuthUrlClient {
         }
 
         final URL url = new URL(server);
-        BufferedReader reader = null;
+        BufferedReader reader;
         try {
             reader = UserGroupInformation.getLoginUser().doAs(new PrivilegedExceptionAction<BufferedReader>() {
                 @Override
@@ -133,7 +129,7 @@ public class AuthUrlClient {
                     BufferedReader reader = null;
                     if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                         InputStream is = conn.getInputStream();
-                        reader = new BufferedReader(new InputStreamReader(is));
+                        reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
                     }
                     return reader;
                 }
@@ -156,10 +152,9 @@ public class AuthUrlClient {
                 String value = params.get(key)[0]; // We don't support multi value.
                 stringBuilder.append(key);
                 stringBuilder.append("=");
-                stringBuilder.append(URLEncoder.encode(value,"UTF-8"));
+                stringBuilder.append(URLEncoder.encode(value,Charsets.UTF_8.name()));
             }
         }
         return stringBuilder.toString();
     }
-
 }
