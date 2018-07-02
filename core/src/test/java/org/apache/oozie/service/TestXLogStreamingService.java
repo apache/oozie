@@ -413,6 +413,33 @@ public class TestXLogStreamingService extends XTestCase {
         assertFalse(log.contains("Truncated logs to max log scan duration"));
     }
 
+    public void testEscapingHtmlCharacters() throws Exception{
+        setupXLog();
+        XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
+        xf.setParameter("USER", "oozie");
+        xf.setLogLevel("DEBUG|INFO");
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        try {
+            new Services().init();
+            assertFalse(doStreamDisabledCheck());
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] "
+                    + "APP[-] JOB[-] ACTION[-] <script>function({Some malicious JS code});</script>");
+            String out = doStreamLog(xf);
+            assertFalse(out.contains("<script>"));
+        }
+        finally {
+            Services.get().destroy();
+        }
+    }
+
     private boolean doStreamDisabledCheckWithServices() throws Exception {
         boolean result = false;
         try {

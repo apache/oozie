@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
@@ -92,7 +93,7 @@ public class XLogStreamingService implements Service, Instrumentable {
     protected void streamLog(XLogStreamer logStreamer, Date startTime, Date endTime, Writer writer, boolean appendDebug)
             throws IOException {
         if (!logStreamer.isLogEnabled()) {
-            writer.write(logStreamer.getLogDisableMessage());
+            writer.write(StringEscapeUtils.escapeHtml(logStreamer.getLogDisableMessage()));
             return;
         }
         logStreamer.streamLog(writer, startTime, endTime, appendDebug);

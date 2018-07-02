@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.LogLine.MATCHED_PATTERN;
@@ -204,7 +205,7 @@ public class TimestampedMessageParser {
      */
     public void processRemaining(Writer writer, XLogStreamer logStreamer) throws IOException {
         while (increment()) {
-            writer.write(lastMessage);
+            writer.write(StringEscapeUtils.escapeHtml(lastMessage));
             if (logStreamer.shouldFlushOutput(lastMessage.length())) {
                 writer.flush();
             }
