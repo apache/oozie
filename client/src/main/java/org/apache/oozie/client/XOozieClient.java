@@ -20,12 +20,15 @@ package org.apache.oozie.client;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.Properties;
 
+import com.google.common.base.Charsets;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.oozie.cli.OozieCLI;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
@@ -71,6 +74,7 @@ public class XOozieClient extends OozieClient {
         super(oozieUrl);
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "FilenameUtils is used to filter user input. JDK8+ is used.")
     private String readScript(String script) throws IOException {
         if (!new File(script).exists()) {
             throw new IOException("Error: script file [" + script + "] does not exist");
@@ -78,7 +82,8 @@ public class XOozieClient extends OozieClient {
 
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(script));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(
+                    FilenameUtils.getFullPath(script) + FilenameUtils.getName(script)), Charsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
@@ -200,22 +205,23 @@ public class XOozieClient extends OozieClient {
         OozieClient.notNull(scriptFile, "scriptFile");
         validateHttpSubmitConf(conf);
 
-        String script = "";
-        String options = "";
-        String scriptParams = "";
+        String script;
+        String options;
+        String scriptParams;
 
-        if (jobType.equals(OozieCLI.HIVE_CMD)) {
-            script = XOozieClient.HIVE_SCRIPT;
-            options = XOozieClient.HIVE_OPTIONS;
-            scriptParams = XOozieClient.HIVE_SCRIPT_PARAMS;
-        }
-        else if (jobType.equals(OozieCLI.PIG_CMD)) {
-            script =  XOozieClient.PIG_SCRIPT;
-            options = XOozieClient.PIG_OPTIONS;
-            scriptParams = XOozieClient.PIG_SCRIPT_PARAMS;
-        }
-        else {
-            throw new IllegalArgumentException("jobType must be either pig or hive");
+        switch (jobType) {
+            case OozieCLI.HIVE_CMD:
+                script = XOozieClient.HIVE_SCRIPT;
+                options = XOozieClient.HIVE_OPTIONS;
+                scriptParams = XOozieClient.HIVE_SCRIPT_PARAMS;
+                break;
+            case OozieCLI.PIG_CMD:
+                script = XOozieClient.PIG_SCRIPT;
+                options = XOozieClient.PIG_OPTIONS;
+                scriptParams = XOozieClient.PIG_SCRIPT_PARAMS;
+                break;
+            default:
+                throw new IllegalArgumentException("jobType must be either pig or hive");
         }
 
         conf.setProperty(script, readScript(scriptFile));
@@ -273,7 +279,7 @@ public class XOozieClient extends OozieClient {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             writeToXml(conf, conn.getOutputStream());
             if (conn.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(), Charsets.UTF_8));
                 return (String) json.get(JsonTags.JOB_ID);
             }
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {

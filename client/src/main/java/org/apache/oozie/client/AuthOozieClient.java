@@ -20,9 +20,11 @@ package org.apache.oozie.client;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
@@ -32,6 +34,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Charsets;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.Authenticator;
@@ -61,7 +64,7 @@ public class AuthOozieClient extends XOozieClient {
      */
     public static final File AUTH_TOKEN_CACHE_FILE = new File(System.getProperty("user.home"), ".oozie-auth-token");
 
-    public static enum AuthType {
+    public enum AuthType {
         KERBEROS, SIMPLE
     }
 
@@ -107,7 +110,7 @@ public class AuthOozieClient extends XOozieClient {
     protected HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
         boolean useAuthFile = System.getProperty(USE_AUTH_TOKEN_CACHE_SYS_PROP, "false").equalsIgnoreCase("true");
         AuthenticatedURL.Token readToken = null;
-        AuthenticatedURL.Token currentToken = null;
+        AuthenticatedURL.Token currentToken;
 
         // Read the token in from the file
         if (useAuthFile) {
@@ -215,7 +218,8 @@ public class AuthOozieClient extends XOozieClient {
         AuthenticatedURL.Token authToken = null;
         if (AUTH_TOKEN_CACHE_FILE.exists()) {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(AUTH_TOKEN_CACHE_FILE));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(AUTH_TOKEN_CACHE_FILE),
+                        Charsets.UTF_8));
                 String line = reader.readLine();
                 reader.close();
                 if (line != null) {
@@ -245,7 +249,7 @@ public class AuthOozieClient extends XOozieClient {
                     new File(System.getProperty("user.home")));
             // just to be safe, if something goes wrong delete tmp file eventually
             tmpTokenFile.deleteOnExit();
-            Writer writer = new FileWriter(tmpTokenFile);
+            Writer writer = new OutputStreamWriter(new FileOutputStream(tmpTokenFile), Charsets.UTF_8);
             writer.write(authToken.toString());
             writer.close();
             Files.move(tmpTokenFile.toPath(), AUTH_TOKEN_CACHE_FILE.toPath(), StandardCopyOption.ATOMIC_MOVE);
@@ -292,12 +296,7 @@ public class AuthOozieClient extends XOozieClient {
                         "Invalid options provided for auth: " + authOption
                         + ", (" + AuthType.KERBEROS + " or " + AuthType.SIMPLE + " expected.)");
             }
-            catch (InstantiationException ex) {
-                throw new OozieClientException(OozieClientException.AUTHENTICATION,
-                        "Could not instantiate Authenticator for option [" + authOption + "], " +
-                        ex.getMessage(), ex);
-            }
-            catch (IllegalAccessException ex) {
+            catch (InstantiationException | IllegalAccessException ex) {
                 throw new OozieClientException(OozieClientException.AUTHENTICATION,
                         "Could not instantiate Authenticator for option [" + authOption + "], " +
                         ex.getMessage(), ex);
@@ -309,7 +308,7 @@ public class AuthOozieClient extends XOozieClient {
         if (className != null) {
             try {
                 ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                Class<? extends Object> klass = (cl != null) ? cl.loadClass(className) :
+                Class<?> klass = (cl != null) ? cl.loadClass(className) :
                     getClass().getClassLoader().loadClass(className);
                 if (klass == null) {
                     throw new OozieClientException(OozieClientException.AUTHENTICATION,
@@ -339,7 +338,7 @@ public class AuthOozieClient extends XOozieClient {
      * @return the map for classes of Authenticator
      */
     protected Map<String, Class<? extends Authenticator>> getAuthenticators() {
-        Map<String, Class<? extends Authenticator>> authClasses = new HashMap<String, Class<? extends Authenticator>>();
+        Map<String, Class<? extends Authenticator>> authClasses = new HashMap<>();
         authClasses.put(AuthType.KERBEROS.toString(), KerberosAuthenticator.class);
         authClasses.put(AuthType.SIMPLE.toString(), PseudoAuthenticator.class);
         authClasses.put(null, KerberosAuthenticator.class);
@@ -354,5 +353,4 @@ public class AuthOozieClient extends XOozieClient {
     public String getAuthOption() {
         return authOption;
     }
-
 }

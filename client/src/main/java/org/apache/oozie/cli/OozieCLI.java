@@ -19,6 +19,7 @@
 package org.apache.oozie.cli;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -61,9 +62,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -713,41 +714,42 @@ public class OozieCLI {
     }
 
     public void processCommand(CLIParser parser, CLIParser.Command command) throws Exception {
-        if (command.getName().equals(HELP_CMD)) {
-            parser.showHelp(command.getCommandLine());
-        }
-        else if (command.getName().equals(JOB_CMD)) {
-            jobCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(JOBS_CMD)) {
-            jobsCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(ADMIN_CMD)) {
-            adminCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(VERSION_CMD)) {
-            versionCommand();
-        }
-        else if (command.getName().equals(VALIDATE_CMD)) {
-            validateCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(SLA_CMD)) {
-            slaCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(PIG_CMD)) {
-            scriptLanguageCommand(command.getCommandLine(), PIG_CMD);
-        }
-        else if (command.getName().equals(HIVE_CMD)) {
-            scriptLanguageCommand(command.getCommandLine(), HIVE_CMD);
-        }
-        else if (command.getName().equals(SQOOP_CMD)) {
-            sqoopCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(INFO_CMD)) {
-            infoCommand(command.getCommandLine());
-        }
-        else if (command.getName().equals(MR_CMD)){
-            mrCommand(command.getCommandLine());
+        switch (command.getName()) {
+            case JOB_CMD:
+                jobCommand(command.getCommandLine());
+                break;
+            case JOBS_CMD:
+                jobsCommand(command.getCommandLine());
+                break;
+            case ADMIN_CMD:
+                adminCommand(command.getCommandLine());
+                break;
+            case VERSION_CMD:
+                versionCommand();
+                break;
+            case VALIDATE_CMD:
+                validateCommand(command.getCommandLine());
+                break;
+            case SLA_CMD:
+                slaCommand(command.getCommandLine());
+                break;
+            case PIG_CMD:
+                scriptLanguageCommand(command.getCommandLine(), PIG_CMD);
+                break;
+            case HIVE_CMD:
+                scriptLanguageCommand(command.getCommandLine(), HIVE_CMD);
+                break;
+            case SQOOP_CMD:
+                sqoopCommand(command.getCommandLine());
+                break;
+            case INFO_CMD:
+                infoCommand(command.getCommandLine());
+                break;
+            case MR_CMD:
+                mrCommand(command.getCommandLine());
+                break;
+            default:
+                parser.showHelp(command.getCommandLine());
         }
     }
     protected String getOozieUrl(CommandLine commandLine) {
@@ -792,10 +794,7 @@ public class OozieCLI {
             Document doc = builder.parse(is);
             return parseDocument(doc, conf);
         }
-        catch (SAXException e) {
-            throw new IOException(e);
-        }
-        catch (ParserConfigurationException e) {
+        catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
         }
     }
@@ -857,7 +856,7 @@ public class OozieCLI {
                 throw new IOException("configuration file [" + configFile + "] not found");
             }
             if (configFile.endsWith(".properties")) {
-                conf.load(new FileReader(file));
+                conf.load(new InputStreamReader(new FileInputStream(file), Charsets.UTF_8));
             }
             else if (configFile.endsWith(".xml")) {
                 parse(new FileInputStream(configFile), conf);
@@ -881,7 +880,7 @@ public class OozieCLI {
      * @throws IOException
      */
     private boolean isConfigurationSpecified(OozieClient wc, CommandLine commandLine) throws IOException {
-        boolean isConf = false;
+        boolean isConf;
         String configFile = commandLine.getOptionValue(CONFIG_OPTION);
         if (configFile == null) {
             isConf = false;
@@ -1005,7 +1004,7 @@ public class OozieCLI {
     private void jobCommand(CommandLine commandLine) throws IOException, OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
 
-        List<String> options = new ArrayList<String>();
+        List<String> options = new ArrayList<>();
         for (Option option : commandLine.getOptions()) {
             options.add(option.getOpt());
         }
@@ -1058,8 +1057,8 @@ public class OozieCLI {
                 if (commandLine.getOptionValue(KILL_OPTION).contains("-C")
                         && (options.contains(DATE_OPTION) || options.contains(ACTION_OPTION))) {
                     String coordJobId = commandLine.getOptionValue(KILL_OPTION);
-                    String scope = null;
-                    String rangeType = null;
+                    String scope;
+                    String rangeType;
                     if (options.contains(DATE_OPTION) && options.contains(ACTION_OPTION)) {
                         throw new OozieCLIException("Invalid options provided for rerun: either" + DATE_OPTION + " or "
                                 + ACTION_OPTION + " expected. Don't use both at the same time.");
@@ -1133,8 +1132,8 @@ public class OozieCLI {
                 }
                 else {
                     String coordJobId = commandLine.getOptionValue(RERUN_OPTION);
-                    String scope = null;
-                    String rerunType = null;
+                    String scope;
+                    String rerunType;
                     boolean refresh = false;
                     boolean noCleanup = false;
                     boolean failed = false;
@@ -1266,21 +1265,13 @@ public class OozieCLI {
                 }
             }
             else if (options.contains(ERROR_LOG_OPTION)) {
-                PrintStream ps = System.out;
-                try {
+                try (PrintStream ps = System.out) {
                     wc.getJobErrorLog(commandLine.getOptionValue(ERROR_LOG_OPTION), ps);
-                }
-                finally {
-                    ps.close();
                 }
             }
             else if (options.contains(AUDIT_LOG_OPTION)) {
-                PrintStream ps = System.out;
-                try {
+                try (PrintStream ps = System.out) {
                     wc.getJobAuditLog(commandLine.getOptionValue(AUDIT_LOG_OPTION), ps);
-                }
-                finally {
-                    ps.close();
                 }
             }
             else if (options.contains(DEFINITION_OPTION)) {
@@ -1728,7 +1719,7 @@ public class OozieCLI {
     private void jobsCommand(CommandLine commandLine) throws IOException, OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
 
-        List<String> options = new ArrayList<String>();
+        List<String> options = new ArrayList<>();
         for (Option option : commandLine.getOptions()) {
             options.add(option.getOpt());
         }
@@ -1970,13 +1961,13 @@ public class OozieCLI {
     private void adminCommand(CommandLine commandLine) throws OozieCLIException {
         XOozieClient wc = createXOozieClient(commandLine);
 
-        List<String> options = new ArrayList<String>();
+        List<String> options = new ArrayList<>();
         for (Option option : commandLine.getOptions()) {
             options.add(option.getOpt());
         }
 
         try {
-            SYSTEM_MODE status = SYSTEM_MODE.NORMAL;
+            SYSTEM_MODE status;
             if (options.contains(VERSION_OPTION)) {
                 System.out.println("Oozie server build version: " + wc.getServerBuildVersion());
             }
@@ -2023,22 +2014,22 @@ public class OozieCLI {
                 }
             }
             else if (options.contains(AVAILABLE_SERVERS_OPTION)) {
-                Map<String, String> availableOozieServers = new TreeMap<String, String>(wc.getAvailableOozieServers());
+                Map<String, String> availableOozieServers = new TreeMap<>(wc.getAvailableOozieServers());
                 for (Map.Entry<String, String> ent : availableOozieServers.entrySet()) {
                     System.out.println(ent.getKey() + " : " + ent.getValue());
                 }
             } else if (options.contains(SERVER_CONFIGURATION_OPTION)) {
-                Map<String, String> serverConfig = new TreeMap<String, String>(wc.getServerConfiguration());
+                Map<String, String> serverConfig = new TreeMap<>(wc.getServerConfiguration());
                 for (Map.Entry<String, String> ent : serverConfig.entrySet()) {
                     System.out.println(ent.getKey() + " : " + ent.getValue());
                 }
             } else if (options.contains(SERVER_OS_ENV_OPTION)) {
-                Map<String, String> osEnv = new TreeMap<String, String>(wc.getOSEnv());
+                Map<String, String> osEnv = new TreeMap<>(wc.getOSEnv());
                 for (Map.Entry<String, String> ent : osEnv.entrySet()) {
                     System.out.println(ent.getKey() + " : " + ent.getValue());
                 }
             } else if (options.contains(SERVER_JAVA_SYSTEM_PROPERTIES_OPTION)) {
-                Map<String, String> javaSysProps = new TreeMap<String, String>(wc.getJavaSystemProperties());
+                Map<String, String> javaSysProps = new TreeMap<>(wc.getJavaSystemProperties());
                 for (Map.Entry<String, String> ent : javaSysProps.entrySet()) {
                     System.out.println(ent.getKey() + " : " + ent.getValue());
                 }
@@ -2153,7 +2144,7 @@ public class OozieCLI {
             return "-";
         }
 
-        SimpleDateFormat dateFormater = null;
+        SimpleDateFormat dateFormater;
         if (verbose) {
             dateFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss zzz", Locale.US);
         }
@@ -2181,7 +2172,7 @@ public class OozieCLI {
         }
         try {
             XOozieClient wc = createXOozieClient(commandLine);
-            String result = wc.validateXML(args[0].toString());
+            String result = wc.validateXML(args[0]);
             if (result == null) {
                 return;
             }
@@ -2213,7 +2204,7 @@ public class OozieCLI {
             XOozieClient wc = createXOozieClient(commandLine);
             Properties conf = getConfiguration(wc, commandLine);
             String script = commandLine.getOptionValue(SCRIPTFILE_OPTION);
-            List<String> paramsList = new ArrayList<String>();
+            List<String> paramsList = new ArrayList<>();
             if (commandLine.hasOption("P")) {
                 Properties params = commandLine.getOptionProperties("P");
                 for (String key : params.stringPropertyNames()) {
@@ -2366,27 +2357,26 @@ public class OozieCLI {
     private void printMetrics(OozieClient.Metrics metrics) {
         System.out.println("COUNTERS");
         System.out.println("--------");
-        Map<String, Long> counters = new TreeMap<String, Long>(metrics.getCounters());
+        Map<String, Long> counters = new TreeMap<>(metrics.getCounters());
         for (Map.Entry<String, Long> ent : counters.entrySet()) {
             System.out.println(ent.getKey() + " : " + ent.getValue());
         }
         System.out.println("\nGAUGES");
         System.out.println("------");
-        Map<String, Object> gauges = new TreeMap<String, Object>(metrics.getGauges());
+        Map<String, Object> gauges = new TreeMap<>(metrics.getGauges());
         for (Map.Entry<String, Object> ent : gauges.entrySet()) {
             System.out.println(ent.getKey() + " : " + ent.getValue());
         }
         System.out.println("\nTIMERS");
         System.out.println("------");
-        Map<String, OozieClient.Metrics.Timer> timers = new TreeMap<String, OozieClient.Metrics.Timer>(metrics.getTimers());
+        Map<String, OozieClient.Metrics.Timer> timers = new TreeMap<>(metrics.getTimers());
         for (Map.Entry<String, OozieClient.Metrics.Timer> ent : timers.entrySet()) {
             System.out.println(ent.getKey());
             System.out.println(ent.getValue());
         }
         System.out.println("\nHISTOGRAMS");
         System.out.println("----------");
-        Map<String, OozieClient.Metrics.Histogram> histograms =
-                new TreeMap<String, OozieClient.Metrics.Histogram>(metrics.getHistograms());
+        Map<String, OozieClient.Metrics.Histogram> histograms = new TreeMap<>(metrics.getHistograms());
         for (Map.Entry<String, OozieClient.Metrics.Histogram> ent : histograms.entrySet()) {
             System.out.println(ent.getKey());
             System.out.println(ent.getValue());
@@ -2396,26 +2386,25 @@ public class OozieCLI {
     private void printInstrumentation(OozieClient.Instrumentation instrumentation) {
         System.out.println("COUNTERS");
         System.out.println("--------");
-        Map<String, Long> counters = new TreeMap<String, Long>(instrumentation.getCounters());
+        Map<String, Long> counters = new TreeMap<>(instrumentation.getCounters());
         for (Map.Entry<String, Long> ent : counters.entrySet()) {
             System.out.println(ent.getKey() + " : " + ent.getValue());
         }
         System.out.println("\nVARIABLES");
         System.out.println("---------");
-        Map<String, Object> variables = new TreeMap<String, Object>(instrumentation.getVariables());
+        Map<String, Object> variables = new TreeMap<>(instrumentation.getVariables());
         for (Map.Entry<String, Object> ent : variables.entrySet()) {
             System.out.println(ent.getKey() + " : " + ent.getValue());
         }
         System.out.println("\nSAMPLERS");
         System.out.println("---------");
-        Map<String, Double> samplers = new TreeMap<String, Double>(instrumentation.getSamplers());
+        Map<String, Double> samplers = new TreeMap<>(instrumentation.getSamplers());
         for (Map.Entry<String, Double> ent : samplers.entrySet()) {
             System.out.println(ent.getKey() + " : " + ent.getValue());
         }
         System.out.println("\nTIMERS");
         System.out.println("---------");
-        Map<String, OozieClient.Instrumentation.Timer> timers =
-                new TreeMap<String, OozieClient.Instrumentation.Timer>(instrumentation.getTimers());
+        Map<String, OozieClient.Instrumentation.Timer> timers = new TreeMap<>(instrumentation.getTimers());
         for (Map.Entry<String, OozieClient.Instrumentation.Timer> ent : timers.entrySet()) {
             System.out.println(ent.getKey());
             System.out.println(ent.getValue());
