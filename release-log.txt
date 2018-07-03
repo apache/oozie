@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3297 Retry logic does not handle the exception from BulkJPAExecutor properly (andras.piros)
 OOZIE-2955 [oozie-client] Fix Findbugs warnings (Jan Hentschel, kmarton via andras.piros)
 OOZIE-3109 [log-streaming] Escape HTML-specific characters (dionusos via andras.piros)
 OOZIE-2956 Fix Findbugs warnings related to reliance on default encoding in oozie-core (Jan Hentschel, kmarton via andras.piros)

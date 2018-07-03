@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.apache.oozie.BulkResponseInfo;
@@ -130,7 +131,8 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
 
             List<Object[]> bundleObjs = (List<Object[]>) tmp.getResultList();
             if (bundleObjs.isEmpty()) {
-                throw new JPAExecutorException(ErrorCode.E0603, "No entries found for given bundle(s)");
+                final String message = "No entries found for given bundle(s)";
+                throw new JPAExecutorException(ErrorCode.E0603, message, new NoResultException(message));
             }
 
             List<BundleJobBean> bundleBeans = new ArrayList<BundleJobBean>();
