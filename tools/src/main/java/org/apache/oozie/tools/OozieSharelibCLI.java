@@ -20,12 +20,14 @@ package org.apache.oozie.tools;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -33,19 +35,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 
 public class OozieSharelibCLI {
     public static final String[] HELP_INFO = {
@@ -60,7 +68,6 @@ public class OozieSharelibCLI {
     public static final String CONCURRENCY_OPT = "concurrency";
     public static final String OOZIE_HOME = "oozie.home.dir";
     public static final String SHARE_LIB_PREFIX = "lib_";
-
     private boolean used;
 
     public static void main(String[] args) throws Exception{
@@ -181,7 +188,13 @@ public class OozieSharelibCLI {
             }
 
             if (threadPoolSize > 1) {
-                concurrentCopyFromLocal(fs, threadPoolSize, srcFile, dstPath);
+                long fsLimitsMinBlockSize = fs.getConf()
+                        .getLong(DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_KEY, DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_DEFAULT);
+                long bytesPerChecksum = fs.getConf()
+                        .getLong(DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_KEY, DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_DEFAULT);
+                new ConcurrentCopyFromLocal(threadPoolSize, fsLimitsMinBlockSize, bytesPerChecksum)
+                        .concurrentCopyFromLocal(fs, srcFile, dstPath);
+
             } else {
                 fs.copyFromLocalFile(false, srcPath, dstPath);
             }
@@ -197,13 +210,19 @@ public class OozieSharelibCLI {
             System.err.println(parser.shortHelp());
             return 1;
         }
+        catch (NumberFormatException ex) {
+            logError("Invalid configuration value: ", ex);
+            return 1;
+        }
         catch (Exception ex) {
             logError(ex.getMessage(), ex);
             return 1;
         }
     }
 
-    private void logError(String errorMessage, Throwable ex) {
+
+
+    private static void logError(String errorMessage, Throwable ex) {
         System.err.println();
         System.err.println("Error: " + errorMessage);
         System.err.println();
@@ -220,66 +239,228 @@ public class OozieSharelibCLI {
         return dateFormat.format(date).toString();
     }
 
-    private void concurrentCopyFromLocal(final FileSystem fs, int threadPoolSize,
-            File srcFile, final Path dstPath) throws IOException {
-        List<Future<Void>> futures = Collections.emptyList();
-        ExecutorService threadPool = Executors.newFixedThreadPool(threadPoolSize);
-        try {
-            futures = copyFolderRecursively(fs, threadPool, srcFile, dstPath);
-            System.out.println("Running " + futures.size() + " copy tasks on " + threadPoolSize + " threads");
-        } finally {
+    @VisibleForTesting
+    static final class CopyTaskConfiguration {
+        private final FileSystem fs;
+        private final File srcFile;
+        private final Path dstPath;
+
+        CopyTaskConfiguration(FileSystem fs, File srcFile, Path dstPath) {
+            this.fs = fs;
+            this.srcFile = srcFile;
+            this.dstPath = dstPath;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CopyTaskConfiguration that = (CopyTaskConfiguration) o;
+            if (!srcFile.equals(that.srcFile)) {
+                return false;
+            }
+            return dstPath.equals(that.dstPath);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = srcFile.hashCode();
+            result = 31 * result + dstPath.hashCode();
+            return result;
+        }
+
+    }
+
+    @VisibleForTesting
+    static final class BlockSizeCalculator {
+
+        protected static long getValidBlockSize (long fileLenght, long fsLimitsMinBlockSize, long bytesPerChecksum) {
+            if (fsLimitsMinBlockSize > fileLenght) {
+                return fsLimitsMinBlockSize;
+            }
+            // bytesPerChecksum must divide block size
+            if (fileLenght % bytesPerChecksum == 0) {
+                return fileLenght;
+            }
+            long ratio = fileLenght/bytesPerChecksum;
+            return (ratio + 1) * bytesPerChecksum;
+        }
+    }
+
+    @VisibleForTesting
+    static final class CopyTaskCallable implements Callable<CopyTaskConfiguration> {
+
+        private final static short REPLICATION_FACTOR = 3;
+        private final FileSystem fileSystem;
+        private final File file;
+        private final Path destinationPath;
+        private final Path targetName;
+        private final long blockSize;
+
+        private final Set<CopyTaskConfiguration> failedCopyTasks;
+
+        CopyTaskCallable(CopyTaskConfiguration copyTask, File file, Path trgName, long blockSize,
+                                 Set<CopyTaskConfiguration> failedCopyTasks) {
+            Preconditions.checkNotNull(copyTask);
+            Preconditions.checkNotNull(file);
+            Preconditions.checkNotNull(trgName);
+            Preconditions.checkNotNull(failedCopyTasks);
+            Preconditions.checkNotNull(copyTask.dstPath);
+            Preconditions.checkNotNull(copyTask.fs);
+            this.file = file;
+            this.destinationPath = copyTask.dstPath;
+            this.failedCopyTasks = failedCopyTasks;
+            this.fileSystem = copyTask.fs;
+            this.blockSize = blockSize;
+            this.targetName = trgName;
+        }
+
+        @Override
+        public CopyTaskConfiguration call() throws Exception {
+            CopyTaskConfiguration cp = new CopyTaskConfiguration(fileSystem, file, targetName);
+            failedCopyTasks.add(cp);
+            final Path destinationFilePath = new Path(destinationPath + File.separator +  file.getName());
+            final boolean overwrite = true;
+            final int bufferSize = CommonConfigurationKeysPublic.IO_FILE_BUFFER_SIZE_DEFAULT;
+            try (FSDataOutputStream out = fileSystem
+                    .create(destinationFilePath, overwrite, bufferSize, REPLICATION_FACTOR, blockSize)) {
+                Files.copy(file.toPath(), out);
+            }
+            return cp;
+        }
+    }
+
+    @VisibleForTesting
+    static final class ConcurrentCopyFromLocal {
+
+        private static final int DEFAULT_RETRY_COUNT = 5;
+        private static final int STARTING_RETRY_DELAY_IN_MS = 1000;
+        private int retryCount;
+        private int retryDelayInMs;
+        private long fsLimitsMinBlockSize;
+        private long bytesPerChecksum;
+
+        private final int threadPoolSize;
+        private final ExecutorService threadPool;
+        private final Set<CopyTaskConfiguration> failedCopyTasks = new ConcurrentHashSet<>();
+
+        public ConcurrentCopyFromLocal(int threadPoolSize, long fsLimitsMinBlockSize, long bytesPerChecksum) {
+            Preconditions.checkArgument(threadPoolSize > 0, "Thread Pool size must be greater than 0");
+            Preconditions.checkArgument(fsLimitsMinBlockSize > 0, "Minimun block size must be greater than 0");
+            Preconditions.checkArgument(bytesPerChecksum > 0, "Bytes per checksum must be greater than 0");
+            this.bytesPerChecksum = bytesPerChecksum;
+            this.fsLimitsMinBlockSize = fsLimitsMinBlockSize;
+            this.threadPoolSize = threadPoolSize;
+            this.threadPool = Executors.newFixedThreadPool(threadPoolSize);
+            this.retryCount = DEFAULT_RETRY_COUNT;
+            this.retryDelayInMs = STARTING_RETRY_DELAY_IN_MS;
+        }
+
+        @VisibleForTesting
+        void concurrentCopyFromLocal(FileSystem fs, File srcFile, Path dstPath) throws IOException {
+            List<Future<CopyTaskConfiguration>> futures = Collections.emptyList();
+            CopyTaskConfiguration copyTask = new CopyTaskConfiguration(fs, srcFile, dstPath);
             try {
-                threadPool.shutdown();
+                futures = copyFolderRecursively(copyTask);
+                System.out.println("Running " + futures.size() + " copy tasks on " + threadPoolSize + " threads");
             } finally {
                 checkCopyResults(futures);
+                System.out.println("Copy tasks are done");
+                threadPool.shutdown();
             }
         }
-    }
 
-    private void checkCopyResults(List<Future<Void>> futures) throws IOException {
-        Throwable t = null;
-        for (Future<Void> future : futures) {
-            try {
-                future.get();
-            } catch (CancellationException ce) {
-                t = ce;
-                logError("Copy task was cancelled", ce);
-            } catch (ExecutionException ee) {
-                t = ee.getCause();
-                logError("Copy task failed with exception", t);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        if (t != null) {
-            throw new IOException ("At least one copy task failed with exception", t);
-        }
-    }
-
-    private List<Future<Void>> copyFolderRecursively(final FileSystem fs, final ExecutorService threadPool,
-            File srcFile, final Path dstPath) throws IOException {
-        List<Future<Void>> taskList = new ArrayList<Future<Void>>();
-        File[] files = srcFile.listFiles();
-
-        if (files != null) {
-            for (final File file : files) {
-                final Path trgName = new Path(dstPath, file.getName());
-                if (file.isDirectory()) {
-                    taskList.addAll(copyFolderRecursively(fs, threadPool, file, trgName));
-                } else {
-                    taskList.add(threadPool.submit(new Callable<Void>() {
-                        @Override
-                        public Void call() throws Exception {
-                            fs.copyFromLocalFile(new Path(file.toURI()), trgName);
-                            return null;
-                        }
-                    }));
+        private List<Future<CopyTaskConfiguration>> copyFolderRecursively(final CopyTaskConfiguration copyTask) {
+            List<Future<CopyTaskConfiguration>> taskList = new ArrayList<>();
+            File[] fileList = copyTask.srcFile.listFiles();
+            if (fileList != null) {
+                for (final File file : fileList) {
+                    final Path trgName = new Path(copyTask.dstPath, file.getName());
+                    if (file.isDirectory()) {
+                        taskList.addAll(copyFolderRecursively(
+                                new CopyTaskConfiguration(copyTask.fs, file, trgName)));
+                    } else {
+                        final long blockSize = BlockSizeCalculator
+                                .getValidBlockSize(file.length(), fsLimitsMinBlockSize, bytesPerChecksum);
+                        taskList.add(threadPool
+                                .submit(new CopyTaskCallable(copyTask, file, trgName, blockSize, failedCopyTasks)));
+                    }
                 }
             }
-        } else {
-            System.out.println("WARNING: directory listing of " + srcFile.getAbsolutePath().toString() + " returned null");
+            return taskList;
         }
 
-        return taskList;
+        private void checkCopyResults(final List<Future<CopyTaskConfiguration>> futures)
+                throws IOException {
+            boolean exceptionOccurred = false;
+            for (Future<CopyTaskConfiguration> future : futures) {
+                CopyTaskConfiguration cp;
+                try {
+                    cp = future.get();
+                    if (cp != null) {
+                        failedCopyTasks.remove(cp);
+                    }
+                } catch (CancellationException ce) {
+                    exceptionOccurred = true;
+                    logError("Copy task was cancelled", ce);
+                } catch (ExecutionException ee) {
+                    exceptionOccurred = true;
+                    logError("Copy task failed with exception", ee.getCause());
+                } catch (InterruptedException ie) {
+                    exceptionOccurred = true;
+                    Thread.currentThread().interrupt();
+                }
+            }
+            if (exceptionOccurred) {
+                System.err.println("At least one copy task failed with exception. Retrying failed copy tasks.");
+                retryFailedCopyTasks();
+
+                if (!failedCopyTasks.isEmpty() && retryCount == 0) {
+                    throw new IOException("At least one copy task failed with exception");
+                }
+            }
+        }
+
+        private void retryFailedCopyTasks() throws IOException {
+
+            while (retryCount > 0 && !failedCopyTasks.isEmpty()) {
+                try {
+                    System.err.println("Waiting " + retryDelayInMs + " ms before retrying failed copy tasks.");
+                    Thread.sleep(retryDelayInMs);
+                    retryDelayInMs = retryDelayInMs * 2;
+                } catch (InterruptedException e) {
+                    System.err.println(e.getMessage());
+                }
+
+                for (CopyTaskConfiguration cp : failedCopyTasks) {
+                    System.err.println("Retrying to copy " + cp.srcFile + " to " + cp.dstPath);
+                    try {
+                        copyFromLocalFile(cp);
+                        failedCopyTasks.remove(cp);
+                    }
+                    catch (IOException e) {
+                        System.err.printf("Copying [%s] to [%s] failed with exception: [%s]%n. Proceed to next file.%n"
+                                ,cp.srcFile, cp.dstPath, e.getMessage());
+                    }
+                }
+
+                --retryCount;
+            }
+
+            if (!failedCopyTasks.isEmpty() && retryCount == 0) {
+                throw new IOException("Could not install Oozie ShareLib properly.");
+            }
+        }
+
+        private void copyFromLocalFile(CopyTaskConfiguration cp) throws IOException{
+            final FileSystem fs = cp.fs;
+            fs.delete(cp.dstPath, false);
+            fs.copyFromLocalFile(false, new Path(cp.srcFile.toURI()), cp.dstPath);
+        }
     }
 }
