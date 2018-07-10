@@ -179,11 +179,12 @@ public class ELConstantsFunctions {
      * @return the encoded <code>String</code>
      */
     public static String urlEncode(String input) {
+        final String encoding = "UTF-8";
         try {
-            return (input == null) ? "" : URLEncoder.encode(input, "UTF-8");
+            return (input == null) ? "" : URLEncoder.encode(input, encoding);
         }
         catch (UnsupportedEncodingException uee) {
-            throw new RuntimeException("It should never happen");
+            throw new RuntimeException(encoding + " encoding is not supported", uee);
         }
     }
 

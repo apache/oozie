@@ -78,7 +78,7 @@ public class DagELFunctions {
                                   new XConfiguration(new StringReader(workflow.getProtoActionConf())));
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen", ex);
+            throw new RuntimeException("Failed to read the configuration", ex);
         }
     }
 

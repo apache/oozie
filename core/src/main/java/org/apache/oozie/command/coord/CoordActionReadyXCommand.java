@@ -136,10 +136,8 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                                     DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
                         }
                     }
-                } catch (ParseException e) {
-                    LOG.error("Should not happen", e);
-                } catch (JDOMException e) {
-                    LOG.error("Should not happen", e);
+                } catch (ParseException | JDOMException e) {
+                    LOG.error("Failed to calculate next nominal time", e);
                 }
             }
         }

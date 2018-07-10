@@ -36,7 +36,6 @@ public enum ErrorCode {
     E0022(XLog.OPS, "Configuration file must be a file name [{0}]"),
     E0023(XLog.OPS, "Default configuration file [{0}] not found in classpath"),
     E0024(XLog.OPS, "Oozie configuration directory does not exist [{0}]"),
-    E0025(XLog.OPS, "Configuration service internal error, it should never happen, {0}"),
     E0026(XLog.OPS, "Missing required configuration property [{0}]"),
 
     E0100(XLog.OPS, "Could not initialize service [{0}], {1}"),

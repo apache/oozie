@@ -370,7 +370,7 @@ public class XConfiguration extends Configuration {
             xml = new String(baos.toByteArray(), Charsets.UTF_8);
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+            throw new RuntimeException("Xml writing failed, " + ex.getMessage(), ex);
         }
         if (!prolog) {
             xml = xml.substring(xml.indexOf("<configuration>"));

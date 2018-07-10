@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3208 "It should never happen" error messages should be more specific to root cause (kmarton via andras.piros)
 OOZIE-2791 ShareLib installation may fail on busy Hadoop clusters (asasvari, kmarton via pbacsko, andras.piros)
 OOZIE-3297 Retry logic does not handle the exception from BulkJPAExecutor properly (andras.piros)
 OOZIE-2955 [oozie-client] Fix Findbugs warnings (Jan Hentschel, kmarton via andras.piros)

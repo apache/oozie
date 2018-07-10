@@ -313,7 +313,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
                     protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
                 }
                 catch (IOException ex) {
-                    throw new RuntimeException("It should not happen", ex);
+                    throw new RuntimeException("Failed to construct the proto configuration", ex);
                 }
             }
         }

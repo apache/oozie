@@ -256,18 +256,12 @@ public class ConfigurationService implements Service, Instrumentable {
         }
 
         if (log.isTraceEnabled()) {
-            try {
-                StringWriter writer = new StringWriter();
-                for (Map.Entry<String, String> entry : configuration) {
-                    String value = getValue(configuration, entry.getKey());
-                    writer.write(" " + entry.getKey() + " = " + value + "\n");
-                }
-                writer.close();
-                log.trace("Configuration:\n{0}---", writer.toString());
+            StringWriter writer = new StringWriter();
+            for (Map.Entry<String, String> entry : configuration) {
+                String value = getValue(configuration, entry.getKey());
+                writer.write(" " + entry.getKey() + " = " + value + "\n");
             }
-            catch (IOException ex) {
-                throw new ServiceException(ErrorCode.E0025, ex.getMessage(), ex);
-            }
+            log.trace("Configuration:\n{0}---", writer.toString());
         }
 
         String[] ignoreSysProps = configuration.getStrings(CONF_IGNORE_SYS_PROPS);

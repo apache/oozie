@@ -93,7 +93,7 @@ public class XmlUtils {
             return prettyPrint(document.getRootElement()).toString();
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+            throw new RuntimeException("Xml parsing failed " + ex.getMessage(), ex);
         }
     }
 
@@ -130,7 +130,7 @@ public class XmlUtils {
             return document.getRootElement();
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+            throw new RuntimeException("Xml parsing failed, " + ex.getMessage(), ex);
         }
     }
 

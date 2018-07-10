@@ -125,7 +125,7 @@ public class CallableQueueService implements Service, Instrumentable {
         synchronized (activeCallables) {
             AtomicInteger counter = activeCallables.get(callable.getType());
             if (counter == null) {
-                throw new IllegalStateException("It should not happen");
+                throw new IllegalStateException("Counter value should not be null");
             }
             else {
                 counter.decrementAndGet();
