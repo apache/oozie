@@ -1,36 +1,34 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { fetchWorkflows } from '../actions/oozie/workflows';
+import { readableDuration } from '../utils/time';
+import { getMessage, getPagination, getWorkflows, isFetching } from "./reducer";
 import { Icon, Table, Badge, Button } from 'antd';
 
 class WorkflowCompleted extends React.Component {
-  state = {
-    selectedRows: [],
-    dataSource: []
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      selectedRows: [],
+    };
+  }
 
   onSelectChange = (selectedRows) => {
     this.setState({ selectedRows });
   };
 
-  componentDidMount = () => {
-    var dataSource = [];
-    for (var i = 0; i < 102; i++) {
-      dataSource.push({
-        key: i,
-        completion: 'Fri, 05 Jun 2017 22:30:00',
-        status: Math.random() > 0.4 ? 'SUCCEEDED' : 'KILLED',
-        name: 'Monthly-Calculation-' + i,
-        duration: '1h:30m:25s',
-        submitter: 'peter.brown',
-        id: '00000' + i + '-2192983989178749-oozie-oozi-W',
-        parent: '00000' + i + '-2192983989178749-oozie-oozi-C',
-      });
-    }
+  componentDidMount() {
+    this.props.fetchWorkflows();
+  };
 
-    this.setState({ dataSource: dataSource});
+  handleTableChange = (page) => {
+    this.props.fetchWorkflows(page.current, page.pageSize);
   };
 
   render() {
-    const { selectedRows, dataSource } = this.state;
+    const { selectedRows } = this.state;
+    const { workflows, isFetching, pagination } = this.props;
 
     const rowSelection = {
       selectedRows,
@@ -42,7 +40,7 @@ class WorkflowCompleted extends React.Component {
     const columns = [
       {
         title: 'Completed',
-        dataIndex: 'completion',
+        dataIndex: 'endTime',
         key: 'completion'
       },
       {
@@ -53,18 +51,19 @@ class WorkflowCompleted extends React.Component {
       },
       {
         title: 'Name',
-        dataIndex: 'name',
+        dataIndex: 'appName',
         key: 'name'
       },
       {
         title: 'Submitter',
-        dataIndex: 'submitter',
+        dataIndex: 'user',
         key: 'submitter'
       },
       {
         title: 'Duration',
-        dataIndex: 'duration',
-        key: 'duration'
+        dataIndex: 'endTime',
+        key: 'duration',
+        render: (endTime, wf) => `${readableDuration(Date.parse(endTime) - Date.parse(wf.startTime))}`
       },
       {
         title: 'ID',
@@ -74,18 +73,18 @@ class WorkflowCompleted extends React.Component {
       },
       {
         title: 'Coordinator',
-        dataIndex: 'parent',
+        dataIndex: 'parentId',
         key: 'parent',
         align: 'center',
-        render: (text) => <span><a href={`#coordinators/${text}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
+        render: (parentId) => <span><a href={`#coordinators/${parentId}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
       },
       {
         title: 'Action',
         dataIndex: 'status',
         key: 'action',
         align: 'center',
-        render: (status, row) => <span className="workflow-op">
-          <a href={`#workflows/${row.id}/rerun`}><Icon type="reload" style={{ fontSize: 16, color: '#52c41a' }}/></a>
+        render: (status, wf) => <span className="workflow-op">
+          <a href={`#workflows/${wf.id}/rerun`}><Icon type="reload" style={{ fontSize: 16, color: '#52c41a' }}/></a>
         </span>
       }
     ];
@@ -98,10 +97,22 @@ class WorkflowCompleted extends React.Component {
           </Button.Group>
           <span style={{ marginLeft: 8 }}>{hasSelected ? `Selected ${selectedRows.length} items` : ''}</span>
         </div>
-        <Table dataSource={dataSource} columns={columns} rowSelection={rowSelection} />
+        <Table rowKey={wf => wf.id} dataSource={workflows}
+               pagination={pagination} columns={columns}
+               rowSelection={rowSelection} loading={isFetching} onChange={this.handleTableChange} />
       </div>
     );
   }
 }
 
-export default WorkflowCompleted;
+export default connect(
+  state => ({
+    workflows: getWorkflows(state),
+    message: getMessage(state),
+    isFetching: isFetching(state),
+    pagination: getPagination(state)
+  }),
+  dispatch => ({
+    fetchWorkflows: (current, size) => dispatch(fetchWorkflows(current, size))
+  }),
+)(WorkflowCompleted);

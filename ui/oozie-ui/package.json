@@ -5,9 +5,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "antd": "^3.6.2",
+    "axios": "^0.18.0",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
-    "react-scripts": "1.1.4"
+    "react-redux": "^5.0.7",
+    "react-scripts": "1.1.4",
+    "redux": "^4.0.0",
+    "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
     "license-compatibility-checker": "0.3.1"
