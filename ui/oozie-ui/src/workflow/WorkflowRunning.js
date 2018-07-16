@@ -1,38 +1,42 @@
 import React from 'react';
-import { Icon, Table, Badge, Progress, Divider, Button } from 'antd';
+import { connect } from "react-redux";
+import { fetchRunningWorkflows } from "../actions/oozie/workflows";
+import { getRunningPagination, getRunningWorkflows, isRunningFetching } from "./reducer";
+import { Icon, Table, Badge, Divider, Button } from 'antd';
 
 class WorkflowRunning extends React.Component {
-  state = {
-    collapsed: false,
-    selectedRows: [],
-    dataSource: []
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      collapsed: false,
+      selectedRows: []
+    };
   };
 
   onSelectChange = (selectedRows) => {
     this.setState({ selectedRows });
   };
 
-  componentDidMount = () => {
-    var dataSource = [];
-    for (var i = 0; i < 5; i++) {
-      dataSource.push({
-        key: i,
-        submission: 'Fri, 08 Jun 2018 22:30:00',
-        status: Math.random() > 0.4 ? 'RUNNING' : 'SUSPENDED',
-        name: 'ROI-Calculation-' + i,
-        progress: Math.round(Math.random() * 100),
-        submitter: 'john.white',
-        lastModified: '2h:30m:32s',
-        id: '00000' + i + '-2192983989178749-oozie-oozi-W',
-        parent: '00000' + i + '-2192983989178749-oozie-oozi-C',
-      });
-    }
+  componentDidMount() {
+    const { pagination } = this.props;
 
-    this.setState({ dataSource: dataSource});
+    this.props.fetchWorkflows(pagination.current, pagination.size);
+
+    this.interval = setInterval(() => this.props.fetchWorkflows(pagination.current, pagination.size), 30000);
+  };
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  };
+
+  handleTableChange = (page) => {
+    this.props.fetchWorkflows(page.current, page.pageSize);
   };
 
   render() {
-    const { selectedRows, dataSource } = this.state;
+    const { selectedRows } = this.state;
+    const { workflows, isFetching, pagination } = this.props;
 
     const rowSelection = {
       selectedRows,
@@ -40,41 +44,37 @@ class WorkflowRunning extends React.Component {
     };
 
     const hasSelected = selectedRows.length > 0;
-    const selected = dataSource.filter(a => selectedRows.includes(a.key));
+    const selected = workflows.filter(a => selectedRows.includes(a.id));
     const hasSuspended = selected.filter(a => a.status === "SUSPENDED").length > 0;
     const hasRunning = selected.filter(a => a.status === "RUNNING").length > 0;
 
     const columns = [
       {
         title: 'Submitted',
-        dataIndex: 'submission',
+        dataIndex: 'startTime',
         key: 'submission'
       },
       {
         title: 'Status',
         dataIndex: 'status',
         key: 'status',
+        width: 150,
         render: (text) => <span><Badge status={text === "RUNNING" ? "processing" : "warning"} text={text}/></span>
       },
       {
         title: 'Name',
-        dataIndex: 'name',
+        dataIndex: 'appName',
         key: 'name'
       },
       {
-        title: 'Progress',
-        dataIndex: 'progress',
-        key: 'progress',
-        render: (percent) => <span><Progress size="small" status="active" percent={percent} /></span>
-      },
-      {
-        title: 'Submitter',
-        dataIndex: 'submitter',
-        key: 'submitter'
+        title: 'User',
+        dataIndex: 'user',
+        key: 'user',
+        width: 70,
       },
       {
         title: 'Last Modified',
-        dataIndex: 'lastModified',
+        dataIndex: 'lastModTime',
         key: 'lastModified'
       },
       {
@@ -84,9 +84,10 @@ class WorkflowRunning extends React.Component {
         render: (text) => <span><a href={`#workflows/${text}`}>{text}</a></span>
       },
       {
-        title: 'Coordinator',
-        dataIndex: 'parent',
+        title: 'Parent',
+        dataIndex: 'parentId',
         key: 'parent',
+        width: 80,
         align: 'center',
         render: (text) => <span><a href={`#coordinators/${text}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
       },
@@ -94,6 +95,7 @@ class WorkflowRunning extends React.Component {
         title: 'Action',
         dataIndex: 'status',
         key: 'action',
+        width: 100,
         align: 'center',
         render: (status, row) => <span className="workflow-op">
           <a href={status === "RUNNING" ? `#workflows/${row.id}/suspend` : `#workflows/${row.id}/resume`}>
@@ -116,10 +118,22 @@ class WorkflowRunning extends React.Component {
           </Button.Group>
           <span style={{ marginLeft: 8 }}>{hasSelected ? `Selected ${selectedRows.length} items` : ''}</span>
         </div>
-        <Table dataSource={dataSource} columns={columns} rowSelection={rowSelection} />
+        <Table rowKey={wf => wf.id} dataSource={workflows}
+               pagination={pagination} columns={columns}
+               rowSelection={rowSelection} loading={isFetching}
+               onChange={this.handleTableChange} />
       </div>
     );
   }
 }
 
-export default WorkflowRunning;
+export default connect(
+  state => ({
+    workflows: getRunningWorkflows(state),
+    isFetching: isRunningFetching(state),
+    pagination: getRunningPagination(state)
+  }),
+  dispatch => ({
+    fetchWorkflows: (current, size) => dispatch(fetchRunningWorkflows(current, size))
+  }),
+)(WorkflowRunning);

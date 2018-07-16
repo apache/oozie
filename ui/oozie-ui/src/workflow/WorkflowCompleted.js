@@ -1,9 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { fetchWorkflows } from '../actions/oozie/workflows';
-import { readableDuration } from '../utils/time';
-import { getMessage, getPagination, getWorkflows, isFetching } from "./reducer";
+import { fetchCompletedWorkflows } from '../actions/oozie/workflows';
+import { getCompletedPagination, getCompletedWorkflows, isCompletedFetching } from "./reducer";
 import { Icon, Table, Badge, Button } from 'antd';
+import { readableDuration } from '../utils/time';
 
 class WorkflowCompleted extends React.Component {
   constructor(props) {
@@ -12,7 +12,7 @@ class WorkflowCompleted extends React.Component {
     this.state = {
       selectedRows: [],
     };
-  }
+  };
 
   onSelectChange = (selectedRows) => {
     this.setState({ selectedRows });
@@ -47,6 +47,7 @@ class WorkflowCompleted extends React.Component {
         title: 'Status',
         dataIndex: 'status',
         key: 'status',
+        width: 150,
         render: (text) => <span><Badge status={text === "SUCCEEDED" ? "success" : "error"} text={text}/></span>
       },
       {
@@ -55,9 +56,10 @@ class WorkflowCompleted extends React.Component {
         key: 'name'
       },
       {
-        title: 'Submitter',
+        title: 'User',
         dataIndex: 'user',
-        key: 'submitter'
+        key: 'user',
+        width: 70,
       },
       {
         title: 'Duration',
@@ -72,9 +74,10 @@ class WorkflowCompleted extends React.Component {
         render: (text) => <span><a href={`#workflows/${text}`}>{text}</a></span>
       },
       {
-        title: 'Coordinator',
+        title: 'Parent',
         dataIndex: 'parentId',
         key: 'parent',
+        width: 80,
         align: 'center',
         render: (parentId) => <span><a href={`#coordinators/${parentId}`}><Icon type="folder" style={{ fontSize: 16 }}/></a></span>
       },
@@ -107,12 +110,11 @@ class WorkflowCompleted extends React.Component {
 
 export default connect(
   state => ({
-    workflows: getWorkflows(state),
-    message: getMessage(state),
-    isFetching: isFetching(state),
-    pagination: getPagination(state)
+    workflows: getCompletedWorkflows(state),
+    isFetching: isCompletedFetching(state),
+    pagination: getCompletedPagination(state)
   }),
   dispatch => ({
-    fetchWorkflows: (current, size) => dispatch(fetchWorkflows(current, size))
+    fetchWorkflows: (current, size) => dispatch(fetchCompletedWorkflows(current, size))
   }),
 )(WorkflowCompleted);
