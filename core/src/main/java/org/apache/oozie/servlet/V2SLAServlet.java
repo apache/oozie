@@ -190,8 +190,10 @@ public class V2SLAServlet extends SLAServlet {
             }
 
             List<String> jobIds = new ArrayList<String>();
-            for(SLASummaryBean summaryBean:slaSummaryList){
-                jobIds.add(summaryBean.getId());
+            if (slaSummaryList != null) {
+                for (SLASummaryBean summaryBean : slaSummaryList) {
+                    jobIds.add(summaryBean.getId());
+                }
             }
             List<SLARegistrationBean> SLARegistrationList = SLARegistrationQueryExecutor.getInstance().getList(
                     SLARegQuery.GET_SLA_CONFIGS, jobIds);

@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3309 Runtime error during /v2/sla filtering for bundle (asalamon74 via andras.piros)
 OOZIE-3306 Make it possible to override maven dependency plugin version number (asalamon74 via andras.piros)
 OOZIE-3208 "It should never happen" error messages should be more specific to root cause (kmarton via andras.piros)
 OOZIE-2791 ShareLib installation may fail on busy Hadoop clusters (asasvari, kmarton via pbacsko, andras.piros)

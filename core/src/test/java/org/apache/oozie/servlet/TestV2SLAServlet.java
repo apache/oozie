@@ -183,6 +183,12 @@ public class TestV2SLAServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
+                //test filter nonexistent bundle ID
+                queryParams.put(RestConstants.TIME_ZONE_PARAM, "GMT");
+                queryParams.put(RestConstants.JOBS_FILTER_PARAM, String.format("bundle=%s","xxxx"));
+                array = getSLAJSONResponse(queryParams);
+                assertEquals(0, array.size());
+
                 //test filter bundle ID
                 queryParams.put(RestConstants.TIME_ZONE_PARAM, "GMT");
                 queryParams.put(RestConstants.JOBS_FILTER_PARAM, String.format("bundle=%s",bundleId));
