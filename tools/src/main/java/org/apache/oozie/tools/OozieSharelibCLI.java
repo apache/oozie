@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -37,10 +39,12 @@ import java.util.concurrent.Future;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
@@ -64,10 +68,29 @@ public class OozieSharelibCLI {
     public static final String CREATE_CMD = "create";
     public static final String UPGRADE_CMD = "upgrade";
     public static final String LIB_OPT = "locallib";
+    public static final String EXTRALIBS = "extralib";
     public static final String FS_OPT = "fs";
     public static final String CONCURRENCY_OPT = "concurrency";
     public static final String OOZIE_HOME = "oozie.home.dir";
     public static final String SHARE_LIB_PREFIX = "lib_";
+    public static final String NEW_LINE = System.lineSeparator();
+    public static final String EXTRALIBS_USAGE = "Extra sharelib resources. " +
+            "This option requires a pair of sharelibname and coma-separated list of pathnames" +
+            " in the following format:" + NEW_LINE +
+            "\"sharelib_name=pathname[,pathname...]\"" + NEW_LINE +
+            "Caveats:" + NEW_LINE +
+            "* Each pathname is either a directory or a regular file (compressed files are not extracted prior to " +
+            "the upload operation)." + NEW_LINE +
+            "* Sharelibname shall be specified only once." + NEW_LINE + NEW_LINE +
+            "* Do not upload multiple conflicting library versions for an extra sharelib directory as it may " +
+            "cause runtime issues." + NEW_LINE +
+            "This option can be present multiple times, in case of more than one sharelib" + NEW_LINE +
+            "Example command:" + NEW_LINE + NEW_LINE +
+            "$ oozie-setup.sh sharelib create -fs hdfs://localhost:9000 -locallib oozie-sharelib.tar.gz " +
+            "-extralib share2=dir2,file2 -extralib share3=file3";
+    public static final String EXTRALIBS_PATH_SEPARATOR = ",";
+    public static final String EXTRALIBS_SHARELIB_KEY_VALUE_SEPARATOR = "=";
+
     private boolean used;
 
     public static void main(String[] args) throws Exception{
@@ -86,9 +109,12 @@ public class OozieSharelibCLI {
         options.addOption(sharelib);
         options.addOption(uri);
         options.addOption(concurrency);
+        Option addLibsOption = new Option(EXTRALIBS, true, EXTRALIBS_USAGE);
+        options.addOption(addLibsOption);
         return options;
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "False positive")
     public synchronized int run(String[] args) throws Exception{
         if (used) {
             throw new IllegalStateException("CLI instance already used");
@@ -141,6 +167,12 @@ public class OozieSharelibCLI {
                 srcFile = files.iterator().next();
             }
 
+            Map<String, String> extraLibs = new HashMap<>();
+            if (command.getCommandLine().hasOption(EXTRALIBS)) {
+                String[] param = command.getCommandLine().getOptionValues(EXTRALIBS);
+                extraLibs = getExtraLibs(param);
+            }
+
             File temp = File.createTempFile("oozie", ".dir");
             temp.delete();
             temp.mkdir();
@@ -183,21 +215,9 @@ public class OozieSharelibCLI {
 
             System.out.println("the destination path for sharelib is: " + dstPath);
 
-            if (!srcFile.exists()){
-                throw new IOException(srcPath + " cannot be found");
-            }
-
-            if (threadPoolSize > 1) {
-                long fsLimitsMinBlockSize = fs.getConf()
-                        .getLong(DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_KEY, DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_DEFAULT);
-                long bytesPerChecksum = fs.getConf()
-                        .getLong(DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_KEY, DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_DEFAULT);
-                new ConcurrentCopyFromLocal(threadPoolSize, fsLimitsMinBlockSize, bytesPerChecksum)
-                        .concurrentCopyFromLocal(fs, srcFile, dstPath);
-
-            } else {
-                fs.copyFromLocalFile(false, srcPath, dstPath);
-            }
+            checkIfSourceFilesExist(srcFile);
+            copyToSharelib(threadPoolSize, srcFile, srcPath, dstPath, fs);
+            copyExtraLibs(threadPoolSize, extraLibs, dstPath, fs);
 
             services.destroy();
             FileUtils.deleteDirectory(temp);
@@ -220,6 +240,69 @@ public class OozieSharelibCLI {
         }
     }
 
+    @VisibleForTesting
+    static Map<String,String> getExtraLibs(String[] param) {
+        Map<String, String> extraLibs = new HashMap<>();
+
+        for (String lib : param) {
+            String[] addLibParts = lib.split(EXTRALIBS_SHARELIB_KEY_VALUE_SEPARATOR);
+            if (addLibParts.length != 2) {
+                printExtraSharelibUsage();
+                throw new IllegalArgumentException(String
+                        .format("Argument of extralibs '%s' is in a wrong format. Exiting.", param));
+            }
+            String sharelibName = addLibParts[0];
+            String sharelibPaths = addLibParts[1];
+            if (extraLibs.containsKey(sharelibName)) {
+                printExtraSharelibUsage();
+                throw new IllegalArgumentException(String
+                        .format("Extra sharelib, '%s', has been specified multiple times. " + "Exiting.", param));
+            }
+            extraLibs.put(sharelibName, sharelibPaths);
+        }
+        return extraLibs;
+    }
+
+    private static void printExtraSharelibUsage() {
+        System.err.println(EXTRALIBS_USAGE);
+    }
+
+
+    @VisibleForTesting
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "FilenameUtils is used to filter user input. JDK8+ is used.")
+    void copyExtraLibs(int threadPoolSize, Map<String, String> extraLibs, Path dstPath, FileSystem fs) throws IOException {
+        for (Map.Entry<String, String> sharelib : extraLibs.entrySet()) {
+            Path libDestPath = new Path(dstPath.toString() + Path.SEPARATOR + sharelib.getKey());
+            for (String libPath : sharelib.getValue().split(EXTRALIBS_PATH_SEPARATOR)) {
+                File srcFile = new File(FilenameUtils.getFullPath(libPath) + FilenameUtils.getName(libPath));
+                Path srcPath = new Path(FilenameUtils.getFullPath(libPath) + FilenameUtils.getName(libPath));
+                checkIfSourceFilesExist(srcFile);
+                copyToSharelib(threadPoolSize, srcFile, srcPath, libDestPath, fs);
+            }
+        }
+    }
+
+    @VisibleForTesting
+    protected void copyToSharelib(int threadPoolSize, File srcFile, Path srcPath, Path dstPath, FileSystem fs) throws IOException {
+        if (threadPoolSize > 1) {
+            long fsLimitsMinBlockSize = fs.getConf()
+                    .getLong(DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_KEY, DFSConfigKeys.DFS_NAMENODE_MIN_BLOCK_SIZE_DEFAULT);
+            long bytesPerChecksum = fs.getConf()
+                    .getLong(DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_KEY, DFSConfigKeys.DFS_BYTES_PER_CHECKSUM_DEFAULT);
+            new ConcurrentCopyFromLocal(threadPoolSize, fsLimitsMinBlockSize, bytesPerChecksum)
+                    .concurrentCopyFromLocal(fs, srcFile, dstPath);
+
+        } else {
+            fs.copyFromLocalFile(false, srcPath, dstPath);
+        }
+    }
+
+    @VisibleForTesting
+    protected void checkIfSourceFilesExist(File srcFile) throws IOException {
+        if (!srcFile.exists()){
+            throw new IOException(srcFile + " cannot be found");
+        }
+    }
 
 
     private static void logError(String errorMessage, Throwable ex) {

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class OozieSharelibFileOperations {
@@ -36,15 +37,17 @@ public final class OozieSharelibFileOperations {
     /**
      * generate a number of files equals with fileNr, and save the fileList parameter
      * @param fileNr number of files to be generated
-     * @param fileList a list of the generated files
+     * @return a list of the generated files
      * @throws Exception
      */
-    public static void generateAndWriteFiles(File libDirectory, int fileNr, List<File> fileList) throws IOException {
+    public static List<File> generateAndWriteFiles(File libDirectory, int fileNr) throws IOException {
+        List<File> fileList = new ArrayList<>();
         for (int i=0; i<fileNr; i++) {
             String fileName = generateFileName(i);
             String fileContent = generateFileContent(i);
             fileList.add(writeFile(libDirectory, fileName, fileContent));
         }
+        return fileList;
     }
 
     /**

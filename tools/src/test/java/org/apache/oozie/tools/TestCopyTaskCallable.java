@@ -110,8 +110,7 @@ public class TestCopyTaskCallable extends XTestCase {
     private void performAndCheckCallCopyTask(final long blockSize, final int poolSize, final int testFiles) throws Exception {
         Set<OozieSharelibCLI.CopyTaskConfiguration> failedCopyTasks = new ConcurrentHashSet<>();
 
-        List<File> fileList = new ArrayList<>();
-        OozieSharelibFileOperations.generateAndWriteFiles(libDirectory, testFiles, fileList);
+        List<File> fileList = OozieSharelibFileOperations.generateAndWriteFiles(libDirectory, testFiles);
 
         File srcFile = new File(libDirectory.getParentFile().getAbsolutePath());
 

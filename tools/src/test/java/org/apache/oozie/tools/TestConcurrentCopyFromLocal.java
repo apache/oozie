@@ -100,9 +100,7 @@ public class TestConcurrentCopyFromLocal extends XTestCase {
 
     private void performAndCheckConcurrentCopy(final int testFiles, final int threadPoolSize, final long fsLimitsMinBlockSize,
                                                final long bytesPerChecksum) throws Exception {
-        List<File> fileList = new ArrayList<>();
-
-        OozieSharelibFileOperations.generateAndWriteFiles(libDirectory, testFiles, fileList);
+        List<File> fileList = OozieSharelibFileOperations.generateAndWriteFiles(libDirectory, testFiles);
         File srcFile = new File(libDirectory.getParentFile().getAbsolutePath());
         OozieSharelibCLI.ConcurrentCopyFromLocal concurrentCopy = new OozieSharelibCLI
                 .ConcurrentCopyFromLocal(threadPoolSize, fsLimitsMinBlockSize, bytesPerChecksum);

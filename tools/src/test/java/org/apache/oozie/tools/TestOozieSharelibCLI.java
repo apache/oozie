@@ -19,206 +19,139 @@
 
 package org.apache.oozie.tools;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.ServiceException;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ShareLibService;
-import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.test.XTestCase;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.apache.oozie.tools.OozieSharelibCLI.getExtraLibs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Test OozieSharelibCLI
  */
-public class TestOozieSharelibCLI extends XTestCase {
-    public final String outPath = "outFolder";
-    private final TemporaryFolder tmpFolder = new TemporaryFolder();
-    private File libDirectory;
-    private Services services = null;
-    private Path dstPath = null;
-    private FileSystem fs;
+public class TestOozieSharelibCLI {
+
+    private final static String TEST_SHAERELIBNAME1 = "sharelibName";
+    private final static String TEST_SHAERELIBNAME2 = "sharelibName2";
+    private final static String TEST_EXTRALIBS_PATHS1 = "/path/to/source/,/path/to/some/file";
+    private final static String TEST_EXTRALIBS_PATHS2 = "hdfs://my/jar.jar#myjar.jar";
+
     private LauncherSecurityManager launcherSecurityManager;
-    @Override
-    protected void setUp() throws Exception {
+
+    @Before
+    public void setUp() {
         launcherSecurityManager = new LauncherSecurityManager();
         launcherSecurityManager.enable();
-        tmpFolder.create();
-        libDirectory = tmpFolder.newFolder("lib");
-        super.setUp(false);
-
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() {
         launcherSecurityManager.disable();
-        if (services != null) {
-            services.destroy();
-        }
-        super.tearDown();
     }
 
-    /**
-     * Test help command
-     */
-    public void testHelp() throws Exception {
+    @Test
+    public void testHelpCommand() throws Exception {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldPrintStream = System.out;
         System.setOut(new PrintStream(data));
         try {
-            String[] argsHelp = { "help" };
-            assertEquals(0, execOozieSharelibCLICommands(argsHelp));
+            String[] argsHelp = {"help"};
+            assertEquals("Exit code mismatch",0, execOozieSharelibCLICommands(argsHelp));
             String helpMessage = data.toString();
-            assertTrue(helpMessage.contains(
+            assertTrue("Missing create <OPTIONS> description from help message", helpMessage.contains(
                     "oozie-setup.sh create <OPTIONS> : create a new timestamped version of oozie sharelib"));
-            assertTrue(helpMessage.contains(
-                    "oozie-setup.sh upgrade <OPTIONS> : [deprecated][use command \"create\" "
-                            + "to create new version]   upgrade oozie sharelib "));
-            assertTrue(helpMessage.contains(" oozie-setup.sh help"));
-            assertTrue(helpMessage.contains(
-                    "-concurrency <arg>   Number of threads to be used for copy operations."));
-        }
-        finally {
+            assertTrue("Missing  upgrade <OPTIONS> description from help message",
+                    helpMessage.contains("oozie-setup.sh upgrade <OPTIONS> : [deprecated][use command \"create\" "
+                    + "to create new version]   upgrade oozie sharelib "));
+            assertTrue("Help message mismatch", helpMessage.contains(" oozie-setup.sh help"));
+            assertTrue("Missing -concurrency from help message",
+                    helpMessage.contains("-concurrency <arg>   Number of threads to be used for copy operations."));
+        } finally {
             System.setOut(oldPrintStream);
         }
-
     }
 
-    /**
-     * test copy libraries
-     */
-    public void testOozieSharelibCLICreate() throws Exception {
-
-        OozieSharelibFileOperations.writeFile(libDirectory, "file1", "test File");
-        OozieSharelibFileOperations.writeFile(libDirectory, "file2", "test File2");
-
-        String[] argsCreate = { "create", "-fs", outPath, "-locallib", libDirectory.getParentFile().getAbsolutePath() };
-        assertEquals(0, execOozieSharelibCLICommands(argsCreate));
-
-        FileSystem fs = getTargetFileSysyem();
-        ShareLibService sharelibService = getServices().get(ShareLibService.class);
-
-        // test files in new folder
-        assertEquals(9, fs.getFileStatus(new Path(sharelibService.getLatestLibPath(getDistPath(),
-                ShareLibService.SHARE_LIB_PREFIX), "file1")).getLen());
-        assertEquals(10, fs.getFileStatus(new Path(sharelibService.getLatestLibPath(getDistPath(),
-                ShareLibService.SHARE_LIB_PREFIX), "file2")).getLen());
-
-    }
-
-    /**
-     * test parallel copy libraries
-     */
-    public void testOozieSharelibCLICreateConcurrent() throws Exception {
-
-        final int testFiles = 7;
-        final int concurrency = 5;
-
-        for (int i = 0; i < testFiles; i++) {
-            OozieSharelibFileOperations.writeFile(libDirectory, OozieSharelibFileOperations.generateFileName(i),
-                    OozieSharelibFileOperations.generateFileContent(i));
-        }
-
-        String[] argsCreate = {"create", "-fs", outPath, "-locallib", libDirectory.getParentFile().getAbsolutePath(),
-            "-concurrency", String.valueOf(concurrency)};
-        assertEquals(0, execOozieSharelibCLICommands(argsCreate));
-
-        getTargetFileSysyem();
-        ShareLibService sharelibService = getServices().get(ShareLibService.class);
-        Path latestLibPath = sharelibService.getLatestLibPath(getDistPath(),
-                ShareLibService.SHARE_LIB_PREFIX);
-
-        // test files in new folder
-
-        for (int i = 0; i < testFiles; i++) {
-            String fileName = OozieSharelibFileOperations.generateFileName(i);
-            String expectedFileContent = OozieSharelibFileOperations.generateFileContent(i);
-            InputStream in = null;
-            try {
-                in = getTargetFileSysyem().open(new Path(latestLibPath, fileName));
-                String actualFileContent = IOUtils.toString(in);
-                assertEquals(fileName, expectedFileContent, actualFileContent);
-            } finally {
-                IOUtils.closeQuietly(in);
-            }
-        }
-
-    }
-
-    /**
-     * test fake command
-     */
+    @Test
     public void testFakeCommand() throws Exception {
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldPrintStream = System.err;
         System.setErr(new PrintStream(data));
         try {
-            String[] argsFake = { "fakeCommand" };
-            assertEquals(1, execOozieSharelibCLICommands(argsFake));
-            assertTrue(data.toString().contains("Invalid sub-command: invalid sub-command [fakeCommand]"));
-            assertTrue(data.toString().contains("use 'help [sub-command]' for help details"));
-        }
-        finally {
+            String[] argsFake = {"fakeCommand"};
+            assertEquals("Exit code mismatch", 1, execOozieSharelibCLICommands(argsFake));
+            assertTrue("Error message missing",
+                    data.toString().contains("Invalid sub-command: invalid sub-command [fakeCommand]"));
+            assertTrue("Help message missing", data.toString().contains("use 'help [sub-command]' for help details"));
+        } finally {
             System.setErr(oldPrintStream);
         }
-
     }
 
-    private FileSystem getTargetFileSysyem() throws Exception {
-        if (fs == null) {
-            HadoopAccessorService has = getServices().get(HadoopAccessorService.class);
-            URI uri = new Path(outPath).toUri();
-            Configuration fsConf = has.createConfiguration(uri.getAuthority());
-            fs = has.createFileSystem(System.getProperty("user.name"), uri, fsConf);
-        }
-        return fs;
+    @Test
+    public void testCopyingExtraSharelibs() throws IOException {
+        OozieSharelibCLI oozieSharelibCLI = spy(new OozieSharelibCLI() {
+            @Override
+            protected void checkIfSourceFilesExist(File srcFile) { }
 
-    }
+            @Override
+            protected void copyToSharelib(int threadPoolSize, File srcFile, Path srcPath, Path dstPath, FileSystem fs) {
+                String dstStr = dstPath.toString();
+                String actualSharelibName = dstStr.substring(dstStr.lastIndexOf(Path.SEPARATOR) + 1);
+                Assert.assertTrue("Expected sharelib name missing",
+                        Arrays.asList(TEST_SHAERELIBNAME1, TEST_SHAERELIBNAME2).contains(actualSharelibName));
 
-    private Services getServices() throws ServiceException {
-        if (services == null) {
-            services = new Services();
-            services.get(ConfigurationService.class).getConf()
-                    .set(Services.CONF_SERVICE_CLASSES,"org.apache.oozie.service.LiteWorkflowAppService,"
-                            + "org.apache.oozie.service.SchedulerService,"
-                            + "org.apache.oozie.service.HadoopAccessorService,"
-                            + "org.apache.oozie.service.ShareLibService");
-            services.init();
-        }
-        return services;
-    }
+                List<File> expectedTestFiles = new ArrayList<>();
+                for (String s : Arrays.asList(TEST_EXTRALIBS_PATHS1.split(","))) {
+                    expectedTestFiles.add(new File(s));
+                }
+                for (String s : Arrays.asList(TEST_EXTRALIBS_PATHS2.split(","))) {
+                    expectedTestFiles.add(new File(s));
+                }
+                Assert.assertTrue("Expected file missing", expectedTestFiles.contains(srcFile));
+            }
+        });
 
-    private Path getDistPath() throws Exception {
-        if (dstPath == null) {
-            WorkflowAppService lwas = getServices().get(WorkflowAppService.class);
-            dstPath = lwas.getSystemLibPath();
-        }
-        return dstPath;
+        final FileSystem fs = mock(FileSystem.class);
+        final Path dst = new Path("/share/lib");
+        String extraLibOption1 = TEST_SHAERELIBNAME1 + "=" + TEST_EXTRALIBS_PATHS1;
+        String extraLibOption2 = TEST_SHAERELIBNAME2 + "=" + TEST_EXTRALIBS_PATHS2;
+        Map<String, String> addLibs = getExtraLibs(new String[] {extraLibOption1, extraLibOption2});
+        oozieSharelibCLI.copyExtraLibs(1, addLibs, dst, fs);
+        verify(oozieSharelibCLI, times(1))
+                .copyExtraLibs(anyInt(), anyMap(), any(Path.class), any(FileSystem.class));
     }
 
     private int execOozieSharelibCLICommands(String[] args) throws Exception {
         try {
             OozieSharelibCLI.main(args);
-        }
-        catch (SecurityException ex) {
+        } catch (SecurityException ex) {
             if (launcherSecurityManager.getExitInvoked()) {
                 System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
                 System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
                 return launcherSecurityManager.getExitCode();
-            }
-            else {
+            } else {
                 throw ex;
             }
         }
