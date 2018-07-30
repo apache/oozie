@@ -326,8 +326,8 @@ public class OozieCLI {
         Option debug = new Option(DEBUG_OPTION, false, "Use debug mode to see debugging statements on stdout");
         Option rerun = new Option(RERUN_OPTION, true,
                 "rerun a job  (coordinator requires -action or -date, bundle requires -coordinator or -date)");
-        Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.3.2) or coordinator (since 2.0) job without"
-                + " actually executing it");
+        Option dryrun = new Option(DRYRUN_OPTION, false, "Dryrun a workflow (since 3.3.2), a coordinator (since 2.0) "
+                + " or a bundle (since 5.1) job without actually executing it");
         Option update = new Option(UPDATE_OPTION, true, "Update coord definition and properties");
         Option showdiff = new Option(SHOWDIFF_OPTION, true,
                 "Show diff of the new coord definition and properties with the existing one (default true)");
@@ -1020,7 +1020,14 @@ public class OozieCLI {
                 String dryrunStr = wc.dryrun(getConfiguration(wc, commandLine));
                 if (dryrunStr.equals("OK")) {  // workflow
                     System.out.println("OK");
-                } else {                        // coordinator
+                }
+                else if (dryrunStr.contains("<bundle-app")) {
+                    // bundle
+                    System.out.println("***Bundle job after parsing: ***");
+                    System.out.println(dryrunStr);
+                }
+                else {
+                    // coordinator
                     String[] dryrunStrs = dryrunStr.split("action for new instance");
                     int arraysize = dryrunStrs.length;
                     System.out.println("***coordJob after parsing: ***");

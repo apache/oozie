@@ -143,14 +143,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             LogUtils.setLogInfo(bundleBean);
 
             if (dryrun) {
-                Date startTime = bundleBean.getStartTime();
-                long startTimeMilli = startTime.getTime();
-                long endTimeMilli = startTimeMilli + (3600 * 1000);
-                Date jobEndTime = bundleBean.getEndTime();
-                Date endTime = new Date(endTimeMilli);
-                if (endTime.compareTo(jobEndTime) > 0) {
-                    endTime = jobEndTime;
-                }
                 jobId = bundleBean.getId();
                 LOG.info("[" + jobId + "]: Update status to PREP");
                 bundleBean.setStatus(Job.Status.PREP);

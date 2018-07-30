@@ -25,14 +25,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
@@ -371,9 +369,6 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
         jobConf.set("coordName2", "coord2");
         jobConf.set("isEnabled", "true");
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
-        final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
-        bundleBean.setStartTime(new Date());
-        bundleBean.setEndTime(new Date());
         final String jobId = command.call();
         sleep(2000);
         new BundleStartXCommand(jobId).call();

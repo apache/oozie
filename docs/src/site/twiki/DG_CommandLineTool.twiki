@@ -53,8 +53,8 @@ oozie job <OPTIONS>           : job operations
           -diff <arg>           Show diff of the new coord definition and properties with the
                                 existing one (default true)
           -doas <arg>           doAs user, impersonates as the specified user
-          -dryrun               Dryrun a workflow (since 3.3.2) or coordinator (since 2.0)
-                                job without actually executing it
+          -dryrun               Dryrun a coordinator (since 2.0), a workflow (since 3.3.2) or a bundle (since 5.1)
+                                without actually executing it.
           -failed               re-runs the failed workflow actions of the coordinator actions (requires -rerun)
           -filter <arg>         <key><comparator><value>[;<key><comparator><value>]*
                                 (All Coordinator actions satisfying the filters will be retrieved).
@@ -889,6 +889,55 @@ specified path must be an HDFS path.
 
 If the workflow is accepted (i.e. Oozie is able to successfully read and parse it), it will return ="OK"=; otherwise, it will return
 an error message describing why it was rejected.
+
+---+++ Dryrun of Bundle Job
+
+* This feature is only supported in Oozie 5.1 or later.
+
+Example:
+
+<verbatim>
+
+$ oozie job -oozie http://localhost:11000/oozie -dryrun -config job.properties
+***Bundle job after parsing: ***
+<bundle-app xmlns="uri:oozie:bundle:0.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="My Bundle">
+  <parameters>
+    <property>
+      <name>oozie.use.system.libpath</name>
+      <value>true</value>
+    </property>
+  </parameters>
+  <controls>
+    <kick-off-time>2017-02-14T00:13Z</kick-off-time>
+  </controls>
+  <coordinator name="My Coordinator-0">
+    <app-path>hdfs://localhost:8020/user/hue/oozie/deployments/_admin_-oozie-24-1487060026.39</app-path>
+    <configuration>
+      <property>
+        <name>wf_application_path</name>
+        <value>hdfs://localhost:8020/user/hue/oozie/workspaces/hue-oozie-1486786607.01</value>
+      </property>
+      <property>
+        <name>start_date</name>
+        <value>2017-02-14T08:12Z</value>
+      </property>
+      <property>
+        <name>end_date</name>
+        <value>2017-02-21T08:12Z</value>
+      </property>
+    </configuration>
+  </coordinator>
+</bundle-app>
+
+</verbatim>
+
+The =dryrun= option tests running a bundle job with given job properties and does not create the job.
+
+The parameters for the job must be provided in a file, either a Java Properties file (.properties) or a Hadoop XML
+Configuration file (.xml). This file must be specified with the <code>-config</code> option.
+
+If the bundle job is accepted (i.e. Oozie is able to successfully read and parse it), it will return the parsed bundle job in xml;
+otherwise, it will return an error message describing why it was rejected.
 
 ---+++ Updating coordinator definition and properties
 Existing coordinator definition will be replaced by new definition. The refreshed coordinator would keep the same coordinator ID, state, and coordinator actions.

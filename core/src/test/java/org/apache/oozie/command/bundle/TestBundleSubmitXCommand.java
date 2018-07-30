@@ -82,17 +82,14 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         jobConf.set(OozieClient.BUNDLE_APP_PATH, appPath.toString());
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(true, jobConf);
-        BundleJobBean bundleBean = (BundleJobBean) command.getJob();
-        bundleBean.setStartTime(new Date());
-        bundleBean.setEndTime(new Date());
         command.call();
+        assertEquals(Job.Status.PREP, command.getJob().getStatus());
 
         // result includes bundle-submit-job.xml file instead of jobId since this is a dryRun mode
         String result = command.submit();
         // bundle-submit-job.xml contains the Apache license but this result should not contain the comment block
         assertTrue("submit result should not contain <!-- ", !result.contains("<!--"));
         assertTrue("submit result should not contain --> ", !result.contains("-->"));
-
     }
 
     public void testCoordJobNameParameterization() throws Exception {
@@ -102,9 +99,6 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         jobConf.set("coord1.starttime", "2009-02-01T00:00Z");
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
-        final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
-        bundleBean.setStartTime(new Date());
-        bundleBean.setEndTime(new Date());
         final String jobId = command.call();
         sleep(2000);
         new BundleStartXCommand(jobId).call();
@@ -129,9 +123,6 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         jobConf.set("coordName2", "coord");
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(true, jobConf);
-        BundleJobBean bundleBean = (BundleJobBean) command.getJob();
-        bundleBean.setStartTime(new Date());
-        bundleBean.setEndTime(new Date());
         try {
             command.call();
         }
@@ -148,9 +139,6 @@ public class TestBundleSubmitXCommand extends XDataTestCase {
         jobConf.set("coord1.starttime", "2009-02-01T00:00Z");
 
         BundleSubmitXCommand command = new BundleSubmitXCommand(jobConf);
-        final BundleJobBean bundleBean = (BundleJobBean) command.getJob();
-        bundleBean.setStartTime(new Date());
-        bundleBean.setEndTime(new Date());
         final String jobId = command.call();
         sleep(2000);
         new BundleStartXCommand(jobId).call();
