@@ -2060,7 +2060,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-        <name>ooozie.action.ssh.check.retries.max</name>
+        <name>oozie.action.ssh.check.retries.max</name>
         <value>3</value>
         <description>
             Maximal retry count for ssh action status check
