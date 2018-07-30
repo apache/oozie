@@ -148,6 +148,11 @@
             <artifactId>hadoop-client</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>apache-jsp</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
