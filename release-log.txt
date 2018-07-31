@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2942 [examples] Fix Findbugs warnings (Jan Hentschel, kmarton via andras.piros)
 OOZIE-2718 Improve -dryrun for bundles (zhengxb2005, asalamon74 via andras.piros)
 OOZIE-3156 amend Retry SSH action check when cannot connect to remote host (txsing, matijhs via andras.piros)
 OOZIE-3303 Oozie UI does not work after Jetty 9.3 upgrade (asalamon74 via gezapeti)

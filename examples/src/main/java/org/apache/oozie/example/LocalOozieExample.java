@@ -69,7 +69,9 @@ public class LocalOozieExample {
             conf.setProperty(OozieClient.APP_PATH, new Path(appUri, "workflow.xml").toString());
             // load additional workflow job parameters from properties file
             if (propertiesFile != null) {
-                conf.load(new FileInputStream(propertiesFile));
+                try (FileInputStream properties = new FileInputStream(propertiesFile)) {
+                    conf.load(properties);
+                }
             }
 
             // submit and start the workflow job
@@ -112,5 +114,4 @@ public class LocalOozieExample {
         }
         System.out.println();
     }
-
 }
