@@ -87,7 +87,12 @@ public class SLASummaryGetForFilterJPAExecutor implements JPAExecutor<List<SLASu
             queryParams.put("parentId", filter.getParentId());
         }
         if (filter.getBundleId() != null || filter.getBundleName() != null) {
-            firstCondition = false;
+            if (firstCondition) {
+                firstCondition = false;
+            }
+            else {
+                sb.append(" AND ");
+            }
             Query bq;
             List<Object> returnList;
             try {

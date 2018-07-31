@@ -204,6 +204,23 @@ public class TestV2SLAServlet extends DagServletTestCase {
                     }
                 }
 
+                //test filter id + bundle ID
+                queryParams.put(RestConstants.TIME_ZONE_PARAM, "GMT");
+                queryParams.put(RestConstants.JOBS_FILTER_PARAM,
+                        String.format("id=%s;bundle=%s", cjBean2.getId() + "@1", bundleId));
+                array = getSLAJSONResponse(queryParams);
+                assertEquals("sla filter result size for id + bundleId", 1, array.size());
+                for (int i=0; i < array.size(); i++) {
+                    JSONObject json = (JSONObject) array.get(i);
+                    String id = (String)json.get(JsonTags.SLA_SUMMARY_ID);
+                    if (id.equals(cjBean1.getId() + "@1")) {
+                        assertEquals("id + bundleId filter summary start delay", -2L, json.get(JsonTags.SLA_SUMMARY_START_DELAY));
+                        assertEquals("id + bundleId filter summary duration delay", 0L,
+                                json.get(JsonTags.SLA_SUMMARY_DURATION_DELAY));
+                        assertEquals("id + bundleId filter summary end delay", -1L, json.get(JsonTags.SLA_SUMMARY_END_DELAY));
+                    }
+                }
+
                 //test filter bundle Name
                 queryParams.clear();
                 queryParams.put(RestConstants.TIME_ZONE_PARAM, "GMT");
