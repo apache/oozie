@@ -1777,7 +1777,7 @@ public class JavaActionExecutor extends ActionExecutor {
         try {
             Element actionXml = XmlUtils.parseXml(action.getConf());
             final Configuration jobConf = createBaseHadoopConf(context, actionXml);
-            String launcherTag = LauncherHelper.getActionYarnTag(jobConf, context.getWorkflow().getParentId(), action);
+            String launcherTag = getActionYarnTag(context, action);
             jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
             yarnClient = createYarnClient(context, jobConf);
             if(action.getExternalId() != null) {
@@ -1826,6 +1826,10 @@ public class JavaActionExecutor extends ActionExecutor {
                 throw convertException(ex);
             }
         }
+    }
+
+    private String getActionYarnTag(Context context, WorkflowAction action) {
+        return LauncherHelper.getActionYarnTag(context.getProtoActionConf(), context.getWorkflow().getParentId(), action);
     }
 
     private static Set<String> FINAL_STATUS = new HashSet<String>();

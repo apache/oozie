@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3193 Applications are not killed when submitted via subworkflow (kmarton via gezapeti, andras.piros)
 OOZIE-3310 SQL error during /v2/sla filtering (asalamon74 via andras.piros)
 OOZIE-2942 [examples] Fix Findbugs warnings (Jan Hentschel, kmarton via andras.piros)
 OOZIE-2718 Improve -dryrun for bundles (zhengxb2005, asalamon74 via andras.piros)
