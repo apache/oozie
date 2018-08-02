@@ -25,7 +25,7 @@
 
    <property>
       <name>mapreduce.input.fileinputformat.split.maxsize</name>
-      <value>256000000L</value>
+      <value>256000000</value>
    </property>
    <property>
       <name>mapreduce.input.fileinputformat.input.dir.recursive</name>
