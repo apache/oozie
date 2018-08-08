@@ -709,16 +709,19 @@ public class Instrumentation {
     public String toString() {
         String E = System.getProperty("line.separator");
         StringBuilder sb = new StringBuilder(4096);
-        for (String element : all.keySet()) {
-            sb.append(element).append(':').append(E);
-            List<String> groups = new ArrayList<String>(all.get(element).keySet());
+
+        for (Map.Entry<String, Map<String, Map<String, Object>>> entry : all.entrySet()) {
+            String allKey = entry.getKey();
+            Map<String, Map<String, Object>> allValue = entry.getValue();
+            sb.append(allKey).append(':').append(E);
+            List<String> groups = new ArrayList<>(allValue.keySet());
             Collections.sort(groups);
             for (String group : groups) {
                 sb.append("  ").append(group).append(':').append(E);
-                List<String> names = new ArrayList<String>(all.get(element).get(group).keySet());
+                List<String> names = new ArrayList<>(allValue.get(group).keySet());
                 Collections.sort(names);
                 for (String name : names) {
-                    sb.append("    ").append(name).append(": ").append(((Element) all.get(element).
+                    sb.append("    ").append(name).append(": ").append(((Element)allValue.
                             get(group).get(name)).getValue()).append(E);
                 }
             }

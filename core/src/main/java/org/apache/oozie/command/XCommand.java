@@ -79,7 +79,9 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
 
-    protected static EventHandlerService eventService;
+    protected static EventHandlerService getEventService() {
+        return Services.get().get(EventHandlerService.class);
+    }
 
     /**
      * Create a command.
@@ -95,7 +97,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.key = name + "_" + UUID.randomUUID();
         createdTime = System.currentTimeMillis();
         instrumentation = Services.get().get(InstrumentationService.class).get();
-        eventService = Services.get().get(EventHandlerService.class);
     }
 
     /**

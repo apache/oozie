@@ -66,12 +66,12 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
     }
 
     protected static void generateEvent(WorkflowJobBean wfJob, String errorCode, String errorMsg) {
-        if (eventService.isSupportedApptype(AppType.WORKFLOW_JOB.name())) {
+        if (getEventService().isSupportedApptype(AppType.WORKFLOW_JOB.name())) {
             WorkflowJobEvent event = new WorkflowJobEvent(wfJob.getId(), wfJob.getParentId(), wfJob.getStatus(),
                     wfJob.getUser(), wfJob.getAppName(), wfJob.getStartTime(), wfJob.getEndTime());
             event.setErrorCode(errorCode);
             event.setErrorMessage(errorMsg);
-            eventService.queueEvent(event);
+            getEventService().queueEvent(event);
         }
     }
 
@@ -80,12 +80,12 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
     }
 
     protected void generateEvent(WorkflowActionBean wfAction, String wfUser) {
-        if (eventService.isSupportedApptype(AppType.WORKFLOW_ACTION.name())) {
+        if (getEventService().isSupportedApptype(AppType.WORKFLOW_ACTION.name())) {
             WorkflowActionEvent event = new WorkflowActionEvent(wfAction.getId(), wfAction.getJobId(),
                     wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
             event.setErrorCode(wfAction.getErrorCode());
             event.setErrorMessage(wfAction.getErrorMessage());
-            eventService.queueEvent(event);
+            getEventService().queueEvent(event);
         }
     }
 

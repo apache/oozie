@@ -18,6 +18,7 @@
 
 package org.apache.oozie.fluentjob.api;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
@@ -40,6 +41,8 @@ import java.util.List;
  * <p>
  * Applying memory constraints, the width of the resulting {@code .png} is limited to {@link #PNG_WIDTH}.
  */
+@SuppressFBWarnings(value = {"WEAK_FILENAMEUTILS"},
+        justification = "Directory name is private static final")
 public class GraphVisualization {
     private static final String PARENT_FOLDER_NAME = "target/graphviz";
     private static final int PNG_WIDTH = 1024;

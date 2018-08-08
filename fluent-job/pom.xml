@@ -31,6 +31,14 @@
     <name>Apache Oozie Fluent Job</name>
     <packaging>pom</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <modules>
         <module>fluent-job-api</module>
         <module>fluent-job-client</module>

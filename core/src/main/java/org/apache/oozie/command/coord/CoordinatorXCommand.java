@@ -57,7 +57,7 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
     }
 
     public static void generateEvent(CoordinatorActionBean coordAction, String user, String appName, Date startTime) {
-        if (eventService.isSupportedApptype(AppType.COORDINATOR_ACTION.name())) {
+        if (getEventService().isSupportedApptype(AppType.COORDINATOR_ACTION.name())) {
             String missDep = coordAction.getMissingDependencies();
             if (missDep != null && missDep.length() > 0) {
                 missDep = missDep.split(CoordELFunctions.INSTANCE_SEPARATOR)[0];
@@ -73,16 +73,16 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
                     deps);
             event.setErrorCode(coordAction.getErrorCode());
             event.setErrorMessage(coordAction.getErrorMessage());
-            eventService.queueEvent(event);
+            getEventService().queueEvent(event);
         }
     }
 
     protected void generateEvent(CoordinatorJobBean coordJob) {
-        if (eventService.isSupportedApptype(AppType.COORDINATOR_JOB.name())) {
+        if (getEventService().isSupportedApptype(AppType.COORDINATOR_JOB.name())) {
             CoordinatorJobEvent event = new CoordinatorJobEvent(coordJob.getId(), coordJob.getBundleId(),
                     coordJob.getStatus(), coordJob.getUser(), coordJob.getAppName(), coordJob.getStartTime(),
                     coordJob.getEndTime());
-            eventService.queueEvent(event);
+            getEventService().queueEvent(event);
         }
     }
 
