@@ -31,6 +31,10 @@
             <directory>${basedir}/src/main/apps</directory>
             <outputDirectory>/examples/apps</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../sharelib/spark/src/main/resources</directory>
+            <outputDirectory>/examples/apps/pyspark/lib</outputDirectory>
+        </fileSet>
     </fileSets>
 
     <files>
