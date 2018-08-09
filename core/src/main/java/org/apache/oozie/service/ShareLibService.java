@@ -85,8 +85,6 @@ public class ShareLibService implements Service, Instrumentable {
 
     public static final String SHARE_LIB_PREFIX = "lib_";
 
-    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-
     private Services services;
 
     private Map<String, List<Path>> shareLibMap = new HashMap<String, List<Path>>();
@@ -118,6 +116,14 @@ public class ShareLibService implements Service, Instrumentable {
     FileSystem localFs;
 
     final long retentionTime = 1000L * 60 * 60 * 24 * ConfigurationService.getInt(LAUNCHERJAR_LIB_RETENTION);
+
+    @VisibleForTesting
+    protected static final ThreadLocal<SimpleDateFormat> dt = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat("yyyyMMddHHmmss");
+        }
+    };
 
     @Override
     public void init(Services services) throws ServiceException {
@@ -519,7 +525,7 @@ public class ShareLibService implements Service, Instrumentable {
                     String time = name.substring(prefix.length());
                     Date d = null;
                     try {
-                        d = dateFormat.parse(time);
+                        d = dt.get().parse(time);
                     }
                     catch (ParseException e) {
                         return false;
@@ -707,7 +713,7 @@ public class ShareLibService implements Service, Instrumentable {
      * @return the launcherlib path
      */
     private Path getLauncherlibPath() {
-        String formattedDate = dateFormat.format(Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime());
+        String formattedDate = dt.get().format(Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime());
         Path tmpLauncherLibPath = new Path(services.get(WorkflowAppService.class).getSystemLibPath(), LAUNCHER_LIB_PREFIX
                 + formattedDate);
         return tmpLauncherLibPath;
@@ -733,11 +739,11 @@ public class ShareLibService implements Service, Instrumentable {
 
         FileStatus[] files = fs.listStatus(rootDir, directoryFilter);
         for (FileStatus file : files) {
-            String name = file.getPath().getName().toString();
+            String name = file.getPath().getName();
             String time = name.substring(prefix.length());
             Date d = null;
             try {
-                d = dateFormat.parse(time);
+                d = dt.get().parse(time);
             }
             catch (ParseException e) {
                 continue;

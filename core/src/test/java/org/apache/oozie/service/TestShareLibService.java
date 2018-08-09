@@ -24,21 +24,33 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
@@ -53,9 +65,10 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
+import org.mockito.Mockito;
 
 public class TestShareLibService extends XFsTestCase {
     private static final String HDFS_SCHEME_PREFIX = "hdfs";
@@ -210,7 +223,7 @@ public class TestShareLibService extends XFsTestCase {
 
         Path basePath = new Path(getOozieConfig()
                 .get(WorkflowAppService.SYSTEM_LIB_PATH));
-        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dateFormat.format(time));
+        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dt.get().format(time));
         fs.mkdirs(libpath);
 
         Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
@@ -381,7 +394,7 @@ public class TestShareLibService extends XFsTestCase {
 
         // Use timedstamped directory if available
         Date time = new Date(System.currentTimeMillis());
-        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dateFormat.format(time));
+        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dt.get().format(time));
         fs.mkdirs(libpath);
 
         Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
@@ -483,7 +496,7 @@ public class TestShareLibService extends XFsTestCase {
         Path basePath = new Path(getOozieConfig()
                 .get(WorkflowAppService.SYSTEM_LIB_PATH));
         Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX
-                + ShareLibService.dateFormat.format(time));
+                + ShareLibService.dt.get().format(time));
         fs.mkdirs(libpath);
 
         Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
@@ -545,7 +558,7 @@ public class TestShareLibService extends XFsTestCase {
         Path basePath = new Path(getOozieConfig()
                 .get(WorkflowAppService.SYSTEM_LIB_PATH));
         Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX
-                + ShareLibService.dateFormat.format(time));
+                + ShareLibService.dt.get().format(time));
         fs.mkdirs(libpath);
         Path ooziePath = new Path(libpath.toString() + Path.SEPARATOR + "oozie");
         fs.mkdirs(ooziePath);
@@ -630,7 +643,7 @@ public class TestShareLibService extends XFsTestCase {
 
         // Use timedstamped directory if available
         Date time = new Date(System.currentTimeMillis());
-        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dateFormat.format(time));
+        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dt.get().format(time));
 
         Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
         createDirs(fs, pigPath, new Path(pigPath, "temp"));
@@ -1007,6 +1020,147 @@ public class TestShareLibService extends XFsTestCase {
         }
         finally {
             getFileSystem().delete(new Path(SHARELIB_PATH), true);
+        }
+    }
+
+    @Test
+    public void testParsingALotOfShareLibsParallel() throws ServiceException, IOException {
+        setShipLauncherInOozieConfig();
+        services.init();
+        // destroying, as we dont want the sharelib dirs purge to be scheduled
+        services.get(SchedulerService.class).destroy();
+
+        final List<FileStatus> fileStatuses = new ArrayList<>();
+
+        final Path rootDir = Mockito.mock(Path.class);
+        final FileSystem fs = Mockito.mock(FileSystem.class);
+
+        final int NUMBER_OF_FILESTATUSES = 100;
+
+        for (int i = 0; i < NUMBER_OF_FILESTATUSES; ++i) {
+            createAndAddMockedFileStatus(fileStatuses, 2018, 8, 1, 0, 0, 1);
+        }
+
+        final FileStatus[] statuses = fileStatuses.toArray(new FileStatus[1]);
+        Mockito.when(fs.listStatus(Mockito.any(Path.class), Mockito.any(PathFilter.class))).thenReturn(statuses);
+
+        final ShareLibService shareLibService = services.get(ShareLibService.class);
+        shareLibService.fs = fs;
+
+        runGivenCallableOnThreads(() -> {
+            try {
+                shareLibService.getLatestLibPath(rootDir, "lib_");
+            } catch (final IOException | NumberFormatException e) {
+                log.error(e.getMessage());
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            return true;
+        }, 10, 10);
+    }
+
+    @Test
+    public void testDeterminingLatestSharelibPathOn1Thread() throws IOException, ServiceException {
+        testDeterminingLatestSharelibPath(1);
+    }
+
+    @Test
+    public void testDeterminingLatestSharelibPathOn5Threads()  throws IOException, ServiceException {
+        testDeterminingLatestSharelibPath(5);
+    }
+
+    @Test
+    public void testDeterminingLatestSharelibPathOn10Threads() throws IOException, ServiceException {
+        testDeterminingLatestSharelibPath(10);
+    }
+
+    private void testDeterminingLatestSharelibPath(final int numberOfThreads) throws ServiceException, IOException {
+        setShipLauncherInOozieConfig();
+        services.init();
+        // destroying, as we dont want the sharelib dirs purge to be scheduled
+        services.get(SchedulerService.class).destroy();
+
+        final List<FileStatus> fileStatuses = new ArrayList<>();
+        createAndAddMockedFileStatus(fileStatuses, 2018, 8, 1, 0, 0, 1);
+        createAndAddMockedFileStatus(fileStatuses, 2018, 8, 1, 0, 1, 1);
+        final Path filePath3 = createAndAddMockedFileStatus(fileStatuses, 2018, 8, 1, 1, 0, 1);
+
+        final Path rootDir = Mockito.mock(Path.class);
+        final FileSystem fs = Mockito.mock(FileSystem.class);
+
+        final FileStatus[] statuses = fileStatuses.toArray(new FileStatus[1]);
+        Mockito.when(fs.listStatus(Mockito.any(Path.class), Mockito.any(PathFilter.class))).thenReturn(statuses);
+
+        final ShareLibService shareLibService = services.get(ShareLibService.class);
+        shareLibService.fs = fs;
+
+        runGivenCallableOnThreads(() -> {
+            try {
+                final Path path = shareLibService.getLatestLibPath(rootDir, "lib_");
+                Assert.assertEquals(filePath3, path);
+            } catch (final IOException | NumberFormatException e) {
+                log.error(e.getMessage());
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            return true;
+        }, 100, numberOfThreads);
+    }
+
+    private void runGivenCallableOnThreads(
+            final Callable<Boolean> callable, final int numberOfCallables, final int numberOfThreads) {
+        final ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+        final List<Callable<Boolean>> callableTasks = new ArrayList<>();
+
+        for (int i = 0; i < numberOfCallables; ++i) {
+            callableTasks.add(callable);
+        }
+
+        // Start 10 thread to do parallel time parsing. Issue is experienced with old code.
+        List<Future<Boolean>> futures = new ArrayList<>();
+        try {
+            futures = executor.invokeAll(callableTasks);
+        } catch (final InterruptedException e) {
+            log.error(e.getMessage());
+            Assert.fail("Determining timestamp of a share lib name is failed with: " + e.getMessage());
+        }
+
+        // Shut down the executor service to have all tasks finished, then collect the results
+        awaitTerminationAfterShutdown(executor);
+
+        Assert.assertFalse(futures.isEmpty());
+        for (final Future<Boolean> f : futures) {
+            try {
+                final Boolean result = f.get(5, TimeUnit.SECONDS);
+                Assert.assertTrue("Parsed share lib name shall be a valid timestamp", result);
+            } catch (final InterruptedException | ExecutionException | TimeoutException e) {
+                log.error(e.getMessage());
+                Assert.fail("Determining timestamp of a share lib name is failed with: " + e.getMessage());
+            }
+        }
+    }
+
+    private Path createAndAddMockedFileStatus(final List<FileStatus> fileStatuses, int y, int m, int d, int h, int min, int s) {
+        final String date = new SimpleDateFormat("yyyyMMddHHmmss").format(
+                new Calendar.Builder().setDate(y, m, d).setTimeOfDay(h, min, s).build().getTime());
+        final Path filePath = Mockito.mock(Path.class);
+        final String libName = ShareLibService.SHARE_LIB_PREFIX + date;
+        Mockito.when(filePath.getName()).thenReturn(libName);
+        final FileStatus fileStatus = Mockito.mock(FileStatus.class);
+        Mockito.when(fileStatus.getPath()).thenReturn(filePath);
+        fileStatuses.add(fileStatus);
+        return filePath;
+    }
+
+    private void awaitTerminationAfterShutdown(ExecutorService threadPool) {
+        threadPool.shutdown();
+        try {
+            if (!threadPool.awaitTermination(10, TimeUnit.SECONDS)) {
+                threadPool.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            threadPool.shutdownNow();
+            Thread.currentThread().interrupt();
         }
     }
 
