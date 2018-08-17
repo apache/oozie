@@ -16,7 +16,7 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
   set -x
 fi
 
-BASEDIR=$(pwd)
+#BASEDIR=$(pwd)
 TASKNAME="DISTRO"
 OP=""
 TEMPDIR=""
@@ -27,7 +27,7 @@ MVNPASSTHRU=""
 
 ###############################################################################
 cleanupAndExit() {
-  exit $1
+  exit "$1"
 }
 ###############################################################################
 printUsage() {
@@ -36,7 +36,7 @@ printUsage() {
 }
 ###############################################################################
 parseArgs() {
-  for i in $*
+  for i in "$@"
   do
     case $i in
     --taskname)
@@ -87,18 +87,18 @@ case $OP in
   pre)
     ;;
   post)
-    mvn package assembly:single -DgenerateDocs -DskipTests | tee ${REPORTDIR}/${TASKNAME}.out >> $STDOUT
+    mvn clean package assembly:single -DgenerateDocs -DskipTests | tee "${REPORTDIR}/${TASKNAME}.out" >> $STDOUT
     exitCode=${PIPESTATUS[0]}
-    echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
+    echo "$exitCode" >  "${TEMPDIR}/${TASKNAME}.exitCode"
     ;;
   report)
-    exitCode=`cat ${TEMPDIR}/${TASKNAME}.exitCode`
+    exitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
     if [[ "$exitCode" != "0" ]] ; then
-      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
-      echo ".    {color:red}-1{color} distro tarball fails with the patch" >> $SUMMARYFILE
+      echo "{color:red}-1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+      echo ".    {color:red}-1{color} distro tarball fails with the patch" >> "$SUMMARYFILE"
          else
-      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
-      echo ".    {color:green}+1{color} distro tarball builds with the patch " >> $SUMMARYFILE
+      echo "{color:green}+1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+      echo ".    {color:green}+1{color} distro tarball builds with the patch " >> "$SUMMARYFILE"
     fi
     ;;
 esac
