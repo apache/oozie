@@ -1,6 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
-OOZIE-3229 [build] test-patch-30-distro improvement (asalamon74 via andras.piros)
+OOZIE-3329 [build] test-patch-30-distro improvement (asalamon74 via andras.piros)
 OOZIE-3324 Cannot compile with findbugs check (asalamon74 via pbacsko)
 OOZIE-3304 Parsing sharelib timestamps is not threadsafe (dionusos, matijhs via andras.piros)
 OOZIE-3314 Remove findbugs-filter.xml and convert its contents to annotations (asalamon74 via andras.piros)
