@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ class SparkOptionsSplitter {
      *     <li>{@code spark.executor.extraJavaOptions="-XX:HeapDumpPath=/tmp"}</li>
      * </ul>
      */
-    private static final String VALUE_HAS_QUOTES_AT_ENDS_REGEX = "[a-zA-Z0-9.]+=\".+\"";
+    private static final String VALUE_HAS_QUOTES_AT_ENDS_REGEX = "([a-zA-Z0-9.]+=)?\".+\"";
 
     /**
      * Matches an option key / value pair, where the value part has quotes in between.
@@ -65,7 +66,7 @@ class SparkOptionsSplitter {
      * </ul>
      */
     private static final String VALUE_HAS_QUOTES_IN_BETWEEN_REGEX =
-            "[a-zA-Z0-9.]+=.*(\\w\\s+\"\\w+[\\s+\\w]*\"|\"\\w+[\\s+\\w]*\"\\s+\\w)+.*";
+            "([a-zA-Z0-9.]+=)?.*(\\w\\s+\"\\w+[\\s+\\w]*\"|\"\\w+[\\s+\\w]*\"\\s+\\w)+.*";
 
     /**
      * Converts the options to be Spark-compatible.
@@ -133,9 +134,10 @@ class SparkOptionsSplitter {
      *     <li>{@code key="value1 value2 value3 value4"}: gets unquoted (has quotes both ends, and no quotes in between)</li>
      * </ul>
      * @param maybeEntirelyQuotedValue a {@code String} that is a parameter value but not necessarily quoted
-     * @return an unquoted version of the input {@String}, when {@code maybeEntirelyQuotedValue} had quotes at both ends, and didn't
-     * have any quotes in between. Else {@code maybeEntirelyQuotedValue}
+     * @return an unquoted version of the input {@code String}, when {@code maybeEntirelyQuotedValue} had quotes at both ends,
+     * and didn't have any quotes in between. Else {@code maybeEntirelyQuotedValue}
      */
+    @SuppressFBWarnings(value = {"REDOS"}, justification = "Complex regular expression")
     private static String unquoteEntirelyQuotedValue(final String maybeEntirelyQuotedValue) {
         final boolean hasQuotesAtEnds = maybeEntirelyQuotedValue.matches(VALUE_HAS_QUOTES_AT_ENDS_REGEX);
         final boolean hasQuotesInBetween = maybeEntirelyQuotedValue.matches(VALUE_HAS_QUOTES_IN_BETWEEN_REGEX);
