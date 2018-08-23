@@ -19,10 +19,8 @@
 package org.apache.oozie.command.coord;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -46,10 +44,8 @@ import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchedulerService;
-import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -57,7 +53,6 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.XCallable;
 
 public class TestCoordChangeXCommand extends XDataTestCase {
     private Services services;
@@ -72,25 +67,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
      */
     public static String convertDateToString(long timeStamp) {
         return DateUtils.formatDateOozieTZ(new Date(timeStamp));
-    }
-
-    /**
-     * Class is used to change the queueservice, as that one meddles with the actions in the background.
-     */
-    static class FakeCallableQueueService extends CallableQueueService implements Service {
-        @Override
-        public void init(Services services){}
-
-        @Override
-        public void destroy(){}
-
-        @Override
-        public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay){return false;}
-
-        @Override
-        public Set<String> getInterruptTypes() {
-            return Collections.emptySet();
-        }
     }
 
     @Override

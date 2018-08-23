@@ -29,7 +29,10 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
@@ -75,8 +78,10 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
@@ -86,6 +91,7 @@ import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -117,6 +123,29 @@ public abstract class XDataTestCase extends XHCatTestCase {
     protected String bundleId;
     protected String CREATE_TIME = "2012-07-22T00:00Z";
 
+    /**
+     * Class is used to change the queueservice, as that one meddles with the actions in the background.
+     */
+    protected static class FakeCallableQueueService extends CallableQueueService implements Service {
+        @Override
+        public void init(Services services) {
+        }
+
+        @Override
+        public void destroy() {
+        }
+
+        @Override
+        public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay) {
+            return false;
+        }
+
+        @Override
+        public Set<String> getInterruptTypes() {
+            return Collections.emptySet();
+        }
+    }
+
     public XDataTestCase() {
     }
 
@@ -135,6 +164,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
         tearDown();
     }
 
+    protected int hoursToSeconds(final int hours) {
+        return new Long(java.util.concurrent.TimeUnit.HOURS.toSeconds(hours)).intValue();
+    }
+
+
     /**
      * Inserts the passed coord job
      * @param coord job bean
@@ -152,6 +186,34 @@ public abstract class XDataTestCase extends XHCatTestCase {
             fail("Unable to insert the test coord job record to table");
             throw je;
         }
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, String freq) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, Timeunit.MINUTE);
+    }
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, String freq, Timeunit timeUnit) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, timeUnit);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, String freq, int matThrottling) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, -1, freq, Timeunit.MINUTE,
+                CoordinatorJob.Execution.FIFO, matThrottling);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, int timeout, String freq, Timeunit timeUnit)
+            throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, timeUnit,
+                CoordinatorJob.Execution.FIFO, 20);
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, int timeout, String freq,
+                                                          CoordinatorJob.Execution execution) throws Exception {
+        return addRecordToCoordJobTable(status, startTime, endTime, pauseTime, timeout, freq, Timeunit.MINUTE, execution, 20);
     }
 
     /**
@@ -358,6 +420,35 @@ public abstract class XDataTestCase extends XHCatTestCase {
             je.printStackTrace();
             fail("Unable to insert the test coord job record to table");
             throw je;
+        }
+
+        return coordJob;
+    }
+
+    protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
+                                                          Date pauseTime, int timeout, String freq, Timeunit timeUnit,
+                                                          CoordinatorJob.Execution execution, int matThrottling)
+            throws Exception {
+        CoordinatorJobBean coordJob = createCoordJob(status, startTime, endTime, false, false, 0);
+        coordJob.setStartTime(startTime);
+        coordJob.setEndTime(endTime);
+        coordJob.setPauseTime(pauseTime);
+        coordJob.setFrequency(freq);
+        coordJob.setTimeUnit(timeUnit);
+        coordJob.setTimeout(timeout);
+        coordJob.setConcurrency(3);
+        coordJob.setMatThrottling(matThrottling);
+        coordJob.setExecutionOrder(execution);
+
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
+            jpaService.execute(coordInsertCmd);
+        } catch (JPAExecutorException ex) {
+            ex.printStackTrace();
+            fail("Unable to insert the test coord job record to table");
+            throw ex;
         }
 
         return coordJob;
