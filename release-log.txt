@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3317 [build] Fix false positive precommit reports (kmarton via andras.piros)
 OOZIE-3264 Flaky test TestCoordMaterializeTransitionXCommand#testLastOnlyMaterialization (asalamon74 via andras.piros)
 OOZIE-3331 [spark-action] Inconsistency while parsing quoted Spark options (asalamon74 via andras.piros)
 OOZIE-3330 [spark-action] Remove double quotes inside plain option values (asalamon74 via andras.piros)

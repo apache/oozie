@@ -154,27 +154,33 @@ generate_report() {
     testsErrors=$(count_test_result_type errors)
     hasFailures=$((testsFailed + testsErrors))
     testsExitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
+    errors=$(grep -c '\[ERROR\]' "${REPORTDIR}"/${TASKNAME}.out)
 
-    if [[ ${hasFailures} != 0 ]] ; then
-      echo "{color:red}-1 ${TASKNAME}{color}"
-      echo ".    Tests run: $testsRun"
-      echo ".    Tests failed: $testsFailed"
-      echo ".    Tests errors: $testsErrors"
-      echo ""
-      echo ".    The patch failed the following testcases:"
-      echo ""
-      echo "${failedTests//#/.      /}"
-      echo ""
-      echo ".    Tests failing with errors:"
-      echo "${testsWithError//#/.      /}"
-      echo ""
+    if [[ ${errors} -gt 0 && ${testsErrors} -eq 0 ]] ; then
+        echo "{color:red}-1 ${TASKNAME}{color}"
+        echo "There were errors during execution. Check console output for details."
     else
-      if [[ "${testsExitCode}" != "0" ]] ; then
-          echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases"
-      else
-        echo "{color:green}+1 ${TASKNAME}{color}"
-        echo ".    Tests run: $testsRun"
-      fi
+        if [[ ${hasFailures} != 0 ]] ; then
+            echo "{color:red}-1 ${TASKNAME}{color}"
+            echo ".    Tests run: $testsRun"
+            echo ".    Tests failed: $testsFailed"
+            echo ".    Tests errors: $testsErrors"
+            echo ""
+            echo ".    The patch failed the following testcases:"
+            echo ""
+            echo "${failedTests//#/.      /}"
+            echo ""
+            echo ".    Tests failing with errors:"
+            echo "${testsWithError//#/.      /}"
+            echo ""
+        else
+            if [[ "${testsExitCode}" != "0" ]] ; then
+                echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases"
+            else
+                echo "{color:green}+1 ${TASKNAME}{color}"
+                echo ".    Tests run: $testsRun"
+            fi
+        fi
     fi
 }
 ###############################################################################
