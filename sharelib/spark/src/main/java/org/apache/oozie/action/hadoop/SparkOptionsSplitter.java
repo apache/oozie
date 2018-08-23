@@ -65,8 +65,7 @@ class SparkOptionsSplitter {
      *     -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp}</li>
      * </ul>
      */
-    private static final String VALUE_HAS_QUOTES_IN_BETWEEN_REGEX =
-            "([a-zA-Z0-9.]+=)?.*(\\w\\s+\"\\w+[\\s+\\w]*\"|\"\\w+[\\s+\\w]*\"\\s+\\w)+.*";
+    private static final String VALUE_HAS_QUOTES_IN_BETWEEN_REGEX = "([a-zA-Z0-9.]+=)?\".*\".*\"";
 
     /**
      * Converts the options to be Spark-compatible.
