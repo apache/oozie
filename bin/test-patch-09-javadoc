@@ -16,7 +16,6 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
   set -x
 fi
 
-BASEDIR=$(pwd)
 TASKNAME="JAVADOC"
 OP=""
 TEMPDIR=""
@@ -26,7 +25,7 @@ MVNPASSTHRU=""
 
 ###############################################################################
 cleanupAndExit() {
-  exit $1
+  exit "$1"
 }
 ###############################################################################
 printUsage() {
@@ -35,7 +34,7 @@ printUsage() {
 }
 ###############################################################################
 parseArgs() {
-  for i in $*
+  for i in "$@"
   do
     case $i in
     --taskname)
@@ -77,9 +76,9 @@ parseArgs() {
 }
 ###############################################################################
 checkForWarnings() {
-  cleanWarns=`grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-clean.txt | awk '/Javadoc Warnings/,EOF' | grep warning | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
-  patchWarns=`grep '\[WARNING\]' ${REPORTDIR}/${TASKNAME}-patch.txt | awk '/Javadoc Warnings/,EOF' | grep warning | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
-  newWarns=`expr $patchWarns - $cleanWarns`
+  cleanWarns=$(grep '\[WARNING\]' "${REPORTDIR}"/${TASKNAME}-clean.txt | awk '/Javadoc Warnings/,EOF' | grep -c warning )
+  patchWarns=$(grep '\[WARNING\]' "${REPORTDIR}"/${TASKNAME}-patch.txt | awk '/Javadoc Warnings/,EOF' | grep -c warning )
+  newWarns=$(( patchWarns - cleanWarns))
   if [[ $newWarns -le 0 ]] ; then
     REPORT+=("{color:green}+1{color} the patch does not seem to introduce new Javadoc warning(s)")
     newWarns=0
@@ -88,23 +87,16 @@ checkForWarnings() {
     newWarns=1
   fi
   if [[ $cleanWarns != 0 ]] ; then
-    REPORT+=("{color:red}WARNING{color}: the current HEAD has $cleanWarns Javadoc warning(s)")
+    REPORT+=("{color:orange}WARNING{color}: the current HEAD has $cleanWarns Javadoc warning(s)")
   fi
 }
 ###############################################################################
 checkForErrors() {
-  cleanErrs=`grep '\[ERROR\]' ${REPORTDIR}/${TASKNAME}-clean.txt | grep error | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
-  patchErrs=`grep '\[ERROR\]' ${REPORTDIR}/${TASKNAME}-patch.txt | grep error | awk 'BEGIN {total = 0} {total += 1} END {print total}'`
-  newErrs=`expr $patchErrs - $cleanErrs`
-  if [[ $newErrs -le 0 ]] ; then
-    REPORT+=("{color:green}+1{color} the patch does not seem to introduce new Javadoc error(s)")
-    newErrs=0
+    exitCode=$(cat "${TEMPDIR}"/${TASKNAME}.exitCode)
+  if [[ "$exitCode" == "0" ]] ; then
+    REPORT+=("{color:green}+1{color} Javadoc generation succeeded with the patch")
   else
-    REPORT+=("{color:red}-1{color} the patch seems to introduce $newErrs new Javadoc error(s)")
-    newErrs=1
-  fi
-  if [[ $cleanErrs != 0 ]] ; then
-    REPORT+=("{color:red}ERROR{color}: the current HEAD has $cleanErrs Javadoc error(s)")
+    REPORT+=("{color:red}-1{color} build with Javadoc generation fails with the patch")
   fi
 }
 ###############################################################################
@@ -113,26 +105,27 @@ parseArgs "$@"
 
 case $OP in
   pre)
-    mvn clean javadoc:javadoc ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-clean.txt
+    mvn clean package javadoc:javadoc -DskipTests ${MVNPASSTHRU} > "${REPORTDIR}"/${TASKNAME}-clean.txt
     ;;
   post)
-    mvn clean javadoc:javadoc ${MVNPASSTHRU} > ${REPORTDIR}/${TASKNAME}-patch.txt
+    mvn clean package javadoc:javadoc -DskipTests ${MVNPASSTHRU} > "${REPORTDIR}"/${TASKNAME}-patch.txt
+    exitCode=${PIPESTATUS[0]}
+    echo "$exitCode" >  "${TEMPDIR}"/${TASKNAME}.exitCode
     ;;
   report)
-    checkForWarnings
-    if [[ $newWarns == 0 ]] ; then
-      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
-    else
-      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
-    fi
     checkForErrors
-    if [[ $newErrs == 0 ]] ; then
-      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
+    if [ $exitCode != 0 ] ; then
+        echo "{color:red}-1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
     else
-      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
+        checkForWarnings
+        if [ $newWarns -eq 0 ] ; then
+            echo "{color:green}+1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+        else
+            echo "{color:red}-1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+        fi
     fi
     for line in "${REPORT[@]}" ; do
-      echo ".    ${line}" >> $SUMMARYFILE
+      echo ".    ${line}" >> "$SUMMARYFILE"
     done
     ;;
 esac
