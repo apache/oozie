@@ -26,6 +26,7 @@
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/spark"/>
             </prepare>
             <master>${master}</master>
+            <mode>${mode}</mode>
             <name>Spark-FileCopy</name>
             <class>org.apache.oozie.example.SparkFileCopy</class>
             <jar>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar</jar>

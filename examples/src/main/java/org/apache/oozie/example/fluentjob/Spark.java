@@ -42,6 +42,7 @@ public class Spark implements WorkflowFactory {
                 .withArg("${nameNode}/user/${wf:user()}/${examplesRoot}/input-data/text/data.txt")
                 .withArg("${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/spark")
                 .withMaster("${master}")
+                .withMode("${mode}")
                 .withActionName("Spark File Copy Example")
                 .withActionClass("org.apache.oozie.example.SparkFileCopy")
                 .withJar("${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar")

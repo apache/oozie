@@ -25,6 +25,7 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <master>${master}</master>
+            <mode>${mode}</mode>
             <name>Python-Spark-Pi</name>
             <jar>pi.py</jar>
         </spark>
