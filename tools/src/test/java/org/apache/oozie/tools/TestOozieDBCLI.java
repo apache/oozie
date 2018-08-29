@@ -23,6 +23,7 @@ import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.service.Services;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.util.db.CompositeIndex;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -177,7 +178,7 @@ public class TestOozieDBCLI extends XTestCase {
         final Charset charset = Charset.defaultCharset();
         final List<String> stringList = Files.readAllLines(upgrade.toPath(), charset);
         final List<String> actualIndexStatements = Arrays.asList(stringList.toArray(new String[]{}));
-        final String[] expectedIndexStatements = OozieDBCLI.getIndexStatementsFor50();
+        final List<String> expectedIndexStatements = CompositeIndex.getIndexStatements();
 
         for (final String indexStmt : expectedIndexStatements) {
             Assert.assertTrue(actualIndexStatements.contains(indexStmt + ";"));
@@ -186,7 +187,7 @@ public class TestOozieDBCLI extends XTestCase {
 
     private void verifyIndexesCreated() throws SQLException {
         final List<String> indexes = getIndexes();
-        for (final String indexStmt : OozieDBCLI.getIndexStatementsFor50()) {
+        for (final String indexStmt : CompositeIndex.getIndexStatements()) {
             final  String index = indexStmt.split(" ")[2];
             Assert.assertTrue(indexes.contains(index));
         }

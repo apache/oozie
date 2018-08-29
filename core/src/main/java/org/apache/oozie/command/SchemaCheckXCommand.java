@@ -36,6 +36,7 @@ import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.db.CompositeIndex;
 import org.apache.openjpa.persistence.jdbc.Index;
 
 import javax.persistence.Column;
@@ -251,7 +252,9 @@ public class SchemaCheckXCommand extends XCommand<Void> {
         ResultSet rs = metaData.getIndexInfo(catalog, null, table, false, true);
         while (rs.next()) {
             String colName = rs.getString("COLUMN_NAME");
-            if (colName != null) {
+            String indexName = rs.getString("INDEX_NAME");
+            final boolean isExtraIndexedColumn = !CompositeIndex.find(indexName) && colName != null;
+            if (isExtraIndexedColumn) {
                 foundIndexedColumns.add(colName);
             }
         }
@@ -431,10 +434,6 @@ public class SchemaCheckXCommand extends XCommand<Void> {
                 Integer type = getSQLType(discAnn.discriminatorType());
                 columnTypes.put(name, type);
                 indexedColumns.add(name);
-            }
-            // For some reason, MySQL doesn't end up having this index...
-            if (dbType.equals("mysql") && clazz.equals(WorkflowActionBean.class)) {
-                indexedColumns.remove("wf_id");
             }
         }
 

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.tools;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -29,6 +30,7 @@ import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.db.CompositeIndex;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -747,23 +749,8 @@ public class OozieDBCLI {
         }
     }
 
-    static String[] getIndexStatementsFor50() {
-        return new String[]{"CREATE INDEX I_WF_JOBS_STATUS_CREATED_TIME ON WF_JOBS (status, created_time)",
 
-                "CREATE INDEX I_COORD_ACTIONS_JOB_ID_STATUS ON COORD_ACTIONS (job_id, status)",
-
-                "CREATE INDEX I_COORD_JOBS_STATUS_CREATED_TIME ON COORD_JOBS (status, created_time)",
-                "CREATE INDEX I_COORD_JOBS_STATUS_LAST_MODIFIED_TIME ON COORD_JOBS (status, last_modified_time)",
-                "CREATE INDEX I_COORD_JOBS_PENDING_DONE_MATERIALIZATION_LAST_MODIFIED_TIME ON COORD_JOBS " +
-                        "(pending, done_materialization, last_modified_time)",
-                "CREATE INDEX I_COORD_JOBS_PENDING_LAST_MODIFIED_TIME ON COORD_JOBS (pending, last_modified_time)",
-
-                "CREATE INDEX I_BUNLDE_JOBS_STATUS_CREATED_TIME ON BUNDLE_JOBS (status, created_time)",
-                "CREATE INDEX I_BUNLDE_JOBS_STATUS_LAST_MODIFIED_TIME ON BUNDLE_JOBS (status, last_modified_time)",
-
-                "CREATE INDEX I_BUNLDE_ACTIONS_PENDING_LAST_MODIFIED_TIME ON BUNDLE_ACTIONS (pending, last_modified_time)"};
-    }
-
+    @SuppressFBWarnings(value = {"SQL_INJECTION_JDBC"}, justification = "Final values are used")
     private void ddlTweaksFor50(final String sqlFile, final boolean run) throws Exception {
         System.out.println("Creating composite indexes");
         try (final Connection conn = createConnection();
@@ -771,7 +758,7 @@ public class OozieDBCLI {
              final Statement stmt = conn.createStatement())
         {
             writer.println();
-            final String[] createCoveringIndexStatements = getIndexStatementsFor50();
+            final List<String> createCoveringIndexStatements = CompositeIndex.getIndexStatements();
 
             for (final String query : createCoveringIndexStatements) {
                 writer.println(query + ";");
