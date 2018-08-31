@@ -1021,6 +1021,18 @@ function jobDetailsPopup(response, request) {
         });
     }
 
+    function createAndAddDagImage() {
+        var dagImage=   new Ext.ux.Image({
+            id: 'dagImage',
+            url: getOozieBase() + 'job/' + workflowId + '?show=graph&format=svg&show-kill=true&v=' + Date.now(),
+            autoScroll: true
+        });
+        dagImage.onError('alertOnDAGError()');
+        imageContainer.add(dagImage);
+        imageContainer.syncSize();
+        imageContainer.doLayout(true);
+    }
+
     var imageContainer = new Ext.Container({
         autoEl: {},
         height: '1000px',
@@ -1118,12 +1130,15 @@ function jobDetailsPopup(response, request) {
             title: 'Job DAG',
             items: imageContainer,
             tbar: [{
-                text: "&nbsp;&nbsp;&nbsp;"
-                // To avoid OOM
-                /*icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
+                text: "&nbsp;&nbsp;&nbsp;",
+                icon: 'ext-2.2/resources/images/default/grid/refresh.gif',
                 handler: function() {
-                    fetchDAG(workflowId);
-                }*/
+                    var child = imageContainer.findById('dagImage');
+                    if (child != null) {
+                        imageContainer.remove(child);
+                    }
+                    createAndAddDagImage();
+                }
             }]
         }]
     });
@@ -1149,16 +1164,7 @@ function jobDetailsPopup(response, request) {
         }
         else if(selectedTab.title == 'Job DAG') {
                 if(!isLoadedDAG){
-                var dagImage=   new Ext.ux.Image({
-                        id: 'dagImage',
-                        url: getOozieBase() + 'job/' + workflowId + '?show=graph&format=svg&show-kill=true',
-                        autoScroll: true
-                        });
-                    dagImage.setAlt('Runtime error : Can\'t display the graph. Number of actions are more than display limit 25');
-                    dagImage.onError('alertOnDAGError()');
-                    imageContainer.add(dagImage);
-                    imageContainer.syncSize();
-                    imageContainer.doLayout(true);
+                    createAndAddDagImage();
                     isLoadedDAG=true;
                  }
                 }
