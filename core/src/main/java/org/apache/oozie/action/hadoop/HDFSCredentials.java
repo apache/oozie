@@ -21,7 +21,6 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.security.Credentials;
@@ -63,9 +62,7 @@ public class HDFSCredentials implements CredentialsProvider {
 
             final UserGroupInformation ugi = Services.get().get(UserGroupInformationService.class)
                     .getProxyUser(context.getWorkflow().getUser());
-            final User user = User.create(ugi);
-
-            obtainTokensForNamenodes(credentials, config, user, paths);
+            obtainTokensForNamenodes(credentials, config, ugi, paths);
         }
         else {
             obtainTokenForAppFileSystemNameNode(credentials, config, context);
@@ -95,11 +92,11 @@ public class HDFSCredentials implements CredentialsProvider {
 
     private void obtainTokensForNamenodes(final Credentials credentials,
                                           final Configuration config,
-                                          final User user,
+                                          final UserGroupInformation ugi,
                                           final Path[] paths) throws IOException, InterruptedException {
         LOG.info(String.format("\"%s\" is present in workflow configuration. Obtaining tokens for NameNode(s) [%s]",
                 MRJobConfig.JOB_NAMENODES, config.get(MRJobConfig.JOB_NAMENODES)));
-        user.runAs(
+        ugi.doAs(
                 new PrivilegedExceptionAction<Void>() {
                     @Override
                     public Void run() throws Exception {

@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3334 Don't use org.apache.hadoop.hbase.security.User in HDFSCredentials (gezapeti)
 OOZIE-3210 [build] Revision information is empty (asalamon74 via andras.piros)
 OOZIE-2684 Bad database schema error for WF_ACTIONS table (abhishekbafna, kmarton via andras.piros)
 OOZIE-3332 [examples] Spark examples should feature yarn client and cluster modes (daniel.becker via andras.piros)
