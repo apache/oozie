@@ -18,10 +18,11 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,10 +30,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Properties;
 
-import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -109,5 +116,28 @@ public class TestLauncherMain {
         }
         String contents = new String(Files.readAllBytes(f.toPath()));
         assertTrue(contents.contains("foo=bar"));
+    }
+
+    @Test
+    public void testKillChildYarnJobs() throws Exception {
+        YarnClient yc = Mockito.mock(YarnClient.class);
+        ApplicationReport ar = Mockito.mock(ApplicationReport.class);
+        Mockito.when(yc.getApplicationReport(Mockito.any(ApplicationId.class))).thenReturn(ar);
+
+        Mockito.when(ar.getFinalApplicationStatus())
+                .thenReturn(FinalApplicationStatus.UNDEFINED)
+                .thenReturn(FinalApplicationStatus.FAILED)
+                .thenReturn(FinalApplicationStatus.KILLED);
+
+        ApplicationId appz[] = {
+                ApplicationId.newInstance(System.currentTimeMillis(), 1),
+                ApplicationId.newInstance(System.currentTimeMillis(), 2),
+                ApplicationId.newInstance(System.currentTimeMillis(), 3)
+        };
+
+        Collection<ApplicationId> result = LauncherMain.checkAndKillChildYarnJobs(yc, null, Arrays.asList(appz));
+
+        assertEquals(1, result.size());
+        assertEquals(appz[0].getId(), result.iterator().next().getId());
     }
 }

@@ -77,6 +77,7 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.Apps;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
@@ -1780,36 +1781,11 @@ public class JavaActionExecutor extends ActionExecutor {
             String launcherTag = getActionYarnTag(context, action);
             jobConf.set(LauncherMain.CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
             yarnClient = createYarnClient(context, jobConf);
-            if(action.getExternalId() != null) {
-                try {
-                    LOG.info("Killing action {0}'s external application {1}", action.getId(), action.getExternalId());
-                    yarnClient.killApplication(ConverterUtils.toApplicationId(action.getExternalId()));
-                } catch (Exception e) {
-                    LOG.warn("Could not kill {0}", action.getExternalId(), e);
-                }
-            }
-            String externalChildIDs = action.getExternalChildIDs();
-            if(externalChildIDs != null) {
-                for(String childId : externalChildIDs.split(",")) {
-                    try {
-                        LOG.info("Killing action {0}'s external child application {1}", action.getId(), childId);
-                        yarnClient.killApplication(ConverterUtils.toApplicationId(childId.trim()));
-                    } catch (Exception e) {
-                        LOG.warn("Could not kill external child of {0}, {1}", action.getExternalId(),
-                                childId, e);
-                    }
-                }
-            }
-            for(ApplicationId id : LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL,
-                    action.getStartTime().getTime())){
-                try {
-                    LOG.info("Killing action {0}'s external child application {1} based on tags",
-                            action.getId(), id.toString());
-                    yarnClient.killApplication(id);
-                } catch (Exception e) {
-                    LOG.warn("Could not kill child of {0}, {1}", action.getExternalId(), id, e);
-                }
-            }
+
+            String appExternalId = action.getExternalId();
+            killExternalApp(action, yarnClient, appExternalId);
+            killExternalChildApp(action, yarnClient, appExternalId);
+            killExternalChildAppByTags(action, yarnClient, jobConf, appExternalId);
 
             context.setExternalStatus(KILLED);
             context.setExecutionData(KILLED, null);
@@ -1824,6 +1800,63 @@ public class JavaActionExecutor extends ActionExecutor {
             } catch (Exception ex) {
                 LOG.error("Error when cleaning up action dir", ex);
                 throw convertException(ex);
+            }
+        }
+    }
+
+    private boolean finalAppStatusUndefined(ApplicationReport appReport) {
+        FinalApplicationStatus status = appReport.getFinalApplicationStatus();
+        return !FinalApplicationStatus.SUCCEEDED.equals(status) &&
+                !FinalApplicationStatus.FAILED.equals(status) &&
+                !FinalApplicationStatus.KILLED.equals(status);
+    }
+
+    void killExternalApp(WorkflowAction action, YarnClient yarnClient, String appExternalId)
+            throws YarnException, IOException {
+        if (appExternalId != null) {
+            ApplicationId appId = ConverterUtils.toApplicationId(appExternalId);
+            if (finalAppStatusUndefined(yarnClient.getApplicationReport(appId))) {
+                try {
+                    LOG.info("Killing action {0}''s external application {1}", action.getId(), appExternalId);
+                    yarnClient.killApplication(appId);
+                } catch (Exception e) {
+                    LOG.warn("Could not kill {0}", appExternalId, e);
+                }
+            }
+        }
+    }
+
+    void killExternalChildApp(WorkflowAction action, YarnClient yarnClient, String appExternalId)
+            throws YarnException, IOException {
+        String externalChildIDs = action.getExternalChildIDs();
+        if (externalChildIDs != null) {
+            for (String childId : externalChildIDs.split(",")) {
+                ApplicationId appChildId = ConverterUtils.toApplicationId(childId.trim());
+                if (finalAppStatusUndefined(yarnClient.getApplicationReport(appChildId))) {
+                    try {
+                        LOG.info("Killing action {0}''s external child application {1}", action.getId(), childId);
+                        yarnClient.killApplication(appChildId);
+                    } catch (Exception e) {
+                        LOG.warn("Could not kill external child of {0}, {1}",
+                                appExternalId, childId, e);
+                    }
+                }
+            }
+        }
+    }
+
+    void killExternalChildAppByTags(WorkflowAction action, YarnClient yarnClient, Configuration jobConf, String appExternalId)
+            throws YarnException, IOException {
+        for (ApplicationId id : LauncherMain.getChildYarnJobs(jobConf, ApplicationsRequestScope.ALL,
+                action.getStartTime().getTime())) {
+            if (finalAppStatusUndefined(yarnClient.getApplicationReport(id))) {
+                try {
+                    LOG.info("Killing action {0}''s external child application {1} based on tags",
+                            action.getId(), id.toString());
+                    yarnClient.killApplication(id);
+                } catch (Exception e) {
+                    LOG.warn("Could not kill child of {0}, {1}", appExternalId, id, e);
+                }
             }
         }
     }
