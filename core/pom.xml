@@ -512,6 +512,12 @@
             <artifactId>annotations</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.10.2</version>
+        </dependency>
     </dependencies>
 
     <build>
