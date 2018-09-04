@@ -1648,7 +1648,8 @@ will be the requeue interval for the actions which are waiting for a long time w
             distcp-action-0.1.xsd,distcp-action-0.2.xsd,distcp-action-1.0.xsd,
             oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,
             hive2-action-0.1.xsd,hive2-action-0.2.xsd,hive2-action-1.0.xsd,
-            spark-action-0.1.xsd,spark-action-0.2.xsd,spark-action-1.0.xsd
+            spark-action-0.1.xsd,spark-action-0.2.xsd,spark-action-1.0.xsd,
+            git-action-1.0.xsd
         </value>
         <description>
             List of schemas for workflows (separated by commas).
@@ -1786,7 +1787,8 @@ will be the requeue interval for the actions which are waiting for a long time w
             org.apache.oozie.action.ssh.SshActionExecutor,
             org.apache.oozie.action.oozie.SubWorkflowActionExecutor,
             org.apache.oozie.action.email.EmailActionExecutor,
-            org.apache.oozie.action.hadoop.SparkActionExecutor
+            org.apache.oozie.action.hadoop.SparkActionExecutor,
+            org.apache.oozie.action.hadoop.GitActionExecutor
         </value>
         <description>
             List of ActionExecutors classes (separated by commas).

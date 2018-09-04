@@ -141,6 +141,7 @@
                         <source>../../client/src/main/resources/spark-action-1.0.xsd</source>
                         <source>../../client/src/main/resources/sqoop-action-1.0.xsd</source>
                         <source>../../client/src/main/resources/ssh-action-0.2.xsd</source>
+                        <source>../../client/src/main/resources/git-action-1.0.xsd</source>
                     </sources>
                 </configuration>
 

@@ -163,4 +163,15 @@
 
     </jaxb:bindings>
 
+    <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/git-action-1.0.xsd">
+
+        <jaxb:schemaBindings>
+            <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.git"/>
+        </jaxb:schemaBindings>
+
+        <jaxb:bindings>
+            <namespace:prefix name="git" />
+        </jaxb:bindings>
+
+    </jaxb:bindings>
 </jaxb:bindings>

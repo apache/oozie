@@ -38,7 +38,7 @@ public class ShellConfigurationConverter extends DozerConverter<Map, CONFIGURATI
 
     @Override
     public CONFIGURATION convertTo(final Map source, CONFIGURATION destination) {
-        if (source == null) {
+        if (source == null || source.isEmpty()) {
             return null;
         }
 

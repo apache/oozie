@@ -35,6 +35,7 @@
         <module>streaming</module>
         <module>hcatalog</module>
         <module>pig</module>
+        <module>git</module>
         <module>hive</module>
         <module>hive2</module>
         <module>sqoop</module>

@@ -67,6 +67,7 @@ public class WorkflowMarshaller {
         filteredPackages.append("org.apache.oozie.fluentjob.api.generated.workflow");
         appendIfPresent(workflow, filteredPackages, "distcp");
         appendIfPresent(workflow, filteredPackages, "email");
+        appendIfPresent(workflow, filteredPackages, "git");
         appendIfPresent(workflow, filteredPackages, "hive2");
         appendIfPresent(workflow, filteredPackages, "hive");
         appendIfPresent(workflow, filteredPackages, "sla");

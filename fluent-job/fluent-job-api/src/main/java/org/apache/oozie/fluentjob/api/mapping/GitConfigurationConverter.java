@@ -18,8 +18,8 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import org.apache.oozie.fluentjob.api.generated.action.sqoop.CONFIGURATION;
-import org.apache.oozie.fluentjob.api.generated.action.sqoop.ObjectFactory;
+import org.apache.oozie.fluentjob.api.generated.action.git.CONFIGURATION;
+import org.apache.oozie.fluentjob.api.generated.action.git.ObjectFactory;
 import org.dozer.DozerConverter;
 
 import java.util.ArrayList;
@@ -29,10 +29,11 @@ import java.util.Map;
 /**
  * A {@link DozerConverter} converting from {@link Map} to JAXB {@link CONFIGURATION}.
  */
-public class SqoopConfigurationConverter extends DozerConverter<Map, CONFIGURATION> {
+@SuppressWarnings("unchecked")
+public class GitConfigurationConverter extends DozerConverter<Map, CONFIGURATION> {
     private static final ObjectFactory OBJECT_FACTORY = new ObjectFactory();
 
-    public SqoopConfigurationConverter() {
+    public GitConfigurationConverter() {
         super(Map.class, CONFIGURATION.class);
     }
 

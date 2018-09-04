@@ -229,6 +229,10 @@
                                     <groupId>org.apache.oozie</groupId>
                                     <artifactId>oozie-sharelib-spark</artifactId>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.oozie</groupId>
+                                    <artifactId>oozie-sharelib-git</artifactId>
+                                </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/oozie-webapp-${project.version}/WEB-INF/lib</outputDirectory>
                             <overWriteIfNewer>true</overWriteIfNewer>

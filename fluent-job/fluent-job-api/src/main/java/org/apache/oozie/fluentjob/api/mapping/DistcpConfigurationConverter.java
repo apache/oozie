@@ -38,7 +38,7 @@ public class DistcpConfigurationConverter extends DozerConverter<Map, CONFIGURAT
 
     @Override
     public CONFIGURATION convertTo(final Map source, CONFIGURATION destination) {
-        if (source == null) {
+        if (source == null || source.isEmpty()) {
             return null;
         }
 

@@ -1060,6 +1060,7 @@ public abstract class XTestCase extends TestCase {
       conf.set("dfs.block.access.token.enable", "false");
       conf.set("dfs.permissions", "true");
       conf.set("hadoop.security.authentication", "simple");
+      conf.setBoolean("dfs.namenode.acls.enabled", true);
 
       //Doing this because Hadoop 1.x does not support '*' if the value is '*,127.0.0.1'
       StringBuilder sb = new StringBuilder();

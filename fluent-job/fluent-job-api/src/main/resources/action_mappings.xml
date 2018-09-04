@@ -818,4 +818,49 @@
             <b>configuration</b>
         </field>
     </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.GitAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.git.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.GitPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.GitConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>gitUri</a>
+            <b>gitUri</b>
+        </field>
+
+        <field>
+            <a>branch</a>
+            <b>branch</b>
+        </field>
+
+        <field>
+            <a>keyPath</a>
+            <b>keyPath</b>
+        </field>
+
+        <field>
+            <a>destinationUri</a>
+            <b>destinationUri</b>
+        </field>
+    </mapping>
 </mappings>

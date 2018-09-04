@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.oozie.fluentjob.api.action.DistcpAction;
 import org.apache.oozie.fluentjob.api.action.EmailAction;
 import org.apache.oozie.fluentjob.api.action.FSAction;
+import org.apache.oozie.fluentjob.api.action.GitAction;
 import org.apache.oozie.fluentjob.api.action.Hive2Action;
 import org.apache.oozie.fluentjob.api.action.HiveAction;
 import org.apache.oozie.fluentjob.api.action.JavaAction;
@@ -75,6 +76,7 @@ public class ExplicitNodeConverter extends DozerConverter<ExplicitNode, ACTION> 
                 .put(EmailAction.class, org.apache.oozie.fluentjob.api.generated.action.email.ACTION.class)
                 .put(DistcpAction.class, org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION.class)
                 .put(HiveAction.class, org.apache.oozie.fluentjob.api.generated.action.hive.ACTION.class)
+                .put(GitAction.class, org.apache.oozie.fluentjob.api.generated.action.git.ACTION.class)
                 .put(Hive2Action.class, org.apache.oozie.fluentjob.api.generated.action.hive2.ACTION.class)
                 .put(JavaAction.class, JAVA.class)
                 .put(PigAction.class, PIG.class)
@@ -205,6 +207,9 @@ public class ExplicitNodeConverter extends DozerConverter<ExplicitNode, ACTION> 
         else if (actionTypeObject instanceof org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION) {
             setDistcp((org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION) actionTypeObject, destination);
         }
+        else if (actionTypeObject instanceof org.apache.oozie.fluentjob.api.generated.action.git.ACTION) {
+            setGit((org.apache.oozie.fluentjob.api.generated.action.git.ACTION) actionTypeObject, destination);
+        }
         else if (actionTypeObject instanceof org.apache.oozie.fluentjob.api.generated.action.hive.ACTION) {
             setHive((org.apache.oozie.fluentjob.api.generated.action.hive.ACTION) actionTypeObject, destination);
         }
@@ -234,6 +239,13 @@ public class ExplicitNodeConverter extends DozerConverter<ExplicitNode, ACTION> 
     private void setDistcp(final org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION source, final ACTION destination) {
         final JAXBElement<org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION> jaxbElement =
                 new org.apache.oozie.fluentjob.api.generated.action.distcp.ObjectFactory().createDistcp(source);
+
+        destination.setOther(jaxbElement);
+    }
+
+    private void setGit(final org.apache.oozie.fluentjob.api.generated.action.git.ACTION source, final ACTION destination) {
+        final JAXBElement<org.apache.oozie.fluentjob.api.generated.action.git.ACTION> jaxbElement =
+                new org.apache.oozie.fluentjob.api.generated.action.git.ObjectFactory().createGit(source);
 
         destination.setOther(jaxbElement);
     }
