@@ -51,7 +51,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * This class does not use a separate thread for anti-starvation check, instead, the check is performed on polling and
  * seeking operations. This check is performed, the most every 1/2 second.
+ *
+ * @deprecated this implementation will be removed in the future and AsyncCommandExecutor will be used.
  */
+@Deprecated
 public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.QueueElement<E>>
         implements BlockingQueue<PriorityDelayQueue.QueueElement<E>> {
 
@@ -65,6 +68,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
         private int priority;
         private long baseTime;
         boolean inQueue;
+        private long initialDelay;
 
         /**
          * Create an Element wrapper.
@@ -88,6 +92,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
             this.element = element;
             this.priority = priority;
             setDelay(delay, unit);
+            this.initialDelay = delay;
         }
 
         /**
@@ -97,6 +102,15 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
          */
         public XCallable<E> getElement() {
             return element;
+        }
+
+        /**
+         * Sets the priority of the element.
+         *
+         * @param priority the priority of the element
+         */
+        public void setPriority(int priority) {
+            this.priority = priority;
         }
 
         /**
@@ -116,6 +130,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
          */
         public void setDelay(long delay, TimeUnit unit) {
             baseTime = System.currentTimeMillis() + unit.toMillis(delay);
+            initialDelay = delay;
         }
 
         /**
@@ -127,6 +142,17 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
          */
         public long getDelay(TimeUnit unit) {
             return unit.convert(baseTime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        /**
+         * Returns the original delay of the element. As time goes on, this value remains static,
+         * as opposed to getDelay(), where the delay depends on how much time has passed since the
+         * creation.
+         *
+         * @return the initial delay of this element in milliseconds.
+         */
+        public long getInitialDelay() {
+            return initialDelay;
         }
 
         /**

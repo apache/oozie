@@ -504,6 +504,31 @@
     </property>
 
     <property>
+        <name>oozie.service.CallableQueueService.delayedcallable.threads</name>
+        <value>1</value>
+        <description>
+            The number of threads where delayed tasks are executed. Upon expiration, the tasks are immediately
+            inserted into the main queue to properly handle priorities. This means that no actual business logic
+            is executed in this thread pool, so under normal circumstances, this value can be set to a low number.
+
+            Note that this property is completely unrelated to oozie.service.SchedulerService.threads which
+            tells how many scheduled background tasks can run in parallel at the same time (like PurgeService,
+            StatusTransitService, etc).
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.CallableQueueService.queue.oldImpl</name>
+        <value>false</value>
+        <description>
+            If set to false, then CallableQueueService will use a more performant, less CPU-intensive
+            queuing mechanism to execute asynchronous tasks internally. The old implementation generates
+            noticeable CPU load even if Oozie is completely idle, especially when oozie.service.CallableQueueService.threads
+            set to a large number. The previous queuing mechanism is kept as a fallback option.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.CallableQueueService.callable.concurrency</name>
         <value>3</value>
         <description>

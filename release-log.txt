@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3160 PriorityDelayQueue put()/take() can cause significant CPU load due to busy waiting (pbacsko)
 OOZIE-2877 Git action (clayb, andras.piros via pbacsko, gezapeti)
 OOZIE-3061 Kill only those child jobs which are not already killed (matijhs via gezapeti, andras.piros)
 OOZIE-3155 [ui] Job DAG is not refreshed when a job is finished (asalamon74 via andras.piros)
