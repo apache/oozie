@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3317 amend [build] Fix false positive precommit reports (kmarton via andras.piros)
 OOZIE-3160 PriorityDelayQueue put()/take() can cause significant CPU load due to busy waiting (pbacsko)
 OOZIE-2877 Git action (clayb, andras.piros via pbacsko, gezapeti)
 OOZIE-3061 Kill only those child jobs which are not already killed (matijhs via gezapeti, andras.piros)

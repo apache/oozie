@@ -49,6 +49,7 @@ parseArgs() {
       ;;
     --tempdir=*)
       TEMPDIR=${i#*=}
+      TESTS_OUT="${TEMPDIR}/${TASKNAME}.out"
       ;;
     --reportdir=*)
       REPORTDIR=${i#*=}
@@ -97,10 +98,10 @@ run_tests() {
         -Dtest.timeout=7200 \
         -Dsurefire.rerunFailingTestsCount=1 \
         ${MAVEN_OPTS}"
-  mvn test -fae | tee "${TEMPDIR}/${TASKNAME}.out" >> "$STDOUT"
+  mvn test -fae | tee "${TESTS_OUT}" >> "$STDOUT"
   local exitCode=${PIPESTATUS[0]}
 
-  grep -b1 -e "Run .: PASS" "${TEMPDIR}/${TASKNAME}.out" | grep Test | cut -d':' -f2 \
+  grep -b1 -e "Run .: PASS" "${TESTS_OUT}" | grep Test | cut -d':' -f2 \
   | awk '{print $1}' > "${TEMPDIR}/${TASKNAME}.flakies.out"
 
   if [ "${PIPESTATUS[0]}" -eq "0" ]; then
@@ -149,12 +150,12 @@ print_flakies_full() {
 generate_report() {
     failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
     testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsRun=$(grep "Tests run:" "${TEMPDIR}/${TASKNAME}.out" | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsRun=$(grep "Tests run:" "${TESTS_OUT}" | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
     testsFailed=$(count_test_result_type failures)
     testsErrors=$(count_test_result_type errors)
     hasFailures=$((testsFailed + testsErrors))
     testsExitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
-    errors=$(grep -c '\[ERROR\]' "${REPORTDIR}"/${TASKNAME}.out)
+    errors=$(grep -c '\[ERROR\]' "${TESTS_OUT}")
 
     if [[ ${errors} -gt 0 && ${testsErrors} -eq 0 ]] ; then
         echo "{color:red}-1 ${TASKNAME}{color}"
