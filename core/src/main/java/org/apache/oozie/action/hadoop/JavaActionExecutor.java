@@ -977,7 +977,8 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    public void submitLauncher(FileSystem actionFs, final Context context, WorkflowAction action) throws ActionExecutorException {
+    public void submitLauncher(final FileSystem actionFs, final Context context, final WorkflowAction action)
+            throws ActionExecutorException {
         YarnClient yarnClient = null;
         try {
             Path appPathRoot = new Path(context.getWorkflow().getAppPath());
@@ -993,15 +994,13 @@ public class JavaActionExecutor extends ActionExecutor {
             // action job configuration
             Configuration actionConf = loadHadoopDefaultResources(context, actionXml);
             setupActionConf(actionConf, context, actionXml, appPathRoot);
-            addAppNameContext(action, context);
+            addAppNameContext(context, action);
             LOG.debug("Setting LibFilesArchives ");
             setLibFilesArchives(context, actionXml, appPathRoot, actionConf);
 
             String jobName = actionConf.get(HADOOP_JOB_NAME);
             if (jobName == null || jobName.isEmpty()) {
-                jobName = XLog.format("oozie:action:T={0}:W={1}:A={2}:ID={3}",
-                        getType(), context.getWorkflow().getAppName(),
-                        action.getName(), context.getWorkflow().getId());
+                jobName = getYarnApplicationName(context, action, "oozie:action");
                 actionConf.set(HADOOP_JOB_NAME, jobName);
             }
 
@@ -1067,8 +1066,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 YarnClientApplication newApp = yarnClient.createApplication();
                 ApplicationId appId = newApp.getNewApplicationResponse().getApplicationId();
                 ApplicationSubmissionContext appContext =
-                        createAppSubmissionContext(appId, launcherConf, context, actionConf, action.getName(),
-                                credentials, actionXml);
+                        createAppSubmissionContext(appId, launcherConf, context, actionConf, action, credentials, actionXml);
                 yarnClient.submitApplication(appContext);
 
                 launcherId = appId.toString();
@@ -1090,6 +1088,15 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
+    private String getYarnApplicationName(final Context context, final WorkflowAction action, final String prefix) {
+        return XLog.format("{0}:T={1}:W={2}:A={3}:ID={4}",
+                prefix,
+                getType(),
+                context.getWorkflow().getAppName(),
+                action.getName(),
+                context.getWorkflow().getId());
+    }
+
     private void removeHBaseSettingFromOozieDefaultResource(final Configuration jobConf) {
         final String[] propertySources = jobConf.getPropertySources(HbaseCredentials.HBASE_USE_DYNAMIC_JARS);
         if (propertySources != null && propertySources.length > 0 &&
@@ -1100,12 +1107,8 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    protected void addAppNameContext(WorkflowAction action, Context context) {
-        String oozieActionName = String.format("oozie:launcher:T=%s:W=%s:A=%s:ID=%s",
-                getType(),
-                context.getWorkflow().getAppName(),
-                action.getName(),
-                context.getWorkflow().getId());
+    private void addAppNameContext(final Context context, final WorkflowAction action) {
+        final String oozieActionName = getYarnApplicationName(context, action, "oozie:launcher");
         context.setVar(OOZIE_ACTION_NAME, oozieActionName);
     }
 
@@ -1128,7 +1131,7 @@ public class JavaActionExecutor extends ActionExecutor {
                                                                     final Configuration launcherJobConf,
                                                                     final Context actionContext,
                                                                     final Configuration actionConf,
-                                                                    final String actionName,
+                                                                    final WorkflowAction action,
                                                                     final Credentials credentials,
                                                                     final Element actionXml)
             throws IOException, HadoopAccessorException, URISyntaxException {
@@ -1139,7 +1142,7 @@ public class JavaActionExecutor extends ActionExecutor {
         setPriority(launcherJobConf, appContext);
         setQueue(launcherJobConf, appContext);
         appContext.setApplicationId(appId);
-        setApplicationName(actionContext, actionName, appContext);
+        setApplicationName(actionContext, action, appContext);
         appContext.setApplicationType("Oozie Launcher");
         setMaxAttempts(launcherJobConf, appContext);
 
@@ -1286,10 +1289,10 @@ public class JavaActionExecutor extends ActionExecutor {
         return oldJavaOpts;
     }
 
-    private void setApplicationName(Context context, String actionName, ApplicationSubmissionContext appContext) {
-        String jobName = XLog.format("oozie:launcher:T={0}:W={1}:A={2}:ID={3}", getType(),
-                context.getWorkflow().getAppName(), actionName,
-                context.getWorkflow().getId());
+    private void setApplicationName(final Context context,
+                                    final WorkflowAction action,
+                                    final ApplicationSubmissionContext appContext) {
+        final String jobName = getYarnApplicationName(context, action, "oozie:launcher");
         appContext.setApplicationName(jobName);
     }
 
@@ -1642,15 +1645,18 @@ public class JavaActionExecutor extends ActionExecutor {
             yarnClient = createYarnClient(context, jobConf);
             FinalApplicationStatus appStatus = null;
             try {
-                ApplicationReport appReport =
-                        yarnClient.getApplicationReport(ConverterUtils.toApplicationId(action.getExternalId()));
-                YarnApplicationState appState = appReport.getYarnApplicationState();
+                final String effectiveApplicationId = findYarnApplicationId(context, action);
+                final ApplicationId applicationId = ConverterUtils.toApplicationId(effectiveApplicationId);
+                final ApplicationReport appReport = yarnClient.getApplicationReport(applicationId);
+                final YarnApplicationState appState = appReport.getYarnApplicationState();
                 if (appState == YarnApplicationState.FAILED || appState == YarnApplicationState.FINISHED
                         || appState == YarnApplicationState.KILLED) {
                     appStatus = appReport.getFinalApplicationStatus();
                 }
-
-            } catch (Exception ye) {
+            } catch (final ActionExecutorException aae) {
+                LOG.warn("Foreseen Exception occurred while action execution; rethrowing ", aae);
+                throw aae;
+            } catch (final Exception ye) {
                 LOG.warn("Exception occurred while checking Launcher AM status; will try checking action data file instead ", ye);
                 // Fallback to action data file if we can't find the Launcher AM (maybe it got purged)
                 fallback = true;
@@ -1747,6 +1753,19 @@ public class JavaActionExecutor extends ActionExecutor {
                 IOUtils.closeQuietly(yarnClient);
             }
         }
+    }
+
+    /**
+     * For every {@link JavaActionExecutor} that is not {@link MapReduceActionExecutor}, the effective YARN application ID of the
+     * action is the one where {@link LauncherAM} is run, hence this default implementation.
+     * @param context the execution context
+     * @param action the workflow action
+     * @return a {@code String} that depicts the application ID of the launcher ApplicationMaster of this action
+     * @throws ActionExecutorException
+     */
+    protected String findYarnApplicationId(final Context context, final WorkflowAction action)
+            throws ActionExecutorException {
+        return action.getExternalId();
     }
 
     /**
@@ -1861,7 +1880,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
     }
 
-    private String getActionYarnTag(Context context, WorkflowAction action) {
+    protected String getActionYarnTag(Context context, WorkflowAction action) {
         return LauncherHelper.getActionYarnTag(context.getProtoActionConf(), context.getWorkflow().getParentId(), action);
     }
 

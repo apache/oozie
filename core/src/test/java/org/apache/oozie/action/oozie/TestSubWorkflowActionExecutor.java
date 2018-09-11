@@ -21,20 +21,14 @@ package org.apache.oozie.action.oozie;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
 import org.apache.oozie.action.hadoop.LauncherMainTester;
-import org.apache.oozie.action.hadoop.OozieJobInfo;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -45,22 +39,13 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.Writer;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
-    private static final int JOB_TIMEOUT = 100 * 1000;
 
     public void testType() {
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
@@ -506,7 +491,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             final OozieClient wfClient = LocalOozie.getClient();
             final String jobId = submitWorkflow(workflowUri, wfClient);
 
-            waitForSubWFtoStart(wfClient, jobId);
+            waitForWorkflowToStart(wfClient, jobId);
             WorkflowJob wf = wfClient.getJobInfo(jobId);
             // Suspending subworkflow
             new SuspendXCommand(wf.getActions().get(1).getExternalId()).call();
@@ -529,7 +514,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             final String jobId = submitWorkflow(workflowUri, wfClient);
             final Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
 
-            waitForSubWFtoStart(wfClient, jobId);
+            waitForWorkflowToStart(wfClient, jobId);
 
             final ApplicationId externalChildJobId = getChildMRJobApplicationId(conf);
             killWorkflow(jobId);
@@ -540,70 +525,11 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    private void killWorkflow(String jobId) throws CommandException {
-        new KillXCommand(jobId).call();
-    }
-
-    private ApplicationId getChildMRJobApplicationId(Configuration conf) throws IOException {
-        final List<ApplicationId> applicationIdList  = new ArrayList<>();
-        final Path inputDir = new Path(getFsTestCaseDir(), "input");
-        final Path wfIDFile = new Path(inputDir, LauncherMainTester.JOB_ID_FILE_NAME);
-        final FileSystem fs = FileSystem.get(conf);
-
-        // wait until we have the running child MR job's ID from HDFS
-        waitFor(JOB_TIMEOUT, new ApplicationIdExistsPredicate(fs, wfIDFile));
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(wfIDFile)))) {
-            String line = reader.readLine();
-            JobID.forName(line);
-            String jobID = line;
-            String appID = jobID.replace("job", "application");
-            ApplicationId id = ConverterUtils.toApplicationId(appID);
-            applicationIdList.add(id);
-        }
-
-        assertTrue("Application ID should've been found. No external Child ID was found in " + wfIDFile.toString(),
-                applicationIdList.size() == 1);
-        return applicationIdList.get(0);
-    }
-
-    private void waitForSubWFtoStart(OozieClient wfClient, String jobId) {
-        waitFor(JOB_TIMEOUT, new SubWorkflowActionRunningPredicate(wfClient,jobId));
-    }
-
-    private String submitWorkflow(String workflowUri, OozieClient wfClient) throws OozieClientException {
-        Properties conf = wfClient.createConfiguration();
-        conf.setProperty(OozieClient.APP_PATH, workflowUri);
-        conf.setProperty(OozieClient.USER_NAME, getTestUser());
-        conf.setProperty("appName", "var-app-name");
-        final String jobId = wfClient.submit(conf);
-        wfClient.start(jobId);
-        return jobId;
-    }
-
-    private void writeToFile(String appXml, String appPath) throws IOException {
-        // TODO Auto-generated method stub
-        File wf = new File(URI.create(appPath));
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new FileWriter(wf));
-            out.println(appXml);
-        }
-        catch (IOException iex) {
-            throw iex;
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
-    }
-
     public String getLazyWorkflow(boolean launchMRAction) {
         return  "<workflow-app xmlns='uri:oozie:workflow:0.4' name='app'>" +
                 "<start to='java' />" +
                 "       <action name='java'>" +
-                getAction(launchMRAction)
+                getJavaAction(launchMRAction)
                 + "<ok to='end' />"
                 + "<error to='fail' />"
                 + "</action>"
@@ -612,26 +538,6 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 + "</kill>"
                 + "<end name='end' />"
                 + "</workflow-app>";
-    }
-
-    private String getAction(boolean launchMRAction) {
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
-        String javaActionXml = "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<main-class>" + JavaSleepAction.class.getName()+ "</main-class>" +
-                "</java>";
-        String javaWithMRActionXml = "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<main-class>" + LauncherMainTester.class.getName()+ "</main-class>" +
-                "<arg>javamapreduce</arg>" +
-                "<arg>"+inputDir.toString()+"</arg>" +
-                "<arg>"+outputDir.toString()+"</arg>" +
-                "</java>";
-        String actionXml = launchMRAction ? javaWithMRActionXml : javaActionXml;
-        return actionXml;
     }
 
     public void testSubWorkflowRerun() throws Exception {
@@ -646,7 +552,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             final String jobId = wfClient.submit(conf);
             wfClient.start(jobId);
 
-            waitForSubWFtoStart(wfClient, jobId);
+            waitForWorkflowToStart(wfClient, jobId);
 
             String subWorkflowExternalId = wfClient.getJobInfo(jobId).getActions().get(1).getExternalId();
             wfClient.kill(wfClient.getJobInfo(jobId).getActions().get(1).getExternalId());
@@ -924,39 +830,5 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 + "</kill>"
                 + "<end name='end' />"
                 + "</workflow-app>";
-    }
-
-    private static class ApplicationIdExistsPredicate implements Predicate {
-
-        private final FileSystem fs;
-        private final Path wfIDFile;
-
-        public ApplicationIdExistsPredicate(FileSystem fs, Path wfIDFile) {
-            this.fs = fs;
-            this.wfIDFile = wfIDFile;
-        }
-
-        @Override
-        public boolean evaluate() throws Exception {
-            return fs.exists(wfIDFile) && fs.getFileStatus(wfIDFile).getLen() > 0;
-        }
-    }
-
-    private static class SubWorkflowActionRunningPredicate implements Predicate {
-        private final OozieClient wfClient;
-        private final String jobId;
-
-        public SubWorkflowActionRunningPredicate(OozieClient wfClient, String jobId) {
-            this.wfClient = wfClient;
-            this.jobId = jobId;
-        }
-
-        @Override
-        public boolean evaluate() throws Exception {
-            boolean isSubWfRunning = wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING;
-            boolean isSubWfActionRunning = wfClient.getJobInfo(jobId)
-                    .getActions().get(1).getStatus() == WorkflowAction.Status.RUNNING;
-            return isSubWfRunning && isSubWfActionRunning;
-        }
     }
 }

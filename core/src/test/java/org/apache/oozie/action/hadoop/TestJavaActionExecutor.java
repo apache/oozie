@@ -2616,11 +2616,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         waitUntilYarnAppDoneAndAssertSuccess(applicationId);
     }
 
-    private HadoopAccessorService getHadoopAccessorService() {
-        return Services.get().get(HadoopAccessorService.class);
-    }
-
-
     public void testChildKill() throws Exception {
         final JobConf clusterConf = createJobConf();
         FileSystem fileSystem = FileSystem.get(clusterConf);

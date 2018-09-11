@@ -56,9 +56,11 @@ import org.apache.hadoop.streaming.StreamJob;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
@@ -67,6 +69,8 @@ import org.apache.oozie.command.wf.StartXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
@@ -74,10 +78,12 @@ import org.apache.oozie.util.ClassUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
+    private static final XLog LOG = XLog.getLog(TestMapReduceActionExecutor.class);
 
     private static final String PIPES = "pipes";
     private static final String MAP_REDUCE = "map-reduce";
@@ -85,7 +91,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
-        setSystemProperty("oozie.service.ActionService.executor.classes", MapReduceActionExecutor.class.getName());
+        setSystemProperty("oozie.service.ActionService.executor.classes",
+                String.join(",", MapReduceActionExecutor.class.getName(), JavaActionExecutor.class.getName()));
         setSystemProperty("oozie.credentials.credentialclasses", "cred=org.apache.oozie.action.hadoop.CredentialForTest");
     }
 
@@ -803,10 +810,6 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         w.close();
     }
 
-    private HadoopAccessorService getHadoopAccessorService() {
-        return Services.get().get(HadoopAccessorService.class);
-    }
-
     public void testMapReduceWithUberJarEnabled() throws Exception {
         Services serv = Services.get();
         boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
@@ -1306,4 +1309,162 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         });
     }
 
+    public void testFailingMapReduceJobCausesOozieLauncherAMToFail() throws Exception {
+        final String workflowUri = createWorkflowWithMapReduceAction();
+
+        startWorkflowAndFailChildMRJob(workflowUri);
+    }
+
+    private String createWorkflowWithMapReduceAction() throws IOException {
+        final String workflowUri = getTestCaseFileUri("workflow.xml");
+        final String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"workflow\">" +
+                "   <start to=\"map-reduce\"/>" +
+                "   <action name=\"map-reduce\">" +
+                "       <map-reduce>" +
+                "           <resource-manager>" + getJobTrackerUri() + "</resource-manager>" +
+                "           <name-node>" + getNameNodeUri() + "</name-node>" +
+                "           <configuration>\n" +
+                "               <property>\n" +
+                "                   <name>mapred.job.queue.name</name>\n" +
+                "                   <value>default</value>\n" +
+                "               </property>\n" +
+                "               <property>\n" +
+                "                   <name>mapred.mapper.class</name>\n" +
+                "                   <value>org.apache.oozie.action.hadoop.SleepMapperReducerForTest</value>\n" +
+                "               </property>\n" +
+                "               <property>\n" +
+                "                   <name>mapred.reducer.class</name>\n" +
+                "                   <value>org.apache.oozie.action.hadoop.SleepMapperReducerForTest</value>\n" +
+                "               </property>\n" +
+                "                <property>\n" +
+                "                    <name>mapred.input.dir</name>\n" +
+                "                    <value>" + getFsTestCaseDir() + "/input</value>\n" +
+                "                </property>\n" +
+                "                <property>\n" +
+                "                    <name>mapred.output.dir</name>\n" +
+                "                    <value>" + getFsTestCaseDir() + "/output</value>\n" +
+                "                </property>\n" +
+                "           </configuration>\n" +
+                "       </map-reduce>" +
+                "       <ok to=\"end\"/>" +
+                "       <error to=\"fail\"/>" +
+                "   </action>" +
+                "   <kill name=\"fail\">" +
+                "       <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                "   </kill>" +
+                "   <end name=\"end\"/>" +
+                "</workflow-app>";
+
+        writeToFile(appXml, workflowUri);
+
+        return workflowUri;
+    }
+
+    private void startWorkflowAndFailChildMRJob(final String workflowUri) throws Exception {
+        try {
+            LocalOozie.start();
+            final OozieClient wfClient = LocalOozie.getClient();
+            final String workflowId = submitWorkflow(workflowUri, wfClient);
+            final Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
+
+            final Path inputFolder = createInputFolder(conf);
+
+            waitForWorkflowToStart(wfClient, workflowId);
+            waitForChildYarnApplication(getHadoopAccessorService().createYarnClient(getTestUser(), conf), workflowId);
+            assertAndWriteNextMRJobId(workflowId, conf, inputFolder);
+
+            final ApplicationId externalChildJobId = getChildMRJobApplicationId(conf);
+
+            killYarnApplication(conf, externalChildJobId);
+            waitUntilYarnAppKilledAndAssertSuccess(externalChildJobId.toString());
+            waitForWorkflowToKill(wfClient, workflowId);
+        } finally {
+            LocalOozie.stop();
+        }
+    }
+
+    /**
+     * Get all YARN application IDs, select the one of type {@code MAPREDUCE} that is relevant to {@code workflowId},
+     * and write to {@code inputFolder/jobID.txt}.
+     * <p>
+     * Simulating functional parts of {@link LauncherMain#writeExternalChildIDs(String, Pattern[], String)} in order
+     * {@link MapReduceActionExecutor#check(ActionExecutor.Context, WorkflowAction)} can find it later on the call chain.
+     * <p>
+     * We need to write out an own sequence file to {@link LauncherMainTester#JOB_ID_FILE_NAME} in order
+     * {@link ActionExecutorTestCase#getChildMRJobApplicationId(Configuration)} can find it. We unfortunately cannot rely on the
+     * original sequence file written by {@link LauncherMain#writeExternalChildIDs(String, Pattern[], String)} because we don't own
+     * a reference to the original {@link ActionExecutor.Context} as in {@link MapReduceActionExecutor}.
+     * @param workflowId the workflow ID
+     * @param conf the {@link Configuration} used for Hadoop Common / YARN API calls
+     * @param inputFolder where to write the output text file
+     * @throws IOException when the output text file cannot be written
+     * @throws YarnException when the list of YARN applications cannot be queried
+     * @throws HadoopAccessorException when {@link YarnClient} cannot be created
+     */
+    private void assertAndWriteNextMRJobId(final String workflowId, final Configuration conf, final Path inputFolder)
+            throws IOException, YarnException, HadoopAccessorException {
+        final Path wfIDFile = new Path(inputFolder, LauncherMainTester.JOB_ID_FILE_NAME);
+        try (final FileSystem fs = FileSystem.get(conf);
+             final Writer w = new OutputStreamWriter(fs.create(wfIDFile))) {
+            final List<ApplicationReport> allApplications =
+                    getHadoopAccessorService().createYarnClient(getTestUser(), conf).getApplications();
+
+            assertTrue("YARN applications number mismatch", allApplications.size() >= 2);
+
+            ApplicationReport mapReduce = null;
+            for (final ApplicationReport candidate : allApplications) {
+                if (candidate.getApplicationType().equals(MapReduceActionExecutor.YARN_APPLICATION_TYPE_MAPREDUCE)
+                        && candidate.getName().contains(workflowId)) {
+                    mapReduce = candidate;
+                }
+            }
+            assertNotNull("MAPREDUCE YARN application not found", mapReduce);
+
+            final String applicationId = mapReduce.getApplicationId().toString();
+            final String nextMRJobId = applicationId.replace("application", "job");
+
+            LOG.debug("Writing next MapReduce job ID: {0}", nextMRJobId);
+
+            w.write(nextMRJobId);
+        }
+    }
+
+    private Path createInputFolder(final Configuration conf) throws IOException {
+        final Path inputDir = new Path(getFsTestCaseDir(), "input");
+        try (final FileSystem fs = FileSystem.get(conf)) {
+             fs.mkdirs(inputDir);
+        }
+        return inputDir;
+    }
+
+    private void waitForChildYarnApplication(final YarnClient yarnClient, final String workflowId) {
+        waitFor(JOB_TIMEOUT, new ChildYarnApplicationPresentPredicate(yarnClient, workflowId));
+    }
+
+    private class ChildYarnApplicationPresentPredicate implements Predicate {
+        private final YarnClient yarnClient;
+        private final String workflowId;
+
+        ChildYarnApplicationPresentPredicate(final YarnClient yarnClient, final String workflowId) {
+            this.yarnClient = yarnClient;
+            this.workflowId = workflowId;
+        }
+
+        @Override
+        public boolean evaluate() throws Exception {
+            if (yarnClient.getApplications().isEmpty()) {
+                return false;
+            }
+
+            for (final ApplicationReport applicationReport : yarnClient.getApplications()) {
+                final String name = applicationReport.getName();
+                final String type = applicationReport.getApplicationType();
+                if (type.equals(MapReduceActionExecutor.YARN_APPLICATION_TYPE_MAPREDUCE) && name.contains(workflowId)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 }

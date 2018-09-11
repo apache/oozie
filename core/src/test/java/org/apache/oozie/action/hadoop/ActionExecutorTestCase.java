@@ -21,15 +21,25 @@ package org.apache.oozie.action.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
+import org.apache.oozie.action.oozie.JavaSleepAction;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ELService;
+import org.apache.oozie.service.HadoopAccessorException;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -47,18 +57,27 @@ import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 public abstract class ActionExecutorTestCase extends XHCatTestCase {
+    protected static final int JOB_TIMEOUT = 100_000;
 
     @Override
     protected void setUp() throws Exception {
@@ -325,4 +344,155 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
         writer.close();
     }
 
+    protected void writeToFile(final String appXml, final String appPath) throws IOException {
+        final File wf = new File(URI.create(appPath));
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new FileWriter(wf));
+            out.println(appXml);
+        }
+        catch (final IOException iex) {
+            throw iex;
+        }
+        finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
+
+    protected String submitWorkflow(final String workflowUri, final OozieClient wfClient) throws OozieClientException {
+        final Properties conf = wfClient.createConfiguration();
+        conf.setProperty(OozieClient.APP_PATH, workflowUri);
+        conf.setProperty(OozieClient.USER_NAME, getTestUser());
+        conf.setProperty("appName", "var-app-name");
+
+        final String jobId = wfClient.submit(conf);
+        wfClient.start(jobId);
+
+        return jobId;
+    }
+
+    protected ApplicationId getChildMRJobApplicationId(final Configuration conf) throws IOException {
+        final List<ApplicationId> applicationIdList  = new ArrayList<>();
+        final Path inputDir = new Path(getFsTestCaseDir(), "input");
+        final Path wfIDFile = new Path(inputDir, LauncherMainTester.JOB_ID_FILE_NAME);
+        final FileSystem fs = FileSystem.get(conf);
+
+        // wait until we have the running child MR job's ID from HDFS
+        waitFor(JOB_TIMEOUT, new ApplicationIdExistsPredicate(fs, wfIDFile));
+        if (!fs.exists(wfIDFile) || !fs.isFile(wfIDFile)) {
+            throw new IOException("Workflow ID file does not exist: " + wfIDFile.toString());
+        }
+
+        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(wfIDFile)))) {
+            final String line = reader.readLine();
+            JobID.forName(line);
+            final String jobID = line;
+            final String appID = jobID.replace("job", "application");
+            final ApplicationId id = ConverterUtils.toApplicationId(appID);
+            applicationIdList.add(id);
+        }
+
+        assertTrue("Application ID should've been found. No external Child ID was found in " + wfIDFile.toString(),
+                applicationIdList.size() == 1);
+
+        return applicationIdList.get(0);
+    }
+
+    private static class ApplicationIdExistsPredicate implements Predicate {
+        private final FileSystem fs;
+        private final Path wfIDFile;
+
+        ApplicationIdExistsPredicate(final FileSystem fs, final Path wfIDFile) {
+            this.fs = fs;
+            this.wfIDFile = wfIDFile;
+        }
+
+        @Override
+        public boolean evaluate() throws Exception {
+            return fs.exists(wfIDFile) && fs.getFileStatus(wfIDFile).getLen() > 0;
+        }
+    }
+
+    protected static class WorkflowActionRunningPredicate extends WorkflowActionStatusPredicate {
+        WorkflowActionRunningPredicate(final OozieClient wfClient, final String jobId) {
+            super(wfClient, jobId, WorkflowJob.Status.RUNNING, WorkflowAction.Status.RUNNING);
+        }
+    }
+
+    protected static class WorkflowActionKilledPredicate extends WorkflowActionStatusPredicate {
+        WorkflowActionKilledPredicate(final OozieClient wfClient, final String jobId) {
+            super(wfClient, jobId, WorkflowJob.Status.KILLED, WorkflowAction.Status.KILLED);
+        }
+    }
+
+    private static abstract class WorkflowActionStatusPredicate implements Predicate {
+        private final OozieClient wfClient;
+        private final String jobId;
+        private final WorkflowJob.Status expectedWorkflowJobStatus;
+        private final WorkflowAction.Status expectedWorkflowActionStatus;
+
+        WorkflowActionStatusPredicate(final OozieClient wfClient,
+                                      final String jobId,
+                                      final WorkflowJob.Status expectedWorkflowJobStatus,
+                                      final WorkflowAction.Status expectedWorkflowActionStatus) {
+            this.wfClient = wfClient;
+            this.jobId = jobId;
+            this.expectedWorkflowJobStatus = expectedWorkflowJobStatus;
+            this.expectedWorkflowActionStatus = expectedWorkflowActionStatus;
+        }
+
+        @Override
+        public boolean evaluate() throws Exception {
+            final WorkflowJob.Status actualWorkflowJobStatus = wfClient.getJobInfo(jobId).getStatus();
+            final boolean isWorkflowInState = actualWorkflowJobStatus.equals(expectedWorkflowJobStatus);
+
+            final WorkflowAction.Status actualWorkflowActionStatus = wfClient.getJobInfo(jobId).getActions().get(1).getStatus();
+            final boolean isWorkflowActionInState = actualWorkflowActionStatus.equals(expectedWorkflowActionStatus);
+
+            return isWorkflowInState && isWorkflowActionInState;
+        }
+    }
+
+    protected void killWorkflow(final String jobId) throws CommandException {
+        new KillXCommand(jobId).call();
+    }
+
+    protected void waitForWorkflowToStart(final OozieClient wfClient, final String jobId) {
+        waitFor(JOB_TIMEOUT, new WorkflowActionRunningPredicate(wfClient,jobId));
+    }
+
+    protected void waitForWorkflowToKill(final OozieClient wfClient, final String jobId) {
+        waitFor(JOB_TIMEOUT, new WorkflowActionKilledPredicate(wfClient,jobId));
+    }
+
+    protected String getJavaAction(final boolean launchMRAction) {
+        final Path inputDir = new Path(getFsTestCaseDir(), "input");
+        final Path outputDir = new Path(getFsTestCaseDir(), "output");
+        final String javaActionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + JavaSleepAction.class.getName()+ "</main-class>" +
+                "</java>";
+        final String javaWithMRActionXml = "<java>" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<main-class>" + LauncherMainTester.class.getName()+ "</main-class>" +
+                "<arg>javamapreduce</arg>" +
+                "<arg>"+inputDir.toString()+"</arg>" +
+                "<arg>"+outputDir.toString()+"</arg>" +
+                "</java>";
+
+        return launchMRAction ? javaWithMRActionXml : javaActionXml;
+    }
+
+    void killYarnApplication(final Configuration configuration, final ApplicationId yarnApplicationId)
+            throws HadoopAccessorException, IOException, YarnException {
+        getHadoopAccessorService().createYarnClient(getTestUser(), configuration).killApplication(yarnApplicationId);
+    }
+
+    HadoopAccessorService getHadoopAccessorService() {
+        return Services.get().get(HadoopAccessorService.class);
+    }
 }

@@ -199,37 +199,9 @@ public abstract class LauncherMain {
 
     public static Set<ApplicationId> getChildYarnJobs(Configuration actionConf, ApplicationsRequestScope scope,
                                                       long startTime) {
-        Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
-        String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
-        if (tag == null) {
-            System.out.print("Could not find YARN tags property " + CHILD_MAPREDUCE_JOB_TAGS);
-            return childYarnJobs;
-        }
-
-        System.out.println("tag id : " + tag);
-        GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
-        gar.setScope(scope);
-        gar.setApplicationTags(Collections.singleton(tag));
-        long endTime = System.currentTimeMillis();
-        if (startTime > endTime) {
-            System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
-                    "Attempting to work around...");
-            // We don't know which one is wrong (relative to the RM), so to be safe, let's assume they're both wrong and add an
-            // offset in both directions
-            long diff = 2 * (startTime - endTime);
-            startTime = startTime - diff;
-            endTime = endTime + diff;
-        }
-        gar.setStartRange(startTime, endTime);
-        try {
-            ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
-            GetApplicationsResponse apps = proxy.getApplications(gar);
-            List<ApplicationReport> appsList = apps.getApplicationList();
-            for(ApplicationReport appReport : appsList) {
-                childYarnJobs.add(appReport.getApplicationId());
-            }
-        } catch (YarnException | IOException ioe) {
-            throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+        final Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+        for (final ApplicationReport applicationReport : getChildYarnApplications(actionConf, scope, startTime)) {
+            childYarnJobs.add(applicationReport.getApplicationId());
         }
 
         if (childYarnJobs.isEmpty()) {
@@ -252,6 +224,39 @@ public abstract class LauncherMain {
             }
         }
         return getChildYarnJobs(actionConf, scope, startTime);
+    }
+
+    public static List<ApplicationReport> getChildYarnApplications(final Configuration actionConf,
+                                                                   final ApplicationsRequestScope scope,
+                                                                   long startTime) {
+        final String tag = actionConf.get(CHILD_MAPREDUCE_JOB_TAGS);
+        if (tag == null) {
+            System.out.print("Could not find YARN tags property " + CHILD_MAPREDUCE_JOB_TAGS);
+            return Collections.emptyList();
+        }
+
+        System.out.println("tag id : " + tag);
+        final GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+        gar.setScope(scope);
+        gar.setApplicationTags(Collections.singleton(tag));
+        long endTime = System.currentTimeMillis();
+        if (startTime > endTime) {
+            System.out.println("WARNING: Clock skew between the Oozie server host and this host detected.  Please fix this.  " +
+                    "Attempting to work around...");
+            // We don't know which one is wrong (relative to the RM), so to be safe, let's assume they're both wrong and add an
+            // offset in both directions
+            final long diff = 2 * (startTime - endTime);
+            startTime = startTime - diff;
+            endTime = endTime + diff;
+        }
+        gar.setStartRange(startTime, endTime);
+        try {
+            final ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(actionConf, ApplicationClientProtocol.class);
+            final GetApplicationsResponse apps = proxy.getApplications(gar);
+            return apps.getApplicationList();
+        } catch (final YarnException | IOException e) {
+            throw new RuntimeException("Exception occurred while finding child jobs", e);
+        }
     }
 
     public static void killChildYarnJobs(Configuration actionConf) {

@@ -20,11 +20,22 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import com.google.common.base.Charsets;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -34,14 +45,21 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.TypeConverter;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.Namespace;
+
+import static org.apache.oozie.action.hadoop.LauncherMain.CHILD_MAPREDUCE_JOB_TAGS;
 
 public class MapReduceActionExecutor extends JavaActionExecutor {
 
@@ -51,6 +69,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
     private static final String STREAMING_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.StreamingMain";
     public static final String JOB_END_NOTIFICATION_URL = "job.end.notification.url";
     private static final String MAPREDUCE_JOB_NAME = "mapreduce.job.name";
+    static final String YARN_APPLICATION_TYPE_MAPREDUCE = "MAPREDUCE";
     private XLog log = XLog.getLog(getClass());
 
     public MapReduceActionExecutor() {
@@ -341,33 +360,35 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         Map<String, String> actionData;
         Configuration jobConf;
 
+        // Need to emit jobConf and actionData for later usage
         try {
-            FileSystem actionFs = context.getAppFileSystem();
-            Element actionXml = XmlUtils.parseXml(action.getConf());
+            final FileSystem actionFs = context.getAppFileSystem();
+            final Element actionXml = XmlUtils.parseXml(action.getConf());
             jobConf = createBaseHadoopConf(context, actionXml);
-            Path actionDir = context.getActionDir();
+            final Path actionDir = context.getActionDir();
             actionData = LauncherHelper.getActionData(actionFs, actionDir, jobConf);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOG.warn("Exception in check(). Message[{0}]", e.getMessage(), e);
             throw convertException(e);
         }
 
-        final String newId = actionData.get(LauncherAMUtils.ACTION_DATA_NEW_ID);
+        final String newJobId = findNewHadoopJobId(context, action);
 
         // check the Hadoop job if newID is defined (which should be the case here) - otherwise perform the normal check()
-        if (newId != null) {
+        if (newJobId != null) {
             boolean jobCompleted;
             JobClient jobClient = null;
             boolean exception = false;
 
             try {
                 jobClient = createJobClient(context, new JobConf(jobConf));
-                RunningJob runningJob = jobClient.getJob(JobID.forName(newId));
+                final JobID jobid = JobID.forName(newJobId);
+                final RunningJob runningJob = jobClient.getJob(jobid);
 
                 if (runningJob == null) {
                     context.setExternalStatus(FAILED);
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA017",
-                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newId,
+                            "Unknown hadoop job [{0}] associated with action [{1}].  Failing this action!", newJobId,
                             action.getId());
                 }
 
@@ -396,7 +417,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                 super.check(context, action);
             } else {
                 context.setExternalStatus(RUNNING);
-                String externalAppId = TypeConverter.toYarn(JobID.forName(newId)).getAppId().toString();
+                final String externalAppId = TypeConverter.toYarn(JobID.forName(newJobId)).getAppId().toString();
                 context.setExternalChildIDs(externalAppId);
             }
         } else {
@@ -409,4 +430,254 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         injectCallback(context, actionConf);
     }
 
+    private String findNewHadoopJobId(final Context context, final WorkflowAction action) throws ActionExecutorException {
+        try {
+            final Configuration jobConf = createJobConfFromActionConf(context, action);
+
+            return new HadoopJobIdFinder(jobConf, context).find();
+        } catch (final HadoopAccessorException | IOException | JDOMException | URISyntaxException | InterruptedException |
+                NoSuchAlgorithmException e) {
+            LOG.warn("Exception while trying to find new Hadoop job id(). Message[{0}]", e.getMessage(), e);
+            throw convertException(e);
+        }
+    }
+
+    private Configuration createJobConfFromActionConf(final Context context, final WorkflowAction action)
+            throws JDOMException, NoSuchAlgorithmException {
+        final Element actionXml = XmlUtils.parseXml(action.getConf());
+        final Configuration jobConf = createBaseHadoopConf(context, actionXml);
+
+        final String launcherTag = getActionYarnTag(context, action);
+        jobConf.set(CHILD_MAPREDUCE_JOB_TAGS, LauncherHelper.getTag(launcherTag));
+
+        return jobConf;
+    }
+
+    /**
+     * Find YARN application ID only for {@link MapReduceActionExecutor} delegating to {@link YarnApplicationIdFinder}.
+     * @param context the execution context
+     * @param action the workflow action
+     * @return the YARN application ID as a {@code String}
+     * @throws ActionExecutorException when the YARN application ID could not be found
+     */
+    @Override
+    protected String findYarnApplicationId(final Context context, final WorkflowAction action) throws ActionExecutorException {
+        try {
+            final Configuration jobConf = createJobConfFromActionConf(context, action);
+            final HadoopJobIdFinder hadoopJobIdFinder = new HadoopJobIdFinder(jobConf, context);
+
+            return new YarnApplicationIdFinder(hadoopJobIdFinder,
+                    new YarnApplicationReportReader(jobConf), (WorkflowActionBean) action).find();
+        }
+        catch (final  IOException | HadoopAccessorException | JDOMException | InterruptedException | URISyntaxException |
+                NoSuchAlgorithmException e) {
+            LOG.warn("Exception while finding YARN application id. Message[{0}]", e.getMessage(), e);
+            throw convertException(e);
+        }
+    }
+
+    /**
+     * Finds a Hadoop job ID based on {@code action-data.seq} file stored on HDFS by {@link MapReduceMain}.
+     */
+    @VisibleForTesting
+    static class HadoopJobIdFinder {
+        private final Configuration jobConf;
+        private final Context executorContext;
+
+        HadoopJobIdFinder(final Configuration jobConf, final Context executorContext) {
+            this.jobConf = jobConf;
+            this.executorContext = executorContext;
+        }
+
+        String find() throws HadoopAccessorException, IOException, URISyntaxException, InterruptedException {
+            final FileSystem actionFs = executorContext.getAppFileSystem();
+            final Path actionDir = executorContext.getActionDir();
+            final Map<String, String> actionData = LauncherHelper.getActionData(actionFs, actionDir, jobConf);
+
+            return actionData.get(LauncherAMUtils.ACTION_DATA_NEW_ID);
+        }
+    }
+
+    /**
+     * Find YARN application ID in three stages:
+     * <ul>
+     *     <li>based on {@code action-data.seq} written by {@link MapReduceMain}, if already present. If present and is not the
+     *     Oozie Launcher's application ID ({@link WorkflowAction#getExternalId()}), gets used. Else, fall back to following:</li>
+     *     <li>if not found, look up the appropriate YARN child ID</li>
+     *     <li>if an appropriate YARN application ID is not found, go with Oozie Launcher's application ID
+     *     ({@link WorkflowAction#getExternalId()})</li>
+     * </ul>
+     */
+    @VisibleForTesting
+    static class YarnApplicationIdFinder {
+        private static final XLog LOG = XLog.getLog(YarnApplicationIdFinder.class);
+
+        private final HadoopJobIdFinder hadoopJobIdFinder;
+        private final YarnApplicationReportReader reader;
+        private final WorkflowActionBean workflowActionBean;
+
+        YarnApplicationIdFinder(final HadoopJobIdFinder hadoopJobIdFinder,
+                                final YarnApplicationReportReader reader,
+                                final WorkflowActionBean workflowActionBean) {
+            this.hadoopJobIdFinder = hadoopJobIdFinder;
+            this.reader = reader;
+            this.workflowActionBean = workflowActionBean;
+        }
+
+        String find() throws IOException, HadoopAccessorException, URISyntaxException, InterruptedException {
+            final String newJobId = hadoopJobIdFinder.find();
+            if (Strings.isNullOrEmpty(newJobId) && !isHadoopJobId(newJobId)) {
+                LOG.trace("Is not a Hadoop Job Id, falling back.");
+                return fallbackToYarnChildOrExternalId();
+            }
+
+            final String effectiveApplicationId;
+            final String newApplicationId = TypeConverter.toYarn(JobID.forName(newJobId)).getAppId().toString();
+
+            if (workflowActionBean.getExternalId().equals(newApplicationId) || newApplicationId == null) {
+                LOG.trace("New YARN application ID {0} is empty or is the same as {1}, falling back.",
+                        newApplicationId, workflowActionBean.getExternalId());
+                effectiveApplicationId = fallbackToYarnChildOrExternalId();
+            }
+            else {
+                LOG.trace("New YARN application ID {0} is different, using it.", newApplicationId);
+                effectiveApplicationId = newApplicationId;
+            }
+
+            return effectiveApplicationId;
+        }
+
+        /**
+         * When a Hadoop could not be found, fall back finding the YARN child application ID, or the workflow's {@code externalId}:
+         * <ul>
+         *     <li>look for YARN children of the actual {@code WorkflowActionBean}</li>
+         *     <li>filter for type {@code MAPREDUCE}. Note that those will be the YARN application children of the original
+         *     {@code Oozie Launcher} type. Filter also for the ones not in YARN applications' terminal states. What remains is the
+         *     one we call YARN child ID</li>
+         *     <li>if not found, go with {@link WorkflowActionBean#externalId}</li>
+         *     <li>if the found one is not newer than the one already stored, go with {@link WorkflowActionBean#externalId}</li>
+         *     <li>if found and there is no {@link WorkflowActionBean#externalId}, go with the YARN child ID</li>
+         *     <li>else, go with the YARN child ID</li>
+         * </ul>
+         * @return the YARN child application's ID, or the workflow action's external ID
+         */
+        private String fallbackToYarnChildOrExternalId() {
+            final List<ApplicationReport> childYarnApplications = reader.read();
+            childYarnApplications.removeIf(new Predicate<ApplicationReport>() {
+                @Override
+                public boolean test(ApplicationReport applicationReport) {
+                    return !applicationReport.getApplicationType().equals(YARN_APPLICATION_TYPE_MAPREDUCE);
+                }
+            });
+
+            if (childYarnApplications.isEmpty()) {
+                LOG.trace("No child YARN applications present, returning {0} instead", workflowActionBean.getExternalId());
+                return workflowActionBean.getExternalId();
+            }
+
+            final String yarnChildId = getLastYarnId(childYarnApplications);
+
+            if (Strings.isNullOrEmpty(yarnChildId)) {
+                LOG.trace("yarnChildId is empty, returning {0} instead", workflowActionBean.getExternalId());
+                return workflowActionBean.getExternalId();
+            }
+
+            if (Strings.isNullOrEmpty(workflowActionBean.getExternalId())) {
+                LOG.trace("workflowActionBean.externalId is empty, returning {0} instead", yarnChildId);
+                return yarnChildId;
+            }
+
+            if (new YarnApplicationIdComparator().compare(yarnChildId, workflowActionBean.getExternalId()) > 0) {
+                LOG.trace("yarnChildId is newer, returning {0}", yarnChildId);
+                return yarnChildId;
+            }
+
+            LOG.trace("yarnChildId is not newer, returning {0}", workflowActionBean.getExternalId());
+            return workflowActionBean.getExternalId();
+        }
+
+        /**
+         * Get the biggest YARN application ID given {@link YarnApplicationIdComparator}.
+         * @param yarnApplications the YARN application reports
+         * @return the biggest {@link ApplicationReport#getApplicationId()#toString()}
+         */
+        @VisibleForTesting
+        protected String getLastYarnId(final List<ApplicationReport> yarnApplications) {
+            Preconditions.checkNotNull(yarnApplications, "YARN application list should be filled");
+            Preconditions.checkArgument(!yarnApplications.isEmpty(), "no YARN applications in the list");
+
+            final Iterable<String> unorderedApplicationIds =
+                    Iterables.transform(yarnApplications, new Function<ApplicationReport, String>() {
+                        @Override
+                        public String apply(final ApplicationReport input) {
+                            Preconditions.checkNotNull(input, "YARN application should be filled");
+                            return input.getApplicationId().toString();
+                        }
+                    });
+
+            return Ordering.from(new YarnApplicationIdComparator()).max(unorderedApplicationIds);
+        }
+
+        private boolean isHadoopJobId(final String jobIdCandidate) {
+            try {
+                return JobID.forName(jobIdCandidate) != null;
+            } catch (final IllegalArgumentException e) {
+                LOG.warn("Job ID candidate is not a Hadoop Job ID.", e);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Compares two YARN application IDs in the sense:
+     * <ul>
+     *     <li>originating from different cluster timestamps the one with the bigger timestamp is considered greater</li>
+     *     <li>originating from the same cluster timestamp the one with the higher sequence number is considered greater</li>
+     *     <li>originating from the same cluster timestamp and with the same sequence number both are considered equal</li>
+     * </ul>
+     */
+    @VisibleForTesting
+    @SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "instances will never be serialized")
+    static class YarnApplicationIdComparator implements Comparator<String> {
+        private static final String PREFIX = "application_";
+        private static final String SEPARATOR = "_";
+
+        @Override
+        public int compare(final String left, final String right) {
+            // Let's say two application IDs with different cluster timestamps are equal
+            final int middleLongPartComparisonResult = Long.compare(getMiddleLongPart(left), getMiddleLongPart(right));
+            if (middleLongPartComparisonResult != 0) {
+                return middleLongPartComparisonResult;
+            }
+
+            // Else we compare the sequence number
+            return Integer.compare(getLastIntegerPart(left), getLastIntegerPart(right));
+        }
+
+        private long getMiddleLongPart(final String applicationId) {
+            return Long.parseLong(applicationId.substring(applicationId.indexOf(PREFIX) + PREFIX.length(),
+                    applicationId.lastIndexOf(SEPARATOR)));
+        }
+
+        private int getLastIntegerPart(final String applicationId) {
+            return Integer.parseInt(applicationId.substring(applicationId.lastIndexOf(SEPARATOR) + SEPARATOR.length()));
+        }
+    }
+
+    /**
+     * Encapsulates call to the static method
+     * {@link LauncherMain#getChildYarnApplications(Configuration, ApplicationsRequestScope, long)} for better testability.
+     */
+    @VisibleForTesting
+    static class YarnApplicationReportReader {
+        private final Configuration jobConf;
+
+        YarnApplicationReportReader(final Configuration jobConf) {
+            this.jobConf = jobConf;
+        }
+
+        List<ApplicationReport> read() {
+            return LauncherMain.getChildYarnApplications(jobConf, ApplicationsRequestScope.OWN, 0L);
+        }
+    }
 }
